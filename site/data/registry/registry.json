@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "cd504aef862cb15c07358f694fec7e86ccd2b4a98b2c03a317036c0b3fb6af96",
+    "fingerprint": "d5b89f906fe15c5bf3e96e0f11a1f40d42d9945d2700fa839196d4ffb5820f84",
     "summary": {
       "total": 1183,
       "builtin": 73,
@@ -26385,7 +26385,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7249322c270cb4ff6e61099e9b18dfa49d43fe49b235db865e347a03a7f4b359",
+    "fingerprint": "da0321cf27f4c405e85611ef62c0094590d66496e59cedb40f5ef96b1f69cb47",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -51129,7 +51129,7 @@
               {
                 "id": "release-bump-dry-run",
                 "title": "Raising it, in both places, once",
-                "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.",
+                "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
                 "argv": [
                   "release",
                   "bump",
@@ -51137,7 +51137,7 @@
                 ],
                 "command": "majordomus release bump --dry-run",
                 "setup": [],
-                "expectation": "exits 0"
+                "expectation": "exits 12"
               }
             ],
             "subcommands": []

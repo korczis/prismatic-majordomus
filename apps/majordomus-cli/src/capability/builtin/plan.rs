@@ -25,7 +25,9 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::plan::{PlanCounts, PlanFinding, PlanIssue, PlanMilestone, Plan, PlanProject, PlanVocabulary, PlanWave};
+use crate::plan::{
+    Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
+};
 use crate::{capability, module};
 
 use super::{get, mcp, Empty};
@@ -287,7 +289,10 @@ fn plan_model(ctx: &Context, _: Empty) -> Result<Plan, CapabilityError> {
     plan_of(ctx)
 }
 
-fn plan_status(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanStatusReport, CapabilityError> {
+fn plan_status(
+    ctx: &Context,
+    input: PlanMilestoneFilter,
+) -> Result<PlanStatusReport, CapabilityError> {
     let plan = plan_of(ctx)?;
     let only = input.milestone.as_deref();
     if let Some(m) = only {
@@ -298,12 +303,7 @@ fn plan_status(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanStatusRe
     let mut counts = PlanCounts {
         total: 0,
         required: 0,
-        by_status: plan
-            .statuses
-            .issue
-            .iter()
-            .map(|s| (s.clone(), 0))
-            .collect(),
+        by_status: plan.statuses.issue.iter().map(|s| (s.clone(), 0)).collect(),
     };
     for i in &plan.issues {
         if only.is_some_and(|m| i.milestone != m) {
@@ -357,7 +357,10 @@ fn plan_issues(ctx: &Context, input: PlanIssueFilter) -> Result<PlanIssueList, C
     })
 }
 
-fn plan_waves(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanWaveReport, CapabilityError> {
+fn plan_waves(
+    ctx: &Context,
+    input: PlanMilestoneFilter,
+) -> Result<PlanWaveReport, CapabilityError> {
     let plan = plan_of(ctx)?;
     let only = input.milestone.as_deref();
     let view = |w: &PlanWave| PlanWaveView {
@@ -628,8 +631,16 @@ mod tests {
         assert_eq!(m.id.as_str(), "plan");
         let expected: &[(&str, &str, &str)] = &[
             ("plan.model", "majordomus_plan", "/api/v1/plan"),
-            ("plan.status", "majordomus_plan_status", "/api/v1/plan/status"),
-            ("plan.issues", "majordomus_plan_issues", "/api/v1/plan/issues"),
+            (
+                "plan.status",
+                "majordomus_plan_status",
+                "/api/v1/plan/status",
+            ),
+            (
+                "plan.issues",
+                "majordomus_plan_issues",
+                "/api/v1/plan/issues",
+            ),
             ("plan.waves", "majordomus_plan_waves", "/api/v1/plan/waves"),
             ("plan.next", "majordomus_plan_next", "/api/v1/plan/next"),
             (
@@ -642,7 +653,11 @@ mod tests {
                 "majordomus_plan_validate",
                 "/api/v1/plan/validate",
             ),
-            ("plan.record", "majordomus_plan_record", "/api/v1/plan/record"),
+            (
+                "plan.record",
+                "majordomus_plan_record",
+                "/api/v1/plan/record",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities

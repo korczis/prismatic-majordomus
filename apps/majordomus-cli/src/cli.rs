@@ -268,7 +268,6 @@ pub struct QualityReportArgs {
     pub write_baseline: bool,
 }
 
-
 #[derive(Debug, Args)]
 /// `majordomus run`. One capability, run as an execution in this process, followed to its
 /// end.
@@ -1447,10 +1446,10 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "release-bump-dry-run",
             title: "Raising it, in both places, once",
-            description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.",
+            description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. A repository that declares no version — the example runs in one with no crate — cannot be raised, and says so with exit 12 rather than inventing a number to raise from.",
             argv: &["release", "bump", "--dry-run"],
             setup: &[],
-            expect: Expect::Success,
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {
