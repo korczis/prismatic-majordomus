@@ -62,14 +62,14 @@ then:
 # What you run
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 majordomus init
 ```
 
 or, in one line:
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --init
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --init
 ```
 
 The installer resolves this machine from `uname` and, on Linux, from the C library it

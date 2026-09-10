@@ -1,6 +1,6 @@
 # GitHub Pages architecture
 
-The website at `https://korczis.github.io/prismatic-majordomus/` is a projection of this
+The website at `https://majordomus.dev/` is a projection of this
 repository. It is built the way Majordomus asks projects to build their own instruction
 files: one canonical source, generated outputs, and a check that fails when the two drift.
 
