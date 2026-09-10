@@ -946,6 +946,15 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         );
     }
 
+    // the catalogue's own directory: where every moment, audience and area is declared,
+    // as the manifest names the section
+    let why_dir = ctx
+        .index
+        .repository
+        .sections
+        .get("why")
+        .cloned()
+        .unwrap_or_else(|| ".ai/repo/why".into());
     Ok(vec![
         crate::generate::Artifact::verbatim(
             format!("{}/why.json", crate::generate::SITE_DATA_DIR),
@@ -954,7 +963,8 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
             Some(WHY_SCHEMA.to_string()),
             WHY_SOURCE,
             render_json(&document),
-        ),
+        )
+        .derived_from(&[why_dir.as_str()]),
         crate::generate::Artifact::verbatim(
             format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
             "site-why-graph",
@@ -962,7 +972,8 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
             None,
             GRAPH_SOURCE,
             render_json(&graph_document),
-        ),
+        )
+        .derived_from(&[why_dir.as_str()]),
     ])
 }
 

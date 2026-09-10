@@ -7,7 +7,7 @@ description: Supported targets, artifact names, installer resolution, the releas
 statement: Distribution has one canonical machine-readable model; every surface that names a platform, an artifact or an installation URL derives from it or is checked against it, and adding or removing a supported target propagates to the release build, the installer, the tests and the documentation without any of them being edited.
 status: active
 class: blocking
-depends_on: [project.interfaces-are-projections@1, project.derived-files-regenerated@1, project.no-claim-without-test@1]
+depends_on: [project.canonicality@1, project.interfaces-are-projections@1, project.derived-files-regenerated@1, project.no-claim-without-test@1]
 tags: [distribution, release, architecture]
 ---
 

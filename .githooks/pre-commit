@@ -10,3 +10,7 @@ bin/majordomus-cli worktree guard --quiet || exit $?
 # lands next. `pages current` compares the recorded input hash with this tree's in a fifth of
 # a second, which is why it can run here rather than only in CI.
 scripts/pages current || exit $?
+# The repository's knowledge held against its committed baseline: a commit that makes a
+# curated claim stale, breaks a link the model follows or adds a hand-kept mirror is refused
+# here with the item named, the same way CI refuses it (docs/KNOWLEDGE.md).
+bin/majordomus-cli knowledge check || exit $?

@@ -910,6 +910,288 @@ impl ProfileArg {
     }
 }
 
+#[derive(Debug, Args)]
+/// `majordomus knowledge`. The output shape is global, so it reads the way a person writes
+/// it — `knowledge list --format json` — and is declared once.
+pub struct KnowledgeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<KnowledgeCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge`.
+pub enum KnowledgeCommand {
+    /// Adopt a brownfield repository: scan it, record every present fact and every present debt as the baseline, and print where it stands; refuses to overwrite a recorded baseline without --force
+    Bootstrap {
+        /// Record over a baseline that exists
+        #[arg(long)]
+        force: bool,
+    },
+    /// Scan the repository and print the whole model as one JSON document (`majordomus/knowledge/v1`); --public keeps only what may leave the repository
+    Scan {
+        /// Only the public projection
+        #[arg(long)]
+        public: bool,
+    },
+    /// Where the knowledge stands: nodes by kind, freshness and provenance, conflicts, gaps, coverage, the check and the canonicality verdict
+    Status,
+    /// List nodes, filtered; one page at a time
+    List {
+        /// Only this node kind (`component`, `document`, `rule`, `capability`, ...)
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+        /// Only this provenance: observed, declared, derived, curated
+        #[arg(long, value_name = "WORD")]
+        provenance: Option<String>,
+        /// Only this freshness: current, possibly_stale, stale, conflicted, unverified
+        #[arg(long, value_name = "WORD")]
+        freshness: Option<String>,
+        /// Only this ownership: external, majordomus, hybrid
+        #[arg(long, value_name = "WORD")]
+        ownership: Option<String>,
+        /// Only nodes this extractor produced
+        #[arg(long, value_name = "ID")]
+        extractor: Option<String>,
+        /// A substring of the id or the title
+        #[arg(long, value_name = "TEXT")]
+        query: Option<String>,
+        /// Only nodes whose freshness is debt
+        #[arg(long)]
+        debt: bool,
+        /// Skip this many
+        #[arg(long, default_value_t = 0)]
+        offset: usize,
+        /// At most this many; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// One node with its claims, evidence, relations, conflicts and gaps
+    Show {
+        /// A node id, a capability id, an object URI or a path
+        id: String,
+    },
+    /// Search ids, titles, summaries and claim values
+    Search {
+        /// What to look for
+        query: String,
+        /// At most this many hits; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// Why the model says what it says about one node: provenance, evidence, claims with freshness, relations, conflicts, gaps, remedies
+    Explain {
+        /// A node id, a capability id, an object URI or a path
+        id: String,
+    },
+    /// A slice of the knowledge graph: around a root, or every node of a kind
+    Graph {
+        /// Cut the slice around this node
+        #[arg(long, value_name = "ID")]
+        root: Option<String>,
+        /// Hops from the root; 2 when unset
+        #[arg(long, default_value_t = 0)]
+        depth: usize,
+        /// Without a root: only this kind
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+        /// At most this many nodes
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// What a change set touches: the working tree against HEAD (or --base), two revisions (--base --to), or named paths
+    Impact {
+        /// The base revision; HEAD when unset
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+        /// Compare the base with this revision instead of the working tree
+        #[arg(long, value_name = "REV")]
+        to: Option<String>,
+        /// Changed paths, named outright
+        #[arg(value_name = "PATH")]
+        paths: Vec<String>,
+    },
+    /// Everything the repository could know and does not, with the remedy for each
+    Gaps {
+        /// Only this category: undocumented_component, unresolved_reference, unverified_knowledge, unexercised_capability, canonicality
+        #[arg(long, value_name = "WORD")]
+        category: Option<String>,
+    },
+    /// Coverage over deterministic denominators: numbers, and what is missing
+    Coverage,
+    /// Every node whose freshness is debt, with the reason: what a person should look at
+    Stale,
+    /// Every conflict: both sides, severity, basis, resolution, remedy
+    Conflicts {
+        /// Only open conflicts
+        #[arg(long)]
+        open_only: bool,
+    },
+    /// Accept one open conflict by id, with a reason: it stays reported, and stops counting as new debt
+    Accept {
+        /// The conflict id, as `knowledge conflicts` prints it (`<subject>#<predicate>`)
+        conflict: String,
+        /// Why both values stand
+        #[arg(long, value_name = "TEXT")]
+        reason: String,
+    },
+    /// Propose what to do about every conflict, stale claim, unresolved reference and gap; --accept records that curated claims were verified against their present evidence
+    Reconcile {
+        /// Record the verifications in the baseline (a deliberate act; the diff is in the commit)
+        #[arg(long)]
+        accept: bool,
+    },
+    /// Validate the model, the baseline and the exceptions against their contracts; exit 10 with each finding named
+    Validate,
+    /// The committed baseline: show it, record it, or migrate it to the current schema
+    Baseline {
+        #[command(subcommand)]
+        /// What to do with it; none shows it
+        command: Option<KnowledgeBaselineCommand>,
+    },
+    /// Hold the scan against the baseline: exit 0 when the mode passes, 10 with every new debt item named
+    Check {
+        /// Check in this mode instead of the policy's: observe, warn, protect, strict
+        #[arg(long, value_name = "WORD")]
+        mode: Option<String>,
+    },
+    /// The canonicality audit: every capability's canonical source and derived surfaces, every violation, the manual maintenance surface; exit 10 when a violation counts
+    Canonicality {
+        /// Only this capability's row
+        #[arg(long, value_name = "ID")]
+        capability: Option<String>,
+    },
+    /// Run the semantic provider the policy names over the model and cache what it derived; off unless the policy enables it, and nothing leaves the machine unless the policy allows it
+    Derive {
+        /// Only nodes of these kinds
+        #[arg(long = "kind", value_name = "KIND")]
+        kinds: Vec<String>,
+        /// Show what would be given to the provider and what withheld; run nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// How the model is made: every extractor with its vocabulary, the providers, the schema versions and migrations
+    Extractors,
+    /// What an agent should read before touching some paths, cut to a budget
+    Context {
+        /// The paths about to be touched; the whole repository when none
+        #[arg(value_name = "PATH")]
+        paths: Vec<String>,
+        /// The budget in bytes; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        budget: usize,
+        /// Only public knowledge
+        #[arg(long)]
+        public: bool,
+    },
+    /// What a change set means for the knowledge: the paths that changed, what they touch, every capability the change adds with the surfaces derived for it, and the canonicality and freshness debt it introduces — the pull-request gate
+    Inspect {
+        /// The base revision; HEAD when unset (the working tree), or a branch to compare with
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+    },
+    /// Every node id, one per line, for a shell's completion
+    Ids {
+        /// Only this kind
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge baseline`.
+pub enum KnowledgeBaselineCommand {
+    /// The baseline as recorded: when, how much of what, and what the scan would change
+    Show,
+    /// Record the present scan as the baseline: every fact verified, every present debt tolerated; refuses to overwrite without --force
+    Record {
+        /// Record over a baseline that exists
+        #[arg(long)]
+        force: bool,
+    },
+    /// Rewrite the baseline in the current schema, naming each migration step; a current one is left alone
+    Migrate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus canonicality`.
+pub struct CanonicalityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `check`.
+    pub command: Option<CanonicalityCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus canonicality`.
+pub enum CanonicalityCommand {
+    /// The audit over every capability and the tree; exit 10 when a violation counts
+    Check,
+    /// One capability: its canonical source, every derived surface, every hand-written mention, its manual maintenance surface and its verdict
+    Explain {
+        /// The capability id
+        capability: String,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus change`.
+pub struct ChangeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `inspect`.
+    pub command: Option<ChangeCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus change`.
+pub enum ChangeCommand {
+    /// Inspect the working tree against HEAD, or against --base: the same answer as `knowledge inspect`
+    Inspect {
+        /// The base revision
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus explain`.
+pub struct ExplainArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// A node id, a capability id, an object URI or a path; `capability <id>` is accepted too
+    #[arg(value_name = "SUBJECT", num_args = 1..=2)]
+    pub subject: Vec<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
 /// Output shape for commands that print to a person or a script. `mcp` speaks its own
 /// protocol and does not use it; `mcp --inspect` does.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]

@@ -7,7 +7,7 @@ description: Every user-visible operational problem this tool answers is one sch
 statement: An operational failure mode is authored once as a catalogue object and every projection of it is derived; registering one in a projection, or writing a derived value into a source, is a defect.
 status: active
 class: blocking
-depends_on: [project.interfaces-are-projections@1, project.derived-files-regenerated@1]
+depends_on: [project.canonicality@1, project.interfaces-are-projections@1, project.derived-files-regenerated@1]
 tags: [why, catalogue, projections, documentation]
 ---
 

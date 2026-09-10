@@ -291,3 +291,91 @@ fn run(root: &Path, args: &[&str]) -> Result<String> {
         reason: e.to_string(),
     })
 }
+
+// ---------------------------------------------------------------- change sets
+
+/// One path a change set touches, and how.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+pub struct ChangedPath {
+    /// Repository-relative, forward slashes.
+    pub path: String,
+    /// `added`, `modified`, `deleted`, `renamed`, `copied` or `untracked`.
+    pub status: String,
+}
+
+fn status_word(code: char) -> &'static str {
+    match code {
+        'A' => "added",
+        'D' => "deleted",
+        'R' => "renamed",
+        'C' => "copied",
+        '?' => "untracked",
+        _ => "modified",
+    }
+}
+
+fn parse_name_status(diff: &str) -> Vec<ChangedPath> {
+    let mut out = Vec::new();
+    let mut fields = diff.split('\0').filter(|s| !s.is_empty());
+    while let Some(status) = fields.next() {
+        let Some(path) = fields.next() else { break };
+        let code = status.chars().next().unwrap_or('M');
+        out.push(ChangedPath {
+            path: path.to_string(),
+            status: status_word(code).to_string(),
+        });
+    }
+    out
+}
+
+/// The paths that differ between a base and the working tree: `git diff --name-status
+/// <base>` for the tracked side, plus every untracked file the ignore rules do not hide.
+/// With no base, the working tree is compared with `HEAD`. Sorted and unique.
+pub fn changed_paths(root: &Path, base: Option<&str>) -> Result<Vec<ChangedPath>> {
+    let base = base.unwrap_or("HEAD");
+    let diff = run(
+        root,
+        &["diff", "--name-status", "-z", "--no-renames", base, "--"],
+    )?;
+    let mut out = parse_name_status(&diff);
+    let untracked = run(
+        root,
+        &["ls-files", "--others", "--exclude-standard", "-z", "--"],
+    )?;
+    for path in untracked.split('\0').filter(|s| !s.is_empty()) {
+        out.push(ChangedPath {
+            path: path.to_string(),
+            status: "untracked".into(),
+        });
+    }
+    out.sort();
+    out.dedup();
+    Ok(out)
+}
+
+/// The paths that differ between two revisions, `git diff --name-status A B`. Sorted.
+pub fn changed_between(root: &Path, from: &str, to: &str) -> Result<Vec<ChangedPath>> {
+    let diff = run(
+        root,
+        &["diff", "--name-status", "-z", "--no-renames", from, to, "--"],
+    )?;
+    let mut out = parse_name_status(&diff);
+    out.sort();
+    out.dedup();
+    Ok(out)
+}
+
+/// The full commit id a revision names, or the error git gives for one it cannot resolve.
+pub fn rev_parse(root: &Path, rev: &str) -> Result<String> {
+    run(
+        root,
+        &["rev-parse", "--verify", "-q", &format!("{rev}^{{commit}}")],
+    )
+    .map(|s| s.trim().to_string())
+}
+
+/// The content of a tracked file at a revision, `git show <rev>:<path>`; `None` when the
+/// revision has no such path.
+pub fn show(root: &Path, rev: &str, path: &str) -> Option<String> {
+    run(root, &["show", &format!("{rev}:{path}")]).ok()
+}

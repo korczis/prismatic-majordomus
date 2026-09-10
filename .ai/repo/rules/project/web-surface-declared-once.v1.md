@@ -7,7 +7,7 @@ description: Everything this repository exposes over HTTP is one resolved surfac
 statement: Declare a web surface once, where its producer is, and derive every router, page, index, publication and reference from the resolved topology; a mount written down a second time is a bug, and `/docs` belongs to the documentation while `/swagger` belongs to the Swagger UI.
 status: active
 class: blocking
-depends_on: [project.derived-once@1, project.interfaces-are-projections@1]
+depends_on: [project.canonicality@1, project.derived-once@1, project.interfaces-are-projections@1]
 tags: [architecture, web, routing]
 ---
 

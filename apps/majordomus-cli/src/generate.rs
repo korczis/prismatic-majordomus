@@ -317,11 +317,22 @@ pub struct Artifact {
     pub schema: Option<String>,
     /// One line: what it was derived from, as the header says it.
     pub source: String,
+    /// The canonical sources it was derived from, as repository-relative paths — a file
+    /// or a directory — so that the derivation is a typed fact the knowledge model can
+    /// follow and the canonicality audit can check, not a sentence. Empty only for an
+    /// artifact that describes the plan itself.
+    pub derived_from: Vec<String>,
     /// The whole file.
     pub content: String,
 }
 
 impl Artifact {
+    /// The artifact with its canonical sources declared.
+    pub fn derived_from(mut self, sources: &[&str]) -> Artifact {
+        self.derived_from = sources.iter().map(|s| s.to_string()).collect();
+        self
+    }
+
     /// A Markdown artifact: the banner, then the body. Nothing writes the banner itself.
     pub fn markdown(
         path: impl Into<String>,
@@ -338,6 +349,7 @@ impl Artifact {
             schema: None,
             content: markdown_banner(&source, version) + body,
             source,
+            derived_from: Vec::new(),
         }
     }
 
@@ -358,6 +370,7 @@ impl Artifact {
             schema: None,
             content: comment_banner(&source, version) + body,
             source,
+            derived_from: Vec::new(),
         }
     }
 
@@ -394,6 +407,7 @@ impl Artifact {
             format: ArtifactFormat::Json,
             schema: None,
             source,
+            derived_from: Vec::new(),
             content: openapi::render(&stamped),
         }
     }
@@ -455,6 +469,7 @@ impl Artifact {
             format,
             schema,
             source: source.into(),
+            derived_from: Vec::new(),
             content,
         }
     }
@@ -544,6 +559,7 @@ impl Document {
             format,
             schema: self.schema.clone(),
             source: self.source.clone(),
+            derived_from: Vec::new(),
             content,
         };
         vec![
@@ -555,6 +571,17 @@ impl Document {
         ]
     }
 }
+/// Where the builtin registry is declared: the directory every registry projection is
+/// derived from, as the manifest names it.
+pub const REGISTRY_SOURCE: &str = "apps/majordomus-cli/src/capability/builtin";
+
+/// Where the command line is declared: what the CLI reference and the CLI document are
+/// derived from.
+pub const CLI_SOURCE: &str = "apps/majordomus-cli/src/cli.rs";
+
+/// Where the web topology is declared.
+pub const WEB_SOURCE: &str = "apps/majordomus-cli/src/web";
+
 /// The registry's artifacts of the selected targets: the OpenAPI document, the
 /// reference index with one file per builtin module, and the registry manifest.
 /// `Target::Benchmarks` needs the repository's index for its cases and is answered by
@@ -581,24 +608,30 @@ pub fn artifacts(
                     value: openapi::document(registry, version, cases)
                         .map_err(|reason| Error::Http { reason })?,
                 };
-                out.extend(doc.artifacts(version));
+                out.extend(doc.artifacts(version).into_iter().map(|a| a.derived_from(&[REGISTRY_SOURCE])));
             }
             Target::Docs => {
-                out.push(Artifact::markdown(
-                    format!("{OUT_DIR}/capabilities.md"),
-                    "capabilities",
-                    "the canonical Majordomus capability registry",
-                    version,
-                    &reference(registry),
-                ));
+                out.push(
+                    Artifact::markdown(
+                        format!("{OUT_DIR}/capabilities.md"),
+                        "capabilities",
+                        "the canonical Majordomus capability registry",
+                        version,
+                        &reference(registry),
+                    )
+                    .derived_from(&[REGISTRY_SOURCE]),
+                );
                 let cli = crate::cli::tree();
-                out.push(Artifact::markdown(
-                    format!("{OUT_DIR}/cli.md"),
-                    "cli",
-                    "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
-                    version,
-                    &cli_reference(&cli),
-                ));
+                out.push(
+                    Artifact::markdown(
+                        format!("{OUT_DIR}/cli.md"),
+                        "cli",
+                        "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+                        version,
+                        &cli_reference(&cli),
+                    )
+                    .derived_from(&[CLI_SOURCE]),
+                );
                 out.extend(
                     Document::new(
                         "cli",
@@ -606,22 +639,35 @@ pub fn artifacts(
                         "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
                         cli_document(&cli, version),
                     )
-                    .artifacts(version),
+                    .artifacts(version)
+                    .into_iter()
+                    .map(|a| a.derived_from(&[CLI_SOURCE])),
                 );
                 for m in registry
                     .modules()
                     .filter(|m| m.source != ModuleSource::Declarative)
                 {
-                    out.push(Artifact::markdown(
-                        format!("{OUT_DIR}/modules/{}.md", m.id),
-                        format!("modules/{}", m.id),
-                        format!(
-                            "the `{}` module of the canonical Majordomus capability registry",
-                            m.id
-                        ),
-                        version,
-                        &module_reference(registry, m.id.as_str()),
-                    ));
+                    // the module's own file, when it is one of this executable's; a
+                    // module an extension composes is derived from the registry as a whole
+                    let file = registry
+                        .iter()
+                        .find(|c| c.module == m.id)
+                        .map(|c| c.provenance.source_path())
+                        .filter(|p| p.starts_with(REGISTRY_SOURCE))
+                        .unwrap_or_else(|| REGISTRY_SOURCE.to_string());
+                    out.push(
+                        Artifact::markdown(
+                            format!("{OUT_DIR}/modules/{}.md", m.id),
+                            format!("modules/{}", m.id),
+                            format!(
+                                "the `{}` module of the canonical Majordomus capability registry",
+                                m.id
+                            ),
+                            version,
+                            &module_reference(registry, m.id.as_str()),
+                        )
+                        .derived_from(&[file.as_str()]),
+                    );
                 }
             }
             Target::Registry => out.extend(
@@ -631,7 +677,9 @@ pub fn artifacts(
                     "the canonical capability registry",
                     registry_manifest(registry),
                 )
-                .artifacts(version),
+                .artifacts(version)
+                .into_iter()
+                .map(|a| a.derived_from(&[REGISTRY_SOURCE])),
             ),
             Target::Benchmarks
             | Target::Allow
@@ -764,14 +812,18 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         if targets.contains(&Target::Site) {
             let dataset =
                 crate::site::dataset(&app.context, &app.schema, &policy, &app.repository)?;
-            out.push(Artifact::verbatim(
-                format!("{SITE_DATA_DIR}/registry.json"),
-                "site-registry",
-                ArtifactFormat::Json,
-                Some(crate::site::SCHEMA.to_string()),
-                "the capability registry and the index of this repository's layer",
-                crate::site::render(&dataset),
-            ));
+            let layer = app.repository.repo_path();
+            out.push(
+                Artifact::verbatim(
+                    format!("{SITE_DATA_DIR}/registry.json"),
+                    "site-registry",
+                    ArtifactFormat::Json,
+                    Some(crate::site::SCHEMA.to_string()),
+                    "the capability registry and the index of this repository's layer",
+                    crate::site::render(&dataset),
+                )
+                .derived_from(&[REGISTRY_SOURCE, layer.as_str()]),
+            );
             // The Why catalogue as the site reads it, and the graph of it. Both are
             // derived from the catalogue alone — never from the index's fingerprint —
             // so the two `generate` passes of the derivation graph agree byte for byte
@@ -841,6 +893,9 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
     }
 
     use crate::distribution::render::SOURCE as DIST_SOURCE;
+    let share_rel = |rel: &str| relative_to(&app.share.dir().join(rel), app.repository.root());
+    let model_path = share_rel(crate::distribution::FILE);
+    let releases_dir = release::DIR.to_string();
     let mut out = vec![
         Artifact::verbatim(
             format!("{OUT_DIR}/distribution-matrix.json"),
@@ -849,7 +904,8 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
             None,
             DIST_SOURCE,
             render::matrix_json(&model),
-        ),
+        )
+        .derived_from(&[model_path.as_str()]),
         Artifact::verbatim(
             format!("{SITE_DATA_DIR}/distribution.json"),
             "site-distribution",
@@ -857,27 +913,32 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
             None,
             DIST_SOURCE,
             render::site_dataset(&model, &releases),
-        ),
+        )
+        .derived_from(&[model_path.as_str(), releases_dir.as_str()]),
     ];
 
     let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
-    out.push(Artifact::verbatim(
-        format!(
-            "{}/{}",
-            crate::distribution::PUBLIC_DIR,
-            model.installer.script
-        ),
-        "installer",
-        ArtifactFormat::Text,
-        None,
-        DIST_SOURCE,
-        render::installer(&model, &installer_template).map_err(|reason| {
-            Error::InvalidDistribution {
-                path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
-                reason,
-            }
-        })?,
-    ));
+    let installer_src = share_rel(crate::distribution::INSTALLER_TEMPLATE);
+    out.push(
+        Artifact::verbatim(
+            format!(
+                "{}/{}",
+                crate::distribution::PUBLIC_DIR,
+                model.installer.script
+            ),
+            "installer",
+            ArtifactFormat::Text,
+            None,
+            DIST_SOURCE,
+            render::installer(&model, &installer_template).map_err(|reason| {
+                Error::InvalidDistribution {
+                    path: crate::distribution::INSTALLER_TEMPLATE.to_string(),
+                    reason,
+                }
+            })?,
+        )
+        .derived_from(&[model_path.as_str(), installer_src.as_str()]),
+    );
 
     let guide_template = read_share(&app.share, crate::distribution::GUIDE_TEMPLATE)?;
     let guide = render::install_doc(&model, &releases, crate::VERSION, &guide_template).map_err(
@@ -889,37 +950,48 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
     // The provenance header goes after the title, not before it: the site's documentation
     // projection strips a document's own first-line heading and would otherwise render two.
     let (title, rest) = guide.split_once('\n').unwrap_or((guide.as_str(), ""));
-    out.push(Artifact::verbatim(
-        crate::distribution::GUIDE.to_string(),
-        "install-guide",
-        ArtifactFormat::Markdown,
-        None,
-        "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
-        format!(
-            "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
-            crate::VERSION
-        ),
-    ));
+    let guide_src = share_rel(crate::distribution::GUIDE_TEMPLATE);
+    out.push(
+        Artifact::verbatim(
+            crate::distribution::GUIDE.to_string(),
+            "install-guide",
+            ArtifactFormat::Markdown,
+            None,
+            "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)",
+            format!(
+                "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
+                crate::VERSION
+            ),
+        )
+        .derived_from(&[guide_src.as_str(), model_path.as_str()]),
+    );
 
     for r in &releases.releases {
-        out.push(Artifact::verbatim(
-            format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
-            format!("release/{}", r.tag),
-            ArtifactFormat::Json,
-            None,
-            format!("the release record {}", r.tag),
-            r.public_json(&model),
-        ));
+        let record = format!("{}/{}.yaml", release::DIR, r.tag);
+        out.push(
+            Artifact::verbatim(
+                format!("{}/{}.json", release::PUBLIC_DIR, r.tag),
+                format!("release/{}", r.tag),
+                ArtifactFormat::Json,
+                None,
+                format!("the release record {}", r.tag),
+                r.public_json(&model),
+            )
+            .derived_from(&[record.as_str(), model_path.as_str()]),
+        );
     }
     if let Some(latest) = releases.latest_stable() {
-        out.push(Artifact::verbatim(
-            format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
-            "release/latest",
-            ArtifactFormat::Json,
-            None,
-            "the latest stable release record",
-            release::latest_json(latest, &model),
-        ));
+        out.push(
+            Artifact::verbatim(
+                format!("{}/{}.json", release::PUBLIC_DIR, release::LATEST),
+                "release/latest",
+                ArtifactFormat::Json,
+                None,
+                "the latest stable release record",
+                release::latest_json(latest, &model),
+            )
+            .derived_from(&[releases_dir.as_str(), model_path.as_str()]),
+        );
     }
     Ok(out)
 }
@@ -1060,13 +1132,16 @@ pub fn context_artifacts(
     let mut out = artifacts(&ctx.registry, version, Some(&cases), targets)?;
     if targets.contains(&Target::Benchmarks) {
         let source = "the benchmark projection of the canonical capability registry";
-        out.push(Artifact::markdown(
-            format!("{OUT_DIR}/benchmarks.md"),
-            "benchmarks",
-            source,
-            version,
-            &benchmark_matrix(ctx),
-        ));
+        out.push(
+            Artifact::markdown(
+                format!("{OUT_DIR}/benchmarks.md"),
+                "benchmarks",
+                source,
+                version,
+                &benchmark_matrix(ctx),
+            )
+            .derived_from(&[REGISTRY_SOURCE]),
+        );
         out.extend(
             Document::new(
                 "benchmarks",
@@ -1074,7 +1149,9 @@ pub fn context_artifacts(
                 source,
                 benchmark_document(ctx),
             )
-            .artifacts(version),
+            .artifacts(version)
+            .into_iter()
+            .map(|a| a.derived_from(&[REGISTRY_SOURCE])),
         );
     }
     if targets.contains(&Target::Web) {
@@ -1085,7 +1162,9 @@ pub fn context_artifacts(
                 "the resolved web topology of this repository",
                 web_topology(ctx),
             )
-            .artifacts(version),
+            .artifacts(version)
+            .into_iter()
+            .map(|a| a.derived_from(&[WEB_SOURCE])),
         );
     }
     if targets.contains(&Target::Docs) {
@@ -1510,28 +1589,35 @@ pub fn document_artifacts(
             "{schemas}/{}",
             crate::proto::project::schema_path(&file.schema_id)?
         );
-        out.push(Artifact::json_extension(
-            path.clone(),
-            format!("schemas/{}", file.schema_id),
-            source.clone(),
-            version,
-            serde_json::to_value(&schema).map_err(|e| Error::KindSchema {
-                reason: format!("{}: cannot render the projected schema: {e}", file.source),
-            })?,
-        ));
-        if let Some(name) = &file.allow_list {
-            let lines = crate::proto::project::section_lines(file);
-            out.push(Artifact::text(
-                format!("{sections}/{name}.txt"),
-                format!("sections/{name}"),
+        let proto = relative_to(Path::new(&file.source), root);
+        out.push(
+            Artifact::json_extension(
+                path.clone(),
+                format!("schemas/{}", file.schema_id),
                 source.clone(),
                 version,
-                &if lines.is_empty() {
-                    String::new()
-                } else {
-                    lines.join("\n") + "\n"
-                },
-            ));
+                serde_json::to_value(&schema).map_err(|e| Error::KindSchema {
+                    reason: format!("{}: cannot render the projected schema: {e}", file.source),
+                })?,
+            )
+            .derived_from(&[proto.as_str()]),
+        );
+        if let Some(name) = &file.allow_list {
+            let lines = crate::proto::project::section_lines(file);
+            out.push(
+                Artifact::text(
+                    format!("{sections}/{name}.txt"),
+                    format!("sections/{name}"),
+                    source.clone(),
+                    version,
+                    &if lines.is_empty() {
+                        String::new()
+                    } else {
+                        lines.join("\n") + "\n"
+                    },
+                )
+                .derived_from(&[proto.as_str()]),
+            );
         }
     }
     Ok(out)
@@ -1552,16 +1638,17 @@ pub fn proto_allow_artifacts(
             continue;
         };
         let schema = crate::proto::project::to_json_schema(file)?;
-        out.push(Artifact::text(
-            format!("{dir}/{name}.txt"),
-            format!("allow/{name}"),
-            format!(
-                "the document schema `{}`",
-                relative_to(Path::new(&file.source), root)
-            ),
-            version,
-            &(allow_lines(&schema).join("\n") + "\n"),
-        ));
+        let proto = relative_to(Path::new(&file.source), root);
+        out.push(
+            Artifact::text(
+                format!("{dir}/{name}.txt"),
+                format!("allow/{name}"),
+                format!("the document schema `{proto}`"),
+                version,
+                &(allow_lines(&schema).join("\n") + "\n"),
+            )
+            .derived_from(&[proto.as_str()]),
+        );
     }
     Ok(out)
 }
@@ -1694,6 +1781,12 @@ pub fn manifest_document(indexed: &[Artifact]) -> Value {
                 o.insert("schema".into(), Value::String(schema.clone()));
             }
             o.insert("source".into(), Value::String(a.source.clone()));
+            if !a.derived_from.is_empty() {
+                o.insert(
+                    "derived_from".into(),
+                    Value::Array(a.derived_from.iter().cloned().map(Value::String).collect()),
+                );
+            }
             o.insert("bytes".into(), Value::from(a.content.len()));
             o.insert("sha256".into(), Value::String(sha256_hex(&a.content)));
             Value::Object(o)
@@ -1874,13 +1967,22 @@ pub fn allow_artifacts(
                 return None;
             }
             let list = sch.json.get(ALLOW_EXTENSION).and_then(Value::as_str)?;
-            Some(Artifact::text(
-                format!("{}/{list}.txt", dir.display()),
-                format!("allow/{list}"),
-                format!("the JSON Schema `{name}` of the kind it validates"),
-                version,
-                &(allow_lines(&sch.json).join("\n") + "\n"),
-            ))
+            // the schema file itself: its directory as the index recorded it, and the
+            // file name its identity derives, the same mapping the loader used to find it
+            let schema_path = crate::proto::project::schema_path(name)
+                .ok()
+                .map(|rel| format!("{}/{rel}", sch.source));
+            let sources: Vec<&str> = schema_path.iter().map(String::as_str).collect();
+            Some(
+                Artifact::text(
+                    format!("{}/{list}.txt", dir.display()),
+                    format!("allow/{list}"),
+                    format!("the JSON Schema `{name}` of the kind it validates"),
+                    version,
+                    &(allow_lines(&sch.json).join("\n") + "\n"),
+                )
+                .derived_from(&sources),
+            )
         })
         .collect()
 }

@@ -122,17 +122,24 @@ pub fn artifacts(
                 }
             }
         }
-        out.push(Artifact::verbatim(
-            target.clone(),
-            format!("providers/{}", projection.provider),
-            crate::generate::ArtifactFormat::of_path(target),
-            None,
-            format!(
-                "the policy `{}` and the `{}` template, stamped by the projection itself",
-                policy.path, projection.provider
-            ),
-            content,
-        ));
+        let template_rel = template
+            .strip_prefix(repository.root())
+            .map(|p| p.display().to_string())
+            .unwrap_or_else(|_| template.display().to_string());
+        out.push(
+            Artifact::verbatim(
+                target.clone(),
+                format!("providers/{}", projection.provider),
+                crate::generate::ArtifactFormat::of_path(target),
+                None,
+                format!(
+                    "the policy `{}` and the `{}` template, stamped by the projection itself",
+                    policy.path, projection.provider
+                ),
+                content,
+            )
+            .derived_from(&[policy.path.as_str(), template_rel.as_str()]),
+        );
     }
     Ok(out)
 }

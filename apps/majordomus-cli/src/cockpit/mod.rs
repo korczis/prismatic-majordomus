@@ -229,6 +229,8 @@ impl Cockpit {
                     pages::command(&self.ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
                     pages::graph(&self.ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/integrity/") {
+                    knowledge::integrity_capability(&self.ctx, &percent_decode(id))
                 } else {
                     pages::not_found(other)
                 }

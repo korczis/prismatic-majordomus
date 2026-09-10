@@ -33,6 +33,7 @@ pub mod git;
 pub mod graph;
 pub mod http;
 pub mod index;
+pub mod knowledge;
 pub mod lease;
 pub mod logging;
 pub mod mcp;

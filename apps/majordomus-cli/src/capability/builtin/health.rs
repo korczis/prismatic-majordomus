@@ -516,6 +516,79 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         },
     );
 
+    // --- the repository's knowledge, held against its committed baseline: the check the
+    // knowledge system itself makes, in the policy's mode
+    match crate::knowledge::scanned(ctx) {
+        Ok(s) => {
+            let report = crate::knowledge::baseline::check(&s.model, &s.baseline, s.policy.mode);
+            checks.push(HealthCheck {
+                id: "knowledge".into(),
+                title: "Repository knowledge against its baseline".into(),
+                status: if !report.passed() {
+                    HealthStatus::Fail
+                } else if !s.baseline.is_empty() && report.tolerated.is_empty() && report.new_debt.is_empty() {
+                    HealthStatus::Ok
+                } else if s.baseline.is_empty() {
+                    HealthStatus::Warn
+                } else {
+                    HealthStatus::Warn
+                },
+                detail: format!(
+                    "{} node(s); {}{}",
+                    s.model.nodes.len(),
+                    report.summary,
+                    if s.baseline.is_empty() { "; no baseline recorded" } else { "" }
+                ),
+                decided_by: "the knowledge check: the scan held against the committed baseline in the policy's mode".into(),
+                evidence: vec!["majordomus knowledge check".into()],
+                findings: report
+                    .new_debt
+                    .iter()
+                    .map(|d| format!("{} {}: {}", d.class, d.id, d.reason.as_deref().unwrap_or(&d.state)))
+                    .collect(),
+            });
+            let violations: Vec<String> = s
+                .model
+                .gaps
+                .iter()
+                .filter(|g| g.category == crate::knowledge::model::GapCategory::Canonicality)
+                .map(|g| format!("{}: {}", g.id, g.reason))
+                .collect();
+            let counting = violations
+                .iter()
+                .filter(|v| !s.baseline.tolerates_violation(v.split(':').take(2).collect::<Vec<_>>().join(":").as_str()))
+                .count();
+            checks.push(HealthCheck {
+                id: "canonicality".into(),
+                title: "Canonicality".into(),
+                status: if violations.is_empty() {
+                    HealthStatus::Ok
+                } else if counting == 0 {
+                    HealthStatus::Warn
+                } else {
+                    HealthStatus::Fail
+                },
+                detail: format!(
+                    "{} violation(s) in the scan, {} not tolerated by the baseline",
+                    violations.len(),
+                    counting
+                ),
+                decided_by: "the canonicality audit over the generation manifest, the registry and the tree".into(),
+                evidence: vec!["majordomus canonicality check".into()],
+                findings: violations,
+            });
+        }
+        Err(e) => checks.push(HealthCheck {
+            id: "knowledge".into(),
+            title: "Repository knowledge against its baseline".into(),
+            status: HealthStatus::Unknown,
+            detail: format!("the knowledge scan could not run: {e}"),
+            decided_by: "the knowledge check".into(),
+            evidence: vec!["majordomus knowledge validate".into()],
+            findings: vec![e.to_string()],
+        }),
+    }
+
     // --- the peers attached to this process
     let peers = ctx.peers.list();
     record(
