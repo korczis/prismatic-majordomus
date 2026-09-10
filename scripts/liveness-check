@@ -22,6 +22,7 @@
 # a regression and does fail; a baseline line that no longer matches anything is also
 # reported, so the ratchet tightens instead of rotting.
 set -eu
+set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASELINE="$ROOT/.ai/repo/liveness-baseline.txt"
@@ -89,8 +90,26 @@ scan() {
   # a few lines down -- after a case/esac, or after the counter that bounds the pool -- so
   # the window is six lines, not one. A spawn is supervised if something in that window
   # captures $! or waits; anything else is work started and never reaped.
+  # A heredoc body is data, not this script's commands: test/cases/123_case_bound.sh writes
+  # a fixture case that hangs on purpose, and the `sleep &` inside that heredoc is the
+  # fixture's, reaped by the case's own trap. Attributing it to the writer reported a
+  # deliberate, supervised fixture as unreaped work. The body is skipped; the script that
+  # the heredoc becomes is scanned on its own if it is one of this repository's.
   awk -v f="$f" -v W=6 '
-    { line[NR] = $0 }
+    {
+      if (heredoc != "") {
+        s = $0; sub(/^[[:space:]]+/, "", s)
+        if (s == heredoc) heredoc = ""
+        line[NR] = "#"                     # data, never a command of this script
+        next
+      }
+      if (match($0, /<<-?[[:space:]]*["'"'"']?[A-Za-z_][A-Za-z0-9_]*["'"'"']?/)) {
+        d = substr($0, RSTART, RLENGTH)
+        sub(/^<<-?[[:space:]]*/, "", d); gsub(/["'"'"']/, "", d)
+        heredoc = d
+      }
+      line[NR] = $0
+    }
     END {
       for (i = 1; i <= NR; i++) {
         L = line[i]
@@ -112,7 +131,7 @@ files | while IFS= read -r f; do scan "$f"; done > "$FOUND" || true
 # --- the ratchet ----------------------------------------------------------------------
 # The baseline is keyed by path and class, not by line: a file that moves a known finding
 # by three lines has not regressed, and a ratchet that fires on that is noise.
-key() { cut -d: -f1,3 < "$1" | sort -u; }
+key() { cut -d: -f1,3 < "$1" | LC_ALL=C sort -u; }
 
 if [ "$WRITE" = 1 ]; then
   { echo "# liveness-check baseline — path:class of the debt that existed when the gate landed."
@@ -125,7 +144,7 @@ if [ "$WRITE" = 1 ]; then
 fi
 
 [ -f "$BASELINE" ] || : > "$BASELINE"
-grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^[[:space:]]*$' | sort -u > "$FOUND.b" || : > "$FOUND.b"
+grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u > "$FOUND.b" || : > "$FOUND.b"
 key "$FOUND" > "$FOUND.new.all"
 comm -23 "$FOUND.new.all" "$FOUND.b" > "$FOUND.new" || : > "$FOUND.new"
 comm -13 "$FOUND.new.all" "$FOUND.b" > "$FOUND.stale" || : > "$FOUND.stale"

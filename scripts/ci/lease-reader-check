@@ -107,8 +107,15 @@ subject() {
   done
 }
 
+# A comment naming the lease parses nothing. This gate's own header quotes
+# `"$MJ_STATE_DIR/mcp/server.json"` to show what the reader it was written against looked
+# like, and that sentence made the gate its own finding on master — it reported itself as a
+# sixth parser of the lease. Comment lines are dropped before the match, in the two comment
+# forms this tree writes (`#` for shell and the data files, `//` for Rust), so the subject
+# is what a file does and not what it says about the lease.
+uncommented() { LC_ALL=C sed -e 's|^[[:space:]]*//.*$||' -e 's|^[[:space:]]*#.*$||' "$1"; }
 current="$(subject | while IFS= read -r f; do
-  if LC_ALL=C grep -qIF -e "$lease_path" -e "$lease_name" -e "$schema" "$f" 2>/dev/null; then printf '%s\n' "$f"; fi
+  if uncommented "$f" | LC_ALL=C grep -qIF -e "$lease_path" -e "$lease_name" -e "$schema" 2>/dev/null; then printf '%s\n' "$f"; fi
 done)"
 
 if [ "$MODE" = write ]; then

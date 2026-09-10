@@ -79,11 +79,24 @@ else
 fi
 
 # ---------------------------------------------------------------- 4. the ratchets
+# Two files are outside the count, and only two. `src/order.rs` is the canonical order
+# itself. `src/generation.rs` is compiled into build.rs through #[path] as well as into the
+# crate, and a build script cannot use the crate it is building — that file may reach for
+# nothing but std and sha2, so it cannot call the order module however much it would like
+# to. Its one sort orders a digest's inputs, which must be code-unit order rather than the
+# reader's order in any case. Excluding it here is what lets the count mean "a presentation
+# comparator written beside its renderer", which is what the rule is about.
 crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' \
-  apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -vc 'src/order\.rs:' || true)"
+  apps/majordomus-cli/src --include='*.rs' 2>/dev/null \
+  | grep -vc -e 'src/order\.rs:' -e 'src/generation\.rs:' || true)"
 # `sort` wherever a command begins — after a pipe, a semicolon, a brace, a `&&`, or at the
 # start of a line — because an unpinned sort collates by the locale whatever precedes it.
+# `.jq` is not shell. jq's own `sort` is a builtin over JSON values, ordered by the JSON
+# type and value order its specification fixes, with no locale anywhere near it — pinning
+# LC_ALL for it would be meaningless. scripts/lib/method.jq alone accounted for seven of the
+# nine findings this measured, none of which is a sort the locale can reach.
 shell_sorts="$(grep -rnE '(\|[[:space:]]*sort\b)|((^|[;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
+  --include='*' --exclude='*.jq' \
   lib scripts bin test 2>/dev/null | grep -vc 'LC_ALL=C' || true)"
 
 if [ "$UPDATE" = 1 ]; then

@@ -1236,6 +1236,12 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
 /// lease in the same millisecond, and only a barrier makes that happen on purpose.
 const STORM: usize = 6;
 
+/// One row of a peer board as this test reads it: the peer's id, its client's name and
+/// the intent it announced.
+type PeerRow = (String, String, String);
+/// A board as one client read it: the id the server calls that client, and the rows it saw.
+type Board = (String, Vec<PeerRow>);
+
 #[test]
 fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     let f = Fixture::new();
@@ -1337,7 +1343,7 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     }
 
     // and reads the layer through it, and sees the whole board
-    let mut boards: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
+    let mut boards: Vec<Board> = Vec::new();
     for (i, m, _) in clients.iter_mut() {
         let repo = m.call("majordomus_repository", json!({}));
         assert_eq!(
@@ -1352,7 +1358,7 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
             Some(STORM as u64),
             "client {i} sees a partial board: {sc}"
         );
-        let mut seen: Vec<(String, String, String)> = sc["peers"]
+        let mut seen: Vec<PeerRow> = sc["peers"]
             .as_array()
             .unwrap()
             .iter()
@@ -1387,7 +1393,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     );
     let callers: std::collections::BTreeSet<&str> =
         boards.iter().map(|(c, _)| c.as_str()).collect();
-    assert_eq!(callers.len(), STORM, "each client answers as itself: {callers:?}");
+    assert_eq!(
+        callers.len(),
+        STORM,
+        "each client answers as itself: {callers:?}"
+    );
     assert_eq!(
         callers,
         ids.iter().map(String::as_str).collect(),
@@ -1405,7 +1415,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
             assert_eq!(m.close(), 0, "client {i} did not end cleanly");
         }
     }
-    assert_eq!(clients[owner].1.close(), 0, "the server did not end cleanly");
+    assert_eq!(
+        clients[owner].1.close(),
+        0,
+        "the server did not end cleanly"
+    );
     assert!(
         !lease_path(&f).exists(),
         "the lease outlived the last client of the storm"

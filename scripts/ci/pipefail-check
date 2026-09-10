@@ -44,8 +44,13 @@ esac; done
 measured() {
   find scripts lib bin -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
     head -1 "$f" | grep -q '^#!.*sh' || continue
-    grep -q 'set -[a-z]*e' "$f" || continue
-    grep -q ' | ' "$f" || continue
+    # A comment that names `set -e` is prose, not a setting: lib/context.sh was measured
+    # (and reported as a new exposure) for a sentence explaining why a loop uses `if`.
+    # Comment lines are stripped before either question is asked, so the denominator is
+    # the scripts that actually set the option and actually pipe.
+    code="$(grep -v '^[[:space:]]*#' "$f")"
+    printf '%s\n' "$code" | grep -q 'set -[a-z]*e' || continue
+    printf '%s\n' "$code" | grep -q ' | ' || continue
     printf '%s\n' "$f"
   done
 }
