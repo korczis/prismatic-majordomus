@@ -25339,6 +25339,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.entry-converges@1",
+        "kind": "rule",
+        "label": "project.entry-converges@1",
+        "summary": "Entering as an agent converges on a server; entering as a shell reports",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%401",
+        "source": ".ai/repo/rules/project/entry-converges.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.envrc-is-an-adapter@1",
+            "project.shared-server-resilience@1",
+            "project.interfaces-are-projections@1",
+            "project.the-lease-is-read-once@1"
+          ],
+          "tags": [
+            "entry",
+            "mcp",
+            "environment",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.envrc-is-an-adapter@1",
         "kind": "rule",
         "label": "project.envrc-is-an-adapter@1",
@@ -27570,13 +27594,6 @@
         "source": "test/cases/110_lease_reader.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_design_contrast.sh",
-        "kind": "test",
-        "label": "test/cases/111_design_contrast.sh",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_design_contrast.sh",
-        "source": "test/cases/111_design_contrast.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/111_session_per_provider.sh",
         "kind": "test",
         "label": "test/cases/111_session_per_provider.sh",
@@ -27598,11 +27615,25 @@
         "source": "test/cases/112_version_matches_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/118_entry_converges_by_rule.sh",
+        "kind": "test",
+        "label": "test/cases/118_entry_converges_by_rule.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F118_entry_converges_by_rule.sh",
+        "source": "test/cases/118_entry_converges_by_rule.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/11_site_derivation.sh",
         "kind": "test",
         "label": "test/cases/11_site_derivation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F11_site_derivation.sh",
         "source": "test/cases/11_site_derivation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "label": "test/cases/120_design_contrast.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F120_design_contrast.sh",
+        "source": "test/cases/120_design_contrast.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -42083,6 +42114,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.envrc-is-an-adapter@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42868,11 +42924,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/111_design_contrast.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -42888,7 +42939,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/118_entry_converges_by_rule.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/11_site_derivation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/120_design_contrast.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46444,8 +46505,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1420,
-      "edges": 3208,
+      "nodes": 1422,
+      "edges": 3214,
       "acyclic": true,
       "truncated": false
     }

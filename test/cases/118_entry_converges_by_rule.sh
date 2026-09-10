@@ -4,9 +4,9 @@
 #
 # Repository entry converged on a server the day ADR 0035's slice landed, and nothing made
 # it a rule. A `serve ensure` in `.envrc`, a `cargo build` in the start path, a switch added
-# to the policy and never taught to the schema, a shim unwired from the provider, a fourth
-# `sed` parser of the lease — each is one reasonable line, and each quietly removes a piece
-# of it while every other gate stays green.
+# to the policy and never taught to the schema, a shim unwired from the provider, a `curl`
+# for the server's standing beside the line the start event was handed — each is one
+# reasonable line, and each quietly removes a piece of it while every other gate stays green.
 #
 # A gate that cannot be shown to fail is decoration, so each half is planted in a fixture
 # tree — a copy of the files the gate reads, never this checkout — and the same gate must
@@ -43,14 +43,16 @@ expect_grep '^class: blocking' "$RULE"
 expect_grep 'scripts/ci/entry-converges' "$RULE"
 # the rule admits what it does not decide, rather than claiming an enforcement it lacks
 expect_grep 'a reviewer does' "$RULE"
+# and it depends on the rule that owns the lease rather than restating it
+expect_grep 'project\.the-lease-is-read-once' "$RULE"
 
 # ---------------------------------------------------------------- a fixture tree
 # Everything the gate reads, copied. A file the gate learns to read later and this case does
 # not copy shows up as a finding on the clean fixture, which is the right way round: the
 # fixture is told to be complete rather than the gate told to be lenient.
 FX="$T/fixture"
-for p in .envrc bin/majordomus-env lib/capture.sh lib/derive.sh lib/context.sh \
-         .just/serve.just scripts/cockpit-probe .claude/hooks/majordomus-session-start \
+for p in .envrc bin/majordomus-env lib/capture.sh lib/derive.sh \
+         .claude/hooks/majordomus-session-start \
          .ai/repo/policy.yaml share/skeleton/policy.yaml share/allow/policy.txt \
          share/schemas/majordomus/policy/policy.v1.schema.json \
          apps/majordomus-cli/src/cli.rs apps/majordomus-cli/src/lease.rs \
@@ -139,33 +141,17 @@ expect_grep 'runs a builder; nothing on entry may build'
 restore lib/capture.sh
 
 # ---------------------------------------------------------------- 4. one author for the briefing
+# The lease half — that nothing but the typed reader opens the file — belongs to
+# project.the-lease-is-read-once and scripts/ci/lease-reader-check, and is deliberately not
+# checked twice; what is this rule's is the other way of forming a second opinion, which
+# opens no file and so is invisible to that gate.
 save lib/derive.sh
-printf 'mj_derive_server() { jq -r .url .ai/local/state/mcp/server.json; }\n' >> "$FX/lib/derive.sh"
-expect_exit 10 gate
-expect_grep 'reads the lease itself'
-restore lib/derive.sh
-
 printf 'mj_derive_server() { curl -fsS "$url/api/v1/server"; }\n' >> "$FX/lib/derive.sh"
 expect_exit 10 gate
 expect_grep 'second opinion'
 restore lib/derive.sh
 
-# ---------------------------------------------------------------- 5. one reading of the lease
-mkdir -p "$FX/scripts"
-cat > "$FX/scripts/whereis" <<'EOF'
-#!/bin/sh
-sed -n 's/.*"url":"\([^"]*\)".*/\1/p' .ai/local/state/mcp/server.json
-EOF
-expect_exit 10 gate
-expect_grep 'parsed by hand outside the typed reader'
-rm -f "$FX/scripts/whereis"
-
-printf 'const P: &str = "state/mcp/server.json";\nfn u() -> &str { "\\"url\\"" }\n' > "$FX/apps/majordomus-cli/src/other.rs"
-expect_exit 10 gate
-expect_grep 'parsed in the crate outside src/lease.rs'
-rm -f "$FX/apps/majordomus-cli/src/other.rs"
-
-# ---------------------------------------------------------------- 6. a bounded life
+# ---------------------------------------------------------------- 5. a bounded life
 save apps/majordomus-cli/src/cli.rs
 sed 's/^pub const DEFAULT_IDLE_SECONDS: u64 = [0-9]*;$/pub const DEFAULT_IDLE_SECONDS: u64 = 0;/' \
   "$T/pristine" > "$FX/apps/majordomus-cli/src/cli.rs"

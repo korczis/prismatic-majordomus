@@ -138,8 +138,10 @@ majordomus doctor                        whether Majordomus itself is healthy an
 `project.entry-converges` is the rule, and `scripts/ci/entry-converges` the gate that
 decides it: entry by a shell starts nothing and builds nothing, the switch is declared in
 the policy, the skeleton, the allow list and the schema together, the start shim is wired
-where the policy says so that `doctor` reconciles it, the briefing has one author, the
-lease has one typed reader, and a server nobody owns has a bounded life. What no script can
+where the policy says so that `doctor` reconciles it, the briefing forms no opinion of its
+own about where the server stands, and a server nobody owns has a bounded life. That the
+lease itself has one reader is `project.the-lease-is-read-once`, decided for every file at
+once by `scripts/ci/lease-reader-check`. What no script can
 decide — that entry actually converges — is `test/cases/108_entry_converges_on_a_server.sh`,
 which drives the provider's own shim; `test/cases/118_entry_converges_by_rule.sh` proves the
 gate by planting each thing the rule forbids and watching it refused.

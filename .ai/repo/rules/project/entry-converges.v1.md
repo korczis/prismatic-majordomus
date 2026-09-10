@@ -7,7 +7,7 @@ description: An agent entering the repository is owed a ready shared server befo
 statement: Entry by an agent converges on a ready shared server through the provider's start event, entry by a shell reports and serves nothing, nothing on entry builds the executable, the briefing has one author, and a server nobody owns has a bounded life.
 status: active
 class: blocking
-depends_on: [project.envrc-is-an-adapter@1, project.shared-server-resilience@1, project.interfaces-are-projections@1]
+depends_on: [project.envrc-is-an-adapter@1, project.shared-server-resilience@1, project.interfaces-are-projections@1, project.the-lease-is-read-once@1]
 tags: [entry, mcp, environment, enforcement]
 ---
 
@@ -32,9 +32,9 @@ misses that a shell is not a client — which is exactly the change ADR 0003 ref
 never covered: it forbids `git`, `grep`, `curl` and `cargo`, and says nothing about the
 tool's own `serve`. A build can be added to either entry path by whoever is tired of
 seeing "the executable is not built", which turns a `cd` into a two-minute compile and a
-start event into a server built from a tree the worker has not read yet. A second reader
-of the lease can be written in five lines of `sed`, as three already were, and will
-disagree with the typed one the first time the document gains a field.
+start event into a server built from a tree the worker has not read yet. A second opinion about where the
+server stands can be formed in one `curl`, beside the one the start event was handed, and
+will disagree with it the first moment the two are asked at different times.
 
 This repository has a name for the shape of that failure: a report nobody must clear is a
 report nobody clears. `docs/ENTRY.md` is prose; `test/cases/108` proves the behaviour once;
@@ -66,14 +66,13 @@ entry still exits zero. A server started from stale code would answer with a tre
 no longer there, which is why the start event names it rather than starting one.
 
 **What a worker is told on entry has one author.** The briefing is handed where the server
-stands as an argument by the event that ensured it. It does not read the lease itself and
-does not ask the server for its own standing: two readings of one state are two answers
-waiting to disagree, and this is the same claim `project.interfaces-are-projections` makes
-of every other surface. Inside the executable, `lease::LeaseFile::read` is the one reading
-of the lease (ADR 0035). Outside it, the hand parsers are the closed set ADR 0035 records
-as stage-09 debt — `lib/context.sh`, `.just/serve.just`, `scripts/cockpit-probe` — and that
-set may shrink and never grow; a new reader asks the executable
-(`majordomus serve status --format json`).
+stands as an argument by the event that ensured it, and forms no opinion of its own —
+neither by opening the lease nor by asking the server for its standing. Two readings of one
+state are two answers waiting to disagree, and this is the same claim
+`project.interfaces-are-projections` makes of every other surface. That the lease itself has
+one reader is `project.the-lease-is-read-once`, which decides it for every file in the
+repository; this rule depends on it rather than restating it, and adds only the half that
+rule cannot see, because asking the server over HTTP opens no file.
 
 **A server nobody owns has a bounded life.** A server `ensure` starts is given an idle
 life, declared once as a constant and greater than zero, and ends when no peer has been
@@ -95,17 +94,15 @@ per check and exits 10 on any finding. It decides, mechanically:
   enforcement list declares a `provider-hook:<provider>:session` entry so `doctor`
   reconciles it, and that the start path runs `serve ensure`, reads the switch, consults
   the staleness check and runs no builder;
-- that the briefing composer neither names the lease nor asks the server for its standing;
-- that the crate parses the lease only in `src/lease.rs`, and that outside the crate the
-  hand parsers are exactly the three ADR 0035 records — a ratchet, so the debt can be paid
-  and not taken on;
+- that the briefing composer does not ask the server for its own standing (the lease half is
+  `scripts/ci/lease-reader-check`'s, for the whole repository, and is not read twice here);
 - that the idle life is one constant greater than zero and that the spawned server is given
   it.
 
 No validator of this rule lives in `lib/`. Which file a shell evaluates on entry, which
-provider fires the start event and which readers of the lease are this repository's debt
-are facts about *this* repository, and a validator in `lib/` would teach the shipped
-executable one repository's layout; `.ai/repo/rules/project/README.md` is where that
+provider fires the start event, and where this repository declares its policy, its skeleton
+and its schema are facts about *this* repository, and a validator in `lib/` would teach the
+shipped executable one repository's layout; `.ai/repo/rules/project/README.md` is where that
 distinction is written down.
 
 # Verification
@@ -114,9 +111,9 @@ distinction is written down.
 tree rather than this checkout: a `serve ensure` added to the entry point, a builder added
 to either entry path, a backgrounded server, the switch dropped from the schema, a shim
 that stops dispatching the start event, a start path that stops ensuring or starts
-building, a briefing that reads the lease itself, a fourth hand parser of the lease, a
-second parser inside the crate, an idle life of zero and a spawn that drops `--idle` are
-each planted and each refused with the cause named; the same fixture unmutated is accepted.
+building, a briefing that asks the server for its own standing, an idle life of zero
+and a spawn that drops `--idle` are each planted and each refused with the cause named; the
+same fixture unmutated is accepted.
 The case also asserts that the gate is declared in `.ai/repo/ci/gates.yaml` and selected by
 the classes that can move it, because a gate no plan selects is prose with an exit code.
 
@@ -136,6 +133,10 @@ What the gate deliberately does not decide, and a reviewer does:
   reviewer's finding: the gate reads the paths it knows and cannot notice a path nobody
   told it about. The related invariant — that a provider is data and not code — is
   `project.providers-are-data`.
+- **That the lease has one reader.** `project.the-lease-is-read-once` and
+  `scripts/ci/lease-reader-check` decide that, and `test/cases/110_lease_reader.sh` proves
+  it; the three shell parsers ADR 0035 recorded as stage-09 debt were paid there. This rule
+  depends on it and checks none of it again.
 - **The election's own promises** under a slow start, a stale lease or a storm. Those are
   `project.shared-server-resilience`, `apps/majordomus-cli/tests/mcp_shared.rs`,
   `tests/serve_lifecycle.rs` and `test/cases/90_mcp_shared_server.sh`; this rule is about
