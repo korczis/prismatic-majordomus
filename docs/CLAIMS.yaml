@@ -902,6 +902,15 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The election classifies the lease on every attempt and is bounded by time. The lease records the executable the server was started from, and the probe compares the server's version with the caller's, so a server of another version (outdated) or one whose own file was replaced (superseded) is taken over rather than joined, before it is asked whether it answers — answering is not the same as being current. The server checks its own executable every reap interval and stops, releasing the lease, when the file has changed; bridged clients elect again on their next message. commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, including a ghost server of another version and a live server whose binary is replaced, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.
 
+  - id: mcp-lease-lost
+    claim: A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them
+    source: docs/MCP.md
+    implementation: apps/majordomus-cli/src/lease.rs
+    test: apps/majordomus-cli/tests/lease_lost.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The takeover itself is correct, the stale-executable guard doing its job; what was unowned was the aftermath. The superseded process kept its socket, its peer board and its generation of the layer, and answered GET / with the same name and repository_id as the leaseholder, so every liveness test in the system passed on it. Measured on 2026-09-10 - two servers of one checkout, one lease, and a session whose environment carried the older address reading a board with one peer where the shared board had two. GET / now carries leaseholder (lease::LEASEHOLDER_KEY, read by lease::probe, so writer and reader cannot drift), a new initialize is refused 409 lease_lost naming the launcher, and health.report's server check warns that this process is not the server it describes. A server too old to answer the question is accepted by the probe on purpose - refusing it would take over a live server, which is how one checkout comes to have two. The doctrine is project.shared-server-resilience.
+
   - id: mcp-peers
     claim: Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch
     source: docs/MCP.md

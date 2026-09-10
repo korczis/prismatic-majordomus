@@ -54,13 +54,23 @@ Under `apps/majordomus-cli/`:
 - A server whose owner has left ends with its last attached session; an HTTP session that
   never says goodbye expires at the idle timeout, so the server never outlives its clients
   by more than that timeout.
+- A server whose lease has been taken over stops acting as the checkout's server, and says
+  so before anybody has to ask twice. Its index answers `leaseholder: false`; the probe
+  every reader of a remembered address goes through refuses it; a new `initialize` is
+  refused with the reason and where the current server is; and its own health report says
+  that what it describes is another process. The sessions it already had continue, and the
+  process ends with them — a client mid-answer does not lose its server because somebody
+  rebuilt the executable. What it must never do is take on a client that could have had
+  the real one: that client gets a peer board, an execution history and a generation of the
+  layer no other client of the checkout can see, with nothing in any answer saying so.
 - A bind to an address that is not loopback is served with a warning naming what it
   exposes.
 - A bridged session and a restarted server answer byte for byte what a local session
   answers.
 
-Every point above is proved by a named case in `tests/mcp_shared.rs` or in
-`test/cases/90_mcp_shared_server.sh`, and a change to any of them lands with its case.
+Every point above is proved by a named case in `tests/mcp_shared.rs`, in
+`tests/lease_lost.rs` or in `test/cases/90_mcp_shared_server.sh`, and a change to any of
+them lands with its case.
 
 # Failure behaviour
 
@@ -72,5 +82,6 @@ and a claim page for `mcp-lease-resilience` whose test no longer names the behav
 # Verification
 
 `RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mcp_shared`,
+`RUSTFLAGS='' cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test lease_lost`,
 `bash test/run.sh 90_mcp_shared_server`, `scripts/rust-check`, and the claim
 `mcp-lease-resilience` in `docs/CLAIMS.yaml`.

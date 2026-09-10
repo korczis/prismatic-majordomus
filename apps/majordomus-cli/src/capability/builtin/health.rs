@@ -464,32 +464,55 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             lease_path.display()
         ),
     };
+    // Whose report this is. Everything above describes the checkout's server, read from the
+    // lease — and a process whose lease was taken over describes, accurately, a server that
+    // is not itself. The one caller that has reached the wrong process is the one caller
+    // who cannot afford to be told that the right server is fine, so this outranks the
+    // standing rather than qualifying it.
+    let orphaned = crate::lease::was_lost();
+    let mut findings: Vec<String> = reason.into_iter().collect();
+    if orphaned {
+        findings.push(
+            "this process no longer holds the lease: it serves the sessions it already had \
+             and takes on no new ones; what is described above is another process"
+                .into(),
+        );
+    }
     record(
         &mut checks,
         &ctx.progress,
         HealthCheck {
             id: "server".into(),
             title: "The shared server".into(),
-            status: match standing {
-                // A checkout nobody serves is not an unhealthy one: nothing is running and
-                // nothing claims to be. A lease still binding resolves itself within the
-                // bind grace, and is reported as stale by this same engine when it does
-                // not. Neither is a fault of what this process serves.
-                ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
-                    HealthStatus::Ok
+            status: if orphaned {
+                HealthStatus::Warn
+            } else {
+                match standing {
+                    // A checkout nobody serves is not an unhealthy one: nothing is running
+                    // and nothing claims to be. A lease still binding resolves itself
+                    // within the bind grace, and is reported as stale by this same engine
+                    // when it does not. Neither is a fault of what this process serves.
+                    ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
+                        HealthStatus::Ok
+                    }
+                    // A server answering from code this tree no longer has says yesterday's
+                    // truth in today's words, and a lease naming one that answers for
+                    // nobody sends the next reader at a dead address. Both are somebody's
+                    // to clear; neither stops this process from serving, so neither is a
+                    // failure.
+                    ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
                 }
-                // A server answering from code this tree no longer has says yesterday's
-                // truth in today's words, and a lease naming one that answers for nobody
-                // sends the next reader at a dead address. Both are somebody's to clear;
-                // neither stops this process from serving, so neither is a failure.
-                ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
             },
-            detail,
+            detail: if orphaned {
+                format!("{detail}; and this process is not it")
+            } else {
+                detail
+            },
             decided_by:
                 "the decision `server.status` makes, from this checkout's lease and one probe of the server it names"
                     .into(),
             evidence: vec!["majordomus serve status".into()],
-            findings: reason.into_iter().collect(),
+            findings,
         },
     );
 

@@ -11,6 +11,7 @@
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -553,18 +554,36 @@ fn take_over(path: &Path, seen: &LeaseFile) -> Result<()> {
     }
 }
 
+/// Set by [`lost`], never cleared: a lease this process was given and no longer has.
+///
+/// Distinct from `held().is_none()`, which is also true of a process that never took a
+/// lease at all — a test, a one-off command, a bridged client. Only a process that *had*
+/// the lease and lost it must change how it behaves, so only that one is recorded here.
+static LOST: AtomicBool = AtomicBool::new(false);
+
+/// The key the index answers [`was_lost`]'s converse under: whether the server answering
+/// still holds the lease of the checkout it serves. Named once, read by [`probe`] and
+/// written by the index route, so the two cannot drift apart.
+pub const LEASEHOLDER_KEY: &str = "leaseholder";
+
 /// This process's lease was taken over by another process: from now on a signal must not
-/// unlink the file, which is somebody else's. Called by the server's own reader when it
-/// finds the file no longer carries its token; nothing else about the process changes — it
-/// serves the peers it has and ends with them.
+/// unlink the file, which is somebody else's, and this process stops claiming to be the
+/// checkout's server — [`held`] answers `None` and [`was_lost`] answers `true` from here
+/// on. It serves the peers it has and ends with them; what it must not do is take on new
+/// ones, or answer a stranger's probe as though it were still the one.
 ///
 /// ```
 /// // a process that holds no lease has nothing to lose; saying so twice changes nothing
 /// majordomus_cli::lease::lost();
 /// majordomus_cli::lease::lost();
 /// assert!(majordomus_cli::lease::held().is_none());
+/// assert!(majordomus_cli::lease::was_lost(), "it was told the lease is gone");
 /// ```
 pub fn lost() {
+    LOST.store(true, Ordering::SeqCst);
+    if let Ok(mut published) = published().lock() {
+        *published = None;
+    }
     signals::release();
 }
 
