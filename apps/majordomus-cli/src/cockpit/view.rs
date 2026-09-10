@@ -205,25 +205,29 @@ fn sidebar(shell: &Shell<'_>) -> El {
                 }
             }
             let current = item.area == shell.area && item.current;
-            list = list.child(
-                el("li").child(
-                    el("a")
-                        .class(if current {
-                            "mj-nav-link mj-nav-link--current"
-                        } else {
-                            "mj-nav-link"
-                        })
-                        .attr("href", item.href.clone())
-                        .attr_if("aria-current", current.then_some("page"))
-                        .child(el("span").class("mj-nav-label").text(&item.label))
-                        .node(match item.count {
-                            Some(n) => {
-                                Node::Element(el("span").class("mj-nav-count").text(n.to_string()))
-                            }
-                            None => empty(),
-                        }),
-                ),
-            );
+            let label = el("span").class("mj-nav-label").text(&item.label);
+            let count = match item.count {
+                Some(n) => Node::Element(el("span").class("mj-nav-count").text(n.to_string())),
+                None => empty(),
+            };
+            // an entry this environment cannot answer is named and not linked: a reader
+            // learns the surface exists and is not offered a promise the render cannot keep
+            let entry = if item.available {
+                el("a")
+                    .class(if current {
+                        "mj-nav-link mj-nav-link--current"
+                    } else {
+                        "mj-nav-link"
+                    })
+                    .attr("href", item.href.clone())
+                    .attr_if("aria-current", current.then_some("page"))
+            } else {
+                el("span")
+                    .class("mj-nav-link mj-nav-link--unavailable")
+                    .attr("aria-disabled", "true")
+                    .attr("title", "available while a server runs")
+            };
+            list = list.child(el("li").child(entry.child(label).node(count)));
         }
         // a catalogue long enough to bury the sections under it folds away, and unfolds
         // itself when what the reader is looking at is inside it
