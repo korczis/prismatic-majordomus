@@ -47,6 +47,11 @@ libc = "0.2"
 syn = { version = "2", default-features = false, features = ["full", "parsing", "clone-impls", "printing", "proc-macro"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 
+[build-dependencies]
+# sha2: build.rs takes the generation — the digest of the crate sources this build read —
+# with the same definition the crate uses at run time (src/generation.rs, included there).
+sha2 = "0.10"
+
 [dev-dependencies]
 tempfile = "3"
 criterion = { version = "0.8", default-features = false }
