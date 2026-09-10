@@ -18,6 +18,13 @@ use crate::web::model::{Category, SurfaceKind, Topology, Visibility};
 /// Only facts a reader can act on. The repository root is a filesystem path and a
 /// deliberate omission: this page is served to whoever can reach the socket, and where the
 /// repository sits on the host is of no use to them and of some use to somebody else.
+///
+/// What replaces it is [`Identity::id`], which answers the question the path was reached
+/// for: *which checkout is this*. Several sessions on one machine each bind their own
+/// server, and a page open on the wrong port is indistinguishable from a broken tool
+/// unless the page says whose it is. The name is readable and not unique; the id is
+/// unique and not readable; a process that knows a root computes the same id and can tell
+/// whether a server is its own.
 #[derive(Debug, Clone)]
 pub struct Identity<'a> {
     /// The executable's version.
@@ -26,11 +33,17 @@ pub struct Identity<'a> {
     pub summary: &'a str,
     /// The repository's name, as the index read it.
     pub repository: &'a str,
+    /// The repository's identity: the root hashed, never the root itself.
+    pub id: &'a str,
     /// The revision the repository is at, when version control could say.
     pub revision: Option<&'a str>,
     /// How many capabilities the registry holds.
     pub capabilities: usize,
 }
+
+/// How much of an identity hash a reader is shown: enough to tell two checkouts apart at
+/// a glance, and short enough to read out loud.
+pub const ID_SHOWN: usize = 12;
 
 /// Whether a surface is ready to answer, decided by asking it rather than by assuming.
 pub type Readiness<'a> = &'a dyn Fn(&str) -> Availability;
@@ -52,6 +65,11 @@ pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) 
     let mut body = String::new();
     body.push_str(&html::summary(&[
         ("Version", identity.version.to_string()),
+        ("Repository", identity.repository.to_string()),
+        (
+            "Identity",
+            identity.id[..ID_SHOWN.min(identity.id.len())].to_string(),
+        ),
         ("Capabilities", identity.capabilities.to_string()),
         ("Surfaces served", topology.surfaces.len().to_string()),
         (
