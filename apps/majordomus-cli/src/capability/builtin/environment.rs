@@ -167,10 +167,21 @@ pub fn module() -> ModuleDescriptor {
                     cli: None,
                 },
                 tags: ["environment", "repository", "introspection"],
-                // The snapshot runs `git status` and reads the lease, so two calls a
-                // second apart may legitimately differ; a short time to live makes a
-                // dashboard polling it cheap without letting it show yesterday's branch.
-                cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(3) },
+                // Not cached, and deliberately so. This answer is a snapshot of *now*:
+                // it runs `git status`, reads the lease, and stamps the moment it was
+                // taken into `generated_at`, so two calls a second apart legitimately
+                // differ. The executor holds that a cached capability answers the same
+                // value from the handler, from a cold cache and from a warm one
+                // (`tests/executor.rs`, `docs/claims/execution-cache-equivalence.md`), and
+                // a cache that may change the answer is a cache that lies. For a value
+                // whose whole product is its freshness the honest declaration is no cache
+                // — and the window bought nothing this module was not already paying:
+                // `environment.explain` runs the same full resolution uncached, and
+                // nothing polls the route on a timer. `project.cache-is-invisible` is the
+                // rule: a cache key is a content hash of what it derives from and never a
+                // timestamp, and a cache a caller can observe is a defect. This value
+                // cannot be made invisible while it carries when it was taken.
+                cache: CachePolicy::Disabled,
                 handler: snapshot,
             },
             capability! {
@@ -246,6 +257,26 @@ mod tests {
             .and_then(|m| m.resource.as_ref())
             .expect("the snapshot is readable as a resource");
         assert_eq!(resource.uri, ENVIRONMENT_URI);
+    }
+
+    /// A snapshot of *now* must not be served from a cache. The value stamps the moment
+    /// it was taken into `generated_at`, and the executor holds that a cached capability
+    /// answers the same value from the handler, from a cold cache and from a warm one; the
+    /// two together made `tests/executor.rs` fail whenever a pair of calls straddled a
+    /// second boundary — a test that failed on the calendar. The declaration was the
+    /// defect, not the invariant.
+    #[test]
+    fn the_snapshot_is_not_cached_because_it_carries_the_moment_it_was_taken() {
+        let m = module();
+        let status = m
+            .capabilities
+            .iter()
+            .find(|e| e.capability.id.as_str() == "environment.status")
+            .expect("the module declares the snapshot");
+        assert!(
+            !status.capability.cache.is_enabled(),
+            "environment.status answers with a wall clock in it, so it cannot be cached"
+        );
     }
 
     /// A served request must not write to the checkout it is serving. The whole cache is
