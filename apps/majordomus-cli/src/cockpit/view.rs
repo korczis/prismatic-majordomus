@@ -417,6 +417,23 @@ pub fn badge(status: &str, label: impl Into<String>) -> El {
         .text(label)
 }
 
+/// A badge for a status word that arrived as *data* — an object's own `status` field, a
+/// graph node's — rather than one this code chose. Filed under a status by the design
+/// declaration, it is a badge and carries that status's colour; filed under nothing, it is
+/// a plain tag, so that an arbitrary word never wears a meaning nobody gave it and the
+/// browser probe's vocabulary check stays exact. The words this code chooses itself go
+/// through [`badge`], where an unfiled word is a defect the probe reports.
+pub fn word_badge(word: &str) -> El {
+    let filed = DesignSystem::compiled()
+        .ok()
+        .is_some_and(|d| d.role_of_state(&css_word(word)).is_some());
+    if filed {
+        badge(word, word)
+    } else {
+        tag(word)
+    }
+}
+
 /// A neutral badge.
 pub fn tag(label: impl Into<String>) -> El {
     el("span").class("mj-tag").text(label)

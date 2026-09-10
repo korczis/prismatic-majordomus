@@ -222,11 +222,11 @@ status:
         light: line
         dark: line
   states:
-    ok: [ok, pass, passed, succeeded, completed, done, current, declared, covered, guaranteed, healthy, live, present, synced, stable, read-only, connected, accepted, enforced, wired]
-    warn: [warn, warning, stale, partial, advisory, cancelled, cancelling, not-generated, reconnecting, verify, executable, ahead, behind, dirty, proposed, deprecated, degraded]
-    bad: [bad, fail, failed, error, missing, blocked, rejected, blocking, refused, disconnected, offline, lost, stderr, superseded, unwired]
-    info: [info, running, queued, active, verified, generated, cached, runtime, resource, pending, loading, streaming]
-    neutral: [neutral, unknown, external, planned, described, draft, ready, inactive, stopped, idle, query, command]
+    ok: [ok, pass, passed, succeeded, completed, done, current, declared, covered, guaranteed, healthy, live, present, synced, stable, read-only, connected, accepted, enforced, wired, behaviorally-verified, valid, clean, merged, documented]
+    warn: [warn, warning, stale, partial, advisory, cancelled, cancelling, not-generated, reconnecting, verify, executable, ahead, behind, dirty, proposed, deprecated, degraded, experimental, ephemeral]
+    bad: [bad, fail, failed, error, missing, blocked, rejected, blocking, refused, disconnected, offline, lost, stderr, superseded, unwired, unsupported, owed, foreign, misplaced]
+    info: [info, running, queued, active, verified, generated, cached, runtime, resource, pending, loading, streaming, implemented, featured, exempt, inherited, unmerged, detached]
+    neutral: [neutral, unknown, external, planned, described, draft, ready, inactive, stopped, idle, query, command, builtin, declarative, vendored, high, medium, low, setup, begin, work, inspect, conclude]
 
 # The type scale the dense surfaces use, as named steps: Tailwind emits a `text-<name>`
 # utility for each, and the compiled-in block carries the same names for the pages that

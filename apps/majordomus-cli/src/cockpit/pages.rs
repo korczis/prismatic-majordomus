@@ -29,8 +29,7 @@ use crate::worktree::{
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
-    alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
-    nothing, pagination, pre, row, statistic, table, tag, text_cell, Window, PER_PAGE,
+    PER_PAGE, Window, alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono, nothing, pagination, pre, row, statistic, table, tag, text_cell, word_badge,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and
@@ -1557,7 +1556,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 cell(mono(&n.kind)),
                 text_cell(n.summary.clone().unwrap_or_default()),
                 cell(match &n.status {
-                    Some(s) => badge(s, s),
+                    Some(s) => word_badge(s),
                     None => el("span").text("-"),
                 }),
                 cell(match &n.source {
