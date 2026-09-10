@@ -297,7 +297,10 @@ start_http() {
     HTTP_PID=$!
     local waited=0
     while [ "$waited" -lt 40 ]; do
-      code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/" 2>/dev/null || true)"
+      # -m: curl has no default timeout, so a server that accepts the connection and then
+      # never answers would block here forever -- and the loop's own bound below would
+      # never advance. A bounded retry whose body can hang is not bounded.
+      code="$(curl -s -m 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/" 2>/dev/null || true)"
       if [ -n "$code" ] && [ "$code" != 000 ]; then
         HTTP_PORT="$port"; HTTP_BASE="http://127.0.0.1:$port"
         export HTTP_PORT HTTP_BASE HTTP_PID

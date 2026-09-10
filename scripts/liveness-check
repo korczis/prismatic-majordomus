@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# liveness-check — the shell of this repository against the liveness doctrine.
+#
+# A worker makes forward progress from execution state. A wait with no bound is a hang
+# with a nice name; a process spawned and never reaped is work suspended where nobody
+# looks; a command that pages blocks on a keypress that an agent never sends. This gate
+# reads the tracked shell and reports those three shapes.
+#
+#   scripts/liveness-check                 report; exit 0 clean, 10 with findings
+#   scripts/liveness-check --json          the findings as JSON
+#   scripts/liveness-check --baseline      rewrite the baseline from what is found now
+#
+# The rules it serves, once they exist in .ai/repo/rules/project/:
+#   project.every-wait-is-bounded          a wait carries a timeout, a predicate, a recovery
+#   project.commands-run-non-interactively no pager, no prompt, no keypress
+#   project.execution-state-is-authoritative
+# It does not require them to be present: this gate ships alongside the rules and must not
+# fail a checkout that has one and not the other.
+#
+# Existing debt is recorded in .ai/repo/liveness-baseline.txt as "path:class" lines. A
+# finding in the baseline is reported as known and does not fail; a finding that is not is
+# a regression and does fail; a baseline line that no longer matches anything is also
+# reported, so the ratchet tightens instead of rotting.
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BASELINE="$ROOT/.ai/repo/liveness-baseline.txt"
+JSON=0; WRITE=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON=1; shift ;;
+    --baseline) WRITE=1; shift ;;
+    --help|-h) sed -n '2,20p' "$0"; exit 0 ;;
+    *) echo "liveness-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+cd "$ROOT"
+FOUND="$(mktemp "${TMPDIR:-/tmp}/mj-liveness.XXXXXX")"
+trap 'rm -f "$FOUND" "$FOUND.b" "$FOUND.new" "$FOUND.stale"' EXIT
+
+# The files this gate reads: tracked shell, plus the scripts that carry no .sh suffix.
+files() {
+  git ls-files -- '*.sh' 'scripts/*' 'bin/*' 2>/dev/null \
+    | while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        case "$f" in
+          *.sh) printf '%s\n' "$f" ;;
+          *) head -n 1 "$f" 2>/dev/null | grep -q '^#!.*sh' && printf '%s\n' "$f" ;;
+        esac
+      done
+}
+
+# --- the three shapes -----------------------------------------------------------------
+# Reported as "path:line:class:evidence". The evidence is the line, so that a finding can
+# be reproduced by opening it: project.finding-carries-reproduce applies to a gate too.
+
+scan() {
+  local f="$1"
+  # a network call with no bound on how long it may block. curl waits forever by default,
+  # so a bounded retry loop whose body calls it is not bounded at all.
+  # command position only: `curl` inside a message, a usage line or a printf template is
+  # text, not a call, and reporting it teaches a reader to ignore the gate.
+  grep -nE '(^|[;&(}]|&&|\|\||\$\()[[:space:]]*(![[:space:]]*)?curl[[:space:]]' "$f" 2>/dev/null \
+    | grep -vE '\-\-max-time|\-m [0-9]|\-\-connect-timeout' \
+    | grep -vE '^[0-9]+: *#' \
+    | grep -vE 'command -v curl|mj_has curl' \
+    | grep -vE "printf '|echo \"" \
+    | while IFS= read -r hit; do
+        printf '%s:%s:unbounded-network:%s\n' "$f" "${hit%%:*}" "$(printf '%s' "${hit#*:}" | sed 's/^[[:space:]]*//' | cut -c1-100)"
+      done
+  # a git subcommand that pages, writing straight to the terminal: `log`, `diff`, `show`
+  # and `blame` page whenever stdout is a terminal, which stops on a keypress that a person
+  # eventually sends and an agent never does. Captured, piped or redirected output is not
+  # one, and neither is --no-pager. `branch` and `tag` are left out on purpose: they page
+  # only in their listing form, and every use here is a write.
+  #
+  # There is deliberately no scan for `less`, `watch`, `top` or `more` as words. This
+  # repository's prose uses all of them, a text scan cannot tell a call from a sentence,
+  # and a check that reports a help string as a blocking command is the same defect this
+  # gate exists to catch.
+  grep -nE '(^|[;&(]|&&)[[:space:]]*(mj_)?git[[:space:]]+(log|diff|show|blame)[[:space:]]' "$f" 2>/dev/null \
+    | grep -vE '^[0-9]+: *#' \
+    | grep -vE '\-\-no-pager|GIT_PAGER|\$\(|`|\||>' \
+    | while IFS= read -r hit; do
+        printf '%s:%s:pager-blocks:%s\n' "$f" "${hit%%:*}" "$(printf '%s' "${hit#*:}" | sed 's/^[[:space:]]*//' | cut -c1-100)"
+      done
+  # a process put into the background whose completion nobody records. `$!` may be captured
+  # a few lines down -- after a case/esac, or after the counter that bounds the pool -- so
+  # the window is six lines, not one. A spawn is supervised if something in that window
+  # captures $! or waits; anything else is work started and never reaped.
+  awk -v f="$f" -v W=6 '
+    { line[NR] = $0 }
+    END {
+      for (i = 1; i <= NR; i++) {
+        L = line[i]
+        if (L ~ /^[[:space:]]*#/) continue
+        if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
+        supervised = 0
+        for (j = i; j <= i + W && j <= NR; j++)
+          if (line[j] ~ /\$!/ || line[j] ~ /(^|[;&|() ])wait([ ;)]|$)/) { supervised = 1; break }
+        if (supervised) continue
+        t = L; sub(/^[[:space:]]+/, "", t)
+        printf "%s:%d:unsupervised-spawn:%s\n", f, i, substr(t, 1, 100)
+      }
+    }
+  ' "$f" 2>/dev/null
+}
+
+files | while IFS= read -r f; do scan "$f"; done > "$FOUND" || true
+
+# --- the ratchet ----------------------------------------------------------------------
+# The baseline is keyed by path and class, not by line: a file that moves a known finding
+# by three lines has not regressed, and a ratchet that fires on that is noise.
+key() { cut -d: -f1,3 < "$1" | sort -u; }
+
+if [ "$WRITE" = 1 ]; then
+  { echo "# liveness-check baseline — path:class of the debt that existed when the gate landed."
+    echo "# A line here is known debt, not permission. Remove one by fixing the file; the gate"
+    echo "# reports a line that no longer matches anything so the list cannot rot."
+    key "$FOUND"
+  } > "$BASELINE"
+  echo "liveness-check: baseline rewritten with $(key "$FOUND" | wc -l | tr -d ' ') entry(ies)"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || : > "$BASELINE"
+grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^[[:space:]]*$' | sort -u > "$FOUND.b" || : > "$FOUND.b"
+key "$FOUND" > "$FOUND.new.all"
+comm -23 "$FOUND.new.all" "$FOUND.b" > "$FOUND.new" || : > "$FOUND.new"
+comm -13 "$FOUND.new.all" "$FOUND.b" > "$FOUND.stale" || : > "$FOUND.stale"
+
+n_new="$(wc -l < "$FOUND.new" | tr -d ' ')"
+n_stale="$(wc -l < "$FOUND.stale" | tr -d ' ')"
+n_all="$(wc -l < "$FOUND" | tr -d ' ')"
+
+if [ "$JSON" = 1 ]; then
+  printf '{"schema":"majordomus/liveness/v1","total":%s,"new":%s,"stale":%s,"findings":[' "$n_all" "$n_new" "$n_stale"
+  sep=""
+  while IFS=: read -r p l c e; do
+    [ -n "$p" ] || continue
+    printf '%s{"file":"%s","line":%s,"class":"%s","evidence":"%s"}' \
+      "$sep" "$p" "$l" "$c" "$(printf '%s' "$e" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+    sep=","
+  done < "$FOUND"
+  printf ']}\n'
+else
+  if [ "$n_new" -gt 0 ]; then
+    echo "liveness-check: $n_new new finding class(es) not in the baseline"
+    while IFS= read -r k; do
+      [ -n "$k" ] || continue
+      echo "  $k"
+      grep "^${k%%:*}:[0-9]*:${k#*:}:" "$FOUND" | sed 's/^/    /' | head -5
+    done < "$FOUND.new"
+  fi
+  if [ "$n_stale" -gt 0 ]; then
+    echo "liveness-check: $n_stale baseline entry(ies) match nothing; remove them:"
+    sed 's/^/  /' "$FOUND.stale"
+  fi
+  [ "$n_new" = 0 ] && [ "$n_stale" = 0 ] \
+    && echo "liveness-check: OK ($n_all known finding(s) in the baseline, no regression)"
+fi
+
+[ "$n_new" = 0 ] && [ "$n_stale" = 0 ] || exit 10
+exit 0
