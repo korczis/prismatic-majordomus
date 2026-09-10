@@ -924,13 +924,18 @@ mj_schema_allow() {
   printf '%s' "$a"
 }
 
-# Does the tool name this schema identifier anywhere in its own source? lib/ and the crate
-# only, for the reason mj_allow_applied gives: a walk from the repository root would descend
-# into the Rust build directory, which is large, changes constantly, and can tell nobody
-# what the tool reads.
+# Does the tool name this schema identifier anywhere in its own source? lib/, the crate and
+# the Node tooling layer, and no further, for the reason mj_allow_applied gives: a walk from
+# the repository root would descend into the Rust build directory, which is large, changes
+# constantly, and can tell nobody what the tool reads.
+#
+# scripts/ is here because ADR 0025 put a reader there. This repository drives a browser and
+# that half is deliberately not Rust, so a contract applied by scripts/lib/workspace.mjs was
+# read by something real while this check called it an orphan and told the author to wire it
+# to a kind or delete the file. Where the tool may live is a fact about the tool.
 mj_schema_named_in_source() {
   [ -n "$1" ] || return 1
-  grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
+  grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" "$MJ_HOME/scripts" 2>/dev/null
 }
 
 # One top-level string field of a JSON file, or nothing. A parser being absent is not a

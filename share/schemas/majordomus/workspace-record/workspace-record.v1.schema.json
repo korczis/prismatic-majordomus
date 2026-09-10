@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/workspace-record/workspace-record.v1.schema.json",
+  "x-majordomus-schema": "majordomus.workspace-record/v1",
+  "title": "Workspace record",
+  "description": "One item synced from an external workspace: a conversation, a message, a set of project instructions, an attachment's metadata. This is the canonical model, and no vendor's own shape reaches it — a mapper turns an observation into this, so that the day a vendor reorganises its message graph the change stops at the mapper. A record says how it was acquired and at what support level, because a record that does not cannot be told apart from a guess. Records live under .ai/local/workspaces/<workspace>/, are this checkout's state, and are never a source (ADR 0005, ADR 0025).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workspace",
+    "vendor",
+    "id",
+    "upstream_id",
+    "type",
+    "transport",
+    "acquisition",
+    "support",
+    "content_hash",
+    "first_seen",
+    "last_seen"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "workspace-record/v1"
+    },
+    "workspace": {
+      "description": "The id of the workspace declaration this record was synced under, `.ai/repo/workspaces/<id>.yaml`. A record whose declaration is gone is orphaned, not owned by whatever else is nearby.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "vendor": {
+      "description": "The vendor id from the declaration, repeated here so a record read on its own still says who holds the original.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "id": {
+      "description": "The local identity, `<vendor>:<type>:<upstream_id>`. Derived from the vendor and the upstream identifier and never from a title: a conversation renamed upstream is the same conversation, and two conversations may share a title on the same day.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*:.+$"
+    },
+    "upstream_id": {
+      "description": "The vendor's own identifier, carried opaquely and never parsed for meaning. Where the vendor gives none, a record is not invented — it is not synced.",
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "description": "What this record is. The set is closed: a shape the mapper cannot place is reported, not filed under whatever is closest.",
+      "enum": ["project", "conversation", "message", "instructions", "attachment"]
+    },
+    "transport": {
+      "description": "What carried this record. `official` is a documented, supported interface. `browser` is an authenticated browser session the operator already holds. `private_http` is an undocumented endpoint observed through that session — never one taken from a prompt, a gist or documentation.",
+      "enum": ["official", "browser", "private_http"]
+    },
+    "acquisition": {
+      "description": "How this record arrived. Polling is not a subscription, and a record that says `poll` may not be presented as one that says `stream`.",
+      "enum": ["push", "stream", "websocket", "browser_observed", "poll"]
+    },
+    "support": {
+      "description": "How far this record may be trusted. `official` is a supported contract. `browser_observed` is what a rendered page showed. `private` came from an undocumented endpoint and may change without notice. `derived` was computed here from other records and is no stronger than its inputs.",
+      "enum": ["official", "browser_observed", "private", "derived"]
+    },
+    "contract": {
+      "description": "The observed contract this record was parsed under, where one applies: the fingerprint of the shape and the compatibility state at the time of parsing. Absent for `official`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "state"],
+      "properties": {
+        "fingerprint": {
+          "description": "A hash of the observed shape, so that a vendor changing it is a diagnosable event rather than a silent wrong answer.",
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "description": "compatible: the shape matched. degraded: it did not, and no partial parse was persisted. incompatible: the mapper refuses this shape entirely.",
+          "enum": ["compatible", "degraded", "incompatible"]
+        }
+      }
+    },
+    "parents": {
+      "description": "The local ids this record hangs from: a message's parent message, a conversation's project. A branching message graph is kept as a graph — flattening it to a list loses which answer replied to which question, and nothing downstream can recover it.",
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "title": {
+      "description": "The vendor's display name for this item, carried for a listing and never used as an identity.",
+      "type": "string"
+    },
+    "content_hash": {
+      "description": "A hash over the normalised body, so a re-sync that changed nothing writes a byte-identical record and a diff of the store means something.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "body": {
+      "description": "The normalised content. Its shape follows `type`, and content parts keep their own type rather than being concatenated into a string. Absent where the declaration does not authorise reading the content, in which case the record is metadata only.",
+      "type": "object"
+    },
+    "first_seen": {
+      "description": "When this record was first written here, RFC 3339 UTC. Not the vendor's creation time, which belongs in the body: this is a fact about the sync.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_seen": {
+      "description": "When a sync last observed this record upstream, RFC 3339 UTC. A record whose last_seen falls behind the run that should have seen it is a candidate for a tombstone, never a silent deletion.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "tombstone": {
+      "description": "Set when the record is gone upstream. The record stays: a corpus that deletes is a corpus that cannot say what it used to hold, and a vendor's outage is indistinguishable from a deletion unless the difference is written down.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "reason"],
+      "properties": {
+        "at": { "type": "string", "format": "date-time" },
+        "reason": {
+          "description": "gone: the vendor no longer lists it. withdrawn: the declaration no longer authorises it. unreadable: it is listed and cannot be parsed.",
+          "enum": ["gone", "withdrawn", "unreadable"]
+        }
+      }
+    }
+  }
+}

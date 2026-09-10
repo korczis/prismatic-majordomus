@@ -25,7 +25,7 @@
 // Playwright drives the Chrome that is already installed (`channel: 'chrome'`); nothing is
 // downloaded. The caller decides whether a missing browser is a skip.
 
-import { chromium } from 'playwright';
+import { launchEphemeral } from './browser.mjs';
 
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
@@ -435,7 +435,7 @@ async function framing(context) {
   await page.close();
 }
 
-const browser = await chromium.launch({ channel: 'chrome' });
+const browser = await launchEphemeral();
 try {
   const derived = await routes();
   const total = derived.routes.length;
