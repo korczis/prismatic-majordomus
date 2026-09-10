@@ -303,10 +303,13 @@ the window is broken either way, and the finding stands.
 
 It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml),
 job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
-tree can make it true or false — only a deployment can. It runs in the full plan, which is
-every push to the default branch, the weekly schedule, a dispatch, and a pull request
-labelled `ci:full`. So the default branch goes red while the advertised command is broken,
-which is the only condition under which anyone was going to find out.
+tree can make it true or false — only a deployment can. It is also one of the model's
+on-demand gates, because half of its matrix is a macOS runner and this repository waits
+hours for one: the nightly schedule, a dispatch and a pull request labelled `ci:full` plan
+it, a routine push does not. So a broken advertised command turns the nightly run red,
+within a day of the deployment that broke it, which is the only condition under which anyone
+was going to find out. To ask the question now — after a release, say — dispatch the
+workflow, or run `scripts/ci/install-check` here.
 
 Against a local fixture rather than the published site:
 

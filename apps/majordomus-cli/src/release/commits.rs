@@ -24,6 +24,26 @@ use crate::model::Object;
 const FIELD: &str = "\u{1}";
 const RECORD: &str = "\u{2}";
 
+/// How many hex digits of a commit's name the changelog carries.
+///
+/// A constant this repository chooses, rather than git's `%h`. Git abbreviates to whatever
+/// is unambiguous in the object database in front of it, so `%h` is a function of how many
+/// objects the clone happens to hold: the same commit reads `933dba91d` in a working
+/// checkout that has fetched every branch and `933dba91` in the fresh one CI makes. The
+/// changelog is a committed artifact, so that turned the width of somebody's object store
+/// into part of a generated file — `generate --check` then reported the artifact stale in
+/// every clone but the one the generator last ran in, with no canonical source changed
+/// anywhere (`project.derived-files-regenerated`). Nine digits is what this history already
+/// carries; the abbreviation is now the repository's decision and reads the same everywhere.
+const NAME_DIGITS: usize = 9;
+
+/// A commit's name, as the changelog carries it: the full name git gave, cut to
+/// [`NAME_DIGITS`]. The cut is here and not in git's format string, because git's own
+/// abbreviation depends on the clone rather than on the commit.
+fn short(name: &str) -> &str {
+    &name[..NAME_DIGITS.min(name.len())]
+}
+
 /// Every commit in `range`, newest first, parsed.
 ///
 /// `range` is anything `git log` accepts — `v0.3.1..HEAD`, a bare `HEAD`, two shas. An
@@ -36,7 +56,7 @@ pub fn in_range(root: &Path, range: &str, objects: &[Object]) -> Vec<Change> {
         .args([
             "log",
             "--no-merges",
-            &format!("--format=%h{FIELD}%s{FIELD}%b{RECORD}"),
+            &format!("--format=%H{FIELD}%s{FIELD}%b{RECORD}"),
             range,
         ])
         .output();
@@ -54,7 +74,7 @@ pub fn in_range(root: &Path, range: &str, objects: &[Object]) -> Vec<Change> {
             if commit.is_empty() {
                 return None;
             }
-            let mut change = parse(commit, subject, body);
+            let mut change = parse(short(commit), subject, body);
             change.references = references(&format!("{subject} {body}"), objects);
             Some(change)
         })
@@ -228,6 +248,19 @@ mod tests {
 
         // a word that merely starts with the letter is not an id
         assert!(references("Interesting M1 Improvements", &layer).is_empty());
+    }
+
+    #[test]
+    fn a_commit_name_is_cut_to_a_width_this_repository_chooses() {
+        // The changelog is committed, so the width cannot come from git: `%h` is short in a
+        // fresh clone and longer in one that has fetched everything, and the artifact would
+        // then be stale in every checkout but the last one the generator ran in.
+        let full = "933dba91d1f7e0a54a1a2b3c4d5e6f7a8b9c0d1e";
+        assert_eq!(short(full), "933dba91d");
+        assert_eq!(short(full).len(), NAME_DIGITS);
+        // a name already shorter than the width is carried whole rather than panicking
+        assert_eq!(short("abc"), "abc");
+        assert_eq!(short(""), "");
     }
 
     #[test]

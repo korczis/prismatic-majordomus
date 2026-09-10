@@ -117,8 +117,8 @@ Rust metadata beside it (`EXAMPLES`) for the examples clap cannot carry. Every r
 generated from that one declaration and never written by hand — `majordomus --help` at a
 terminal, [`docs/generated/cli.md`](../../docs/generated/cli.md) for a reader on GitHub,
 [`docs/generated/cli.json`](../../docs/generated/cli.json) and its YAML sibling for the website's generator and for a reader of configuration, the
-site's [reference under `/docs/cli/`](https://korczis.github.io/prismatic-majordomus/docs/cli/)
-with one page per command, and the [command line page](https://korczis.github.io/prismatic-majordomus/registry/cli/)
+site's [reference under `/docs/cli/`](https://majordomus.dev/docs/cli/)
+with one page per command, and the [command line page](https://majordomus.dev/registry/cli/)
 of the registry. `majordomus generate` writes the files and `majordomus generate --check`
 refuses a stale one in CI. Every artifact it writes declares the document it projects, its
 encoding, the schema its content satisfies and its source, and a structured document is

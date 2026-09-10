@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 38
+weight = 40
 [extra]
 source = "docs/WEB.md"
 +++
@@ -149,7 +149,7 @@ The documentation under `/docs/` is the **same Zola source** GitHub Pages render
 no second copy and no second generator; the two builds differ in one argument.
 
 ```text
-site/  ──scripts/site-build───────────────────→ site/public/     base_url https://korczis.github.io/prismatic-majordomus
+site/  ──scripts/site-build───────────────────→ site/public/     base_url https://majordomus.dev
    └───scripts/site-build --serve ───────────→ target/web/docs/  base_url /docs
 ```
 

@@ -52,7 +52,7 @@
       <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
         {%- for uid in c.use_cases -%}{%- set u = cat.use_cases[cat.uc_index[uid]] -%}
         {%- if u.status != "draft" %}
-        <li x-show="(app === 'all' || '{{ u.applications | join(sep=" ") }}'.includes(app)) && (actor === 'all' || '{{ u.actors | default(value=[]) | join(sep=" ") }}'.includes(actor)) && (m === 'all' || m === '{{ u.maturity }}') && ('{{ u.id }} {{ u.title | lower }} {{ u.commands | join(sep=" ") }} {{ u.doctrines | join(sep=" ") }}'.includes(q.toLowerCase()))">
+        <li x-show="(app === 'all' || '{{ u.applications | default(value=[]) | join(sep=" ") }}'.includes(app)) && (actor === 'all' || '{{ u.actors | default(value=[]) | join(sep=" ") }}'.includes(actor)) && (m === 'all' || m === '{{ u.maturity }}') && ('{{ u.id }} {{ u.title | lower }} {{ u.commands | join(sep=" ") }} {{ u.doctrines | join(sep=" ") }}'.includes(q.toLowerCase()))">
           <a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
             <div class="mb-2 flex flex-wrap items-center gap-2"><span>{{ <maturity status={u.maturity} /> }}</span>{% if u.difficulty %}<span class="font-mono text-xs text-body-subtle">{{ u.difficulty }}</span>{% endif %}</div>
             <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">{{ u.title }}</h3>

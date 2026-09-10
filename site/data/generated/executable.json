@@ -1112,6 +1112,23 @@
       "tool": "majordomus_scope_classify"
     },
     {
+      "api_anchor": "/docs/api/#op-server-status",
+      "claims": [],
+      "cli": "majordomus serve status",
+      "id": "server.status",
+      "kind": "query",
+      "module": "server",
+      "module_route": "/registry/modules/server/",
+      "resource": "majordomus://server",
+      "route": "/registry/capabilities/server-status/",
+      "slug": "server-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/server.rs",
+      "tests": [],
+      "title": "The shared server, and every server of the repository",
+      "tool": "majordomus_server"
+    },
+    {
       "api_anchor": "/docs/api/#op-trace-commit",
       "claims": [],
       "cli": null,
@@ -1601,11 +1618,11 @@
     ]
   },
   "counts": {
-    "capabilities": 77,
+    "capabilities": 78,
     "claims": 35,
-    "modules": 25
+    "modules": 26
   },
-  "generator": "majordomus-cli 0.4.0",
+  "generator": "majordomus-cli 0.5.0",
   "modules": [
     {
       "capabilities": [
@@ -2160,6 +2177,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "server.status",
+          "route": "/registry/capabilities/server-status/",
+          "slug": "server-status"
+        }
+      ],
+      "claims": [],
+      "id": "server",
+      "route": "/registry/modules/server/",
+      "slug": "server",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/server.rs",
+      "title": "Server"
     },
     {
       "capabilities": [

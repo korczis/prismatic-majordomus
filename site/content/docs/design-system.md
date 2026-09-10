@@ -1,7 +1,7 @@
 +++
 title = "The design system"
 description = "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong"
-weight = 42
+weight = 44
 [extra]
 source = "docs/DESIGN_SYSTEM.md"
 +++
@@ -142,7 +142,7 @@ same reason. If it does, the architecture has a hole; file it.
 | the stylesheet, the page and the dataset agree, at every declared width | `scripts/site-probe` (`site-probe` gate) | the site job |
 | the stylesheet, the page and the executable agree; every badge word is filed; no overflow at every declared width | `scripts/cockpit-probe` (`cockpit-probe` gate) | the cockpit job |
 | every page is keyboard-operable and passes contrast at every width | `scripts/ui audit` (`ui-audit` gate) | the site job |
-| every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/111_design_contrast.sh` | every plan that touches the declaration or a primitive |
+| every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/120_design_contrast.sh` | every plan that touches the declaration or a primitive |
 | the model, the renderer and the zero-registration property | the crate's tests; `test/cases/107_design_tokens.sh`; `test/cases/109_design_system.sh` | the rust and suite jobs |
 
 </div>

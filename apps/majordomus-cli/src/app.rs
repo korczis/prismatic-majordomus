@@ -124,6 +124,9 @@ impl App {
         let mut index = index;
         index.distribution = crate::distribution::Model::locate(&share)?;
         index.providers = share.providers()?;
+        // the distribution this process was run with, carried so that a handler reading a
+        // file beside the kinds reads the same one rather than resolving its own
+        index.share = Some(share.dir().to_path_buf());
         let registry = CapabilityRegistry::builder()
             .with_modules(builtin::modules())
             .with_index(&index)

@@ -1139,3 +1139,86 @@ fn a_bridge_is_transparent_and_a_restarted_server_answers_the_same_bytes() {
     );
     assert_eq!(c.close(), 0);
 }
+
+#[test]
+fn an_announcement_outlives_the_server_it_was_made_to() {
+    // takeover: b announced through a; a dies; b takes over, and its own board carries
+    // the announcement it made to a
+    let f = Fixture::new();
+    let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    a.initialize("claude-code");
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    b.wait_log("bridging this stdio session");
+    b.initialize("codex");
+    let announced = b.call(
+        "majordomus_announce",
+        json!({ "intent": "the ordering rule", "scope": ["apps"] }),
+    );
+    assert_eq!(announced["isError"], false, "{announced}");
+    b.request("ping", json!({}));
+    a.child.kill().unwrap();
+    let _ = a.child.wait();
+    let peers = b.call("majordomus_peers", json!({}));
+    let log = b.drain_log();
+    assert!(log.contains("took over as the shared server"), "{log}");
+    assert!(
+        log.contains("announcement was carried onto this server's board"),
+        "{log}"
+    );
+    let sc = &peers["structuredContent"];
+    let me = sc["peers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["client"]["name"] == "codex")
+        .unwrap_or_else(|| panic!("the client is on its own board: {sc}"));
+    assert_eq!(me["attached"], true);
+    assert_eq!(
+        me["announcement"]["intent"], "the ordering rule",
+        "the announcement survived the takeover: {sc}"
+    );
+    assert_eq!(me["announcement"]["scope"][0], "apps");
+    assert_eq!(b.close(), 0);
+
+    // re-attach: b announced through a; a dies; c becomes the server first; b's next
+    // message re-attaches to c, and the bridge says the announcement again
+    let g = Fixture::new();
+    let mut a = Mcp::spawn(&g.root(), &["--http-port", "0"]);
+    a.wait_log("listening on http://");
+    a.initialize("claude-code");
+    let mut b = Mcp::spawn(&g.root(), &["--http-port", "0"]);
+    b.wait_log("bridging this stdio session");
+    b.initialize("codex");
+    let announced = b.call(
+        "majordomus_announce",
+        json!({ "intent": "the installer", "scope": ["site"] }),
+    );
+    assert_eq!(announced["isError"], false, "{announced}");
+    b.request("ping", json!({}));
+    a.child.kill().unwrap();
+    let _ = a.child.wait();
+    let mut c = Mcp::spawn(&g.root(), &["--http-port", "0"]);
+    c.wait_log("listening on http://");
+    c.initialize("gemini-cli");
+    let repo = b.call("majordomus_repository", json!({}));
+    assert_eq!(repo["isError"], false, "{repo}");
+    let log = b.drain_log();
+    assert!(log.contains("re-attached to the shared server"), "{log}");
+    assert!(log.contains("announcement was replayed"), "{log}");
+    let peers = c.call("majordomus_peers", json!({}));
+    let sc = &peers["structuredContent"];
+    let codex = sc["peers"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["client"]["name"] == "codex")
+        .unwrap_or_else(|| panic!("the re-attached client is on c's board: {sc}"));
+    assert_eq!(
+        codex["announcement"]["intent"], "the installer",
+        "the announcement reached the server the client re-attached to: {sc}"
+    );
+    b.send(&json!({ "jsonrpc": "2.0", "method": "notifications/cancelled" }));
+    assert_eq!(b.close(), 0);
+    assert_eq!(c.close(), 0);
+}

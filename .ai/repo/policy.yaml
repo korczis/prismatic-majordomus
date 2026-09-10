@@ -47,6 +47,7 @@ session:
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true
   handover_on_end: true
+  ensure_server_on_start: true           # the start event converges on a ready shared server
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's

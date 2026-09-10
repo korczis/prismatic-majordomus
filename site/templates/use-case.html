@@ -91,7 +91,7 @@
     </ul>
     {%- endif %}
 
-    {%- set related = [x for x in caps.claims if x.id in u.claims] -%}
+    {%- set related = [x for x in caps.claims if x.id in u.claims | default(value=[])] -%}
     {%- if related | length > 0 %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees exercised</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -123,16 +123,16 @@
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">{{ u.maturity }}</dd></div>
       </dl>
     </div>
-    {%- if u.applications | length > 0 %}
+    {%- if u.applications | default(value=[]) | length > 0 %}
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">where it applies</h2>
-      <ul class="space-y-2 text-sm">{% for a in u.applications %}{% set aa = cat.applications[cat.ap_index[a]] %}<li><a href="{{ get_url(path='/applications/' ~ a ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ aa.title }}</a></li>{% endfor %}</ul>
+      <ul class="space-y-2 text-sm">{% for a in u.applications | default(value=[]) %}{% set aa = cat.applications[cat.ap_index[a]] %}<li><a href="{{ get_url(path='/applications/' ~ a ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ aa.title }}</a></li>{% endfor %}</ul>
     </div>
     {%- endif %}
-    {%- if u.responsibilities | length > 0 %}
+    {%- if u.responsibilities | default(value=[]) | length > 0 %}
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2>
-      <ul class="space-y-1 text-sm">{% for r in u.responsibilities %}{% set rr = [x for x in readme.does if x.slug == r] %}<li><a href="{{ get_url(path='/supervises/' ~ r ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{% if rr | length > 0 %}{{ rr[0].title }}{% else %}{{ r }}{% endif %}</a></li>{% endfor %}</ul>
+      <ul class="space-y-1 text-sm">{% for r in u.responsibilities | default(value=[]) %}{% set rr = [x for x in readme.does if x.slug == r] %}<li><a href="{{ get_url(path='/supervises/' ~ r ~ '/', trailing_slash=true) }}" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">{% if rr | length > 0 %}{{ rr[0].title }}{% else %}{{ r }}{% endif %}</a></li>{% endfor %}</ul>
     </div>
     {%- endif %}
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">

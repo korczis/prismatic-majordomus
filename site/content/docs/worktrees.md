@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 40
+weight = 42
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -345,6 +345,8 @@ says where to `cd`.
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |
 | a fingerprint mismatch | `worktree.migration_verification_failed`, the differences listed | inspect the worktree where git registers it before touching anything; a rename cannot lose content, so something wrote to it during the move |
+| a built executable that was there a minute ago | `MAJORDOMUS_BIN is not an executable`, or a test failing on a branch that was green | an environment event, not a defect in the branch under test: another worker reclaimed the build directory. Rebuild in **your own** worktree and re-measure. `project.reclaim-only-what-you-own` says whose it was |
+| a borrowed executable from another worktree | artifacts reported stale on a tree that is current; a derivation that removes thousands of lines | establish it matches before using it — `majordomus generate --check` must say `in sync` — and read `git diff --stat -- docs/generated site/data` before committing. `project.a-tool-that-cannot-match-the-tree-refuses` |
 
 </div>
 

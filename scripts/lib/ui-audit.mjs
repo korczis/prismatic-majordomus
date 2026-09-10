@@ -217,18 +217,43 @@ export async function auditPage(page, origin, route, width) {
   }
 
   // the accessibility engine, last, so its findings sit beside the repository's own
-  await page.addScriptTag({ content: readFileSync(AXE, 'utf8') });
-  const axe = await page.evaluate(async () => {
-    // eslint-disable-next-line no-undef
-    const results = await axe.run(document, { resultTypes: ['violations'], runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });
-    return results.violations.map((v) => ({
-      id: v.id,
-      impact: v.impact,
-      help: v.help,
-      nodes: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+  // Evaluated through the debugging protocol rather than appended as a `<script>` element.
+  // `addScriptTag` puts an inline script *into the document*, so the document's own Content
+  // Security Policy decides whether it may run — and the Cockpit's policy is `script-src
+  // 'self'` with a hash per script, exactly as it should be. The engine would be refused on
+  // every page of the strictest surface this repository serves, which is the surface whose
+  // accessibility was least measured. The debugger's own evaluation is the instrument
+  // speaking, not the page, so it runs without the page's policy being relaxed for it —
+  // which matters, because a page audited with its policy disabled is not the page.
+  await page.evaluate(readFileSync(AXE, 'utf8'));
+  const measured = await page.evaluate(async () => {
+    // A page may declare a subtree that is not this repository's to fix: a third-party
+    // component tree, pinned at a version, whose markup and stylesheet arrive together. The
+    // Swagger UI widget is the one such subtree here, and ADR 0036 already decided not to
+    // restyle it. The *page* declares the boundary with `data-mj-foreign`, and the engine is
+    // told to skip it; nothing in this file knows what a widget is called. The declaration
+    // is reported with the run, because "not measured" and "measured and clean" are
+    // different claims and a report that conflated them would be worth nothing.
+    const foreign = [...document.querySelectorAll('[data-mj-foreign]')].map((el) => ({
+      selector: el.tagName.toLowerCase() + (el.id ? `#${el.id}` : ''),
+      declares: el.getAttribute('data-mj-foreign') || '',
     }));
+    const context = foreign.length
+      ? { include: [['body']], exclude: [['[data-mj-foreign]']] }
+      : document;
+    // eslint-disable-next-line no-undef
+    const results = await axe.run(context, { resultTypes: ['violations'], runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });
+    return {
+      foreign,
+      violations: results.violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        help: v.help,
+        nodes: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+      })),
+    };
   });
-  for (const violation of axe) {
+  for (const violation of measured.violations) {
     findings.push({
       rule: `accessibility.${violation.id}`,
       detail: `${violation.help} (${violation.impact})`,
@@ -236,7 +261,14 @@ export async function auditPage(page, origin, route, width) {
     });
   }
 
-  return { route, width, status, findings, components: observed.triggers.map((t) => t.component) };
+  return {
+    route,
+    width,
+    status,
+    findings,
+    foreign: measured.foreign,
+    components: observed.triggers.map((t) => t.component),
+  };
 }
 
 /** Audit every page of a plan against a running origin. */

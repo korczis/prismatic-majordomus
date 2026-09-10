@@ -189,11 +189,19 @@ struct VocabularyFile {
     obligations: Vec<Obligation>,
 }
 
-/// Read the shipped vocabulary. The share directory is located the way every other reader
-/// locates it; a distribution that ships no vocabulary declares no tokens, which is not an
-/// error but is reported as such by the closure's findings when a task names one.
-fn vocabulary_at(root: &Path) -> Result<Vocabulary, String> {
-    let share = crate::share::Share::locate(None, root)
+/// Read the shipped vocabulary from `share`, the distribution this process located, or —
+/// when the caller has none, which is an index built without an application around it —
+/// the way every other reader locates one, from `root`. A distribution that ships no
+/// vocabulary declares no tokens, which is not an error but is reported as such by the
+/// closure's findings when a task names one.
+///
+/// The distribution is passed in rather than resolved here because the two answers differ:
+/// a process told which distribution to read (`--share`, or a released binary run inside a
+/// repository that is not its own) has already resolved one, and a second resolution from
+/// the repository root would find another distribution or, when the executable lives
+/// outside the repository, none.
+fn vocabulary_at(share: Option<&Path>, root: &Path) -> Result<Vocabulary, String> {
+    let share = crate::share::Share::locate(share, root)
         .map_err(|e| format!("the distribution's share directory was not found: {e}"))?;
     let path = share.dir().join(VOCABULARY_FILE);
     let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -687,7 +695,7 @@ fn judge(
 
 fn obligations_vocabulary(ctx: &Context, _: Empty) -> Result<Vocabulary, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
-    vocabulary_at(&root).map_err(CapabilityError::Internal)
+    vocabulary_at(ctx.index.share.as_deref(), &root).map_err(CapabilityError::Internal)
 }
 
 fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityError> {
@@ -706,7 +714,7 @@ fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityErr
     let mut findings = Vec::new();
     let task = continuity::read_task(&dir.join("current.yaml"));
 
-    let vocabulary = match vocabulary_at(&root) {
+    let vocabulary = match vocabulary_at(ctx.index.share.as_deref(), &root) {
         Ok(v) => v.obligations,
         Err(reason) => {
             findings.push(format!(
@@ -916,9 +924,10 @@ mod tests {
             "# a comment the reader skips\nversion: 1\nobligations:\n  - id: tests\n    title: The cases were run\n    summary: They passed.\n    discharged_by: usecase impact\n    inputs: [\"lib/**\", \"share/**\"]\n    remote: false\n  - id: push\n    title: The commit reached the remote\n    summary: The branch head exists on the remote.\n    discharged_by: git\n    remote: true\n",
         )
         .unwrap();
-        std::env::set_var(crate::share::SHARE_ENV, dir.path());
-        let v = vocabulary_at(dir.path()).expect("the vocabulary parses");
-        std::env::remove_var(crate::share::SHARE_ENV);
+        // the distribution is named, not searched for: the reader is handed one the way an
+        // application hands it the one the process located, and the environment of whoever
+        // runs the tests does not reach it
+        let v = vocabulary_at(Some(dir.path()), dir.path()).expect("the vocabulary parses");
 
         assert_eq!(v.version, 1);
         assert_eq!(v.count, 2, "the count is measured, never written down");

@@ -39,7 +39,7 @@ elif "$ROOT/scripts/generate-site-data" --check >/dev/null 2>&1; then ok sync "s
 else bad sync "site/data/generated is stale; run scripts/generate-site-data"; fi
 # 2. generated data schema: every file parses and carries schema 1
 # derived from the directory, not listed here: a new generated file is checked the day it appears
-gen_files="$(find "$SITE/data/generated" -name '*.json' | sed 's#.*/##; s#\.json$##' | sort)"
+gen_files="$(find "$SITE/data/generated" -name '*.json' | sed 's#.*/##; s#\.json$##' | LC_ALL=C sort)"
 for f in $gen_files; do
   [ "$(jq -r '.schema' "$SITE/data/generated/$f.json" 2>/dev/null)" = 1 ] || bad schema "$f.json missing or schema != 1"
 done; ok schema "every generated file ($(printf '%s\n' $gen_files | wc -l | tr -d ' ')) carries schema 1"
@@ -105,7 +105,7 @@ if [ -f "$PD" ]; then
   # hand-written data files are where a substitute list would live; prose elsewhere on the
   # site naming a bootstrap as an illustration is a sentence, not an inventory, and the
   # documentation is full of such mentions by design.
-  for f in $(jq -r '.providers[].bootstraps[]?.target, .providers[].client_config' "$PD" | grep -v '^null$' | sort -u); do
+  for f in $(jq -r '.providers[].bootstraps[]?.target, .providers[].client_config' "$PD" | grep -v '^null$' | LC_ALL=C sort -u); do
     hit="$(grep -l -F -- "$f" "$SITE"/templates/index.html "$SITE"/templates/feature.html \
              "$SITE"/templates/features-section.html "$SITE"/templates/features-matrix.html \
              "$SITE"/templates/partials/feature-surfaces.html \
@@ -118,7 +118,7 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 # fact beside them comes out of the dataset above
 grep -qE '\b(surfaces?|capabilit(y|ies)|command line|MCP|HTTP API)\b *[:=] *\[' "$SITE/data/marketing.toml" \
   && bad promo "marketing.toml declares a capability list; capabilities are derived"
-grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | sort -u | while read -r a; do grep -q "id=\"$a\"" "$PUB/index.html" || echo "$a"; done | head -1 | grep -q . && bad product "an in-page link on the homepage has no target section"
+grep -oE 'href="#[a-z-]+"' "$PUB/index.html" | sed 's/href="#//; s/"$//' | LC_ALL=C sort -u | while read -r a; do grep -q "id=\"$a\"" "$PUB/index.html" || echo "$a"; done | head -1 | grep -q . && bad product "an in-page link on the homepage has no target section"
 # 4. routes: metadata, landmarks, no unresolved placeholders, one h1, viewport
 # a {{...}} inside a code span or a code block is rendered output (docs/SCHEMAS.md and
 # docs/CLI.md document the prompt renderer's own {{TOKEN}} syntax), not an unrendered
@@ -145,7 +145,7 @@ if [ -n "$PREFIX" ]; then
 fi
 # 6. internal links resolve to a generated file
 missing=0
-for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | sort -u); do
+for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | LC_ALL=C sort -u); do
   t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
 done; [ "$missing" = 0 ] && ok link "every internal link resolves"
 # 7. assets present
@@ -227,9 +227,9 @@ else bad api "site/public/openapi.json missing"; apibad=1; fi
 RDS="$SITE/data/registry/registry.json"; EXJ="$SITE/data/generated/executable.json"; regbad=0
 if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   [ "$(jq -r '.source' "$EXJ")" = "docs/generated/registry.json" ] || { bad registry "executable.json does not name docs/generated/registry.json as its source"; regbad=1; }
-  [ "$(jq -S '[.registry.builtin[].id] | sort' "$RDS")" = "$(jq -S '[.capabilities[].id] | sort' "$EXJ")" ] \
+  [ "$(jq -S '[.registry.builtin[].id] | sort_by(.)' "$RDS")" = "$(jq -S '[.capabilities[].id] | sort_by(.)' "$EXJ")" ] \
     || { bad registry "the capability ids of site/data/registry/registry.json and executable.json differ (one generate pass wrote them?)"; regbad=1; }
-  [ "$(jq -S '[.registry.modules[] | select(.source=="builtin") | .id] | sort' "$RDS")" = "$(jq -S '[.modules[].id] | sort' "$EXJ")" ] \
+  [ "$(jq -S '[.registry.modules[] | select(.source=="builtin") | .id] | sort_by(.)' "$RDS")" = "$(jq -S '[.modules[].id] | sort_by(.)' "$EXJ")" ] \
     || { bad registry "the module ids of site/data/registry/registry.json and executable.json differ"; regbad=1; }
   for r in "" executable/ modules/ capabilities/ cli/ mcp/ benchmarks/; do [ -f "$PUB/registry/${r}index.html" ] || { bad registry "no page at /registry/$r"; regbad=1; }; done
   jq -r '.modules[] | [.slug, .route] | @tsv' "$EXJ" | while IFS="$(printf '\t')" read -r slug route; do
@@ -257,7 +257,7 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   done | while read -r l; do bad registry "$l"; done
   nt="$(jq '.benchmarks.targets | length' "$RDS")"; np="$(grep -o 'id="target-' "$PUB/registry/benchmarks/index.html" | wc -l | tr -d ' ')"
   [ "$nt" = "$np" ] || { bad registry "/registry/benchmarks/ renders $np targets, the dataset holds $nt"; regbad=1; }
-  for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
+  for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | LC_ALL=C sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
   for pl in $(jq -r '.benchmarks.baselines[].platform' "$RDS"); do grep -qF ">$pl<" "$PUB/registry/benchmarks/index.html" || { bad registry "baseline $pl is not on /registry/benchmarks/"; regbad=1; }; done
   # nothing enumerates the registry by hand: a capability id or a module route typed into a
   # template, the site generator, its jq programs or the navigation would be a second list.
@@ -287,8 +287,8 @@ if [ -f "$CLIJ" ]; then
   [ "$(jq -r '.source' "$CLIJ")" = "docs/generated/cli.json" ] || { bad cli "cli.json does not name docs/generated/cli.json as its source"; clibad=1; }
   [ -f "$ROOT/$(jq -r '.declaration' "$CLIJ")" ] || { bad cli "the declaration $(jq -r '.declaration' "$CLIJ") does not exist"; clibad=1; }
   # the two sets, compared as sets and both ways round
-  cli_expected="$(jq -r '.commands[].route' "$CLIJ" | sort)"
-  cli_built="$(find "$PUB/docs/cli" -name index.html 2>/dev/null | sed "s#^$PUB##; s#index\.html\$##" | sort)"
+  cli_expected="$(jq -r '.commands[].route' "$CLIJ" | LC_ALL=C sort)"
+  cli_built="$(find "$PUB/docs/cli" -name index.html 2>/dev/null | sed "s#^$PUB##; s#index\.html\$##" | LC_ALL=C sort)"
   for r in $cli_expected; do
     printf '%s\n' "$cli_built" | grep -qxF "$r" || { bad cli "the executable declares a command at $r and no page was generated"; clibad=1; }
   done
@@ -419,7 +419,7 @@ for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
 done
 ok tiles "every profile, claim, status, responsibility, command, doctrine, use case, application and why-moment has its own page"
 # 13d. every navigation target resolves
-for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
+for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
 ok nav "every navigation link on the homepage resolves"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
@@ -458,7 +458,7 @@ done
 # `scripts/generate-site-data --check`, which diffs every derived page and names every orphan,
 # exactly as it does for site/data/generated. Derived by scanning for $CONTENT_ROOT uses rather
 # than by listing the sections, so the next one is covered the day it is written.
-for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$ROOT/scripts/generate-site-data" | sed 's#.*/##' | sort -u); do
+for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$ROOT/scripts/generate-site-data" | sed 's#.*/##' | LC_ALL=C sort -u); do
   # an ignored section and an empty one are different faults: the first is a .gitignore rule
   # that has to go, the second is a generation nobody committed, and saying which saves the
   # reader a detour through `git check-ignore` on a path no rule mentions
@@ -623,7 +623,7 @@ for n in $(jq -r '.commands[].name' "$SITE/data/generated/commands.json"); do
   done
   grep -q 'role="tablist"' "$page" || { bad command "$n: the demonstration has no tablist"; cmdbad=1; }
   # evidence links resolve to files that exist in this repository
-  for t in $(jq -r --arg n "$n" '.commands[] | select(.name==$n) | .tests.behaviour[], .tests.negative[]' "$SITE/data/generated/commands.json" | sort -u); do
+  for t in $(jq -r --arg n "$n" '.commands[] | select(.name==$n) | .tests.behaviour[], .tests.negative[]' "$SITE/data/generated/commands.json" | LC_ALL=C sort -u); do
     [ -f "$ROOT/test/cases/$t.sh" ] || { bad command "$n: evidence names test/cases/$t.sh, which does not exist"; cmdbad=1; }
     grep -qF "test/cases/$t.sh" "$page" || { bad command "$n: $t is not linked on the page"; cmdbad=1; }
   done

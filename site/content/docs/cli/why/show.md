@@ -1,7 +1,7 @@
 +++
 title = "majordomus why show"
 description = "One moment in full, with every relation derived from its metadata"
-weight = 28
+weight = 31
 [extra]
 route = "/docs/cli/why/show/"
 command = "majordomus why show"

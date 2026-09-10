@@ -3,17 +3,17 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
-  "fingerprint": "932345f2ce45f74ccb1519a1ab9bf1929fe2c810e2f739960cacc613ce3e4553",
+  "fingerprint": "3a36f2f95b494d83a0227adcbdddddafad5612366f2f63a15e8f30899b1f857c",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 25,
-    "modules_covered": 16,
+    "modules": 26,
+    "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
     "kinds": 25,
@@ -1158,6 +1158,7 @@
       ],
       "modules": [
         "peers",
+        "server",
         "worktree"
       ],
       "commands": [
@@ -1240,6 +1241,25 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_peers",
               "route": "GET /api/v1/peers"
+            }
+          ]
+        },
+        {
+          "id": "server",
+          "title": "Server",
+          "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "capabilities": [
+            {
+              "id": "server.status",
+              "title": "The shared server, and every server of the repository",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_server",
+              "resource": "majordomus://server",
+              "route": "GET /api/v1/server",
+              "cli": "majordomus serve status"
             }
           ]
         },
@@ -1528,11 +1548,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
-        "mcp_resources": 1,
-        "http_routes": 6,
-        "cli_paths": 4,
+        "capabilities": 7,
+        "mcp_tools": 7,
+        "mcp_resources": 2,
+        "http_routes": 7,
+        "cli_paths": 5,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -1548,7 +1568,7 @@
           "guaranteed": 5
         },
         "modules": {
-          "behaviorally_verified": 2
+          "behaviorally_verified": 3
         }
       }
     },
@@ -1932,7 +1952,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 11
+          "objects": 12
         },
         {
           "name": "prompt",
@@ -2265,11 +2285,11 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 16,
+        "mcp_resources": 17,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 15,
+        "objects": 16,
         "rules": 8,
         "enforced_rules": 6,
         "docs": 2,
@@ -2439,7 +2459,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 34
+          "objects": 37
         },
         {
           "name": "knowledge",
@@ -2447,7 +2467,7 @@
         },
         {
           "name": "document",
-          "objects": 211
+          "objects": 213
         }
       ],
       "rule_refs": [
@@ -2696,11 +2716,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 247,
+        "mcp_resources": 252,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 246,
+        "objects": 251,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2800,7 +2820,7 @@
         {
           "id": "health",
           "title": "Health",
-          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
@@ -2865,7 +2885,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 109
+          "objects": 115
         }
       ],
       "rule_refs": [
@@ -3186,11 +3206,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 110,
+        "mcp_resources": 116,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 109,
+        "objects": 115,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -4082,7 +4102,7 @@
         {
           "id": "health",
           "title": "Health",
-          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
@@ -4413,7 +4433,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 11
+          "objects": 12
         }
       ],
       "rule_refs": [
@@ -4639,11 +4659,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 11,
+        "mcp_resources": 12,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 11,
+        "objects": 12,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -5765,7 +5785,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 42
+          "objects": 43
         },
         {
           "name": "application",
@@ -5877,11 +5897,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 57,
+        "mcp_resources": 58,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 57,
+        "objects": 58,
         "rules": 3,
         "enforced_rules": 2,
         "docs": 2,
@@ -7480,6 +7500,13 @@
         ]
       },
       {
+        "id": "server",
+        "title": "Server",
+        "features": [
+          "coordination"
+        ]
+      },
+      {
         "id": "trace",
         "title": "Traceability",
         "features": [
@@ -7724,7 +7751,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (34)",
+        "title": "adr (37)",
         "features": [
           "knowledge"
         ]
@@ -7846,7 +7873,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (109)",
+        "title": "rule (115)",
         "features": [
           "doctrine"
         ]
@@ -7860,7 +7887,7 @@
       },
       {
         "id": "session",
-        "title": "session (11)",
+        "title": "session (12)",
         "features": [
           "continuity",
           "provenance"
@@ -7882,7 +7909,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (42)",
+        "title": "use-case (43)",
         "features": [
           "use-cases"
         ]
@@ -8623,19 +8650,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1197,
-    "builtin": 77,
-    "declarative": 1120,
-    "modules": 25,
-    "mcp_tools": 75,
-    "mcp_resources": 1147,
-    "http_routes": 77,
-    "cli_commands": 88,
+    "capabilities": 1217,
+    "builtin": 78,
+    "declarative": 1139,
+    "modules": 26,
+    "mcp_tools": 76,
+    "mcp_resources": 1167,
+    "http_routes": 78,
+    "cli_commands": 91,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1120,
+    "objects": 1139,
     "by_kind": {
-      "adr": 34,
+      "adr": 37,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8644,7 +8671,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 211,
+      "document": 213,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -8655,18 +8682,18 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 115,
       "scope": 1,
-      "session": 11,
+      "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 137,
-      "use-case": 42,
+      "test": 143,
+      "use-case": 43,
       "workspace": 1
     },
     "providers": 6,
     "features": 19,
-    "web_surfaces": 10
+    "web_surfaces": 9
   },
   "valid": true
 }

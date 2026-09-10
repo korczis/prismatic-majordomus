@@ -118,16 +118,10 @@ pub fn resolve(root: &Path, local_half: &str, probe: bool) -> Vec<ServiceState> 
 /// file and contacts nothing; [`crate::lease::probe`] is the version that checks whether
 /// the server is really there, and it costs an HTTP round trip.
 pub fn published_url(root: &Path, local_half: &str) -> Option<String> {
-    let path = root.join(local_half).join(crate::lease::LEASE_PATH);
-    let text = std::fs::read_to_string(path).ok()?;
-    let document: serde_json::Value = serde_json::from_str(&text).ok()?;
-    if document.get("schema").and_then(serde_json::Value::as_str)? != crate::lease::SCHEMA {
-        return None;
-    }
-    document
-        .get("url")
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_string)
+    crate::lease::LeaseFile::read(&crate::lease::lease_file(root, local_half))
+        .document()?
+        .url
+        .clone()
 }
 
 /// A base address and a route, joined without a doubled or missing slash.

@@ -45,6 +45,11 @@ fn peers_list(ctx: &Context, _: Empty) -> Result<PeerList, CapabilityError> {
 
 // ---------------------------------------------------------------- peers.announce
 
+/// The MCP tool `peers.announce` is projected as. Named once, here, because the bridge
+/// recognises the frame that carries an announcement by this name in order to replay it
+/// after a takeover or a re-attach; the exposure below and the bridge read the same word.
+pub const ANNOUNCE_TOOL: &str = "majordomus_announce";
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `peers.announce`: what the calling peer is working on.
@@ -118,7 +123,7 @@ pub fn module() -> ModuleDescriptor {
                 input: AnnounceInput,
                 output: Announced,
                 stability: Stability::BehaviorallyVerified,
-                exposure: Exposure { mcp: mcp("majordomus_announce"), http: post("/api/v1/peers/announce"), cli: None },
+                exposure: Exposure { mcp: mcp(ANNOUNCE_TOOL), http: post("/api/v1/peers/announce"), cli: None },
                 tags: ["peers", "coordination"],
                 handler: peers_announce,
             },

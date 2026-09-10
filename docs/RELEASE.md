@@ -15,6 +15,45 @@ The commands, their arguments and their executable examples are in the generated
 routes and their benchmark cases in [`generated/capabilities.md`](generated/capabilities.md),
 module `release`. Neither is restated here.
 
+## The version is measured, not claimed
+
+The bump a release takes is decided by comparing the public surface of the last release
+with this tree, not by the words in the commit messages. `feat:` meaning minor and `fix:`
+meaning patch describes what the author believed; it says nothing about what a caller can
+still call. Between `v0.3.1` and `0.4.0` the command `majordomus scope classify` left the
+command line and every gate stayed green, because no gate was looking at the surface.
+
+The surface is the capability registry — one declaration of which MCP, HTTP, OpenAPI and
+the command line are projections — and `docs/generated/registry.json` is committed at every
+commit and every tag, so two releases can be compared without building either. What a
+caller can hold is an *atom*: a public capability's identity, its kind, the MCP tool and
+resource it answers to, the HTTP method and path it is bound to, the command-line path that
+dispatches it.
+
+```text
+an atom is gone      major implied   a caller who held it is broken
+an atom is new       minor implied   nothing broke, something arrived
+the surface is equal patch implied   nothing is owed; most commits are here
+```
+
+```bash
+scripts/ci/version-matches-surface             # the tree against the newest version tag
+scripts/ci/version-matches-surface --explain   # every atom that arrived or left
+scripts/ci/version-matches-surface --implied   # just the level
+majordomus release bump --level minor          # raise both writers at once
+```
+
+**Below 1.0.0 the floor is a minor release** for any surface change, gone or new. Semantic
+versioning grants `0.y.z` a blanket exemption — anything may change — and Elm refuses that
+exemption by starting every package at 1.0.0. This project has earned neither answer, so it
+takes the strongest signal 0.x has rather than demanding 1.0.0 for a single removal. When
+the major reaches 1 the shift ends and the implied bump is the required one.
+
+**A removal is named whatever the verdict is.** Below 1.0.0 it does not refuse the release,
+and it still belongs in the release record and the changelog as a breaking change: a caller
+who held what is gone otherwise finds out by breaking. The rule is
+`project.the-version-is-measured`; the gate is `version-surface`.
+
 ## The gap it closes
 
 Every other public fact in this repository has one canonical declaration and a set of

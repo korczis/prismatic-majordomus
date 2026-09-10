@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -17,7 +17,7 @@
   },
   "externalDocs": {
     "description": "The API reference, rendered from this document.",
-    "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
+    "url": "https://majordomus.dev/docs/api/"
   },
   "servers": [
     {
@@ -72,7 +72,7 @@
     },
     {
       "name": "health",
-      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own."
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
     },
     {
       "name": "objects",
@@ -109,6 +109,10 @@
     {
       "name": "repository",
       "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+    },
+    {
+      "name": "server",
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
     },
     {
       "name": "trace",
@@ -3361,7 +3365,7 @@
       "get": {
         "operationId": "health.report",
         "summary": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "tags": [
           "health"
         ],
@@ -6189,6 +6193,90 @@
         "x-majordomus-mcp": {
           "tool": "majordomus_search"
         }
+      }
+    },
+    "/api/v1/server": {
+      "get": {
+        "operationId": "server.status",
+        "summary": "The shared server, and every server of the repository",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "tags": [
+          "server"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The shared server, and every server of the repository: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "server.status",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::server"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_server",
+          "resource": {
+            "uri": "majordomus://server",
+            "name": "server"
+          }
+        },
+        "x-majordomus-cli": "serve status"
       }
     },
     "/api/v1/trace": {
@@ -11333,6 +11421,43 @@
         ],
         "description": "The design system: what it is and where it goes."
       },
+      "Desired": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "The interface the shared server binds by default."
+          },
+          "port": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535,
+            "description": "The port it asks for first."
+          },
+          "version": {
+            "type": "string",
+            "description": "This executable's version."
+          },
+          "executable": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutableIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "This executable, when it can be located."
+          }
+        },
+        "required": [
+          "host",
+          "port",
+          "version"
+        ],
+        "description": "What this executable would want a server of this checkout to be: the address it would\nbind, the version and the executable it would serve from. What `standing` is measured\nagainst.\n\n```\nuse majordomus_cli::capability::builtin::server::Desired;\nlet d = Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None };\nlet v = serde_json::to_value(&d).unwrap();\nassert_eq!(v[\"port\"], 8741);\nassert!(v.get(\"executable\").is_none(), \"an executable that cannot be located is not written as null\");\n```"
+      },
       "Diagnosis": {
         "type": "object",
         "properties": {
@@ -12285,6 +12410,33 @@
           "after"
         ],
         "description": "One concrete situation, in one audience, with what happens today and what happens\ninstead."
+      },
+      "ExecutableIdentity": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path the process was started from."
+          },
+          "mtime": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The file's modification time, seconds since the epoch."
+          },
+          "size": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The file's size in bytes."
+          }
+        },
+        "required": [
+          "path",
+          "mtime",
+          "size"
+        ],
+        "description": "The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \"/opt/majordomus\".into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&recorded).unwrap();\nassert_eq!(serde_json::from_str::<ExecutableIdentity>(&text).unwrap(), recorded);\n```"
       },
       "ExecutionConcurrency": {
         "oneOf": [
@@ -13647,6 +13799,29 @@
         ],
         "description": "The two type stacks."
       },
+      "GitIdentity": {
+        "type": "object",
+        "properties": {
+          "common_dir": {
+            "type": "string",
+            "description": "The git directory every work tree of the repository shares, canonical."
+          },
+          "id": {
+            "type": "string",
+            "description": "Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path."
+          },
+          "linked": {
+            "type": "boolean",
+            "description": "Whether this checkout is a linked work tree rather than the primary one."
+          }
+        },
+        "required": [
+          "common_dir",
+          "id",
+          "linked"
+        ],
+        "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```"
+      },
       "GitInfo": {
         "type": "object",
         "properties": {
@@ -14515,6 +14690,51 @@
           "state"
         ],
         "description": "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on."
+      },
+      "LeaseView": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The server's process id. Informational: nothing decides liveness from it."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The address, once bound."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When the server took the lease, RFC 3339."
+          },
+          "executable": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutableIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The executable the server was started from, when it could be located."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The executable's version; absent for a server too old to have written one."
+          }
+        },
+        "required": [
+          "pid",
+          "started_at"
+        ],
+        "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
       },
       "Libc": {
         "oneOf": [
@@ -15971,6 +16191,10 @@
             "type": "string",
             "description": "The provider whose event opened it, when one did."
           },
+          "provider_session": {
+            "type": "string",
+            "description": "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns."
+          },
           "branch": {
             "type": "string",
             "description": "The branch it opened on."
@@ -15989,7 +16213,7 @@
           "started_at",
           "foreign"
         ],
-        "description": "The open episode of this worktree, when there is one."
+        "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line."
       },
       "OperationParity": {
         "type": "object",
@@ -19723,6 +19947,156 @@
         ],
         "description": "The answer of `objects.search`."
       },
+      "ServerStanding": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "absent",
+            "description": "No lease: nothing serves this checkout."
+          },
+          {
+            "type": "string",
+            "const": "starting",
+            "description": "A lease without an address, young enough that its owner is still binding."
+          },
+          {
+            "type": "string",
+            "const": "ready",
+            "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+          },
+          {
+            "type": "string",
+            "const": "outdated",
+            "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "The lease names a server that does not answer, or is not a lease at all."
+          }
+        ],
+        "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+      },
+      "ServerStatus": {
+        "type": "object",
+        "properties": {
+          "checkout_id": {
+            "type": "string",
+            "description": "This checkout's identity: what this process answers as `repository_id`."
+          },
+          "git": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GitIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The git repository this checkout belongs to; absent where git cannot be asked."
+          },
+          "desired": {
+            "$ref": "#/components/schemas/Desired",
+            "description": "What this executable would serve, and what `standing` is measured against."
+          },
+          "this_process": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeaseView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lease this process holds, when it is the server; absent when the question was\nanswered by a process that serves nothing."
+          },
+          "standing": {
+            "$ref": "#/components/schemas/ServerStanding",
+            "description": "Where this checkout's server stands."
+          },
+          "servers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServerView"
+            },
+            "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+          }
+        },
+        "required": [
+          "checkout_id",
+          "desired",
+          "standing",
+          "servers"
+        ],
+        "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+      },
+      "ServerView": {
+        "type": "object",
+        "properties": {
+          "worktree": {
+            "type": "string",
+            "description": "The checkout, absolute and canonical."
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The branch checked out there, when git names one."
+          },
+          "checkout_id": {
+            "type": "string",
+            "description": "The checkout's identity: what its server answers as `repository_id`."
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "Whether this is the primary checkout rather than a linked worktree."
+          },
+          "this_checkout": {
+            "type": "boolean",
+            "description": "Whether this is the checkout the answering process serves."
+          },
+          "standing": {
+            "$ref": "#/components/schemas/ServerStanding",
+            "description": "Where its server stands."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why, when the standing is not `ready`: what the lease held, or what answered."
+          },
+          "lease": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeaseView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lease, when the file holds one."
+          },
+          "peers": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many peers the server reports attached, when it answers."
+          }
+        },
+        "required": [
+          "worktree",
+          "checkout_id",
+          "primary",
+          "this_checkout",
+          "standing"
+        ],
+        "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+      },
       "ServiceAvailability": {
         "oneOf": [
           {
@@ -22056,7 +22430,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.4.0",
+    "generator": "majordomus-cli 0.5.0",
     "infrastructure": [
       {
         "id": "home",
@@ -22126,5 +22500,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.4.0"
+  "x-majordomus-generator": "majordomus-cli 0.5.0"
 }

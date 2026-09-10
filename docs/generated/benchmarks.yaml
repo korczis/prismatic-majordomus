@@ -1,23 +1,23 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.4.0
+# Generator: majordomus-cli 0.5.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.4.0
+generator: majordomus-cli 0.5.0
 coverage:
   - scope: direct
-    required: 77
-    covered: 74
+    required: 78
+    covered: 75
     missing: 0
     waived: 3
   - scope: http
-    required: 77
-    covered: 74
+    required: 78
+    covered: 75
     missing: 0
     waived: 3
   - scope: mcp
-    required: 75
-    covered: 72
+    required: 76
+    covered: 73
     missing: 0
     waived: 3
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 242
-    covered: 233
+    required: 245
+    covered: 236
     missing: 0
     waived: 9
 capabilities:
@@ -629,6 +629,15 @@ capabilities:
       - secret
       - undeclared
       - first-object
+  - id: server.status
+    module: server
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: trace.commit
     module: trace
     kind: query

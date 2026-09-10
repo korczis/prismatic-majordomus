@@ -4,6 +4,7 @@
 //! peer that attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
 //! ends when its owner's session is over and the last peer has left.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -12,7 +13,7 @@ use crate::error::Result;
 use crate::http::mcp::McpEndpoint;
 use crate::http::server::{self, Running};
 use crate::http::Router;
-use crate::lease::Lease;
+use crate::lease::{Lease, LeaseFile};
 
 /// How often the server looks for expired sessions while it waits for peers to leave.
 pub const REAP_INTERVAL: Duration = Duration::from_millis(500);
@@ -22,6 +23,8 @@ pub struct SharedServer {
     running: Running,
     endpoint: Arc<McpEndpoint>,
     lease: Lease,
+    /// Set by [`SharedServer::stop`]; the reader thread ends at its next tick.
+    stopping: Arc<AtomicBool>,
 }
 
 impl SharedServer {
@@ -57,6 +60,43 @@ impl SharedServer {
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
         let running = bound.start(router);
+        // The server's own reader: every REAP_INTERVAL it forgets the HTTP sessions that
+        // stopped pinging — on every path, not only while the owner waits for peers to
+        // leave, so that a dead peer never stays `attached` on the board — and it checks
+        // that the lease is still its own. A lease another process took over is that
+        // process's to remove; this one stops claiming it, serves the peers it has, and
+        // ends with them.
+        let stopping = Arc::new(AtomicBool::new(false));
+        {
+            let endpoint = Arc::clone(&endpoint);
+            let stopping = Arc::clone(&stopping);
+            let path = lease.path().to_path_buf();
+            let token = lease.token().to_string();
+            let _ = std::thread::Builder::new()
+                .name("majordomus-server-tick".into())
+                .spawn(move || {
+                    let mut lost = false;
+                    while !stopping.load(Ordering::SeqCst) {
+                        std::thread::sleep(REAP_INTERVAL);
+                        let gone = endpoint.reap();
+                        if !gone.is_empty() {
+                            tracing::info!(peers = ?gone, "peer(s) expired: no message within the idle timeout");
+                        }
+                        if !lost
+                            && LeaseFile::read(&path)
+                                .document()
+                                .is_none_or(|d| d.token != token)
+                        {
+                            lost = true;
+                            crate::lease::lost();
+                            tracing::warn!(
+                                lease = %path.display(),
+                                "the lease is no longer this server's: another process took it over; this server serves the peers it has and ends with them"
+                            );
+                        }
+                    }
+                });
+        }
         tracing::info!(
             url = %url,
             lease = %lease.path().display(),
@@ -67,6 +107,7 @@ impl SharedServer {
             running,
             endpoint,
             lease,
+            stopping,
         })
     }
 
@@ -107,6 +148,7 @@ impl SharedServer {
 
     /// Stop serving and release the lease.
     pub fn stop(self) {
+        self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
         self.running.stop();
         self.lease.release();

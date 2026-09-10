@@ -254,10 +254,94 @@ fn is_legacy_layout(dir: &Path) -> bool {
 /// assert!(!identity(Path::new("/a/b")).contains('/'));
 /// ```
 pub fn identity(root: &Path) -> String {
+    digest(root)
+}
+
+fn digest(path: &Path) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
-    hasher.update(root.as_os_str().as_encoded_bytes());
+    hasher.update(path.as_os_str().as_encoded_bytes());
     format!("{:x}", hasher.finalize())[..32].to_string()
+}
+
+/// The git repository a checkout belongs to, as distinct from the checkout itself.
+///
+/// [`identity`] names a checkout: one server, one lease, one index per checkout root. Every
+/// linked worktree of one git repository is a checkout of its own by that measure, and
+/// nothing in it said that they belong together. This does: the git directory every work
+/// tree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest
+/// is one value for every checkout of that repository, and `linked` says whether this
+/// checkout is the primary one or a work tree hanging off it. `None` where git cannot be
+/// asked: a repository of the layer does not have to be version controlled.
+///
+/// ```
+/// use majordomus_cli::repository::{git_identity, identity, GitIdentity};
+/// use std::process::Command;
+/// let dir = tempfile::tempdir().unwrap();
+/// let root = dir.path().join("repo");
+/// std::fs::create_dir_all(&root).unwrap();
+/// let git = |args: &[&str]| assert!(Command::new("git").arg("-C").arg(&root).args(args).status().unwrap().success());
+/// git(&["init", "-q", "."]);
+/// git(&["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "init"]);
+/// let wt = dir.path().join("repo-wt");
+/// git(&["worktree", "add", "-q", "-b", "feature/x", wt.to_str().unwrap()]);
+///
+/// let primary: GitIdentity = git_identity(&root).expect("a work tree");
+/// let linked: GitIdentity = git_identity(&wt).expect("a linked work tree");
+/// assert_eq!(primary.id, linked.id, "one repository");
+/// assert_ne!(identity(&root), identity(&wt), "two checkouts");
+/// assert!(!primary.linked && linked.linked);
+/// assert!(!primary.id.contains('/'), "a digest, never a path");
+/// ```
+#[derive(
+    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct GitIdentity {
+    /// The git directory every work tree of the repository shares, canonical.
+    pub common_dir: PathBuf,
+    /// Its digest: the same for every checkout of one repository, different across
+    /// repositories, and never a path.
+    pub id: String,
+    /// Whether this checkout is a linked work tree rather than the primary one.
+    pub linked: bool,
+}
+
+/// Ask git which repository the checkout at `root` belongs to. One subprocess; `None`
+/// when git is absent or the root is not a work tree.
+///
+/// ```
+/// use majordomus_cli::repository::git_identity;
+/// let plain = tempfile::tempdir().unwrap();
+/// assert!(git_identity(plain.path()).is_none(), "a plain directory belongs to no repository");
+/// ```
+pub fn git_identity(root: &Path) -> Option<GitIdentity> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--git-common-dir"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let raw = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if raw.is_empty() {
+        return None;
+    }
+    // relative to the current directory when the current directory is inside the work
+    // tree, absolute otherwise; both forms are answers
+    let common = PathBuf::from(&raw);
+    let common = if common.is_absolute() {
+        common
+    } else {
+        root.join(common)
+    };
+    let common = common.canonicalize().ok()?;
+    Some(GitIdentity {
+        id: digest(&common),
+        linked: root.join(".git").is_file(),
+        common_dir: common,
+    })
 }
 
 #[cfg(test)]

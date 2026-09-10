@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# lease-reader-check — the shared server's lease has one reader, and this is what keeps it
+# that way.
+#
+# The lease is the rendezvous of ADR 0003: the one file that says which process serves a
+# checkout and at which address. It had grown five parsers — three in the executable, `jq`
+# in lib/context.sh, and `sed` over JSON in .just/serve.just and again in
+# scripts/cockpit-probe. Five readers of one document is five opinions about what it
+# contains, and two of them were a regular expression over JSON that breaks the day
+# anything writes the file pretty-printed. ADR 0035 made the executable's three one typed
+# reading (`lease::LeaseFile::read`); the shell readers moved onto `serve status`, which is
+# that reading served. This gate holds the rest of the tree to it.
+#
+# The subject is every tracked file that is neither documentation nor a test, minus the
+# reader itself and the files allowed below by name. A finding is a file that names the
+# lease path, its bare file name or the lease schema at all: a file that names none of the
+# three cannot parse the lease, and a file that names one is either the reader, an allowed
+# non-reader, or new debt. The names are read out of the reader's own declarations rather
+# than written here, so that renaming either renames it in one place
+# (project.no-machine-paths).
+#
+# Allowed by name, with the reason:
+#   apps/majordomus-cli/src/lease.rs   the reader; the file this rule is about
+#   .envrc                             asks direnv to watch the file; never opens it
+#
+# Exempt by kind:
+#   documentation — *.md, docs/, site/, .ai/ — describes the lease and parses nothing;
+#   tests — apps/majordomus-cli/tests/, test/cases/ — plant a lease and read it back,
+#   where the file is the subject under test rather than a dependency of the code.
+#
+# Enforcement is a ratchet, not a cliff: a reader that exists today and cannot be moved is
+# recorded in the baseline, and the gate fails only on a file that is not on it, so the
+# debt can shrink and cannot grow. The baseline is empty as it is first written, which is
+# the point: nothing but the reader reads the lease.
+#
+#   scripts/ci/lease-reader-check                    report, and fail on a new reader
+#   MJ_ROOT=<dir> scripts/ci/lease-reader-check      measure another tree (case 110 does)
+#   scripts/ci/lease-reader-check --write-baseline   record today's readers (a deliberate act)
+#   scripts/ci/lease-reader-check --strict           fail on any reader, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 a new reader (or any reader under --strict), 12
+# unusable.
+set -eu
+set -o pipefail
+
+# MJ_ROOT lets the behavioural case point this at a fixture; without it the repository the
+# script lives in is the subject, which is what CI wants.
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+READER="apps/majordomus-cli/src/lease.rs"
+BASELINE=".ai/repo/lease-reader-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "lease-reader-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+if [ ! -f "$READER" ]; then
+  echo "lease-reader-check: no lease reader at $READER; nothing to measure"
+  exit 0
+fi
+
+# The names a parser has to use, read from the reader that declares them. A copy here would
+# be the sixth place the lease is written down, and it would go stale the first time either
+# changed.
+lease_path="$(sed -n 's/^pub const LEASE_PATH: &str = "\(.*\)";$/\1/p;' "$READER" | sed -n '1p')"
+schema="$(sed -n 's/^pub const SCHEMA: &str = "\(.*\)";$/\1/p;' "$READER" | sed -n '1p')"
+if [ -z "$lease_path" ] || [ -z "$schema" ]; then
+  echo "lease-reader-check: $READER declares no LEASE_PATH and SCHEMA to look for" >&2
+  exit 12
+fi
+# The file's own name as well as its path, because a reader that composes the directory
+# from a variable — `"$MJ_STATE_DIR/mcp/server.json"`, which is exactly what the reader in
+# lib/context.sh looked like — never writes the path out in full. A gate that matched only
+# the full path would have passed the very reader this rule was written for.
+lease_name="$(basename "$lease_path")"
+
+# Every file of the tree, from git where there is one and from the filesystem where there
+# is not, so that the gate measures a fixture as readily as its own repository.
+tracked() {
+  listed=""
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    listed="$(git ls-files || true)"
+  fi
+  # An empty index is a tree git does not know about — a fixture, an unpacked release —
+  # and not a tree with no files in it. Measuring nothing and passing is how a check stops
+  # working without saying so.
+  if [ -n "$listed" ]; then
+    printf '%s\n' "$listed"
+  else
+    find . -type f -not -path './.git/*' | sed 's|^\./||'
+  fi
+}
+
+subject() {
+  tracked | LC_ALL=C sort | while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ -f "$f" ] || continue
+    case "$f" in
+      "$READER") continue ;;                                  # the reader
+      .envrc) continue ;;                                     # watches, never opens
+      *.md|docs/*|site/*|.ai/*) continue ;;                   # documentation
+      apps/majordomus-cli/tests/*|test/cases/*) continue ;;    # the lease as a subject
+    esac
+    printf '%s\n' "$f"
+  done
+}
+
+current="$(subject | while IFS= read -r f; do
+  if LC_ALL=C grep -qIF -e "$lease_path" -e "$lease_name" -e "$schema" "$f" 2>/dev/null; then printf '%s\n' "$f"; fi
+done)"
+
+if [ "$MODE" = write ]; then
+  { echo "# Files that read the shared server's lease and are not its one reader."
+    echo "# Written by scripts/ci/lease-reader-check --write-baseline. The list may shrink;"
+    echo "# a file not on it that names the lease fails the gate. Do not add by hand."
+    printf '%s' "$current" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "lease-reader-check: baseline written with $(printf '%s' "$current" | grep -c . || true) file(s)"
+  exit 0
+fi
+
+if [ -n "$current" ]; then
+  printf '%s' "$current" | grep -v '^$' | while IFS= read -r f; do
+    printf 'FAIL lease-reader %s names the lease (%s, %s) or its schema (%s)\n' "$f" "$lease_path" "$lease_name" "$schema"
+  done
+fi
+
+known=""
+if [ -f "$BASELINE" ]; then
+  known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
+fi
+
+if [ "$MODE" = strict ]; then
+  if [ -z "$current" ]; then
+    echo "lease-reader-check: the lease is read by $READER and by nothing else"
+    exit 0
+  fi
+  echo "lease-reader-check: $(printf '%s' "$current" | grep -c . || true) file(s) read the lease (--strict)" >&2
+  exit 10
+fi
+
+new="$(comm -23 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) \
+                <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(comm -13 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) \
+                 <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+if [ -n "$gone" ]; then
+  echo
+  echo "lease-reader-check: a reader is gone, run --write-baseline to record it:"
+  printf '%s\n' "$gone" | sed 's/^/  /'
+fi
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "lease-reader-check: a second parser of the lease, not in $BASELINE:" >&2
+  printf '%s\n' "$new" | sed 's/^/  /' >&2
+  echo "  The lease is read by $READER and served by \`serve status\`; a shell caller asks" >&2
+  echo "  the executable (bin/majordomus-cli serve status --format json) rather than opening" >&2
+  echo "  the file. The rule is project.the-lease-is-read-once." >&2
+  exit 10
+fi
+echo "lease-reader-check: the lease is read by $READER ($(printf '%s\n' "$known" | grep -c . || true) known reader(s) besides it)"

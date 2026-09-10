@@ -142,19 +142,38 @@ mj_validate_state() {
 mj_validate_scope() {
   mj_task_gate scope || return 0
   mj_finish_gate scope || return 0
-  local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words
+  local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words soft=0 repro
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
+  # Only a *completed* finish is refused by scope, for the reason the blocker gate below
+  # gives and one more that is specific to this gate: `start` will not begin a task while
+  # one is active, and `finish` is the only way to close one, so refusing every outcome
+  # leaves a worker whose scope turned out too narrow with no move at all except editing
+  # current.yaml by hand. That happened on 2026-09-10 to the session that added live
+  # scenarios. `partial`, `blocked`, `no_match` and `failed` are honest statements that the
+  # work did not complete; the files are still named, as warnings, because what a worker
+  # needs is to see them and not to be unable to say what happened.
+  if [ "$MJ_DOCTRINE_CMD" = finish ] && [ -n "${MJ_FINISH_OUTCOME:-}" ] && [ "$MJ_FINISH_OUTCOME" != completed ]; then soft=1; fi
   # the scope is read once, not once per touched file: that was one awk per file, and a
   # tree with a long diff paid thousands of them for a list that does not change
   scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"; scope_words="$(printf '%s\n' "$scope_list" | paste -sd, -)"
+  repro="git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"
   for f in $(mj_git_touched "$(mj_cur head)"); do
     mj_is_ai_path "$f" && continue
     case " $allow_gen " in *" $f "*) continue ;; esac
     inside=0
     for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
-    if [ "$inside" = 1 ]; then n_in=$((n_in+1)); else n_out=$((n_out+1)); mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"; fi
+    if [ "$inside" = 1 ]; then n_in=$((n_in+1))
+    else
+      n_out=$((n_out+1))
+      if [ "$soft" = 1 ]; then mj_warn scope "$f" "outside claimed scope ($scope_words)" "$repro"
+      else mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "$repro"; fi
+    fi
   done
-  [ "$n_out" = 0 ] && mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
+  if [ "$n_out" = 0 ]; then mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
+  elif [ "$soft" = 1 ]; then
+    mj_doctrine_skip scope "$id" "$n_out file(s) outside scope; outcome is $MJ_FINISH_OUTCOME, not completed, so scope does not refuse it"
+    MJ_DOCTRINE_SKIPPED=1
+  fi
   MJ_TOUCHED_IN="$n_in"
   return 0
 }

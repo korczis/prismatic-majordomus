@@ -89,6 +89,9 @@ mod tests {
         let cases: &[Case] = &[
             (&["majordomus", "mcp"], |c| matches!(c, Command::Mcp(_))),
             (&["majordomus", "serve"], |c| matches!(c, Command::Serve(_))),
+            (&["majordomus", "serve", "status"], |c| {
+                matches!(c, Command::Serve(_))
+            }),
             (&["majordomus", "capabilities", "list"], |c| {
                 matches!(c, Command::Capabilities(_))
             }),

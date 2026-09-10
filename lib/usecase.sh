@@ -7,10 +7,18 @@
 #
 # A use case is a Markdown file with front matter (share/schemas/majordomus/use-case/use-case.v1.schema.json): a
 # task a person performs, the commands, rules, claims, responsibilities and applications
-# it names, and a scenario: a fresh repository prepared by a setup script, then real
-# invocations of bin/majordomus with their expected exit codes and output. Nothing here is
-# prose about the tool; a reference that does not resolve or a step that does not behave
-# is a failure with the file and the step named.
+# it names, and a scenario: real invocations of bin/majordomus with their expected exit
+# codes and output. Nothing here is prose about the tool; a reference that does not resolve
+# or a step that does not behave is a failure with the file and the step named.
+#
+# A scenario declares where it runs (ADR 38). `mode: fixture`, the default, prepares a
+# fresh repository with a setup script and proves the tool behaves: its evidence is
+# derived, committed and reproduced by CI. `mode: live` asks its questions of the
+# repository the command was invoked in, may run only commands share/commands.yaml
+# declares `class: read-only`, and may assert an obligation instead of running anything —
+# a step that is discharged, unmet or stale rather than passing or failing. A live
+# scenario is how a class of work states what it owes; `check` is how one task's own
+# promises are judged, and both read the same judgement in lib/evidence.sh.
 #
 # Evidence is written under the local half (.ai/local/evidence/use-cases/<id>.json), never
 # under the tracked tree; the site generator runs the scenarios itself and embeds the
@@ -18,16 +26,21 @@
 
 MJ_UC_DIR=""; MJ_AP_DIR=""; MJ_UC_IDS=""; MJ_UC_N=0; MJ_UC_LOADED=0
 MJ_UC_EVIDENCE=""
-# the command registry, for the public commands coverage is counted over
+# the command registry, for the public commands coverage is counted over, and for the
+# class a live scenario's steps are held to
 # shellcheck source=commands.sh
 . "$MJ_LIB_DIR/commands.sh"
+# the obligation vocabulary and the one judgement of whether an obligation is discharged;
+# a live scenario asserts obligations and must reach the same answer check reaches
+# shellcheck source=evidence.sh
+. "$MJ_LIB_DIR/evidence.sh"
 
 mj_uc_usage() {
   cat <<'USAGE'
 usage: majordomus usecase list [--json]
        majordomus usecase show <id>
        majordomus usecase validate [--json]
-       majordomus usecase run [<id>...] [--json] [--out <dir>] [--keep]
+       majordomus usecase run [<id>...] [--json] [--out <dir>] [--keep] [--live]
        majordomus usecase coverage [--json] [--check]
        majordomus usecase impact [--base <ref>] [--json]
        majordomus usecase scaffold [--missing] [--for command:<name>] [--dry-run]
@@ -36,10 +49,14 @@ usage: majordomus usecase list [--json]
   validate  every reference resolves (commands, doctrines, claims, responsibilities, applications,
             categories, setup scripts, stdin files), ids are unique and match their file, the body
             carries its sections; exit 10 on any failure
-  run       execute the scenarios against bin/majordomus in disposable repositories, assert every
-            step, write the evidence under .ai/local/evidence/use-cases/; exit 10 when a step fails
+  run       execute the scenarios against bin/majordomus and assert every step: a fixture scenario
+            in a disposable repository, evidence under .ai/local/evidence/use-cases/; a live one
+            against this repository, read-only, evidence under .ai/local/evidence/live/ and never
+            committed. Fixtures run by default; --live adds the live ones, and naming an id runs it
+            whatever its mode. Exit 10 when a step fails or an obligation is unmet
   coverage  every public command, guaranteed claim and MCP tool against the use cases that name and
-            run it; --check exits 10 on a gap the policy makes required (policy: use_cases.coverage)
+            run it in a fixture; --check exits 10 on a gap the policy makes required
+            (policy: use_cases.coverage)
   impact    from the files changed since --base (default: the upstream, else HEAD) plus the work
             tree, the commands, rules, use cases, scenarios and behavioural cases affected
   scaffold  write a draft use case for every public command no active use case names, from what the
@@ -147,7 +164,8 @@ mj_uc_has() { # index field value
 mj_uc_runs() { # index command: does the scenario run it?
   local n="MJUCR$1" i=0 k acc
   if [ -z "${!n+x}" ]; then
-    acc=" "; while k="MJUC${1}__scenario__steps__${i}__run__0"; [ -n "${!k:-}" ]; do acc="$acc${!k} "; i=$((i+1)); done
+    acc=" "; while k="MJUC${1}__scenario__steps__${i}__id"; [ -n "${!k:-}" ]; do
+      k="MJUC${1}__scenario__steps__${i}__run__0"; if [ -n "${!k:-}" ]; then acc="$acc${!k} "; fi; i=$((i+1)); done
     printf -v "$n" '%s' "$acc"
   fi
   case "${!n}" in *" $2 "*) return 0 ;; esac; return 1
@@ -168,9 +186,24 @@ mj_uc_categories() {
   awk -F= '/^categories\.[0-9]+\.id=/ { print substr($0, index($0, "=") + 1) }' "$flat"
   rm -f "$flat"
 }
-# the commands a scenario runs, one per line, in order
-mj_uc_scenario_commands() { local i="$1" k=0 c; while c="$(mj_uc_v "$i" "scenario.steps.$k.run.0")"; [ -n "$c" ]; do printf '%s\n' "$c"; k=$((k+1)); done; }
-mj_uc_has_scenario() { local k="MJUC${1}__scenario__setup"; [ -n "${!k:-}" ]; }
+# the commands a scenario runs, one per line, in order. The walk is over step ids, not
+# over `run.0`: an obligation step has no command, and a loop that stopped at the first
+# one would silently truncate the scenario at it.
+mj_uc_scenario_commands() { local i="$1" k=0; while mj_uc_get "$i" "scenario.steps.$k.id"; [ -n "$MJ_V" ]; do mj_uc_get "$i" "scenario.steps.$k.run.0"; if [ -n "$MJ_V" ]; then printf '%s\n' "$MJ_V"; fi; k=$((k+1)); done; }
+# a scenario is its steps. A fixture scenario also names a setup; a live one deliberately
+# has none, so the setup cannot be what says a scenario is there.
+mj_uc_has_scenario() { local k="MJUC${1}__scenario__steps__0__id"; [ -n "${!k:-}" ]; }
+# Where a scenario runs (ADR 38): `fixture` in a disposable repository, the default and
+# what CI reproduces; `live` in the repository the command was invoked in, read-only.
+mj_uc_mode() { local k="MJUC${1}__scenario__mode"; printf '%s' "${!k:-fixture}"; }
+mj_uc_is_live() { local k="MJUC${1}__scenario__mode"; [ "${!k:-fixture}" = live ]; }
+# Whether this run includes this scenario. A bare `usecase run` runs the fixtures and only
+# the fixtures, so what CI means by it does not change under a repository that adds a live
+# scenario; `--live` adds them, and naming an id runs it whatever its mode.
+mj_uc_selected() { # index named(0|1) want_live(0|1)
+  mj_uc_is_live "$1" || return 0
+  [ "$2" = 1 ] || [ "$3" = 1 ]
+}
 mj_uc_active() { local k="MJUC${1}__status"; [ "${!k:-}" = active ]; }
 # the fixture directory the scenarios draw setup scripts and stdin bodies from: the
 # repository's own when it has one, otherwise the distribution's (a managed repository
@@ -303,17 +336,47 @@ mj_uc_validate_all() {
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
-      mj_uc_get "$i" scenario.setup
-      [ -f "$fix/setup/$MJ_V.sh" ] || mj_uc_bad "$id" "scenario names setup '$MJ_V', which $(mj_rel "$fix")/setup/ does not have" ""
+      local mode obl
+      mode="$(mj_uc_mode "$i")"
+      case "$mode" in
+        fixture)
+          mj_uc_get "$i" scenario.setup
+          [ -n "$MJ_V" ] || mj_uc_bad "$id" "a fixture scenario names no setup; the repository it runs in has to be prepared" "scenario: mode: live, to ask about this repository instead"
+          [ -z "$MJ_V" ] || [ -f "$fix/setup/$MJ_V.sh" ] || mj_uc_bad "$id" "scenario names setup '$MJ_V', which $(mj_rel "$fix")/setup/ does not have" ""
+          ;;
+        live)
+          mj_uc_get "$i" scenario.setup
+          [ -z "$MJ_V" ] || mj_uc_bad "$id" "a live scenario names setup '$MJ_V'; it runs in this repository and prepares nothing" "remove the setup, or drop mode: live"
+          ;;
+        *) mj_uc_bad "$id" "scenario mode '$mode' is not fixture or live" "ADR 38" ;;
+      esac
       k=0; sids=""
       while mj_uc_get "$i" "scenario.steps.$k.id"; sid="$MJ_V"; [ -n "$sid" ]; do
         case " $sids " in *" $sid "*) mj_uc_bad "$id" "step '$sid' is declared twice" "" ;; esac; sids="$sids $sid"
         mj_uc_get "$i" "scenario.steps.$k.run.0"; cmd="$MJ_V"
-        [ -n "$cmd" ] || mj_uc_bad "$id" "step '$sid' runs nothing" ""
-        case " $(printf '%s' "$cmd_list" | tr '\n' ' ') " in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
-        mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
-        mj_uc_get "$i" "scenario.steps.$k.stdin"; found="$MJ_V"
-        [ -z "$found" ] || [ -f "$stdin_dir/$found" ] || mj_uc_bad "$id" "step '$sid' names stdin '$found', which $(mj_rel "$stdin_dir")/ does not have" ""
+        mj_uc_get "$i" "scenario.steps.$k.obligation"; obl="$MJ_V"
+        if [ -n "$obl" ]; then
+          # an obligation step asserts that work was done; it runs nothing and there is
+          # nothing in a fixture to owe it
+          [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and asserts obligation '$obl'; a step is one or the other" ""
+          [ "$mode" = live ] || mj_uc_bad "$id" "step '$sid' asserts obligation '$obl' in a fixture scenario; a disposable repository owes nothing" "mode: live"
+          mj_obligations_load 2>/dev/null || true
+          mj_obligation_known "$obl" || mj_uc_bad "$id" "step '$sid' asserts obligation '$obl', which share/obligations.yaml does not declare" "majordomus evidence --help"
+        else
+          [ -n "$cmd" ] || mj_uc_bad "$id" "step '$sid' runs nothing" ""
+          case " $(printf '%s' "$cmd_list" | tr '\n' ' ') " in *" $cmd "*) ;; *) mj_uc_bad "$id" "step '$sid' runs '$cmd', which the use case does not list under commands" "" ;; esac
+          mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
+          mj_uc_get "$i" "scenario.steps.$k.stdin"; found="$MJ_V"
+          [ -z "$found" ] || [ -f "$stdin_dir/$found" ] || mj_uc_bad "$id" "step '$sid' names stdin '$found', which $(mj_rel "$stdin_dir")/ does not have" ""
+          # A live scenario is a question about this repository, never an action on it.
+          # The class is read from share/commands.yaml, which already declares it, so
+          # safety is a property of the declaration and not of the author's care (ADR 38).
+          if [ "$mode" = live ] && [ -n "$cmd" ]; then
+            mj_cmdreg_load || true
+            local cls; cls="$(mj_cmdreg_class "$cmd")"
+            [ "$cls" = read-only ] || mj_uc_bad "$id" "step '$sid' runs '$cmd', which is ${cls:-undeclared}, in a live scenario; only read-only commands may run against this repository" "share/commands.yaml"
+          fi
+        fi
         k=$((k+1))
       done
       [ "$k" -gt 0 ] || mj_uc_bad "$id" "scenario has no steps" ""
@@ -521,14 +584,90 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   [ "$all_ok" = 1 ]
 }
 
+# ---------------------------------------------------------------- the live runner
+# A live scenario asks its questions of the repository the command was invoked in. It
+# creates nothing, prepares nothing and — because `usecase validate` refuses a step whose
+# command is not `class: read-only` in share/commands.yaml — changes nothing.
+#
+# Unlike a fixture scenario it does not stop at the first failure. A fixture's steps are a
+# sequence: step three runs in the state step two left, so continuing past a failure would
+# assert against a repository that never reached the described state. A live scenario's
+# steps are independent questions about one tree, and a gate that answered only the first
+# of them would send a worker round the loop once per finding.
+mj_uc_run_live() { # index, evidence-file
+  local i="$1" out="$2" id W k sid cmd obl argv_n a rc want pat ok all_ok=1 t0 t1 dur
+  local steps_json="" first=1 raw norm asserts fail_reason n tmp j jstate jrest jmsg jrep task
+  id="$(mj_uc_v "$i" id)"; W="$MJ_ROOT"
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uclive.XXXXXX")"
+  # the task an obligation step is asked about; a live scenario with obligation steps and
+  # no active task reports them unmet, which is the honest answer and not an error
+  task=""; mj_load_current 2>/dev/null && task="$(mj_cur id)" || task=""
+  k=0
+  while sid="$(mj_uc_v "$i" "scenario.steps.$k.id")"; [ -n "$sid" ]; do
+    obl="$(mj_uc_v "$i" "scenario.steps.$k.obligation")"
+    ok=1; asserts=""; fail_reason=""
+    if [ -n "$obl" ]; then
+      if [ -z "$task" ]; then
+        ok=0; jstate=unmet; jmsg="no task is active here, so nothing owes '$obl'"; jrep="majordomus start"
+      else
+        j="$(mj_obligation_judge "$task" "$obl")" || true
+        jstate="${j%%"$MJ_TAB"*}"; jrest="${j#*"$MJ_TAB"}"
+        jmsg="${jrest%%"$MJ_TAB"*}"; jrep="${jrest#*"$MJ_TAB"}"; if [ "$jrep" = "$jrest" ]; then jrep=""; fi
+        [ "$jstate" = pass ] || ok=0
+      fi
+      [ "$ok" = 1 ] || fail_reason="$jmsg"
+      asserts="{\"kind\":\"obligation\",\"token\":\"$(mj_json_esc "$obl")\",\"state\":\"$jstate\",\"result\":\"$([ "$ok" = 1 ] && printf pass || printf "$jstate")\"}"
+      [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
+      steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"obligation\":\"$(mj_json_esc "$obl")\",\"state\":\"$jstate\",\"message\":\"$(mj_json_esc "$jmsg")\",\"reproduce\":$( [ -n "$jrep" ] && printf '"%s"' "$(mj_json_esc "$jrep")" || printf null ),\"assertions\":[$asserts],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf "$jstate")\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null )}"
+      [ "$ok" = 1 ] || all_ok=0
+      k=$((k+1)); continue
+    fi
+    set --; argv_n=0
+    while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
+    want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
+    raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
+    ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?
+    t1="$(mj_ms)"; dur=$((t1 - t0))
+    norm="$(mj_uc_normalise "$W" < "$raw")"
+    if [ "$rc" != "$want" ]; then ok=0; fail_reason="expected exit $want, got $rc"; fi
+    asserts="{\"kind\":\"exit\",\"expected\":$want,\"observed\":$rc,\"result\":\"$([ "$rc" = "$want" ] && printf pass || printf fail)\"},"
+    n=0
+    while pat="$(mj_uc_v "$i" "scenario.steps.$k.expect.stdout_contains.$n")"; [ -n "$pat" ]; do
+      if grep -qE -- "$pat" "$raw"; then asserts="$asserts{\"kind\":\"stdout_contains\",\"pattern\":\"$(mj_json_esc "$pat")\",\"result\":\"pass\"},"
+      else ok=0; [ -n "$fail_reason" ] || fail_reason="expected /$pat/ in the output"; asserts="$asserts{\"kind\":\"stdout_contains\",\"pattern\":\"$(mj_json_esc "$pat")\",\"result\":\"fail\"},"; fi
+      n=$((n+1))
+    done
+    n=0
+    while pat="$(mj_uc_v "$i" "scenario.steps.$k.expect.stdout_not_contains.$n")"; [ -n "$pat" ]; do
+      if grep -qE -- "$pat" "$raw"; then ok=0; [ -n "$fail_reason" ] || fail_reason="did not expect /$pat/ in the output"; asserts="$asserts{\"kind\":\"stdout_not_contains\",\"pattern\":\"$(mj_json_esc "$pat")\",\"result\":\"fail\"},"
+      else asserts="$asserts{\"kind\":\"stdout_not_contains\",\"pattern\":\"$(mj_json_esc "$pat")\",\"result\":\"pass\"},"; fi
+      n=$((n+1))
+    done
+    [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
+    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf unmet)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
+    [ "$ok" = 1 ] || all_ok=0
+    k=$((k+1))
+  done
+  printf '{"schema":"majordomus/use-case-evidence/v1","mode":"live","use_case":"%s","repository":"%s","head":"%s","result":"%s","steps":[%s]}\n' \
+    "$id" "$(mj_json_esc "$(mj_rel "$W")")" "$(mj_git_head 2>/dev/null || printf unknown)" "$([ "$all_ok" = 1 ] && printf pass || printf unmet)" "$steps_json" > "$out"
+  rm -rf "$tmp"
+  [ "$all_ok" = 1 ] || return "$MJ_EX_CONTRACT"
+  return 0
+}
+
 mj_uc_cmd_run() {
-  local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" i id ev rc fails=0 ran=0 skipped=0 first=1 jobs=0 maxjobs="${MJ_UC_JOBS:-8}"
+  local json="${MJ_JSON:-0}" outdir="" keep=0 ids="" named=0 want_live=0 i id ev rc fails=0 unmets=0 lived=0 ran=0 skipped=0 first=1 jobs=0 maxjobs="${MJ_UC_JOBS:-8}"
   while [ $# -gt 0 ]; do case "$1" in
     --json) json=1; shift ;; --out) outdir="$2"; shift 2 ;; --keep) keep=1; shift ;; --jobs) maxjobs="$2"; shift 2 ;;
+    --live) want_live=1; shift ;;
     --help|-h) mj_uc_usage; return 0 ;; -*) mj_die "$MJ_EX_USAGE" "usecase run: unknown option $1" ;;
-    *) ids="$ids $1"; shift ;; esac; done
+    *) ids="$ids $1"; named=1; shift ;; esac; done
   mj_uc_require
   mkdir -p "$MJ_UC_EVIDENCE"
+  # Live evidence is never committed: it describes one tree at one minute on one machine,
+  # and a derived file whose content depends on who derived it is what ADR 5 forbids. It
+  # lands in the local half, which .gitignore already covers.
+  MJ_UC_LIVE_EVIDENCE="$MJ_AI_LOCAL_DIR/evidence/live"; mkdir -p "$MJ_UC_LIVE_EVIDENCE"
   [ -z "$outdir" ] || mkdir -p "$outdir"
   [ -n "$ids" ] || ids="$MJ_UC_IDS"
   for id in $ids; do mj_uc_index "$id" >/dev/null || mj_die "$MJ_EX_MISSING" "no use case '$id' (majordomus usecase list)"; done
@@ -538,11 +677,24 @@ mj_uc_cmd_run() {
   for id in $ids; do
     i="$(mj_uc_index "$id")"
     mj_uc_has_scenario "$i" || continue
+    mj_uc_selected "$i" "$named" "$want_live" || continue
+    if mj_uc_is_live "$i"; then continue; fi
     ( mj_uc_run_one "$i" "$MJ_UC_EVIDENCE/$id.json" "$keep"; echo $? > "$tmp/$id" ) &
     jobs=$((jobs+1))
     if [ "$jobs" -ge "$maxjobs" ]; then wait -n 2>/dev/null || wait; jobs=$((jobs-1)); fi
   done
   wait
+  # The live scenarios run afterwards and one at a time. They share a single repository, so
+  # there is nothing to gain from running them together, and their output is easier to read
+  # in the order the list gives.
+  for id in $ids; do
+    i="$(mj_uc_index "$id")"
+    mj_uc_has_scenario "$i" || continue
+    mj_uc_is_live "$i" || continue
+    mj_uc_selected "$i" "$named" "$want_live" || continue
+    rc=0; mj_uc_run_live "$i" "$MJ_UC_LIVE_EVIDENCE/$id.json" || rc=$?
+    echo "$rc" > "$tmp/$id"; lived=$((lived+1))
+  done
   [ "$json" = 1 ] && printf '{"schema":"majordomus/use-case-run/v1","results":['
   for id in $ids; do
     i="$(mj_uc_index "$id")"
@@ -551,13 +703,23 @@ mj_uc_cmd_run() {
       [ "$json" = 1 ] || printf '%-38s described (no scenario)\n' "$id"
       continue
     fi
-    ev="$MJ_UC_EVIDENCE/$id.json"; rc="$(cat "$tmp/$id" 2>/dev/null || echo 13)"
+    if ! mj_uc_selected "$i" "$named" "$want_live"; then
+      skipped=$((skipped+1))
+      [ "$json" = 1 ] || printf '%-38s live (run it with --live)\n' "$id"
+      continue
+    fi
+    if mj_uc_is_live "$i"; then ev="$MJ_UC_LIVE_EVIDENCE/$id.json"; else ev="$MJ_UC_EVIDENCE/$id.json"; fi
+    rc="$(cat "$tmp/$id" 2>/dev/null || echo 13)"
     ran=$((ran+1))
     # A scenario's verdict is a fact about the run, not about how it is being printed.
     # Counting failures inside the text branch left `--json` reporting "failed":0 and
     # exiting 0 however the scenarios went, which made the exit code generate-site-data
     # relies on to refuse a broken demonstration permanently green.
-    [ "$rc" = 0 ] || fails=$((fails+1))
+    # A live scenario that exits 10 is reporting work not done, which is not a defect in
+    # the tool and must not be counted or printed as one (ADR 38).
+    if [ "$rc" = 0 ]; then :
+    elif [ "$rc" = "$MJ_EX_CONTRACT" ] && mj_uc_is_live "$i"; then unmets=$((unmets+1))
+    else fails=$((fails+1)); fi
     [ -z "$outdir" ] || cp "$ev" "$outdir/$id.json"
     if [ "$json" = 1 ]; then
       [ "$first" = 1 ] || printf ','; first=0
@@ -568,15 +730,19 @@ mj_uc_cmd_run() {
       else printf '{"use_case":"%s","result":"fail","reason":"the scenario wrote no evidence (exit %s)"}' "$id" "$rc"; fi
     else
       if [ "$rc" = 0 ]; then printf '%-38s pass  %s step(s)\n' "$id" "$(grep -o '"id":"' "$ev" | wc -l | tr -d ' ')"
+      elif [ "$rc" = "$MJ_EX_CONTRACT" ] && mj_uc_is_live "$i"; then
+        printf '%-38s UNMET %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
+        grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | cut -d'"' -f4 | sed 's/^/      | /' | head -20
       else printf '%-38s FAIL  %s\n' "$id" "$(grep -o '"reason":"[^"]*"' "$ev" | grep -v 'null' | head -1 | cut -d'"' -f4)"
         grep -o '"output":"[^"]*"' "$ev" | tail -1 | cut -d'"' -f4 | sed 's/\\n/\n/g' | sed 's/^/      | /' | head -20; fi
     fi
   done
   rm -rf "$tmp"
-  if [ "$json" = 1 ]; then printf '],"ran":%s,"failed":%s,"skipped":%s}\n' "$ran" "$fails" "$skipped"
-  else printf 'usecase run: %s scenario(s), %s failed, %s described only; evidence under %s/\n' "$ran" "$fails" "$skipped" "$(mj_rel "$MJ_UC_EVIDENCE")"; fi
-  mj_ledger_append use_cases.ran "\"ran\":$ran,\"failed\":$fails" 2>/dev/null || true
-  [ "$fails" = 0 ] || return "$MJ_EX_CONTRACT"
+  if [ "$json" = 1 ]; then printf '],"ran":%s,"failed":%s,"unmet":%s,"skipped":%s}\n' "$ran" "$fails" "$unmets" "$skipped"
+  else printf 'usecase run: %s scenario(s), %s failed, %s unmet, %s not run; evidence under %s/%s\n' "$ran" "$fails" "$unmets" "$skipped" \
+    "$(mj_rel "$MJ_UC_EVIDENCE")" "$([ "$lived" = 0 ] || printf ' and %s/' "$(mj_rel "$MJ_UC_LIVE_EVIDENCE")")"; fi
+  mj_ledger_append use_cases.ran "\"ran\":$ran,\"failed\":$fails,\"unmet\":$unmets" 2>/dev/null || true
+  [ "$fails" = 0 ] && [ "$unmets" = 0 ] || return "$MJ_EX_CONTRACT"
   return 0
 }
 
@@ -600,7 +766,10 @@ mj_uc_coverage_rows() {
       mj_uc_active "$i" || { i=$((i+1)); continue; }
       if mj_uc_has "$i" commands "$c"; then
         n_named=$((n_named+1))
-        if mj_uc_runs "$i" "$c"; then n_exec=$((n_exec+1))
+        # A live scenario runs the command, and CI cannot reproduce what it saw: the tree
+        # it asked about was one machine's at one minute. It counts as naming the command,
+        # never as covering it — a guarantee nothing can re-run is not a guarantee (ADR 38).
+        if mj_uc_runs "$i" "$c" && ! mj_uc_is_live "$i"; then n_exec=$((n_exec+1))
           local idk="MJUC${i}__id"; ev="$MJ_UC_EVIDENCE/${!idk}.json"; [ -f "$ev" ] && grep -q '"result":"pass"' "$ev" && n_ev=$((n_ev+1)); fi
       fi
       i=$((i+1))
@@ -612,13 +781,16 @@ mj_uc_coverage_rows() {
     n_named=0; n_exec=0
     i=0
     while [ "$i" -lt "$MJ_UC_N" ]; do
-      mj_uc_active "$i" && mj_uc_has "$i" claims "$cls" && { n_named=$((n_named+1)); mj_uc_has_scenario "$i" && n_exec=$((n_exec+1)); }
+      if mj_uc_active "$i" && mj_uc_has "$i" claims "$cls"; then
+        n_named=$((n_named+1))
+        if mj_uc_has_scenario "$i" && ! mj_uc_is_live "$i"; then n_exec=$((n_exec+1)); fi
+      fi
       i=$((i+1))
     done
     mj_uc_status_of "$n_named" "$n_exec"; printf 'claim\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$n_named" "$n_exec" "$n_exec" "$MJ_UC_ST"
   done
   if [ -f "$MJ_ROOT/docs/generated/registry.json" ]; then
-    grep -o '"tool": *"[a-z_]*"' "$MJ_ROOT/docs/generated/registry.json" | sed 's/.*"\([a-z_]*\)"$/\1/' | sort -u | while IFS= read -r cls; do
+    grep -o '"tool": *"[a-z_]*"' "$MJ_ROOT/docs/generated/registry.json" | sed 's/.*"\([a-z_]*\)"$/\1/' | LC_ALL=C sort -u | while IFS= read -r cls; do
       n_named=0
       i=0
       while [ "$i" -lt "$MJ_UC_N" ]; do
@@ -685,7 +857,7 @@ mj_uc_cmd_impact() {
   mj_uc_require
   [ -n "$base" ] || base="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
   [ -n "$base" ] || base="HEAD"
-  files="$( { mj_git diff --name-only "$base" 2>/dev/null; mj_git status --porcelain 2>/dev/null | cut -c4- | sed 's/^.* -> //'; } | sort -u )"
+  files="$( { mj_git diff --name-only "$base" 2>/dev/null; mj_git status --porcelain 2>/dev/null | cut -c4- | sed 's/^.* -> //'; } | LC_ALL=C sort -u )"
   mj_cmdreg_load || true
   for f in $files; do
     case "$f" in
@@ -704,7 +876,7 @@ mj_uc_cmd_impact() {
   if [ -f "$MJ_ROOT/docs/RESPONSIBILITIES.yaml" ]; then
     local rf; rf="$(mktemp "${TMPDIR:-/tmp}/mj.resp.XXXXXX")"; mj_yaml_flatten "$MJ_ROOT/docs/RESPONSIBILITIES.yaml" > "$rf" 2>/dev/null || true
     for f in $files; do
-      for c in $(awk -F= -v f="$f" '$0 ~ /^responsibilities\.[0-9]+\.(files\.[0-9]+|implementation)=/ && substr($0, index($0,"=")+1) == f { split($1,k,"."); print k[2] }' "$rf" | sort -u); do
+      for c in $(awk -F= -v f="$f" '$0 ~ /^responsibilities\.[0-9]+\.(files\.[0-9]+|implementation)=/ && substr($0, index($0,"=")+1) == f { split($1,k,"."); print k[2] }' "$rf" | LC_ALL=C sort -u); do
         r="$(mj_yget "$rf" "responsibilities.$c.command")"; [ -n "$r" ] && [ "$r" != none ] && cmds="$cmds $r"
       done
     done
@@ -720,12 +892,12 @@ mj_uc_cmd_impact() {
     [ "$claims_touched" = 1 ] && [ -n "$(mj_uc_v "$i" claims.0)" ] && ucs="$ucs $id"
     i=$((i+1))
   done
-  cmds="$(printf '%s\n' $cmds | sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | sort -u | tr '\n' ' ')"
+  cmds="$(printf '%s\n' $cmds | LC_ALL=C sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | LC_ALL=C sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | LC_ALL=C sort -u | tr '\n' ' ')"
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
   # behavioural cases that declare coverage of an affected command, and the rules' tests
   for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
   for r in $rules; do n="$(mj_doc_index "$r" 2>/dev/null)" && cases="$cases $(mj_doc_list "$n" tests | tr '\n' ' ')"; done
-  cases="$(printf '%s\n' $cases | sort -u | tr '\n' ' ')"; cases="${cases% }"
+  cases="$(printf '%s\n' $cases | LC_ALL=C sort -u | tr '\n' ' ')"; cases="${cases% }"
   local scen=""; for id in $ucs; do i="$(mj_uc_index "$id")" && mj_uc_has_scenario "$i" && scen="$scen $id"; done; scen="${scen# }"
   if [ "$json" = 1 ]; then
     printf '{"schema":"majordomus/use-case-impact/v1","base":"%s","files":%s,"commands":%s,"rules":%s,"use_cases":%s,"scenarios":%s,"cases":%s}\n' \

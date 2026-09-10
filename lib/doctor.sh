@@ -86,7 +86,7 @@ mj_validate_policy() {
   if [ "$(mj_pol version)" = 1 ]; then
     unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_ALLOW_DIR/policy.txt" || true)"
       if [ -z "$unk" ]; then mj_doctrine_ok policy "$(mj_rel "$MJ_POLICY_FILE")" "parsed, version 1"
-      else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
+      else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | LC_ALL=C sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
   else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)"; fi
 
   local pf n count=0
@@ -357,7 +357,7 @@ EOF
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order
 mj_hook_candidates() {
   printf '%s\n' "$1"
-  if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | sort; fi
+  if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | LC_ALL=C sort; fi
   return 0
 }
 # does the hook line that invokes "<prog> <arg0>" name an executable binary?
@@ -400,7 +400,7 @@ mj_validate_policy_defaults() {
   mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
   # a key is letters, digits and underscores per segment (benchmark.regression.p95 is one)
   for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
-             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
     n=$((n + 1))
     if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
@@ -569,9 +569,38 @@ mj_validate_rule_package() {
 #
 # It also runs the other direction: a mj_validate_* function that no doctrine declares
 # is an orphan validator, which is how a check quietly stops being governed.
+#
+# Two halves, and the difference between them is where the evidence lives.
+#
+# The wiring half — validator defined, command dispatches, blocking failure propagates —
+# reads lib/, which every distribution ships. It is verifiable wherever the tool runs and
+# runs everywhere.
+#
+# The evidence half — the test case that proves the rule, the claim it is filed under, the
+# CI that runs the runner — reads test/, docs/CLAIMS.yaml and .github/, which are the
+# vendor's source tree and which `scripts/release-package` deliberately does not ship: the
+# archive carries bin/ lib/ libexec/ share/ LICENSE and a RELEASE.json stamp. So in an
+# installed distribution those paths are absent by construction, and reporting their
+# absence as a rule violation told an adopting repository it was missing 107 files it was
+# never given and does not owe. That was the whole of `docs/ADOPTION_FIRST_RUN.md`.
+#
+# The discriminator is the stamp, not the paths. `release-package` writes RELEASE.json and
+# `release-verify` refuses an archive without it; a source tree has none. Skipping on "the
+# file is not there" would have been the same diff and a check that can never fail
+# anywhere, including here — which is the failure mode section 6 of that document names.
+# `test/cases/97_vendor_evidence.sh` holds the line: it proves the evidence is still
+# checked in a source tree and that a rotted test path is still a failure.
 mj_validate_doctrine_wiring() {
   local lib="$MJ_LIB_DIR" root="$MJ_HOME"
   local i=0 id val cls fn cmd t c bad=0 n=0
+  # Is this the vendor's source tree, or a packaged distribution serving someone else?
+  # mj_validate_command_coverage answers the same question for the same reason ("a rule
+  # about Majordomus's own suite, so it applies only in the repository that carries one").
+  # It sets MJ_DOCTRINE_SKIPPED because the whole of it is unverifiable away from home;
+  # this doctrine is only half unverifiable, so it must not — the wiring half still runs,
+  # and a rule that is written down but not wired must still fail in an adopter.
+  local packaged=0
+  [ -f "$root/RELEASE.json" ] && packaged=1
   # the source, read once: which validator functions exist, which modules dispatch, which
   # modules turn a failing finding into a non-zero exit, and which claim ids are declared
   local fns dispatching propagating claims
@@ -604,40 +633,52 @@ mj_validate_doctrine_wiring() {
         esac
       done
     fi
-    # the tests that prove it must exist
-    if [ -z "$MJ_DR_TEST" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $MJ_DR_FILE"; bad=1; fi
-    for t in ${MJ_DR_TESTS//,/ }; do
-      [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
-    done
-    # every claim it carries must be a real claim
-    for c in ${MJ_DR_CLAIMS//,/ }; do
-      case "$claims" in *" $c "*) ;; *)
-        mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1 ;;
-      esac
-    done
+    # the tests that prove it must exist — the vendor's evidence, in the vendor's source
+    if [ "$packaged" = 0 ]; then
+      if [ -z "$MJ_DR_TEST" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $MJ_DR_FILE"; bad=1; fi
+      for t in ${MJ_DR_TESTS//,/ }; do
+        [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
+      done
+      # every claim it carries must be a real claim
+      for c in ${MJ_DR_CLAIMS//,/ }; do
+        case "$claims" in *" $c "*) ;; *)
+          mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1 ;;
+        esac
+      done
+    fi
     i=$((i+1))
   done
 
   # 2. the other direction — a validator no doctrine declares
   local f declared=" "
   i=0; while mj_doc_row "$i"; do declared="$declared$MJ_DR_VAL "; i=$((i+1)); done
-  for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
+  for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | LC_ALL=C sort -u); do
     case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no rule declares it; it runs under no rule" "grep -rn 'validator: $f' $(mj_rel "$MJ_RULES_DIR")"; bad=1 ;; esac
   done
 
-  # 3. CI must run the test runner, without swallowing it
-  local ci="$root/.github/workflows/validate.yml"
-  if [ ! -f "$ci" ]; then mj_doctrine_fail doctrine "ci" "no .github/workflows/validate.yml; nothing runs the doctrine tests on integration" "ls .github/workflows/"; bad=1
-  elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
-  elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
-    mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
-  fi
-  # and the runner must run every case, not a list that a new case can miss
-  if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then
-    mj_doctrine_fail doctrine "runner" "test/run.sh does not glob test/cases/; a new case would not run" "grep -n cases test/run.sh"; bad=1
+  # 3. CI must run the test runner, without swallowing it. The vendor's CI, in the vendor's
+  # source: an adopting repository owes no `.github/workflows/validate.yml` of ours.
+  if [ "$packaged" = 0 ]; then
+    local ci="$root/.github/workflows/validate.yml"
+    if [ ! -f "$ci" ]; then mj_doctrine_fail doctrine "ci" "no .github/workflows/validate.yml; nothing runs the doctrine tests on integration" "ls .github/workflows/"; bad=1
+    elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
+      mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    fi
+    # and the runner must run every case, not a list that a new case can miss
+    if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then
+      mj_doctrine_fail doctrine "runner" "test/run.sh does not glob test/cases/; a new case would not run" "grep -n cases test/run.sh"; bad=1
+    fi
   fi
 
-  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch, propagation, test and CI resolve for every one"
+  if [ "$packaged" = 1 ]; then
+    # Named, not silent: a reader has to be able to tell this apart from a check that passed.
+    mj_doctrine_skip doctrine "vendor evidence" \
+      "$(sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' "$root/RELEASE.json" 2>/dev/null | head -n 1) is a packaged distribution, so the tests, claims and CI each rule cites are not here to read; they are verified in the package's own source tree, and this repository owes none of them" \
+      "cat $root/RELEASE.json"
+  fi
+
+  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one' || printf 'validator, dispatch, propagation, test and CI resolve for every one')"
   return 0
 }
 # watch's view of the same doctrine: every target against the stamp it carries.
@@ -726,9 +767,9 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | sort -u)"
+  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
-         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | sort -u)"
+         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | LC_ALL=C sort -u)"
   # A section that lists no versions is prose pointing at the projection, not a second
   # authority. The rule is about an authored version list, not about the heading: a partial
   # list is the dangerous case, and no list at all is the intended end state.
@@ -736,8 +777,8 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
     return 0
   fi
-  missing="$(comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
-  extra="$(comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"
   if [ -n "$extra" ]; then
     mj_doctrine_fail roadmap "README.md" "lists version(s) no milestone declares: $extra" "majordomus plan roadmap"
@@ -837,7 +878,7 @@ mj_validate_schema_integrity() {
   fi
 
   local k fmt sch unschemad="" named=" " n=0
-  for k in $(sed -n 's/^kinds\.\([a-z0-9_-]*\)\.format=.*/\1/p' "$flat" | sort -u); do
+  for k in $(sed -n 's/^kinds\.\([a-z0-9_-]*\)\.format=.*/\1/p' "$flat" | LC_ALL=C sort -u); do
     n=$((n + 1))
     fmt="$(mj_yget "$flat" "kinds.$k.format")"
     sch="$(mj_yget "$flat" "kinds.$k.schema")"

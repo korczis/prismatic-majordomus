@@ -183,6 +183,20 @@
       "source": "share/distribution.yaml and the release records"
     },
     {
+      "document": "graph",
+      "format": "json",
+      "path": "docs/generated/graph.json",
+      "schema": "majordomus/capability-graph/v1",
+      "source": "the composed graph of the registry and the index"
+    },
+    {
+      "document": "graph-schema",
+      "format": "json",
+      "path": "docs/generated/graph.schema.json",
+      "schema": null,
+      "source": "the schema of the composed graph, generated from its types"
+    },
+    {
       "document": "modules/artifacts",
       "format": "markdown",
       "path": "docs/generated/modules/artifacts.md",
@@ -328,6 +342,13 @@
       "path": "docs/generated/modules/repository.md",
       "schema": null,
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/server",
+      "format": "markdown",
+      "path": "docs/generated/modules/server.md",
+      "schema": null,
+      "source": "the `server` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/trace",
@@ -1139,6 +1160,21 @@
     },
     {
       "formats": [
+        "json"
+      ],
+      "id": "graph",
+      "schema": "majordomus/capability-graph/v1",
+      "source": "the composed graph of the registry and the index"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "graph-schema",
+      "source": "the schema of the composed graph, generated from its types"
+    },
+    {
+      "formats": [
         "markdown"
       ],
       "id": "install-guide",
@@ -1297,6 +1333,13 @@
       ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/server",
+      "source": "the `server` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -1571,7 +1614,7 @@
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.4.0",
+  "generator": "majordomus-cli 0.5.0",
   "manifest_schema": "majordomus/generated-artifacts/v1",
   "schema": 1
 }

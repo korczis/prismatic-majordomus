@@ -3,29 +3,29 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "288bf61c1a033d7a3c8c3b20cd860872b6a9f4369188a7f63b40c319ef280c22",
+    "fingerprint": "622acc4bdbedce90b5809a38281acca8e7baba95babf9cefdae5ef7c869b24b3",
     "summary": {
-      "total": 1197,
-      "builtin": 77,
-      "declarative": 1120,
+      "total": 1217,
+      "builtin": 78,
+      "declarative": 1139,
       "by_kind": {
         "command": 3,
-        "query": 74,
-        "resource": 1120
+        "query": 75,
+        "resource": 1139
       },
       "by_stability": {
-        "behaviorally_verified": 72,
-        "implemented": 1125
+        "behaviorally_verified": 73,
+        "implemented": 1144
       },
-      "mcp_tools": 75,
-      "mcp_resources": 1147,
-      "http_routes": 77,
-      "cli_commands": 31,
-      "modules": 53,
-      "benchmark_required": 74,
+      "mcp_tools": 76,
+      "mcp_resources": 1167,
+      "http_routes": 78,
+      "cli_commands": 32,
+      "modules": 54,
+      "benchmark_required": 75,
       "benchmark_waived": 3,
       "cached": 25
     },
@@ -3898,6 +3898,10 @@
                     "type": "string",
                     "description": "The provider whose event opened it, when one did."
                   },
+                  "provider_session": {
+                    "type": "string",
+                    "description": "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns."
+                  },
                   "branch": {
                     "type": "string",
                     "description": "The branch it opened on."
@@ -3916,7 +3920,7 @@
                   "started_at",
                   "foreign"
                 ],
-                "description": "The open episode of this worktree, when there is one."
+                "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line."
               },
               "ActiveTask": {
                 "type": "object",
@@ -12653,7 +12657,7 @@
         "module": "health",
         "kind": "query",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -21546,6 +21550,354 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
       },
       {
+        "id": "server.status",
+        "module": "server",
+        "kind": "query",
+        "title": "The shared server, and every server of the repository",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ServerStatus",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "checkout_id": {
+                "type": "string",
+                "description": "This checkout's identity: what this process answers as `repository_id`."
+              },
+              "git": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/GitIdentity"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The git repository this checkout belongs to; absent where git cannot be asked."
+              },
+              "desired": {
+                "$ref": "#/$defs/Desired",
+                "description": "What this executable would serve, and what `standing` is measured against."
+              },
+              "this_process": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/LeaseView"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The lease this process holds, when it is the server; absent when the question was\nanswered by a process that serves nothing."
+              },
+              "standing": {
+                "$ref": "#/$defs/ServerStanding",
+                "description": "Where this checkout's server stands."
+              },
+              "servers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ServerView"
+                },
+                "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked."
+              }
+            },
+            "required": [
+              "checkout_id",
+              "desired",
+              "standing",
+              "servers"
+            ],
+            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+            "title": "ServerStatus",
+            "$defs": {
+              "GitIdentity": {
+                "type": "object",
+                "properties": {
+                  "common_dir": {
+                    "type": "string",
+                    "description": "The git directory every work tree of the repository shares, canonical."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path."
+                  },
+                  "linked": {
+                    "type": "boolean",
+                    "description": "Whether this checkout is a linked work tree rather than the primary one."
+                  }
+                },
+                "required": [
+                  "common_dir",
+                  "id",
+                  "linked"
+                ],
+                "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```"
+              },
+              "Desired": {
+                "type": "object",
+                "properties": {
+                  "host": {
+                    "type": "string",
+                    "description": "The interface the shared server binds by default."
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0,
+                    "maximum": 65535,
+                    "description": "The port it asks for first."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "This executable's version."
+                  },
+                  "executable": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ExecutableIdentity"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "This executable, when it can be located."
+                  }
+                },
+                "required": [
+                  "host",
+                  "port",
+                  "version"
+                ],
+                "description": "What this executable would want a server of this checkout to be: the address it would\nbind, the version and the executable it would serve from. What `standing` is measured\nagainst.\n\n```\nuse majordomus_cli::capability::builtin::server::Desired;\nlet d = Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None };\nlet v = serde_json::to_value(&d).unwrap();\nassert_eq!(v[\"port\"], 8741);\nassert!(v.get(\"executable\").is_none(), \"an executable that cannot be located is not written as null\");\n```"
+              },
+              "ExecutableIdentity": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path the process was started from."
+                  },
+                  "mtime": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The file's modification time, seconds since the epoch."
+                  },
+                  "size": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The file's size in bytes."
+                  }
+                },
+                "required": [
+                  "path",
+                  "mtime",
+                  "size"
+                ],
+                "description": "The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \"/opt/majordomus\".into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&recorded).unwrap();\nassert_eq!(serde_json::from_str::<ExecutableIdentity>(&text).unwrap(), recorded);\n```"
+              },
+              "LeaseView": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The server's process id. Informational: nothing decides liveness from it."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The address, once bound."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When the server took the lease, RFC 3339."
+                  },
+                  "executable": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ExecutableIdentity"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The executable the server was started from, when it could be located."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The executable's version; absent for a server too old to have written one."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "started_at"
+                ],
+                "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```"
+              },
+              "ServerStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "No lease: nothing serves this checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "starting",
+                    "description": "A lease without an address, young enough that its owner is still binding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "outdated",
+                    "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The lease names a server that does not answer, or is not a lease at all."
+                  }
+                ],
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+              },
+              "ServerView": {
+                "type": "object",
+                "properties": {
+                  "worktree": {
+                    "type": "string",
+                    "description": "The checkout, absolute and canonical."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out there, when git names one."
+                  },
+                  "checkout_id": {
+                    "type": "string",
+                    "description": "The checkout's identity: what its server answers as `repository_id`."
+                  },
+                  "primary": {
+                    "type": "boolean",
+                    "description": "Whether this is the primary checkout rather than a linked worktree."
+                  },
+                  "this_checkout": {
+                    "type": "boolean",
+                    "description": "Whether this is the checkout the answering process serves."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "Where its server stands."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when the standing is not `ready`: what the lease held, or what answered."
+                  },
+                  "lease": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/LeaseView"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The lease, when the file holds one."
+                  },
+                  "peers": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many peers the server reports attached, when it answers."
+                  }
+                },
+                "required": [
+                  "worktree",
+                  "checkout_id",
+                  "primary",
+                  "this_checkout",
+                  "standing"
+                ],
+                "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::server"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_server",
+            "resource": {
+              "uri": "majordomus://server",
+              "name": "server"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/server"
+          },
+          "cli": {
+            "path": [
+              "serve",
+              "status"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "server",
+          "lease",
+          "coordination",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs"
+      },
+      {
         "id": "trace.commit",
         "module": "trace",
         "kind": "query",
@@ -27228,7 +27580,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 34,
+        "capabilities": 37,
         "capability_ids": []
       },
       {
@@ -27409,7 +27761,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 211,
+        "capabilities": 213,
         "capability_ids": []
       },
       {
@@ -27467,7 +27819,7 @@
       {
         "id": "health",
         "title": "Health",
-        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 3,
@@ -27682,7 +28034,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 115,
         "capability_ids": []
       },
       {
@@ -27694,11 +28046,23 @@
         "capability_ids": []
       },
       {
+        "id": "server",
+        "title": "Server",
+        "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "server.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs"
+      },
+      {
         "id": "session",
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 11,
+        "capabilities": 12,
         "capability_ids": []
       },
       {
@@ -27722,7 +28086,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 137,
+        "capabilities": 143,
         "capability_ids": []
       },
       {
@@ -27744,7 +28108,7 @@
         "title": "use-case",
         "description": "Declarative objects of kind 'use-case' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 42,
+        "capabilities": 43,
         "capability_ids": []
       },
       {
@@ -27802,7 +28166,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1521ff14aca8197a0a2eeaf3c4dfe593823da2f43a9b95e6fa8bd68b470f826a",
+    "fingerprint": "80e3d09a075b105ccd2d0ffe9f128011bba298ac30dec9aa65fcdf368622c577",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -27825,7 +28189,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 34,
+      "adr": 37,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -27834,7 +28198,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 211,
+      "document": 213,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -27845,13 +28209,13 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 115,
       "scope": 1,
-      "session": 11,
+      "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 137,
-      "use-case": 42,
+      "test": 143,
+      "use-case": 43,
       "workspace": 1
     },
     "diagnostics": {},
@@ -28195,7 +28559,7 @@
         "path": ".ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7381,
+        "bytes": 7416,
         "tags": [
           "ui",
           "accessibility",
@@ -28389,6 +28753,22 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0035",
+        "kind": "adr",
+        "identity": "adr-0035",
+        "title": "A checkout's server is one of the repository's, and its state is served like every other fact",
+        "description": "A checkout's server is one of the repository's, and its state is served like every other fact",
+        "path": ".ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10258,
+        "tags": [
+          "mcp",
+          "architecture",
+          "coordination"
+        ]
+      },
+      {
         "uri": "majordomus://adr/adr-0036",
         "kind": "adr",
         "identity": "adr-0036",
@@ -28405,6 +28785,36 @@
           "site",
           "projections",
           "derived"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0037",
+        "kind": "adr",
+        "identity": "adr-0037",
+        "title": "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives",
+        "description": "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives",
+        "path": ".ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7790,
+        "tags": [
+          "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0038",
+        "kind": "adr",
+        "identity": "adr-0038",
+        "title": "A scenario declares where it runs, and an obligation is a step",
+        "description": "A scenario declares where it runs, and an obligation is a step",
+        "path": ".ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8955,
+        "tags": [
+          "architecture",
+          "agents",
+          "governance"
         ]
       },
       {
@@ -30204,7 +30614,7 @@
         "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/bench",
@@ -30214,7 +30624,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/capture",
@@ -30224,7 +30634,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/check",
@@ -30234,7 +30644,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -30244,7 +30654,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/context",
@@ -30254,7 +30664,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/decision",
@@ -30264,7 +30674,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/doctor",
@@ -30274,7 +30684,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -30284,7 +30694,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/evidence",
@@ -30294,7 +30704,7 @@
         "description": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/finish",
@@ -30304,7 +30714,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/handover",
@@ -30314,7 +30724,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/help",
@@ -30324,7 +30734,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/history",
@@ -30334,7 +30744,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/init",
@@ -30344,7 +30754,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -30354,7 +30764,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/migrate",
@@ -30364,7 +30774,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/plan",
@@ -30374,7 +30784,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/prompt",
@@ -30384,7 +30794,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/question",
@@ -30394,7 +30804,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/rules",
@@ -30404,7 +30814,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/search",
@@ -30414,7 +30824,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/session",
@@ -30424,7 +30834,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/skills",
@@ -30434,7 +30844,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/start",
@@ -30444,7 +30854,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/update",
@@ -30454,7 +30864,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/usecase",
@@ -30464,7 +30874,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/version",
@@ -30474,7 +30884,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/watch",
@@ -30484,7 +30894,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -30792,7 +31202,7 @@
         "identity": "share/distribution.yaml",
         "path": "share/distribution.yaml",
         "source_class": "distribution",
-        "bytes": 4093
+        "bytes": 4069
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -30968,7 +31378,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 33876
+        "bytes": 33708
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -30977,7 +31387,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 1955
+        "bytes": 2632
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -30986,7 +31396,7 @@
         "title": "Adoption",
         "path": "docs/ADOPTION.md",
         "source_class": "document",
-        "bytes": 5522
+        "bytes": 5498
       },
       {
         "uri": "majordomus://document/docs/ADOPTION_FIRST_RUN.md",
@@ -30995,7 +31405,7 @@
         "title": "First run in a foreign repository — forensic finding",
         "path": "docs/ADOPTION_FIRST_RUN.md",
         "source_class": "document",
-        "bytes": 7733
+        "bytes": 7685
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -31004,7 +31414,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 41632
+        "bytes": 43805
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -31022,7 +31432,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 14260
+        "bytes": 16371
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -31031,7 +31441,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 97360
+        "bytes": 99621
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -31040,7 +31450,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 25387
+        "bytes": 26342
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -31058,7 +31468,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 13219
+        "bytes": 13338
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -31076,7 +31486,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 20056
+        "bytes": 21500
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -31103,7 +31513,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 21757
+        "bytes": 22003
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -31142,6 +31552,24 @@
         "bytes": 4407
       },
       {
+        "uri": "majordomus://document/docs/ENTRY.md",
+        "kind": "document",
+        "identity": "docs/ENTRY.md",
+        "title": "Entering the repository",
+        "path": "docs/ENTRY.md",
+        "source_class": "document",
+        "bytes": 7966
+      },
+      {
+        "uri": "majordomus://document/docs/ENTRY_AUDIT.md",
+        "kind": "document",
+        "identity": "docs/ENTRY_AUDIT.md",
+        "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
+        "path": "docs/ENTRY_AUDIT.md",
+        "source_class": "document",
+        "bytes": 28014
+      },
+      {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
         "kind": "document",
         "identity": "docs/ENVIRONMENT.md",
@@ -31175,7 +31603,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 39976
+        "bytes": 41288
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -31193,7 +31621,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9530
+        "bytes": 9218
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -31202,7 +31630,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 23257
+        "bytes": 32666
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -31211,7 +31639,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2698
+        "bytes": 2728
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -31238,7 +31666,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 49583
+        "bytes": 44327
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -31265,7 +31693,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 14006
+        "bytes": 14618
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -31274,7 +31702,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 20149
+        "bytes": 22417
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -31292,7 +31720,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 65498
+        "bytes": 67394
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -31310,7 +31738,7 @@
         "title": "Site claims",
         "path": "docs/SITE_CLAIMS.md",
         "source_class": "document",
-        "bytes": 46848
+        "bytes": 43296
       },
       {
         "uri": "majordomus://document/docs/SITE_REVIEW.md",
@@ -31337,7 +31765,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 9950
+        "bytes": 16188
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -31346,7 +31774,7 @@
         "title": "Executable use cases",
         "path": "docs/USE_CASES.md",
         "source_class": "document",
-        "bytes": 12280
+        "bytes": 15139
       },
       {
         "uri": "majordomus://document/docs/WEB.md",
@@ -31355,7 +31783,7 @@
         "title": "The web surface — discovered from its producer, projected once",
         "path": "docs/WEB.md",
         "source_class": "document",
-        "bytes": 11596
+        "bytes": 11572
       },
       {
         "uri": "majordomus://document/docs/WHY.md",
@@ -31373,7 +31801,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 23596
+        "bytes": 24314
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -31409,7 +31837,7 @@
         "title": "The install command this project advertises is run, from the published site, and proved to work",
         "path": "docs/claims/advertised-install-command-works.md",
         "source_class": "claim_page",
-        "bytes": 2682
+        "bytes": 2658
       },
       {
         "uri": "majordomus://document/docs/claims/ai-layer-manifest.md",
@@ -31850,7 +32278,7 @@
         "title": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
         "path": "docs/claims/github-projection-gated.md",
         "source_class": "claim_page",
-        "bytes": 3243
+        "bytes": 3893
       },
       {
         "uri": "majordomus://document/docs/claims/github-projection.md",
@@ -31913,7 +32341,7 @@
         "title": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
         "path": "docs/claims/installer-verifies-before-installing.md",
         "source_class": "claim_page",
-        "bytes": 2652
+        "bytes": 2628
       },
       {
         "uri": "majordomus://document/docs/claims/interfaces-are-projections.md",
@@ -32093,7 +32521,7 @@
         "title": "An obligation whose fact the tool can hold is established live rather than recorded, and a hand-recorded line neither discharges it nor rescues it",
         "path": "docs/claims/obligation-establishment.md",
         "source_class": "claim_page",
-        "bytes": 7027
+        "bytes": 7032
       },
       {
         "uri": "majordomus://document/docs/claims/open-question-gate.md",
@@ -32489,7 +32917,7 @@
         "title": "The site is deployed by one script, from a terminal or from the Pages workflow, and the deploy names its source",
         "path": "docs/claims/site-deploy-one-path.md",
         "source_class": "claim_page",
-        "bytes": 3328
+        "bytes": 3304
       },
       {
         "uri": "majordomus://document/docs/claims/site-deploys-from-verified-run.md",
@@ -32792,7 +33220,7 @@
         "path": ".ai/repo/features/coordination.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2465,
+        "bytes": 2473,
         "tags": [
           "agents",
           "parallelism",
@@ -33029,7 +33457,7 @@
         "identity": "bin/majordomus-cli",
         "path": "bin/majordomus-cli",
         "source_class": "entrypoint",
-        "bytes": 2773
+        "bytes": 2971
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-env",
@@ -33053,7 +33481,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 33836
+        "bytes": 33845
       },
       {
         "uri": "majordomus://implementation/lib/bench.sh",
@@ -33061,7 +33489,7 @@
         "identity": "lib/bench.sh",
         "path": "lib/bench.sh",
         "source_class": "library",
-        "bytes": 18915
+        "bytes": 18924
       },
       {
         "uri": "majordomus://implementation/lib/capture.sh",
@@ -33069,7 +33497,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 71136
+        "bytes": 75438
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -33093,7 +33521,7 @@
         "identity": "lib/commands.sh",
         "path": "lib/commands.sh",
         "source_class": "library",
-        "bytes": 6734
+        "bytes": 7341
       },
       {
         "uri": "majordomus://implementation/lib/common.sh",
@@ -33101,7 +33529,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 54899
+        "bytes": 59784
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -33109,7 +33537,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 37239
+        "bytes": 38936
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -33141,7 +33569,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 20232
+        "bytes": 20707
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -33149,7 +33577,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 58883
+        "bytes": 58964
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -33157,7 +33585,7 @@
         "identity": "lib/doctrine.sh",
         "path": "lib/doctrine.sh",
         "source_class": "library",
-        "bytes": 14942
+        "bytes": 14866
       },
       {
         "uri": "majordomus://implementation/lib/evidence.sh",
@@ -33165,7 +33593,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 25669
+        "bytes": 26497
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -33173,7 +33601,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 10754
+        "bytes": 10763
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -33181,7 +33609,7 @@
         "identity": "lib/handover.sh",
         "path": "lib/handover.sh",
         "source_class": "library",
-        "bytes": 6115
+        "bytes": 6124
       },
       {
         "uri": "majordomus://implementation/lib/history.sh",
@@ -33277,7 +33705,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 15158
+        "bytes": 15176
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -33285,7 +33713,7 @@
         "identity": "lib/prompt.sh",
         "path": "lib/prompt.sh",
         "source_class": "library",
-        "bytes": 8835
+        "bytes": 8844
       },
       {
         "uri": "majordomus://implementation/lib/question.sh",
@@ -33309,7 +33737,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 5319
+        "bytes": 6079
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -33317,7 +33745,7 @@
         "identity": "lib/search.sh",
         "path": "lib/search.sh",
         "source_class": "library",
-        "bytes": 5106
+        "bytes": 5124
       },
       {
         "uri": "majordomus://implementation/lib/session.sh",
@@ -33325,7 +33753,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 36198
+        "bytes": 46926
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -33333,7 +33761,7 @@
         "identity": "lib/session_context.sh",
         "path": "lib/session_context.sh",
         "source_class": "library",
-        "bytes": 13168
+        "bytes": 13177
       },
       {
         "uri": "majordomus://implementation/lib/skills.sh",
@@ -33365,7 +33793,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 51033
+        "bytes": 63306
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -33373,7 +33801,7 @@
         "identity": "lib/watch.sh",
         "path": "lib/watch.sh",
         "source_class": "library",
-        "bytes": 5685
+        "bytes": 5694
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -36451,7 +36879,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 4569
+        "bytes": 4663
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -37307,6 +37735,36 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "kind": "rule",
+        "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "title": "A generator that cannot match the tree refuses rather than rewriting it",
+        "description": "An executable asked to generate this repository's derived artifacts first establishes that it was built from the same declarations the tree carries; when it cannot, it refuses and says so, because a generator that guesses rewrites the documents it was meant to check.",
+        "path": ".ai/repo/rules/project/a-tool-that-cannot-match-the-tree-refuses.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5887,
+        "tags": [
+          "derived",
+          "safety"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "rule",
+        "identity": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "title": "A worker that stops leaves its work where somebody else can find it",
+        "description": "Work that exists only in one worker's working tree is invisible to every other and dies with the worker; anyone who fans work out is responsible for checkpointing it, because a worker's death is not a rollback.",
+        "path": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3791,
+        "tags": [
+          "process",
+          "integration"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "identity": "project.benchmarkable-commands@1",
@@ -37687,7 +38145,7 @@
         "path": ".ai/repo/rules/project/land-and-publish.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7361,
+        "bytes": 8362,
         "tags": [
           "process",
           "integration",
@@ -37725,6 +38183,22 @@
         "tags": [
           "records",
           "git"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "rule",
+        "identity": "project.never-reported-is-not-green@1",
+        "title": "A verdict that never arrived is not a verdict",
+        "description": "A change is judged against the trunk's own failing set, established by reading a run that finished, and never against the absence of a report; a check that has not spoken is unknown, not passing.",
+        "path": ".ai/repo/rules/project/never-reported-is-not-green.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4077,
+        "tags": [
+          "process",
+          "integration",
+          "evidence"
         ]
       },
       {
@@ -37793,11 +38267,11 @@
         "kind": "rule",
         "identity": "project.no-network-no-eval@1",
         "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
-        "description": "bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.",
+        "description": "bin/, lib/, share/ and test/ contain no telemetry, no eval, no curl piped to a shell, no silent overwrite, no recursive deletion outside a temporary directory, and no network client but the one declared exception SECURITY.md names.",
         "path": ".ai/repo/rules/project/no-network-no-eval.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 1196,
+        "bytes": 1732,
         "tags": [
           "security"
         ]
@@ -37911,6 +38385,21 @@
           "documentation",
           "provider",
           "derivation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "rule",
+        "identity": "project.reclaim-only-what-you-own@1",
+        "title": "A worker reclaims only what it owns",
+        "description": "Build output, scratch trees and worktrees belong to whoever is working in them; a worker under disk pressure reclaims its own and says what it removed, because everything else on the machine is another worker's instrument.",
+        "path": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3975,
+        "tags": [
+          "process",
+          "worktrees"
         ]
       },
       {
@@ -38084,6 +38573,40 @@
         "bytes": 1012,
         "tags": [
           "testing"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "rule",
+        "identity": "project.the-lease-is-read-once@1",
+        "title": "The shared server's lease has one reader",
+        "description": "The file that says which process serves a checkout and at which address is parsed by one typed reader in the executable and served from there; no other file in this repository opens it, and a caller that needs the address asks `serve status`.",
+        "path": ".ai/repo/rules/project/the-lease-is-read-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5314,
+        "tags": [
+          "mcp",
+          "coordination",
+          "derived",
+          "gates"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.the-version-is-measured@1",
+        "kind": "rule",
+        "identity": "project.the-version-is-measured@1",
+        "title": "The version is measured against the public surface, not claimed",
+        "description": "What a release's version number says about compatibility is decided by comparing the capability registry of the last release with this tree — an atom of the surface that is gone is a breaking change, one that is new is an addition — and a version smaller than what moved is refused. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.",
+        "path": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5014,
+        "tags": [
+          "release",
+          "versioning",
+          "contract",
+          "evidence"
         ]
       },
       {
@@ -38347,6 +38870,17 @@
         "bytes": 1002
       },
       {
+        "uri": "majordomus://session/s-20260909152316-024f",
+        "kind": "session",
+        "identity": "s-20260909152316-024f",
+        "title": "Session s-20260909152316-024f on master",
+        "description": "Session s-20260909152316-024f on master",
+        "path": ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 2139
+      },
+      {
         "uri": "majordomus://skill/deploy-site",
         "kind": "skill",
         "identity": "deploy-site",
@@ -38355,7 +38889,7 @@
         "path": ".ai/repo/skills/deploy-site/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 3887,
+        "bytes": 3863,
         "tags": [
           "site",
           "deploy",
@@ -38576,7 +39110,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 2498
+        "bytes": 3827
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -38624,7 +39158,7 @@
         "identity": "test/cases/103_obligations.sh",
         "path": "test/cases/103_obligations.sh",
         "source_class": "case",
-        "bytes": 12264
+        "bytes": 12807
       },
       {
         "uri": "majordomus://test/test/cases/103_release_projection.sh",
@@ -38656,7 +39190,7 @@
         "identity": "test/cases/106_context_peers.sh",
         "path": "test/cases/106_context_peers.sh",
         "source_class": "case",
-        "bytes": 5379
+        "bytes": 7625
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -38672,7 +39206,15 @@
         "identity": "test/cases/107_runtime_staleness_is_loud.sh",
         "path": "test/cases/107_runtime_staleness_is_loud.sh",
         "source_class": "case",
-        "bytes": 4285
+        "bytes": 4948
+      },
+      {
+        "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
+        "kind": "test",
+        "identity": "test/cases/108_entry_converges_on_a_server.sh",
+        "path": "test/cases/108_entry_converges_on_a_server.sh",
+        "source_class": "case",
+        "bytes": 5166
       },
       {
         "uri": "majordomus://test/test/cases/108_scope_after_trunk_merge.sh",
@@ -38699,12 +39241,36 @@
         "bytes": 6597
       },
       {
-        "uri": "majordomus://test/test/cases/111_design_contrast.sh",
+        "uri": "majordomus://test/test/cases/110_lease_reader.sh",
         "kind": "test",
-        "identity": "test/cases/111_design_contrast.sh",
-        "path": "test/cases/111_design_contrast.sh",
+        "identity": "test/cases/110_lease_reader.sh",
+        "path": "test/cases/110_lease_reader.sh",
         "source_class": "case",
-        "bytes": 6069
+        "bytes": 6873
+      },
+      {
+        "uri": "majordomus://test/test/cases/111_session_per_provider.sh",
+        "kind": "test",
+        "identity": "test/cases/111_session_per_provider.sh",
+        "path": "test/cases/111_session_per_provider.sh",
+        "source_class": "case",
+        "bytes": 9254
+      },
+      {
+        "uri": "majordomus://test/test/cases/111_unblock.sh",
+        "kind": "test",
+        "identity": "test/cases/111_unblock.sh",
+        "path": "test/cases/111_unblock.sh",
+        "source_class": "case",
+        "bytes": 7721
+      },
+      {
+        "uri": "majordomus://test/test/cases/112_version_matches_surface.sh",
+        "kind": "test",
+        "identity": "test/cases/112_version_matches_surface.sh",
+        "path": "test/cases/112_version_matches_surface.sh",
+        "source_class": "case",
+        "bytes": 5245
       },
       {
         "uri": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -38715,12 +39281,20 @@
         "bytes": 4344
       },
       {
+        "uri": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "identity": "test/cases/120_design_contrast.sh",
+        "path": "test/cases/120_design_contrast.sh",
+        "source_class": "case",
+        "bytes": 6069
+      },
+      {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
         "kind": "test",
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 8216
+        "bytes": 8243
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -38728,7 +39302,7 @@
         "identity": "test/cases/12b_site_data_transactional.sh",
         "path": "test/cases/12b_site_data_transactional.sh",
         "source_class": "case",
-        "bytes": 6038
+        "bytes": 6056
       },
       {
         "uri": "majordomus://test/test/cases/12c_graph_data.sh",
@@ -38760,7 +39334,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 4833
+        "bytes": 4860
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -38848,7 +39422,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 12506
+        "bytes": 17281
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -38872,7 +39446,7 @@
         "identity": "test/cases/28_no_hardcoded_values.sh",
         "path": "test/cases/28_no_hardcoded_values.sh",
         "source_class": "case",
-        "bytes": 18582
+        "bytes": 18627
       },
       {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -38888,7 +39462,7 @@
         "identity": "test/cases/30_command_registry.sh",
         "path": "test/cases/30_command_registry.sh",
         "source_class": "case",
-        "bytes": 7043
+        "bytes": 7088
       },
       {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -38896,7 +39470,7 @@
         "identity": "test/cases/31_command_coverage.sh",
         "path": "test/cases/31_command_coverage.sh",
         "source_class": "case",
-        "bytes": 5917
+        "bytes": 5935
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -38920,7 +39494,7 @@
         "identity": "test/cases/33_event_registry.sh",
         "path": "test/cases/33_event_registry.sh",
         "source_class": "case",
-        "bytes": 7485
+        "bytes": 7521
       },
       {
         "uri": "majordomus://test/test/cases/33_stale_executable.sh",
@@ -38928,7 +39502,7 @@
         "identity": "test/cases/33_stale_executable.sh",
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
-        "bytes": 2644
+        "bytes": 8682
       },
       {
         "uri": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -38936,7 +39510,7 @@
         "identity": "test/cases/34_command_fixtures.sh",
         "path": "test/cases/34_command_fixtures.sh",
         "source_class": "case",
-        "bytes": 5954
+        "bytes": 5963
       },
       {
         "uri": "majordomus://test/test/cases/35_future_command.sh",
@@ -38944,7 +39518,7 @@
         "identity": "test/cases/35_future_command.sh",
         "path": "test/cases/35_future_command.sh",
         "source_class": "case",
-        "bytes": 5679
+        "bytes": 6101
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -38992,7 +39566,7 @@
         "identity": "test/cases/43_plan_command.sh",
         "path": "test/cases/43_plan_command.sh",
         "source_class": "case",
-        "bytes": 4693
+        "bytes": 4711
       },
       {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -39008,7 +39582,7 @@
         "identity": "test/cases/45_github_projection.sh",
         "path": "test/cases/45_github_projection.sh",
         "source_class": "case",
-        "bytes": 7392
+        "bytes": 7410
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -39016,7 +39590,7 @@
         "identity": "test/cases/46_cross_surface.sh",
         "path": "test/cases/46_cross_surface.sh",
         "source_class": "case",
-        "bytes": 7347
+        "bytes": 7500
       },
       {
         "uri": "majordomus://test/test/cases/47_mutation.sh",
@@ -39064,7 +39638,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 6923
+        "bytes": 6932
       },
       {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -39072,7 +39646,7 @@
         "identity": "test/cases/53_status_vocabulary.sh",
         "path": "test/cases/53_status_vocabulary.sh",
         "source_class": "case",
-        "bytes": 5658
+        "bytes": 5694
       },
       {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
@@ -39080,7 +39654,7 @@
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
         "path": "test/cases/54_session_lifecycle_hooks.sh",
         "source_class": "case",
-        "bytes": 15273
+        "bytes": 15523
       },
       {
         "uri": "majordomus://test/test/cases/55_session_context.sh",
@@ -39128,7 +39702,7 @@
         "identity": "test/cases/60_session_lifecycle.sh",
         "path": "test/cases/60_session_lifecycle.sh",
         "source_class": "case",
-        "bytes": 3565
+        "bytes": 4492
       },
       {
         "uri": "majordomus://test/test/cases/61_session_envelope.sh",
@@ -39160,7 +39734,7 @@
         "identity": "test/cases/64_knowledge_discovery.sh",
         "path": "test/cases/64_knowledge_discovery.sh",
         "source_class": "case",
-        "bytes": 5381
+        "bytes": 5390
       },
       {
         "uri": "majordomus://test/test/cases/65_tool_root_independence.sh",
@@ -39168,7 +39742,7 @@
         "identity": "test/cases/65_tool_root_independence.sh",
         "path": "test/cases/65_tool_root_independence.sh",
         "source_class": "case",
-        "bytes": 4380
+        "bytes": 4398
       },
       {
         "uri": "majordomus://test/test/cases/66_migrate_legacy.sh",
@@ -39200,7 +39774,7 @@
         "identity": "test/cases/69_context_documents.sh",
         "path": "test/cases/69_context_documents.sh",
         "source_class": "case",
-        "bytes": 19963
+        "bytes": 19981
       },
       {
         "uri": "majordomus://test/test/cases/70_context_impact.sh",
@@ -39224,7 +39798,7 @@
         "identity": "test/cases/72_rust_mcp.sh",
         "path": "test/cases/72_rust_mcp.sh",
         "source_class": "case",
-        "bytes": 10718
+        "bytes": 10736
       },
       {
         "uri": "majordomus://test/test/cases/73_knowledge_nodes.sh",
@@ -39264,7 +39838,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 10034
+        "bytes": 10105
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -39272,7 +39846,7 @@
         "identity": "test/cases/79_bench_command.sh",
         "path": "test/cases/79_bench_command.sh",
         "source_class": "case",
-        "bytes": 5777
+        "bytes": 5795
       },
       {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
@@ -39352,7 +39926,7 @@
         "identity": "test/cases/85_ui_conformance.sh",
         "path": "test/cases/85_ui_conformance.sh",
         "source_class": "case",
-        "bytes": 10651
+        "bytes": 16571
       },
       {
         "uri": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -39360,7 +39934,7 @@
         "identity": "test/cases/86_deployment_projections.sh",
         "path": "test/cases/86_deployment_projections.sh",
         "source_class": "case",
-        "bytes": 5255
+        "bytes": 5594
       },
       {
         "uri": "majordomus://test/test/cases/86_installer_platform.sh",
@@ -39376,7 +39950,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 6070
+        "bytes": 6079
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -39400,7 +39974,7 @@
         "identity": "test/cases/89_web_surface.sh",
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
-        "bytes": 12013
+        "bytes": 12031
       },
       {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
@@ -39408,7 +39982,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10713
+        "bytes": 10719
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -39416,7 +39990,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 7480
+        "bytes": 8869
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -39424,7 +39998,7 @@
         "identity": "test/cases/92_openapi_reference.sh",
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
-        "bytes": 8867
+        "bytes": 10048
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -39464,7 +40038,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 16160
+        "bytes": 20878
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -39488,7 +40062,7 @@
         "identity": "test/cases/95_skills.sh",
         "path": "test/cases/95_skills.sh",
         "source_class": "case",
-        "bytes": 17192
+        "bytes": 17198
       },
       {
         "uri": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
@@ -39512,7 +40086,7 @@
         "identity": "test/cases/96_worktree_topology.sh",
         "path": "test/cases/96_worktree_topology.sh",
         "source_class": "case",
-        "bytes": 12476
+        "bytes": 12494
       },
       {
         "uri": "majordomus://test/test/cases/97_github_gate.sh",
@@ -39536,7 +40110,7 @@
         "identity": "test/cases/97_pages_fast_path.sh",
         "path": "test/cases/97_pages_fast_path.sh",
         "source_class": "case",
-        "bytes": 10377
+        "bytes": 10404
       },
       {
         "uri": "majordomus://test/test/cases/97_product_features.sh",
@@ -39544,7 +40118,15 @@
         "identity": "test/cases/97_product_features.sh",
         "path": "test/cases/97_product_features.sh",
         "source_class": "case",
-        "bytes": 8978
+        "bytes": 8996
+      },
+      {
+        "uri": "majordomus://test/test/cases/97_site_probe_attribution.sh",
+        "kind": "test",
+        "identity": "test/cases/97_site_probe_attribution.sh",
+        "path": "test/cases/97_site_probe_attribution.sh",
+        "source_class": "case",
+        "bytes": 3396
       },
       {
         "uri": "majordomus://test/test/cases/98_cli_reference.sh",
@@ -39568,7 +40150,7 @@
         "identity": "test/cases/98_why_catalogue.sh",
         "path": "test/cases/98_why_catalogue.sh",
         "source_class": "case",
-        "bytes": 9742
+        "bytes": 9760
       },
       {
         "uri": "majordomus://test/test/cases/99_adr.sh",
@@ -39576,7 +40158,7 @@
         "identity": "test/cases/99_adr.sh",
         "path": "test/cases/99_adr.sh",
         "source_class": "case",
-        "bytes": 15646
+        "bytes": 15664
       },
       {
         "uri": "majordomus://test/test/cases/99_canonical_order.sh",
@@ -39592,7 +40174,7 @@
         "identity": "test/cases/99_plan_capabilities.sh",
         "path": "test/cases/99_plan_capabilities.sh",
         "source_class": "case",
-        "bytes": 13518
+        "bytes": 13545
       },
       {
         "uri": "majordomus://test/test/cases/99_work_graph_chain.sh",
@@ -39798,7 +40380,7 @@
         "path": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
         "section": "use-cases",
         "source_class": "use_case",
-        "bytes": 4060
+        "bytes": 4012
       },
       {
         "uri": "majordomus://use-case/keep-decisions-out-of-the-transcript",
@@ -39821,6 +40403,17 @@
         "section": "use-cases",
         "source_class": "use_case",
         "bytes": 2738
+      },
+      {
+        "uri": "majordomus://use-case/know-whether-this-work-is-finished",
+        "kind": "use-case",
+        "identity": "know-whether-this-work-is-finished",
+        "title": "Know whether the work in this checkout is finished",
+        "description": "Ask the repository you are standing in, and be told what is still owed by name.",
+        "path": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 3124
       },
       {
         "uri": "majordomus://use-case/know-which-tool-is-running",
@@ -40085,7 +40678,7 @@
       "identity": [
         "id"
       ],
-      "objects": 34
+      "objects": 37
     },
     {
       "name": "application",
@@ -40171,7 +40764,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 211
+      "objects": 213
     },
     {
       "name": "feature",
@@ -40285,7 +40878,7 @@
         "id",
         "version"
       ],
-      "objects": 109
+      "objects": 115
     },
     {
       "name": "scope",
@@ -40303,7 +40896,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 11
+      "objects": 12
     },
     {
       "name": "session-context",
@@ -40340,7 +40933,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 137
+      "objects": 143
     },
     {
       "name": "use-case",
@@ -40350,7 +40943,7 @@
       "identity": [
         "id"
       ],
-      "objects": 42
+      "objects": 43
     },
     {
       "name": "workspace",
@@ -40614,7 +41207,7 @@
         ],
         "route": "/docs/cli/serve/",
         "executable": true,
-        "usage": "majordomus serve [OPTIONS]",
+        "usage": "majordomus serve [OPTIONS] [COMMAND]",
         "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
         "args": [
           {
@@ -40707,6 +41300,34 @@
             ]
           },
           {
+            "name": "fallback",
+            "long": "fallback",
+            "positional": false,
+            "help": "When the port is taken, bind a free one instead and log both; without this a taken port is an error",
+            "value_name": "FALLBACK",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "idle",
+            "long": "idle",
+            "positional": false,
+            "help": "Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with",
+            "value_name": "SECONDS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "0"
+            ]
+          },
+          {
             "name": "deployment",
             "long": "deployment",
             "positional": false,
@@ -40734,7 +41355,381 @@
             "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped"
           }
         ],
-        "subcommands": []
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "status"
+            ],
+            "route": "/docs/cli/serve/status/",
+            "executable": true,
+            "usage": "majordomus serve status [OPTIONS]",
+            "about": "Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository",
+            "args": [
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-status",
+                "title": "Where this checkout's server stands, and every server of the repository",
+                "description": "The standing of this checkout's server measured against what this executable would serve, the lease it holds, and every checkout git registers for the repository with its own server. Asked of the running server when there is one, so that the answer includes the lease that process holds; answered locally otherwise.",
+                "argv": [
+                  "serve",
+                  "status"
+                ],
+                "command": "majordomus serve status",
+                "setup": [],
+                "expectation": "exits 0; prints standing"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "ensure"
+            ],
+            "route": "/docs/cli/serve/ensure/",
+            "executable": true,
+            "usage": "majordomus serve ensure [OPTIONS]",
+            "about": "Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands",
+            "args": [
+              {
+                "name": "port",
+                "long": "port",
+                "positional": false,
+                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "value_name": "PORT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "8741"
+                ]
+              },
+              {
+                "name": "idle",
+                "long": "idle",
+                "positional": false,
+                "help": "The started server stops when no peer has been attached for this many seconds",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "900"
+                ]
+              },
+              {
+                "name": "wait",
+                "long": "wait",
+                "positional": false,
+                "help": "How long to wait for a server to become ready before reporting what stands",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "20"
+                ]
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-ensure-idle",
+                "title": "Make sure a server serves this checkout, and let it end when idle",
+                "description": "Starts a server as a process of its own when none answers, waits until it is ready, and prints one line: the standing, the address, the pid. Run again, it finds the server ready and starts nothing. `--idle` is how long the started server outlives its last peer; one second here, so that the example leaves nothing behind.",
+                "argv": [
+                  "serve",
+                  "ensure",
+                  "--idle",
+                  "1",
+                  "--wait",
+                  "30"
+                ],
+                "command": "majordomus serve ensure --idle 1 --wait 30",
+                "setup": [],
+                "expectation": "exits 0; prints ready"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "stop"
+            ],
+            "route": "/docs/cli/serve/stop/",
+            "executable": true,
+            "usage": "majordomus serve stop [OPTIONS]",
+            "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go",
+            "args": [
+              {
+                "name": "wait",
+                "long": "wait",
+                "positional": false,
+                "help": "How long to wait for the server to end",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "10"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-stop-nothing",
+                "title": "Stop this checkout's server, when there is one",
+                "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+                "argv": [
+                  "serve",
+                  "stop"
+                ],
+                "command": "majordomus serve stop",
+                "setup": [],
+                "expectation": "exits 0; prints nothing to stop"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       },
       {
         "path": [
@@ -41587,6 +42582,10 @@
               {
                 "name": "deployment",
                 "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+              },
+              {
+                "name": "graph",
+                "help": "docs/generated/graph.json and its schema: the composed graph as data"
               },
               {
                 "name": "design",
@@ -54130,7 +55129,7 @@
         "name": "majordomus_health",
         "id": "health.report",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",
@@ -54415,6 +55414,16 @@
         "read_only": true,
         "input": "ClassifyInput",
         "output": "Classification"
+      },
+      {
+        "name": "majordomus_server",
+        "id": "server.status",
+        "title": "The shared server, and every server of the repository",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ServerStatus"
       },
       {
         "name": "majordomus_trace_commit",
@@ -54703,6 +55712,13 @@
         "name": "scope",
         "id": "repository.scope",
         "title": "The repository scope",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://server",
+        "name": "server",
+        "id": "server.status",
+        "title": "The shared server, and every server of the repository",
         "kind": "query"
       },
       {
@@ -55128,6 +56144,12 @@
         "method": "GET",
         "path": "/api/v1/scope/classify",
         "id": "repository.scope_classify",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/server",
+        "id": "server.status",
         "kind": "query"
       },
       {
@@ -57970,6 +58992,35 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
+        "key": "server.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "server.status",
+        "module": "server",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "server.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "server.status",
+        "module": "server",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_server"
+      },
+      {
+        "key": "server.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "server.status",
+        "module": "server",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/server"
+      },
+      {
         "key": "trace.commit|direct|head",
         "kind": "capability",
         "transport": "direct",
@@ -59905,6 +60956,27 @@
           "cases": 5
         },
         {
+          "subject": "server.status",
+          "module": "server",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "server.status",
+          "module": "server",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "server.status",
+          "module": "server",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "trace.commit",
           "module": "trace",
           "transport": "direct",
@@ -60292,20 +61364,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 77,
-          "covered": 74,
+          "required": 78,
+          "covered": 75,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 77,
-          "covered": 74,
+          "required": 78,
+          "covered": 75,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 75,
-          "covered": 72,
+          "required": 76,
+          "covered": 73,
           "missing": 0,
           "waived": 3
         },
@@ -60316,8 +61388,8 @@
           "waived": 0
         },
         "total": {
-          "required": 242,
-          "covered": 233,
+          "required": 245,
+          "covered": 236,
           "missing": 0,
           "waived": 9
         }

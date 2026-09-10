@@ -93,8 +93,8 @@ grep -q '"event":"plan_done"' .ai/local/state/ledger.jsonl || { echo "    plan d
 expect_exit 0 "$MJ" history --validate
 
 # --- the read subcommands never write
-before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
+before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 for s in validate status list ready blocked waves graph next; do "$MJ" plan "$s" >/dev/null 2>&1 || true; done
 "$MJ" plan show I0001 >/dev/null; "$MJ" plan body M000 >/dev/null
-after="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"
+after="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 [ "$before" = "$after" ] || { echo "    a read subcommand wrote to the canonical model"; exit 1; }

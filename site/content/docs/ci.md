@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 46
+weight = 48
 [extra]
 source = "docs/CI.md"
 +++
@@ -78,9 +78,24 @@ Two execution classes, both evidence-driven:
 - **affected** — a pull request: the gates of the classes its changed paths fall in. Nothing
   is skipped on a hope; a gate is left out only when no changed path is in a class that
   names it, and the plan says so for every gate.
-- **full** — every gate: a push to master, the weekly schedule, a manual dispatch, a pull
-  request labelled `ci:full`, a change to the pipeline itself (the workflow, the actions,
-  `scripts/ci/`, the planner, the model, the runner), or a path the model does not know.
+- **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
+  manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
+  workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
+  model does not know.
+
+A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
+only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
+schedule, a dispatch and a `ci:full` pull request do and a routine push does not. Three
+gates carry it — `macos`, `rust-bench` and `installer-live` — and what they share is a macOS
+runner rather than a subject. The reason is arithmetic, and the model states it: this
+repository pushes to master about every seven minutes, the macOS suite runs for about 106
+minutes, and three macOS jobs per push is demand no shared runner pool answers. On
+2026-09-10 four master runs had every Linux job finished — five of them red — while their
+`ci` job had not started, because it needs those three and they had been queued for hours;
+master carried the defects overnight with every check apparently green, because a run that
+never reported and a run that reported green look identical in the interface. The gates were
+not weakened: they run in full every night and on request, which is more often than they
+were completing. `ci` still needs their jobs and still turns red when one of them does.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
@@ -127,7 +142,14 @@ filter that matches nothing is a usage error, an empty case directory is a usage
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
 
 The jobs that run the suite check out the whole history: a case that clones the checkout
-into a fixture and pushes cannot push a shallow clone. A case may read the checkout it
+into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
+other reason: `generate --check` runs there, and the changelog it checks is composed from
+the release records, the decisions and `git log <previous>..<this>`. A checkout one commit
+deep has none of that history, so every release record names a commit the clone does not
+have, the composer writes the degraded document
+`project.release-is-a-projection` requires of it, and the gate reports the committed
+artifact stale for a reason no branch caused. A gate reads its inputs; the job fetches
+them. A case may read the checkout it
 lives in but must not write into it while other cases run;
 the parallel phase checks `git status` before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
@@ -207,16 +229,103 @@ a scarce runner does not hold up the next commit's evidence. Deployments are the
 `pages.yml` cancels a superseded deployment, because the site is a projection of the newest
 commit and finishing an older one would publish an older tree.
 
+## Where a gate cannot reach
+
+A gate that never fires is worse than one that fails, because the verdict still reads
+complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
+about, and each of them cost a real outage or a real afternoon.
+
+**The staleness catch cannot run on the path most merges take** — the driver resolving to
+ours is a design decision working correctly, and the defect is that the only thing checking
+its result runs in a `pre-commit` hook, while no hook of any kind runs for a merge the server
+creates. `.gitattributes` sends
+derived artifacts to `scripts/merge-derived`, which resolves them to *ours* and exits clean.
+That is deliberate: a derived file carries a fingerprint of the tree it was generated from,
+so after a merge neither side's value is right and the answer comes from running the
+generator, not from a conflict marker. The design leans on `scripts/pages current` in
+`.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
+hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
+commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
+bypass; it is the action this repository tells people to take. With no branch protection
+(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
+nothing server-side compensates, and the `site` gate that does check currency is advisory and
+reports after the merge. So the first thing in the pipeline that can actually refuse is the
+Pages build, and it refuses by failing publication rather than by failing a pull request. The
+symptom is always "the site is stale" and never "the branch is red".
+
+The vivid form: a stale recording rides through a merge untouched, so two consecutive master
+merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
+coverage is inverse to its usage is worse than a missing one, because nobody notices it is
+absent.
+
+The condition above was observed on 2026-09-10 and then repaired, and the gap it illustrates
+is structural rather than a description of how the trunk stands today — so do not test this
+by looking at the trunk and concluding the finding expired. The commits carry their own
+evidence permanently: `git show <commit>:site/data/generated/source.json` beside
+`scripts/pages fingerprint` on that tree, and `git log -1 --format=%cn` for who committed the
+merge.
+
+**A check whose input goes empty can vanish instead of failing.** `scripts/site-check`
+derives `PREFIX` by stripping scheme and host from `base_url`. At an apex domain the path
+component is empty, and the block that uses it is guarded by `if [ -n "$PREFIX" ]` with no
+`else` — so it emits neither `ok` nor `bad`. The verdict still reads complete. Note that
+simply removing the guard is wrong: the filter it protects would then match everything its
+own first stage can emit and print a green `ok` over an empty set. What an empty prefix needs
+is a *different* predicate, not the same one ungated.
+
+The tool has vocabulary for this and the doctrine gates use it: `mj_doctrine_skip` prints the
+check, says it did not run, and gives the reason — see the blocker and scope gates in
+`lib/check.sh`. A gate with only `ok` and `bad` makes silence the path of least resistance
+every time an author meets a case they cannot decide.
+
+**Two queries worth running against any new gate.** The first is this document's; the second
+came out of the apex case above:
+
+- for every field a validator reads out of a state record, can something write it?
+- for every value a check derives, is empty distinguishable from absent?
+
+The first has a mechanical form — `grep` the readers and the writers — and it found that a
+task's `requires` had five readers and no writer at all, so `check` reported "the task
+declares no obligations" truthfully and forever. In each case the rule existed, the validator
+ran, and its answer was *true about the half it could see*.
+
+**One correction for whoever proposes the obvious repair.** The natural fix for stale derived
+data is to let the Pages build re-derive rather than refuse. It does not work, and the reason
+must be stated precisely or it is refutable in one command. The **input fingerprint is
+deterministic** — `scripts/pages fingerprint` three times on one tree gives one value. What is
+machine-dependent is the **generated content**: `%h` abbreviates against the local object
+store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling
+worktree root. A build that re-derived could therefore publish a third answer matching neither
+side. State it as content-dependence, never as fingerprint non-determinism.
+
+One thing the generation guard is not: the digest it compares is taken over `Cargo.toml`,
+`Cargo.lock`, `build.rs` and `src` only, with `benches/` and `tests/` deliberately outside
+it — which is why a branch that changes no Rust may legitimately use a binary built in
+another worktree.
+
+**A note about the plan.** `majordomus plan validate` refuses an issue that names no
+milestone. So an area of standing work with no milestone is not merely unfiled — the work in
+it cannot be recorded in the plan at all, which is how a repository can land a great deal of
+change against a plan that never moves. If a gate finds something worth an issue and no
+milestone fits, the milestone is the missing part; do not park the issue under the
+least-wrong parent, because status here is derived from the graph and a false parent
+propagates into the roadmap and the waves.
+
 ## Platforms
 
 Linux is the blocking path for everything that does not depend on the platform: lints,
 documentation, coverage, the benchmark runner. macOS runs what does: the behavioural suite
 under the stock macOS shell (bash 3.2) and BSD userland, and the crate's own suites there
-(files, signals, the lease, the spawned processes), when a change is in a class that can
-reach them (the shell tool, the distribution, the crate, the pipeline) and in every full
-plan. The benchmark check against a committed baseline runs on macOS, the one platform
-with a baseline under `.ai/repo/benchmarks/rust/`. `docs/HARDCODING_LEDGER.yaml` records
-the platform list as a deliberate decision.
+(files, signals, the lease, the spawned processes). The benchmark check against a committed
+baseline runs on macOS, the one platform with a baseline under `.ai/repo/benchmarks/rust/`.
+`docs/HARDCODING_LEDGER.yaml` records the platform list as a deliberate decision.
+
+The macOS gates are the on-demand ones (above): the nightly schedule, a dispatch and a
+`ci:full` pull request plan them, a routine push does not, because a macOS runner is what
+this repository waits hours for and a gate queued behind one reports nothing at all. A
+change that is likely to be platform-dependent — the shell tool, the distribution, the
+crate's process and file handling — should carry the `ci:full` label rather than wait for
+the night, and that is a judgement a reviewer makes, not one the model can.
 
 ## Telemetry and budgets
 

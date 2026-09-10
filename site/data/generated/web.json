@@ -142,32 +142,6 @@
       }
     },
     {
-      "id": "tests",
-      "title": "Test results",
-      "mount": "/tests",
-      "category": "report",
-      "visibility": "public",
-      "kind": "static-directory",
-      "producer": "bash test/run.sh + cargo test, rendered by majordomus web report tests",
-      "availability": "both",
-      "artifact": "target/web/tests",
-      "feature": null,
-      "provenance": {
-        "artifact": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "kind": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "mount": {
-          "source": "producer-declaration",
-          "path": "target/web/tests/surface.json"
-        }
-      }
-    },
-    {
       "id": "app",
       "title": "The site as it is deployed",
       "mount": "/",
@@ -214,13 +188,12 @@
     "api",
     "documentation",
     "interface",
-    "protocol",
-    "report"
+    "protocol"
   ],
   "counts": {
-    "surfaces": 10,
-    "public": 8,
-    "served": 9,
-    "published": 3
+    "surfaces": 9,
+    "public": 7,
+    "served": 8,
+    "published": 2
   }
 }

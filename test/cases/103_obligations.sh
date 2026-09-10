@@ -10,12 +10,13 @@
 . "$ROOT/test/lib.sh"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj103.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
+printf '# Objective\n\nx\n\n# Current State\n\nx\n\n# Next Action\n\nx\n' > "$S/partial.md"
 mkdir -p lib && echo a > lib/a && git add -A >/dev/null && git commit -qm base
 
-# the task record carries `requires` beside `scope`; start writes the scope, and the
-# obligations are added the way a caller would add them. Called again it replaces the list
-# rather than adding a second one, so the second half of this case can hand the same task a
-# different set of things to owe without restarting it.
+# the task record carries `requires` beside `scope`, and `start --requires` writes it. This
+# helper is the *other* way in: it replaces the list on a task that is already active, which
+# no command does, so the sections below can hand one task a different set of things to owe
+# without restarting it and losing the evidence recorded against it.
 owes() {
   python3 - "$@" <<'PY'
 import io, re, sys
@@ -34,9 +35,15 @@ expect_grep 'usage: majordomus evidence'
 expect_exit 12 "$MJ" evidence --covers tests --command 'bash test/run.sh'
 expect_grep 'no active task'
 
-# ---------------------------------------------------------------- a task that owes tests
-expect_exit 0 "$MJ" start "obligations" --scope lib/
-owes tests
+# ---------------------------------------------------------------- start declares them
+# `requires` has a producer: a token the vocabulary does not declare is refused here, at the
+# beginning, rather than at the moment a worker tries to discharge it and is told the task
+# never asked for it.
+expect_exit 2 "$MJ" start "obligations" --scope lib/ --requires nonsense
+expect_grep "'nonsense' is not an obligation"
+expect_exit 0 "$MJ" start "obligations" --scope lib/ --requires tests
+expect_grep 'requires=tests'
+grep -q '^requires:' .ai/local/state/current.yaml || { echo "    start --requires wrote no requires block"; exit 1; }
 # a token the vocabulary does not know
 expect_exit 2 "$MJ" evidence --covers nonsense --command x
 expect_grep "no obligation 'nonsense'"
@@ -188,6 +195,14 @@ if start_http "$S/public"; then
   expect_exit 0 "$MJ" check
   expect_grep 'OK   obligation  pages — exact: the published site serves'
 
+  # A caller names the commit however it has it, and the shortest way to have it is to read
+  # it off a gh-pages subject. The probe answers about the same commit either way; it used
+  # to poll the whole timeout and then report that beaee8654 is not beaee8654.
+  expect_exit 0 scripts/pages verify --commit "$(git rev-parse --short HEAD)" --timeout 0
+  # and a prefix too short to name a commit is a usage error rather than a pass that matches
+  # every commit there has ever been
+  expect_exit 2 scripts/pages verify --commit b --timeout 0
+
   # the site serves an older commit: unpublished, and said in those words
   printf '{"commit":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}\n' > "$S/public/build.json"
   expect_exit 10 "$MJ" finish --outcome completed --note "done"
@@ -225,3 +240,18 @@ expect_grep 'OK   obligation  verify — discharged at this commit'
 echo 'after' >> lib/a && git add -A >/dev/null && git commit -qm after
 expect_exit 10 "$MJ" finish --outcome completed --note "done"
 expect_grep 'deploy — the evidence names .*, and the branch has moved since'
+
+# ================================================ an honest outcome is not stranded
+# `start` refuses while a task is active and `finish` is the only way to close one, so a
+# scope that turns out too narrow used to leave a worker with no move at all: scope-integrity
+# refused every outcome, including the ones that say the work did not finish. A completed
+# finish is still refused; a non-completed one names the files as warnings and closes the
+# record. Its own task, because it ends by closing it.
+expect_exit 0 "$MJ" finish --outcome partial --note "$S/partial.md"
+expect_exit 0 "$MJ" start "a scope that turns out too narrow" --scope lib/
+mkdir -p elsewhere && echo out > elsewhere/f && git add -A >/dev/null && git commit -qm outside
+expect_exit 10 "$MJ" finish --outcome completed --note "$S/partial.md"
+expect_grep 'FAIL scope +elsewhere/f — outside claimed scope'
+expect_exit 0 "$MJ" finish --outcome partial --note "$S/partial.md"
+expect_grep 'WARN scope +elsewhere/f — outside claimed scope'
+expect_grep 'outcome is partial, not completed, so scope does not refuse it'

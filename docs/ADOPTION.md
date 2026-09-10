@@ -5,7 +5,7 @@ Majordomus sits around an existing workflow. Nothing is rewritten.
 ## Day one: one repository, one person
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 
 cd <your project>
 majordomus init          # .ai/ with the policy, profiles, rules, prompts and workflows
@@ -13,15 +13,63 @@ majordomus update        # CLAUDE.md, AGENTS.md, GEMINI.md generated from the po
 majordomus doctor        # tells you exactly which hook lines are missing
 ```
 
-Add the two hook lines `init` printed. Run `doctor` again; it should report zero
-failures.
+Add the two hook lines `init` printed, then run `doctor` again.
 
-> **This does not hold today.** Measured against the published `v0.3.1`, a repository that
-> follows these steps exactly sees 109 failures, citing Majordomus's own development
-> apparatus rather than anything the repository owes. The finding, its reproduction and the
-> decision it needs are in [`ADOPTION_FIRST_RUN.md`](ADOPTION_FIRST_RUN.md). Until that is
-> settled, read the `doctor` output here for the `wiring` lines, which are about your
-> repository, and expect the `doctrine` lines to be noise.
+### What the second run actually says
+
+Not "nothing". A promise of zero was written here once and was wrong by 112 findings
+([`ADOPTION_FIRST_RUN.md`](ADOPTION_FIRST_RUN.md) is the record), so this section is a
+measurement instead: a `git init` repository with a README, one source file and one commit,
+adopted by following the four commands above literally. Your own repository will differ in
+the details and not in the shape.
+
+```
+FAIL bootstrap   README.md — does not name AGENTS.md; a reader cannot find the agent bootstrap
+WARN clone       unpushed — commits on no remote: main(1)
+INFO doctrine    vendor evidence — v0.5.0 is a packaged distribution, so the tests, claims
+                 and CI each rule cites are not here to read
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
+INFO skill       .ai/repo/skills/ — no skills; nothing to validate
+...
+OK   ...         43 of them
+```
+
+Read it by verdict, because the three mean different things:
+
+- **`FAIL` is yours, and there is normally one of it.** `update` wrote `AGENTS.md`; the
+  check asks that your `README.md` point a reader at it. One line fixes it, and then the
+  run is clean. Every other `FAIL` you see is about your repository too — a projection you
+  hand-edited, a hook that is present but not executable, an `.ai/local/` that got
+  committed — and each names the command that fixes it.
+- **`WARN` is a fact about this checkout, not a defect.** A repository with no remote yet
+  reports `unpushed`; it stops as soon as you push. `doctor` also warns when it runs longer
+  than its budget, which on a loaded machine says something about the machine.
+- **`INFO` is a check that had nothing to look at,** and is worth reading once so that you
+  know what is *not* being verified. `no decisions; nothing to validate` will stop the day
+  you write an ADR. `vendor evidence` is permanent and is explained below.
+
+`majordomus doctor` exits `10` while any `FAIL` stands, which is what makes the `pre-commit`
+line worth adding. `WARN` and `INFO` never fail the command.
+
+So zero *is* reachable, and in the measured run it took one line — a sentence in `README.md`
+naming `AGENTS.md`. After that edit the same command reports no failures and exits `0`, with
+the two warnings and the informational lines still there and still not failures. That is the
+promise this page used to make before the first `doctor`, and now makes after the first fix.
+
+### Why `doctor` skips its own evidence in your repository
+
+Each rule in the package carries the test case and the claim that prove it — `tests:
+[test/cases/01_init.sh]`, and so on. Those are *our* evidence for *our* rule, they live in
+the Majordomus source tree, and the release archive does not ship them: it carries `bin/`,
+`lib/`, `libexec/`, `share/` and a `RELEASE.json` stamp. So an installed tool cannot read
+them, says so once, and holds your repository to none of it. You are not expected to have a
+`test/cases/`, a `docs/CLAIMS.yaml`, or a copy of our CI workflow, and nothing here will
+ask you for one.
+
+What is still checked in your repository is the half that travels with the tool: that every
+rule names a validator that exists, that the command it is declared under really dispatches
+it, and that a blocking rule can actually stop that command. A rule that is written down
+but not wired is still reported here, exactly as it is at home.
 
 Commit `.ai/repo/` and the generated files. `.ai/local/` is this checkout's own
 state — the task record, ledger, checkpoints, handovers — and `init` ignores it; it never
