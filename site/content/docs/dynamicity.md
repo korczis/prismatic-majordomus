@@ -1,7 +1,7 @@
 +++
 title = "Canonical ownership and derivation"
 description = "canonical ownership: what may be written down twice, what must be derived, and which entities still have no owner"
-weight = 31
+weight = 32
 [extra]
 source = "docs/DYNAMICITY.md"
 +++

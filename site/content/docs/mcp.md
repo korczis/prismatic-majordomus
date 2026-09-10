@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 42
+weight = 43
 [extra]
 source = "docs/MCP.md"
 +++
