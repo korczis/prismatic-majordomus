@@ -37,9 +37,9 @@ expect_grep '^resource    majordomus://prompt/continue$'
 expect_grep '^resource    majordomus://rule/majordomus\.scope-integrity@1$'
 expect_no_grep '\.ai/local/'
 # every rule the shell tool resolves is a resource, and nothing else is: the two readers agree
-"$MJ" rules list | awk '{print $1}' | sort > "$S/shell_rules.txt"
+"$MJ" rules list | awk '{print $1}' | LC_ALL=C sort > "$S/shell_rules.txt"
 [ -s "$S/shell_rules.txt" ] || { echo "    rules list printed no rules"; exit 1; }
-"$RB" mcp --inspect 2>/dev/null | sed -n 's|^resource    majordomus://rule/\(.*\)@\([0-9]*\)$|\1|p' | sort > "$S/rust_rules.txt"
+"$RB" mcp --inspect 2>/dev/null | sed -n 's|^resource    majordomus://rule/\(.*\)@\([0-9]*\)$|\1|p' | LC_ALL=C sort > "$S/rust_rules.txt"
 cmp -s "$S/shell_rules.txt" "$S/rust_rules.txt" || { echo "    the Rust executable and rules list disagree:"; diff "$S/shell_rules.txt" "$S/rust_rules.txt" | head; exit 1; }
 
 # --- a real session over the real pipes: initialize, list, read a vendored rule, call a tool

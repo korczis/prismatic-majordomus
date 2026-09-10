@@ -20,12 +20,14 @@ pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
 pub mod deploy;
+pub(crate) mod design;
 pub mod discovery;
 pub(crate) mod distribution;
 pub mod environment;
 pub(crate) mod error;
 pub mod execution;
 pub mod generate;
+pub mod generation;
 pub mod git;
 pub mod graph;
 pub mod http;
@@ -74,3 +76,14 @@ pub const PROFILE: &str = env!("MAJORDOMUS_PROFILE");
 /// build time: nothing here shells out to git, and an installed binary needs no repository
 /// in order to say what it is.
 pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
+
+/// The generation this executable was built from: the digest `generation::crate_generation`
+/// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build
+/// could not read them.
+///
+/// [`VERSION`] says what this executable calls itself; this says what it *is*. Two builds
+/// of `majordomus-cli 0.4.0` from different revisions of the crate carry different models
+/// and derive a repository differently, and only this tells them apart — which is why
+/// `majordomus generate` compares it against the tree it is asked to derive rather than
+/// comparing versions.
+pub const GENERATION: &str = env!("MAJORDOMUS_GENERATION");

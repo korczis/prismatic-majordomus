@@ -595,17 +595,45 @@ disagree on purpose and fails when the ledger is not what decides.
 A malformed record is skipped with a warning on stderr and never silently, and never
 fatally: one unreadable file must not cost the whole listing.
 
-**Writes:** `state/session-current.yaml`, mode `0600`, written atomically, and one
-`session.started` line in the ledger. `session_id`, `repository_id`, `worktree`, `branch`,
-`start_head` and `start_working_tree` are computed from git and are never authored.
+**One episode per provider session, not one per worktree.** Two windows of the same
+provider open on one checkout are two workers. Folding them into one record stamped one
+worker's ledger lines with the other's id and let either window's end event close the
+episode for both; measured in this repository on 2026-09-09, seven concurrent sessions
+produced one record between them. So an open episode is a file of its own,
+`state/sessions-open/<provider session>.yaml`, keyed by the provider session that opened
+it. `--if-open keep` keeps *your* episode — which is why it exists: the start event fires
+again on a resume and on a compaction — and gives a different provider session an episode
+of its own. `close --provider-session <id>` closes that episode and no other, which is what
+a provider's end event passes. An episode nobody named is keyed `hand`, and there is at
+most one of those: a provider that sends no session identity is indistinguishable from a
+person at a terminal, and inventing a distinction there would multiply episodes nobody can
+close. A hand-opened episode needs no provider anywhere and behaves exactly as before.
 
-Nothing under `.ai/local/state/` is tracked, the open session record included: an open
+`state/session-current.yaml` is a relative symlink into that store: the pointer to the
+episode of this checkout, aimed at the one opened here last and re-aimed by a close at the
+one still open when exactly one is. Which episode a given process's commands belong to is
+resolved in `mj_session_here_file` (`lib/common.sh`): the provider session named on the
+command line, else the provider session this process is running inside when an episode with
+that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or the variable the lifecycle adapter
+declares — `CLAUDE_CODE_SESSION_ID` for Claude Code), else the pointer. Two episodes open
+and a process that can name neither is the one case nothing can resolve: the pointer names
+the one opened last, and `session status` lists the others under `Also open:` rather than
+letting a guess pass for a fact.
+
+**Writes:** `state/sessions-open/<provider session>.yaml`, mode `0600`, written atomically,
+the pointer beside it, and one `session.started` line in the ledger. `session_id`,
+`repository_id`, `worktree`, `branch`, `start_head` and `start_working_tree` are computed
+from git and are never authored. `provider` and `provider_session` are recorded only when a
+provider hook supplied them, which is also what makes them reportable: `continuity.state`
+declared an `OpenSession.provider` for a year that no writer could produce.
+
+Nothing under `.ai/local/state/` is tracked, the open session records included: an open
 session carries nothing anyone else needs, and a record that arrived from another checkout
 would make this one inherit an episode it did not open. A record that names another
 worktree is reported and never obeyed, which keeps the defence in place for every way one
 can still arrive — a copied working directory, a synced folder.
 
-Exit `15` when a session is already open here, `10` when the record does not parse — a
+Exit `15` when your own session is already open here, `10` when the record does not parse — a
 corrupt record fails loudly rather than being read as "no session", because reading it as
 absent is exactly what would let a second `start` overwrite it.
 

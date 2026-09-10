@@ -10,9 +10,10 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, CheckState, CommandIndex, Continuity, DirectoryReport, DirectoryState,
-    EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
+    ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
+    DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
     InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
+    TokenList,
 };
 use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
@@ -29,7 +30,7 @@ use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
     alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
-    nothing, pagination, pre, row, statistic, table, tag, text_cell, Window, PER_PAGE,
+    nothing, pagination, pre, row, statistic, table, tag, text_cell, word_badge, Window, PER_PAGE,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and
@@ -1556,7 +1557,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 cell(mono(&n.kind)),
                 text_cell(n.summary.clone().unwrap_or_default()),
                 cell(match &n.status {
-                    Some(s) => badge(s, s),
+                    Some(s) => word_badge(s),
                     None => el("span").text("-"),
                 }),
                 cell(match &n.source {
@@ -3959,6 +3960,210 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
         (e.id.as_str(), None),
     ])
     .script("executions.js")
+}
+
+// ---------------------------------------------------------------------- design
+
+/// The design system, as this executable carries it: every role with its light and dark
+/// value, every status with the words filed under it, the type scale at its own sizes,
+/// the layout values, the theme contract, and where the declaration is projected. Nothing
+/// on this page is written here — it is `design.system` and `design.tokens` rendered — and
+/// the badge at the top is the one check no file-level gate can make: whether the
+/// stylesheet this page loaded was projected from the declaration this executable was
+/// built with.
+pub fn design(ctx: &Context) -> Page {
+    let report: DesignReport = match ask(ctx, "design.system", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Design, "Design", e),
+    };
+    let list: TokenList = match ask(ctx, "design.tokens", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Design, "Design", e),
+    };
+    use crate::design::TokenKind;
+    let of = |kind: TokenKind| list.tokens.iter().filter(move |t| t.kind == kind);
+
+    // a swatch of a resolved value: the class shows the value in the theme in force, the
+    // inline style shows the value of the theme the reader is not in, resolved from the
+    // declaration at request time rather than chosen here
+    let swatch = |literal: &str| {
+        el("span")
+            .class("mj-swatch")
+            .attr("style", format!("background: {literal}"))
+            .attr("title", literal.to_string())
+    };
+    let colour_cell = |literal: &str, reference: &str| {
+        el("td")
+            .child(swatch(literal))
+            .text(" ")
+            .child(mono(reference.to_string()))
+    };
+
+    let roles =
+        table(
+            &["role", "light", "dark", "the site's names", "for"],
+            of(TokenKind::Role)
+                .map(|t| {
+                    let p = &t.parts[0];
+                    row(vec![
+                        cell(mono(p.css.clone())),
+                        colour_cell(&p.light.literal, &p.light.reference),
+                        colour_cell(&p.dark.literal, &p.dark.reference),
+                        cell(el("span").class("mj-marks").children(
+                            t.aliases.iter().map(|a| tag(a.clone())).collect::<Vec<_>>(),
+                        )),
+                        text_cell(t.about.clone()),
+                    ])
+                })
+                .collect(),
+        );
+
+    let statuses = table(
+        &[
+            "status",
+            "as a badge",
+            "text",
+            "ground",
+            "border",
+            "the words filed under it",
+        ],
+        of(TokenKind::Status)
+            .map(|t| {
+                let part = |name: &str| t.parts.iter().find(|p| p.part == name).cloned();
+                let fg = part("fg").expect("a status has text");
+                let bg = part("bg").expect("a status has a ground");
+                let line = part("line").expect("a status has a border");
+                row(vec![
+                    cell(mono(t.name.clone())),
+                    cell(badge(&t.name, t.name.clone())),
+                    colour_cell(&fg.light.literal, &fg.light.reference),
+                    colour_cell(&bg.light.literal, &bg.light.reference),
+                    colour_cell(&line.light.literal, &line.light.reference),
+                    cell(
+                        el("span").class("mj-marks").children(
+                            t.states
+                                .iter()
+                                .map(|w| badge(w, w.clone()))
+                                .collect::<Vec<_>>(),
+                        ),
+                    ),
+                ])
+            })
+            .collect(),
+    );
+
+    let type_scale = table(
+        &["step", "as itself", "size / leading", "utility", "for"],
+        of(TokenKind::Type)
+            .map(|t| {
+                row(vec![
+                    cell(mono(t.css[0].clone())),
+                    cell(
+                        el("span")
+                            .class(format!("mj-type-sample--{}", t.name))
+                            .text("The quick brown fox jumps over the lazy dog"),
+                    ),
+                    text_cell(t.value.clone().unwrap_or_default()),
+                    cell(mono(t.css[2].clone())),
+                    text_cell(t.about.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let scalars = table(
+        &["token", "kind", "value", "for"],
+        list.tokens
+            .iter()
+            .filter(|t| {
+                matches!(
+                    t.kind,
+                    TokenKind::Font
+                        | TokenKind::Tracking
+                        | TokenKind::Layout
+                        | TokenKind::Radius
+                        | TokenKind::Motion
+                )
+            })
+            .map(|t| {
+                row(vec![
+                    cell(mono(t.css[0].clone())),
+                    cell(tag(t.kind.as_str())),
+                    cell(mono(t.value.clone().unwrap_or_default())),
+                    text_cell(t.about.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let projections = table(
+        &["projection", "read by"],
+        report
+            .projections
+            .iter()
+            .map(|p| {
+                row(vec![
+                    cell(mono(p.path.clone())),
+                    text_cell(p.read_by.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let t = &report.tallies;
+    Page::new(
+        Area::Design,
+        "Design",
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "One declaration, every surface",
+                // filled by cockpit.js from the stylesheet's own --mj-design; until then, and
+                // without JavaScript, the badge says what it is waiting for
+                el("span")
+                    .attr("id", "mj-design-check")
+                    .class("mj-badge mj-badge--pending")
+                    .text("comparing the stylesheet with the executable"),
+                el("div")
+                    .child(
+                        el("div")
+                            .class("mj-stats")
+                            .child(statistic(t.roles.to_string(), "roles", "the declaration"))
+                            .child(statistic(t.statuses.to_string(), "statuses", "the declaration"))
+                            .child(statistic(t.states.to_string(), "state words", "the declaration"))
+                            .child(statistic(t.type_steps.to_string(), "type steps", "the declaration"))
+                            .child(statistic(t.aliases.to_string(), "site synonyms", "the declaration"))
+                            .child(statistic(t.palette.to_string(), "palette entries", "the declaration")),
+                    )
+                    .child(facts(vec![
+                        ("Source", Node::Element(mono(report.source.clone()))),
+                        ("Fingerprint", Node::Element(mono(report.fingerprint.clone()))),
+                        ("On every page", Node::Element(mono(format!("--mj-design: \"{}\"", report.design)))),
+                        ("Dark means", Node::Element(mono(format!(".{}", report.theme.class)))),
+                        ("Choice stored under", Node::Element(mono(report.theme.storage_key.clone()))),
+                        (
+                            "Audited at",
+                            Node::Element(el("span").class("mj-marks").children(
+                                report
+                                    .viewports
+                                    .iter()
+                                    .map(|w| tag(format!("{w}px")))
+                                    .collect::<Vec<_>>(),
+                            )),
+                        ),
+                    ]))
+                    .child(el("p").class("mj-note").text(
+                        "The site published to GitHub Pages, this Cockpit, the pages the executable renders itself and the Swagger shell are projections of the one file named above. A value changed there and regenerated reaches every surface; a value chosen anywhere else fails the design gate.",
+                    )),
+            ))
+            .child(card("Roles", roles))
+            .child(card("Status", statuses))
+            .child(card("Type", type_scale))
+            .child(card("Type stacks, layout, radius, motion", scalars))
+            .child(card("Projections", projections)),
+    )
+    .subtitle("What every surface of this tool is rendered with, from the one declaration this executable carries.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Design", None)])
 }
 
 #[cfg(test)]

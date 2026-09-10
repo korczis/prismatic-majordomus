@@ -229,7 +229,7 @@ pub fn executions(args: ExecutionsArgs) -> Result<u8> {
 ///
 /// The route is not written here: it is read from the same descriptor the server binds,
 /// so a route that moves moves once.
-fn ask_server(
+pub(crate) fn ask_server(
     ctx: &crate::capability::Context,
     url: &str,
     id: &str,
@@ -409,7 +409,10 @@ fn event_id(id: &str) -> Result<crate::execution::ExecutionId> {
     })
 }
 
-fn cli_capability<'a>(ctx: &'a crate::capability::Context, path: &[&str]) -> Result<&'a str> {
+pub(crate) fn cli_capability<'a>(
+    ctx: &'a crate::capability::Context,
+    path: &[&str],
+) -> Result<&'a str> {
     let words: Vec<String> = path.iter().map(|w| w.to_string()).collect();
     ctx.registry
         .by_cli(&words)
@@ -422,7 +425,7 @@ fn cli_capability<'a>(ctx: &'a crate::capability::Context, path: &[&str]) -> Res
         })
 }
 
-fn map(e: CapabilityError) -> Error {
+pub(crate) fn map(e: CapabilityError) -> Error {
     match e {
         // the request was well formed and the thing is absent: the missing-artifact exit
         // code, so a script can tell "no such execution" from "the server did not answer"

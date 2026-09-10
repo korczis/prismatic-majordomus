@@ -14,7 +14,7 @@ source = "docs/claims/advertised-install-command-works.md"
 Every document here shows one line to a stranger:
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 ```
 
 That line is fetched and run — as it is written, pipe included — on Linux and on macOS,

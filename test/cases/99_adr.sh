@@ -71,7 +71,7 @@ grep -q '^status: proposed$' "$adr2"
 for i in 1 2 3 4 5 6 7 8; do "$MJ" adr propose "Concurrent decision $i" >/dev/null 2>&1 & done
 wait
 [ "$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')" = 10 ]
-[ "$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | sort -u | wc -l | tr -d ' ')" = 10 ]
+[ "$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | LC_ALL=C sort -u | wc -l | tr -d ' ')" = 10 ]
 # and no lock was left behind
 [ ! -e .ai/repo/adrs/.id.lock ]
 
@@ -276,7 +276,7 @@ git add -A >/dev/null; git commit -qm "before the branch" >/dev/null 2>&1 || tru
 git checkout -q -b other-branch
 "$MJ" adr propose "Decided on a branch" >/dev/null
 git add -A >/dev/null && git commit -qm "a decision on a branch" >/dev/null
-high="$(ls .ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md | sed 's|.*/||; s|-.*||' | sort -n | tail -1)"
+high="$(ls .ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md | sed 's|.*/||; s|-.*||' | LC_ALL=C sort -n | tail -1)"
 git checkout -q -
 # the record is gone from this tree; the number is not free
 test ! -e ".ai/repo/adrs/$high-decided-on-a-branch.md"

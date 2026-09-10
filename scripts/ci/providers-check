@@ -73,7 +73,7 @@ fi
 # counted as three providers named. Words shorter than four letters and articles are not
 # names of anything.
 names="$(jq -r '.providers[] | .id, .title, (.title | split(" ") | .[0])' "$DOC" \
-  | awk 'length($0) >= 3 && $0 != "Any" && $0 != "A" && $0 != "bb" || $0 == "bb"' | sort -u)"
+  | awk 'length($0) >= 3 && $0 != "Any" && $0 != "A" && $0 != "bb" || $0 == "bb"' | LC_ALL=C sort -u)"
 # a line names a provider when one of its names appears as a word (bb is a word only in
 # lower case, as an id and a title, never inside another word)
 count_named() { # line -> number of distinct providers it names

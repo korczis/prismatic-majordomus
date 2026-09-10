@@ -6,17 +6,24 @@
 # the command graph — one description, one declaration, one place to change them. What
 # remains here is what no program implements: opening a browser, and building the
 # Cockpit's static assets.
+#
+# Neither recipe below opens the lease. `serve status` is the executable's one typed
+# reading of that file (ADR 0035, project.the-lease-is-read-once); `mcp-status` was a `cat`
+# of it and `open` a `sed` regular expression over JSON, which would have found nothing the
+# day anything wrote the document pretty-printed, and said "no server" rather than "I
+# cannot read this".
 
-# Where the repository's shared server is, if one runs (from the lease under .ai/local/).
+# Where the repository's shared server is, and every other server of this repository.
 [group('serve')]
 mcp-status:
-    @f=".ai/local/state/mcp/server.json"; if [ -f "$f" ]; then cat "$f"; echo; else echo "no shared server lease at $f"; fi
+    @bin/majordomus-cli serve status
 
-# Open a surface of the running shared server in a browser: `just open`, `just open cockpit`, `just open swagger`. The address comes from the lease; the surfaces come from the server.
+# Open a surface of the running shared server in a browser: `just open`, `just open cockpit`, `just open swagger`. The address is the one `serve status` reports for this checkout; the surfaces come from the server.
 [group('serve')]
 open surface="":
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")/{{surface}}"; echo "$url"; \
+    @url="$(bin/majordomus-cli serve status --format json | jq -r '[.servers[]? | select(.this_checkout == true)] | .[0].lease.url // empty')"; \
+    [ -n "$url" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
+    url="$url/{{surface}}"; echo "$url"; \
     (command -v open >/dev/null && open "$url") || xdg-open "$url"
 
 # Open Swagger UI of the running shared server in the browser.

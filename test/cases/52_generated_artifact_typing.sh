@@ -95,7 +95,7 @@ done
 [ -n "$YAML_READER" ] || echo "    note: no YAML parser (ruby/psych or python3/PyYAML); the encodings were compared by declaration only"
 
 # --- every schema a document names is published and pins that document
-for s in $(jq -r '.documents[] | select(.schema) | .schema' "$MAN" | sort -u); do
+for s in $(jq -r '.documents[] | select(.schema) | .schema' "$MAN" | LC_ALL=C sort -u); do
   grep -rl "\"$s\"" "$ROOT/share/schemas/generated"/*.schema.json >/dev/null 2>&1 \
     || { echo "    the document schema $s has no published contract under share/schemas/generated/"; exit 1; }
 done

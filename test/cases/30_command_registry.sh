@@ -42,7 +42,7 @@ done
 
 # 1. no duplicate ids. Discovery that silently picks the first or the last entry is worse
 #    than no discovery, because it looks like it worked.
-dupes="$(printf '%s\n' $ids | sort | uniq -d)"
+dupes="$(printf '%s\n' $ids | LC_ALL=C sort | uniq -d)"
 [ -z "$dupes" ] || { echo "    duplicate command id(s): $dupes"; exit 1; }
 
 # 2. unknown keys are errors here as everywhere else in this repository
@@ -51,7 +51,7 @@ unk="$(mj_yaml_unknown_keys "$FLAT" "$ROOT/share/allow/commands.txt" || true)"
 
 # 3. every dispatched command has a registry entry, and every public entry is dispatched.
 #    The dispatch table is read from the binary, so adding a command there adds it here.
-dispatched="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u)"
+dispatched="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | LC_ALL=C sort -u)"
 [ "$(printf '%s\n' "$dispatched" | wc -w | tr -d ' ')" -ge 15 ] || {
   echo "    could not read the dispatch table from bin/majordomus"; exit 1; }
 for c in $dispatched; do
@@ -114,8 +114,8 @@ code_of() { case "$1" in OK) echo 0 ;; USAGE) echo 2 ;; CONTRACT) echo 10 ;; DRI
 i=0; while [ "$i" -lt "$count" ]; do
   id="$(get "$i" id)"
   if [ -f "$ROOT/lib/$id.sh" ]; then
-    declared="$(sed -n "s|^commands\.$i\.exit_codes\.[0-9]*=||p" "$FLAT" | sort -n)"
-    for name in $(grep -oE 'MJ_EX_(OK|USAGE|CONTRACT|DRIFT|MISSING|INTERNAL|REFUSED)' "$ROOT/lib/$id.sh" | sed 's/MJ_EX_//' | sort -u); do
+    declared="$(sed -n "s|^commands\.$i\.exit_codes\.[0-9]*=||p" "$FLAT" | LC_ALL=C sort -n)"
+    for name in $(grep -oE 'MJ_EX_(OK|USAGE|CONTRACT|DRIFT|MISSING|INTERNAL|REFUSED)' "$ROOT/lib/$id.sh" | sed 's/MJ_EX_//' | LC_ALL=C sort -u); do
       c="$(code_of "$name")"
       printf '%s\n' "$declared" | grep -qx "$c" || {
         echo "    $id: lib/$id.sh can exit $c (MJ_EX_$name) but the registry does not declare it"; exit 1; }
@@ -136,7 +136,7 @@ if grep -qE '^stages\.[0-9]+\.id=nosuchstage$' "$T/probe.flat"; then
 sed 's|^  - id: doctor$|  - id: init|' "$REG" > "$probe"
 mj_yaml_flatten "$probe" > "$T/probe.flat" 2>/dev/null
 pids="$(sed -n 's|^commands\.[0-9]*\.id=||p' "$T/probe.flat")"
-[ -n "$(printf '%s\n' $pids | sort | uniq -d)" ] || {
+[ -n "$(printf '%s\n' $pids | LC_ALL=C sort | uniq -d)" ] || {
   echo "    duplicate-id check is vacuous: the probe produced no duplicate"; exit 1; }
 
 printf 'ok   registry: %s commands, %s public, reconciled against the dispatch table\n' \

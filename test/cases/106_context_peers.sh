@@ -7,8 +7,14 @@
 # sessions built the same subsystem because neither read the board. So the board arrives in
 # the one command every worker is already told to run. What this case holds is that it
 # arrives, that it names the collision rather than merely the peers, and above all that it
-# is never load-bearing: no lease, no server, a server that does not answer, or a board that
-# says nothing must all leave `context` exactly as it was.
+# is never load-bearing: no lease, no server, a server that does not answer, an executable
+# that is not built, or a board that says nothing must all leave `context` exactly as it
+# was.
+#
+# Where the server is now comes from `serve status`, the executable's one typed reading of
+# the lease (ADR 0035, project.the-lease-is-read-once); the lease this case plants is read
+# by that reader rather than by the shell. Everything asserted below is asserted about the
+# same contract as before the move, which is the point of leaving the assertions alone.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
 command -v curl >/dev/null 2>&1 || { echo "    curl absent; skipping"; exit 0; }
@@ -23,6 +29,13 @@ expect_exit 0 "$MJ" context
 expect_no_grep '^## PEERS'
 order=$(printf '%s\n' "$LAST_OUT" | grep -E '^## ' | tr '\n' ' ')
 case "$order" in "## GIT ## TASK"*) ;; *) echo "    a repository with one worker grew a section about it: $order"; exit 1 ;; esac
+
+# --- an executable that is not built is the same answer, and it is proved above: the
+# section is asked for from `serve status` and there is nothing to ask, so `context` is
+# exactly what it was. That half of the contract is what a tree without a build can hold;
+# the board itself needs the reader, so the rest is a skip rather than a failure.
+BIN="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
+[ -x "$BIN" ] || { echo "    no built executable to read the lease with; the never-load-bearing half is proved above"; exit 0; }
 
 # --- a board with one peer whose claim is inside this task's scope
 board="$T/board.json"
@@ -76,6 +89,28 @@ expect_no_grep 'p2 claims site'
 # the section sits between git and the task: a worker on your paths outranks your own records
 order=$(printf '%s\n' "$LAST_OUT" | grep -E '^## ' | tr '\n' ' ')
 case "$order" in "## GIT ## PEERS ## TASK"*) ;; *) echo "    peers is not between git and task: $order"; exit 1 ;; esac
+
+# --- a peer that said nothing, listed last: the section still prints and context still
+# exits 0. Under `set -e` the bare `[ -n "$pscope" ] &&` on the last row of the listing
+# was the loop's exit status, and every board whose newest peer had not announced ended
+# `context` with nothing on either stream and exit 1 (2026-09-10, the primary checkout).
+cat > "$board" <<'JSON'
+{"count":2,"peers":[
+ {"id":"p1","client":{"name":"codex","version":"1"},"transport":"http","connected_at":"2026-09-09T18:00:00Z","last_seen_seconds_ago":4,"attached":true,
+  "announcement":{"intent":"the evidence subsystem","scope":["lib/evidence.sh"],"at":"2026-09-09T18:00:00Z"}},
+ {"id":"p3","client":{"name":"claude-code","version":"1"},"transport":"http","connected_at":"2026-09-09T19:00:00Z","last_seen_seconds_ago":2,"attached":true}
+]}
+JSON
+kill "$stub" 2>/dev/null || true; wait "$stub" 2>/dev/null || true
+python3 "$srv" "$T/port3" "$board" > /dev/null 2>&1 &
+stub=$!
+i=0; until [ -s "$T/port3" ] || [ "$i" -ge 100 ]; do i=$((i+1)); sleep 0.05; done
+printf '{"schema":"majordomus-mcp-lease/v1","url":"http://127.0.0.1:%s"}\n' "$(cat "$T/port3")" > .ai/local/state/mcp/server.json
+expect_exit 0 "$MJ" context
+expect_grep '^## PEERS'
+expect_grep 'p3   here'
+expect_grep '(said nothing)'
+expect_grep '^## TASK'
 
 # --- a board nobody is on says nothing at all
 printf '{"count":0,"peers":[]}\n' > "$board"

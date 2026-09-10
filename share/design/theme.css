@@ -1,13 +1,53 @@
-/* GENERATED FILE - DO NOT EDIT DIRECTLY
-   Source: share/design/tokens.yaml, the one place a design value is chosen
-   Generator: scripts/design-tokens */
+/* GENERATED FILE — DO NOT EDIT DIRECTLY
+   Source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`
+   Generator: majordomus-cli 0.5.0 */
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-
-  --color-accent-50: oklch(0.97 0.02 250);
-  --color-accent-200: oklch(0.87 0.07 250);
-  --color-accent-500: oklch(0.62 0.16 250);
-  --color-accent-600: oklch(0.55 0.16 250);
-  --color-accent-900: oklch(0.32 0.10 250);
+  --text-meta: 10px;
+  --text-meta--line-height: 1.4;
+  --text-label: 11px;
+  --text-label--line-height: 1.4;
+  --text-small: 12px;
+  --text-small--line-height: 1.5;
+  --text-dense: 13.5px;
+  --text-dense--line-height: 1.6;
+  --tracking-caps: 0.12em;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+}
+/* The site's vocabulary. Flowbite's semantic names, declared as synonyms of the roles
+   so that `text-heading` and `--mj-fg` are one value. Unlayered and after Flowbite's own
+   `.dark` block, which is unlayered too, so these win in both themes. */
+:root, .dark {
+  --color-heading: var(--mj-fg);
+  --color-body: var(--mj-body);
+  --color-body-subtle: var(--mj-muted);
+  --color-default: var(--mj-line);
+  --color-default-subtle: var(--mj-line);
+  --color-default-medium: var(--mj-line);
+  --color-default-strong: var(--mj-line);
+  --color-neutral-primary: var(--mj-bg);
+  --color-neutral-primary-soft: var(--mj-raised);
+  --color-neutral-primary-medium: var(--mj-raised);
+  --color-neutral-primary-strong: var(--mj-raised);
+  --color-neutral-secondary: var(--mj-sunken);
+  --color-neutral-secondary-soft: var(--mj-sunken);
+  --color-neutral-secondary-medium: var(--mj-sunken);
+  --color-neutral-secondary-strong: var(--mj-sunken);
+  --color-brand: var(--mj-accent-fill);
+  --color-brand-softer: var(--mj-accent-soft);
+  --color-brand-subtle: var(--mj-accent-line);
+  --color-fg-brand: var(--mj-accent);
+  --color-fg-brand-strong: var(--mj-accent-strong);
+  --color-success-soft: var(--mj-ok-bg);
+  --color-success-subtle: var(--mj-ok-line);
+  --color-fg-success-strong: var(--mj-ok);
+  --color-danger-soft: var(--mj-bad-bg);
+  --color-danger-subtle: var(--mj-bad-line);
+  --color-fg-danger-strong: var(--mj-bad);
+  --color-warning-soft: var(--mj-warn-bg);
+  --color-warning-subtle: var(--mj-warn-line);
+  --color-fg-warning: var(--mj-warn);
 }

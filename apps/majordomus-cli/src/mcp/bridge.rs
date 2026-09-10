@@ -139,12 +139,23 @@ pub enum BridgeError {
 }
 
 /// A stdio session forwarded to a shared server.
+///
+/// Besides the frames, the bridge keeps two things it saw pass through: the client's
+/// `initialize`, so that a session can be re-opened without the client noticing, and the
+/// arguments of the client's last accepted announcement, so that what the client said it
+/// was working on outlives the server it said it to. An announcement was the one fact
+/// that died with a server: on 2026-09-09 a session's intent vanished from the board when
+/// its transport was re-established, and eight peers could not see it for three hours.
+/// The bridge is the one place that sees both the announcement and the reconnection, so
+/// the bridge replays it — after a re-attach through [`Bridge::reinitialize`], and, for a
+/// takeover, through [`Bridge::announcement`] onto the new server's own board.
 #[derive(Debug)]
 pub struct Bridge {
     url: String,
     session: Option<String>,
     initialize: Option<Value>,
     client: Option<ClientInfo>,
+    announcement: Option<Value>,
 }
 
 impl Bridge {
@@ -155,7 +166,14 @@ impl Bridge {
             session: None,
             initialize: None,
             client: None,
+            announcement: None,
         }
+    }
+
+    /// The arguments of the client's last announcement the server accepted, when it made
+    /// one: what a takeover replays onto the new server's board.
+    pub fn announcement(&self) -> Option<&Value> {
+        self.announcement.as_ref()
     }
 
     /// The server's URL.
@@ -182,22 +200,28 @@ impl Bridge {
             self.initialize = Some(params);
             self.session = None;
         }
-        match self.send(message)? {
-            Sent::Answer(v) => Ok(v),
+        let answer = match self.send(message)? {
+            Sent::Answer(v) => v,
             Sent::SessionLost => {
                 // the server forgot us (it restarted, or we were idle too long): open a
                 // new session with the client's own initialize and try once more
                 self.reinitialize()?;
                 match self.send(message)? {
-                    Sent::Answer(v) => Ok(v),
-                    Sent::SessionLost => Err(BridgeError::Rejected {
-                        url: self.url.clone(),
-                        status: 404,
-                        body: "session lost twice in a row".into(),
-                    }),
+                    Sent::Answer(v) => v,
+                    Sent::SessionLost => {
+                        return Err(BridgeError::Rejected {
+                            url: self.url.clone(),
+                            status: 404,
+                            body: "session lost twice in a row".into(),
+                        })
+                    }
                 }
             }
+        };
+        if let Some(arguments) = announcement_in(message, answer.as_ref()) {
+            self.announcement = Some(arguments);
         }
+        Ok(answer)
     }
 
     /// Open a new session with the initialize the client sent earlier. A no-op when it
@@ -217,6 +241,23 @@ impl Bridge {
         }
         let _ = self.send(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }))?;
         tracing::info!(url = %self.url, "session re-opened on the shared server");
+        // what the client said it was working on is said again, to whoever serves now
+        if let Some(arguments) = self.announcement.clone() {
+            let replay = json!({
+                "jsonrpc": "2.0",
+                "id": "majordomus-bridge-announce",
+                "method": "tools/call",
+                "params": { "name": crate::capability::builtin::peers::ANNOUNCE_TOOL, "arguments": arguments },
+            });
+            match self.send(&replay) {
+                Ok(Sent::Answer(_)) => {
+                    tracing::info!(url = %self.url, "the client's announcement was replayed to the server it is now attached to")
+                }
+                Ok(Sent::SessionLost) | Err(_) => {
+                    tracing::warn!(url = %self.url, "the client's announcement could not be replayed; the board understates it until it announces again")
+                }
+            }
+        }
         Ok(())
     }
 
@@ -292,6 +333,30 @@ impl Bridge {
 enum Sent {
     Answer(Option<Value>),
     SessionLost,
+}
+
+/// The arguments of an announcement the server accepted: the message is a `tools/call` of
+/// the announce tool, and the answer is a result rather than an error. A batch is not
+/// looked into; a bridge that carried one announcement in a batch replays nothing, which
+/// is what a bridge did for every announcement before this.
+fn announcement_in(message: &Value, answer: Option<&Value>) -> Option<Value> {
+    if message.get("method")?.as_str()? != "tools/call" {
+        return None;
+    }
+    let params = message.get("params")?;
+    if params.get("name")?.as_str()? != crate::capability::builtin::peers::ANNOUNCE_TOOL {
+        return None;
+    }
+    let answer = answer?;
+    if answer.get("error").is_some() || answer["result"]["isError"] == true {
+        return None;
+    }
+    Some(
+        params
+            .get("arguments")
+            .cloned()
+            .unwrap_or_else(|| json!({})),
+    )
 }
 
 fn first_initialize_params(message: &Value) -> Value {

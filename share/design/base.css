@@ -1,0 +1,34 @@
+/* The base every first-party surface shares, hand-written and imported by both Tailwind
+   entry points (site/tailwind.css, share/cockpit/src/cockpit.css) after the generated
+   token sheets. Nothing here chooses a value: every colour, size and duration is a token.
+
+   What belongs here is the accessible default a surface must not lose by omission:
+
+     - the focus ring is never removed. A control plane is driven from the keyboard and a
+       documentation site is read with one; a visible ring in the accent, offset from the
+       control, on every element the keyboard can reach.
+     - reduced motion is honoured. Anything that animates does so for a state change, and a
+       reader who has asked for stillness gets it in one rule rather than per component.
+     - `x-cloak` hides what Alpine has not yet initialised, as its documentation requires.
+
+   Layout, type size and component shape stay with the surface that owns them. */
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--mj-accent);
+    outline-offset: 2px;
+  }
+  [x-cloak] {
+    display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

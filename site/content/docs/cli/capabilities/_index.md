@@ -4,7 +4,7 @@ description = "Introspect the capability registry: what exists, where it came fr
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 4
+weight = 7
 [extra]
 route = "/docs/cli/capabilities/"
 command = "majordomus capabilities"

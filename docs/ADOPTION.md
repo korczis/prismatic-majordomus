@@ -5,7 +5,7 @@ Majordomus sits around an existing workflow. Nothing is rewritten.
 ## Day one: one repository, one person
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 
 cd <your project>
 majordomus init          # .ai/ with the policy, profiles, rules, prompts and workflows

@@ -22,10 +22,10 @@ ci-structure:
 ci-fast *args:
     scripts/ci/run-plan {{args}}
 
-# Every gate, as a push to master runs them (the macOS gate only on macOS).
+# Every gate, the on-demand ones included — a push leaves those to the nightly run, a person asking for everything means everything (the macOS gate only on macOS).
 [group('ci')]
 ci-full:
-    scripts/ci/run-plan --full "just ci-full"
+    scripts/ci/run-plan --full "just ci-full" --on-demand
 
 # What GitHub observed of recent runs, recorded into .ai/repo/ci/baseline.json (needs gh); `just ci-baseline --table` renders it.
 [group('ci')]

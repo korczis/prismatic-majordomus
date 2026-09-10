@@ -16,7 +16,7 @@
       {%- if u.difficulty %}<span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ u.difficulty }}</span>{% endif -%}
       {%- for a in u.actors | default(value=[]) %}<span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ a }}</span>{% endfor -%}
       {%- set ro = true -%}{%- for cn in u.commands %}{%- set m = [x for x in cmds.commands if x.name == cn] -%}{%- if m | length > 0 and not m[0].read_only %}{%- set_global ro = false -%}{% endif %}{% endfor -%}
-      <span class="rounded border border-default px-1.5 py-0.5 font-mono {% if ro %}bg-success-soft text-fg-success-strong{% else %}bg-neutral-secondary-medium text-heading{% endif %}">{% if ro %}read-only{% else %}writes state{% endif %}</span>
+      <span class="mj-badge mj-badge--{% if ro %}read-only{% else %}neutral{% endif %}">{% if ro %}read-only{% else %}writes state{% endif %}</span>
     </div>
 
     {#- the authored narrative: the body of the object, rendered as it was written -#}

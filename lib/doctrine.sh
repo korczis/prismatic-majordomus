@@ -136,7 +136,6 @@ mj_doc_index() {
 mj_doc_count() { printf '%s' "${#MJ_DOC_ROW[@]}"; }
 mj_doc_ids() { local i=0; while [ "$i" -lt "${#MJ_DOC_ROW[@]}" ]; do mj_doc_field "$i" 2; printf '\n'; i=$((i+1)); done; }
 
-mj_is_function() { type "$1" 2>/dev/null | head -n1 | grep -q 'function'; }
 # `doctrine status` reports on the installation, not on this process — it must read the
 # source. Only the dispatcher, which has the libraries loaded, asks the live process.
 mj_validator_defined() { grep -rqE "^mj_validate_$1\(\)" "$MJ_LIB_DIR"; }

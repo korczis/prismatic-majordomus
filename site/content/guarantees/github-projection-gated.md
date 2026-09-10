@@ -56,6 +56,14 @@ for the commands no capability claims.
 A gate that cannot reach the remote — no `gh`, no token, no permission — exits 12 and names
 which. It never exits clean.
 
+## How to see it
+
+```bash
+scripts/ci/github-check                   # 0 in sync, 10 findings, 12 the gate cannot run
+scripts/ci/github-check --write-baseline  # record today's backlog as the ceiling, deliberately
+scripts/github-sync --plan                # offline: what an apply would create or change
+```
+
 ## Why it is a separate claim
 
 Because the first claim was true and green for five days while the thing it describes had
@@ -70,10 +78,16 @@ All eight projected milestones were in sync throughout, because milestones are f
 touched by hand — so the surface a person looks at was the surface that still agreed. That
 is what a claim citing a script that exists, rather than a gate that runs, buys you.
 
-## Applying stays a human act
+## What it does not cover
 
-CI proves agreement. It does not create issues. `scripts/github-sync --apply` is run by a
-person, deliberately, and the gate's baseline is lowered in the same commit.
+Applying stays a human act. CI proves agreement; it does not create issues.
+`scripts/github-sync --apply` is run by a person, deliberately, and the gate's baseline is
+lowered in the same commit.
+
+Nor does the gate judge the model. It says which of the two sides moved, not whether the
+canonical records describe the right work — that is the plan's business. And it decides
+nothing it cannot measure: with no `gh`, no token or no permission it exits 12 naming
+which, rather than a green build that read nothing.
 
 ## Evidence
 

@@ -81,7 +81,7 @@ done
 if [ "$jobs" = 1 ]; then
   # ---------------------------------------------------------------- serial
   # Name order, every case streaming its own output as it runs.
-  for name in $(printf '%s\n' $parallel_names $exclusive_names | sort); do
+  for name in $(printf '%s\n' $parallel_names $exclusive_names | LC_ALL=C sort); do
     t0="$(date +%s)"
     run_case "$ROOT/test/cases/$name.sh"; rc=$?
     verdict "$name" "$rc" $(( $(date +%s) - t0 )) serial
@@ -99,14 +99,14 @@ else
   fi
   after="$(git -C "$ROOT" status --porcelain --untracked-files=all 2>/dev/null || true)"
   dirtied=""
-  [ "$before" = "$after" ] || dirtied="$(printf '%s\n%s\n' "$before" "$after" | sort | uniq -u | sed 's/^...//' | sort -u | tr '\n' ' ')"
+  [ "$before" = "$after" ] || dirtied="$(printf '%s\n%s\n' "$before" "$after" | LC_ALL=C sort | uniq -u | sed 's/^...//' | LC_ALL=C sort -u | tr '\n' ' ')"
   if [ -n "$exclusive_names" ]; then
     echo "run.sh: $(printf '%s\n' $exclusive_names | wc -l | tr -d ' ') exclusive cases, one at a time"
     printf '%s\n' $exclusive_names | MJ_TEST_WORKER=1 xargs -n1 -P1 bash "$0"
   fi
   # the verdicts in name order; a failing case's whole log comes right before its line
   echo "run.sh: results"
-  for name in $(printf '%s\n' $parallel_names $exclusive_names | sort); do
+  for name in $(printf '%s\n' $parallel_names $exclusive_names | LC_ALL=C sort); do
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
     [ "$rc" = 0 ] || [ "$rc" = 2 ] || cat "$L/$name.log" 2>/dev/null

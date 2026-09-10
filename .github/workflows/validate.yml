@@ -5,6 +5,18 @@
 # status a branch rule can require. Docs: docs/CI.md.
 #
 # The shape: plan → structure (always) → the selected gates, in parallel → ci (the verdict).
+#
+# A verdict that does not arrive is not a verdict. On 2026-09-10 four master runs had every
+# Linux job finished — five of them red — and their `ci` job had not started, because it needs
+# `bench`, `macos` and `install (macos-latest)` and those had been queued for hours behind a
+# macOS runner pool this repository shares with the world. Master carried the defects overnight
+# with every check apparently green, because a run that never reported and a run that reported
+# green look identical. So the model now marks those three gates `on-demand`: the schedule, a
+# dispatch and a pull request labelled ci:full plan them, a routine push does not, their jobs
+# are skipped rather than queued, and `ci` — which still needs every job, and still turns red
+# when any of them does — reports on every push and every pull request. Nothing was deleted or
+# weakened: the macOS gates run in full every night and on request, which is more often than
+# they were completing before.
 # Publication is not here: .github/workflows/pages.yml is the latency-sensitive path that puts
 # a master commit on GitHub Pages, and it runs beside this workflow rather than after it. This
 # one decides whether a change may merge; that one decides what the public site shows. The
@@ -17,8 +29,10 @@ on:
     branches: [master]
   workflow_dispatch:
   schedule:
-    # the full plan once a week, so a gate nothing selected for a while still has a run
-    - cron: '17 4 * * 1'
+    # Every night, and this is the run that carries the on-demand gates: a gate nothing
+    # selected for a while still has a run, and a gate no push can afford a runner for still
+    # has a cadence. It was weekly while every push ran everything; a push no longer does.
+    - cron: '17 4 * * *'
 
 permissions:
   contents: read
@@ -79,12 +93,17 @@ jobs:
           REF: ${{ github.ref_name }}
           LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
+          # --on-demand asks for the gates the model marks on-demand — the macOS ones, whose
+          # runners this repository waits hours for. The schedule, a dispatch and a pull
+          # request labelled ci:full ask; a routine push does not, so that the verdict below
+          # is a verdict rather than a job queued behind a runner pool.
           case "$EVENT" in
             pull_request)
               case ",$LABELS," in
-                *,ci:full,*) scripts/ci-plan --full "pull request labelled ci:full" > plan.json ;;
+                *,ci:full,*) scripts/ci-plan --full "pull request labelled ci:full" --on-demand > plan.json ;;
                 *) scripts/ci-plan --base HEAD^1 --head HEAD > plan.json ;;
               esac ;;
+            schedule|workflow_dispatch) scripts/ci-plan --full "$EVENT on $REF" --on-demand > plan.json ;;
             *) scripts/ci-plan --full "$EVENT on $REF" > plan.json ;;
           esac
           jq -r '"mode=\(.mode)", "selected=\(.selected | join(" "))", (.gates[] | "\(.id | gsub("-"; "_"))=\(.selected)")' plan.json >> "$GITHUB_OUTPUT"
@@ -194,7 +213,17 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
+      # the whole history: `generate --check` runs here, and the changelog is composed from
+      # the release records, the decisions and `git log <previous>..<this>` — history is one
+      # of its canonical sources (project.release-is-a-projection). A default checkout is one
+      # commit deep, so every release record named a commit the clone did not have,
+      # `merge-base --is-ancestor` said `fatal: Not a valid commit name 45f921ef…` once per
+      # decision, every range yielded nothing, and the composer wrote the honest degraded
+      # document it is required to write. The gate then reported the committed artifact stale
+      # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
@@ -467,6 +496,12 @@ jobs:
   # succeeded, and no job that ran failed or was cancelled. Always runs, so a required check
   # is never left pending by a skipped job. It also gathers the jobs' timing rows into the
   # artifact ci-performance-metrics.
+  #
+  # It still needs every job the model names — a red `macos` on the nightly run turns this red
+  # — and on a routine push those three are skipped rather than queued, which is what makes
+  # this status arrive at all. Requiring it in the branch rule is the repository owner's
+  # setting and is not made here; until it is required, this is a verdict a person can read
+  # and not one the merge obeys.
   ci:
     needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install, pages]
     if: always()

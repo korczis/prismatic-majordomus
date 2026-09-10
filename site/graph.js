@@ -32,7 +32,7 @@
   function palette() {
     var s = getComputedStyle(document.documentElement);
     var b = getComputedStyle(document.body);
-    var dark = document.documentElement.classList.contains('dark');
+    var dark = document.documentElement.classList.contains(document.documentElement.dataset.themeClass);
     // The fallback is the page's own computed text colour, never a table. Until
     // share/design/surface.css declared these names, nothing did, so every lookup here
     // missed and the drawing was painted from the literals that used to sit in this
@@ -40,13 +40,13 @@
     function v(name) { var x = s.getPropertyValue(name).trim(); return x || b.color; }
     return {
       dark: dark,
-      text: v('--mj-graph-text'),
-      muted: v('--mj-graph-muted'),
-      line: v('--mj-graph-line'),
-      surface: v('--mj-graph-surface'),
-      accent: v('--mj-graph-accent'),
-      warn: v('--mj-graph-warn'),
-      good: v('--mj-graph-good')
+      text: v('--mj-fg'),
+      muted: v('--mj-muted'),
+      line: v('--mj-line'),
+      surface: v('--mj-raised'),
+      accent: v('--mj-accent'),
+      warn: v('--mj-warn'),
+      good: v('--mj-ok')
     };
   }
 

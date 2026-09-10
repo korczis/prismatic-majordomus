@@ -33,7 +33,10 @@ if [ "$NODATA" = 0 ]; then echo "== data";    "$ROOT/scripts/generate-site-data"
 else echo "== data    (committed, not regenerated)"; fi
 echo "== assets"
 mkdir -p "$SITE/static/images" "$SITE/static/js"
-cp "$ROOT/assets/logo.svg" "$ROOT/assets/logo-mark.svg" "$ROOT/assets/social-card.png" "$SITE/static/images/"
+# the brand: the marks under site/static/images are generated copies of share/design/brand
+# (written by `majordomus generate design`, compared by scripts/ci/design-check); the social
+# card is a raster the generator does not write, copied from the same canonical directory
+cp "$ROOT/share/design/brand/social-card.png" "$SITE/static/images/social-card.png"
 if [ "$NOCSS" = 0 ]; then
   [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "site-build: node_modules absent; run: npm ci" >&2; exit 12; }
   cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$SITE/static/js/flowbite.min.js"
