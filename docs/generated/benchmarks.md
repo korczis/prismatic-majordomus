@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 63 | 60 | 0 | 3 |
-| http | 63 | 60 | 0 | 3 |
-| mcp | 61 | 58 | 0 | 3 |
+| direct | 73 | 70 | 0 | 3 |
+| http | 73 | 70 | 0 | 3 |
+| mcp | 71 | 68 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 200 | 191 | 0 | 9 |
+| total | 230 | 221 | 0 | 9 |
 
 ## Capabilities
 
@@ -54,9 +54,19 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
+| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.issues` | plan | query | — | covered | covered | covered | `all`, `ready`, `one-milestone` |
+| `plan.model` | plan | query | — | covered | covered | covered | `default` |
+| `plan.next` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
+| `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
+| `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.validate` | plan | query | — | covered | covered | covered | `default` |
+| `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |

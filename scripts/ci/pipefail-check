@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# pipefail-check — a shell script that pipes may not hide the failure of what it piped from.
+#
+# `set -e` ends a script when a command fails, and a pipeline's status is its LAST command's,
+# so `producer | tee log | tail -5` succeeds whenever `tail` does — however loudly `producer`
+# failed. Without `set -o pipefail` the guard everyone relies on stops at the first `|`.
+#
+# This is not hypothetical here. A deploy was read as having succeeded because its exit
+# status was `tail`'s, and a 73-minute test run reported nothing at all because its output
+# went into a `tail` that never flushed. Both readings were wrong in the same way, and the
+# fix is one line at the top of the script that owns the pipeline.
+#
+# Adding pipefail to a script that already exists can change what it does — a pipeline
+# ending in `head` or `grep -q` may now fail where it used to be ignored — so this is a
+# ratchet rather than a sweep, the same shape as scripts/ci/projection-check. The scripts
+# that pipe under `set -e` without pipefail today are recorded in the baseline; the check
+# fails when a NEW one appears, and reports — without failing — every baseline entry that
+# has since been fixed, so the baseline can be tightened deliberately.
+#
+# The denominator is measured from the tree, never listed here: every executable shell
+# script under scripts/, lib/ and bin/ that sets -e and contains a pipeline.
+#
+#   scripts/ci/pipefail-check                   report, and fail on a new one
+#   scripts/ci/pipefail-check --write-baseline  record today's set (a deliberate act)
+#   scripts/ci/pipefail-check --strict          fail on any script without pipefail
+#
+# Exit: 0 clean or unchanged, 10 a script the baseline does not have (or any under
+# --strict), 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/pipefail-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "pipefail-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# Every shell script the repository runs, by its shebang rather than by its extension or by
+# a list here: a script renamed or added is measured the day it lands.
+measured() {
+  find scripts lib bin -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
+    head -1 "$f" | grep -q '^#!.*sh' || continue
+    grep -q 'set -[a-z]*e' "$f" || continue
+    grep -q ' | ' "$f" || continue
+    printf '%s\n' "$f"
+  done
+}
+
+exposed() {
+  measured | while IFS= read -r f; do
+    grep -q 'pipefail' "$f" || printf '%s\n' "$f"
+  done
+}
+
+now="$(exposed)"
+total="$(measured | grep -c . || true)"
+count="$(printf '%s\n' "$now" | grep -c . || true)"
+
+if [ "$MODE" = write ]; then
+  {
+    echo "# The shell scripts that pipe under \`set -e\` without \`set -o pipefail\`, so a"
+    echo "# pipeline's failure is reported as its last command's success."
+    echo "#"
+    echo "# Written by scripts/ci/pipefail-check --write-baseline; never by hand. The set may"
+    echo "# only shrink: adding pipefail to one of these is the deliberate act of having"
+    echo "# checked that its pipelines still mean what they meant."
+    printf '%s\n' "$now"
+  } > "$BASELINE"
+  echo "pipefail-check: baseline written — $count of $total script(s) exposed"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || { echo "pipefail-check: no baseline at $BASELINE (run --write-baseline)" >&2; exit 12; }
+known="$(grep -v '^#' "$BASELINE" | grep -c . || true)"
+rc=0
+
+# a script that pipes without pipefail and is not in the baseline: new debt
+printf '%s\n' "$now" | grep -v '^$' | while IFS= read -r f; do
+  grep -qxF "$f" "$BASELINE" || echo "  NEW  $f pipes under set -e without pipefail"
+done > /tmp/pipefail-new.$$ || true
+if [ -s /tmp/pipefail-new.$$ ]; then
+  echo "pipefail-check: a pipeline's failure would be hidden here:"
+  cat /tmp/pipefail-new.$$
+  echo "  add 'set -o pipefail' beside the script's 'set -e', or record it deliberately with --write-baseline"
+  rc=10
+fi
+rm -f /tmp/pipefail-new.$$
+
+# a baseline entry that has since been fixed: report, never fail
+grep -v '^#' "$BASELINE" | grep -v '^$' | while IFS= read -r f; do
+  if [ ! -f "$f" ] || grep -q 'pipefail' "$f" 2>/dev/null; then
+    echo "  FIXED $f — tighten the baseline: scripts/ci/pipefail-check --write-baseline"
+  fi
+done
+
+if [ "$MODE" = strict ] && [ "$count" != 0 ]; then
+  echo "pipefail-check: $count of $total script(s) still hide a pipeline's failure (--strict)"
+  rc=10
+fi
+
+[ "$rc" = 0 ] && echo "pipefail-check: $count of $total script(s) exposed, baseline $known — no new debt"
+exit "$rc"
