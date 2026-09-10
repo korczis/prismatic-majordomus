@@ -202,8 +202,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `d5dc7da86ab749a1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `07b1573a6ba8380f` |
-| `site/data/registry/product.json` | `site-product` | json | 303688 | `45a4586c05266ce4` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2335171 | `964f9e8cae625f7c` |
+| `site/data/registry/product.json` | `site-product` | json | 303688 | `52287964411945ad` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2335422 | `03d241893f493869` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

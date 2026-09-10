@@ -50,7 +50,13 @@ rather than argued:
    derive once, then commit — a derive before the last source fix is a derive done twice. A
    derived file is never resolved by hand: it is regenerated, because a hand-resolved
    derived file passes the merge and fails `derive-check` one commit later. The server's
-   view does not change until the local merge is pushed.
+   view does not change until the local merge is pushed. `scripts/unblock <branch>` (`just
+   unblock`, and it takes a pull request number) is that whole gesture as one command, in a
+   detached scratch worktree that never touches the branch's own: it merges the trunk in
+   where the driver exists, refuses and names any conflict outside the `merge=derived` set
+   rather than deciding it, derives, commits and pushes the branch. It exists because a
+   ten-minute manual gesture performed several times a day is one that gets skipped under
+   pressure, and a branch nobody unblocks is a branch somebody merges without reading.
 3. **A mechanical union is wrong across generations.** Taking both sides is right for a list
    that gained entries and wrong when one side is an older generation of the same code:
    folding one branch that way reintroduced a second match arm built against a previous
@@ -102,4 +108,9 @@ fixture, and one reaching the real site would fail whenever the network did. `--
 the seam, and the case asserts the seam announces itself rather than skipping silently.
 
 `test/cases/97_pages_fast_path.sh` holds the publication path itself. The
-derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`.
+derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`, and
+`test/cases/110_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
+file is refused with the files named and the branch left where it was, the scratch worktree
+is gone on every path including the refusals, a dry run pushes nothing, and the branch is
+never checked out. It was proved non-vacuous by making the script classify every conflicted
+path as derived and watching the authored refusal disappear.

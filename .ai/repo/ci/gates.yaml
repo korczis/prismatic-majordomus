@@ -277,6 +277,14 @@ classes:
     paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture]
     gates: [shell-suite, rust-integration, macos]
 
+  # the gesture that takes a branch out of the state GitHub puts it in: it merges the trunk
+  # in where the derived merge driver exists, derives, and pushes. It reads .gitattributes
+  # and the derive-merge-driver recipe and is read by nothing else, so its own behavioural
+  # case is what decides it; without this class every edit to it escalates the whole plan.
+  - id: integration
+    paths: [scripts/unblock]
+    gates: [shell-suite]
+
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients
     paths: [.mcp.json, .codex/**, .gemini/**]
