@@ -74,9 +74,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The bound is over two different kinds of second, so it is written twice, and the two
+  # numbers are not independent.
+  #
+  # Each step of the controlled work carries its own minutes — that is what turns a hang into
+  # a failure, which is all a timeout is for — and the job's bound must be strictly greater
+  # than the sum of them, because *which* bound fires decides what GitHub reports. A step
+  # killed by its own bound is a failed step, and on the publication probe below, which is
+  # `continue-on-error`, a reported one; a job killed by the job's bound is `cancelled`, over
+  # every step at once, including the ones that had already succeeded. Sizing the job at or
+  # below the sum makes the job's bound the one that fires, which is the defect this file
+  # was carrying: on 2026-09-10 the deploy of 67ec7c2aa published at 13:52:20, GitHub's own
+  # "pages build and deployment" ran until 13:57:59, and a five-minute job bound killed the
+  # job at 13:56:12 — mid-wait, with the publication already done — so a deployment that had
+  # succeeded was reported as `cancelled`.
+  #
+  # The three controlled steps below bound 9 minutes between them, against the 65 seconds
+  # .ai/repo/ci/pages.yaml budgets them warm and the 180 it allows the whole controlled half
+  # cold; the probe bounds 11, against a wait this repository does not control and that same
+  # file says never to budget. 25 covers those 20 plus the unbounded checkout, setup and
+  # report steps on a cold runner, and leaves the job's bound where it belongs: as the last
+  # resort behind every step's own.
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -104,14 +125,17 @@ jobs:
 
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build
+        timeout-minutes: 3
         run: scripts/pages build
 
       # every static check over the output; the browser probe stays in validate.yml
       - name: check
+        timeout-minutes: 3
         run: scripts/pages check
 
       # the one deploy path, the same script a person runs
       - name: publish
+        timeout-minutes: 3
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
@@ -120,13 +144,27 @@ jobs:
           scripts/site-deploy --skip-build
           printf 'pages\tpublish\t%s\n' "$(( $(date -u +%s) - t0 ))" >> "$MJ_PAGES_TIMINGS"
 
-      # publication, not workflow success: the site serves the commit it was built from at
-      # /build.json, so this waits for that file to name this commit and measures the wait
+      # Publication, not workflow success: the site serves the commit it was built from at
+      # /build.json, so this waits for that file to name this commit and measures the wait.
+      # The wait is over GitHub's Pages build and its CDN, neither of which this repository
+      # controls, so the bound is set from measurement and not from taste: GitHub's own "pages
+      # build and deployment" ran for 33, 121, 204 and 338 seconds over the four deployments
+      # of 2026-09-10, and 240 sat inside that distribution — which is how a publication that
+      # had succeeded came to be reported as a failure. Ten minutes is that observed maximum
+      # with about eighty per cent of headroom; it is a bound on waiting, not a budget, and
+      # .ai/repo/ci/pages.yaml still budgets the controlled half alone. The step's own minute
+      # of slack over it is deliberate: the script's timeout expires first, so what a reader
+      # gets is its diagnostic — which commit the site is still serving — rather than a kill.
+      # The check is not removed and not softened. continue-on-error keeps it a report rather
+      # than a gate on a deployment that has already happened; what refuses a publication that
+      # never happened is the `pages-live` gate of .ai/repo/ci/gates.yaml, which reads the
+      # live site on the next validation run and is not advisory.
       - id: public
         continue-on-error: true
+        timeout-minutes: 11
         run: |
           t0="$(date -u +%s)"
-          MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 240
+          MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 600
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
 

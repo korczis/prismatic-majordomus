@@ -167,3 +167,58 @@ awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -q '^    if: a
 grep -q "cancel-in-progress: \${{ github.event_name == 'pull_request' }}" "$W" || { echo "    validate.yml does not cancel superseded pull-request runs only"; exit 1; }
 # no bare push trigger: a branch with a pull request is validated once, as that pull request
 awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -A1 '^  push:' | grep -q 'branches: \[master\]' || { echo "    validate.yml runs on every push rather than on master and pull requests"; exit 1; }
+
+# 10. a verdict that does not arrive is not a verdict. The model marks the gates whose runner
+#     this repository cannot get on demand (the macOS ones); the workflow asks for them where
+#     they can be afforded — the schedule, a dispatch, a pull request labelled ci:full — and
+#     nowhere else. On 2026-09-10 four master runs had every Linux job finished, five of them
+#     red, and their `ci` job had never started, because it needs three macOS jobs that had
+#     been queued for hours; master carried the defects overnight looking green. So: if the
+#     model marks a gate on-demand, something must still run it, and a routine push must not
+#     wait for it.
+ondemand="$(awk '/^  - id: /{id=$3} /^    on-demand: true$/{print id}' "$G" | tr '\n' ' ')"
+if [ -n "$ondemand" ]; then
+  grep -qE '^  schedule:$' "$W" \
+    || { echo "    the model marks gate(s) on-demand ($ondemand) and validate.yml has no schedule to run them"; exit 1; }
+  grep -qE 'ci-plan --full "\$EVENT on \$REF" --on-demand' "$W" \
+    || { echo "    the schedule and the dispatch do not ask the planner for the on-demand gates (--on-demand)"; exit 1; }
+  grep -qE 'schedule\|workflow_dispatch\)' "$W" \
+    || { echo "    validate.yml does not tell the schedule and the dispatch apart from a push, so a push would ask for the on-demand gates"; exit 1; }
+  grep -qE 'ci-plan --full "pull request labelled ci:full" --on-demand' "$W" \
+    || { echo "    the ci:full label does not ask for the on-demand gates, so a reviewer cannot request them"; exit 1; }
+  grep -qE 'ci-plan --base HEAD\^1 --head HEAD.*--on-demand' "$W" \
+    && { echo "    an ordinary pull request asks for the on-demand gates; its verdict would queue behind them"; exit 1; }
+  grep -qE '\*\) scripts/ci-plan --full "\$EVENT on \$REF" > plan\.json ;;' "$W" \
+    || { echo "    a push does not plan without the on-demand gates; the verdict it needs would never arrive"; exit 1; }
+  # and every on-demand gate is still a gate: its job exists and the verdict still needs it
+  for g in $ondemand; do
+    job="$(awk -v g="$g" '$0 ~ "^  - id: " g "$" {f=1; next} f && /^  - id: / {f=0} f' "$G" | sed -n 's/^    job: //p' | head -1)"
+    [ -n "$job" ] || { echo "    the on-demand gate $g names no job"; exit 1; }
+    printf '%s\n' "$ci_needs" | grep -qx "$job" || { echo "    the ci job does not need $job, the job of the on-demand gate $g"; exit 1; }
+  done
+fi
+
+# 11. the publication probe of pages.yml survives, and which bound fires is arithmetic rather
+#     than luck. A step killed by its own timeout is a failed step — and the probe is
+#     continue-on-error, so a reported one; a job killed by the *job's* timeout is `cancelled`
+#     over every step at once, the ones that had already succeeded included. On 2026-09-10 a
+#     five-minute job bound killed the deploy of 67ec7c2aa mid-wait at 13:56:12 with the
+#     publication already done at 13:52:20, and a deployment that had succeeded was reported
+#     as a failure. So the job's bound must strictly exceed the sum of its steps', and the
+#     probe's own --timeout must fit inside the step that runs it, or the diagnostic a reader
+#     needs — which commit the site is still serving — is replaced by a kill.
+P="$ROOT/.github/workflows/pages.yml"
+grep -q 'scripts/pages verify --commit' "$P" \
+  || { echo "    pages.yml no longer verifies that the site serves the commit it published"; exit 1; }
+job_to="$(awk '$0 == "  deploy:" {f=1; next} /^  [a-z-]+:$/ {f=0} f && /^    timeout-minutes: / {print $2; exit}' "$P")"
+step_to="$(awk '/^        timeout-minutes: / {s += $2} END {print s+0}' "$P")"
+[ -n "$job_to" ] || { echo "    the pages deploy job carries no timeout; a hang holds a runner for GitHub's default six hours"; exit 1; }
+[ "$step_to" -gt 0 ] || { echo "    no step of the pages deploy job carries a timeout, so only the job's bound can fire and every overrun reads as cancelled"; exit 1; }
+[ "$job_to" -gt "$step_to" ] \
+  || { echo "    the pages deploy job is bounded at $job_to min and its steps at $step_to min together; the job's bound fires first, and a finished deployment then reports cancelled"; exit 1; }
+probe_to="$(grep 'scripts/pages verify --commit' "$P" | sed -n 's/.*--timeout \([0-9][0-9]*\).*/\1/p' | head -1)"
+probe_step="$(awk '/^      - id: public$/ {f=1} f && /^        timeout-minutes: / {print $2; exit}' "$P")"
+[ -n "$probe_to" ] && [ -n "$probe_step" ] \
+  || { echo "    the publication probe's wait or its step bound could not be read from pages.yml"; exit 1; }
+[ "$probe_to" -lt "$(( probe_step * 60 ))" ] \
+  || { echo "    the publication probe waits ${probe_to}s inside a step bounded at ${probe_step}min; the step kills it before it can say what the site is serving"; exit 1; }
