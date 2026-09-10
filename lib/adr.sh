@@ -490,6 +490,9 @@ mj_adr_propose() {
   slug="$(mj_adr_slug "$title")"
   [ -n "$slug" ] || slug="decision"
   dest="$MJ_ADRS_DIR/$num-$slug.md"
+  # the number came from every claim git knows, so nothing may already stand there; if
+  # something does, the allocation was wrong and overwriting it would destroy a decision
+  [ -e "$dest" ] && mj_die "$MJ_EX_REFUSED" "adr propose: $(mj_rel "$dest") already exists; the identity $num was allocated over every branch this clone knows and is still taken, so nothing here may be written over it"
   tmp="$dest.tmp.$$"
   [ -n "$refs" ] || origin=authored
 
@@ -614,6 +617,9 @@ EOF
       esac
     done
   done < "$MJ_ADR_ROWS"
+  # and the identities no single tree can see: a number another branch already holds for a
+  # different record. Cheap unless this tree introduces a number the trunk does not have.
+  mj_adr_cross_check "$report" || rc=1
   return "$rc"
 }
 
