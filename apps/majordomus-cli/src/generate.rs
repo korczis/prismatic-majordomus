@@ -638,8 +638,12 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         // time, where HEAD is a fact and not a promise. The Markdown is the rendering a
         // person reads; the JSON and YAML are the document every other reader gets, and all
         // three are compared by `generate --check`.
-        let log =
+        let mut log =
             crate::release::compose_published(app.repository.root(), &app.context.index.objects);
+        // The committed document names its producer the way the served one does, so a page
+        // rendering either can find the same value on every other surface without a route
+        // or an id of its own.
+        log.produced_by = crate::capability::builtin::release::produced_by(&app.context.registry);
         let value = serde_json::to_value(&log).unwrap_or(serde_json::Value::Null);
         out.extend(
             Document::new(

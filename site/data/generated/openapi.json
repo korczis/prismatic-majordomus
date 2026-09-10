@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 73,
-    "schemas": 326,
+    "schemas": 328,
     "tags": 24
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -13305,6 +13305,22 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.",
+          "name": "references",
+          "refs": [
+            "ReleaseReference"
+          ],
+          "required": false,
+          "type": "array of ReleaseReference"
         }
       ],
       "type": "object",
@@ -13367,7 +13383,7 @@
       "is_enum": true,
       "name": "ReleaseChangeKind",
       "properties": [],
-      "type": "\"feat\" | \"fix\" | \"perf\" | \"refactor\" | \"docs\" | \"test\" | \"chore\" | \"ci\" | \"other\"",
+      "type": "\"feat\" | \"fix\" | \"perf\" | \"refactor\" | \"docs\" | \"test\" | \"chore\" | \"ci\" | \"style\" | \"build\" | \"revert\" | \"other\"",
       "used_by": [],
       "used_by_schemas": [
         "ReleaseChange",
@@ -13405,6 +13421,18 @@
         {
           "description": "Continuous integration.",
           "value": "ci"
+        },
+        {
+          "description": "Formatting, with the behaviour unchanged.",
+          "value": "style"
+        },
+        {
+          "description": "The build system or its dependencies.",
+          "value": "build"
+        },
+        {
+          "description": "A change that undoes another.",
+          "value": "revert"
         },
         {
           "description": "A commit whose subject does not parse as a conventional commit.",
@@ -13447,6 +13475,15 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Which capability answered, and where else the same value can be had.",
+          "name": "produced_by",
+          "refs": [
+            "ReleaseProducedBy"
+          ],
+          "required": false,
+          "type": "ReleaseProducedBy | null"
         }
       ],
       "type": "object",
@@ -13524,12 +13561,117 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit that added the file, which is what decides the release it belongs to. The\nfront-matter date says when the decision was made; those are different questions.",
+          "name": "added",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "ReleaseSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```",
+      "is_enum": false,
+      "name": "ReleaseProducedBy",
+      "properties": [
+        {
+          "description": "The capability id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command line that renders it.",
+          "name": "cli",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The HTTP route that answers with it.",
+          "name": "http",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP tool.",
+          "name": "mcp_tool",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP resource URI.",
+          "name": "mcp_resource",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChangelog"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```",
+      "is_enum": false,
+      "name": "ReleaseReference",
+      "properties": [
+        {
+          "description": "`issue` or `milestone`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`I1305`, `M000`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is, from the record itself.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is published on this site, when it has a page.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChange"
       ],
       "values": [],
       "variants": []
@@ -13573,6 +13715,27 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The release notes the record names — the published release itself.",
+          "name": "notes_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every commit between the previous release and this one, as the forge renders it.",
+          "name": "compare_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The tree at this release.",
+          "name": "tree_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The decisions dated inside this release's window.",
