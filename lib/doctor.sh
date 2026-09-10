@@ -613,6 +613,12 @@ mj_validate_doctrine_wiring() {
   propagating=" $(grep -lE 'MJ_FAILS.*exit|exit .*MJ_EX_CONTRACT|MJ_DOCTOR_MISSING' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
   claims=" $(sed -n 's/^  - id: //p' "$root/docs/CLAIMS.yaml" 2>/dev/null | paste -sd' ' -) "
 
+  # Reconciled against a release, every doctrine would fail for the one reason that says
+  # nothing about the repository being supervised: the proof surface was never shipped.
+  # mj_proves_itself decides which form this distribution is.
+  local proving=1
+  mj_proves_itself || proving=0
+
   # 1. every declared doctrine resolves, end to end
   while mj_doc_row "$i"; do
     n=$((n+1)); id="$MJ_DR_ID"; val="$MJ_DR_VAL"; cls="$MJ_DR_CLASS"; fn="mj_validate_$val"

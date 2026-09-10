@@ -129,3 +129,28 @@ restore
 
 # healthy again after every mutation is reverted
 expect_exit 0 "$MJ" doctor
+
+# 10. the same tool, distributed as a release. A release archive ships bin, lib, libexec,
+# share and RELEASE.json and deliberately no proof surface: no test/, no docs/CLAIMS.yaml,
+# no CI workflow. Reconciling a doctrine against a surface that was never shipped failed
+# every one of them at once, for the one reason that says nothing about the repository
+# being supervised — every adopter's first `doctor` after the advertised install.
+REL="$T/release"
+cp -R "$T/tool" "$REL"
+rm -rf "$REL/test" "$REL/docs" "$REL/.github"
+printf '{ "schema": "majordomus/build/v1", "version": "0.0.0-test", "target": "test" }\n' > "$REL/RELEASE.json"
+expect_exit 0 "$REL/bin/majordomus" doctor
+expect_grep 'OK +doctrine +[0-9]+ doctrines .* validator, dispatch and propagation resolve'
+expect_grep 'INFO +doctrine +proof surface .* did not run here'
+expect_no_grep 'FAIL +doctrine'
+
+# the same is true of the counter: from a release the number of doctrines without a test
+# file is unknown, and reporting it as 0 or as all of them are both numbers nobody can act on
+expect_exit 0 "$REL/bin/majordomus" doctrine status
+expect_grep 'without a test file: +not shipped with this release'
+
+# and the marker is what decides, not the absence of the files: the same tree without
+# RELEASE.json is a checkout whose proof surface was deleted, which is a real failure.
+rm "$REL/RELEASE.json"
+expect_exit 10 "$REL/bin/majordomus" doctor
+expect_grep 'FAIL doctrine .* does not exist'
