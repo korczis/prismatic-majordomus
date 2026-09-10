@@ -3,16 +3,16 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
-  "fingerprint": "e763ec5e3b33dfd59b0835dc7707771e8e5a6a822bf1789d66d5f492a6fef691",
+  "fingerprint": "a626cee9520c1a229ea7673d23276c694664d96b73e60b788462e39cc890925d",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 25,
+    "modules": 26,
     "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
@@ -2459,7 +2459,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 34
+          "objects": 37
         },
         {
           "name": "knowledge",
@@ -2467,7 +2467,7 @@
         },
         {
           "name": "document",
-          "objects": 212
+          "objects": 213
         }
       ],
       "rule_refs": [
@@ -2716,11 +2716,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 248,
+        "mcp_resources": 252,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 247,
+        "objects": 251,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2820,7 +2820,7 @@
         {
           "id": "health",
           "title": "Health",
-          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
@@ -2885,7 +2885,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 109
+          "objects": 111
         }
       ],
       "rule_refs": [
@@ -3206,11 +3206,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 110,
+        "mcp_resources": 112,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 109,
+        "objects": 111,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -4075,6 +4075,7 @@
         "worktrees",
         "health",
         "artifacts",
+        "design",
         "api"
       ],
       "web": [
@@ -4101,7 +4102,7 @@
         {
           "id": "health",
           "title": "Health",
-          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+          "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
@@ -4210,6 +4211,11 @@
           "id": "artifacts",
           "title": "Artifacts",
           "route": "/cockpit/artifacts"
+        },
+        {
+          "id": "design",
+          "title": "Design",
+          "route": "/cockpit/design"
         },
         {
           "id": "api",
@@ -5779,7 +5785,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 42
+          "objects": 43
         },
         {
           "name": "application",
@@ -5891,11 +5897,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 57,
+        "mcp_resources": 58,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 57,
+        "objects": 58,
         "rules": 3,
         "enforced_rules": 2,
         "docs": 2,
@@ -7394,6 +7400,11 @@
         "features": []
       },
       {
+        "id": "design",
+        "title": "Design system",
+        "features": []
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "features": [
@@ -7740,7 +7751,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (34)",
+        "title": "adr (37)",
         "features": [
           "knowledge"
         ]
@@ -7862,7 +7873,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (109)",
+        "title": "rule (111)",
         "features": [
           "doctrine"
         ]
@@ -7898,7 +7909,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (42)",
+        "title": "use-case (43)",
         "features": [
           "use-cases"
         ]
@@ -8628,25 +8639,30 @@
       "route": "/cockpit/artifacts"
     },
     {
+      "id": "design",
+      "title": "Design",
+      "route": "/cockpit/design"
+    },
+    {
       "id": "api",
       "title": "API",
       "route": "/cockpit/api"
     }
   ],
   "telemetry": {
-    "capabilities": 1197,
-    "builtin": 74,
-    "declarative": 1123,
-    "modules": 25,
-    "mcp_tools": 72,
-    "mcp_resources": 1150,
-    "http_routes": 74,
+    "capabilities": 1215,
+    "builtin": 78,
+    "declarative": 1137,
+    "modules": 26,
+    "mcp_tools": 76,
+    "mcp_resources": 1165,
+    "http_routes": 78,
     "cli_commands": 91,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1123,
+    "objects": 1137,
     "by_kind": {
-      "adr": 34,
+      "adr": 37,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8655,7 +8671,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 212,
+      "document": 213,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -8666,13 +8682,13 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 111,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 139,
-      "use-case": 42,
+      "test": 146,
+      "use-case": 43,
       "workspace": 1
     },
     "providers": 6,

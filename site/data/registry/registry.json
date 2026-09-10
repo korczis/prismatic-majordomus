@@ -3,29 +3,29 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "cc9f0c72adf5e80f17fff2d5e97e4daaa47a884f84777d83ff1a068ed2dec2de",
+    "fingerprint": "2bcb288aa364bf6c69cb67ed449843697e133db2f516c9994290988cf5f073a8",
     "summary": {
-      "total": 1197,
-      "builtin": 74,
-      "declarative": 1123,
+      "total": 1215,
+      "builtin": 78,
+      "declarative": 1137,
       "by_kind": {
         "command": 3,
-        "query": 71,
-        "resource": 1123
+        "query": 75,
+        "resource": 1137
       },
       "by_stability": {
-        "behaviorally_verified": 69,
-        "implemented": 1128
+        "behaviorally_verified": 73,
+        "implemented": 1142
       },
-      "mcp_tools": 72,
-      "mcp_resources": 1150,
-      "http_routes": 74,
+      "mcp_tools": 76,
+      "mcp_resources": 1165,
+      "http_routes": 78,
       "cli_commands": 32,
-      "modules": 53,
-      "benchmark_required": 71,
+      "modules": 54,
+      "benchmark_required": 75,
       "benchmark_waived": 3,
       "cached": 25
     },
@@ -3898,6 +3898,10 @@
                     "type": "string",
                     "description": "The provider whose event opened it, when one did."
                   },
+                  "provider_session": {
+                    "type": "string",
+                    "description": "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns."
+                  },
                   "branch": {
                     "type": "string",
                     "description": "The branch it opened on."
@@ -3916,7 +3920,7 @@
                   "started_at",
                   "foreign"
                 ],
-                "description": "The open episode of this worktree, when there is one."
+                "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line."
               },
               "ActiveTask": {
                 "type": "object",
@@ -5480,6 +5484,1104 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "design.contrast",
+        "module": "design",
+        "kind": "query",
+        "title": "Whether the declared colours can be read",
+        "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ContrastReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of the declaration measured."
+              },
+              "standard": {
+                "type": "string",
+                "description": "The standard the thresholds come from."
+              },
+              "minimum_text": {
+                "type": "number",
+                "format": "double",
+                "description": "The ratio asked of text."
+              },
+              "minimum_non_text": {
+                "type": "number",
+                "format": "double",
+                "description": "The ratio asked of a non-text element that carries meaning."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Source"
+                },
+                "description": "The stylesheets read, and whether each was found."
+              },
+              "measured": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many pairs were derived and measured."
+              },
+              "pairs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Measured"
+                },
+                "description": "Every pair, in a stable order: theme, then what it carries, then the two tokens."
+              },
+              "composed": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Declarations skipped because their value is composed at run time."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio."
+              },
+              "readable": {
+                "type": "boolean",
+                "description": "Whether every enforced pair reaches its threshold."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "standard",
+              "minimum_text",
+              "minimum_non_text",
+              "sources",
+              "measured",
+              "pairs",
+              "composed",
+              "findings",
+              "readable"
+            ],
+            "description": "Every pair the declaration and its consumers state, measured.",
+            "title": "ContrastReport",
+            "$defs": {
+              "Source": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Where it was read from, as the caller named it."
+                  },
+                  "rules": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many rules of it state a colour."
+                  }
+                },
+                "required": [
+                  "path",
+                  "rules"
+                ],
+                "description": "One stylesheet the pair set was derived from."
+              },
+              "Measured": {
+                "type": "object",
+                "properties": {
+                  "foreground": {
+                    "type": "string",
+                    "description": "The foreground token, as the declaration names it (`muted`, `ok`)."
+                  },
+                  "foreground_entry": {
+                    "type": "string",
+                    "description": "The palette entry it resolves to in this theme."
+                  },
+                  "foreground_value": {
+                    "type": "string",
+                    "description": "The literal that entry holds."
+                  },
+                  "ground": {
+                    "type": "string",
+                    "description": "The ground token."
+                  },
+                  "ground_entry": {
+                    "type": "string",
+                    "description": "The palette entry the ground resolves to in this theme."
+                  },
+                  "ground_value": {
+                    "type": "string",
+                    "description": "The literal that entry holds."
+                  },
+                  "theme": {
+                    "type": "string",
+                    "description": "`light` or `dark`."
+                  },
+                  "carries": {
+                    "$ref": "#/$defs/Carries",
+                    "description": "Text, or a border."
+                  },
+                  "ratio": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "The measured ratio, to two decimal places."
+                  },
+                  "required": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "What the standard asks of this pair."
+                  },
+                  "passes": {
+                    "type": "boolean",
+                    "description": "Whether it reaches it."
+                  },
+                  "enforced": {
+                    "type": "boolean",
+                    "description": "Whether falling short is a finding. False for a border; see the module documentation."
+                  },
+                  "seen": {
+                    "type": "string",
+                    "description": "Where the pair was read: the stylesheet and the selector that states it."
+                  }
+                },
+                "required": [
+                  "foreground",
+                  "foreground_entry",
+                  "foreground_value",
+                  "ground",
+                  "ground_entry",
+                  "ground_value",
+                  "theme",
+                  "carries",
+                  "ratio",
+                  "required",
+                  "passes",
+                  "enforced",
+                  "seen"
+                ],
+                "description": "One measured pair: a foreground on a ground, in one theme."
+              },
+              "Carries": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "text",
+                    "description": "Text: held to [`MINIMUM_TEXT`]."
+                  },
+                  {
+                    "type": "string",
+                    "const": "non_text",
+                    "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced."
+                  }
+                ],
+                "description": "What a colour is doing where it was found."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_contrast"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/contrast"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "accessibility",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.explain",
+        "module": "design",
+        "kind": "query",
+        "title": "What a design token means",
+        "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+        "input": {
+          "name": "ExplainTokenInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`)."
+              }
+            },
+            "required": [
+              "token"
+            ],
+            "description": "The input of `design.explain`: one token by name.",
+            "title": "ExplainTokenInput"
+          }
+        },
+        "output": {
+          "name": "Token",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name as declared."
+              },
+              "kind": {
+                "$ref": "#/$defs/TokenKind",
+                "description": "What kind of token."
+              },
+              "about": {
+                "type": "string",
+                "description": "What it is for, from the declaration."
+              },
+              "css": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The custom properties and Tailwind utilities it becomes."
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ColourPart"
+                },
+                "description": "For a colour token: its parts, each resolved per theme."
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "For a scalar token: the value."
+              },
+              "role": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "For a state word: the status it is filed under."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "For a status: the state words filed under it."
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The Flowbite names that are synonyms of it."
+              },
+              "projections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The generated files the token reaches."
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "about",
+              "css",
+              "projections"
+            ],
+            "description": "One token, explained: where it came from, what it resolves to, what reads it.",
+            "title": "Token",
+            "$defs": {
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              },
+              "ColourPart": {
+                "type": "object",
+                "properties": {
+                  "part": {
+                    "type": "string",
+                    "description": "`fg`, `bg` or `line`."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The custom property a surface reads."
+                  },
+                  "light": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the light theme."
+                  },
+                  "dark": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the dark theme."
+                  }
+                },
+                "required": [
+                  "part",
+                  "css",
+                  "light",
+                  "dark"
+                ],
+                "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+              },
+              "Resolved": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "description": "The palette entry or role the declaration named."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                  },
+                  "literal": {
+                    "type": "string",
+                    "description": "The literal after every reference is followed."
+                  }
+                },
+                "required": [
+                  "reference",
+                  "css",
+                  "literal"
+                ],
+                "description": "What a colour reference resolved to."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_explain"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/explain"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "provenance",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.system",
+        "module": "design",
+        "kind": "query",
+        "title": "The design system",
+        "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DesignReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "SHA-256 of the declaration's canonical form."
+              },
+              "design": {
+                "type": "string",
+                "description": "The first twelve digits, as every stylesheet carries them in `--mj-design`."
+              },
+              "schema": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The format version of the declaration."
+              },
+              "source": {
+                "type": "string",
+                "description": "Where the declaration lives, repository-relative."
+              },
+              "identity": {
+                "$ref": "#/$defs/Identity",
+                "description": "Who this is."
+              },
+              "font": {
+                "$ref": "#/$defs/Fonts",
+                "description": "The two type stacks."
+              },
+              "theme": {
+                "$ref": "#/$defs/ThemeView",
+                "description": "The theme contract."
+              },
+              "viewports": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0
+                },
+                "description": "The widths a browser audit measures every page at."
+              },
+              "tallies": {
+                "$ref": "#/$defs/TokenTallies",
+                "description": "How many of each kind of token."
+              },
+              "projections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProjectionView"
+                },
+                "description": "Every generated file the declaration is projected into."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "design",
+              "schema",
+              "source",
+              "identity",
+              "font",
+              "theme",
+              "viewports",
+              "tallies",
+              "projections"
+            ],
+            "description": "The design system: what it is and where it goes.",
+            "title": "DesignReport",
+            "$defs": {
+              "Identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The product name every surface shows."
+                  },
+                  "mark": {
+                    "type": "string",
+                    "description": "The mark, relative to the design directory."
+                  },
+                  "logo": {
+                    "type": "string",
+                    "description": "The full logo, relative to the design directory."
+                  },
+                  "social": {
+                    "type": "string",
+                    "description": "The social preview image, relative to the design directory."
+                  }
+                },
+                "required": [
+                  "name",
+                  "mark",
+                  "logo",
+                  "social"
+                ],
+                "description": "Who this is."
+              },
+              "Fonts": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sans": {
+                    "type": "string",
+                    "description": "The system stack."
+                  },
+                  "mono": {
+                    "type": "string",
+                    "description": "The monospace stack."
+                  }
+                },
+                "required": [
+                  "sans",
+                  "mono"
+                ],
+                "description": "The two type stacks."
+              },
+              "ThemeView": {
+                "type": "object",
+                "properties": {
+                  "class": {
+                    "type": "string",
+                    "description": "The class on the root element that means dark."
+                  },
+                  "storage_key": {
+                    "type": "string",
+                    "description": "The `localStorage` key the person's choice is kept under."
+                  },
+                  "bootstrap": {
+                    "type": "string",
+                    "description": "The one pre-paint statement every surface runs."
+                  }
+                },
+                "required": [
+                  "class",
+                  "storage_key",
+                  "bootstrap"
+                ],
+                "description": "The theme contract as a client reads it."
+              },
+              "TokenTallies": {
+                "type": "object",
+                "properties": {
+                  "palette": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Raw palette entries."
+                  },
+                  "roles": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Semantic roles."
+                  },
+                  "statuses": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Status meanings."
+                  },
+                  "states": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "State words filed under a status."
+                  },
+                  "type_steps": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Steps of the type scale."
+                  },
+                  "aliases": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Flowbite names declared as synonyms."
+                  }
+                },
+                "required": [
+                  "palette",
+                  "roles",
+                  "statuses",
+                  "states",
+                  "type_steps",
+                  "aliases"
+                ],
+                "description": "How many of each kind of token."
+              },
+              "ProjectionView": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "read_by": {
+                    "type": "string",
+                    "description": "What reads it."
+                  }
+                },
+                "required": [
+                  "path",
+                  "read_by"
+                ],
+                "description": "One generated projection of the design and what it is for."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design",
+            "resource": {
+              "uri": "majordomus://design",
+              "name": "design"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.tokens",
+        "module": "design",
+        "kind": "query",
+        "title": "The design tokens",
+        "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+        "input": {
+          "name": "TokensInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/TokenKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Only tokens of this kind."
+              }
+            },
+            "description": "The input of `design.tokens`: every token, or one kind of them.",
+            "title": "TokensInput",
+            "$defs": {
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "TokenList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of the declaration they came from."
+              },
+              "total": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many are listed."
+              },
+              "tokens": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Token"
+                },
+                "description": "The tokens, in the inventory's order."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "total",
+              "tokens"
+            ],
+            "description": "The tokens, listed.",
+            "title": "TokenList",
+            "$defs": {
+              "Token": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name as declared."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/TokenKind",
+                    "description": "What kind of token."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "What it is for, from the declaration."
+                  },
+                  "css": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The custom properties and Tailwind utilities it becomes."
+                  },
+                  "parts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ColourPart"
+                    },
+                    "description": "For a colour token: its parts, each resolved per theme."
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "For a scalar token: the value."
+                  },
+                  "role": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "For a state word: the status it is filed under."
+                  },
+                  "states": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "For a status: the state words filed under it."
+                  },
+                  "aliases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The Flowbite names that are synonyms of it."
+                  },
+                  "projections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The generated files the token reaches."
+                  }
+                },
+                "required": [
+                  "name",
+                  "kind",
+                  "about",
+                  "css",
+                  "projections"
+                ],
+                "description": "One token, explained: where it came from, what it resolves to, what reads it."
+              },
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              },
+              "ColourPart": {
+                "type": "object",
+                "properties": {
+                  "part": {
+                    "type": "string",
+                    "description": "`fg`, `bg` or `line`."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The custom property a surface reads."
+                  },
+                  "light": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the light theme."
+                  },
+                  "dark": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the dark theme."
+                  }
+                },
+                "required": [
+                  "part",
+                  "css",
+                  "light",
+                  "dark"
+                ],
+                "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+              },
+              "Resolved": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "description": "The palette entry or role the declaration named."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                  },
+                  "literal": {
+                    "type": "string",
+                    "description": "The literal after every reference is followed."
+                  }
+                },
+                "required": [
+                  "reference",
+                  "css",
+                  "literal"
+                ],
+                "description": "What a colour reference resolved to."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_tokens"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/tokens"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
       },
       {
         "id": "directories.list",
@@ -11555,7 +12657,7 @@
         "module": "health",
         "kind": "query",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -26478,7 +27580,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 34,
+        "capabilities": 37,
         "capability_ids": []
       },
       {
@@ -26604,6 +27706,21 @@
         "capability_ids": []
       },
       {
+        "id": "design",
+        "title": "Design system",
+        "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 4,
+        "capability_ids": [
+          "design.contrast",
+          "design.explain",
+          "design.system",
+          "design.tokens"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
@@ -26644,7 +27761,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 212,
+        "capabilities": 213,
         "capability_ids": []
       },
       {
@@ -26702,7 +27819,7 @@
       {
         "id": "health",
         "title": "Health",
-        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 3,
@@ -26917,7 +28034,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 111,
         "capability_ids": []
       },
       {
@@ -26969,7 +28086,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 139,
+        "capabilities": 146,
         "capability_ids": []
       },
       {
@@ -26991,7 +28108,7 @@
         "title": "use-case",
         "description": "Declarative objects of kind 'use-case' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 42,
+        "capabilities": 43,
         "capability_ids": []
       },
       {
@@ -27049,7 +28166,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ececa9a102d9cd853d7cbb5a14e64ab520326684ad57f6793fcf840a2bb284",
+    "fingerprint": "f87d90bc0f1a6161832acdcde4270a4b45bea3bab14b46647a6657a9fb82a6b5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -27072,7 +28189,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 34,
+      "adr": 37,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -27081,7 +28198,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 212,
+      "document": 213,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -27092,13 +28209,13 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 111,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 139,
-      "use-case": 42,
+      "test": 146,
+      "use-case": 43,
       "workspace": 1
     },
     "diagnostics": {},
@@ -27442,7 +28559,7 @@
         "path": ".ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7381,
+        "bytes": 7416,
         "tags": [
           "ui",
           "accessibility",
@@ -27593,7 +28710,7 @@
         "path": ".ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7429,
+        "bytes": 7448,
         "tags": [
           "design",
           "ui",
@@ -27649,6 +28766,55 @@
           "mcp",
           "architecture",
           "coordination"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0036",
+        "kind": "adr",
+        "identity": "adr-0036",
+        "title": "The design system is a typed declaration in the crate and every first-party surface consumes its projections",
+        "description": "The design system is a typed declaration in the crate and every first-party surface consumes its projections",
+        "path": ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12544,
+        "tags": [
+          "design",
+          "ui",
+          "cockpit",
+          "site",
+          "projections",
+          "derived"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0037",
+        "kind": "adr",
+        "identity": "adr-0037",
+        "title": "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives",
+        "description": "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives",
+        "path": ".ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7790,
+        "tags": [
+          "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0038",
+        "kind": "adr",
+        "identity": "adr-0038",
+        "title": "A scenario declares where it runs, and an obligation is a step",
+        "description": "A scenario declares where it runs, and an obligation is a step",
+        "path": ".ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 8955,
+        "tags": [
+          "architecture",
+          "agents",
+          "governance"
         ]
       },
       {
@@ -29448,7 +30614,7 @@
         "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/bench",
@@ -29458,7 +30624,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/capture",
@@ -29468,7 +30634,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/check",
@@ -29478,7 +30644,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -29488,7 +30654,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/context",
@@ -29498,7 +30664,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/decision",
@@ -29508,7 +30674,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/doctor",
@@ -29518,7 +30684,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -29528,7 +30694,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/evidence",
@@ -29538,7 +30704,7 @@
         "description": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/finish",
@@ -29548,7 +30714,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/handover",
@@ -29558,7 +30724,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/help",
@@ -29568,7 +30734,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/history",
@@ -29578,7 +30744,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/init",
@@ -29588,7 +30754,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -29598,7 +30764,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/migrate",
@@ -29608,7 +30774,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/plan",
@@ -29618,7 +30784,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/prompt",
@@ -29628,7 +30794,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/question",
@@ -29638,7 +30804,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/rules",
@@ -29648,7 +30814,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/search",
@@ -29658,7 +30824,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/session",
@@ -29668,7 +30834,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/skills",
@@ -29678,7 +30844,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/start",
@@ -29688,7 +30854,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/update",
@@ -29698,7 +30864,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/usecase",
@@ -29708,7 +30874,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/version",
@@ -29718,7 +30884,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://command/watch",
@@ -29728,7 +30894,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26143
+        "bytes": 26396
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -30036,7 +31202,7 @@
         "identity": "share/distribution.yaml",
         "path": "share/distribution.yaml",
         "source_class": "distribution",
-        "bytes": 4093
+        "bytes": 4069
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -30212,7 +31378,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 33864
+        "bytes": 33708
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -30221,7 +31387,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 1955
+        "bytes": 2632
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -30230,7 +31396,7 @@
         "title": "Adoption",
         "path": "docs/ADOPTION.md",
         "source_class": "document",
-        "bytes": 5522
+        "bytes": 5498
       },
       {
         "uri": "majordomus://document/docs/ADOPTION_FIRST_RUN.md",
@@ -30239,7 +31405,7 @@
         "title": "First run in a foreign repository — forensic finding",
         "path": "docs/ADOPTION_FIRST_RUN.md",
         "source_class": "document",
-        "bytes": 7733
+        "bytes": 7685
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -30248,7 +31414,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 41632
+        "bytes": 43805
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -30266,7 +31432,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 14260
+        "bytes": 16371
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -30275,7 +31441,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 97360
+        "bytes": 99621
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -30284,7 +31450,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 24618
+        "bytes": 26342
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -30302,7 +31468,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 13219
+        "bytes": 13338
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -30320,7 +31486,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 20596
+        "bytes": 21500
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -30332,13 +31498,22 @@
         "bytes": 34743
       },
       {
+        "uri": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "kind": "document",
+        "identity": "docs/DESIGN_SYSTEM.md",
+        "title": "The design system — one declaration, every surface",
+        "path": "docs/DESIGN_SYSTEM.md",
+        "source_class": "document",
+        "bytes": 14471
+      },
+      {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
         "kind": "document",
         "identity": "docs/DISTRIBUTION.md",
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 21757
+        "bytes": 22003
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -30392,7 +31567,7 @@
         "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
         "path": "docs/ENTRY_AUDIT.md",
         "source_class": "document",
-        "bytes": 27043
+        "bytes": 28014
       },
       {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
@@ -30428,7 +31603,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 39976
+        "bytes": 39952
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -30446,7 +31621,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9530
+        "bytes": 9218
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -30455,7 +31630,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 29614
+        "bytes": 32666
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -30464,7 +31639,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2518
+        "bytes": 2728
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -30491,7 +31666,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 49583
+        "bytes": 44327
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -30518,7 +31693,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 14237
+        "bytes": 14618
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -30527,7 +31702,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 20149
+        "bytes": 22417
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -30545,7 +31720,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 65498
+        "bytes": 67394
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -30563,7 +31738,7 @@
         "title": "Site claims",
         "path": "docs/SITE_CLAIMS.md",
         "source_class": "document",
-        "bytes": 46848
+        "bytes": 43296
       },
       {
         "uri": "majordomus://document/docs/SITE_REVIEW.md",
@@ -30590,7 +31765,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 9463
+        "bytes": 16188
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -30599,7 +31774,7 @@
         "title": "Executable use cases",
         "path": "docs/USE_CASES.md",
         "source_class": "document",
-        "bytes": 12280
+        "bytes": 15139
       },
       {
         "uri": "majordomus://document/docs/WEB.md",
@@ -30608,7 +31783,7 @@
         "title": "The web surface — discovered from its producer, projected once",
         "path": "docs/WEB.md",
         "source_class": "document",
-        "bytes": 10895
+        "bytes": 11572
       },
       {
         "uri": "majordomus://document/docs/WHY.md",
@@ -30662,7 +31837,7 @@
         "title": "The install command this project advertises is run, from the published site, and proved to work",
         "path": "docs/claims/advertised-install-command-works.md",
         "source_class": "claim_page",
-        "bytes": 2682
+        "bytes": 2658
       },
       {
         "uri": "majordomus://document/docs/claims/ai-layer-manifest.md",
@@ -31103,7 +32278,7 @@
         "title": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
         "path": "docs/claims/github-projection-gated.md",
         "source_class": "claim_page",
-        "bytes": 3243
+        "bytes": 3893
       },
       {
         "uri": "majordomus://document/docs/claims/github-projection.md",
@@ -31166,7 +32341,7 @@
         "title": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
         "path": "docs/claims/installer-verifies-before-installing.md",
         "source_class": "claim_page",
-        "bytes": 2652
+        "bytes": 2628
       },
       {
         "uri": "majordomus://document/docs/claims/interfaces-are-projections.md",
@@ -31346,7 +32521,7 @@
         "title": "An obligation whose fact the tool can hold is established live rather than recorded, and a hand-recorded line neither discharges it nor rescues it",
         "path": "docs/claims/obligation-establishment.md",
         "source_class": "claim_page",
-        "bytes": 7027
+        "bytes": 7032
       },
       {
         "uri": "majordomus://document/docs/claims/open-question-gate.md",
@@ -31742,7 +32917,7 @@
         "title": "The site is deployed by one script, from a terminal or from the Pages workflow, and the deploy names its source",
         "path": "docs/claims/site-deploy-one-path.md",
         "source_class": "claim_page",
-        "bytes": 3328
+        "bytes": 3304
       },
       {
         "uri": "majordomus://document/docs/claims/site-deploys-from-verified-run.md",
@@ -31999,7 +33174,7 @@
         "path": ".ai/repo/features/cockpit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2223,
+        "bytes": 2231,
         "tags": [
           "cockpit",
           "interface"
@@ -32282,7 +33457,7 @@
         "identity": "bin/majordomus-cli",
         "path": "bin/majordomus-cli",
         "source_class": "entrypoint",
-        "bytes": 2773
+        "bytes": 2971
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-env",
@@ -32306,7 +33481,7 @@
         "identity": "lib/adr.sh",
         "path": "lib/adr.sh",
         "source_class": "library",
-        "bytes": 33836
+        "bytes": 33845
       },
       {
         "uri": "majordomus://implementation/lib/bench.sh",
@@ -32314,7 +33489,7 @@
         "identity": "lib/bench.sh",
         "path": "lib/bench.sh",
         "source_class": "library",
-        "bytes": 18915
+        "bytes": 18924
       },
       {
         "uri": "majordomus://implementation/lib/capture.sh",
@@ -32322,7 +33497,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 73421
+        "bytes": 75438
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -32346,7 +33521,7 @@
         "identity": "lib/commands.sh",
         "path": "lib/commands.sh",
         "source_class": "library",
-        "bytes": 6734
+        "bytes": 7341
       },
       {
         "uri": "majordomus://implementation/lib/common.sh",
@@ -32354,7 +33529,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 54899
+        "bytes": 59784
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -32362,7 +33537,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 37239
+        "bytes": 38936
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -32394,7 +33569,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 20698
+        "bytes": 20707
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -32402,7 +33577,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 58883
+        "bytes": 58964
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -32410,7 +33585,7 @@
         "identity": "lib/doctrine.sh",
         "path": "lib/doctrine.sh",
         "source_class": "library",
-        "bytes": 14942
+        "bytes": 14866
       },
       {
         "uri": "majordomus://implementation/lib/evidence.sh",
@@ -32418,7 +33593,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 25669
+        "bytes": 26497
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -32426,7 +33601,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 10754
+        "bytes": 10763
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -32434,7 +33609,7 @@
         "identity": "lib/handover.sh",
         "path": "lib/handover.sh",
         "source_class": "library",
-        "bytes": 6115
+        "bytes": 6124
       },
       {
         "uri": "majordomus://implementation/lib/history.sh",
@@ -32530,7 +33705,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 15158
+        "bytes": 15176
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -32538,7 +33713,7 @@
         "identity": "lib/prompt.sh",
         "path": "lib/prompt.sh",
         "source_class": "library",
-        "bytes": 8835
+        "bytes": 8844
       },
       {
         "uri": "majordomus://implementation/lib/question.sh",
@@ -32562,7 +33737,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 5319
+        "bytes": 6079
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -32570,7 +33745,7 @@
         "identity": "lib/search.sh",
         "path": "lib/search.sh",
         "source_class": "library",
-        "bytes": 5106
+        "bytes": 5124
       },
       {
         "uri": "majordomus://implementation/lib/session.sh",
@@ -32578,7 +33753,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 36198
+        "bytes": 43826
       },
       {
         "uri": "majordomus://implementation/lib/session_context.sh",
@@ -32586,7 +33761,7 @@
         "identity": "lib/session_context.sh",
         "path": "lib/session_context.sh",
         "source_class": "library",
-        "bytes": 13168
+        "bytes": 13177
       },
       {
         "uri": "majordomus://implementation/lib/skills.sh",
@@ -32618,7 +33793,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 51033
+        "bytes": 63306
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -32626,7 +33801,7 @@
         "identity": "lib/watch.sh",
         "path": "lib/watch.sh",
         "source_class": "library",
-        "bytes": 5685
+        "bytes": 5694
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -36710,20 +37885,22 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.design-tokens-declared-once@1",
+        "uri": "majordomus://rule/project.design-tokens-declared-once@2",
         "kind": "rule",
-        "identity": "project.design-tokens-declared-once@1",
-        "title": "A design value is chosen once and every stylesheet is a projection of it",
-        "description": "Type, palette and accent are declared in one canonical file and generated into the Tailwind theme both builds import, the surface block the Cockpit is written against, and the custom properties compiled into the executable; a file that puts a colour on a screen may name a token and may not invent one, and a token it names is one something declares.",
-        "path": ".ai/repo/rules/project/design-tokens-declared-once.v1.md",
+        "identity": "project.design-tokens-declared-once@2",
+        "title": "The design is one typed declaration and every first-party surface consumes its projections",
+        "description": "Roles, status semantics, type scale, layout, radius, motion, theme contract and brand are declared once in share/design/tokens.yaml, read by the crate as a typed model, and projected by `majordomus generate design` into the stylesheets both Tailwind builds import, the tokens and declaration compiled into the executable, every copy of the brand, the site's dataset and the reference; a first-party surface names a token and never chooses a value, a state word is coloured by the meaning it is filed under, and a token added to the declaration reaches every surface with no consumer edited.",
+        "path": ".ai/repo/rules/project/design-tokens-declared-once.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6089,
+        "bytes": 12096,
         "tags": [
           "design",
           "ui",
           "derived",
-          "projections"
+          "projections",
+          "cockpit",
+          "site"
         ]
       },
       {
@@ -36938,7 +38115,7 @@
         "path": ".ai/repo/rules/project/land-and-publish.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 7361,
+        "bytes": 8362,
         "tags": [
           "process",
           "integration",
@@ -37044,11 +38221,11 @@
         "kind": "rule",
         "identity": "project.no-network-no-eval@1",
         "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
-        "description": "bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.",
+        "description": "bin/, lib/, share/ and test/ contain no telemetry, no eval, no curl piped to a shell, no silent overwrite, no recursive deletion outside a temporary directory, and no network client but the one declared exception SECURITY.md names.",
         "path": ".ai/repo/rules/project/no-network-no-eval.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 1196,
+        "bytes": 1732,
         "tags": [
           "security"
         ]
@@ -37338,6 +38515,40 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "rule",
+        "identity": "project.the-lease-is-read-once@1",
+        "title": "The shared server's lease has one reader",
+        "description": "The file that says which process serves a checkout and at which address is parsed by one typed reader in the executable and served from there; no other file in this repository opens it, and a caller that needs the address asks `serve status`.",
+        "path": ".ai/repo/rules/project/the-lease-is-read-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5314,
+        "tags": [
+          "mcp",
+          "coordination",
+          "derived",
+          "gates"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.the-version-is-measured@1",
+        "kind": "rule",
+        "identity": "project.the-version-is-measured@1",
+        "title": "The version is measured against the public surface, not claimed",
+        "description": "What a release's version number says about compatibility is decided by comparing the capability registry of the last release with this tree — an atom of the surface that is gone is a breaking change, one that is new is an addition — and a version smaller than what moved is refused. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.",
+        "path": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5014,
+        "tags": [
+          "release",
+          "versioning",
+          "contract",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.ui-conformance@1",
         "kind": "rule",
         "identity": "project.ui-conformance@1",
@@ -37606,7 +38817,7 @@
         "path": ".ai/repo/skills/deploy-site/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 3887,
+        "bytes": 3863,
         "tags": [
           "site",
           "deploy",
@@ -37827,7 +39038,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 2498
+        "bytes": 3827
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -37875,7 +39086,7 @@
         "identity": "test/cases/103_obligations.sh",
         "path": "test/cases/103_obligations.sh",
         "source_class": "case",
-        "bytes": 12264
+        "bytes": 12807
       },
       {
         "uri": "majordomus://test/test/cases/103_release_projection.sh",
@@ -37907,7 +39118,7 @@
         "identity": "test/cases/106_context_peers.sh",
         "path": "test/cases/106_context_peers.sh",
         "source_class": "case",
-        "bytes": 5379
+        "bytes": 7625
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -37915,7 +39126,7 @@
         "identity": "test/cases/107_design_tokens.sh",
         "path": "test/cases/107_design_tokens.sh",
         "source_class": "case",
-        "bytes": 8577
+        "bytes": 7498
       },
       {
         "uri": "majordomus://test/test/cases/107_runtime_staleness_is_loud.sh",
@@ -37923,7 +39134,7 @@
         "identity": "test/cases/107_runtime_staleness_is_loud.sh",
         "path": "test/cases/107_runtime_staleness_is_loud.sh",
         "source_class": "case",
-        "bytes": 4285
+        "bytes": 4948
       },
       {
         "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
@@ -37942,12 +39153,52 @@
         "bytes": 2030
       },
       {
+        "uri": "majordomus://test/test/cases/109_design_system.sh",
+        "kind": "test",
+        "identity": "test/cases/109_design_system.sh",
+        "path": "test/cases/109_design_system.sh",
+        "source_class": "case",
+        "bytes": 9712
+      },
+      {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
         "kind": "test",
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
         "bytes": 6597
+      },
+      {
+        "uri": "majordomus://test/test/cases/110_lease_reader.sh",
+        "kind": "test",
+        "identity": "test/cases/110_lease_reader.sh",
+        "path": "test/cases/110_lease_reader.sh",
+        "source_class": "case",
+        "bytes": 6873
+      },
+      {
+        "uri": "majordomus://test/test/cases/111_session_per_provider.sh",
+        "kind": "test",
+        "identity": "test/cases/111_session_per_provider.sh",
+        "path": "test/cases/111_session_per_provider.sh",
+        "source_class": "case",
+        "bytes": 9254
+      },
+      {
+        "uri": "majordomus://test/test/cases/111_unblock.sh",
+        "kind": "test",
+        "identity": "test/cases/111_unblock.sh",
+        "path": "test/cases/111_unblock.sh",
+        "source_class": "case",
+        "bytes": 7721
+      },
+      {
+        "uri": "majordomus://test/test/cases/112_version_matches_surface.sh",
+        "kind": "test",
+        "identity": "test/cases/112_version_matches_surface.sh",
+        "path": "test/cases/112_version_matches_surface.sh",
+        "source_class": "case",
+        "bytes": 5245
       },
       {
         "uri": "majordomus://test/test/cases/113_shared_server_survives_a_crash.sh",
@@ -37982,12 +39233,20 @@
         "bytes": 4344
       },
       {
+        "uri": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "identity": "test/cases/120_design_contrast.sh",
+        "path": "test/cases/120_design_contrast.sh",
+        "source_class": "case",
+        "bytes": 6069
+      },
+      {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
         "kind": "test",
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 8216
+        "bytes": 8243
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -37995,7 +39254,7 @@
         "identity": "test/cases/12b_site_data_transactional.sh",
         "path": "test/cases/12b_site_data_transactional.sh",
         "source_class": "case",
-        "bytes": 6038
+        "bytes": 6056
       },
       {
         "uri": "majordomus://test/test/cases/12c_graph_data.sh",
@@ -38027,7 +39286,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 4833
+        "bytes": 4860
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -38115,7 +39374,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 12506
+        "bytes": 17281
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -38139,7 +39398,7 @@
         "identity": "test/cases/28_no_hardcoded_values.sh",
         "path": "test/cases/28_no_hardcoded_values.sh",
         "source_class": "case",
-        "bytes": 18582
+        "bytes": 18627
       },
       {
         "uri": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -38155,7 +39414,7 @@
         "identity": "test/cases/30_command_registry.sh",
         "path": "test/cases/30_command_registry.sh",
         "source_class": "case",
-        "bytes": 7043
+        "bytes": 7088
       },
       {
         "uri": "majordomus://test/test/cases/31_command_coverage.sh",
@@ -38163,7 +39422,7 @@
         "identity": "test/cases/31_command_coverage.sh",
         "path": "test/cases/31_command_coverage.sh",
         "source_class": "case",
-        "bytes": 5917
+        "bytes": 5935
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -38187,7 +39446,7 @@
         "identity": "test/cases/33_event_registry.sh",
         "path": "test/cases/33_event_registry.sh",
         "source_class": "case",
-        "bytes": 7485
+        "bytes": 7521
       },
       {
         "uri": "majordomus://test/test/cases/33_stale_executable.sh",
@@ -38195,7 +39454,7 @@
         "identity": "test/cases/33_stale_executable.sh",
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
-        "bytes": 2644
+        "bytes": 8682
       },
       {
         "uri": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -38203,7 +39462,7 @@
         "identity": "test/cases/34_command_fixtures.sh",
         "path": "test/cases/34_command_fixtures.sh",
         "source_class": "case",
-        "bytes": 5954
+        "bytes": 5963
       },
       {
         "uri": "majordomus://test/test/cases/35_future_command.sh",
@@ -38211,7 +39470,7 @@
         "identity": "test/cases/35_future_command.sh",
         "path": "test/cases/35_future_command.sh",
         "source_class": "case",
-        "bytes": 5679
+        "bytes": 6101
       },
       {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -38259,7 +39518,7 @@
         "identity": "test/cases/43_plan_command.sh",
         "path": "test/cases/43_plan_command.sh",
         "source_class": "case",
-        "bytes": 4693
+        "bytes": 4711
       },
       {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -38275,7 +39534,7 @@
         "identity": "test/cases/45_github_projection.sh",
         "path": "test/cases/45_github_projection.sh",
         "source_class": "case",
-        "bytes": 7392
+        "bytes": 7410
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -38283,7 +39542,7 @@
         "identity": "test/cases/46_cross_surface.sh",
         "path": "test/cases/46_cross_surface.sh",
         "source_class": "case",
-        "bytes": 7347
+        "bytes": 7500
       },
       {
         "uri": "majordomus://test/test/cases/47_mutation.sh",
@@ -38331,7 +39590,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 6923
+        "bytes": 6932
       },
       {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -38339,7 +39598,7 @@
         "identity": "test/cases/53_status_vocabulary.sh",
         "path": "test/cases/53_status_vocabulary.sh",
         "source_class": "case",
-        "bytes": 5658
+        "bytes": 5694
       },
       {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
@@ -38347,7 +39606,7 @@
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
         "path": "test/cases/54_session_lifecycle_hooks.sh",
         "source_class": "case",
-        "bytes": 15505
+        "bytes": 15523
       },
       {
         "uri": "majordomus://test/test/cases/55_session_context.sh",
@@ -38395,7 +39654,7 @@
         "identity": "test/cases/60_session_lifecycle.sh",
         "path": "test/cases/60_session_lifecycle.sh",
         "source_class": "case",
-        "bytes": 3565
+        "bytes": 4492
       },
       {
         "uri": "majordomus://test/test/cases/61_session_envelope.sh",
@@ -38427,7 +39686,7 @@
         "identity": "test/cases/64_knowledge_discovery.sh",
         "path": "test/cases/64_knowledge_discovery.sh",
         "source_class": "case",
-        "bytes": 5381
+        "bytes": 5390
       },
       {
         "uri": "majordomus://test/test/cases/65_tool_root_independence.sh",
@@ -38435,7 +39694,7 @@
         "identity": "test/cases/65_tool_root_independence.sh",
         "path": "test/cases/65_tool_root_independence.sh",
         "source_class": "case",
-        "bytes": 4380
+        "bytes": 4398
       },
       {
         "uri": "majordomus://test/test/cases/66_migrate_legacy.sh",
@@ -38467,7 +39726,7 @@
         "identity": "test/cases/69_context_documents.sh",
         "path": "test/cases/69_context_documents.sh",
         "source_class": "case",
-        "bytes": 19963
+        "bytes": 19981
       },
       {
         "uri": "majordomus://test/test/cases/70_context_impact.sh",
@@ -38491,7 +39750,7 @@
         "identity": "test/cases/72_rust_mcp.sh",
         "path": "test/cases/72_rust_mcp.sh",
         "source_class": "case",
-        "bytes": 10718
+        "bytes": 10736
       },
       {
         "uri": "majordomus://test/test/cases/73_knowledge_nodes.sh",
@@ -38531,7 +39790,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 10034
+        "bytes": 10105
       },
       {
         "uri": "majordomus://test/test/cases/79_bench_command.sh",
@@ -38539,7 +39798,7 @@
         "identity": "test/cases/79_bench_command.sh",
         "path": "test/cases/79_bench_command.sh",
         "source_class": "case",
-        "bytes": 5777
+        "bytes": 5795
       },
       {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
@@ -38619,7 +39878,7 @@
         "identity": "test/cases/85_ui_conformance.sh",
         "path": "test/cases/85_ui_conformance.sh",
         "source_class": "case",
-        "bytes": 10651
+        "bytes": 16571
       },
       {
         "uri": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -38627,7 +39886,7 @@
         "identity": "test/cases/86_deployment_projections.sh",
         "path": "test/cases/86_deployment_projections.sh",
         "source_class": "case",
-        "bytes": 5255
+        "bytes": 5594
       },
       {
         "uri": "majordomus://test/test/cases/86_installer_platform.sh",
@@ -38643,7 +39902,7 @@
         "identity": "test/cases/87_release_pipeline.sh",
         "path": "test/cases/87_release_pipeline.sh",
         "source_class": "case",
-        "bytes": 6070
+        "bytes": 6079
       },
       {
         "uri": "majordomus://test/test/cases/87b_release_archive_shape.sh",
@@ -38667,7 +39926,7 @@
         "identity": "test/cases/89_web_surface.sh",
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
-        "bytes": 12013
+        "bytes": 12031
       },
       {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
@@ -38675,7 +39934,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10713
+        "bytes": 10719
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -38683,7 +39942,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 7480
+        "bytes": 8869
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -38691,7 +39950,7 @@
         "identity": "test/cases/92_openapi_reference.sh",
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
-        "bytes": 8867
+        "bytes": 10048
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",
@@ -38731,7 +39990,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 16160
+        "bytes": 20878
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -38755,7 +40014,7 @@
         "identity": "test/cases/95_skills.sh",
         "path": "test/cases/95_skills.sh",
         "source_class": "case",
-        "bytes": 17192
+        "bytes": 17198
       },
       {
         "uri": "majordomus://test/test/cases/96_rust_public_api_quality.sh",
@@ -38779,7 +40038,7 @@
         "identity": "test/cases/96_worktree_topology.sh",
         "path": "test/cases/96_worktree_topology.sh",
         "source_class": "case",
-        "bytes": 12476
+        "bytes": 12494
       },
       {
         "uri": "majordomus://test/test/cases/97_github_gate.sh",
@@ -38803,7 +40062,7 @@
         "identity": "test/cases/97_pages_fast_path.sh",
         "path": "test/cases/97_pages_fast_path.sh",
         "source_class": "case",
-        "bytes": 10377
+        "bytes": 10404
       },
       {
         "uri": "majordomus://test/test/cases/97_product_features.sh",
@@ -38811,7 +40070,15 @@
         "identity": "test/cases/97_product_features.sh",
         "path": "test/cases/97_product_features.sh",
         "source_class": "case",
-        "bytes": 8978
+        "bytes": 8996
+      },
+      {
+        "uri": "majordomus://test/test/cases/97_site_probe_attribution.sh",
+        "kind": "test",
+        "identity": "test/cases/97_site_probe_attribution.sh",
+        "path": "test/cases/97_site_probe_attribution.sh",
+        "source_class": "case",
+        "bytes": 3396
       },
       {
         "uri": "majordomus://test/test/cases/98_cli_reference.sh",
@@ -38835,7 +40102,7 @@
         "identity": "test/cases/98_why_catalogue.sh",
         "path": "test/cases/98_why_catalogue.sh",
         "source_class": "case",
-        "bytes": 9742
+        "bytes": 9760
       },
       {
         "uri": "majordomus://test/test/cases/99_adr.sh",
@@ -38843,7 +40110,7 @@
         "identity": "test/cases/99_adr.sh",
         "path": "test/cases/99_adr.sh",
         "source_class": "case",
-        "bytes": 15646
+        "bytes": 15664
       },
       {
         "uri": "majordomus://test/test/cases/99_canonical_order.sh",
@@ -38859,7 +40126,7 @@
         "identity": "test/cases/99_plan_capabilities.sh",
         "path": "test/cases/99_plan_capabilities.sh",
         "source_class": "case",
-        "bytes": 13518
+        "bytes": 13545
       },
       {
         "uri": "majordomus://test/test/cases/99_work_graph_chain.sh",
@@ -39065,7 +40332,7 @@
         "path": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
         "section": "use-cases",
         "source_class": "use_case",
-        "bytes": 4060
+        "bytes": 4012
       },
       {
         "uri": "majordomus://use-case/keep-decisions-out-of-the-transcript",
@@ -39088,6 +40355,17 @@
         "section": "use-cases",
         "source_class": "use_case",
         "bytes": 2738
+      },
+      {
+        "uri": "majordomus://use-case/know-whether-this-work-is-finished",
+        "kind": "use-case",
+        "identity": "know-whether-this-work-is-finished",
+        "title": "Know whether the work in this checkout is finished",
+        "description": "Ask the repository you are standing in, and be told what is still owed by name.",
+        "path": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 3124
       },
       {
         "uri": "majordomus://use-case/know-which-tool-is-running",
@@ -39352,7 +40630,7 @@
       "identity": [
         "id"
       ],
-      "objects": 34
+      "objects": 37
     },
     {
       "name": "application",
@@ -39438,7 +40716,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 212
+      "objects": 213
     },
     {
       "name": "feature",
@@ -39552,7 +40830,7 @@
         "id",
         "version"
       ],
-      "objects": 109
+      "objects": 111
     },
     {
       "name": "scope",
@@ -39607,7 +40885,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 139
+      "objects": 146
     },
     {
       "name": "use-case",
@@ -39617,7 +40895,7 @@
       "identity": [
         "id"
       ],
-      "objects": 42
+      "objects": 43
     },
     {
       "name": "workspace",
@@ -41256,6 +42534,14 @@
               {
                 "name": "deployment",
                 "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+              },
+              {
+                "name": "graph",
+                "help": "docs/generated/graph.json and its schema: the composed graph as data"
+              },
+              {
+                "name": "design",
+                "help": "The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*"
               }
             ],
             "defaults": [
@@ -53582,6 +54868,46 @@
         "output": "DeploymentList"
       },
       {
+        "name": "majordomus_design_contrast",
+        "id": "design.contrast",
+        "title": "Whether the declared colours can be read",
+        "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ContrastReport"
+      },
+      {
+        "name": "majordomus_design_explain",
+        "id": "design.explain",
+        "title": "What a design token means",
+        "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ExplainTokenInput",
+        "output": "Token"
+      },
+      {
+        "name": "majordomus_design",
+        "id": "design.system",
+        "title": "The design system",
+        "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DesignReport"
+      },
+      {
+        "name": "majordomus_design_tokens",
+        "id": "design.tokens",
+        "title": "The design tokens",
+        "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+        "kind": "query",
+        "read_only": true,
+        "input": "TokensInput",
+        "output": "TokenList"
+      },
+      {
         "name": "majordomus_directories",
         "id": "directories.list",
         "title": "The layer's directory contracts",
@@ -53755,7 +55081,7 @@
         "name": "majordomus_health",
         "id": "health.report",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",
@@ -54222,6 +55548,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://design",
+        "name": "design",
+        "id": "design.system",
+        "title": "The design system",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://directories",
         "name": "directories",
         "id": "directories.list",
@@ -54451,6 +55784,30 @@
         "method": "GET",
         "path": "/api/v1/deployments",
         "id": "deploy.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/contrast",
+        "id": "design.contrast",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/explain",
+        "id": "design.explain",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design",
+        "id": "design.system",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/tokens",
+        "id": "design.tokens",
         "kind": "query"
       },
       {
@@ -55343,6 +56700,180 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/deployments"
+      },
+      {
+        "key": "design.contrast|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "design.contrast|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_design_contrast"
+      },
+      {
+        "key": "design.contrast|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/design/contrast"
+      },
+      {
+        "key": "design.explain|direct|role",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false
+      },
+      {
+        "key": "design.explain|direct|state",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false
+      },
+      {
+        "key": "design.explain|mcp|role",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false,
+        "tool": "majordomus_design_explain"
+      },
+      {
+        "key": "design.explain|mcp|state",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false,
+        "tool": "majordomus_design_explain"
+      },
+      {
+        "key": "design.explain|http|role",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false,
+        "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.explain|http|state",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false,
+        "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.system|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "design.system|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_design"
+      },
+      {
+        "key": "design.system|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/design"
+      },
+      {
+        "key": "design.tokens|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false
+      },
+      {
+        "key": "design.tokens|direct|roles",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false
+      },
+      {
+        "key": "design.tokens|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false,
+        "tool": "majordomus_design_tokens"
+      },
+      {
+        "key": "design.tokens|mcp|roles",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false,
+        "tool": "majordomus_design_tokens"
+      },
+      {
+        "key": "design.tokens|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false,
+        "route": "GET /api/v1/design/tokens"
+      },
+      {
+        "key": "design.tokens|http|roles",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false,
+        "route": "GET /api/v1/design/tokens"
       },
       {
         "key": "directories.list|direct|whole-tree",
@@ -58290,6 +59821,90 @@
           "cases": 1
         },
         {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "directories.list",
           "module": "directories",
           "transport": "direct",
@@ -59701,20 +61316,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 74,
-          "covered": 71,
+          "required": 78,
+          "covered": 75,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 74,
-          "covered": 71,
+          "required": 78,
+          "covered": 75,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 72,
-          "covered": 69,
+          "required": 76,
+          "covered": 73,
           "missing": 0,
           "waived": 3
         },
@@ -59725,8 +61340,8 @@
           "waived": 0
         },
         "total": {
-          "required": 233,
-          "covered": 224,
+          "required": 245,
+          "covered": 236,
           "missing": 0,
           "waived": 9
         }
