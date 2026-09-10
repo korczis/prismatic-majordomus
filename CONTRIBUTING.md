@@ -144,8 +144,15 @@ The public site is a projection of the files above, not a second copy of them. I
 npm ci
 scripts/site-build      # generate canonical data, build with Zola, compile Tailwind
 scripts/site-check      # the checks CI runs
-scripts/site-serve      # watch mode
+scripts/site-serve      # watch mode, loopback only
+scripts/site-serve --tailscale   # watch mode, reachable from the tailnet (or --host <addr>)
 ```
+
+A preview is served at one address and *advertised* at one address, and both have to be the
+one the browser uses: Zola binds a single interface (127.0.0.1 by default) and bakes the base
+URL into every link and into the livereload socket. `--tailscale` and `--host` set both, so a
+phone or another machine gets a preview that navigates and reloads. Plain `scripts/site-serve`
+stays on loopback, where a preview of unreviewed content belongs.
 
 `site/data/generated/`, `site/content/` and `public/` are rewritten on every build and are
 gitignored. Change the canonical file instead — a policy field, a profile, a claim in

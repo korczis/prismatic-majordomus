@@ -1,7 +1,55 @@
 #!/usr/bin/env bash
-# site-serve — local preview with the production path prefix, so links resolve as deployed.
-set -eu
+# site-serve — local preview in watch mode, at an address a browser can actually reach.
+#   scripts/site-serve                      loopback only, http://127.0.0.1:1111/
+#   scripts/site-serve --tailscale          this machine's tailnet IPv4, reachable from the tailnet
+#   scripts/site-serve --host <addr|name>   advertise that address, and bind every interface so
+#                                           another device (Tailscale, LAN) can connect
+#   scripts/site-serve --interface <addr>   bind exactly this interface (default 127.0.0.1, or
+#                                           0.0.0.0 once --host names something else)
+#   scripts/site-serve --port <n>           another port (default 1111)
+# SITE_SERVE_HOST, SITE_SERVE_INTERFACE and SITE_SERVE_PORT set the same three values.
+#
+# Zola binds one interface and bakes one base URL into the pages it serves — every link, and
+# the address the livereload socket connects back to. Both have to name the address the
+# *browser* uses, and the two failures look nothing alike: bound to 127.0.0.1 the port is
+# unreachable from anywhere but this machine, while advertised as 127.0.0.1 a remote browser
+# loads the first page and then navigates and reloads against its own loopback. One option
+# therefore sets both.
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+HOST="${SITE_SERVE_HOST:-}"; IFACE="${SITE_SERVE_INTERFACE:-}"; PORT="${SITE_SERVE_PORT:-1111}"; TAILNET=0
+
+# This machine's tailnet IPv4: from the CLI if it is installed (it is not on PATH when only
+# the macOS app is), otherwise the CGNAT address Tailscale puts on a utun interface.
+tailnet_address() {
+  local cli addr
+  for cli in tailscale /Applications/Tailscale.app/Contents/MacOS/Tailscale; do
+    command -v "$cli" >/dev/null 2>&1 || continue
+    addr="$("$cli" ip -4 2>/dev/null || true)"; addr="${addr%%$'\n'*}"
+    [ -z "$addr" ] || { printf '%s\n' "$addr"; return 0; }
+  done
+  addr="$(ifconfig 2>/dev/null | awk '/inet 100\./ { print $2; exit }' || true)"
+  [ -n "$addr" ] || return 1
+  printf '%s\n' "$addr"
+}
+
+while [ $# -gt 0 ]; do case "$1" in
+  --tailscale) TAILNET=1; shift ;;
+  --host) HOST="$2"; shift 2 ;;
+  --interface|-i) IFACE="$2"; shift 2 ;;
+  --port|-p) PORT="$2"; shift 2 ;;
+  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  *) echo "site-serve: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+if [ "$TAILNET" = 1 ]; then
+  HOST="$(tailnet_address)" || { echo "site-serve: no tailnet IPv4 address — is Tailscale up on this machine?" >&2; exit 12; }
+fi
+[ -n "$HOST" ] || HOST="127.0.0.1"
+if [ -z "$IFACE" ]; then
+  case "$HOST" in 127.*|localhost|::1|"[::1]") IFACE="127.0.0.1" ;; *) IFACE="0.0.0.0" ;; esac
+fi
+
 "$ROOT/scripts/site-build"
-echo "serving http://127.0.0.1:1111/prismatic-majordomus/  (Ctrl-C to stop; rebuild with scripts/site-build in another shell)"
-cd "$ROOT/site" && zola serve --base-url 127.0.0.1 --port 1111
+echo "serving http://$HOST:$PORT/  (bound $IFACE:$PORT; Ctrl-C to stop; rebuild assets with scripts/site-build in another shell)"
+cd "$ROOT/site" && exec zola serve --interface "$IFACE" --port "$PORT" --base-url "$HOST"
