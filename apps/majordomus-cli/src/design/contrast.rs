@@ -174,7 +174,9 @@ pub fn ratio(foreground: &str, ground: &str) -> Option<f64> {
 // ------------------------------------------------------------------------ what is derived
 
 /// What a colour is doing where it was found.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Carries {
     /// Text: held to [`MINIMUM_TEXT`].
@@ -413,6 +415,14 @@ fn bindings(design: &DesignSystem, value: &str) -> Vec<Binding> {
     out
 }
 
+/// What one rule of a stylesheet puts in each slot, and where it was read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Coloured {
+    source: String,
+    selector: String,
+    slots: Vec<(Slot, Vec<Binding>)>,
+}
+
 /// A pair as derived, before it is measured in either theme.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Derived {
@@ -450,7 +460,7 @@ fn derive(
 
     // What each rule puts in each slot, once, so that the ambient grounds can be collected
     // before any pair is made.
-    let mut slots: Vec<(String, String, Vec<(Slot, Vec<Binding>)>)> = Vec::new();
+    let mut coloured: Vec<Coloured> = Vec::new();
     for (name, rules) in &parsed {
         for rule in rules {
             let mut found: Vec<(Slot, Vec<Binding>)> = Vec::new();
@@ -472,7 +482,11 @@ fn derive(
                 }
             }
             if !found.is_empty() {
-                slots.push((name.clone(), rule.selector.clone(), found));
+                coloured.push(Coloured {
+                    source: name.clone(),
+                    selector: rule.selector.clone(),
+                    slots: found,
+                });
             }
         }
     }
@@ -482,9 +496,9 @@ fn derive(
     // a reader reads on: what is read sits inside the box, not on its edge. So a token
     // used as a line anywhere is not collected as a ground below — derived from how the
     // consumers use it, so a role that stops being a border stops being excluded.
-    let edges: BTreeSet<String> = slots
+    let edges: BTreeSet<String> = coloured
         .iter()
-        .flat_map(|(_, _, found)| found.iter())
+        .flat_map(|rule| rule.slots.iter())
         .filter(|(s, _)| *s == Slot::Line)
         .flat_map(|(_, bound)| bound.iter().map(|b| b.token.clone()))
         .collect();
@@ -492,12 +506,12 @@ fn derive(
     // A ground a container sets — a rule that carries no text of its own — is a ground any
     // floating foreground can land on.
     let mut ambient: BTreeSet<String> = BTreeSet::new();
-    for (_, _, found) in &slots {
-        let has_text = found.iter().any(|(s, _)| *s == Slot::Text);
+    for rule in &coloured {
+        let has_text = rule.slots.iter().any(|(s, _)| *s == Slot::Text);
         if has_text {
             continue;
         }
-        for (s, bound) in found {
+        for (s, bound) in &rule.slots {
             if *s != Slot::Ground {
                 continue;
             }
@@ -512,13 +526,15 @@ fn derive(
     }
 
     let mut pairs: BTreeMap<Derived, String> = BTreeMap::new();
-    for (name, selector, found) in &slots {
-        let grounds: Vec<&Binding> = found
+    for rule in &coloured {
+        let (name, selector) = (&rule.source, &rule.selector);
+        let grounds: Vec<&Binding> = rule
+            .slots
             .iter()
             .filter(|(s, _)| *s == Slot::Ground)
             .flat_map(|(_, b)| b.iter())
             .collect();
-        for (s, bound) in found {
+        for (s, bound) in &rule.slots {
             let carries_text = match s {
                 Slot::Text => true,
                 Slot::Line => false,
@@ -526,14 +542,18 @@ fn derive(
             };
             for binding in bound {
                 let mut landed = false;
-                for ground in grounds.iter().filter(|g| g.variant.compatible(&binding.variant)) {
+                for ground in grounds
+                    .iter()
+                    .filter(|g| g.variant.compatible(&binding.variant))
+                {
                     landed = true;
-                    pairs.entry(Derived {
-                        carries_text,
-                        foreground: binding.token.clone(),
-                        ground: ground.token.clone(),
-                    })
-                    .or_insert_with(|| format!("{name} {selector}"));
+                    pairs
+                        .entry(Derived {
+                            carries_text,
+                            foreground: binding.token.clone(),
+                            ground: ground.token.clone(),
+                        })
+                        .or_insert_with(|| format!("{name} {selector}"));
                 }
                 if landed {
                     continue;
@@ -546,7 +566,9 @@ fn derive(
                             foreground: binding.token.clone(),
                             ground: ground.clone(),
                         })
-                        .or_insert_with(|| format!("{name} {selector}, on every ground a container sets"));
+                        .or_insert_with(|| {
+                            format!("{name} {selector}, on every ground a container sets")
+                        });
                 }
             }
         }
@@ -686,7 +708,9 @@ mod tests {
             .iter()
             .filter_map(|name| {
                 let path = share_dir().join(name);
-                std::fs::read_to_string(&path).ok().map(|t| (format!("share/{name}"), t))
+                std::fs::read_to_string(&path)
+                    .ok()
+                    .map(|t| (format!("share/{name}"), t))
             })
             .collect()
     }
@@ -706,8 +730,14 @@ mod tests {
         // ships for the same steps, so a wrong transform is caught by a value and not by
         // a plausible-looking number
         assert_eq!(srgb("oklch(21% 0.034 264.665)"), Some([16.0, 24.0, 40.0])); // gray-900 #101828
-        assert_eq!(srgb("oklch(54.6% 0.245 262.881)"), Some([21.0, 93.0, 252.0])); // blue-600 #155dfc
-        assert_eq!(srgb("oklch(55.1% 0.027 264.364)"), Some([106.0, 114.0, 130.0])); // gray-500 #6a7282
+        assert_eq!(
+            srgb("oklch(54.6% 0.245 262.881)"),
+            Some([21.0, 93.0, 252.0])
+        ); // blue-600 #155dfc
+        assert_eq!(
+            srgb("oklch(55.1% 0.027 264.364)"),
+            Some([106.0, 114.0, 130.0])
+        ); // gray-500 #6a7282
         assert_eq!(srgb("#fff"), Some([255.0, 255.0, 255.0]));
         // what is not measurable is refused rather than guessed
         assert_eq!(srgb("oklch(55% 0.02 264 / 50%)"), None);
@@ -718,10 +748,9 @@ mod tests {
     fn a_rule_that_sets_both_states_a_pair() {
         let css = "@layer components { .thing { color: var(--mj-on-accent); background: var(--mj-accent-fill); } }";
         let report = measure(design(), &[("fixture.css".into(), css.into())]);
-        assert!(report
-            .pairs
-            .iter()
-            .any(|p| p.foreground == "on-accent" && p.ground == "accent-fill" && p.theme == "light"));
+        assert!(report.pairs.iter().any(|p| p.foreground == "on-accent"
+            && p.ground == "accent-fill"
+            && p.theme == "light"));
         // and only that pair: nothing else is a ground here
         assert!(report.pairs.iter().all(|p| p.ground == "accent-fill"));
         assert_eq!(report.sources[0].rules, 1);
@@ -775,7 +804,10 @@ mod tests {
         assert_eq!(border.carries, Carries::NonText);
         assert_eq!(border.required, MINIMUM_NON_TEXT);
         assert!(!border.enforced);
-        assert!(report.readable, "a border below the threshold is not a finding");
+        assert!(
+            report.readable,
+            "a border below the threshold is not a finding"
+        );
     }
 
     #[test]
@@ -796,8 +828,19 @@ mod tests {
             .iter()
             .find(|f| f.starts_with("faint ") && f.contains("light theme"))
             .expect("the failing pair is named");
-        for part in ["faint", "gray-400", "bg", "light", "2.6", "4.5", "fixture.css"] {
-            assert!(finding.contains(part), "the finding does not name {part}: {finding}");
+        for part in [
+            "faint",
+            "gray-400",
+            "bg",
+            "light",
+            "2.6",
+            "4.5",
+            "fixture.css",
+        ] {
+            assert!(
+                finding.contains(part),
+                "the finding does not name {part}: {finding}"
+            );
         }
     }
 
@@ -813,7 +856,11 @@ mod tests {
             "the declaration pairs colours that cannot be read:\n{}",
             report.findings.join("\n")
         );
-        assert!(report.measured > 40, "only {} pairs were derived", report.measured);
+        assert!(
+            report.measured > 40,
+            "only {} pairs were derived",
+            report.measured
+        );
         // both themes, and the pairs the declaration is explicit about
         let light: BTreeSet<(&str, &str)> = report
             .pairs

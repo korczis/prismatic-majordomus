@@ -142,6 +142,7 @@ same reason. If it does, the architecture has a hole; file it.
 | the stylesheet, the page and the dataset agree, at every declared width | `scripts/site-probe` (`site-probe` gate) | the site job |
 | the stylesheet, the page and the executable agree; every badge word is filed; no overflow at every declared width | `scripts/cockpit-probe` (`cockpit-probe` gate) | the cockpit job |
 | every page is keyboard-operable and passes contrast at every width | `scripts/ui audit` (`ui-audit` gate) | the site job |
+| every colour the declaration pairs with a ground can be read on it, in both themes | `crate::design::contrast` through `design.contrast`, asked by `scripts/ci/design-check` question 9; `test/cases/111_design_contrast.sh` | every plan that touches the declaration or a primitive |
 | the model, the renderer and the zero-registration property | the crate's tests; `test/cases/107_design_tokens.sh`; `test/cases/109_design_system.sh` | the rust and suite jobs |
 
 </div>
@@ -153,15 +154,25 @@ canonical property, a read of a `--mj-` token nothing emits, a copy of the brand
 differs from the canonical file or lives elsewhere, and a theme key or class named by hand.
 Each exemption in the gate is a reason, stated where the gate is written.
 
+The last question is not about where a decision was made but about whether the decision is
+readable. Which foreground is rendered on which ground is derived — the declaration files
+each status's text with its own ground, and the primitives say the rest: a rule setting a
+colour and a background states a pair, a rule setting only a colour states a foreground that
+lands on every ground a container sets — so a role added tomorrow is measured tomorrow and
+no list has to be kept. The threshold is WCAG 2.1 AA, 4.5:1 for text, the same constant
+`scripts/lib/ui-contrast.mjs` holds for the generated highlighting palettes; a border is
+measured against 3:1 and reported rather than enforced, because the primitive that draws it
+always shows the word beside it.
+
 ## Introspection
 
 <div class="overflow-x-auto" tabindex="0">
 
 | surface | how |
 |---|---|
-| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`; resource `majordomus://design` |
-| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg` |
-| OpenAPI, Swagger | the same three operations, from the registry |
+| MCP | `majordomus_design`, `majordomus_design_tokens`, `majordomus_design_explain`, `majordomus_design_contrast`; resource `majordomus://design` |
+| HTTP | `GET /api/v1/design`, `/api/v1/design/tokens?kind=role`, `/api/v1/design/explain?token=fg`, `/api/v1/design/contrast` |
+| OpenAPI, Swagger | the same four operations, from the registry |
 | Cockpit | `/cockpit/design`: every role with both themes' swatches, every status with its words as badges, the type scale at its own sizes, the projections — and the badge that says whether the stylesheet the page loaded agrees with the executable |
 | reference | `docs/generated/design.md`, and the JSON and YAML beside it |
 

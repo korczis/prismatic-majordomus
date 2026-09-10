@@ -253,7 +253,9 @@ fn explain(_: &Context, input: ExplainTokenInput) -> Result<Token, CapabilityErr
 /// reported as a source that was not found rather than as a clean measurement.
 fn consumers(root: &std::path::Path) -> Result<Vec<(String, String)>, CapabilityError> {
     let share = crate::share::Share::locate(None, root).map_err(|e| {
-        CapabilityError::Internal(format!("the distribution's share directory was not found: {e}"))
+        CapabilityError::Internal(format!(
+            "the distribution's share directory was not found: {e}"
+        ))
     })?;
     let mut out = Vec::new();
     for name in contrast::CONSUMERS {
