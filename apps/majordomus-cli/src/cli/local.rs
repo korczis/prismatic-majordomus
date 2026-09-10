@@ -321,7 +321,7 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the branches of the repository with the worktree each belongs in, derived from the same topology.",
     },
     // ---------------------------------------------------------------- the command graph
-    // Three landings — the command graph (#117), the environment and executions (#142) and
+    // Three landings — the command graph (PR 117), the environment and executions (PR 142) and
     // the release module — each added runnable commands without saying here why they were
     // not capabilities, and the parity check found all twenty-one at once the day a CI run
     // finished. Every entry below was read off the command's own dispatch; none is a guess.
