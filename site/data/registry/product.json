@@ -7936,7 +7936,10 @@
       "title": "Codex",
       "bootstraps": [],
       "client_config": ".codex/config.toml",
-      "hooks": [],
+      "hooks": [
+        "prompt-capture-codex",
+        "session-lifecycle-codex"
+      ],
       "scratch_roots": []
     },
     {
@@ -7944,7 +7947,9 @@
       "title": "Gemini CLI",
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
-      "hooks": [],
+      "hooks": [
+        "session-lifecycle-gemini"
+      ],
       "scratch_roots": []
     },
     {
@@ -8607,17 +8612,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1190,
+    "capabilities": 1191,
     "builtin": 73,
-    "declarative": 1117,
+    "declarative": 1118,
     "modules": 24,
     "mcp_tools": 71,
-    "mcp_resources": 1143,
+    "mcp_resources": 1144,
     "http_routes": 73,
     "cli_commands": 88,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1117,
+    "objects": 1118,
     "by_kind": {
       "adr": 33,
       "application": 5,
@@ -8644,7 +8649,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 136,
+      "test": 137,
       "use-case": 42,
       "workspace": 1
     },

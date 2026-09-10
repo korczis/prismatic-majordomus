@@ -22,8 +22,16 @@ expect_exit 12 "$MJ" capture session --provider claude-code
 expect_grep 'must be one of start end compact'
 expect_exit 12 "$MJ" capture session --event start
 expect_grep 'provider is required'
-expect_exit 12 "$MJ" capture session --provider codex --event start
+# A provider with no lifecycle event of its own is refused, and the refusal carries the
+# reason the declaration gives rather than a sentence this file made up about somebody
+# else's tool. `bb` is an orchestrator: the agent it runs owns the hooks and the episode.
+expect_exit 12 "$MJ" capture session --provider bb --event start
 expect_grep 'no lifecycle adapter'
+expect_grep 'the agent it runs owns the hooks'
+# ...and so is an event this tool has no kind for. An event kind a provider does have and a
+# second provider does not is case 119's, which publishes a distribution missing one.
+expect_exit 12 "$MJ" capture session --provider gemini --event nonsense
+expect_grep 'must be one of start end compact'
 
 # ---------------------------------------------------------------- install
 expect_exit 0 "$MJ" capture install

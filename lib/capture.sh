@@ -79,99 +79,134 @@ MJ_CAPTURE_OPTIONAL="finished_at duration_ms model effort tokens meta"
 MJ_CAPTURE_STARTED="started_at,ts"
 
 # ---------------------------------------------------------------- provider adapters
-# One line per provider Majordomus can capture from:
-#   1 provider  2 config file  3 event  4 id keys  5 session keys  6 text keys  7 source keys
-#   8 shim  9 the source values that mean a person typed it  10 openings that mark a message
-#   the provider injected rather than a person writing one
-# All paths are repository-relative. Fields 4 to 7 are comma-separated candidates, tried in
-# order, because a payload field is a provider's private shape: it is versioned on their
-# schedule, renaming one is not a breaking change to them, and a capture built on a single
-# assumed name loses every prompt the day it moves. When none of the candidates is present
-# the record is not written and the keys that were present are logged, so the next name is
-# a fact from a payload rather than a guess.
+# What Majordomus knows about a provider's hooks is `share/providers.yaml`, not this file.
 #
-# A provider absent from this table is unsupported: it has no documented event that hands
-# the person's prompt to a command before the model runs. Adding a line here does not make
-# capture real — doctor proves it by running it.
+# It used to be two positional tables here: one line per provider, nine or thirteen
+# whitespace-separated columns, read by a dozen awk one-liners that each had to agree about
+# which column meant what. Adding a provider meant editing shell, and the shell carried a
+# provider's own configuration file as a literal — which `project.providers-are-data`
+# forbids, for the reason ADR 0024 gives: a provider's title, the files it reads and the
+# directories it creates are the vendor's decisions, they are declared once beside the
+# templates, and every reader reads that declaration.
 #
-# Fields 9 and 10 exist because the event is not what its name suggests. Claude Code fires
-# UserPromptSubmit for messages it injects into the turn as well — a completed background
-# task, a system reminder — and those are not the person's prompts. They are filtered here
-# and not by the doctrine, because a skip is normal operation rather than a failure: it
-# writes no record and no log line. Both tests are declared as data so that a provider
-# growing another kind of injected message is one string, not a change to the writer.
+# So the declaration moved and this became its reader. What stayed here is what is not a
+# fact about any provider:
 #
-# The list is what has been observed or documented, not a closed set: the provider owns it
-# and can add to it without telling anyone. A marker that arrives and is not listed becomes
-# a record whose text opens with an angle bracket, which is visible in a directory listing;
-# that is the intended way to find the next one.
-MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_id,id session_id,sessionId prompt,prompt_text,text prompt_source,source .claude/hooks/majordomus-capture user <task-notification>,<system-reminder>,<subagent-notification>,<cross-session-message>,<hook-message>,<user-prompt-submit-hook>,<command-message>,<command-name>,<command-args>,<local-command-stdout>,<local-command-stderr>,<bash-input>,<bash-stdout>,<bash-stderr>,<ide_selection>,<ide_opened_file>,<ide_diagnostics>'
+#   * the kinds of event Majordomus recognises and the order it writes them in — `start`,
+#     `end`, `compact` are this tool's vocabulary, and a provider says only what it calls
+#     each one it has;
+#   * the names of the shims — `majordomus-capture`, `majordomus-session-<kind>` — which are
+#     this tool's own convention inside whatever directory the provider reads hooks from;
+#   * the writers, one per dialect, because rendering a hook into a configuration file is
+#     code and not data.
+#
+# The file is read once per process and flattened into shell variables, so the accessors
+# below are builtins: the ledger's write path asks for `session_env` on every append.
 
-# ---------------------------------------------------------------- lifecycle adapters
+MJ_PROVIDERS_FILE="providers.yaml"
+
+# The event kinds, in the order a configuration writes them. Membership is the provider's
+# (`hooks.session.events`), the vocabulary and the order are this tool's.
+MJ_LIFECYCLE_KINDS="start end compact"
+# The shims, inside whatever directory the provider declares. One prompt shim, one per
+# lifecycle event kind.
+MJ_PROMPT_SHIM="majordomus-capture"
+MJ_SESSION_SHIM="majordomus-session-"
+
+# The declaration, flattened once. A distribution without the file declares nothing: every
+# provider is then unsupported, which is the honest answer and not a crash in a hook.
+MJ_PROV_FLAT=""
+MJ_PROV_IDS=""
+mj_providers_load() {
+  [ -n "$MJ_PROV_FLAT" ] && return 0
+  local src="$MJ_SHARE_DIR/$MJ_PROVIDERS_FILE" flat
+  [ -f "$src" ] || return 1
+  flat="$(mktemp "${TMPDIR:-/tmp}/mj.prov.XXXXXX")" || return 1
+  if ! mj_yaml_flatten "$src" > "$flat" 2>/dev/null; then rm -f "$flat"; return 1; fi
+  MJ_PROV_FLAT="$flat"
+  mj_yload "$flat" MJPROV
+  MJ_PROV_IDS="$(awk -F. '$1 == "providers" && NF > 2 { print $2 }' "$flat" | awk '!seen[$0]++')"
+  return 0
+}
+# every declared provider, in the file's own order
+mj_provider_ids() { mj_providers_load || return 0; printf '%s\n' "$MJ_PROV_IDS"; }
+# one declared value, and the candidates of one declared list joined the way mj_capture_raw
+# wants them: comma-separated, tried in order
+mj_prov()       { mj_providers_load || return 0; mj_yv MJPROV "providers.$1.$2"; }
+mj_prov_list()  { mj_providers_load || return 0; mj_yvlist MJPROV "providers.$1.$2"; }
+mj_prov_csv()   { mj_prov_list "$1" "$2" | paste -sd, - ; }
+
+# ---------------------------------------------------------------- the hooks block
+mj_hook_config()      { mj_prov "$1" hooks.config; }
+mj_hook_dialect()     { mj_prov "$1" hooks.dialect; }
+mj_hook_project_dir() { mj_prov "$1" hooks.project_dir; }
+mj_hook_shim_dir()    { mj_prov "$1" hooks.shim_dir; }
+# A provider that declares why it has no hook at all: the reason is data, so `capture status`
+# prints the finding rather than a sentence this file made up about somebody else's tool.
+mj_hook_unsupported() { mj_prov "$1" hooks.unsupported; }
+# every provider whose hooks this tool can write: the union of the two aspects, because a
+# provider may have one and not the other
+mj_hook_providers()   { local p; for p in $(mj_provider_ids); do [ -n "$(mj_hook_config "$p")" ] && printf '%s\n' "$p"; done; return 0; }
+
+# ---------------------------------------------------------------- the prompt aspect
+# A provider absent from here has no documented event that hands the person's prompt to a
+# command before the model runs. Declaring one does not make capture real — doctor proves it
+# by running it.
+mj_capture_adapter()   { [ -n "$(mj_prov "$1" hooks.prompt.event)" ]; }
+mj_capture_providers() { local p; for p in $(mj_provider_ids); do mj_capture_adapter "$p" && printf '%s\n' "$p"; done; return 0; }
+mj_capture_event()     { mj_prov "$1" hooks.prompt.event; }
+# <provider> <id|session|text|source> -> the candidates, comma-separated
+mj_capture_keys()      { mj_prov_csv "$1" "hooks.prompt.$2_keys"; }
+mj_capture_first()     { mj_prov_list "$1" "hooks.prompt.$2_keys" | head -n 1; }
+mj_capture_shim_rel()  { local d; d="$(mj_hook_shim_dir "$1")"; [ -n "$d" ] || return 0; printf '%s/%s\n' "$d" "$MJ_PROMPT_SHIM"; }
+mj_capture_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_capture_shim_rel "$1")"; }
+
+# ---------------------------------------------------------------- the lifecycle aspect
 # The same argument, applied to the other thing a worker cannot be asked to do: mark where
 # its own episode began and ended. A model that is told to open a session opens one when it
 # remembers to, which is never the episode that mattered — the one that ended in a crash, a
 # compaction or somebody closing the window. The provider knows, it fires an event, and the
 # boundary is drawn there or it is fiction.
 #
-# One line per provider whose lifecycle Majordomus can follow:
-#   1 provider  2 config file  3 start event  4 end event  5 start shim  6 end shim
-#   7 session keys  8 start source keys  9 end reason keys  10 the end reasons that mean the
-#   episode ended deliberately rather than being cut short
-# Fields 7 to 9 are comma-separated candidates for the same reason the prompt adapter's
-# are: a payload field is the provider's private shape, and a capture built on one assumed
-# name loses everything the day it moves.
-#
-# Field 10 is what separates `closed` from `interrupted` in the record. Both are
-# self-reported and the record says so; the difference is the one thing about an ended
-# episode that changes what somebody does next, so it is read from the event rather than
-# assumed. A reason outside the list — a crash, a name this table has not seen — closes the
-# episode as interrupted, because the mistake of calling a cut-short episode complete is
-# worse than the reverse.
-#
-# The third event is the one an episode boundary alone cannot see. A compaction is not the
-# end of an episode — the worker keeps going — but it is the moment the conversation stops
-# being a place anything is kept, and it is by far the most common way state is lost while
-# work is still in progress. The provider announces it before it happens, which is the only
-# moment at which anything can be written about a context that is about to be discarded.
-#
-# Field 13 is the one column read outside a hook. An episode belongs to the provider session
-# that opened it, so a command a worker runs inside that session has to be able to say which
-# open episode is its own — and only the provider can tell it, by exporting its session
-# identity into the environment the worker's commands run in. The variable is declared here,
-# beside the payload keys, because a provider is one thing and a second table naming the
-# same providers elsewhere is how two lists come to disagree. A provider that exports
-# nothing writes `-`, and its workers resolve through the pointer as everything did before.
-MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
-
-# The events an adapter line describes: the kind this tool calls it, the column holding the
-# provider's own name for it, and the column holding the shim. Adding a fourth event is a
-# row here and two columns there, rather than another pair of positional branches in four
-# readers that can disagree about which column means what.
-MJ_LIFECYCLE_COLUMNS='start 3 5
-end 4 6
-compact 11 12'
-
-mj_lifecycle_adapter()   { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
-mj_lifecycle_field()     { mj_lifecycle_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
-mj_lifecycle_first()     { mj_lifecycle_field "$1" "$2" | cut -d, -f1; }
+# A provider declares only the kinds it has. `compact` is the one an episode boundary alone
+# cannot see: a compaction is not the end of an episode — the worker keeps going — but it is
+# the moment the conversation stops being a place anything is kept, and the provider
+# announces it before it happens. A provider with no such event declares none, and nothing
+# is wired, verified or reported for it.
+mj_lifecycle_adapter() { [ -n "$(mj_lifecycle_event "$1" start)" ]; }
+mj_lifecycle_event()   { mj_prov "$1" "hooks.session.events.$2"; }
 # every event kind, in the order a configuration writes them
-mj_lifecycle_kinds()     { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk '{ print $1 }'; }
-mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1" -v n="$2" '$1 == k { print $n }'; }
-mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
-mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
-mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2)"; }
+mj_lifecycle_kinds()   { printf '%s\n' $MJ_LIFECYCLE_KINDS; }
+# the kinds this provider actually has, in that order
+mj_lifecycle_kinds_for() {
+  local k
+  for k in $MJ_LIFECYCLE_KINDS; do [ -n "$(mj_lifecycle_event "$1" "$k")" ] && printf '%s\n' "$k"; done
+  return 0
+}
+mj_lifecycle_shim_rel() { local d; d="$(mj_hook_shim_dir "$1")"; [ -n "$d" ] || return 0; printf '%s/%s%s\n' "$d" "$MJ_SESSION_SHIM" "$2"; }
+mj_lifecycle_shim()     { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
+# <provider> <session|source|reason> -> the candidates, comma-separated
+mj_lifecycle_keys()     { mj_prov_csv "$1" "hooks.session.$2_keys"; }
+mj_lifecycle_first()    { mj_prov_list "$1" "hooks.session.$2_keys" | head -n 1; }
+# The end reasons that mean the episode ended deliberately. A reason outside the list — a
+# crash, a name the declaration has not seen — closes the episode as interrupted, because
+# the mistake of calling a cut-short episode complete is worse than the reverse.
+mj_lifecycle_closed()   { mj_prov_csv "$1" hooks.session.closed_reasons; }
+# The seconds a provider is asked to allow this event, when the declaration says. Nothing
+# infers one: a hook system's default is its own business, and a number here is a number
+# somebody measured against that provider.
+mj_lifecycle_timeout()  { mj_prov "$1" "hooks.session.timeouts.$2"; }
+# What the provider does with the start hook's standard output; `stdout` when it says nothing.
+mj_lifecycle_briefing() { local v; v="$(mj_prov "$1" hooks.session.briefing)"; printf '%s' "${v:-stdout}"; }
 # The environment variables in which some provider names the session a command is running
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
-mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
-
-mj_capture_adapter()   { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
-mj_capture_providers() { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk '{ print $1 }'; }
-mj_capture_field()     { mj_capture_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
-mj_capture_shim_rel()  { mj_capture_field "$1" 8; }
-# the first candidate of a comma-separated adapter field
-mj_capture_first()     { mj_capture_field "$1" "$2" | cut -d, -f1; }
-mj_capture_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_capture_field "$1" 8)"; }
+mj_lifecycle_session_vars() {
+  local p v
+  for p in $(mj_provider_ids); do
+    v="$(mj_prov "$p" hooks.session.session_env)"; [ -n "$v" ] && printf '%s\n' "$v"
+  done
+  return 0
+}
 
 # Where records are written. MJ_CAPTURE_DIR overrides it so that doctor can prove the shim
 # works without writing into the archive it is checking.
@@ -227,7 +262,7 @@ mj_capture_prompt() {
   done
   [ -n "$provider" ] || { mj_err "capture prompt: --provider is required"; return "$MJ_EX_MISSING"; }
   mj_capture_adapter "$provider" >/dev/null 2>&1 || {
-    mj_err "capture prompt: no adapter for provider '$provider' (have: $(mj_capture_providers | tr '\n' ' '))"
+    mj_err "capture prompt: no adapter for provider '$provider' — $(mj_hook_why "$provider" prompt) (have: $(mj_capture_providers | tr '\n' ' '))"
     return "$MJ_EX_MISSING"; }
 
   # A hook must work in a repository whose policy does not parse, so nothing here needs
@@ -255,9 +290,9 @@ mj_capture_log() { printf '%s %s\n' "$(mj_now)" "$2" >> "$1" 2>/dev/null || true
 mj_capture_write() {
   local provider="$1" scan="$2" dir="$3" file event
   local k_id k_session k_text k_source v_text v_id v_session v_source v_cwd
-  event="$(mj_capture_field "$provider" 3)"
-  k_id="$(mj_capture_field "$provider" 4)";   k_session="$(mj_capture_field "$provider" 5)"
-  k_text="$(mj_capture_field "$provider" 6)"; k_source="$(mj_capture_field "$provider" 7)"
+  event="$(mj_capture_event "$provider")"
+  k_id="$(mj_capture_keys "$provider" id)";   k_session="$(mj_capture_keys "$provider" session)"
+  k_text="$(mj_capture_keys "$provider" text)"; k_source="$(mj_capture_keys "$provider" source)"
 
   v_text="$(mj_capture_raw "$scan" "$k_text")"
   [ -n "$v_text" ] || {
@@ -658,13 +693,13 @@ mj_capture_render() {
 # calls a person, and for one whose text opens with a marker the provider injects.
 mj_capture_is_person() {
   local p="$1" src="$2" text="$3" who mark
-  who="$(mj_capture_field "$p" 9)"
+  who="$(mj_prov_csv "$p" hooks.prompt.person_sources)"
   if [ "$src" != null ] && [ -n "$who" ]; then
     src="${src#\"}"; src="${src%\"}"
     case ",$who," in *",$src,"*) ;; *) return 1 ;; esac
   fi
   text="${text#\"}"
-  for mark in $(mj_capture_field "$p" 10 | tr ',' ' '); do
+  for mark in $(mj_prov_list "$p" hooks.prompt.injected_openings); do
     case "$text" in "$mark"*) return 1 ;; esac
   done
   return 0
@@ -737,7 +772,13 @@ mj_capture_session() {
     *) mj_err "capture session: --event must be one of $(mj_lifecycle_kinds | paste -sd' ' -)"; return "$MJ_EX_MISSING" ;;
   esac
   mj_lifecycle_adapter "$provider" >/dev/null 2>&1 || {
-    mj_err "capture session: no lifecycle adapter for provider '$provider'"
+    mj_err "capture session: no lifecycle adapter for provider '$provider' — $(mj_hook_why "$provider" session)"
+    return "$MJ_EX_MISSING"; }
+  # A provider declares only the kinds it has. An event it never fires is not a boundary this
+  # can draw, and answering it as though it were would put a checkpoint or a close in the
+  # ledger that nothing happened.
+  [ -n "$(mj_lifecycle_event "$provider" "$event")" ] || {
+    mj_err "capture session: $provider fires no $event event; it has $(mj_lifecycle_kinds_for "$provider" | paste -sd' ' -)"
     return "$MJ_EX_MISSING"; }
   mj_require_repo 2>/dev/null || { mj_err "capture session: not in a repository"; return "$MJ_EX_MISSING"; }
   # sourced here rather than at the top of this file: the prompt path is the one a person
@@ -753,9 +794,9 @@ mj_capture_session() {
     payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
     cat > "$payload"
     if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
-      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
-      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
-      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" session)")")"
+      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" source)")")"
+      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" reason)")")"
     elif [ -s "$payload" ]; then
       mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
     fi
@@ -831,7 +872,33 @@ mj_capture_session_start() {
   . "$MJ_LIB_DIR/derive.sh"
   mj_load_policy || return 0
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
-  mj_derive_briefing 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  mj_capture_briefing "$provider" || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  return 0
+}
+
+# The briefing, in the envelope this provider reads it out of. The document is the same one
+# either way — one derivation, one budget, one set of references — and what differs is only
+# how the provider takes it off standard output.
+#
+#   stdout              the text is added to the context verbatim (Claude Code)
+#   additional-context  the provider parses one JSON object and reads
+#                       `hookSpecificOutput.additionalContext` out of it (Gemini CLI); text
+#                       that is not that object is not a briefing to it, and is dropped
+#                       without saying so.
+#
+# The envelope is declared beside the events rather than decided here, because it is a fact
+# about somebody else's tool; what is here is the encoder, which is code.
+mj_capture_briefing() {
+  local provider="$1" text
+  case "$(mj_lifecycle_briefing "$provider")" in
+    additional-context)
+      text="$(mj_derive_briefing 2>/dev/null)" || return 1
+      [ -n "$text" ] || return 0
+      printf '{"hookSpecificOutput":{"hookEventName":"%s","additionalContext":"%s"}}\n' \
+        "$(mj_lifecycle_event "$provider" start)" "$(mj_json_esc_text "$text")"
+      ;;
+    *) mj_derive_briefing 2>/dev/null || return 1 ;;
+  esac
   return 0
 }
 
@@ -880,7 +947,7 @@ mj_capture_session_compact() {
 # accumulation this design refuses.
 mj_capture_session_end() {
   local provider="$1" psession="$2" reason="$3" outcome=interrupted out
-  case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
+  case ",$(mj_lifecycle_closed "$provider")," in *",$reason,"*) outcome=closed ;; esac
   # shellcheck source=handover.sh
   . "$MJ_LIB_DIR/handover.sh"
   # The same reasoning as the compaction event, with one difference: an end that cannot read
@@ -931,16 +998,31 @@ mj_capture_session_end() {
 #
 # Prints: <state><tab><reason>
 # mj_capture_state <provider> [prompt|session]
+# Why a provider has no adapter for an aspect. The reason is the declaration's own when it
+# has one — that is a finding somebody established about a tool, and it belongs beside the
+# tool rather than inside a sentence this file made up — and the general one otherwise.
+# mj_hook_why <provider> <prompt|session>
+mj_hook_why() {
+  local why
+  why="$(mj_prov "$1" "hooks.$2.unsupported")"
+  [ -n "$why" ] || why="$(mj_hook_unsupported "$1")"
+  if [ -n "$why" ]; then printf '%s' "$why"; return 0; fi
+  case "$2" in
+    session) printf 'this provider has no documented event marking the start and end of a session' ;;
+    *)       printf 'no documented event delivers a prompt to a command before the model runs' ;;
+  esac
+}
+
 mj_capture_state() {
   [ "${2:-prompt}" = session ] && { mj_lifecycle_state "$1"; return 0; }
   local p="$1" cfg shim rel event
-  mj_capture_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: no documented event delivers a prompt to a command before the model runs\n'; return 0; }
-  cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"; shim="$(mj_capture_shim "$p")"
-  rel="$(mj_capture_shim_rel "$p")"; event="$(mj_capture_field "$p" 3)"
-  [ -f "$cfg" ]                || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_capture_field "$p" 2)"; return 0; }
-  grep -qF "$event" "$cfg"     || { printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_capture_field "$p" 2)" "$event"; return 0; }
-  grep -qF "$rel" "$cfg"       || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_capture_field "$p" 2)" "$event" "$rel"; return 0; }
-  [ -f "$shim" ]               || { printf 'named\t%s names %s, which does not exist\n' "$(mj_capture_field "$p" 2)" "$rel"; return 0; }
+  mj_capture_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: %s\n' "$(mj_hook_why "$p" prompt)"; return 0; }
+  cfg="$MJ_ROOT/$(mj_hook_config "$p")"; shim="$(mj_capture_shim "$p")"
+  rel="$(mj_capture_shim_rel "$p")"; event="$(mj_capture_event "$p")"
+  [ -f "$cfg" ]                || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_hook_config "$p")"; return 0; }
+  grep -qF "$event" "$cfg"     || { printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_hook_config "$p")" "$event"; return 0; }
+  grep -qF "$rel" "$cfg"       || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_hook_config "$p")" "$event" "$rel"; return 0; }
+  [ -f "$shim" ]               || { printf 'named\t%s names %s, which does not exist\n' "$(mj_hook_config "$p")" "$rel"; return 0; }
   [ -x "$shim" ]               || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
   if mj_capture_selftest "$p"; then printf 'verified\t%s is wired, and a synthetic payload through it produced one record and its rendering\n' "$rel"
   else printf 'wired\t%s is in place but a synthetic payload through it produced no record and rendering\n' "$rel"; fi
@@ -953,8 +1035,14 @@ mj_capture_state() {
 mj_capture_selftest() {
   local p="$1" tmp rc=0
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.selftest.XXXXXX")"
-  printf '{"%s":"majordomus self test","%s":"selftest-%s","%s":"user"}' \
-    "$(mj_capture_first "$p" 6)" "$(mj_capture_first "$p" 4)" "$$" "$(mj_capture_first "$p" 7)" \
+  # The payload carries only the members this provider's own event carries. A provider that
+  # names no source field gets none: a synthetic payload that invents one would prove the
+  # writer against a shape the provider never sends.
+  local src; src="$(mj_capture_first "$p" source)"
+  { printf '{"%s":"majordomus self test","%s":"selftest-%s"' \
+      "$(mj_capture_first "$p" text)" "$(mj_capture_first "$p" id)" "$$"
+    [ -n "$src" ] && printf ',"%s":"%s"' "$src" "$(mj_prov_list "$p" hooks.prompt.person_sources | head -n 1)"
+    printf '}'; } \
     | MJ_CAPTURE_DIR="$tmp" "$(mj_capture_shim "$p")" >/dev/null 2>&1 || rc=1
   # both halves, because both are what the hook is supposed to leave behind: a shim that
   # writes a record and no rendering is wired but not doing the whole of its job.
@@ -971,20 +1059,20 @@ mj_capture_selftest() {
 # every one is checked and the reason names whichever is missing.
 mj_lifecycle_state() {
   local p="$1" cfg one rel
-  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: this provider has no documented event marking the start and end of a session\n'; return 0; }
-  cfg="$MJ_ROOT/$(mj_lifecycle_field "$p" 2)"
-  [ -f "$cfg" ] || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)"; return 0; }
-  for one in $(mj_lifecycle_kinds); do
+  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: %s\n' "$(mj_hook_why "$p" session)"; return 0; }
+  cfg="$MJ_ROOT/$(mj_hook_config "$p")"
+  [ -f "$cfg" ] || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_hook_config "$p")"; return 0; }
+  for one in $(mj_lifecycle_kinds_for "$p"); do
     grep -qF "$(mj_lifecycle_event "$p" "$one")" "$cfg" || {
-      printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")"; return 0; }
+      printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_hook_config "$p")" "$(mj_lifecycle_event "$p" "$one")"; return 0; }
   done
-  for one in $(mj_lifecycle_kinds); do
+  for one in $(mj_lifecycle_kinds_for "$p"); do
     rel="$(mj_lifecycle_shim_rel "$p" "$one")"
-    grep -qF "$rel" "$cfg" || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")" "$rel"; return 0; }
-    [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_lifecycle_field "$p" 2)" "$rel"; return 0; }
+    grep -qF "$rel" "$cfg" || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_hook_config "$p")" "$(mj_lifecycle_event "$p" "$one")" "$rel"; return 0; }
+    [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_hook_config "$p")" "$rel"; return 0; }
     [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
   done
-  local shims; shims="$(for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
+  local shims; shims="$(for one in $(mj_lifecycle_kinds_for "$p"); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
   if mj_lifecycle_selftest "$p"; then printf 'verified\t%s are wired, and a synthetic payload through the end shim reached the command\n' "$shims"
   else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
 }
@@ -997,7 +1085,7 @@ mj_lifecycle_state() {
 mj_lifecycle_selftest() {
   local p="$1" out rc=0
   out="$(printf '{"%s":"selftest-%s","%s":"other"}' \
-    "$(mj_lifecycle_first "$p" 7)" "$$" "$(mj_lifecycle_first "$p" 9)" \
+    "$(mj_lifecycle_first "$p" session)" "$$" "$(mj_lifecycle_first "$p" reason)" \
     | MJ_SESSION_DRY_RUN=1 "$(mj_lifecycle_shim "$p" end)" 2>&1)" || rc=1
   [ "$rc" = 0 ] && { printf '%s' "$out" | grep -qF "selftest-$$" || rc=1; }
   return "$rc"
@@ -1022,45 +1110,52 @@ mj_capture_install() {
     esac
   done
   mj_require_installed
-  providers="$(mj_capture_providers)"
-  [ -n "$p" ] && { mj_capture_adapter "$p" >/dev/null 2>&1 || mj_die "$MJ_EX_USAGE" "capture install: no adapter for '$p' (have: $(printf '%s' "$providers" | tr '\n' ' '))"; providers="$p"; }
+  # Every provider whose hooks this tool can write, not only the ones it can capture prompts
+  # from: a provider may have an episode boundary and no honest prompt event, and installing
+  # nothing for it would leave the boundary undrawn over the other aspect's absence.
+  providers="$(mj_hook_providers)"
+  [ -n "$p" ] && { [ -n "$(mj_hook_config "$p")" ] || mj_die "$MJ_EX_USAGE" "capture install: no hook adapter for '$p' (have: $(printf '%s' "$providers" | tr '\n' ' ')); $(mj_hook_why "$p" session)"; providers="$p"; }
   for one in $providers; do mj_capture_install_one "$one" || rc=$?; done
   return "$rc"
 }
 
 mj_capture_install_one() {
   local p="$1" cfg rel event missing="" one
-  cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"
+  cfg="$MJ_ROOT/$(mj_hook_config "$p")"
   mkdir -p "$(dirname "$cfg")"
 
-  mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_field "$p" 3)" "capture prompt --provider $p"
+  if mj_capture_adapter "$p" >/dev/null 2>&1; then
+    mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_event "$p")" "capture prompt --provider $p"
+  fi
   if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
-    for one in $(mj_lifecycle_kinds); do
+    for one in $(mj_lifecycle_kinds_for "$p"); do
       mj_capture_install_shim "$p" "$(mj_lifecycle_shim_rel "$p" "$one")" "$(mj_lifecycle_event "$p" "$one")" \
         "capture session --provider $p --event $one"
     done
   fi
 
-  if [ ! -f "$cfg" ]; then
+  if [ ! -f "$cfg" ] && mj_hook_dialect_known "$p"; then
     mj_capture_config "$p" > "$cfg"
-    mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
+    mj_info capture "$(mj_hook_config "$p")" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
   fi
   # A configuration this tool did not write is not this tool's to rewrite, and one it wrote
   # before this tool knew about the lifecycle events is the same file: what is missing is
-  # named, one event at a time, rather than the whole object being replaced.
+  # named, one event at a time, rather than the whole object being replaced. A configuration
+  # in a dialect this cannot write reaches the same place from the other direction — the
+  # shims are in place, and what to point at them is printed for a person.
   for one in $(mj_capture_events "$p"); do
     event="${one%%=*}"; rel="${one#*=}"
-    grep -qF "$rel" "$cfg" || missing="$missing $event=$rel"
+    grep -qF "$rel" "$cfg" 2>/dev/null || missing="$missing $event=$rel"
   done
   if [ -z "$missing" ]; then
-    mj_info capture "$(mj_capture_field "$p" 2)" "already names the hooks; left as it is"
+    mj_info capture "$(mj_hook_config "$p")" "already names the hooks; left as it is"
     return 0
   fi
-  mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to its \"hooks\" object:"
+  mj_err "capture install: $(mj_hook_config "$p") $([ -f "$cfg" ] && printf 'exists and does not name' || printf 'is in a dialect this tool cannot write, so nothing here names') $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to it:"
   for one in $missing; do
     event="${one%%=*}"; rel="${one#*=}"
-    mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+    mj_err "  $(mj_hook_entry "$p" "$event" "$rel")"
   done
   return "$MJ_EX_REFUSED"
 }
@@ -1070,9 +1165,10 @@ mj_capture_install_one() {
 # the two cannot disagree about what "installed" means.
 mj_capture_events() {
   local p="$1" one
-  printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
+  mj_capture_adapter "$p" >/dev/null 2>&1 \
+    && printf '%s=%s\n' "$(mj_capture_event "$p")" "$(mj_capture_shim_rel "$p")"
   mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
-  for one in $(mj_lifecycle_kinds); do
+  for one in $(mj_lifecycle_kinds_for "$p"); do
     printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
   done
 }
@@ -1088,9 +1184,16 @@ mj_capture_install_shim() {
   { printf '#!/bin/sh\n'
     printf '# The %s hook: it runs where the provider fires that event, and hands the payload\n' "$event"
     printf '# to `majordomus %s`. Written by `majordomus capture install`.\n#\n' "$args"
-    printf '# The repository is derived from this file: the provider substitutes its project\n'
-    printf '# directory into the command string textually, so nothing in the environment names\n'
-    printf '# the repository here, and the working directory is not contracted.\n#\n'
+    printf '# The repository is derived from this file, and never from the environment or the\n'
+    printf '# working directory, neither of which is part of any contract this tool can rely on.\n'
+    if [ -n "$(mj_hook_project_dir "$p")" ]; then
+      printf '# The provider substitutes its project directory into the command string textually,\n'
+      printf '# so this is invoked by absolute path and inherits nothing that names the repository.\n#\n'
+    else
+      printf '# This provider substitutes nothing into a command string and runs it wherever the\n'
+      printf '# session was started, so the configuration that names this file finds the checkout\n'
+      printf '# with git before running it, and this then derives the same root from itself.\n#\n'
+    fi
     printf '# It must never reject what the person is doing, so every path out of it is exit 0\n'
     printf '# or the exit of a command that is itself contracted never to return 2.\n'
     printf 'root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0\n'
@@ -1105,20 +1208,102 @@ mj_capture_install_shim() {
   mj_info capture "$rel" "written and made executable"
 }
 
+# ---------------------------------------------------------------- the dialects
+# Rendering a hook into a provider's configuration file is the one part of an adapter that
+# is code rather than data: a file format has a syntax, and a syntax is not a field. So the
+# declaration says which dialect a provider's configuration is written in and this is where
+# each dialect is written, once, for every provider that uses it.
+#
+# `hooks-json` is the object Claude Code introduced and Gemini CLI adopted unchanged: a
+# top-level `hooks` map from the provider's own event name to a list of groups, each with a
+# matcher and the handlers inside it. Only the variable the provider substitutes its project
+# directory into differs between them, and that is declared.
+#
+# A provider whose configuration is not in a dialect this knows has its hooks reported and
+# never written: `capture install` can say what to add without being able to add it, which
+# is the same refusal an existing configuration already gets, for the same reason.
+mj_hook_dialect_known() { case "$(mj_hook_dialect "$1")" in hooks-json|hooks-toml) return 0 ;; *) return 1 ;; esac; }
+
+# The command a configuration points at, before it is escaped into whatever quotes the
+# dialect uses. A provider that substitutes its project directory into the string gets that
+# and the shim is reached by absolute path. A provider that substitutes nothing has to be
+# given a command that finds the repository itself: Codex runs the string in a shell whose
+# working directory is wherever the session was started, so a relative path there resolves
+# against a directory that `--cd`, a resume or a subdirectory all move. `git` is the one
+# thing already on that path that knows where the checkout begins, and it answers for a
+# linked worktree as readily as for the primary.
+#
+# The shim still derives the repository from its own location once it is running. This only
+# has to get the provider as far as the shim.
+mj_hook_command() {
+  local var; var="$(mj_hook_project_dir "$1")"
+  if [ -n "$var" ]; then printf '${%s}/%s' "$var" "$2"
+  else printf '%s' "sh -c 'exec \"\$(git rev-parse --show-toplevel)/$2\"'"; fi
+}
+
+# One event's entry, as a person would paste it into the file. The refusal message prints
+# this, and the writer below builds the whole configuration out of the same shape, so what
+# `capture install` asks somebody to add is exactly what it would have written itself.
+# mj_hook_entry <provider> <event> <shim path>
+mj_hook_entry() {
+  local cmd; cmd="$(mj_json_esc "$(mj_hook_command "$1" "$3")")"
+  case "$(mj_hook_dialect "$1")" in
+    hooks-json) printf '"%s": [ { "matcher": "", "hooks": [ { "type": "command", "command": "%s" } ] } ]' "$2" "$cmd" ;;
+    hooks-toml) printf '[[hooks.%s]] with [[hooks.%s.hooks]] { type = "command", command = "%s" }' "$2" "$2" "$cmd" ;;
+    *)          printf 'a %s hook running %s' "$2" "$cmd" ;;
+  esac
+}
+
 # The configuration this tool writes when there is none: every event it has a shim for, in
 # one hooks object. The event takes no matcher and fires every time, but the shape is the
 # one every event uses — a group, then the handlers inside it.
 mj_capture_config() {
-  local p="$1" one event rel first=1
+  case "$(mj_hook_dialect "$1")" in
+    hooks-toml) mj_capture_config_toml "$1" ;;
+    *)          mj_capture_config_json "$1" ;;
+  esac
+}
+
+mj_capture_config_json() {
+  local p="$1" one event rel first=1 secs
   printf '{\n  "hooks": {\n'
   for one in $(mj_capture_events "$p"); do
-    event="${one%%=*}"; rel="${one#*=}"
+    event="${one%%=*}"; rel="${one#*=}"; secs="$(mj_capture_event_timeout "$p" "$event")"
     [ "$first" = 1 ] || printf ',\n'; first=0
     printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
-    printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
+    printf '          {\n            "type": "command",\n            "command": "%s"' "$(mj_json_esc "$(mj_hook_command "$p" "$rel")")"
+    [ -n "$secs" ] && printf ',\n            "timeout": %s' "$secs"
+    printf '\n          }\n'
     printf '        ]\n      }\n    ]'
   done
   printf '\n  }\n}\n'
+}
+
+# The same events, in the array-of-tables form Codex reads. No matcher is written: an event
+# this tool wires is one it wants every time, and an absent matcher is the only form of
+# "always" the dialect documents.
+mj_capture_config_toml() {
+  local p="$1" one event rel secs
+  printf '# Written by `majordomus capture install`. Each hook hands the payload to\n'
+  printf '# `majordomus capture`, which never rejects what the person is doing.\n'
+  for one in $(mj_capture_events "$p"); do
+    event="${one%%=*}"; rel="${one#*=}"; secs="$(mj_capture_event_timeout "$p" "$event")"
+    printf '\n[[hooks.%s]]\n\n[[hooks.%s.hooks]]\ntype = "command"\ncommand = "%s"\n' \
+      "$event" "$event" "$(mj_json_esc "$(mj_hook_command "$p" "$rel")")"
+    [ -n "$secs" ] && printf 'timeout = %s\n' "$secs"
+  done
+  return 0
+}
+
+# The declared timeout of an event, found by the provider's own name for it. `capture events`
+# is a list of provider event names, and the declaration is keyed by this tool's event kinds,
+# so the two are joined here rather than in three writers.
+mj_capture_event_timeout() {
+  local p="$1" want="$2" k
+  for k in $(mj_lifecycle_kinds_for "$p"); do
+    [ "$(mj_lifecycle_event "$p" "$k")" = "$want" ] && { mj_lifecycle_timeout "$p" "$k"; return 0; }
+  done
+  return 0
 }
 
 # ---------------------------------------------------------------- capture status
@@ -1128,7 +1313,7 @@ mj_capture_status() {
   local p a line state reason first=1
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":"%s","providers":[' "$MJ_CAPTURE_SCHEMA"
-    for p in $(mj_capture_providers); do
+    for p in $(mj_provider_ids); do
       for a in prompt session; do
         line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
         [ "$first" = 1 ] || printf ','; first=0
@@ -1140,7 +1325,7 @@ mj_capture_status() {
   # The prompt aspect keeps the provider's own name in the first column and the lifecycle
   # aspect is suffixed, because they are two wirings of one provider and a reader looking
   # for "is claude-code capturing" must not have to know that there are now two answers.
-  for p in $(mj_capture_providers); do
+  for p in $(mj_provider_ids); do
     for a in prompt session; do
       line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
       printf '%-22s %-12s %s\n' "$([ "$a" = prompt ] && printf '%s' "$p" || printf '%s:session' "$p")" "$state" "$reason"

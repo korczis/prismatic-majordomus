@@ -244,6 +244,113 @@ struct ProviderEntry {
     client_config: Option<String>,
     #[serde(default)]
     scratch_roots: Vec<String>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    hooks: Option<ProviderHooks>,
+}
+
+/// What `majordomus capture` needs to know about a provider's hooks: which file it reads
+/// them from, what it calls each event, and which key of the JSON it sends carries the
+/// session, the prompt or the reason.
+///
+/// The reader is the shell tool — a hook runs in front of a person's prompt, and that path
+/// is shell — so nothing here is projected into the product table or a generated document.
+/// What declaring it here buys is that `share/providers.yaml` stays one schema rather than
+/// two: `deny_unknown_fields` still refuses a misspelt key anywhere in the file, and a
+/// malformed `hooks` block is named by the executable instead of being read as absent by an
+/// awk that cannot say why.
+#[derive(Debug, Default, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProviderHooks {
+    /// The provider has no such event at all, and why. Reported by `capture status`.
+    #[serde(default)]
+    pub unsupported: Option<String>,
+    /// The file the provider reads its hooks from, repository-relative.
+    #[serde(default)]
+    pub config: Option<String>,
+    /// How a hook is written into that file.
+    #[serde(default)]
+    pub dialect: Option<String>,
+    /// The variable the provider substitutes its project directory into.
+    #[serde(default)]
+    pub project_dir: Option<String>,
+    /// Where `capture install` writes this provider's shims.
+    #[serde(default)]
+    pub shim_dir: Option<String>,
+    /// The event that hands a command what a person typed, before the model runs.
+    #[serde(default)]
+    pub prompt: Option<PromptHook>,
+    /// The events that mark the boundaries of a sitting.
+    #[serde(default)]
+    pub session: Option<SessionHook>,
+}
+
+/// `hooks.prompt`. Every payload key is a list of candidates, tried in order: a key is the
+/// provider's private shape, and a capture built on one assumed name loses every prompt the
+/// day it moves.
+#[derive(Debug, Default, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PromptHook {
+    /// The provider has no honest prompt event, and why.
+    #[serde(default)]
+    pub unsupported: Option<String>,
+    /// The provider's own name for the event.
+    #[serde(default)]
+    pub event: Option<String>,
+    /// The keys that may carry the prompt's own identity, so a redelivered hook is
+    /// recognised as the same prompt.
+    #[serde(default)]
+    pub id_keys: Vec<String>,
+    /// The keys that may carry the provider session.
+    #[serde(default)]
+    pub session_keys: Vec<String>,
+    /// The keys that may carry the person's text. A payload carrying none of them is
+    /// logged rather than captured: the provider has renamed the field.
+    #[serde(default)]
+    pub text_keys: Vec<String>,
+    /// The keys that may say where the message came from.
+    #[serde(default)]
+    pub source_keys: Vec<String>,
+    /// The source values that mean a person typed it.
+    #[serde(default)]
+    pub person_sources: Vec<String>,
+    /// The openings of a message the provider injected into the turn itself.
+    #[serde(default)]
+    pub injected_openings: Vec<String>,
+}
+
+/// `hooks.session`: the episode boundary, as the provider draws it.
+#[derive(Debug, Default, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SessionHook {
+    /// The provider has no lifecycle event, and why.
+    #[serde(default)]
+    pub unsupported: Option<String>,
+    /// The provider's own name for each event kind it has; a kind it lacks is absent.
+    #[serde(default)]
+    pub events: std::collections::BTreeMap<String, String>,
+    /// The seconds this provider is asked to allow each event, where somebody measured one
+    /// against that provider. Nothing infers a number: a hook system's default is its own.
+    #[serde(default)]
+    pub timeouts: std::collections::BTreeMap<String, u64>,
+    /// The keys that may carry the provider session an event belongs to.
+    #[serde(default)]
+    pub session_keys: Vec<String>,
+    /// The keys that may say what started the sitting.
+    #[serde(default)]
+    pub source_keys: Vec<String>,
+    /// The keys that may say how the sitting ended.
+    #[serde(default)]
+    pub reason_keys: Vec<String>,
+    /// The end reasons that mean the episode ended deliberately rather than being cut short.
+    #[serde(default)]
+    pub closed_reasons: Vec<String>,
+    /// The variable in which the provider names the session a command is running inside.
+    #[serde(default)]
+    pub session_env: Option<String>,
+    /// What the provider does with the start hook's standard output.
+    #[serde(default)]
+    pub briefing: Option<String>,
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.

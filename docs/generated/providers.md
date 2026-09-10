@@ -10,8 +10,8 @@ Every provider the tool ships an adapter for, and what this repository does with
 | `agents` | Any tool that reads AGENTS.md | `AGENTS.md` (always loaded) | — | — | — |
 | `bb` | bb | `.bb/AGENTS.md` | — | — | `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees` |
 | `claude-code` | Claude Code | `CLAUDE.md` | `.mcp.json` | `prompt-capture`, `session-lifecycle` | `<primary>/.claude/worktrees` |
-| `codex` | Codex | — | `.codex/config.toml` | — | — |
-| `gemini` | Gemini CLI | — | `.gemini/settings.json` | — | — |
+| `codex` | Codex | — | `.codex/config.toml` | `prompt-capture-codex`, `session-lifecycle-codex` | — |
+| `gemini` | Gemini CLI | — | `.gemini/settings.json` | `session-lifecycle-gemini` | — |
 | `generic` | A worker with no convention of its own | — | — | — | — |
 
 6 provider(s).

@@ -46,13 +46,16 @@ providers:
     title: Codex
     bootstraps: []
     client_config: .codex/config.toml
-    hooks: []
+    hooks:
+      - prompt-capture-codex
+      - session-lifecycle-codex
     scratch_roots: []
   - id: gemini
     title: Gemini CLI
     bootstraps: []
     client_config: .gemini/settings.json
-    hooks: []
+    hooks:
+      - session-lifecycle-gemini
     scratch_roots: []
   - id: generic
     title: A worker with no convention of its own

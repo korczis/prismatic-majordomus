@@ -6,9 +6,12 @@
 # beside it is the bootstrap the provider reads; the repository's policy says which
 # providers it projects and where; and this file says what cannot be discovered from any
 # tree: the name a person knows the tool by, the file it reads a project-scoped MCP client
-# configuration from (decided by the vendor), and the scratch roots it creates worktrees
-# under. Before this file the first two were a table compiled into the executable and the
-# third was a list compiled into the worktree topology (ADR 0024).
+# configuration from (decided by the vendor), the scratch roots it creates worktrees under,
+# and the hooks through which it hands Majordomus a prompt and the boundaries of a sitting.
+# Before this file the first two were a table compiled into the executable, the third was a
+# list compiled into the worktree topology (ADR 0024), and the fourth was two positional
+# tables inside `lib/capture.sh` — where a provider's own configuration file appeared as a
+# shell literal, which `project.providers-are-data` forbids.
 #
 # A template with no entry here is still a provider, named by its file; `product validate`
 # reports the gap. An entry with no template is an error there, because a provider with no
@@ -24,6 +27,63 @@
 #   $NAME              an environment variable; the root is skipped when it is unset
 # Nothing else is interpreted. A root that does not exist is not an error: the question is
 # only ever asked about a path that does.
+#
+# ---------------------------------------------------------------- hooks
+#
+# `hooks` is what `majordomus capture` needs to know about a provider, and every field of it
+# is the vendor's decision rather than anything discoverable in a tree: which file the
+# provider reads its hook configuration from, what it calls each event, and which key of the
+# JSON it sends carries the session, the prompt or the reason. A payload key is a provider's
+# private shape — it is versioned on their schedule and renaming one is not a breaking change
+# to them — so every key field is a list of candidates, tried in order, and a capture built
+# on one assumed name loses everything the day it moves.
+#
+#   config        the file the provider reads its hooks from, repository-relative
+#   dialect       how a hook is written into that file. `hooks-json` is the object shape
+#                 Claude Code introduced and Gemini CLI adopted unchanged; `hooks-toml` is
+#                 Codex's array of tables. One writer each, in `lib/capture.sh`, because a
+#                 file format is a syntax and a syntax is not a field; a dialect no writer
+#                 knows has its hooks reported for a person to add and never written.
+#   project_dir   the variable the provider substitutes its project directory into, inside
+#                 a command string, before a shell sees it
+#   shim_dir      where `capture install` writes this provider's shims; the names inside it
+#                 are Majordomus's own convention and are not declared here
+#   unsupported   a provider with no such event at all, and why. It is a finding and is
+#                 reported as one: `capture status` prints this reason, and no adapter is
+#                 invented for a tool that has nowhere to run one.
+#
+# `hooks.prompt` — the event that hands a command what a person typed, before the model runs:
+#   event, id_keys, session_keys, text_keys, source_keys, and two filters. `person_sources`
+#   are the values of the source field that mean a person typed it; `injected_openings` are
+#   the openings of a message the provider injected into the turn itself. Both are declared
+#   rather than written into the filter, so a provider growing another kind of injected
+#   message is a line here. Neither list is closed: the provider owns it and can add to it
+#   without telling anyone, and a marker that arrives unlisted becomes a record whose text
+#   opens with an angle bracket — visible in a directory listing, which is how the next one
+#   is found.
+#
+# `hooks.session` — the events that mark the boundaries of a sitting:
+#   events.start / events.end / events.compact, the provider's own name for each. A provider
+#   that has two of the three declares two; the third is simply absent, and nothing is wired,
+#   verified or reported for an event that does not exist.
+#   session_keys / source_keys / reason_keys   candidates, as above
+#   closed_reasons   the end reasons that mean the episode ended deliberately rather than
+#                    being cut short. A reason outside this list closes it as `interrupted`,
+#                    because calling a cut-short episode complete is the worse mistake.
+#   session_env      the variable in which the provider names the session a command it runs
+#                    is inside. It is the only field read outside a hook: a worker's command
+#                    resolves its own open episode through it. A provider that exports
+#                    nothing omits it, and its workers resolve through the pointer.
+#   timeouts         the seconds this provider is asked to allow each event, where somebody
+#                    has measured what it will give. Nothing infers one — a hook system's
+#                    default is its own business — so a number here is a number that was
+#                    established against that provider, and an event without one is written
+#                    with no timeout at all.
+#   briefing         what the provider does with the start hook's standard output.
+#                    `stdout` — the text is added to the context verbatim (Claude Code).
+#                    `additional-context` — the provider parses one JSON object and reads
+#                    `hookSpecificOutput.additionalContext` from it (Gemini CLI). The
+#                    briefing is the same document either way; only its envelope differs.
 version: 1
 
 # The tool's own scratch roots: the operating system's temporary directory, where test
@@ -39,6 +99,8 @@ scratch_roots:
 providers:
   agents:
     title: Any tool that reads AGENTS.md
+    hooks:
+      unsupported: not a tool but a convention, so there is nothing to fire an event
   bb:
     title: bb
     # An orchestrator (getbb.app): it runs Claude Code, Codex and ACP agents as processes
@@ -47,16 +109,161 @@ providers:
     # (ADR 0024). Its managed worktrees live under its data directory, by thread id.
     scratch_roots:
       - ${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees
+    hooks:
+      unsupported: an orchestrator; the agent it runs owns the hooks, and its own episode is that agent's
   claude-code:
     title: Claude Code
     client_config: .mcp.json
     scratch_roots:
       - <primary>/.claude/worktrees
+    hooks:
+      config: .claude/settings.json
+      dialect: hooks-json
+      project_dir: CLAUDE_PROJECT_DIR
+      shim_dir: .claude/hooks
+      prompt:
+        event: UserPromptSubmit
+        id_keys: [prompt_id, id]
+        session_keys: [session_id, sessionId]
+        text_keys: [prompt, prompt_text, text]
+        source_keys: [prompt_source, source]
+        person_sources: [user]
+        # UserPromptSubmit fires for messages Claude Code injects into a turn as well as for
+        # the person's own: a completed background task, a system reminder, the stdout of a
+        # local command. Those are not prompts, and a skip is normal operation rather than a
+        # failure, so it writes no record and no log line.
+        injected_openings:
+          - <task-notification>
+          - <system-reminder>
+          - <subagent-notification>
+          - <cross-session-message>
+          - <hook-message>
+          - <user-prompt-submit-hook>
+          - <command-message>
+          - <command-name>
+          - <command-args>
+          - <local-command-stdout>
+          - <local-command-stderr>
+          - <bash-input>
+          - <bash-stdout>
+          - <bash-stderr>
+          - <ide_selection>
+          - <ide_opened_file>
+          - <ide_diagnostics>
+      session:
+        events:
+          start: SessionStart
+          end: SessionEnd
+          compact: PreCompact
+        session_keys: [session_id, sessionId]
+        source_keys: [source, session_source]
+        reason_keys: [reason, end_reason]
+        closed_reasons: [clear, logout, prompt_input_exit]
+        session_env: CLAUDE_CODE_SESSION_ID
+        briefing: stdout
   codex:
     title: Codex
     client_config: .codex/config.toml
+    hooks:
+      # The same file it reads its MCP clients from, and the only one of the three providers
+      # whose hooks are not JSON.
+      config: .codex/config.toml
+      dialect: hooks-toml
+      shim_dir: .codex/hooks
+      # No project_dir, and that is a finding rather than an omission: Codex substitutes
+      # nothing into a command string. It runs the string in a shell whose working directory
+      # is wherever the session was started — which `--cd`, `resume`, and opening a session
+      # in a subdirectory all move — so a relative command resolves against that and not
+      # against the repository. `mj_hook_command` therefore has the command find the
+      # repository at run time. Measured on codex-cli 0.153.4: `${CODEX_SESSION_ID}` in a
+      # command reached the hook as an empty argument, `$HOME` was expanded by the shell,
+      # and `CODEX_PROJECT_DIR` exists nowhere in the executable. Codex rewrites Claude
+      # Code's `$CLAUDE_PROJECT_DIR` when it imports one, because it has no equivalent.
+      prompt:
+        # A better prompt event than the one this was built on. It fires only when a prompt
+        # is submitted — a tool result or an injected reminder never reaches it, so the
+        # distinction Claude Code needs `injected_openings` for is made by the event
+        # boundary here — and `prompt` is what the person typed, byte for byte: an
+        # `@mention` unexpanded, an unknown `/token` untouched, doubled spaces kept.
+        event: UserPromptSubmit
+        # `turn_id` is per prompt and distinct from the session, so a redelivered hook is
+        # recognised as the same prompt.
+        id_keys: [turn_id]
+        session_keys: [session_id]
+        text_keys: [prompt]
+        # No key names the origin of the message; the event boundary is the filter, and
+        # inventing a source field to fill would be claiming an observation nobody made.
+      session:
+        events:
+          start: SessionStart
+          end: SessionEnd
+          compact: PreCompact
+        session_keys: [session_id]
+        source_keys: [source]
+        reason_keys: [reason]
+        # Deliberately empty, and not an oversight: the end event's `reason` is pinned to
+        # the literal `"other"` by Codex's own schema, so it says nothing about how the
+        # sitting ended. Every Codex episode therefore closes as `interrupted` — which is
+        # the direction this design already chose, because calling a cut-short episode
+        # complete is the worse of the two mistakes.
+        closed_reasons: []
+        # It exports no variable of its own into a hook's environment — zero `CODEX_*` names
+        # were present in a hook's process — so a worker's commands cannot name their own
+        # episode and resolve through the pointer, as everything did before the episode
+        # belonged to a provider session.
+        #
+        # The end event is clamped to three seconds, and to one when no timeout is declared,
+        # which is why one is. A close that writes a continuation record can exceed that and
+        # be killed; the episode then stays open and the next start event keeps it. That is
+        # the provider's limit, not this tool's, and it is written down here rather than
+        # discovered by somebody whose record went missing.
+        timeouts:
+          start: 30
+          end: 3
+          compact: 30
+        briefing: additional-context
   gemini:
     title: Gemini CLI
     client_config: .gemini/settings.json
+    hooks:
+      config: .gemini/settings.json
+      dialect: hooks-json
+      project_dir: GEMINI_PROJECT_DIR
+      shim_dir: .gemini/hooks
+      prompt:
+        # It has the event — `BeforeAgent`, which fires once per prompt — and the event does
+        # not carry a prompt. Its payload is `session_id` and one string called `prompt`,
+        # and that string is what was *sent to the model*: a slash command already expanded
+        # to its body, an `@file` already inlined, and a start hook's own output already
+        # prepended inside `<hook_context>` (observed in @google/gemini-cli 0.58.0). There is
+        # no field naming the origin of the message and no per-prompt identifier, so a hook
+        # cannot tell what a person typed from what the tool injected, and cannot recognise
+        # the same prompt delivered twice.
+        #
+        # Every one of those is a property the prompt archive is defined by. An adapter here
+        # would fill `.ai/local/prompts/` with text nobody wrote, under a claim the record's
+        # own schema makes — and a wrong adapter is worse than an honest absence, because the
+        # absence is visible in `capture status` and the wrong one is not.
+        unsupported: BeforeAgent carries the expanded text sent to the model, with no origin field and no prompt id, so nothing there is the person's prompt
+      session:
+        # Gemini CLI's own names. `PreCompress` is what it calls the moment Claude Code calls
+        # `PreCompact`; the event is the same one — the conversation is about to stop holding
+        # what it holds — so it is declared under the same kind and nothing else changes.
+        events:
+          start: SessionStart
+          end: SessionEnd
+          compact: PreCompress
+        session_keys: [session_id, sessionId]
+        source_keys: [source, session_source]
+        reason_keys: [reason, end_reason]
+        # `exit` is Gemini's ordinary end and Claude Code has no equivalent; `other` is its
+        # explicit "something else happened" and is deliberately not here.
+        closed_reasons: [exit, clear, logout, prompt_input_exit]
+        session_env: GEMINI_SESSION_ID
+        # It does not add the hook's standard output to the context verbatim: it parses one
+        # JSON object and reads `hookSpecificOutput.additionalContext` out of it.
+        briefing: additional-context
   generic:
     title: A worker with no convention of its own
+    hooks:
+      unsupported: names no tool, so there is no configuration to write a hook into

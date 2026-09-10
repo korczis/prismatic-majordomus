@@ -26,7 +26,12 @@ expect_grep 'claude-code +unconfigured'
 # A provider with no adapter is named as such, never assumed to be silent. The exit code is
 # 12 and not 2: this command runs inside a provider hook, where 2 rejects the person's own
 # prompt, so it is never the answer however wrong the invocation is.
-expect_exit 12 "$MJ" capture prompt --provider codex
+# Gemini CLI is the case that matters: it HAS a prompt event, and the event does not carry a
+# prompt. `BeforeAgent` delivers the expanded text sent to the model — a slash command
+# already replaced by its body, an `@file` already inlined — with no field naming the origin
+# and no per-prompt identity, so nothing in it is what the person wrote. An adapter there
+# would fill the archive with text nobody typed, under the claim the record's schema makes.
+expect_exit 12 "$MJ" capture prompt --provider gemini
 expect_grep 'no adapter'
 expect_grep 'claude-code'
 expect_exit 12 "$MJ" capture prompt

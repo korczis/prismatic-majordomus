@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "9ccb423ed305fd7a1e6aa99e967ae86ea9038171375de3a7d837acb29417cbad",
+    "fingerprint": "46e5aeb8b2ec44a2bd701a03f06dda0d9755ac0abae527697857514bc1e6365b",
     "summary": {
-      "total": 1190,
+      "total": 1191,
       "builtin": 73,
-      "declarative": 1117,
+      "declarative": 1118,
       "by_kind": {
         "command": 3,
         "query": 70,
-        "resource": 1117
+        "resource": 1118
       },
       "by_stability": {
         "behaviorally_verified": 68,
-        "implemented": 1122
+        "implemented": 1123
       },
       "mcp_tools": 71,
-      "mcp_resources": 1143,
+      "mcp_resources": 1144,
       "http_routes": 73,
       "cli_commands": 31,
       "modules": 52,
@@ -26613,7 +26613,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 136,
+        "capabilities": 137,
         "capability_ids": []
       },
       {
@@ -26693,7 +26693,7 @@
     ]
   },
   "index": {
-    "fingerprint": "caa39cdfb33b307597f42bd85fb894a7d498adc4b2c9b334b5b218f7bdef9934",
+    "fingerprint": "d1f3133c3560f0d6accf28ce261cdfe6d5afd50ddb9c140dc4e9b4a38480b76c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26741,7 +26741,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 136,
+      "test": 137,
       "use-case": 42,
       "workspace": 1
     },
@@ -29903,7 +29903,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 99621
+        "bytes": 99614
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -29948,7 +29948,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 20960
+        "bytes": 21695
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -30155,7 +30155,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 67221
+        "bytes": 67343
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -31325,7 +31325,7 @@
         "title": "A provider hook opens and closes the execution episode, and the context it was given at the open is frozen beside it",
         "path": "docs/claims/session-lifecycle.md",
         "source_class": "claim_page",
-        "bytes": 7541
+        "bytes": 8919
       },
       {
         "uri": "majordomus://document/docs/claims/session-records.md",
@@ -31932,7 +31932,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 73153
+        "bytes": 82100
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -31964,7 +31964,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 59112
+        "bytes": 60111
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -35314,7 +35314,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 4569
+        "bytes": 5258
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -36763,11 +36763,11 @@
         "kind": "rule",
         "identity": "project.providers-are-data@1",
         "title": "What the tool knows about a provider is declared once and projected everywhere",
-        "description": "A provider's title, the client configuration it reads and the scratch roots it creates checkouts under are declared in share/providers.yaml beside its template and nowhere else; the table a person reads is docs/generated/providers.md, generated from the same value the product, the site and the worktree topology answer from; no document enumerates providers by hand.",
+        "description": "A provider's title, the client configuration it reads, the scratch roots it creates checkouts under and the hooks through which it hands Majordomus a prompt and the boundaries of a sitting are declared in share/providers.yaml beside its template and nowhere else; the table a person reads is docs/generated/providers.md, generated from the same value the product, the site and the worktree topology answer from; no document enumerates providers by hand.",
         "path": ".ai/repo/rules/project/providers-are-data.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4709,
+        "bytes": 5709,
         "tags": [
           "documentation",
           "provider",
@@ -37560,6 +37560,14 @@
         "bytes": 9254
       },
       {
+        "uri": "majordomus://test/test/cases/119_every_provider_draws_its_boundary.sh",
+        "kind": "test",
+        "identity": "test/cases/119_every_provider_draws_its_boundary.sh",
+        "path": "test/cases/119_every_provider_draws_its_boundary.sh",
+        "source_class": "case",
+        "bytes": 16245
+      },
+      {
         "uri": "majordomus://test/test/cases/11_site_derivation.sh",
         "kind": "test",
         "identity": "test/cases/11_site_derivation.sh",
@@ -37733,7 +37741,7 @@
         "identity": "test/cases/29_prompt_capture.sh",
         "path": "test/cases/29_prompt_capture.sh",
         "source_class": "case",
-        "bytes": 25884
+        "bytes": 26344
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -37933,7 +37941,7 @@
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
         "path": "test/cases/54_session_lifecycle_hooks.sh",
         "source_class": "case",
-        "bytes": 15273
+        "bytes": 15879
       },
       {
         "uri": "majordomus://test/test/cases/55_session_context.sh",
@@ -39193,7 +39201,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 136
+      "objects": 137
     },
     {
       "name": "use-case",

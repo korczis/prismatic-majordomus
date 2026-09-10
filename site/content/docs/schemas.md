@@ -780,8 +780,9 @@ record exists to avoid.
 Which episode is a given process's is decided in `mj_session_here_file` (`lib/common.sh`):
 the provider session named on the command line, else the provider session this process is
 running inside when an episode with that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or
-the variable the lifecycle adapter in `lib/capture.sh` declares — `CLAUDE_CODE_SESSION_ID`
-for Claude Code), else the pointer.
+the variable this provider's lifecycle adapter declares in `share/providers.yaml`, as
+`hooks.session.session_env`), else the pointer. A provider that exports nothing declares
+none, and its workers resolve through the pointer as everything did before.
 
 ```yaml
 session_id: s-20260904153733-fc51

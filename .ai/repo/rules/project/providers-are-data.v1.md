@@ -3,7 +3,7 @@ id: project.providers-are-data
 version: 1
 kind: rule
 title: What the tool knows about a provider is declared once and projected everywhere
-description: A provider's title, the client configuration it reads and the scratch roots it creates checkouts under are declared in share/providers.yaml beside its template and nowhere else; the table a person reads is docs/generated/providers.md, generated from the same value the product, the site and the worktree topology answer from; no document enumerates providers by hand.
+description: A provider's title, the client configuration it reads, the scratch roots it creates checkouts under and the hooks through which it hands Majordomus a prompt and the boundaries of a sitting are declared in share/providers.yaml beside its template and nowhere else; the table a person reads is docs/generated/providers.md, generated from the same value the product, the site and the worktree topology answer from; no document enumerates providers by hand.
 statement: Declare a provider in share/providers.yaml and a template beside it; let `majordomus generate` write docs/generated/providers.md and every other projection; when a document has to name the providers, point at the generated table rather than listing them, and let scripts/ci/providers-check refuse a list written by hand.
 status: active
 class: blocking
@@ -32,15 +32,22 @@ declaration of the same fact, and a second declaration is a design defect
 # Required behaviour
 
 1. **One declaration.** `share/providers.yaml` declares, per provider, the title a person
-   knows it by, the file it reads a project-scoped MCP client configuration from, and the
-   scratch roots it creates checkouts under. The set of providers is the templates under
+   knows it by, the file it reads a project-scoped MCP client configuration from, the
+   scratch roots it creates checkouts under, and its `hooks`: the file it reads hooks from,
+   the dialect that file is written in, each event's own name, the payload keys the event
+   carries, and what it does with a start hook's standard output. A provider with no such
+   event declares `unsupported` and the reason — a finding, reported as one, never an
+   adapter invented to fill a gap. The set of providers is the templates under
    `share/providers/`; a declaration without a template is an error and a template without
    a declaration a warning, both reported by `majordomus product validate`.
 2. **Every projection reads the declaration.** `majordomus product providers`, the MCP tool
    `majordomus_providers`, `GET /api/v1/product/providers`, the site's provider cards, the
    worktree topology's scratch roots and `docs/generated/providers.{md,json,yaml}` are
-   derived from it. No source file carries a provider's title, configuration file or scratch
-   root as a literal.
+   derived from it, and so are the capture adapters `lib/capture.sh` reads. No source file
+   carries a provider's title, configuration file, scratch root, event name or payload key
+   as a literal; what the shell keeps is the event kinds this tool recognises, the names of
+   the shims it writes, and one writer per configuration dialect — a file format is a syntax
+   and a syntax is not a field.
 3. **Documents point, they do not list.** A document that has to say which providers exist
    names `docs/generated/providers.md`. A line that names three or more declared providers
    is a list, and the file that carries it must point at the generated table; records of a
@@ -66,4 +73,7 @@ at hand it also fails when `docs/generated/providers.*` are stale, and without i
 `scripts/ci/providers-check` on this tree, and `majordomus generate --check providers`.
 `apps/majordomus-cli/tests/product.rs` proves the provider table is the templates the
 distribution ships decorated by the policy; the worktree service's tests prove the scratch
-roots are the declarations expanded.
+roots are the declarations expanded; `test/cases/119_every_provider_draws_its_boundary.sh`
+proves the capture adapters are the declaration — no provider's configuration file, event
+name or payload key appears in `lib/capture.sh`, and an event removed from a probe
+distribution stops existing for that provider alone.
