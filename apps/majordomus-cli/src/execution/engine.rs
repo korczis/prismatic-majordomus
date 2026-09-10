@@ -177,6 +177,16 @@ impl ExecutionEngine {
     ///
     /// Fast on purpose: the input is checked, the record is created, the work is queued and
     /// this returns. Nothing waits for the handler.
+    ///
+    /// The answer is the execution *as accepted* — `queued`, sequence 2, the `execution.queued`
+    /// event already published — and never whatever a worker has since made of it. That is
+    /// what `docs/EXECUTIONS.md` promises a client of `executions.start`, and it is not a
+    /// courtesy: reading the record again after the work became dispatchable would answer
+    /// `queued`, `running` or even `succeeded` depending on how the machine was loaded that
+    /// millisecond, and the same window would let a worker publish `execution.started` before
+    /// `execution.queued`, whereupon the state machine refuses the queued event and the
+    /// stream loses it. Acceptance is therefore recorded and read while the queue lock is
+    /// held, before [`Self::dispatch`] can hand the pending to anybody.
     pub fn submit(
         &self,
         ctx: &Context,
@@ -229,15 +239,21 @@ impl ExecutionEngine {
             input,
             ctx: ctx.clone(),
         };
-        {
+        // The queue lock is held across the queued event and the snapshot: a worker
+        // finishing another execution calls `dispatch` too, and it needs this lock to take
+        // the pending, so nothing can start what has not yet been announced as accepted.
+        // The nesting is one way — this is the only place that takes the store's lock while
+        // holding the engine's, the store knows nothing of the engine, and the store's
+        // fan-out never blocks — so it cannot deadlock.
+        let accepted = {
             let mut inner = self.lock();
             inner.queue.push_back(pending);
             let ahead = inner.queue.len() - 1;
-            drop(inner);
             self.store.publish(&id, EventPayload::Queued { ahead });
-        }
+            self.store.get(&id)
+        };
         self.dispatch();
-        self.store.get(&id).ok_or_else(|| {
+        accepted.ok_or_else(|| {
             SubmitError::Unavailable("the execution was forgotten as it was created".into())
         })
     }
