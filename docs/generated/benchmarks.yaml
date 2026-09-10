@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.2.0
 coverage:
   - scope: direct
-    required: 32
-    covered: 32
+    required: 35
+    covered: 35
     missing: 0
     waived: 0
   - scope: http
-    required: 32
-    covered: 32
+    required: 35
+    covered: 35
     missing: 0
     waived: 0
   - scope: mcp
-    required: 30
-    covered: 30
+    required: 33
+    covered: 33
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 106
-    covered: 106
+    required: 115
+    covered: 115
     missing: 0
     waived: 0
 capabilities:
@@ -334,6 +334,34 @@ capabilities:
     module: why
     kind: query
     cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: worktree.list
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - topology-only
+      - with-status
+  - id: worktree.root
+    module: worktree
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: worktree.status
+    module: worktree
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered

@@ -146,9 +146,15 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
     )
 }
 
-/// Fill a template: `{{DEFAULT_PROFILE}}`, `{{CHECKPOINT_DEFAULT}}` and `{{POLICY_SHA}}`
-/// come from the policy; any other `{{TOKEN}}` is an error, because a template that asks
-/// for something the policy does not carry cannot be rendered deterministically.
+/// Fill a template: `{{DEFAULT_PROFILE}}`, `{{CHECKPOINT_DEFAULT}}`, `{{POLICY_SHA}}` and
+/// `{{WORKTREE_SUFFIX}}` come from the policy; any other `{{TOKEN}}` is an error, because a
+/// template that asks for something the policy does not carry cannot be rendered
+/// deterministically.
+///
+/// `{{WORKTREE_SUFFIX}}` is what makes the worktree doctrine a projection rather than a
+/// sentence four provider files repeat: the rule an agent reads names the container the
+/// policy derives, so changing `worktree.root.suffix` changes every provider file, and
+/// `majordomus generate --check` fails until they are regenerated.
 ///
 /// ```
 /// use majordomus_cli::providers::render;
@@ -165,6 +171,7 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
 ///     render("profile {{DEFAULT_PROFILE}}, every {{CHECKPOINT_DEFAULT}}, policy {{POLICY_SHA}}\n", &policy).unwrap(),
 ///     "profile implementation, every 15m, policy 0123456789ab\n"
 /// );
+/// assert_eq!(render("<repo>{{WORKTREE_SUFFIX}}/\n", &policy).unwrap(), "<repo>-wt/\n");
 /// assert!(render("{{PROFILE_TABLE}}\n", &policy).unwrap_err().contains("PROFILE_TABLE"));
 /// ```
 pub fn render(template: &str, policy: &LoadedPolicy) -> std::result::Result<String, String> {
@@ -181,9 +188,10 @@ pub fn render(template: &str, policy: &LoadedPolicy) -> std::result::Result<Stri
             "DEFAULT_PROFILE" => policy.policy.profiles.default.clone(),
             "CHECKPOINT_DEFAULT" => policy.policy.profiles.checkpoint_interval_default.clone(),
             "POLICY_SHA" => Some(policy.sha256[..12.min(policy.sha256.len())].to_string()),
+            "WORKTREE_SUFFIX" => Some(policy.policy.worktree.root.suffix.clone()),
             _ => {
                 return Err(format!(
-                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, POLICY_SHA)"
+                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, POLICY_SHA, WORKTREE_SUFFIX)"
                 ))
             }
         };

@@ -47,6 +47,8 @@ tags:
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
   - name: why
     description: "The operational failure modes this tool is a response to: the moments a reader recognises, the audiences that recognise them, the areas they fall under, and what a reader's own symptoms imply. Every entry is a file under the layer's why section; nothing here holds a list, and a moment added there is answered by all of these without a registration anywhere."
+  - name: worktree
+    description: "Where this repository's linked git worktrees belong, which ones exist, and whether each is where the canonical policy says it should be. The container is derived from the repository's identity and the policy's suffix, so the answer is the same from the primary checkout and from inside any linked worktree."
 paths:
   "/api/v1/artifacts":
     get:
@@ -2041,6 +2043,174 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_why_validate
       x-majordomus-cli: why validate
+  "/api/v1/worktree/root":
+    get:
+      operationId: worktree.root
+      summary: The canonical worktree container
+      description: "The directory every linked worktree of this repository belongs under, derived from the primary checkout's name and the policy's suffix — never from the current directory. Also names the primary checkout, the work tree the call came from, and the common git directory that identifies the repository."
+      tags:
+        - worktree
+      parameters: []
+      responses:
+        "200":
+          description: "The canonical worktree container: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RootReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.root
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_worktree_root
+      x-majordomus-cli: worktree root
+  "/api/v1/worktree/status":
+    get:
+      operationId: worktree.status
+      summary: "Where this call is, and whether that is where it belongs"
+      description: "The current work tree in one answer: the repository it belongs to, whether it is the primary checkout or a linked worktree, its branch and HEAD, the canonical container, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place."
+      tags:
+        - worktree
+      parameters: []
+      responses:
+        "200":
+          description: "Where this call is, and whether that is where it belongs: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/StatusReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.status
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_worktree_status
+      x-majordomus-cli: worktree status
+  "/api/v1/worktrees":
+    get:
+      operationId: worktree.list
+      summary: "Every registered worktree, judged against the policy"
+      description: "Every work tree git has registered for this repository, primary first: its path, branch, HEAD, whether it is locked, prunable or the one this call came from, and whether the layout rule holds for it. The primary checkout is exempt by definition. Violations are listed separately with the destination each one would move to."
+      tags:
+        - worktree
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: "Also report whether each work tree has uncommitted or untracked content. It costs one\n`git status` per existing work tree, and the layout rule never needs it, so it is off\nunless asked for."
+          examples:
+            with-status:
+              value: true
+      responses:
+        "200":
+          description: "Every registered worktree, judged against the policy: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/WorktreeReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.list
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_worktrees
+        resource:
+          uri: majordomus://worktrees
+          name: worktrees
+      x-majordomus-cli: worktree list
 components:
   schemas:
     ActiveTask:
@@ -4296,6 +4466,18 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    Level:
+      oneOf:
+        - type: string
+          const: error
+          description: "A finding that fails the check and the command's exit code."
+        - type: string
+          const: warn
+          description: A finding that is reported and does not decide the exit code.
+        - type: string
+          const: "off"
+          description: Not evaluated.
+      description: What a violation of the layout means to a command that checks it.
     Libc:
       oneOf:
         - type: string
@@ -5021,6 +5203,18 @@ components:
         - count
         - total_nanos
       description: "A phase's totals."
+    PolicyStatus:
+      oneOf:
+        - type: string
+          const: pass
+          description: Where it belongs.
+        - type: string
+          const: fail
+          description: Not where it belongs.
+        - type: string
+          const: exempt
+          description: "The rule does not apply: the primary checkout."
+      description: What the layout rule says about one work tree.
     Port:
       type: integer
       format: uint16
@@ -5426,6 +5620,43 @@ components:
         - cpus
         - memory_mb
       description: What one machine is granted.
+    RootReport:
+      type: object
+      properties:
+        repository_root:
+          type: string
+          description: "The primary checkout: what the container is named after."
+        worktree_root:
+          type: string
+          description: The canonical container every linked worktree belongs under.
+        suffix:
+          type: string
+          description: "The policy's suffix."
+        strategy:
+          type: string
+          description: "The policy's placement strategy."
+        exists:
+          type: boolean
+          description: The container exists on disk. It is created when the first worktree is created.
+        current_worktree:
+          type: string
+          description: The work tree the command ran in.
+        current_kind:
+          "$ref": "#/components/schemas/WorktreeKind"
+          description: Whether that was the primary checkout or a linked one.
+        git_common_dir:
+          type: string
+          description: "The common git directory: this repository's identity."
+      required:
+        - repository_root
+        - worktree_root
+        - suffix
+        - strategy
+        - exists
+        - current_worktree
+        - current_kind
+        - git_common_dir
+      description: "Where the container is, and how that was decided."
     Route:
       type: string
       description: "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
@@ -5569,6 +5800,62 @@ components:
           const: degraded
           description: At least one file could not be read; the diagnostics say which.
       description: Whether every discovered file became an object.
+    StatusReport:
+      type: object
+      properties:
+        repository:
+          type: string
+          description: The primary checkout.
+        current:
+          type: string
+          description: The work tree the command ran in.
+        kind:
+          "$ref": "#/components/schemas/WorktreeKind"
+          description: Primary or linked.
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch checked out here.
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit checked out here.
+        canonical_root:
+          type: string
+          description: The canonical container.
+        policy:
+          "$ref": "#/components/schemas/PolicyStatus"
+          description: Whether this work tree is where it belongs.
+        policy_reason:
+          type:
+            - string
+            - "null"
+          description: "Why not, when it is not."
+        dirty:
+          type: boolean
+          description: Uncommitted or untracked content here.
+        changes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many entries `git status --porcelain` printed."
+        repository_violations:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many linked work trees of this repository are outside the container.
+      required:
+        - repository
+        - current
+        - kind
+        - canonical_root
+        - policy
+        - dirty
+        - changes
+        - repository_violations
+      description: "The answer to \"where am I and is that all right\"."
     Summary:
       type: object
       properties:
@@ -5809,6 +6096,204 @@ components:
           const: external_dependency
           description: The capability talks to something the benchmark host cannot provide.
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
+    WorktreeKind:
+      oneOf:
+        - type: string
+          const: primary
+          description: "The main work tree. Never moved, never removed, exempt from the layout rule."
+        - type: string
+          const: linked
+          description: A linked work tree. Belongs under the canonical root.
+      description: "Whether a work tree is the repository's own checkout or one linked to it."
+    WorktreeReport:
+      type: object
+      properties:
+        root:
+          "$ref": "#/components/schemas/RootReport"
+          description: Where the container is and how that was decided.
+        tallies:
+          "$ref": "#/components/schemas/WorktreeTallies"
+          description: The state of each state.
+        worktrees:
+          type: array
+          items:
+            "$ref": "#/components/schemas/WorktreeView"
+          description: "Every registered work tree, primary first."
+        violations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/WorktreeViolation"
+          description: "What is wrong with the topology, in the order the work trees are listed. Empty is the\nhealthy answer."
+        enforcement:
+          "$ref": "#/components/schemas/Level"
+          description: "Whether a violation fails a check, only warns, or is not evaluated."
+      required:
+        - root
+        - tallies
+        - worktrees
+        - violations
+        - enforcement
+      description: "The whole topology with the policy applied: what `list`, `doctor` and the MCP resource\nall read."
+    WorktreeTallies:
+      type: object
+      properties:
+        worktrees:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Every registered work tree, primary included."
+        linked:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Linked work trees.
+        compliant:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Linked work trees where the layout rule holds.
+        violations:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Linked work trees outside the canonical root.
+        prunable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Work trees git reports as prunable.
+        locked:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Work trees git reports as locked.
+      required:
+        - worktrees
+        - linked
+        - compliant
+        - violations
+        - prunable
+        - locked
+      description: How many work trees are in each state.
+    WorktreeView:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Absolute, as git holds it."
+        name:
+          type: string
+          description: "The directory name, which is also this worktree's short selector."
+        kind:
+          "$ref": "#/components/schemas/WorktreeKind"
+          description: Primary or linked.
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch checked out here, short. Absent when detached."
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit checked out here.
+        detached:
+          type: boolean
+          description: HEAD is detached here.
+        current:
+          type: boolean
+          description: The command was run inside this work tree.
+        exists:
+          type: boolean
+          description: The directory git registered still exists on disk.
+        locked:
+          type:
+            - string
+            - "null"
+          description: "Locked, with git's reason; an empty string when it recorded none."
+        prunable:
+          type:
+            - string
+            - "null"
+          description: "Prunable, with git's reason."
+        dirty:
+          type:
+            - boolean
+            - "null"
+          description: "Uncommitted or untracked content. Absent when the status was not asked for — it\ncosts one subprocess per work tree, and the layout rule does not need it."
+        changes:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: "How many entries `git status --porcelain` printed, when it was asked."
+        policy:
+          "$ref": "#/components/schemas/PolicyStatus"
+          description: Whether the layout rule holds here.
+        policy_reason:
+          type:
+            - string
+            - "null"
+          description: "Why the layout rule does not hold, in one line."
+        proposed_path:
+          type:
+            - string
+            - "null"
+          description: "Where it would go, when it is in the wrong place and a safe destination exists."
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue this worktree's name refers to, when the name carries one."
+      required:
+        - path
+        - name
+        - kind
+        - detached
+        - current
+        - exists
+        - policy
+      description: "One work tree, as the topology and the policy see it together."
+    WorktreeViolation:
+      type: object
+      properties:
+        code:
+          type: string
+          description: "The stable machine name, which is the error variant's name."
+        path:
+          type: string
+          description: The work tree involved.
+        name:
+          type: string
+          description: Its directory name.
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch it holds.
+        expected_root:
+          type: string
+          description: Where linked work trees belong.
+        proposed_path:
+          type:
+            - string
+            - "null"
+          description: "Where it would go, when a safe destination exists."
+        reason:
+          type: string
+          description: "What is wrong, in one line."
+        remedy:
+          type: string
+          description: The command that repairs it.
+      required:
+        - code
+        - path
+        - name
+        - expected_root
+        - reason
+        - remedy
+      description: One thing wrong with the topology.
 x-majordomus:
   generator: majordomus-cli 0.2.0
   infrastructure:

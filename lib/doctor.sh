@@ -45,6 +45,10 @@
 # the deployment contract: the section's own closure, read without a Rust toolchain
 # shellcheck source=deployment.sh
 . "$MJ_LIB_DIR/deployment.sh"
+# the worktree layout doctrine: the topology is read from the executable's own service, so
+# this file carries no second derivation of the container and no second reading of git
+# shellcheck source=worktree.sh
+. "$MJ_LIB_DIR/worktree.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {

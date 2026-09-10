@@ -83,6 +83,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 6
+  - id: worktree
+    title: Worktree topology
+    description: "Where this repository's linked git worktrees belong, which ones exist, and whether each is where the canonical policy says it should be. The container is derived from the repository's identity and the policy's suffix, so the answer is the same from the primary checkout and from inside any linked worktree."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -6395,6 +6401,515 @@ capabilities:
       policy: process
       max_entries: 2
     source_path: apps/majordomus-cli/src/capability/builtin/why.rs
+  - id: worktree.list
+    module: worktree
+    kind: query
+    title: "Every registered worktree, judged against the policy"
+    description: "Every work tree git has registered for this repository, primary first: its path, branch, HEAD, whether it is locked, prunable or the one this call came from, and whether the layout rule holds for it. The primary checkout is exempt by definition. Violations are listed separately with the destination each one would move to."
+    input:
+      name: ListInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          status:
+            type:
+              - boolean
+              - "null"
+            description: "Also report whether each work tree has uncommitted or untracked content. It costs one\n`git status` per existing work tree, and the layout rule never needs it, so it is off\nunless asked for."
+        description: "How much of each work tree's state to read."
+        title: ListInput
+    output:
+      name: WorktreeReport
+      schema:
+        type: object
+        properties:
+          root:
+            "$ref": "#/$defs/RootReport"
+            description: Where the container is and how that was decided.
+          tallies:
+            "$ref": "#/$defs/WorktreeTallies"
+            description: The state of each state.
+          worktrees:
+            type: array
+            items:
+              "$ref": "#/$defs/WorktreeView"
+            description: "Every registered work tree, primary first."
+          violations:
+            type: array
+            items:
+              "$ref": "#/$defs/WorktreeViolation"
+            description: "What is wrong with the topology, in the order the work trees are listed. Empty is the\nhealthy answer."
+          enforcement:
+            "$ref": "#/$defs/Level"
+            description: "Whether a violation fails a check, only warns, or is not evaluated."
+        required:
+          - root
+          - tallies
+          - worktrees
+          - violations
+          - enforcement
+        description: "The whole topology with the policy applied: what `list`, `doctor` and the MCP resource\nall read."
+        title: WorktreeReport
+        "$defs":
+          RootReport:
+            type: object
+            properties:
+              repository_root:
+                type: string
+                description: "The primary checkout: what the container is named after."
+              worktree_root:
+                type: string
+                description: The canonical container every linked worktree belongs under.
+              suffix:
+                type: string
+                description: "The policy's suffix."
+              strategy:
+                type: string
+                description: "The policy's placement strategy."
+              exists:
+                type: boolean
+                description: The container exists on disk. It is created when the first worktree is created.
+              current_worktree:
+                type: string
+                description: The work tree the command ran in.
+              current_kind:
+                "$ref": "#/$defs/WorktreeKind"
+                description: Whether that was the primary checkout or a linked one.
+              git_common_dir:
+                type: string
+                description: "The common git directory: this repository's identity."
+            required:
+              - repository_root
+              - worktree_root
+              - suffix
+              - strategy
+              - exists
+              - current_worktree
+              - current_kind
+              - git_common_dir
+            description: "Where the container is, and how that was decided."
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. Never moved, never removed, exempt from the layout rule."
+              - type: string
+                const: linked
+                description: A linked work tree. Belongs under the canonical root.
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+          WorktreeTallies:
+            type: object
+            properties:
+              worktrees:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Every registered work tree, primary included."
+              linked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees.
+              compliant:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees where the layout rule holds.
+              violations:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Linked work trees outside the canonical root.
+              prunable:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Work trees git reports as prunable.
+              locked:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Work trees git reports as locked.
+            required:
+              - worktrees
+              - linked
+              - compliant
+              - violations
+              - prunable
+              - locked
+            description: How many work trees are in each state.
+          WorktreeView:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Absolute, as git holds it."
+              name:
+                type: string
+                description: "The directory name, which is also this worktree's short selector."
+              kind:
+                "$ref": "#/$defs/WorktreeKind"
+                description: Primary or linked.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out here, short. Absent when detached."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The commit checked out here.
+              detached:
+                type: boolean
+                description: HEAD is detached here.
+              current:
+                type: boolean
+                description: The command was run inside this work tree.
+              exists:
+                type: boolean
+                description: The directory git registered still exists on disk.
+              locked:
+                type:
+                  - string
+                  - "null"
+                description: "Locked, with git's reason; an empty string when it recorded none."
+              prunable:
+                type:
+                  - string
+                  - "null"
+                description: "Prunable, with git's reason."
+              dirty:
+                type:
+                  - boolean
+                  - "null"
+                description: "Uncommitted or untracked content. Absent when the status was not asked for — it\ncosts one subprocess per work tree, and the layout rule does not need it."
+              changes:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "How many entries `git status --porcelain` printed, when it was asked."
+              policy:
+                "$ref": "#/$defs/PolicyStatus"
+                description: Whether the layout rule holds here.
+              policy_reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why the layout rule does not hold, in one line."
+              proposed_path:
+                type:
+                  - string
+                  - "null"
+                description: "Where it would go, when it is in the wrong place and a safe destination exists."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue this worktree's name refers to, when the name carries one."
+            required:
+              - path
+              - name
+              - kind
+              - detached
+              - current
+              - exists
+              - policy
+            description: "One work tree, as the topology and the policy see it together."
+          PolicyStatus:
+            oneOf:
+              - type: string
+                const: pass
+                description: Where it belongs.
+              - type: string
+                const: fail
+                description: Not where it belongs.
+              - type: string
+                const: exempt
+                description: "The rule does not apply: the primary checkout."
+            description: What the layout rule says about one work tree.
+          WorktreeViolation:
+            type: object
+            properties:
+              code:
+                type: string
+                description: "The stable machine name, which is the error variant's name."
+              path:
+                type: string
+                description: The work tree involved.
+              name:
+                type: string
+                description: Its directory name.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it holds.
+              expected_root:
+                type: string
+                description: Where linked work trees belong.
+              proposed_path:
+                type:
+                  - string
+                  - "null"
+                description: "Where it would go, when a safe destination exists."
+              reason:
+                type: string
+                description: "What is wrong, in one line."
+              remedy:
+                type: string
+                description: The command that repairs it.
+            required:
+              - code
+              - path
+              - name
+              - expected_root
+              - reason
+              - remedy
+            description: One thing wrong with the topology.
+          Level:
+            oneOf:
+              - type: string
+                const: error
+                description: "A finding that fails the check and the command's exit code."
+              - type: string
+                const: warn
+                description: A finding that is reported and does not decide the exit code.
+              - type: string
+                const: "off"
+                description: Not evaluated.
+            description: What a violation of the layout means to a command that checks it.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktrees
+        resource:
+          uri: majordomus://worktrees
+          name: worktrees
+      http:
+        method: GET
+        path: /api/v1/worktrees
+      cli:
+        path:
+          - worktree
+          - list
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - policy
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.root
+    module: worktree
+    kind: query
+    title: The canonical worktree container
+    description: "The directory every linked worktree of this repository belongs under, derived from the primary checkout's name and the policy's suffix — never from the current directory. Also names the primary checkout, the work tree the call came from, and the common git directory that identifies the repository."
+    input:
+      name: WorktreeInput
+      schema:
+        type: object
+        additionalProperties: false
+        description: "Nothing to ask: the repository decides the answer, not the caller."
+        title: WorktreeInput
+    output:
+      name: RootReport
+      schema:
+        type: object
+        properties:
+          repository_root:
+            type: string
+            description: "The primary checkout: what the container is named after."
+          worktree_root:
+            type: string
+            description: The canonical container every linked worktree belongs under.
+          suffix:
+            type: string
+            description: "The policy's suffix."
+          strategy:
+            type: string
+            description: "The policy's placement strategy."
+          exists:
+            type: boolean
+            description: The container exists on disk. It is created when the first worktree is created.
+          current_worktree:
+            type: string
+            description: The work tree the command ran in.
+          current_kind:
+            "$ref": "#/$defs/WorktreeKind"
+            description: Whether that was the primary checkout or a linked one.
+          git_common_dir:
+            type: string
+            description: "The common git directory: this repository's identity."
+        required:
+          - repository_root
+          - worktree_root
+          - suffix
+          - strategy
+          - exists
+          - current_worktree
+          - current_kind
+          - git_common_dir
+        description: "Where the container is, and how that was decided."
+        title: RootReport
+        "$defs":
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. Never moved, never removed, exempt from the layout rule."
+              - type: string
+                const: linked
+                description: A linked work tree. Belongs under the canonical root.
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_root
+      http:
+        method: GET
+        path: /api/v1/worktree/root
+      cli:
+        path:
+          - worktree
+          - root
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - policy
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
+  - id: worktree.status
+    module: worktree
+    kind: query
+    title: "Where this call is, and whether that is where it belongs"
+    description: "The current work tree in one answer: the repository it belongs to, whether it is the primary checkout or a linked worktree, its branch and HEAD, the canonical container, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place."
+    input:
+      name: WorktreeInput
+      schema:
+        type: object
+        additionalProperties: false
+        description: "Nothing to ask: the repository decides the answer, not the caller."
+        title: WorktreeInput
+    output:
+      name: StatusReport
+      schema:
+        type: object
+        properties:
+          repository:
+            type: string
+            description: The primary checkout.
+          current:
+            type: string
+            description: The work tree the command ran in.
+          kind:
+            "$ref": "#/$defs/WorktreeKind"
+            description: Primary or linked.
+          branch:
+            type:
+              - string
+              - "null"
+            description: The branch checked out here.
+          head:
+            type:
+              - string
+              - "null"
+            description: The commit checked out here.
+          canonical_root:
+            type: string
+            description: The canonical container.
+          policy:
+            "$ref": "#/$defs/PolicyStatus"
+            description: Whether this work tree is where it belongs.
+          policy_reason:
+            type:
+              - string
+              - "null"
+            description: "Why not, when it is not."
+          dirty:
+            type: boolean
+            description: Uncommitted or untracked content here.
+          changes:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many entries `git status --porcelain` printed."
+          repository_violations:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many linked work trees of this repository are outside the container.
+        required:
+          - repository
+          - current
+          - kind
+          - canonical_root
+          - policy
+          - dirty
+          - changes
+          - repository_violations
+        description: "The answer to \"where am I and is that all right\"."
+        title: StatusReport
+        "$defs":
+          WorktreeKind:
+            oneOf:
+              - type: string
+                const: primary
+                description: "The main work tree. Never moved, never removed, exempt from the layout rule."
+              - type: string
+                const: linked
+                description: A linked work tree. Belongs under the canonical root.
+            description: "Whether a work tree is the repository's own checkout or one linked to it."
+          PolicyStatus:
+            oneOf:
+              - type: string
+                const: pass
+                description: Where it belongs.
+              - type: string
+                const: fail
+                description: Not where it belongs.
+              - type: string
+                const: exempt
+                description: "The rule does not apply: the primary checkout."
+            description: What the layout rule says about one work tree.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::worktree
+    exposure:
+      mcp:
+        tool: majordomus_worktree_status
+      http:
+        method: GET
+        path: /api/v1/worktree/status
+      cli:
+        path:
+          - worktree
+          - status
+    stability: behaviorally_verified
+    tags:
+      - worktree
+      - git
+      - policy
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/worktree.rs
 declarative_kinds:
   - application
   - area

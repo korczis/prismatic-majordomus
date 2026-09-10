@@ -21,6 +21,17 @@ Before working under a path, run `majordomus context resolve <path>` (or read th
 ancestors and the nearest one does not replace them. A provider's own nested-file
 loading is an optimisation; the Majordomus resolution is what applies.
 
+Linked git worktrees of this repository belong in the sibling container
+`<repository>{{WORKTREE_SUFFIX}}/`, never at a path you choose and never inside the
+repository. Create one with `majordomus worktree create <name>` — it derives the
+destination, so you choose what to work on and not where it goes — and find your way with
+`majordomus worktree root`, `list`, `status` and `path`. The rule holds from anywhere: run
+from inside a linked worktree, these commands still answer the repository's one container,
+not a container inside that worktree. `majordomus doctor` reports every worktree that is
+somewhere else and moves nothing; `majordomus worktree migrate --plan` shows the moves and
+`--apply` makes the safe ones. A dirty or locked worktree is never moved or removed without
+`--force`, and removing a worktree never deletes its branch.
+
 A `.majordomus/` directory, if one exists, is an optional installation of the tool and not
 repository context. Do not duplicate shared rules into this file: it is generated, and a
 rule that exists here and nowhere else is a bug.

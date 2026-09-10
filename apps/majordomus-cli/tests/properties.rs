@@ -631,3 +631,97 @@ fn the_registry_graph_holds_every_builtin_capability_and_its_projections() {
         );
     }
 }
+
+// ---------------------------------------------------------------- worktree naming
+//
+// The derivation from a label to a directory name is the one place a bad input could turn
+// into a bad *path*, and a bad path is what destructive commands operate on. The invariants
+// below are the ones the container's safety rests on, and they hold for every label — not
+// only for the ones anybody thought to write a case for.
+
+proptest! {
+    #![proptest_config(ProptestConfig { cases: 512, ..ProptestConfig::default() })]
+
+    /// Whatever the label, the result is one filesystem component that cannot leave the
+    /// container: never empty, never a separator, never a relative path, never hidden.
+    #[test]
+    fn a_derived_worktree_name_is_always_one_safe_component(label in ".{0,120}") {
+        use majordomus_cli::worktree::WorktreeName;
+        let Ok(name) = WorktreeName::derive(&label) else { return Ok(()) };
+        let s = name.as_str();
+        prop_assert!(!s.is_empty(), "empty name from {label:?}");
+        prop_assert!(!s.contains('/') && !s.contains('\\'), "separator in {s:?} from {label:?}");
+        prop_assert!(!s.contains('\0'), "NUL in {s:?}");
+        prop_assert!(s != "." && s != "..", "relative path from {label:?}");
+        prop_assert!(!s.starts_with('.'), "hidden directory from {label:?}");
+        prop_assert!(s.len() <= 255, "overlong name from {label:?}");
+        // exactly one component, as the filesystem counts them
+        let path = std::path::Path::new(s);
+        prop_assert_eq!(path.components().count(), 1, "not one component: {:?}", s);
+    }
+
+    /// Joining a derived name under the container stays under the container. This is the
+    /// property that makes "derive, then join" safe without a second containment check at
+    /// every call site.
+    #[test]
+    fn joining_a_derived_name_never_escapes_the_container(label in ".{0,120}") {
+        use majordomus_cli::worktree::WorktreeName;
+        let Ok(name) = WorktreeName::derive(&label) else { return Ok(()) };
+        let root = std::path::Path::new("/a/foo-wt");
+        let joined = root.join(name.as_str());
+        prop_assert!(joined.starts_with(root), "{} escaped {}", joined.display(), root.display());
+        prop_assert_eq!(joined.parent(), Some(root));
+        prop_assert!(
+            !joined.components().any(|c| matches!(c, std::path::Component::ParentDir)),
+            "a traversal survived: {}", joined.display()
+        );
+    }
+
+    /// The same label always derives the same name. A worktree whose location depended on
+    /// when you asked would not be findable.
+    #[test]
+    fn deriving_a_worktree_name_is_deterministic(label in ".{0,120}") {
+        use majordomus_cli::worktree::WorktreeName;
+        let a = WorktreeName::derive(&label).map(|n| n.as_str().to_string());
+        let b = WorktreeName::derive(&label).map(|n| n.as_str().to_string());
+        prop_assert_eq!(a.is_ok(), b.is_ok());
+        if let (Ok(a), Ok(b)) = (a, b) {
+            prop_assert_eq!(a, b);
+        }
+    }
+
+    /// Deriving an already-derived name changes nothing. Without this, a name would drift
+    /// every time it passed through the function — on a migration plan, say, whose
+    /// destination is derived from a directory name that was itself derived.
+    #[test]
+    fn deriving_is_idempotent(label in ".{0,120}") {
+        use majordomus_cli::worktree::WorktreeName;
+        let Ok(once) = WorktreeName::derive(&label) else { return Ok(()) };
+        let twice = WorktreeName::derive(once.as_str()).expect("a derived name derives to itself");
+        prop_assert_eq!(once.as_str(), twice.as_str());
+    }
+
+    /// The canonical container is always a sibling of the checkout, named after it, whatever
+    /// the checkout is called. The suffix comes from the policy and from nowhere else.
+    #[test]
+    fn the_container_is_always_the_checkouts_sibling(
+        name in "[A-Za-z0-9._-]{1,40}",
+        suffix in "[A-Za-z0-9._-]{1,12}",
+    ) {
+        use majordomus_cli::worktree::{RootPolicy, WorktreePolicy};
+        let policy = WorktreePolicy {
+            root: RootPolicy { suffix: suffix.clone(), ..RootPolicy::default() },
+            ..WorktreePolicy::default()
+        };
+        let parent = std::path::Path::new("/a/b");
+        let root = policy.canonical_root_of(parent, &name).expect("a usable suffix");
+        prop_assert_eq!(root.parent(), Some(parent), "the container is not beside the checkout");
+        prop_assert_eq!(
+            root.file_name().unwrap().to_string_lossy(),
+            format!("{name}{suffix}")
+        );
+        // and it is never the checkout itself, nor inside it
+        prop_assert_ne!(root.clone(), parent.join(&name));
+        prop_assert!(!root.starts_with(parent.join(&name)));
+    }
+}

@@ -6,26 +6,26 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "1a7d4c00fa78e157fb8b530d3184a7ced4db28d8051655605bcc3e509bba3f62",
+    "fingerprint": "b6f7e441b713196b54a7e662170ffe31c254a4a080767dc5ba0b64b73ff70794",
     "summary": {
-      "total": 932,
-      "builtin": 32,
-      "declarative": 900,
+      "total": 937,
+      "builtin": 35,
+      "declarative": 902,
       "by_kind": {
         "command": 1,
-        "query": 31,
-        "resource": 900
+        "query": 34,
+        "resource": 902
       },
       "by_stability": {
-        "behaviorally_verified": 32,
-        "implemented": 900
+        "behaviorally_verified": 35,
+        "implemented": 902
       },
-      "mcp_tools": 30,
-      "mcp_resources": 911,
-      "http_routes": 32,
-      "cli_commands": 14,
-      "modules": 37,
-      "benchmark_required": 32,
+      "mcp_tools": 33,
+      "mcp_resources": 914,
+      "http_routes": 35,
+      "cli_commands": 17,
+      "modules": 38,
+      "benchmark_required": 35,
       "benchmark_waived": 0,
       "cached": 14
     },
@@ -8872,6 +8872,705 @@
           "max_entries": 2
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "worktree.list",
+        "module": "worktree",
+        "kind": "query",
+        "title": "Every registered worktree, judged against the policy",
+        "description": "Every work tree git has registered for this repository, primary first: its path, branch, HEAD, whether it is locked, prunable or the one this call came from, and whether the layout rule holds for it. The primary checkout is exempt by definition. Violations are listed separately with the destination each one would move to.",
+        "input": {
+          "name": "ListInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "status": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Also report whether each work tree has uncommitted or untracked content. It costs one\n`git status` per existing work tree, and the layout rule never needs it, so it is off\nunless asked for."
+              }
+            },
+            "description": "How much of each work tree's state to read.",
+            "title": "ListInput"
+          }
+        },
+        "output": {
+          "name": "WorktreeReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "root": {
+                "$ref": "#/$defs/RootReport",
+                "description": "Where the container is and how that was decided."
+              },
+              "tallies": {
+                "$ref": "#/$defs/WorktreeTallies",
+                "description": "The state of each state."
+              },
+              "worktrees": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WorktreeView"
+                },
+                "description": "Every registered work tree, primary first."
+              },
+              "violations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WorktreeViolation"
+                },
+                "description": "What is wrong with the topology, in the order the work trees are listed. Empty is the\nhealthy answer."
+              },
+              "enforcement": {
+                "$ref": "#/$defs/Level",
+                "description": "Whether a violation fails a check, only warns, or is not evaluated."
+              }
+            },
+            "required": [
+              "root",
+              "tallies",
+              "worktrees",
+              "violations",
+              "enforcement"
+            ],
+            "description": "The whole topology with the policy applied: what `list`, `doctor` and the MCP resource\nall read.",
+            "title": "WorktreeReport",
+            "$defs": {
+              "RootReport": {
+                "type": "object",
+                "properties": {
+                  "repository_root": {
+                    "type": "string",
+                    "description": "The primary checkout: what the container is named after."
+                  },
+                  "worktree_root": {
+                    "type": "string",
+                    "description": "The canonical container every linked worktree belongs under."
+                  },
+                  "suffix": {
+                    "type": "string",
+                    "description": "The policy's suffix."
+                  },
+                  "strategy": {
+                    "type": "string",
+                    "description": "The policy's placement strategy."
+                  },
+                  "exists": {
+                    "type": "boolean",
+                    "description": "The container exists on disk. It is created when the first worktree is created."
+                  },
+                  "current_worktree": {
+                    "type": "string",
+                    "description": "The work tree the command ran in."
+                  },
+                  "current_kind": {
+                    "$ref": "#/$defs/WorktreeKind",
+                    "description": "Whether that was the primary checkout or a linked one."
+                  },
+                  "git_common_dir": {
+                    "type": "string",
+                    "description": "The common git directory: this repository's identity."
+                  }
+                },
+                "required": [
+                  "repository_root",
+                  "worktree_root",
+                  "suffix",
+                  "strategy",
+                  "exists",
+                  "current_worktree",
+                  "current_kind",
+                  "git_common_dir"
+                ],
+                "description": "Where the container is, and how that was decided."
+              },
+              "WorktreeKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "primary",
+                    "description": "The main work tree. Never moved, never removed, exempt from the layout rule."
+                  },
+                  {
+                    "type": "string",
+                    "const": "linked",
+                    "description": "A linked work tree. Belongs under the canonical root."
+                  }
+                ],
+                "description": "Whether a work tree is the repository's own checkout or one linked to it."
+              },
+              "WorktreeTallies": {
+                "type": "object",
+                "properties": {
+                  "worktrees": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Every registered work tree, primary included."
+                  },
+                  "linked": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Linked work trees."
+                  },
+                  "compliant": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Linked work trees where the layout rule holds."
+                  },
+                  "violations": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Linked work trees outside the canonical root."
+                  },
+                  "prunable": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Work trees git reports as prunable."
+                  },
+                  "locked": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Work trees git reports as locked."
+                  }
+                },
+                "required": [
+                  "worktrees",
+                  "linked",
+                  "compliant",
+                  "violations",
+                  "prunable",
+                  "locked"
+                ],
+                "description": "How many work trees are in each state."
+              },
+              "WorktreeView": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Absolute, as git holds it."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The directory name, which is also this worktree's short selector."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/WorktreeKind",
+                    "description": "Primary or linked."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out here, short. Absent when detached."
+                  },
+                  "head": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit checked out here."
+                  },
+                  "detached": {
+                    "type": "boolean",
+                    "description": "HEAD is detached here."
+                  },
+                  "current": {
+                    "type": "boolean",
+                    "description": "The command was run inside this work tree."
+                  },
+                  "exists": {
+                    "type": "boolean",
+                    "description": "The directory git registered still exists on disk."
+                  },
+                  "locked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Locked, with git's reason; an empty string when it recorded none."
+                  },
+                  "prunable": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Prunable, with git's reason."
+                  },
+                  "dirty": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Uncommitted or untracked content. Absent when the status was not asked for — it\ncosts one subprocess per work tree, and the layout rule does not need it."
+                  },
+                  "changes": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many entries `git status --porcelain` printed, when it was asked."
+                  },
+                  "policy": {
+                    "$ref": "#/$defs/PolicyStatus",
+                    "description": "Whether the layout rule holds here."
+                  },
+                  "policy_reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the layout rule does not hold, in one line."
+                  },
+                  "proposed_path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it would go, when it is in the wrong place and a safe destination exists."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue this worktree's name refers to, when the name carries one."
+                  }
+                },
+                "required": [
+                  "path",
+                  "name",
+                  "kind",
+                  "detached",
+                  "current",
+                  "exists",
+                  "policy"
+                ],
+                "description": "One work tree, as the topology and the policy see it together."
+              },
+              "PolicyStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pass",
+                    "description": "Where it belongs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "Not where it belongs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exempt",
+                    "description": "The rule does not apply: the primary checkout."
+                  }
+                ],
+                "description": "What the layout rule says about one work tree."
+              },
+              "WorktreeViolation": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The stable machine name, which is the error variant's name."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The work tree involved."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Its directory name."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch it holds."
+                  },
+                  "expected_root": {
+                    "type": "string",
+                    "description": "Where linked work trees belong."
+                  },
+                  "proposed_path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it would go, when a safe destination exists."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that repairs it."
+                  }
+                },
+                "required": [
+                  "code",
+                  "path",
+                  "name",
+                  "expected_root",
+                  "reason",
+                  "remedy"
+                ],
+                "description": "One thing wrong with the topology."
+              },
+              "Level": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "A finding that fails the check and the command's exit code."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warn",
+                    "description": "A finding that is reported and does not decide the exit code."
+                  },
+                  {
+                    "type": "string",
+                    "const": "off",
+                    "description": "Not evaluated."
+                  }
+                ],
+                "description": "What a violation of the layout means to a command that checks it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktrees",
+            "resource": {
+              "uri": "majordomus://worktrees",
+              "name": "worktrees"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktrees"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "list"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "policy",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
+        "id": "worktree.root",
+        "module": "worktree",
+        "kind": "query",
+        "title": "The canonical worktree container",
+        "description": "The directory every linked worktree of this repository belongs under, derived from the primary checkout's name and the policy's suffix — never from the current directory. Also names the primary checkout, the work tree the call came from, and the common git directory that identifies the repository.",
+        "input": {
+          "name": "WorktreeInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Nothing to ask: the repository decides the answer, not the caller.",
+            "title": "WorktreeInput"
+          }
+        },
+        "output": {
+          "name": "RootReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repository_root": {
+                "type": "string",
+                "description": "The primary checkout: what the container is named after."
+              },
+              "worktree_root": {
+                "type": "string",
+                "description": "The canonical container every linked worktree belongs under."
+              },
+              "suffix": {
+                "type": "string",
+                "description": "The policy's suffix."
+              },
+              "strategy": {
+                "type": "string",
+                "description": "The policy's placement strategy."
+              },
+              "exists": {
+                "type": "boolean",
+                "description": "The container exists on disk. It is created when the first worktree is created."
+              },
+              "current_worktree": {
+                "type": "string",
+                "description": "The work tree the command ran in."
+              },
+              "current_kind": {
+                "$ref": "#/$defs/WorktreeKind",
+                "description": "Whether that was the primary checkout or a linked one."
+              },
+              "git_common_dir": {
+                "type": "string",
+                "description": "The common git directory: this repository's identity."
+              }
+            },
+            "required": [
+              "repository_root",
+              "worktree_root",
+              "suffix",
+              "strategy",
+              "exists",
+              "current_worktree",
+              "current_kind",
+              "git_common_dir"
+            ],
+            "description": "Where the container is, and how that was decided.",
+            "title": "RootReport",
+            "$defs": {
+              "WorktreeKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "primary",
+                    "description": "The main work tree. Never moved, never removed, exempt from the layout rule."
+                  },
+                  {
+                    "type": "string",
+                    "const": "linked",
+                    "description": "A linked work tree. Belongs under the canonical root."
+                  }
+                ],
+                "description": "Whether a work tree is the repository's own checkout or one linked to it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_root"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktree/root"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "root"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "policy"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
+      },
+      {
+        "id": "worktree.status",
+        "module": "worktree",
+        "kind": "query",
+        "title": "Where this call is, and whether that is where it belongs",
+        "description": "The current work tree in one answer: the repository it belongs to, whether it is the primary checkout or a linked worktree, its branch and HEAD, the canonical container, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place.",
+        "input": {
+          "name": "WorktreeInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Nothing to ask: the repository decides the answer, not the caller.",
+            "title": "WorktreeInput"
+          }
+        },
+        "output": {
+          "name": "StatusReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repository": {
+                "type": "string",
+                "description": "The primary checkout."
+              },
+              "current": {
+                "type": "string",
+                "description": "The work tree the command ran in."
+              },
+              "kind": {
+                "$ref": "#/$defs/WorktreeKind",
+                "description": "Primary or linked."
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The branch checked out here."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit checked out here."
+              },
+              "canonical_root": {
+                "type": "string",
+                "description": "The canonical container."
+              },
+              "policy": {
+                "$ref": "#/$defs/PolicyStatus",
+                "description": "Whether this work tree is where it belongs."
+              },
+              "policy_reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, when it is not."
+              },
+              "dirty": {
+                "type": "boolean",
+                "description": "Uncommitted or untracked content here."
+              },
+              "changes": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many entries `git status --porcelain` printed."
+              },
+              "repository_violations": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many linked work trees of this repository are outside the container."
+              }
+            },
+            "required": [
+              "repository",
+              "current",
+              "kind",
+              "canonical_root",
+              "policy",
+              "dirty",
+              "changes",
+              "repository_violations"
+            ],
+            "description": "The answer to \"where am I and is that all right\".",
+            "title": "StatusReport",
+            "$defs": {
+              "WorktreeKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "primary",
+                    "description": "The main work tree. Never moved, never removed, exempt from the layout rule."
+                  },
+                  {
+                    "type": "string",
+                    "const": "linked",
+                    "description": "A linked work tree. Belongs under the canonical root."
+                  }
+                ],
+                "description": "Whether a work tree is the repository's own checkout or one linked to it."
+              },
+              "PolicyStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pass",
+                    "description": "Where it belongs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "Not where it belongs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exempt",
+                    "description": "The rule does not apply: the primary checkout."
+                  }
+                ],
+                "description": "What the layout rule says about one work tree."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::worktree"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_worktree_status"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/worktree/status"
+          },
+          "cli": {
+            "path": [
+              "worktree",
+              "status"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "worktree",
+          "git",
+          "policy"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ],
     "modules": [
@@ -9190,7 +9889,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 6,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -9241,11 +9940,25 @@
           "why.validate"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "worktree",
+        "title": "Worktree topology",
+        "description": "Where this repository's linked git worktrees belong, which ones exist, and whether each is where the canonical policy says it should be. The container is derived from the repository's identity and the policy's suffix, so the answer is the same from the primary checkout and from inside any linked worktree.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "worktree.list",
+          "worktree.root",
+          "worktree.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
       }
     ]
   },
   "index": {
-    "fingerprint": "d05b2225369f990e7b5a7c4a163bdd45c6a5b478bf9c9224b600337aad58367e",
+    "fingerprint": "34575962c81cfb00c915080d91dbac8a1b4c1c312c534448184d4b246cfc45d8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -9286,7 +9999,7 @@
       "prompt": 4,
       "rule": 87,
       "scope": 1,
-      "session": 6,
+      "session": 8,
       "skill": 3,
       "taxonomy": 10,
       "test": 104,
@@ -13307,7 +14020,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 51890
+        "bytes": 52128
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -15999,7 +16712,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 3534
+        "bytes": 4926
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -17461,6 +18174,28 @@
         "section": "sessions",
         "source_class": "session",
         "bytes": 838
+      },
+      {
+        "uri": "majordomus://session/s-20260906100402-1b4e",
+        "kind": "session",
+        "identity": "s-20260906100402-1b4e",
+        "title": "Session s-20260906100402-1b4e on feature/ai-artifacts",
+        "description": "Session s-20260906100402-1b4e on feature/ai-artifacts",
+        "path": ".ai/repo/sessions/20260906T104136Z--s-20260906100402-1b4e--feature-ai-artifacts--2b42014--217c31a51008928f.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 776
+      },
+      {
+        "uri": "majordomus://session/s-20260906104842-c7cf",
+        "kind": "session",
+        "identity": "s-20260906104842-c7cf",
+        "title": "Session s-20260906104842-c7cf on feature/ai-artifacts",
+        "description": "Session s-20260906104842-c7cf on feature/ai-artifacts",
+        "path": ".ai/repo/sessions/20260906T110558Z--s-20260906104842-c7cf--feature-ai-artifacts--2b42014--159467df2ddcde14.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 11487
       },
       {
         "uri": "majordomus://skill/deploy-site",
@@ -19102,7 +19837,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 6
+      "objects": 8
     },
     {
       "name": "session-context",
@@ -25160,6 +25895,1219 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "worktree"
+        ],
+        "route": "/docs/cli/worktree/",
+        "executable": true,
+        "usage": "majordomus worktree [OPTIONS] [COMMAND]",
+        "about": "Where this repository's linked git worktrees belong, which ones exist, and their whole lifecycle: create, move, remove, prune",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "worktree-default-status",
+            "title": "Where am I, and is that where I belong?",
+            "description": "`worktree` with nothing after it answers the question an agent has to ask before it starts: which repository this is, whether this directory is the primary checkout or a linked worktree, the canonical container, and whether the layout rule holds here. It is the same answer from the primary checkout and from four directories deep inside a linked worktree.",
+            "argv": [
+              "worktree"
+            ],
+            "command": "majordomus worktree",
+            "setup": [],
+            "expectation": "exits 0; prints Repository, Canonical root, Policy"
+          }
+        ],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "root"
+            ],
+            "route": "/docs/cli/worktree/root/",
+            "executable": true,
+            "usage": "majordomus worktree root [OPTIONS]",
+            "about": "Print the canonical container every linked worktree belongs under: `cd \"$(majordomus worktree root)\"`",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-root-path",
+                "title": "The one path every linked worktree goes under",
+                "description": "Prints the canonical container and nothing else, so a shell can use it: `cd \"$(majordomus worktree root)\"`. It is derived from the primary checkout's name and the policy's suffix, never from the current directory — which is why running this inside a linked worktree does not answer a container inside that worktree.",
+                "argv": [
+                  "worktree",
+                  "root"
+                ],
+                "command": "majordomus worktree root",
+                "setup": [],
+                "expectation": "exits 0; prints -wt"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "list"
+            ],
+            "route": "/docs/cli/worktree/list/",
+            "executable": true,
+            "usage": "majordomus worktree list [OPTIONS]",
+            "about": "Every registered worktree, with the branch it holds and whether it is where the policy says it belongs",
+            "args": [
+              {
+                "name": "status",
+                "long": "status",
+                "positional": false,
+                "help": "Also report uncommitted and untracked content (one `git status` per worktree)",
+                "value_name": "STATUS",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "tsv",
+                "long": "tsv",
+                "positional": false,
+                "help": "One worktree per line, tab separated: kind, policy, path, name, branch, head, proposed path, reason; an absent field is `-`. The form `majordomus doctor` reads, so that its check has no JSON parser of its own and no second derivation of any of these fields",
+                "value_name": "TSV",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-list-text",
+                "title": "Every worktree, with the ones in the wrong place obvious",
+                "description": "The primary checkout first, then every linked worktree with its branch and its policy verdict. The primary checkout is exempt by definition: it is the thing the container is named after, so counting it as a violation would be a bug that fires in every repository.",
+                "argv": [
+                  "worktree",
+                  "list"
+                ],
+                "command": "majordomus worktree list",
+                "setup": [],
+                "expectation": "exits 0; prints PRIMARY, branch"
+              },
+              {
+                "id": "worktree-list-json",
+                "title": "The topology as one document a script can read",
+                "description": "The same answer as JSON: the derived container, the tallies, every worktree with its path, branch, HEAD, lock and prune state, and the violations listed separately with the destination each one would move to. This is what the MCP tool `majordomus_worktrees`, the HTTP route `/api/v1/worktrees` and the cockpit all render.",
+                "argv": [
+                  "worktree",
+                  "list",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus worktree list --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /root/worktree_root, /tallies/linked, /worktrees/0/kind"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "status"
+            ],
+            "route": "/docs/cli/worktree/status/",
+            "executable": true,
+            "usage": "majordomus worktree status [OPTIONS]",
+            "about": "Where this command is running, and whether that is where it belongs",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-status-json",
+                "title": "The current context in one document",
+                "description": "The repository, this work tree, its kind and branch, the canonical root, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place. An agent reads this before it decides where to put anything.",
+                "argv": [
+                  "worktree",
+                  "status",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus worktree status --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /repository, /canonical_root, /kind, /policy"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "path"
+            ],
+            "route": "/docs/cli/worktree/path/",
+            "executable": true,
+            "usage": "majordomus worktree path [OPTIONS] <SELECTOR>",
+            "about": "Print one worktree's path, for `cd \"$(majordomus worktree path <name>)\"`",
+            "args": [
+              {
+                "name": "selector",
+                "positional": true,
+                "help": "An exact path, an exact directory name, or an exact branch name",
+                "value_name": "SELECTOR",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-path-selector",
+                "title": "The path of one worktree, for the shell to cd into",
+                "description": "A child process cannot change its parent shell's directory, so nothing here pretends to: this prints one path and the shell does the rest — `cd \"$(majordomus worktree path feature-x)\"`. The selector is an exact path, an exact directory name or an exact branch name; nothing is matched by prefix or similarity.",
+                "argv": [
+                  "worktree",
+                  "path",
+                  "feature-x"
+                ],
+                "command": "majordomus worktree path feature-x",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature-x"
+                    ],
+                    "command": "majordomus worktree create feature-x"
+                  }
+                ],
+                "expectation": "exits 0; prints -wt/feature-x"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "create"
+            ],
+            "route": "/docs/cli/worktree/create/",
+            "executable": true,
+            "usage": "majordomus worktree create [OPTIONS] [NAME]",
+            "about": "Create a worktree under the canonical root. The destination is derived; you never give a path",
+            "args": [
+              {
+                "name": "name",
+                "positional": true,
+                "help": "What to work on: the directory name is derived from it, and so is the branch unless --branch says otherwise",
+                "value_name": "NAME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "branch",
+                "long": "branch",
+                "positional": false,
+                "help": "Check out this branch, creating it from --base when it does not exist",
+                "value_name": "BRANCH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "base",
+                "long": "base",
+                "positional": false,
+                "help": "Start a new branch from this ref (default: HEAD). Never fetched: it must resolve locally",
+                "value_name": "REF",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "issue",
+                "long": "issue",
+                "positional": false,
+                "help": "Name the worktree after this issue of .ai/repo/project/issues (its id and slug); no number is invented and nothing is fetched",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "detach",
+                "long": "detach",
+                "positional": false,
+                "help": "Check out a commit with no branch",
+                "value_name": "DETACH",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-create-named",
+                "title": "Create a worktree without deciding where it goes",
+                "description": "Creates the branch `feature-x` and checks it out in a new worktree at `<repository>-wt/feature-x`. No path is given and none may be: the destination is derived from the repository's identity and the policy, so the same command in the same repository always produces the same path — from the primary checkout, and from inside another worktree.",
+                "argv": [
+                  "worktree",
+                  "create",
+                  "feature-x"
+                ],
+                "command": "majordomus worktree create feature-x",
+                "setup": [],
+                "expectation": "exits 0; prints -wt/feature-x, feature-x"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "remove"
+            ],
+            "route": "/docs/cli/worktree/remove/",
+            "executable": true,
+            "usage": "majordomus worktree remove [OPTIONS] <SELECTOR>",
+            "about": "Remove one linked worktree. Never the primary checkout, never a branch, never a dirty tree without --force",
+            "args": [
+              {
+                "name": "selector",
+                "positional": true,
+                "help": "An exact path, an exact directory name, or an exact branch name",
+                "value_name": "SELECTOR",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "force",
+                "long": "force",
+                "positional": false,
+                "help": "Remove it even though it holds uncommitted or untracked work, or is locked. The identity checks still apply",
+                "value_name": "FORCE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-remove-clean",
+                "title": "Remove a worktree, and keep its branch",
+                "description": "Removes the worktree and nothing else. The branch it held still exists: worktree lifecycle and branch lifecycle are separate, and deleting a branch is a git command a person types deliberately. A worktree with uncommitted or untracked work is refused rather than removed.",
+                "argv": [
+                  "worktree",
+                  "remove",
+                  "feature-x"
+                ],
+                "command": "majordomus worktree remove feature-x",
+                "setup": [
+                  {
+                    "argv": [
+                      "worktree",
+                      "create",
+                      "feature-x"
+                    ],
+                    "command": "majordomus worktree create feature-x"
+                  }
+                ],
+                "expectation": "exits 0; prints removed, feature-x"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "migrate"
+            ],
+            "route": "/docs/cli/worktree/migrate/",
+            "executable": true,
+            "usage": "majordomus worktree migrate [OPTIONS]",
+            "about": "Bring worktrees outside the canonical root back under it. Planning is the default and changes nothing",
+            "args": [
+              {
+                "name": "plan",
+                "long": "plan",
+                "positional": false,
+                "help": "Show what would move and change nothing (the default)",
+                "value_name": "PLAN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Carry out the safe moves",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-migrate-plan",
+                "title": "What it would take to bring every worktree home",
+                "description": "Planning is the default and changes nothing — `doctor` diagnoses, `migrate --apply` repairs, and neither `init`, `update` nor `doctor` ever moves a worktree. Each step says where a worktree would go, or why it cannot move: it is dirty, it is locked, its directory is gone, or the name it would take is already used inside the container.",
+                "argv": [
+                  "worktree",
+                  "migrate",
+                  "--plan"
+                ],
+                "command": "majordomus worktree migrate --plan",
+                "setup": [],
+                "expectation": "exits 0; prints migrate"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "worktree",
+              "prune"
+            ],
+            "route": "/docs/cli/worktree/prune/",
+            "executable": true,
+            "usage": "majordomus worktree prune [OPTIONS]",
+            "about": "Drop git's metadata for worktrees whose directories are gone. Deletes no directory",
+            "args": [
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Report what would be dropped and change nothing",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "worktree-prune-dry-run",
+                "title": "What git would forget",
+                "description": "`prune` drops git's administrative records for worktrees whose directories no longer exist. It deletes no directory and touches no branch; `--dry-run` reports what it would drop and changes nothing.",
+                "argv": [
+                  "worktree",
+                  "prune",
+                  "--dry-run"
+                ],
+                "command": "majordomus worktree prune --dry-run",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -25470,6 +27418,36 @@
         "read_only": true,
         "input": "Empty",
         "output": "ValidationReport"
+      },
+      {
+        "name": "majordomus_worktrees",
+        "id": "worktree.list",
+        "title": "Every registered worktree, judged against the policy",
+        "description": "Every work tree git has registered for this repository, primary first: its path, branch, HEAD, whether it is locked, prunable or the one this call came from, and whether the layout rule holds for it. The primary checkout is exempt by definition. Violations are listed separately with the destination each one would move to.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ListInput",
+        "output": "WorktreeReport"
+      },
+      {
+        "name": "majordomus_worktree_root",
+        "id": "worktree.root",
+        "title": "The canonical worktree container",
+        "description": "The directory every linked worktree of this repository belongs under, derived from the primary checkout's name and the policy's suffix — never from the current directory. Also names the primary checkout, the work tree the call came from, and the common git directory that identifies the repository.",
+        "kind": "query",
+        "read_only": true,
+        "input": "WorktreeInput",
+        "output": "RootReport"
+      },
+      {
+        "name": "majordomus_worktree_status",
+        "id": "worktree.status",
+        "title": "Where this call is, and whether that is where it belongs",
+        "description": "The current work tree in one answer: the repository it belongs to, whether it is the primary checkout or a linked worktree, its branch and HEAD, the canonical container, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place.",
+        "kind": "query",
+        "read_only": true,
+        "input": "WorktreeInput",
+        "output": "StatusReport"
       }
     ],
     "resources": [
@@ -25548,6 +27526,13 @@
         "name": "why",
         "id": "why.list",
         "title": "The catalogue",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://worktrees",
+        "name": "worktrees",
+        "id": "worktree.list",
+        "title": "Every registered worktree, judged against the policy",
         "kind": "query"
       }
     ],
@@ -25745,6 +27730,24 @@
         "method": "GET",
         "path": "/api/v1/why/validate",
         "id": "why.validate",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktrees",
+        "id": "worktree.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktree/root",
+        "id": "worktree.root",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/worktree/status",
+        "id": "worktree.status",
         "kind": "query"
       }
     ],
@@ -27248,6 +29251,122 @@
         "route": "GET /api/v1/why/validate"
       },
       {
+        "key": "worktree.list|direct|topology-only",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "topology-only",
+        "cached": false
+      },
+      {
+        "key": "worktree.list|direct|with-status",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "with-status",
+        "cached": false
+      },
+      {
+        "key": "worktree.list|mcp|topology-only",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "topology-only",
+        "cached": false,
+        "tool": "majordomus_worktrees"
+      },
+      {
+        "key": "worktree.list|mcp|with-status",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "with-status",
+        "cached": false,
+        "tool": "majordomus_worktrees"
+      },
+      {
+        "key": "worktree.list|http|topology-only",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "topology-only",
+        "cached": false,
+        "route": "GET /api/v1/worktrees"
+      },
+      {
+        "key": "worktree.list|http|with-status",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.list",
+        "module": "worktree",
+        "case": "with-status",
+        "cached": false,
+        "route": "GET /api/v1/worktrees"
+      },
+      {
+        "key": "worktree.root|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.root",
+        "module": "worktree",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "worktree.root|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.root",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_worktree_root"
+      },
+      {
+        "key": "worktree.root|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.root",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/worktree/root"
+      },
+      {
+        "key": "worktree.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "worktree.status",
+        "module": "worktree",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "worktree.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "worktree.status",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_worktree_status"
+      },
+      {
+        "key": "worktree.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "worktree.status",
+        "module": "worktree",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/worktree/status"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -27994,6 +30113,69 @@
           "cases": 1
         },
         {
+          "subject": "worktree.list",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.list",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.list",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "worktree.root",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.root",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.root",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.status",
+          "module": "worktree",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.status",
+          "module": "worktree",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "worktree.status",
+          "module": "worktree",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "system.mcp.process_cold",
           "module": "system",
           "transport": "mcp",
@@ -28080,20 +30262,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 32,
-          "covered": 32,
+          "required": 35,
+          "covered": 35,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 32,
-          "covered": 32,
+          "required": 35,
+          "covered": 35,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 30,
-          "covered": 30,
+          "required": 33,
+          "covered": 33,
           "missing": 0,
           "waived": 0
         },
@@ -28104,8 +30286,8 @@
           "waived": 0
         },
         "total": {
-          "required": 106,
-          "covered": 106,
+          "required": 115,
+          "covered": 115,
           "missing": 0,
           "waived": 0
         }

@@ -53,13 +53,22 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus distribution releases`](#majordomus-distribution-releases) | `/docs/cli/distribution/releases/` | Every recorded release, newest first, and the one an unpinned installation resolves to |
 | [`majordomus distribution metadata`](#majordomus-distribution-metadata) | `/docs/cli/distribution/metadata/` | The public metadata one release record publishes, rendered from the record alone |
 | [`majordomus distribution build`](#majordomus-distribution-build) | `/docs/cli/distribution/build/` | What this executable is: version, target triple, profile, commit |
+| [`majordomus worktree`](#majordomus-worktree) | `/docs/cli/worktree/` | Where this repository's linked git worktrees belong, which ones exist, and their whole lifecycle: create, move, remove, prune |
+| [`majordomus worktree root`](#majordomus-worktree-root) | `/docs/cli/worktree/root/` | Print the canonical container every linked worktree belongs under: `cd "$(majordomus worktree root)"` |
+| [`majordomus worktree list`](#majordomus-worktree-list) | `/docs/cli/worktree/list/` | Every registered worktree, with the branch it holds and whether it is where the policy says it belongs |
+| [`majordomus worktree status`](#majordomus-worktree-status) | `/docs/cli/worktree/status/` | Where this command is running, and whether that is where it belongs |
+| [`majordomus worktree path`](#majordomus-worktree-path) | `/docs/cli/worktree/path/` | Print one worktree's path, for `cd "$(majordomus worktree path <name>)"` |
+| [`majordomus worktree create`](#majordomus-worktree-create) | `/docs/cli/worktree/create/` | Create a worktree under the canonical root. The destination is derived; you never give a path |
+| [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree. Never the primary checkout, never a branch, never a dirty tree without --force |
+| [`majordomus worktree migrate`](#majordomus-worktree-migrate) | `/docs/cli/worktree/migrate/` | Bring worktrees outside the canonical root back under it. Planning is the default and changes nothing |
+| [`majordomus worktree prune`](#majordomus-worktree-prune) | `/docs/cli/worktree/prune/` | Drop git's metadata for worktrees whose directories are gone. Deletes no directory |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree).
 
 ```text
 majordomus <COMMAND>
@@ -1282,4 +1291,272 @@ Examples:
   ```
 
   Verified: exits 0; prints version, target, commit.
+
+<a id="majordomus-worktree"></a>
+## `majordomus worktree`
+
+Where this repository's linked git worktrees belong, which ones exist, and their whole lifecycle: create, move, remove, prune
+
+Subcommands: [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree prune`](#majordomus-worktree-prune).
+
+```text
+majordomus worktree [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where am I, and is that where I belong?** — `worktree` with nothing after it answers the question an agent has to ask before it starts: which repository this is, whether this directory is the primary checkout or a linked worktree, the canonical container, and whether the layout rule holds here. It is the same answer from the primary checkout and from four directories deep inside a linked worktree.
+
+  ```console
+  $ majordomus worktree
+  ```
+
+  Verified: exits 0; prints Repository, Canonical root, Policy.
+
+<a id="majordomus-worktree-root"></a>
+## `majordomus worktree root`
+
+Print the canonical container every linked worktree belongs under: `cd "$(majordomus worktree root)"`
+
+```text
+majordomus worktree root [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The one path every linked worktree goes under** — Prints the canonical container and nothing else, so a shell can use it: `cd "$(majordomus worktree root)"`. It is derived from the primary checkout's name and the policy's suffix, never from the current directory — which is why running this inside a linked worktree does not answer a container inside that worktree.
+
+  ```console
+  $ majordomus worktree root
+  ```
+
+  Verified: exits 0; prints -wt.
+
+<a id="majordomus-worktree-list"></a>
+## `majordomus worktree list`
+
+Every registered worktree, with the branch it holds and whether it is where the policy says it belongs
+
+```text
+majordomus worktree list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--status` | flag | — | Also report uncommitted and untracked content (one `git status` per worktree) |
+| `--tsv` | flag | — | One worktree per line, tab separated: kind, policy, path, name, branch, head, proposed path, reason; an absent field is `-`. The form `majordomus doctor` reads, so that its check has no JSON parser of its own and no second derivation of any of these fields |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every worktree, with the ones in the wrong place obvious** — The primary checkout first, then every linked worktree with its branch and its policy verdict. The primary checkout is exempt by definition: it is the thing the container is named after, so counting it as a violation would be a bug that fires in every repository.
+
+  ```console
+  $ majordomus worktree list
+  ```
+
+  Verified: exits 0; prints PRIMARY, branch.
+
+- **The topology as one document a script can read** — The same answer as JSON: the derived container, the tallies, every worktree with its path, branch, HEAD, lock and prune state, and the violations listed separately with the destination each one would move to. This is what the MCP tool `majordomus_worktrees`, the HTTP route `/api/v1/worktrees` and the cockpit all render.
+
+  ```console
+  $ majordomus worktree list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /root/worktree_root, /tallies/linked, /worktrees/0/kind.
+
+<a id="majordomus-worktree-status"></a>
+## `majordomus worktree status`
+
+Where this command is running, and whether that is where it belongs
+
+```text
+majordomus worktree status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The current context in one document** — The repository, this work tree, its kind and branch, the canonical root, whether the layout rule holds here, whether there is uncommitted work, and how many worktrees of the repository are out of place. An agent reads this before it decides where to put anything.
+
+  ```console
+  $ majordomus worktree status --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /repository, /canonical_root, /kind, /policy.
+
+<a id="majordomus-worktree-path"></a>
+## `majordomus worktree path`
+
+Print one worktree's path, for `cd "$(majordomus worktree path <name>)"`
+
+```text
+majordomus worktree path [OPTIONS] <SELECTOR>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SELECTOR>` | `<SELECTOR>` | required | An exact path, an exact directory name, or an exact branch name |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The path of one worktree, for the shell to cd into** — A child process cannot change its parent shell's directory, so nothing here pretends to: this prints one path and the shell does the rest — `cd "$(majordomus worktree path feature-x)"`. The selector is an exact path, an exact directory name or an exact branch name; nothing is matched by prefix or similarity.
+
+  ```console
+  $ majordomus worktree create feature-x
+  $ majordomus worktree path feature-x
+  ```
+
+  Verified: exits 0; prints -wt/feature-x.
+
+<a id="majordomus-worktree-create"></a>
+## `majordomus worktree create`
+
+Create a worktree under the canonical root. The destination is derived; you never give a path
+
+```text
+majordomus worktree create [OPTIONS] [NAME]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<NAME>` | `<NAME>` | — | What to work on: the directory name is derived from it, and so is the branch unless --branch says otherwise |
+| `--branch` | `<BRANCH>` | — | Check out this branch, creating it from --base when it does not exist |
+| `--base` | `<REF>` | — | Start a new branch from this ref (default: HEAD). Never fetched: it must resolve locally |
+| `--issue` | `<ID>` | — | Name the worktree after this issue of .ai/repo/project/issues (its id and slug); no number is invented and nothing is fetched |
+| `--detach` | flag | — | Check out a commit with no branch |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Create a worktree without deciding where it goes** — Creates the branch `feature-x` and checks it out in a new worktree at `<repository>-wt/feature-x`. No path is given and none may be: the destination is derived from the repository's identity and the policy, so the same command in the same repository always produces the same path — from the primary checkout, and from inside another worktree.
+
+  ```console
+  $ majordomus worktree create feature-x
+  ```
+
+  Verified: exits 0; prints -wt/feature-x, feature-x.
+
+<a id="majordomus-worktree-remove"></a>
+## `majordomus worktree remove`
+
+Remove one linked worktree. Never the primary checkout, never a branch, never a dirty tree without --force
+
+```text
+majordomus worktree remove [OPTIONS] <SELECTOR>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SELECTOR>` | `<SELECTOR>` | required | An exact path, an exact directory name, or an exact branch name |
+| `--force` | flag | — | Remove it even though it holds uncommitted or untracked work, or is locked. The identity checks still apply |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Remove a worktree, and keep its branch** — Removes the worktree and nothing else. The branch it held still exists: worktree lifecycle and branch lifecycle are separate, and deleting a branch is a git command a person types deliberately. A worktree with uncommitted or untracked work is refused rather than removed.
+
+  ```console
+  $ majordomus worktree create feature-x
+  $ majordomus worktree remove feature-x
+  ```
+
+  Verified: exits 0; prints removed, feature-x.
+
+<a id="majordomus-worktree-migrate"></a>
+## `majordomus worktree migrate`
+
+Bring worktrees outside the canonical root back under it. Planning is the default and changes nothing
+
+```text
+majordomus worktree migrate [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--plan` | flag | — | Show what would move and change nothing (the default) |
+| `--apply` | flag | — | Carry out the safe moves |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What it would take to bring every worktree home** — Planning is the default and changes nothing — `doctor` diagnoses, `migrate --apply` repairs, and neither `init`, `update` nor `doctor` ever moves a worktree. Each step says where a worktree would go, or why it cannot move: it is dirty, it is locked, its directory is gone, or the name it would take is already used inside the container.
+
+  ```console
+  $ majordomus worktree migrate --plan
+  ```
+
+  Verified: exits 0; prints migrate.
+
+<a id="majordomus-worktree-prune"></a>
+## `majordomus worktree prune`
+
+Drop git's metadata for worktrees whose directories are gone. Deletes no directory
+
+```text
+majordomus worktree prune [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--dry-run` | flag | — | Report what would be dropped and change nothing |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What git would forget** — `prune` drops git's administrative records for worktrees whose directories no longer exist. It deletes no directory and touches no branch; `--dry-run` reports what it would drop and changes nothing.
+
+  ```console
+  $ majordomus worktree prune --dry-run
+  ```
+
+  Verified: exits 0.
 

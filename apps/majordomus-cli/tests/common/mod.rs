@@ -462,6 +462,7 @@ true
     pub fn empty_git() -> Self {
         let dir = tempfile::tempdir().expect("tempdir");
         let f = Fixture { dir };
+        std::fs::create_dir_all(f.repo()).expect("repository directory");
         f.git(&["init", "-q", "."]);
         f.git(&["config", "user.email", "t@example.com"]);
         f.git(&["config", "user.name", "t"]);
@@ -471,17 +472,34 @@ true
 
     /// A directory that is not a git repository at all.
     pub fn plain_dir() -> Self {
-        Fixture {
+        let f = Fixture {
             dir: tempfile::tempdir().expect("tempdir"),
-        }
+        };
+        std::fs::create_dir_all(f.repo()).expect("repository directory");
+        f
     }
 
+    /// The repository root. It is a *subdirectory* of the temporary directory, not the
+    /// temporary directory itself, so that anything a command creates beside the repository
+    /// — the worktree container, which is `<root>-wt` by the canonical policy — is still
+    /// inside the temporary directory and is removed with it. A fixture rooted at the
+    /// temporary directory would leak one container per test into the system temp space.
     pub fn root(&self) -> PathBuf {
-        self.dir.path().canonicalize().expect("canonical root")
+        self.repo().canonicalize().expect("canonical root")
+    }
+
+    /// The repository root before canonicalisation, which is what has to be created.
+    fn repo(&self) -> PathBuf {
+        self.dir.path().join("repo")
+    }
+
+    /// The directory the repository sits in: where its worktree container goes.
+    pub fn parent(&self) -> PathBuf {
+        self.dir.path().canonicalize().expect("canonical parent")
     }
 
     pub fn path(&self, rel: &str) -> PathBuf {
-        self.dir.path().join(rel)
+        self.repo().join(rel)
     }
 
     pub fn write(&self, rel: &str, content: &str) {
@@ -503,7 +521,7 @@ true
     pub fn git(&self, args: &[&str]) -> String {
         let out = Command::new("git")
             .arg("-C")
-            .arg(self.dir.path())
+            .arg(self.repo())
             .args(args)
             .output()
             .expect("git runs");

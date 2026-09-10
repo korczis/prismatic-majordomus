@@ -310,6 +310,34 @@ Every command reports where its time went with `MJ_TIMING=1`, and `bench` holds 
 accepted state in a tracked baseline; how that works, and the rules behind it, is
 [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
+## Worktrees
+
+Several sessions on one repository need several checkouts, and git has no opinion about
+where they go — so every caller has one, and the answers accumulate. Majordomus decides
+instead, and decides the same way every time:
+
+```text
+~/dev/prismatic-majordomus          the primary checkout — never moves
+~/dev/prismatic-majordomus-wt/      the container
+~/dev/prismatic-majordomus-wt/*     every linked worktree
+```
+
+```bash
+majordomus worktree create issue-184-websocket   # you choose what, not where
+majordomus worktree list                          # what exists, what is out of place
+cd "$(majordomus worktree path issue-184-websocket)"
+majordomus doctor                                 # does the topology hold
+```
+
+The container is derived from the primary checkout and one suffix in the policy, never from
+the current directory — so the answer is the same from the checkout and from four
+directories deep inside a linked worktree. A worktree somewhere else is reported by `doctor`
+and moved only by an explicit `worktree migrate --apply`; a dirty or locked worktree is
+never moved or removed without `--force`, and removing a worktree never deletes its branch.
+
+Details: [`docs/WORKTREES.md`](docs/WORKTREES.md). The decision and the alternatives:
+ADR 20.
+
 ## Customisation
 
 - **Rules workers read:** rule objects under `.ai/repo/rules/project/`, one Markdown
@@ -320,6 +348,8 @@ accepted state in a tracked baseline; how that works, and the rules behind it, i
 - **Budget for the always-loaded file:** `context.always_loaded_budget_lines`.
 - **What must be wired:** the `enforcement` list; `doctor` reconciles it.
 - **A new task class:** a new file in `.ai/repo/profiles/`.
+- **Where linked worktrees go:** `worktree.root.suffix` in the policy; every derived path,
+  check and generated instruction follows it.
 
 Unknown keys anywhere are errors, so a typo fails loudly.
 

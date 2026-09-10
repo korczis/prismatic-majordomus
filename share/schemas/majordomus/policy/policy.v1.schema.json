@@ -187,6 +187,80 @@
         }
       }
     },
+    "worktree": {
+      "type": "object",
+      "description": "Where linked git worktrees of this repository belong, and how conservative the commands that change them are. The canonical statement of the layout doctrine: the CLI derives the container from it, doctor evaluates against it, and the provider instruction files are generated from it. An absent section means the defaults, which are the doctrine.",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "object",
+          "description": "How the container that holds every linked worktree is located.",
+          "additionalProperties": false,
+          "properties": {
+            "strategy": {
+              "enum": [
+                "sibling"
+              ],
+              "description": "sibling: the container is the primary checkout's directory name plus the suffix, in the directory the primary checkout sits in. /a/b/foo becomes /a/b/foo-wt."
+            },
+            "suffix": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Appended to the primary checkout's directory name to name the container. This is the one place the convention is written down; changing it moves every derived path at once."
+            }
+          }
+        },
+        "naming": {
+          "type": "object",
+          "description": "How a worktree's directory name is derived from a branch or a label.",
+          "additionalProperties": false,
+          "properties": {
+            "strategy": {
+              "enum": [
+                "slug"
+              ],
+              "description": "slug: everything outside A-Za-z0-9._- becomes a separator, runs collapse, and the result is exactly one filesystem component."
+            }
+          }
+        },
+        "enforcement": {
+          "type": "object",
+          "description": "What a check does with a worktree that is not where the policy says it belongs.",
+          "additionalProperties": false,
+          "properties": {
+            "outside_root": {
+              "enum": [
+                "error",
+                "warn",
+                "off"
+              ],
+              "description": "A registered linked worktree outside the canonical container: error fails doctor and the worktree commands' exit codes, warn reports it, off does not evaluate it."
+            }
+          }
+        },
+        "cleanup": {
+          "type": "object",
+          "description": "What the destructive commands refuse by default. --force is the explicit override, and it never waives the repository-identity checks.",
+          "additionalProperties": false,
+          "properties": {
+            "dirty": {
+              "enum": [
+                "refuse",
+                "allow"
+              ],
+              "description": "A worktree holding uncommitted or untracked content, for remove and migrate."
+            },
+            "locked": {
+              "enum": [
+                "refuse",
+                "allow"
+              ],
+              "description": "A worktree git has locked, for remove."
+            }
+          }
+        }
+      }
+    },
     "benchmark": {
       "type": "object",
       "additionalProperties": false,

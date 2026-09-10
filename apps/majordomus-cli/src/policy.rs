@@ -79,6 +79,10 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+    /// `worktree:` — where linked git worktrees of this repository belong. Absent means the
+    /// defaults, which are the doctrine: a sibling container named after the checkout.
+    #[serde(default)]
+    pub worktree: crate::worktree::WorktreePolicy,
 }
 
 /// The policy as loaded: the typed value, where it came from, and the hash the stamps
