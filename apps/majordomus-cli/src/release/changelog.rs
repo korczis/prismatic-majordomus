@@ -40,12 +40,36 @@ struct Record {
     artifacts: Vec<Artifact>,
 }
 
-/// Compose the changelog.
+/// Compose the changelog, unreleased section included.
 ///
 /// `objects` is the index's own view of the layer; `root` is the repository git reads. A
 /// repository with no records yields one unreleased section, which is the right answer for a
 /// project that has never published rather than an error.
+///
+/// This is what a live reader wants — the API, MCP and the Cockpit answer at request time
+/// and HEAD is whatever it is then. It is not what a committed artifact may hold: see
+/// [`compose_published`].
 pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
+    compose_with(root, objects, true)
+}
+
+/// Compose the changelog of what has been published, and nothing after it.
+///
+/// The one form a committed artifact may take. The unreleased section is
+/// `<last release>..HEAD`, and a file inside a commit cannot describe the commit it is in:
+/// every commit made the committed changelog stale by construction, the pre-commit gate
+/// refused until a full derive had run, and every session paid several minutes per commit
+/// or worked around the gate. A document that depends only on the release records and the
+/// history up to the newest of them is the same bytes at every commit that changes neither,
+/// which is what "current" has to mean for a file under `docs/generated/`.
+///
+/// A repository with no records yields no section at all here — there is nothing published
+/// to describe — where [`compose`] yields the unreleased one.
+pub fn compose_published(root: &Path, objects: &[Object]) -> Changelog {
+    compose_with(root, objects, false)
+}
+
+fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog {
     let mut diagnostics = Vec::new();
 
     let mut records: Vec<Record> = objects
@@ -60,15 +84,21 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
 
     let mut sections = Vec::new();
 
-    // The unreleased section: everything after the newest release, when there is any.
+    // The unreleased section: everything after the newest release, when there is any, and
+    // only for a reader that asked for it — a committed document never does (see
+    // `compose_published`).
     let newest = records.first();
     let unreleased_range = match newest {
         Some(r) => format!("{}..HEAD", r.commit),
         None => "HEAD".to_string(),
     };
-    let unreleased_changes = commits::in_range(root, &unreleased_range);
-    if newest.is_some() && unreleased_changes.is_empty() {
-        // nothing since the last release; no section rather than an empty one
+    let unreleased_changes = if unreleased {
+        commits::in_range(root, &unreleased_range)
+    } else {
+        Vec::new()
+    };
+    if !unreleased || (newest.is_some() && unreleased_changes.is_empty()) {
+        // nothing since the last release, or nobody asked; no section rather than an empty one
     } else {
         sections.push(ReleaseSection {
             version: "unreleased".into(),
@@ -379,6 +409,142 @@ mod tests {
         assert_eq!(after[0].id, "adr-0003");
         // No release at all: everything is unreleased.
         assert_eq!(decisions_after(&all, None).len(), 2);
+    }
+
+    /// A throwaway repository with `n` commits, the first of them tagged as a release the
+    /// records name. What every test of the two compositions needs: a real HEAD that moves.
+    fn repo_with_commits(n: usize) -> (tempfile::TempDir, String) {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@t")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@t")
+                .output()
+                .expect("git runs");
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&[
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "feat(a): the release",
+        ]);
+        let release = git(&["rev-parse", "HEAD"]);
+        for i in 1..n {
+            git(&[
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                &format!("fix(b): after the release {i}"),
+            ]);
+        }
+        (dir, release)
+    }
+
+    fn release_record(commit: &str) -> Object {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("schema".into(), "release/v1".into());
+        metadata.insert("version".into(), "0.1.0".into());
+        metadata.insert("tag".into(), "v0.1.0".into());
+        metadata.insert("channel".into(), "stable".into());
+        metadata.insert("commit".into(), commit.into());
+        metadata.insert("published_at".into(), "2026-09-01T00:00:00Z".into());
+        metadata.insert("artifacts".into(), serde_json::Value::Array(Vec::new()));
+        Object {
+            kind: RELEASE_KIND.into(),
+            identity: "v0.1.0".into(),
+            uri: "majordomus://release-record/v0.1.0".into(),
+            title: None,
+            description: None,
+            metadata: serde_json::Value::Object(metadata),
+            body: String::new(),
+            content: String::new(),
+            media_type: "application/yaml",
+            provenance: crate::model::Provenance {
+                path: ".ai/repo/releases/v0.1.0.yaml".into(),
+                directory: ".ai/repo/releases".into(),
+                source_class: "release".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// The property the committed artifact exists to have: a commit that publishes nothing
+    /// does not change it. The live form is the one that follows HEAD.
+    #[test]
+    fn the_published_changelog_is_the_same_bytes_at_every_commit_after_the_release() {
+        let (dir, release) = repo_with_commits(2);
+        let objects = vec![release_record(&release)];
+        let before = compose_published(dir.path(), &objects);
+        let live_before = compose(dir.path(), &objects);
+
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir.path())
+            .args([
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "fix(c): one more commit",
+            ])
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@t")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@t")
+            .status()
+            .expect("git runs");
+
+        let after = compose_published(dir.path(), &objects);
+        let live_after = compose(dir.path(), &objects);
+
+        assert_eq!(
+            serde_json::to_string(&before).unwrap(),
+            serde_json::to_string(&after).unwrap(),
+            "a commit that publishes nothing must not move the committed changelog"
+        );
+        assert!(
+            !before.sections.iter().any(|s| s.unreleased),
+            "the committed form carries no unreleased section"
+        );
+        assert!(
+            live_before.sections.iter().any(|s| s.unreleased),
+            "the live form does"
+        );
+        assert_ne!(
+            serde_json::to_string(&live_before).unwrap(),
+            serde_json::to_string(&live_after).unwrap(),
+            "and the live form follows HEAD"
+        );
+    }
+
+    /// A repository that has never published: the live form says so with an unreleased
+    /// section, and the committed form says so with nothing — there is nothing published to
+    /// describe, and an empty section would be a claim.
+    #[test]
+    fn with_no_release_the_published_form_is_empty_and_the_live_form_is_unreleased() {
+        let (dir, _) = repo_with_commits(1);
+        let published = compose_published(dir.path(), &[]);
+        assert!(published.sections.is_empty());
+        let live = compose(dir.path(), &[]);
+        assert_eq!(live.sections.len(), 1);
+        assert!(live.sections[0].unreleased);
     }
 
     #[test]

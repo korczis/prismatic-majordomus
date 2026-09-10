@@ -31,17 +31,22 @@
   // rest of the site, so the theme toggle moves it without a second colour table.
   function palette() {
     var s = getComputedStyle(document.documentElement);
+    var b = getComputedStyle(document.body);
     var dark = document.documentElement.classList.contains('dark');
-    function v(name, fallback) { var x = s.getPropertyValue(name).trim(); return x || fallback; }
+    // The fallback is the page's own computed text colour, never a table. Until
+    // share/design/surface.css declared these names, nothing did, so every lookup here
+    // missed and the drawing was painted from the literals that used to sit in this
+    // function — while the comment above said the palette came from the page.
+    function v(name) { var x = s.getPropertyValue(name).trim(); return x || b.color; }
     return {
       dark: dark,
-      text: v('--mj-graph-text', dark ? '#e5e7eb' : '#111827'),
-      muted: v('--mj-graph-muted', dark ? '#9ca3af' : '#6b7280'),
-      line: v('--mj-graph-line', dark ? '#4b5563' : '#d1d5db'),
-      surface: v('--mj-graph-surface', dark ? '#1f2937' : '#ffffff'),
-      accent: v('--mj-graph-accent', dark ? '#818cf8' : '#4f46e5'),
-      warn: v('--mj-graph-warn', dark ? '#fbbf24' : '#b45309'),
-      good: v('--mj-graph-good', dark ? '#34d399' : '#047857')
+      text: v('--mj-graph-text'),
+      muted: v('--mj-graph-muted'),
+      line: v('--mj-graph-line'),
+      surface: v('--mj-graph-surface'),
+      accent: v('--mj-graph-accent'),
+      warn: v('--mj-graph-warn'),
+      good: v('--mj-graph-good')
     };
   }
 

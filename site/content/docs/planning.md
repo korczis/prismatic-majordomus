@@ -130,6 +130,71 @@ the issue's own file, beside the contract it satisfies, with the commit it was r
 What this does not do: rerun the command. The tool records what a worker says a command
 produced. The commit hash stored beside it is what makes a false record checkable later.
 
+## Traceability: what realised an issue, and what an issue realised
+
+The model reaches as far as a branch on its own: a branch path component equal to an issue id
+(`feature/I1305-traceability` → `I1305`) is the one edge the topology already reads and the
+pre-commit guard already enforces. Everything above it — the commits, the pull requests — is
+**derived on every read and stored nowhere**. No canonical record under
+`.ai/repo/project/` names a branch, a commit, a pull request or a check run, and none may:
+git and GitHub already hold those facts, and a record repeating one is a second truth that
+starts rotting the moment history is rewritten.
+
+Two systems hold the two halves, and the boundary between them is the same boundary
+`scripts/github-sync` respects — the executable, `bin/`, `lib/`, `share/` and `test/` make no
+network call, and `test/cases/08_no_forbidden_constructs.sh` proves it:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| half | source | where it lives |
+|---|---|---|
+| branches and commits | `git for-each-ref`, `git log` | the `trace` capability module of the Rust executable |
+| pull requests | the GitHub API, through `gh` | `scripts/traceability` |
+
+</div>
+
+
+```text
+issue ──names──▶ branch ──contains──▶ commit          derived from git
+  ▲                 ▲
+  │                 └── head branch of ─── pull request   derived from GitHub
+  └── milestone, the one edge git does not hold: the canonical issue record declares it
+```
+
+A branch's commits are the commits it holds that the trunk did not: measured against the
+trunk while the branch is open, and against the first parent of the merge commit that brought
+it in once it is merged. Read backwards, a commit belongs to the issue whose branches hold it.
+
+Three answers are states rather than failures, and each is reported by name rather than
+silently dropped:
+
+- **absorbed** — the branch reached the trunk with no merge commit of its own (fast-forwarded,
+  or rebased onto it). Its commits cannot be told from the trunk's, so none are claimed and
+  the trace says it is incomplete.
+- **unattributed** — no branch naming an issue holds the commit, and no pull request's head
+  branch names one. That is either work committed with no execution contract or a branch
+  deleted after its merge, and the answer says so rather than choosing between them. Work
+  with no contract is the thing a traceability report exists to make visible; omitting it
+  would defeat the report.
+- **ambiguous** — branches naming two different issues hold the same commit. The branch-name
+  edge cannot decide, so it does not.
+
+```text
+scripts/traceability                 every issue, and the trunk commits nothing accounts for
+scripts/traceability --issue I1305   its branches, its commits and its pull requests
+scripts/traceability --commit <rev>  the issue and milestone it served, or unattributed
+scripts/traceability --pull 42       the same, from the pull request's side
+scripts/traceability --no-github     the git half alone: no token, no network
+scripts/traceability --strict        exit 10 when something has no contract; the shape of a gate
+```
+
+The git half is `majordomus_trace_issue`, `majordomus_trace_commit` and
+`majordomus_traceability` on MCP and `/api/v1/trace`, `/api/v1/trace/issue`,
+`/api/v1/trace/commit` on HTTP; the script is a client of them rather than a second
+implementation. `MJ_GH_FIXTURE_PULLS` reads the pull requests from a file in the shape the
+live read produces, so the join is provable with no network and no token — the same seam
+`scripts/github-sync` uses, and what `test/cases/98_traceability.sh` exercises.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one
@@ -142,7 +207,7 @@ different opinions about what is ready:
 |---|---|
 | the command line | `majordomus plan` |
 | the Mermaid DAG | `majordomus plan graph` |
-| GitHub milestones and issues | `scripts/github-sync` |
+| GitHub milestones and issues | `scripts/github-sync`, proved current by `scripts/ci/github-check` |
 | the website's roadmap, milestone, issue and DAG pages | `scripts/generate-site-data` |
 | the documentation | this file explains the semantics; the figures are generated |
 
@@ -153,6 +218,38 @@ GitHub is a projection and a place to talk, never the source. A canonical change
 generated region of an issue body; a person editing that region is reported as drift and not
 overwritten; a person's comments and any text outside the region are never touched. Nothing
 is read back: closing an issue on GitHub does not complete it here.
+
+A record is found on GitHub by an identity it carries in its own body, written beside the
+hash as `<!-- majordomus:record I0001 -->`. A GitHub number is GitHub's to assign and a
+title is a person's to edit, so neither can be the key: matching on a title means a rename
+orphans the record and the next `--apply` creates a second one for work that already exists.
+
+Every finding about a body is one of six states, from two independent questions — has a
+person rewritten the region since it was posted, and has the canonical record moved since?
+
+<div class="overflow-x-auto" tabindex="0">
+
+| state | meaning | `--apply` |
+|---|---|---|
+| `insync` | intact and current | nothing |
+| `behind` | intact, the canonical record has moved | rewrites |
+| `edited` | a person rewrote the region | refuses without `--force` |
+| `conflict` | a person rewrote it and the record has moved | refuses without `--force` |
+| `adopt` | no identity marker; matched by title, this once | writes one |
+| `missing` | no counterpart on GitHub | creates |
+
+</div>
+
+
+and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
+canonical id this repository does not have.
+
+Applying is a deliberate act; agreement is a gate. `scripts/ci/github-check` reads the
+remote on every change that can move either side, refuses the first six states outright,
+and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
+may fall and may never rise. It exists because the detector was written, never called, and
+the projection decayed to a tenth of the model over five days with every build green
+(`project.github-projection-gated@1`).
 
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves

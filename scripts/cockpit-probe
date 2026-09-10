@@ -139,6 +139,28 @@ EOF
 done < "$ROUTES"
 [ "$statusbad" = 0 ] && ok status "$n route(s) derived from the server, every one 200 text/html"
 
+# ---------------------------------------------------------------- the served projection
+# The other half of the availability contract: what a publication may only name, a running
+# server must actually answer, and the Cockpit's API page must offer. If a served-only
+# surface 404s here, the metadata that keeps it off the published site is describing a
+# route nobody serves either.
+surfbad=0
+for route in $(curl -s "$BASE/openapi.json" | python3 -c '
+import json,sys
+for r in json.load(sys.stdin)["x-majordomus"]["infrastructure"]:
+    if r["availability"] == "served-only": print(r["path"])'); do
+  code="$(curl -s -o /dev/null -w '%{http_code}' "$BASE$route")"
+  # a surface answers with its own status: MCP refuses GET with 405 by design, and the
+  # WebSocket route refuses a plain GET with 426 Upgrade Required by the protocol's own
+  # rule — both are a surface answering. Only a 404 says nobody serves it.
+  case "$code" in
+    2??|3??|405|426) ;;
+    *) bad surface "$route is declared served-only and this server answered $code"; surfbad=$((surfbad+1)) ;;
+  esac
+done
+curl -s "$BASE/cockpit/api" | grep -qF 'href="/swagger"' || { bad surface "the Cockpit does not offer the API console, which this process serves"; surfbad=1; }
+[ "$surfbad" = 0 ] && ok surface "every served-only surface answers here, and the Cockpit offers the console a publication may only name"
+
 # the headers every page carries, checked once rather than n times
 hdr="$(curl -s -D - -o /dev/null "$BASE/cockpit")"
 for h in "content-security-policy: default-src 'none'" "x-content-type-options: nosniff" "referrer-policy: no-referrer"; do

@@ -37,6 +37,6 @@ pub mod commits;
 pub mod model;
 pub mod version;
 
-pub use changelog::compose;
+pub use changelog::{compose, compose_published};
 pub use model::{Change, ChangeKind, Changelog, ReleaseSection, VersionReport};
 pub use version::{bump_of, Bump};

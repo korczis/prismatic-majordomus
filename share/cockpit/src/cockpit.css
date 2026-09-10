@@ -22,6 +22,14 @@
 
 @import "tailwindcss" source(none);
 @import "flowbite/src/themes/default";
+/* after Flowbite's theme, because it overrides it: the same generated token block the
+   site imports, so the two Tailwind builds cannot resolve a different type or a different
+   accent. Generated from share/design/tokens.yaml by scripts/design-tokens. */
+@import "../../design/theme.css";
+/* the semantic surface, the same values under the selector this stylesheet is written
+   against, with the `--mj-*` names declared as aliases of the canonical ones. Generated
+   from share/design/tokens.yaml by scripts/design-tokens. */
+@import "../../design/surface.css";
 @plugin "flowbite/plugin";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -31,43 +39,14 @@
    a function of this file and the pinned versions alone, and never of what happens to be
    in the tree — which is what lets `scripts/cockpit-assets --check` be exact. */
 
-@theme {
-  /* Type: one system stack, one monospace stack. Nothing is fetched. */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
-    monospace;
-
-  /* The one accent. Everything else is neutral, because a control plane that colours
-     everything says nothing with colour. */
-  --color-accent-50: oklch(0.97 0.02 250);
-  --color-accent-200: oklch(0.87 0.07 250);
-  --color-accent-500: oklch(0.62 0.16 250);
-  --color-accent-600: oklch(0.55 0.16 250);
-  --color-accent-900: oklch(0.32 0.10 250);
-}
 
 @layer base {
   :root {
     /* The topbar's height: the sidebar and a listing's sticky header both sit under it,
-       and one value keeps them from disagreeing. */
+       and one value keeps them from disagreeing. It is a layout value and it stays here;
+       every colour this file used to declare is now share/design/surface.css, imported
+       above, because the Cockpit's palette was one of four and is now one of one. */
     --mj-topbar-h: 2.75rem;
-    --mj-bg: var(--color-white);
-    --mj-bg-raised: var(--color-white);
-    --mj-bg-sunken: var(--color-gray-50);
-    --mj-border: var(--color-gray-200);
-    --mj-text: var(--color-gray-900);
-    --mj-text-muted: var(--color-gray-500);
-    color-scheme: light;
-  }
-  :where(.dark) {
-    --mj-bg: oklch(0.19 0.005 250);
-    --mj-bg-raised: oklch(0.23 0.006 250);
-    --mj-bg-sunken: oklch(0.16 0.005 250);
-    --mj-border: oklch(0.32 0.008 250);
-    --mj-text: oklch(0.94 0.004 250);
-    --mj-text-muted: oklch(0.68 0.008 250);
-    color-scheme: dark;
   }
 
   html {
@@ -558,12 +537,16 @@
   .mj-badge--ok,
   .mj-badge--declared,
   .mj-badge--query,
+  .mj-badge--succeeded,
+  .mj-badge--completed,
   .mj-badge--current {
     @apply text-green-700 dark:text-green-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--warn,
   .mj-badge--command,
+  .mj-badge--cancelled,
+  .mj-badge--cancelling,
   .mj-badge--stale,
   .mj-badge--not-generated {
     @apply text-amber-700 dark:text-amber-300;
@@ -571,6 +554,7 @@
   }
   .mj-badge--fail,
   .mj-badge--error,
+  .mj-badge--failed,
   .mj-badge--missing {
     @apply text-red-700 dark:text-red-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
@@ -581,6 +565,8 @@
   }
   .mj-badge--info,
   .mj-badge--resource,
+  .mj-badge--queued,
+  .mj-badge--running,
   .mj-badge--generated,
   .mj-badge--cached,
   .mj-badge--present,
@@ -590,6 +576,8 @@
   }
   :where(.dark) .mj-badge--info,
   :where(.dark) .mj-badge--resource,
+  :where(.dark) .mj-badge--queued,
+  :where(.dark) .mj-badge--running,
   :where(.dark) .mj-badge--generated,
   :where(.dark) .mj-badge--cached,
   :where(.dark) .mj-badge--present,
@@ -801,5 +789,68 @@
     @apply px-4 py-2 text-[11px];
     color: var(--mj-text-muted);
     border-top: 1px solid var(--mj-border);
+  }
+
+  /* --- executions: a progress bar, a log that scrolls inside itself, and a connection
+     indicator that says what it means in a word as well as in a shape. Nothing here is
+     wider than its container: a path in a log line wraps rather than widening the page. */
+  .mj-progress {
+    @apply relative flex h-4 w-full max-w-xs items-center overflow-hidden rounded;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-progress-bar {
+    @apply absolute inset-y-0 left-0;
+    background: color-mix(in oklch, var(--color-accent-500) 45%, transparent);
+    transition: width 150ms linear;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mj-progress-bar {
+      transition: none;
+    }
+  }
+  .mj-progress-text {
+    @apply relative z-10 w-full text-center font-mono text-[10px];
+  }
+  .mj-log {
+    @apply max-h-96 overflow-y-auto rounded p-2 font-mono text-[11.5px];
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-log-line {
+    @apply flex flex-wrap items-baseline gap-2 py-0.5;
+  }
+  .mj-log-time {
+    @apply shrink-0 text-[10px];
+    color: var(--mj-text-muted);
+  }
+  .mj-log-stream {
+    @apply shrink-0 rounded px-1 text-[10px] uppercase tracking-wider;
+    border: 1px solid var(--mj-border);
+  }
+  .mj-log-stream--stderr {
+    @apply text-red-700 dark:text-red-300;
+  }
+  .mj-log-text {
+    @apply min-w-0 break-words whitespace-pre-wrap;
+  }
+  .mj-connection {
+    @apply mb-2 flex items-center gap-1.5 text-[11.5px];
+    color: var(--mj-text-muted);
+  }
+  .mj-connection-mark {
+    @apply font-mono;
+  }
+  .mj-connection-mark--live {
+    @apply text-green-700 dark:text-green-300;
+  }
+  .mj-connection-mark--reconnecting {
+    @apply text-amber-700 dark:text-amber-300;
+  }
+  .mj-live {
+    @apply text-[12.5px];
+  }
+  .mj-filters {
+    @apply flex flex-wrap items-end gap-3;
   }
 }

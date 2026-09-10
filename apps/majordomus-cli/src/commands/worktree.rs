@@ -602,6 +602,7 @@ fn create(
                 (Some(b), true) => w(out, format!("branch  {} (new, from {b})", report.branch))?,
                 _ => w(out, format!("branch  {}", report.branch))?,
             }
+            w(out, report.envrc.describe())?;
             w(
                 out,
                 format!("cd \"$(majordomus worktree path {})\"", report.branch),
@@ -692,16 +693,21 @@ fn render_plan(plan: &MigrationPlan, out: &mut Out<'_>) -> Result<()> {
         };
         match step.outcome {
             StepOutcome::Planned => w(out, format!("  action  {action}"))?,
-            StepOutcome::Moved => w(
-                out,
-                format!(
-                    "  outcome moved and verified ({action}){}",
-                    step.message
-                        .as_deref()
-                        .map(|m| format!(": {m}"))
-                        .unwrap_or_default()
-                ),
-            )?,
+            StepOutcome::Moved => {
+                w(
+                    out,
+                    format!(
+                        "  outcome moved and verified ({action}){}",
+                        step.message
+                            .as_deref()
+                            .map(|m| format!(": {m}"))
+                            .unwrap_or_default()
+                    ),
+                )?;
+                if let Some(envrc) = &step.envrc {
+                    w(out, format!("  {}", envrc.describe()))?;
+                }
+            }
             StepOutcome::Blocked => {
                 w(out, "  outcome BLOCKED")?;
                 for b in &step.blockers {

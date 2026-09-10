@@ -434,6 +434,47 @@ Because the fixture says so.
 Nothing the fixture does not say.
 ";
 
+/// The plan's header. `sources.yaml` has always declared the project pathspecs; without
+/// these three files the fixture was a repository that claimed a plan and had none, and the
+/// plan capabilities were the only ones with nothing to answer over.
+const PROJECT: &str = "schema_version: 1
+name: Fixture
+repository: example/fixture
+default_branch: master
+";
+
+const MILESTONE: &str = "id: fixture-milestone
+title: The fixture reaches its outcome
+slug: fixture-milestone
+order: 0
+priority: p1
+problem: \"A problem worth solving.\"
+outcome: \"The outcome once it is solved.\"
+acceptance_criteria:
+  - The outcome is reached
+validation:
+  - \"true\"
+evidence_required:
+  - proof
+";
+
+const ISSUE: &str = "id: I0001
+milestone: fixture-milestone
+title: The bounded piece of work
+slug: issue-I0001
+priority: p1
+profile: implementation
+objective: \"Do the bounded piece of work.\"
+scope:
+  - lib
+acceptance_criteria:
+  - The work is done
+validation:
+  - \"true\"
+evidence_required:
+  - proof
+";
+
 pub struct Fixture {
     dir: tempfile::TempDir,
 }
@@ -492,6 +533,12 @@ true
             ".ai/repo/rules/project/alpha.v1.md",
             &rule("project.alpha", 1, "Alpha"),
         );
+        f.write(".ai/repo/project/project.yaml", PROJECT);
+        f.write(
+            ".ai/repo/project/milestones/fixture-milestone.yaml",
+            MILESTONE,
+        );
+        f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
         f.write(
             ".ai/repo/workflows/task-lifecycle.md",

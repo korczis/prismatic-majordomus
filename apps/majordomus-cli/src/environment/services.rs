@@ -37,7 +37,7 @@ struct Descriptor {
 
 /// Every service, in the order a snapshot reports them: the human surfaces first, the
 /// machine ones after.
-fn descriptors() -> [Descriptor; 7] {
+fn descriptors() -> [Descriptor; 8] {
     [
         Descriptor {
             id: "cockpit",
@@ -58,8 +58,18 @@ fn descriptors() -> [Descriptor; 7] {
             id: "api",
             title: "HTTP API",
             // The prefix every capability route lives under; the routes themselves are the
-            // registry's and are not repeated anywhere.
-            path: HttpExposure::PREFIX,
+            // registry's and are not repeated anywhere. Without the trailing slash, because
+            // the surface is mounted without it (`web::discover::native_all` trims it) and
+            // this list is compared against what the server actually serves.
+            path: HttpExposure::PREFIX.trim_end_matches('/'),
+        },
+        Descriptor {
+            id: "events",
+            title: "Execution events",
+            // The stream a Cockpit or a terminal follows an execution over. It arrived with
+            // the execution control plane, after this list was written, which is exactly the
+            // gap `every_infrastructure_route_is_described` exists to close.
+            path: crate::http::events::PATH,
         },
         Descriptor {
             id: "openapi",
@@ -145,8 +155,9 @@ mod tests {
         let described: Vec<&str> = descriptors().iter().map(|d| d.path).collect();
         for route in infrastructure_routes() {
             assert!(
-                described.contains(&route.as_str()),
-                "the server serves {route} and no service describes it"
+                described.contains(&route.path.as_str()),
+                "the server serves {} and no service describes it",
+                route.path
             );
         }
     }

@@ -243,9 +243,16 @@ if [ -f "$RDS" ] && [ -f "$EXJ" ]; then
   for k in $(jq -r '.benchmarks.coverage.lines[].subject' "$RDS" | sort -u); do grep -qF ">$k<" "$PUB/registry/benchmarks/index.html" || { bad registry "coverage subject $k is not on /registry/benchmarks/"; regbad=1; }; done
   for pl in $(jq -r '.benchmarks.baselines[].platform' "$RDS"); do grep -qF ">$pl<" "$PUB/registry/benchmarks/index.html" || { bad registry "baseline $pl is not on /registry/benchmarks/"; regbad=1; }; done
   # nothing enumerates the registry by hand: a capability id or a module route typed into a
-  # template, the site generator, its jq programs or the navigation would be a second list
+  # template, the site generator, its jq programs or the navigation would be a second list.
+  # A hand-typed inventory names an id as a delimited literal — inside quotes, in a route
+  # (/registry/capabilities/<id>/), or as element text (>id<) — never as a bare expression
+  # token. The bare token is what a Tera data path looks like: `plan.issues` in
+  # `[i for i in plan.issues]` is the plan dataset's field, and the day a capability named
+  # plan.issues appeared, a fixed-string match reported four templates as an inventory they
+  # were not. The delimiters keep every pass this check ever made and still catch the list.
   for id in $(jq -r '.registry.builtin[].id' "$RDS"); do
-    hit="$(grep -l -F -- "$id" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/lib/*.jq "$SITE"/data/nav.toml 2>/dev/null || true)"
+    esc="$(printf '%s' "$id" | sed 's/[.[\*^$]/\\&/g')"
+    hit="$(grep -l -E -- "[\"'\''/>]${esc}[\"'\''/<]" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/lib/*.jq "$SITE"/data/nav.toml 2>/dev/null || true)"
     [ -z "$hit" ] || { bad registry "capability $id is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; regbad=1; }
   done
   grep -qE '/registry/(modules|capabilities)/[a-z]' "$SITE/data/nav.toml" && { bad registry "nav.toml enumerates a module or capability route by hand"; regbad=1; }
@@ -300,8 +307,12 @@ if [ -f "$CLIJ" ]; then
   done | while read -r l; do bad cli "$l"; done
   # every example command line a page shows is one the crate's tests execute: the argument
   # vectors are the same document, so a page cannot show a session nobody ran
+  # The page carries the command HTML-escaped — an example with quotes in its argument
+  # vector renders `'` as &#39; and `"` as &quot; — so the comparison is made against the
+  # escaped form the template produces, not the raw string the data holds.
   jq -r '.commands[].examples[].command' "$CLIJ" | while read -r c; do
-    grep -rqF "$c" "$PUB"/docs/cli/ || echo "the example \`$c\` is in the data and on no page"
+    e="$(printf '%s' "$c" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g")"
+    grep -rqF "$e" "$PUB"/docs/cli/ || echo "the example \`$c\` is in the data and on no page"
   done | while read -r l; do bad cli "$l"; done
   # nothing enumerates the command line by hand: a command's route typed into a template,
   # the site generator, its jq programs or the navigation would be a second list. The index
@@ -675,5 +686,29 @@ else
   fi
 fi
 [ "$distbad" = 0 ] && ok install "/install.sh is served as the model's URL names it, the homepage and the installation page show the command it composes, and every published release is complete"
+
+# 18. a publication offers no surface it cannot answer for. Every route the projection
+# declares `served-only` needs a running process, so this site may name it and must not
+# link it: a link here is a promise nobody keeps, and the reason it is not linked belongs
+# in the surface's declared availability rather than in a test on the page's own address.
+# The root is the one mount a publication answers for with another surface — its
+# application owns `/` — so a link there lands on a page rather than on a promise, and the
+# check leaves it alone.
+OA="$SITE/data/generated/openapi.json"; surfbad=0
+served="$(jq -r '.infrastructure[] | select(.availability=="served-only" and .path != "/") | .path' "$OA")"
+[ -n "$served" ] || { bad surface "no route declares itself served-only; the availability is not reaching this page"; surfbad=1; }
+for route in $served; do
+  # the mount itself, and anything under it, as a link a reader could follow
+  if grep -rhoE 'href="[^"]*"' $pages | grep -qE "href=\"($PREFIX)?$route(/[^\"]*)?\"" ; then
+    bad surface "a published page links $route, which only a running server answers"; surfbad=1
+  fi
+  # the class list is presentation and changes with it — a long path gained `break-all` so it
+  # wraps at 320px. What this asserts is that the route is NAMED in a code element, not what
+  # that element is styled with, so it matches the attribute rather than one spelling of it.
+  grep -qE "<code class=\"[^\"]*font-mono text-heading\">$route</code>" "$PUB/docs/api/index.html" \
+    || { bad surface "$route is not named on /docs/api/"; surfbad=1; }
+done
+grep -qF 'while a server runs' "$PUB/docs/api/index.html" || { bad surface "/docs/api/ does not say which routes need a server"; surfbad=1; }
+[ "$surfbad" = 0 ] && ok surface "every served-only route is named on /docs/api/ and linked from nowhere: $(printf '%s ' $served)"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

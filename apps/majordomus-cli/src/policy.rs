@@ -159,6 +159,21 @@ pub fn sha256_hex(text: &str) -> String {
     format!("{:x}", h.finalize())
 }
 
+/// Hex SHA-256 of arbitrary bytes: the same digest [`sha256_hex`] takes, for content that
+/// is not necessarily text. A file the repository tracks may hold anything, and decoding it
+/// to hash it would be a decision about its encoding that nothing here is entitled to make.
+///
+/// ```
+/// use majordomus_cli::policy::{sha256_bytes_hex, sha256_hex};
+/// assert_eq!(sha256_bytes_hex(b"majordomus"), sha256_hex("majordomus"));
+/// assert_ne!(sha256_bytes_hex(&[0xff, 0xfe]), sha256_bytes_hex(&[0xfe, 0xff]));
+/// ```
+pub fn sha256_bytes_hex(bytes: &[u8]) -> String {
+    let mut h = Sha256::new();
+    h.update(bytes);
+    format!("{:x}", h.finalize())
+}
+
 /// A path is inside `root` after lexical normalisation: no absolute path, no `..`
 /// component, nothing empty.
 pub fn is_safe_relative(path: &str) -> bool {

@@ -43,6 +43,7 @@
 //! changes and the untracked files are the same on the other side. Every mutation holds one
 //! repository-scoped [`lock::WorktreeLock`], so two agents cannot half-register one path.
 
+pub(crate) mod direnv;
 pub(crate) mod error;
 pub mod fingerprint;
 pub(crate) mod git;
@@ -54,7 +55,9 @@ pub(crate) mod path;
 pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
+pub(crate) mod trace;
 
+pub use direnv::EnvrcApproval;
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
 pub use fingerprint::WorktreeFingerprint;
 pub use identity::{RepositoryIdentity, ResolvedPath, Trunk, TrunkSource};
@@ -69,3 +72,7 @@ pub use model::{
 pub use path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
 pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
+pub use trace::{
+    Attribution, BranchTrace, CommitAttribution, CommitRef, Integration, IssueTrace, TraceReport,
+    TraceTallies, Tracer,
+};

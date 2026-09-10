@@ -585,6 +585,7 @@
       ],
       "tests": {
         "behaviour": [
+          "106_context_peers",
           "15_command_surface",
           "23_context",
           "25_continuity_lifecycle"
@@ -870,6 +871,7 @@
       "tests": {
         "behaviour": [
           "04_start_check",
+          "108_scope_after_trunk_merge",
           "15_command_surface",
           "17_doctrine_enforcement",
           "19_end_to_end",
@@ -878,6 +880,8 @@
         ],
         "negative": [
           "04_start_check",
+          "103_obligations",
+          "108_scope_after_trunk_merge",
           "17_doctrine_enforcement",
           "19_end_to_end",
           "21_decision_question",
@@ -985,6 +989,7 @@
         ],
         "negative": [
           "06_finish",
+          "103_obligations",
           "16_profiles",
           "17_doctrine_enforcement",
           "19_end_to_end",
@@ -1539,6 +1544,150 @@
       "doc_md": "\nList, show and render repository-local prompt assets. Read-only.\n\nAn asset is `.ai/repo/prompts/<name>.md`: YAML front matter with `name` (matching the\nfilename) and a non-empty `description`, then a body. They are small, versioned with the\nrepository, and provider-neutral — a prompt library is not the goal, and nothing here\ninvokes a model.\n\n**Rendering substitutes a closed set of tokens and no others.** Inline: `{{TASK}}`,\n`{{TASK_ID}}`, `{{PROFILE}}`, `{{SCOPE}}`, `{{OWNER}}`, `{{BRANCH}}`, `{{HEAD}}`,\n`{{WORKING_TREE}}`, `{{REPOSITORY}}`, `{{NOW}}`. Alone on a line: `{{OPEN_QUESTIONS}}`,\n`{{DECISIONS}}`, `{{CHECKPOINT}}`, `{{HANDOVER}}`, `{{CONTEXT}}`.\n\nThere is no templating language: no conditionals, no loops, no includes, no shell. An\nunknown token is an error, exactly as an unknown configuration key is, because a prompt\nthat silently renders `{{TSAK}}` as literal text is worse than one that refuses. `doctor`\nand `watch` validate every asset for the same reason.\n\n```\n$ majordomus prompt list\ncontinue               resume a task from durable state instead of from someone's memory\ndebug                  frame a defect so that the fix is proven, not asserted\nhandover               produce a continuation record body for the current task\nreview                 review the working diff against the claimed scope and the finish contract\n$ majordomus prompt render debug | head -3\nTask t-20260903193012-a4f1 on branch main at 3f2a9c1e...: fix the OAuth callback\n\nScope: lib/auth\n```"
     },
     {
+      "name": "evidence",
+      "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+      "category": "task",
+      "stage": "work",
+      "class": "local-mutation",
+      "read_only": false,
+      "requires_task": "active",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]",
+      "demo": "obligation-evidence",
+      "note": null,
+      "reads": [
+        "share/obligations.yaml",
+        ".ai/local/state/current.yaml"
+      ],
+      "writes": [
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        12,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "103_obligations"
+        ],
+        "negative": [
+          "103_obligations"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "evidence",
+        "title": "What the task owed, and what proves it",
+        "intro": "A task's scope says where a worker may write. Its requires says what the worker owes. Evidence discharges one obligation, and carries the hash of the files that obligation names, so that changing any of them takes the proof away rather than leaving it behind.",
+        "scenarios": [
+          {
+            "id": "records",
+            "title": "Recording a discharge",
+            "given": {
+              "active task": true,
+              "the task owes tests": true
+            },
+            "setup": "task-owes",
+            "run": [
+              "evidence",
+              "--covers",
+              "tests",
+              "--type",
+              "test",
+              "--command",
+              "bash test/run.sh"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "evidence: tests recorded"
+              ]
+            },
+            "explain": "The line lands in the ledger, which is already append-only and integrity-checked, and carries the hash of the tracked files the obligation names. Nothing else is written; a second store of evidence would be a second account of the same facts.",
+            "setup_sh": "# ... and an active task that owes an obligation, with work done inside its scope. The\n# obligation is written into the record the way a caller would declare it, because what the\n# scenario is about is the discharge, not how the list got there.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" start \"narrow the parser\" --scope lib >/dev/null\necho work >> lib/a\npython3 - <<'PY'\nimport io\np = '.ai/local/state/current.yaml'\ns = io.open(p, encoding='utf-8').read()\nio.open(p, 'w', encoding='utf-8').write(s.replace('outcome:', 'requires:\\n  - tests\\noutcome:'))\nPY",
+            "stdin_body": null
+          },
+          {
+            "id": "not-promised",
+            "title": "For something the task never promised",
+            "given": {
+              "active task": true,
+              "the task owes tests": true
+            },
+            "setup": "task-owes",
+            "run": [
+              "evidence",
+              "--covers",
+              "docs",
+              "--command",
+              "scripts/ci/reference-check"
+            ],
+            "expect": {
+              "exit": 15,
+              "stdout_contains": [
+                "does not require 'docs'"
+              ]
+            },
+            "explain": "Recording evidence against an obligation nobody declared is how a checklist grows entries nobody asked for. The refusal names what the task does require.",
+            "setup_sh": "# ... and an active task that owes an obligation, with work done inside its scope. The\n# obligation is written into the record the way a caller would declare it, because what the\n# scenario is about is the discharge, not how the list got there.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" start \"narrow the parser\" --scope lib >/dev/null\necho work >> lib/a\npython3 - <<'PY'\nimport io\np = '.ai/local/state/current.yaml'\ns = io.open(p, encoding='utf-8').read()\nio.open(p, 'w', encoding='utf-8').write(s.replace('outcome:', 'requires:\\n  - tests\\noutcome:'))\nPY",
+            "stdin_body": null
+          },
+          {
+            "id": "narrative",
+            "title": "Without a command or an artifact",
+            "given": {
+              "active task": true,
+              "the task owes tests": true
+            },
+            "setup": "task-owes",
+            "run": [
+              "evidence",
+              "--covers",
+              "tests"
+            ],
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "narrative is not evidence"
+              ]
+            },
+            "explain": "An assertion that something was done is the thing this command exists to replace. Either a command produced the evidence or an artifact points at it.",
+            "setup_sh": "# ... and an active task that owes an obligation, with work done inside its scope. The\n# obligation is written into the record the way a caller would declare it, because what the\n# scenario is about is the discharge, not how the list got there.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" start \"narrow the parser\" --scope lib >/dev/null\necho work >> lib/a\npython3 - <<'PY'\nimport io\np = '.ai/local/state/current.yaml'\ns = io.open(p, encoding='utf-8').read()\nio.open(p, 'w', encoding='utf-8').write(s.replace('outcome:', 'requires:\\n  - tests\\noutcome:'))\nPY",
+            "stdin_body": null
+          },
+          {
+            "id": "no-task",
+            "title": "With no active task",
+            "given": {
+              "active task": false
+            },
+            "setup": "installed",
+            "run": [
+              "evidence",
+              "--covers",
+              "tests",
+              "--command",
+              "bash test/run.sh"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no active task"
+              ]
+            },
+            "explain": "An obligation is owed by a task. With nothing to attach it to, the evidence would describe no promise.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nRecord that one obligation the active task declared has been discharged.\n\n```\nmajordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]\n```\n\nA task's `scope` says where a worker may write; its `requires` says what the worker owes\nbefore the outcome `completed` is available. The tokens are declared in\n`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,\ntarget, pages, deploy, verify — each naming the command that discharges it and, where the\nfact is local, the pathspecs its evidence is taken over.\n\n`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary\ndoes not declare exits `2`; a token the active task never promised exits `15`, because\nrecording evidence for something nobody asked for is how a checklist grows entries nobody\nwanted.\n\n**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,\nthe command or artifact, and the hash of the tracked files the obligation names. Nothing\nelse is written; the ledger is already append-only, ordered and integrity-checked, and its\nenvelope already carries the head, the branch and the session.\n\nThat hash is the point. Evidence discharges an obligation only while the recomputed hash of\nits inputs equals the recorded one, so a change to any file the obligation names takes the\nproof away rather than leaving it behind — the same currency question the site's own\n`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an\nintegration, a publication, a deployment) has no inputs and is bound instead to the commit\nit was taken at, judged `exact | advanced | diverged | different_context` like every other\nrecord here.\n\n`check` and `finish` evaluate every obligation on every run through the doctrine\n`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on\nit; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,\nand refusing that would teach them to claim `completed` instead."
+    },
+    {
       "name": "skills",
       "summary": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
       "category": "memory",
@@ -2005,7 +2154,9 @@
           "42_dag_waves",
           "43_plan_command",
           "44_model_doctrine",
-          "45_github_projection"
+          "45_github_projection",
+          "99_plan_capabilities",
+          "99_work_graph_chain"
         ],
         "negative": [
           "40_project_model",

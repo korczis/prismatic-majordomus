@@ -152,7 +152,7 @@ mj_validate_scope() {
     case " $allow_gen " in *" $f "*) continue ;; esac
     inside=0
     for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
-    if [ "$inside" = 1 ]; then n_in=$((n_in+1)); else n_out=$((n_out+1)); mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "git status --porcelain; git diff --name-only $(mj_cur head) HEAD"; fi
+    if [ "$inside" = 1 ]; then n_in=$((n_in+1)); else n_out=$((n_out+1)); mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "git status --porcelain; git log --first-parent --no-merges --name-only --format= $(mj_cur head)..HEAD"; fi
   done
   [ "$n_out" = 0 ] && mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   MJ_TOUCHED_IN="$n_in"
@@ -259,3 +259,5 @@ mj_report_overlap_from_current() {
 . "$MJ_LIB_DIR/commands.sh"
 # shellcheck source=usecase.sh
 . "$MJ_LIB_DIR/usecase.sh"
+# shellcheck source=evidence.sh
+. "$MJ_LIB_DIR/evidence.sh"

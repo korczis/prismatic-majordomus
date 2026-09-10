@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/workspace/workspace.v1.schema.json",
+  "x-majordomus-schema": "majordomus.workspace/v1",
+  "title": "Workspace",
+  "description": "An external workspace: a body of content held by another vendor, over which the operator of this repository is already authenticated, and which this repository reads. A workspace is not a provider — a provider is a tool that works in this repository (ADR 0024) — and the two are named after the same vendors, so the distinction is stated rather than inferred. This object is the declaration: which workspace exists, who holds it, what the operator asserts they authorised, which origins an adapter may observe, which browser profile reaches it and which capabilities the adapter is expected to negotiate. It carries no content and no credential. The synced content lives under .ai/local/workspaces/, is this checkout's state, and is never a source (ADR 0005, ADR 0025).",
+  "x-majordomus-allow": "workspace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kind",
+    "id",
+    "title",
+    "vendor",
+    "upstream",
+    "authorisation",
+    "access",
+    "capabilities"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "workspace/v1"
+    },
+    "kind": {
+      "const": "workspace"
+    },
+    "id": {
+      "description": "The identity of this workspace within the repository, `[a-z][a-z0-9-]*`. Stable across renames upstream, because a display title is never an identity.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "description": "One line naming the workspace, for a listing. The vendor's display name may change under it; the id does not.",
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "description": "One line: what this workspace holds and why this repository reads it.",
+      "type": "string"
+    },
+    "status": {
+      "description": "declared: the object exists and nothing has been synced from it. active: it is synced. retired: it was, and the declaration is kept for the record while the store is not.",
+      "enum": ["declared", "active", "retired"],
+      "default": "declared"
+    },
+    "vendor": {
+      "$ref": "#/$defs/vendor"
+    },
+    "upstream": {
+      "$ref": "#/$defs/upstream"
+    },
+    "authorisation": {
+      "$ref": "#/$defs/authorisation"
+    },
+    "access": {
+      "$ref": "#/$defs/access"
+    },
+    "capabilities": {
+      "description": "The capabilities an adapter is expected to negotiate for this workspace. Expectation, not permission: an adapter that cannot provide one reports it unavailable rather than returning an empty success, and one listed here that the vendor withdrew is a diagnostic rather than a silence.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "workspace.read",
+          "conversations.read",
+          "conversations.watch",
+          "messages.read",
+          "messages.watch",
+          "files.read",
+          "files.download",
+          "instructions.read"
+        ]
+      }
+    },
+    "created_at": {
+      "$ref": "#/$defs/date"
+    },
+    "updated_at": {
+      "$ref": "#/$defs/date"
+    }
+  },
+  "$defs": {
+    "date": {
+      "description": "A calendar date, `YYYY-MM-DD`.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "vendor": {
+      "description": "Who holds the workspace, and the only origins an adapter may observe on its behalf. The origin list is the scope of observation, not a hint: traffic to anything not named here is never recorded (ADR 0025).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "origins"],
+      "properties": {
+        "id": {
+          "description": "The vendor's identity within this repository, `[a-z][a-z0-9-]*`. Shares a namespace with nothing; a provider of the same name is a different object.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "name": {
+          "description": "The name a person knows the vendor by.",
+          "type": "string",
+          "minLength": 1
+        },
+        "origins": {
+          "description": "The origins an adapter may observe, each a scheme and host with no path. Observation outside this list is a defect, not a configuration choice.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^https://[a-z0-9.-]+$"
+          }
+        }
+      }
+    },
+    "upstream": {
+      "description": "What the vendor calls this workspace. The identity is the vendor's own and is opaque here: it is carried, compared and never parsed for meaning.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "description": "The vendor's own identifier for the workspace, as the vendor gave it. Opaque.",
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "description": "What the vendor calls this shape of container. `project` for a ChatGPT Project; another vendor's word goes here unchanged, because translating it would lose the only place the vendor's vocabulary is recorded.",
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "description": "Where a person opens the workspace. Convenience for a reader; nothing resolves it.",
+          "type": "string",
+          "pattern": "^https://"
+        }
+      }
+    },
+    "authorisation": {
+      "description": "What the operator asserts they are entitled to read, in their own words, with the date they asserted it. This is the boundary an adapter may not exceed, and it is a statement by a person rather than a permission granted by a schema.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asserted_by", "asserted_at", "statement"],
+      "properties": {
+        "asserted_by": {
+          "description": "Who asserts it: a role or a name, as the repository writes people elsewhere.",
+          "type": "string",
+          "minLength": 1
+        },
+        "asserted_at": {
+          "$ref": "#/$defs/date"
+        },
+        "statement": {
+          "description": "What is authorised, in a sentence a person would defend: whose account, which workspace, read or write, and any limit that matters.",
+          "type": "string",
+          "minLength": 1
+        },
+        "write": {
+          "description": "Whether the operator authorises writing back to the vendor. False everywhere until a separate decision says otherwise; a read adapter never consults it.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "access": {
+      "description": "How an adapter reaches the workspace. No credential, no token, no cookie and no path to one appears here: the browser profile is named by a label the operator recognises, and what that label resolves to lives outside this repository.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["browser_profile", "transports"],
+      "properties": {
+        "browser_profile": {
+          "description": "The label of an already-authenticated browser profile, as the operator's own configuration names it. A label, never a filesystem path, never an environment variable holding a secret, never a credential.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "transports": {
+          "description": "The transports this workspace may be reached over, in the order they are preferred. `official` is a documented vendor interface; `browser` is the authenticated browser this repository already drives; `private_http` is an observed, fingerprinted contract used only where one has been validated, and never in place of a fallback.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["official", "browser", "private_http"]
+          }
+        }
+      }
+    }
+  }
+}

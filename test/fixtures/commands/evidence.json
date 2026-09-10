@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "command": "evidence",
+  "title": "What the task owed, and what proves it",
+  "intro": "A task's scope says where a worker may write. Its requires says what the worker owes. Evidence discharges one obligation, and carries the hash of the files that obligation names, so that changing any of them takes the proof away rather than leaving it behind.",
+  "scenarios": [
+    {
+      "id": "records",
+      "title": "Recording a discharge",
+      "given": {
+        "active task": true,
+        "the task owes tests": true
+      },
+      "setup": "task-owes",
+      "run": [
+        "evidence",
+        "--covers",
+        "tests",
+        "--type",
+        "test",
+        "--command",
+        "bash test/run.sh"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "evidence: tests recorded"
+        ]
+      },
+      "explain": "The line lands in the ledger, which is already append-only and integrity-checked, and carries the hash of the tracked files the obligation names. Nothing else is written; a second store of evidence would be a second account of the same facts."
+    },
+    {
+      "id": "not-promised",
+      "title": "For something the task never promised",
+      "given": {
+        "active task": true,
+        "the task owes tests": true
+      },
+      "setup": "task-owes",
+      "run": [
+        "evidence",
+        "--covers",
+        "docs",
+        "--command",
+        "scripts/ci/reference-check"
+      ],
+      "expect": {
+        "exit": 15,
+        "stdout_contains": [
+          "does not require 'docs'"
+        ]
+      },
+      "explain": "Recording evidence against an obligation nobody declared is how a checklist grows entries nobody asked for. The refusal names what the task does require."
+    },
+    {
+      "id": "narrative",
+      "title": "Without a command or an artifact",
+      "given": {
+        "active task": true,
+        "the task owes tests": true
+      },
+      "setup": "task-owes",
+      "run": [
+        "evidence",
+        "--covers",
+        "tests"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "narrative is not evidence"
+        ]
+      },
+      "explain": "An assertion that something was done is the thing this command exists to replace. Either a command produced the evidence or an artifact points at it."
+    },
+    {
+      "id": "no-task",
+      "title": "With no active task",
+      "given": {
+        "active task": false
+      },
+      "setup": "installed",
+      "run": [
+        "evidence",
+        "--covers",
+        "tests",
+        "--command",
+        "bash test/run.sh"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no active task"
+        ]
+      },
+      "explain": "An obligation is owed by a task. With nothing to attach it to, the evidence would describe no promise."
+    }
+  ]
+}

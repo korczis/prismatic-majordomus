@@ -35,6 +35,7 @@ ROOT COMPOSITION            compose_modules![repository, objects, capabilities, 
 CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
         ↓
 DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit
+                            · the execution plane and its live channel
                             · benchmark targets and coverage · cache policy · perf counters
                             · docs/generated/* · the website's /registry/ pages
 ```
@@ -104,7 +105,8 @@ A **capability** is a descriptor with:
 | field | meaning |
 |---|---|
 | `id` | the canonical identity: a namespace, a dot, an opaque local part (`repository.info`, `rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`); unique across both sources |
-| `kind` | `query`: executable, read-only, one typed handler; `command`: executable, one typed handler, changes this process's own memory and nothing else (a peer announcing itself), bound to `POST` and announced to MCP clients as not read-only; `resource`: declarative content, read as it is. No kind writes to the repository |
+| `kind` | `query`: executable, read-only, one typed handler; `command`: executable, one typed handler, changes this process's own memory and nothing else (a peer announcing itself), bound to `POST` and announced to MCP clients as not read-only; `resource`: declarative content, read as it is. No kind writes to the repository, and how long a call takes is not a kind |
+| `execution` | what running it as an execution means: the effect and whether two may overlap, classified from the kind; and whether asking it to stop achieves anything, which only its handler can say and which `.cancellable()` on the declaration declares ([`EXECUTIONS.md`](@/docs/executions.md)) |
 | `title`, `description` | the words every projection shows |
 | `input`, `output` | canonical JSON Schemas; for a query, derived from its Rust types; for a resource, the object view |
 | `provenance` | `builtin` with the module, or `declarative` with the repository-relative path, directory, source class, section and, for a member of a collection file, the member's key path |
@@ -282,6 +284,7 @@ written by hand.
 | benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` and `docs/generated/benchmarks.{json,yaml}` (`majordomus/benchmark-matrix/v1`) — one computation, three encodings |
 | registry manifest | the builtin registry as data: modules, descriptors with schemas and the file each was composed in, declarative kinds, system targets; the boundary the site generator reads for its routes | `docs/generated/registry.{json,yaml}` (`majordomus/capability-registry/v1`) |
 | artifact manifest | the generation plan itself: every artifact with the document it projects, its encoding, the schema its content satisfies, its source, size and hash | `docs/generated/artifacts.{json,yaml,md}` (`majordomus/generated-artifacts/v1`); read back by `artifacts.list` — `majordomus_artifacts`, `GET /api/v1/artifacts`, `majordomus://artifacts`, `/cockpit/artifacts`, and the site's `/registry/artifacts/` |
+| executions | every executable capability can be started as an execution, watched over the live channel and read back; the descriptor's `execution` policy decides what a client may offer, and nothing is registered a second time | `majordomus run`, `executions.*`, `GET /events`, `/cockpit/executions` ([`EXECUTIONS.md`](@/docs/executions.md)) |
 | perf counters | the executor's and the startup phases' counters | `perf.counters`: `majordomus_perf`, `GET /api/v1/perf` |
 | allow-lists | the schemas | `share/allow/*.txt`, each under a `#` provenance banner every reader of one skips |
 | site dataset | the registry (fingerprint, counts, every builtin descriptor in full with its source file, every module with its ids), the index (fingerprint, every object without its content), the kinds, the declared provider projections, the command line, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines; no timestamps of its own, no absolute paths, no git state | `site/data/registry/registry.json` (`majordomus-site-registry/v2`) — `majordomus generate site`; rendered under `/registry/` (overview, executable, modules, capabilities, cli, mcp, benchmarks) |
@@ -430,8 +433,9 @@ In the file of its module under `apps/majordomus-cli/src/capability/builtin/`:
    an MCP session, the calling peer,
 3. add one `capability! { id, title, description, input, output, stability, exposure,
    tags, handler }` block to the module's `capabilities: [...]`, with
-   `kind: CapabilityKind::Command` after the id when it changes this process's memory
-   and `cache: CachePolicy::Process { .. }` when a measurement says so,
+   `kind: CapabilityKind::Command` after the id when it changes this process's memory,
+   `cache: CachePolicy::Process { .. }` when a measurement says so, and `.cancellable()`
+   after the block when the handler looks at `ctx.progress.cancelled()` and stops,
 4. run `majordomus generate` and `majordomus capabilities validate` (or `just generate`
    and `just validate`); commit the regenerated files under `docs/generated/`,
 5. add a behavioural test of the handler's semantics.
@@ -505,6 +509,7 @@ Cockpit's Artifacts page and the site's `/registry/artifacts/` all show.
 | `capability 'x' is defined twice: <a> and <b>` | two sources claim one id | rename one, or delete the duplicate |
 | `MCP tool 'n' is claimed by 'a' and 'b'`, `HTTP route GET /p is claimed by …`, `CLI path … is claimed by …` | two capabilities project to one name | change one exposure |
 | `invalid HTTP exposure: path '/x' is not under /api/v1/` | a route outside the versioned prefix | move it under the prefix |
+| `declares the execution policy …; its kind makes it …` | a descriptor carries a policy that is neither its kind's nor its kind's with cancellation | let the declaration classify itself, or add `.cancellable()` |
 | `… is planned and cannot be exposed as executable through MCP tool` | a planned capability declares an executable exposure | drop the exposure until it is implemented |
 | `unknown_key … not in schema 'rule': owner` | a declarative file carries a key its schema does not allow | remove the key, or extend the schema in the repository's `schemas/` for a repository kind |
 | `schema_violation … class: "fatal" is not one of …` | a value fails a constraint | fix the value |
