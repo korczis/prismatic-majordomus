@@ -365,6 +365,21 @@ similarity: <code>feature/I00420-x</code> names no issue.</p>
 <p>A handover records the branch and the worktree; a session resumed elsewhere derives the
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.</p>
+<h3 id="the-envrc-of-a-new-path"><a class="zola-anchor" href="#the-envrc-of-a-new-path" aria-label="Anchor link for: the-envrc-of-a-new-path">The <code>.envrc</code> of a new path</a></h3>
+<p>direnv approves an <code>.envrc</code> by path and content, so the repository's own <code>.envrc</code> at a
+path that did not exist a moment ago is a file direnv has never seen, and the first <code>cd</code>
+into a fresh worktree was answered with <code>direnv: error .envrc is blocked</code>. Measured on
+2026-09-09: 36 of the 37 worktrees that carried an <code>.envrc</code> were blocked, and the one
+approved was the primary checkout. <code>create</code>, <code>ensure</code> and every moved step of <code>migrate</code>
+therefore carry the primary checkout's approval to the new path — <code>direnv allow</code> on the
+worktree's <code>.envrc</code>, at the moment the path exists — and report what happened on an
+<code>envrc</code> line and in the <code>envrc</code> field of the JSON.</p>
+<p>Carried, not granted: the worktree's <code>.envrc</code> must be byte-for-byte the primary
+checkout's, and the primary checkout's must itself be approved, or nothing is approved and
+the report says which (<code>differs</code>, <code>not_approved_in_primary</code>). A branch with an <code>.envrc</code> of
+its own is a file the person has not read, and approving it for them is the one thing
+<code>direnv allow</code> exists to prevent. Without direnv on the PATH the outcome is
+<code>direnv_absent</code> and nothing is blocked, because nothing would load the file.</p>
 <p>The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and <code>cleanup</code> deliberately deletes
 nothing — it names what is merged and clean and leaves the act to a person, because a tool
@@ -437,6 +452,7 @@ says where to <code>cd</code>.</p>
 <tr><td>a missing directory</td><td><code>worktree.missing</code> / <code>worktree.stale_registration</code></td><td><code>majordomus worktree repair</code></td></tr>
 <tr><td>a locked worktree</td><td><code>worktree.locked</code>, the step blocked</td><td><code>git worktree unlock &lt;path&gt;</code>, then migrate</td></tr>
 <tr><td>the wrong branch in a worktree</td><td><code>worktree.branch_already_checked_out</code> on create</td><td>migrate the worktree that holds it, or work there</td></tr>
+<tr><td><code>direnv: error .envrc is blocked</code> in a worktree</td><td><code>envrc   differs …</code> or <code>envrc   the primary checkout's is not approved …</code> on the create or migrate report</td><td>read the file, then <code>direnv allow</code> there; approve the primary checkout's first when that is what the report names. A worktree older than the report: <code>majordomus worktree ensure &lt;branch&gt;</code> carries the approval now</td></tr>
 <tr><td>the primary checkout on a feature branch</td><td><code>worktree.primary_on_non_trunk</code>; the guard refuses</td><td>when clean, <code>git switch &lt;trunk&gt;</code>; then <code>worktree create &lt;branch&gt;</code></td></tr>
 <tr><td>a scratch checkout of a session on a branch</td><td><code>worktree.ephemeral</code>; the guard refuses</td><td><code>git switch --detach</code> there and continue in the canonical worktree, or <code>migrate --include-ephemeral --only &lt;branch&gt;</code></td></tr>
 <tr><td>a move that crossed devices</td><td><code>worktree.cross_device</code> on the step, or a refusal</td><td><code>migrate --allow-copy</code></td></tr>
@@ -488,7 +504,7 @@ topology changes outside the process.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6ccc71d6796c8b0f8311e026ad9b90a8b8ab390a" class="font-mono underline">6ccc71d</a> · inputs <span class="font-mono">286925e6d60c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7526aac2a0cde7a2a8239864859c2b21a3972934" class="font-mono underline">7526aac</a> · inputs <span class="font-mono">e999c8a324b1</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

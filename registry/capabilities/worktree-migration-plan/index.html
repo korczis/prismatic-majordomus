@@ -436,6 +436,94 @@ checkout off the trunk. Each says what a person does about it.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;EnvrcApproval&quot;: {
+      &quot;description&quot;: &quot;What became of the `.envrc` of a worktree that was just created, found, or moved.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;direnv accepted it: the next `cd` loads the environment.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;approved&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;no_envrc&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;direnv_absent&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The worktree&#39;s `.envrc` is not the primary checkout&#39;s, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person&#39;s.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;differs&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The primary checkout&#39;s `.envrc` is not approved, so there is no approval to carry.&quot;,
+          &quot;properties&quot;: {
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;not_approved_in_primary&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;direnv was asked and refused, or could not be run; the message is its own.&quot;,
+          &quot;properties&quot;: {
+            &quot;message&quot;: {
+              &quot;description&quot;: &quot;direnv&#39;s standard error, or the error running it.&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;outcome&quot;: {
+              &quot;const&quot;: &quot;failed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;outcome&quot;,
+            &quot;message&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
     &quot;MigrationAction&quot;: {
       &quot;description&quot;: &quot;How a step moves its worktree.&quot;,
       &quot;oneOf&quot;: [
@@ -511,6 +599,17 @@ checkout off the trunk. Each says what a person does about it.</td>
         &quot;dirty&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/DirtyState&quot;,
           &quot;description&quot;: &quot;Its uncommitted work, which moves with it.&quot;
+        },
+        &quot;envrc&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EnvrcApproval&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout&#39;s approval carried there, or why it was not. Only on a moved step.&quot;
         },
         &quot;from&quot;: {
           &quot;description&quot;: &quot;Where it is.&quot;,
@@ -817,7 +916,7 @@ checkout off the trunk. Each says what a person does about it.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::worktree</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MigrationPlan</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">ef99796a20da653ed2b0ca6684bd3c3dcf973bb6449fc4dd77c81e8358fa4a58</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/worktree.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/worktree.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">84aa9db6bfc92dcd31ed3b826523453573d830230c4786bac1de57d2d72fb2bf</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.4.0</dd></div>
       </dl>
     </div>
@@ -849,7 +948,7 @@ checkout off the trunk. Each says what a person does about it.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6ccc71d6796c8b0f8311e026ad9b90a8b8ab390a" class="font-mono underline">6ccc71d</a> · inputs <span class="font-mono">286925e6d60c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7526aac2a0cde7a2a8239864859c2b21a3972934" class="font-mono underline">7526aac</a> · inputs <span class="font-mono">e999c8a324b1</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
