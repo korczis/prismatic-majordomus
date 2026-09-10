@@ -95,9 +95,9 @@ NOW="$(atoms_of -)"
 GONE="$(LC_ALL=C comm -23 <(printf '%s\n' "$BASE") <(printf '%s\n' "$NOW") | sed '/^$/d')"
 NEW="$(LC_ALL=C comm -13 <(printf '%s\n' "$BASE") <(printf '%s\n' "$NOW") | sed '/^$/d')"
 
-if [ -n "$GONE" ]; then IMPLIED=major
-elif [ -n "$NEW" ]; then IMPLIED=minor
-else IMPLIED=patch
+if [ -n "$GONE" ]; then IMPLIED="major"
+elif [ -n "$NEW" ]; then IMPLIED="minor"
+else IMPLIED="patch"
 fi
 
 if [ "$IMPLIED_ONLY" = 1 ]; then printf '%s\n' "$IMPLIED"; exit 0; fi

@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# case-numbers-unique — a case number names one case.
+#
+# `bash test/run.sh 96_worktree_topology` is how a case is run, `test/cases/96_*` is how a
+# gate selects one, and "case 96" is how every rule, claim and commit message in this
+# repository refers to one. All three assume the number identifies the case. On
+# 2026-09-10 nineteen numbers on master were held by two to five files each — 97 by five —
+# because parallel sessions allocate a number from what they can see, and what they can see
+# is the tree at the moment they branched. Two of my own branches took 110 in the same
+# minute; neither was pushed, so no scan could have found the other.
+#
+# A number is claimed in the tree, which is the only place every session looks. This refuses
+# the next collision without demanding that fifty files be renumbered under sessions that
+# are mid-flight: the debt of the day it was written is recorded, and nothing may be added
+# to it. That is the ratchet `scripts/ci/rust-command-check` already uses here.
+#
+#   scripts/ci/case-numbers-unique                  refuse a duplicate that is not on the baseline
+#   scripts/ci/case-numbers-unique --strict         refuse every duplicate, baseline or not
+#   scripts/ci/case-numbers-unique --write-baseline record today's duplicates as accepted debt
+#   scripts/ci/case-numbers-unique --list           every number with more than one file
+#   MJ_ROOT=DIR ...                                 examine that repository instead of this one
+#
+# Exit 0 no duplicate outside the baseline · 10 there is one, and the refusal names the
+# files · 2 usage.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+CASES="test/cases"
+BASELINE=".ai/repo/ci/case-numbers-baseline.txt"
+MODE="check"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --strict) MODE="strict"; shift ;;
+    --write-baseline) MODE="write"; shift ;;
+    --list) MODE="list"; shift ;;
+    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "case-numbers-unique: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+[ -d "$CASES" ] || { echo "case-numbers-unique: no $CASES in $ROOT" >&2; exit 2; }
+
+# The number is what precedes the first underscore, taken verbatim: `87b` is a deliberate
+# second half of 87 and is its own number, not a duplicate of it. Anything else would make
+# the gate argue with a convention the repository already uses.
+# A glob rather than `ls | grep`: shellcheck refuses the latter at the gate's -S warning
+# level, and a case file whose name is not plain ASCII would survive the glob and not the
+# pipeline. A glob that matches nothing stays literal, so each loop tests for the file.
+numbers() {
+  local f b
+  for f in "$CASES"/*.sh; do
+    [ -e "$f" ] || continue
+    b="${f##*/}"; printf '%s\n' "${b%%_*}"
+  done | LC_ALL=C sort -u
+}
+files_of() {
+  local f
+  for f in "$CASES"/"$1"_*.sh; do
+    [ -e "$f" ] || continue
+    printf '%s\n' "${f##*/}"
+  done | LC_ALL=C sort
+}
+
+# Every file that shares its number with another, one per line, sorted: the shape both the
+# baseline and the comparison use, so neither can drift from the other.
+colliding() {
+  local n
+  for n in $(numbers); do
+    local fs; fs="$(files_of "$n")"
+    if [ "$(printf '%s\n' "$fs" | grep -c .)" -gt 1 ]; then printf '%s\n' "$fs"; fi
+  done | LC_ALL=C sort -u
+}
+
+COLLIDING="$(colliding)"
+
+case "$MODE" in
+  list)
+    for n in $(numbers); do
+      fs="$(files_of "$n" | tr '\n' ' ')"
+      [ "$(files_of "$n" | grep -c .)" -gt 1 ] && printf '%-5s %s\n' "$n" "$fs"
+    done
+    exit 0 ;;
+  write)
+    mkdir -p "$(dirname "$BASELINE")"
+    {
+      printf '# The case files that shared a number on the day this gate was written, and are\n'
+      printf '# allowed to keep sharing it. Nothing may be added: a new file that collides with\n'
+      printf '# any number is refused, including one that would join a collision listed here.\n'
+      printf '#\n'
+      printf '# Written by: scripts/ci/case-numbers-unique --write-baseline\n'
+      printf '# Shrinking this list is welcome; a renumbering removes its two lines.\n'
+      printf '%s\n' "$COLLIDING"
+    } > "$BASELINE"
+    printf 'case-numbers-unique: recorded %s file(s) in %s\n' \
+      "$(printf '%s' "$COLLIDING" | grep -c . || true)" "$BASELINE"
+    exit 0 ;;
+esac
+
+if [ "$MODE" = strict ]; then
+  ACCEPTED=""
+else
+  ACCEPTED="$( [ -f "$BASELINE" ] && grep -v '^#' "$BASELINE" | sed '/^$/d' | LC_ALL=C sort -u || true)"
+fi
+
+NEW="$(LC_ALL=C comm -23 <(printf '%s\n' "$COLLIDING" | sed '/^$/d') <(printf '%s\n' "$ACCEPTED" | sed '/^$/d'))"
+
+if [ -n "$NEW" ]; then
+  printf 'REFUSE a case number names one case, and these share one:\n\n'
+  printf '%s\n' "$NEW" | sed 's/^/  /' | while read -r f; do
+    n="${f%%_*}"
+    printf '  %-40s shares %s with: %s\n' "$(echo "$f" | sed 's/^ *//')" "$n" \
+      "$(files_of "$n" | grep -v -F -x "$(echo "$f" | sed 's/^ *//')" | tr '\n' ' ')"
+  done
+  printf '\n       `bash test/run.sh <number>_...` and every reference to "case <number>" assume\n'
+  printf '       the number identifies the case. Take a free one:\n'
+  printf '       scripts/ci/case-numbers-unique --list   shows what is taken\n'
+  exit 10
+fi
+
+n_accepted="$(printf '%s' "$ACCEPTED" | grep -c . || true)"
+if [ "$MODE" = strict ]; then
+  printf 'ok  every case number names one case\n'
+else
+  printf 'ok  no case number is newly shared (%s file(s) of accepted debt on the baseline)\n' "$n_accepted"
+fi
