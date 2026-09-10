@@ -163,11 +163,14 @@
 {% endcomponent plan_status %}
 
 {#- A labelled list rendered from canonical data. Empty lists render nothing at all rather
-    than an empty heading, so a record that declares no non-scope simply has no such section. -#}
+    than an empty heading, so a record that declares no non-scope simply has no such section.
+    `break-words` on the list, not on the item: prose written by a person names files and
+    commands (`test/cases/08_no_forbidden_constructs.sh`) that are longer than a phone is
+    wide, and overflow-wrap inherits, so one declaration covers both kinds of item. -#}
 {% component plan_list(title, items, mono="") %}
 {%- if items | length > 0 %}
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ title }}</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body">
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
   {%- for i in items %}<li{% if mono %} class="font-mono text-heading break-words"{% endif %}>{{ i }}</li>{% endfor -%}
 </ul>
 {%- endif -%}
