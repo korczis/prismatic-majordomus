@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Expose cheap liveness and readiness endpoints through the capability registry, so that the provider health check, the container test and the smoke suite all point at routes the registry knows about."
 why: "A health route added directly to the router would be invisible to OpenAPI, to the documentation and to the route-derived smoke suite — three projections silently missing the one endpoint the platform polls most."
-current_state: "system.health exists as a capability and aggregates index diagnostics, benchmark coverage and projection staleness. It is not a liveness probe: it is expensive and it can legitimately report failure while the process is perfectly able to serve traffic."
+current_state: "system.health still aggregates index diagnostics, benchmark coverage and projection staleness, and liveness and readiness are now separate registered capabilities in apps/majordomus-cli/src/capability/builtin/health.rs, each with its own handler and unit tests. 2026-09-10 changed the surrounding half as well: ADR 0035 made the server's own state a capability (server.status, GET /api/v1/server), the health report names the process behind the address, and readiness stopped meaning three unrelated things (PR #153, PR #164). What is not established here is the rest of the contract -- the measured cost inside the blocking-check budget, and a deployment object whose validation refuses a reference to a route that is not registered. Measured on master 6042f4286, 2026-09-10."
 desired_state: "Liveness answers whether this process is alive, cheaply and without touching the layer. Readiness answers whether it can serve traffic, checking only local initialisation. Both are registered, both are documented, and both have measured cost."
 scope:
   - apps/majordomus-cli/src/capability/builtin/health.rs
@@ -31,4 +31,4 @@ evidence_required:
   - cheap_measured
 risk: "A readiness check that grows into a dependency probe will fail a deployment because an unrelated service is down. Readiness answers one question: can this process serve a page."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10

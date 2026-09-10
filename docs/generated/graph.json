@@ -14912,7 +14912,6 @@
         "source": ".ai/repo/project/issues/I0901.yaml",
         "facts": {
           "created_at": "2026-09-06",
-          "current_state": "No deployment kind, no .ai/repo/deployments directory, no allow file and no schema exist. share/kinds.yaml registers every other kind the layer holds.",
           "depends_on": [],
           "evidence_required": [
             "kind_registered",
@@ -14936,7 +14935,7 @@
             "share/schemas"
           ],
           "slug": "deployment-kind",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -14952,7 +14951,6 @@
         "source": ".ai/repo/project/issues/I0902.yaml",
         "facts": {
           "created_at": "2026-09-06",
-          "current_state": "Nothing in apps/majordomus-cli reads a deployment object.",
           "depends_on": [
             "I0901"
           ],
@@ -14976,7 +14974,7 @@
             "apps/majordomus-cli/src/deploy"
           ],
           "slug": "typed-deployment-model",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "cargo clippy --workspace --all-targets --all-features -- -D warnings"
@@ -14999,7 +14997,6 @@
             "The benchmark coverage projection accounts for the new capabilities, as the coverage rule requires"
           ],
           "created_at": "2026-09-06",
-          "current_state": "The capability registry holds modules for capabilities, graph, health, objects, peers, perf, repository, scope and views. No deployment module exists.",
           "depends_on": [
             "I0902"
           ],
@@ -15024,7 +15021,7 @@
             "apps/majordomus-cli/src/capability/builtin/mod.rs"
           ],
           "slug": "deployment-capabilities",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
@@ -15116,7 +15113,7 @@
             "apps/majordomus-cli/src/capability/builtin/health.rs"
           ],
           "slug": "health-and-readiness-routes",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
@@ -15278,7 +15275,6 @@
             "The generated file states its source and its regeneration command without breaking the format, and generate --check fails on a manual edit"
           ],
           "created_at": "2026-09-06",
-          "current_state": "No Dockerfile exists anywhere in the repository.",
           "depends_on": [
             "I0902",
             "I0904",
@@ -15305,7 +15301,7 @@
             "apps/majordomus-cli/src/deploy/container.rs"
           ],
           "slug": "container-projection",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "majordomus generate --check",
             "cargo test --workspace --all-features"
@@ -15473,7 +15469,6 @@
             "The provider's own configuration validator accepts the generated file"
           ],
           "created_at": "2026-09-06",
-          "current_state": "No fly.toml exists. No region, resource envelope or cost profile is stated anywhere.",
           "depends_on": [
             "I0902",
             "I0903"
@@ -15500,7 +15495,7 @@
             "apps/majordomus-cli/src/deploy/fly.rs"
           ],
           "slug": "fly-configuration-projection",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "majordomus generate --check",
             "fly config validate"
@@ -17049,7 +17044,6 @@
             "Both cases are tested — the static build and a running server with the API present"
           ],
           "created_at": "2026-09-06",
-          "current_state": "The Swagger shell and the API are served by the running process. The published site has no way to know that.",
           "depends_on": [
             "I1004"
           ],
@@ -17073,7 +17067,7 @@
           ],
           "slug": "conditional-runtime-surfaces",
           "started_at": "2026-09-06T17:35:07Z",
-          "updated_at": "2026-09-06T17:35:07Z",
+          "updated_at": "2026-09-10",
           "validation": [
             "bash test/run.sh",
             "scripts/cockpit-probe"
@@ -17326,7 +17320,6 @@
             "Selectors are stable identifiers rather than presentational classes"
           ],
           "created_at": "2026-09-06",
-          "current_state": "A probe script drives the Cockpit's routes and interactions in a real browser.",
           "depends_on": [
             "I1014",
             "I1015",
@@ -17350,7 +17343,7 @@
             "scripts/cockpit-probe"
           ],
           "slug": "browser-tests",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "scripts/cockpit-probe"
           ],
@@ -17807,7 +17800,7 @@
             "apps/majordomus-cli/src/http/router.rs"
           ],
           "slug": "served-identity-visible",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"

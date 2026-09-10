@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Parse the canonical deployment object into strongly typed Rust — enums and newtypes rather than strings — and validate it so that a deployment that cannot work is refused before anything is built."
 why: "Generation from an unvalidated document produces a valid-looking Dockerfile pointing at a binary that does not exist. The validation is the point at which a deployment mistake costs a test failure instead of a failed production rollout."
-current_state: "Nothing in apps/majordomus-cli reads a deployment object."
+current_state: "apps/majordomus-cli/src/deploy/ exists and parses the deployment object into typed structures, and apps/majordomus-cli/src/capability/builtin/deploy.rs projects it through the registry. As with I0901 the work reached master without ever being recorded against the issue. Measured on master 6042f4286, 2026-09-10; not marked complete here because this issue's validation has not been rerun against that tree."
 desired_state: "A deploy module parses the object into typed structures, validates every invariant that can be decided locally, and reports a failure that names the file, the key, what was wrong and what to do."
 scope:
   - apps/majordomus-cli/src/deploy
@@ -32,4 +32,4 @@ evidence_required:
   - property_invariants
 risk: "Route validation needs the capability registry, which makes the deployment model depend on the index. Reading the registry that already exists is correct; building a second route list to avoid the dependency is not."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10
