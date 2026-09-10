@@ -3,7 +3,9 @@
 //! stdio to it; peers see each other and what they announced; MCP over HTTP at `/mcp`
 //! works for a client that speaks it directly; the server outlives its owner while a
 //! peer is attached, ends when the last one leaves, and a bridged peer takes over when
-//! its server dies. `--standalone` and `--inspect` touch no port and no lease.
+//! its server dies. `--standalone` and `--inspect` touch no port and no lease. A storm of
+//! clients released in the same instant still leaves one server, one board and a
+//! repository nobody wrote to.
 
 mod common;
 
@@ -1203,8 +1205,12 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
     c.initialize("gemini-cli");
     let repo = b.call("majordomus_repository", json!({}));
     assert_eq!(repo["isError"], false, "{repo}");
+    // `drain_log` is non-blocking, and the line this proves may still be in the pipe when
+    // the answer to the request has already arrived: waiting for the last of them —
+    // "re-attached" is logged after the replay it follows — is what makes the log complete
+    // rather than merely current. Under load this raced and lost.
+    b.wait_log("re-attached to the shared server");
     let log = b.drain_log();
-    assert!(log.contains("re-attached to the shared server"), "{log}");
     assert!(log.contains("announcement was replayed"), "{log}");
     let peers = c.call("majordomus_peers", json!({}));
     let sc = &peers["structuredContent"];
@@ -1221,4 +1227,188 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
     b.send(&json!({ "jsonrpc": "2.0", "method": "notifications/cancelled" }));
     assert_eq!(b.close(), 0);
     assert_eq!(c.close(), 0);
+}
+
+// ---------------------------------------------------------------- the storm
+
+/// How many clients start in the same instant. Two were tested, and two is not a storm: the
+/// race the election has to survive is the one where several processes read the same absent
+/// lease in the same millisecond, and only a barrier makes that happen on purpose.
+const STORM: usize = 6;
+
+#[test]
+fn a_storm_of_clients_converges_on_one_server_and_one_board() {
+    let f = Fixture::new();
+    let before = f.snapshot();
+    let root = f.root();
+    // released together, so the election is decided under contention rather than in the
+    // order a test happened to spawn its children
+    let gate = std::sync::Arc::new(std::sync::Barrier::new(STORM));
+    let mut clients: Vec<(usize, Mcp, Value)> = (0..STORM)
+        .map(|i| {
+            let root = root.clone();
+            let gate = std::sync::Arc::clone(&gate);
+            std::thread::spawn(move || {
+                gate.wait();
+                let mut m = Mcp::spawn(&root, &["--http-port", "0"]);
+                let init = m.initialize(&format!("storm-{i}"));
+                (i, m, init)
+            })
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .map(|h| h.join().expect("a client thread"))
+        .collect();
+
+    // exactly one bound a port; every other one bridged to it. The log lines may still be
+    // arriving when the last initialize has been answered, so this is waited for.
+    let deadline = Instant::now() + WAIT;
+    let logs = loop {
+        let logs: Vec<String> = clients.iter_mut().map(|(_, m, _)| m.drain_log()).collect();
+        let serving = logs
+            .iter()
+            .filter(|l| l.contains("listening on http://"))
+            .count();
+        let bridging = logs
+            .iter()
+            .filter(|l| l.contains("bridging this stdio session"))
+            .count();
+        if (serving, bridging) == (1, STORM - 1) {
+            break logs;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "one server and {} bridges expected, found {serving} and {bridging}:\n{}",
+            STORM - 1,
+            logs.join("\n---\n")
+        );
+        std::thread::sleep(Duration::from_millis(100));
+    };
+    let owner = logs
+        .iter()
+        .position(|l| l.contains("listening on http://"))
+        .expect("one of them serves");
+    let url = Mcp::url_in(
+        logs[owner]
+            .lines()
+            .find(|l| l.contains("listening on http://"))
+            .unwrap(),
+    );
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(lease["url"], url, "the lease names the one server");
+
+    // every client was told about that server, and each was given an identity of its own
+    let mut ids = std::collections::BTreeSet::new();
+    for (i, _, init) in &clients {
+        let instructions = init["result"]["instructions"]
+            .as_str()
+            .unwrap_or_else(|| panic!("client {i} was not told anything: {init}"));
+        assert!(
+            instructions.contains(&url),
+            "client {i} was not told about the one server: {instructions}"
+        );
+        let id: String = instructions
+            .split("You are peer ")
+            .nth(1)
+            .and_then(|rest| rest.split(|c: char| !c.is_ascii_alphanumeric()).next())
+            .unwrap_or_else(|| panic!("client {i} was given no peer id: {instructions}"))
+            .to_string();
+        assert!(ids.insert(id.clone()), "peer id {id} was handed out twice");
+    }
+    assert_eq!(ids.len(), STORM, "{ids:?}");
+
+    // each of them has a working session: it announces a scope of its own and the board
+    // takes it without finding a collision that is not there
+    for (i, m, _) in clients.iter_mut() {
+        let announced = m.call(
+            "majordomus_announce",
+            json!({ "intent": format!("storm client {i}"), "scope": [format!("lib/storm-{i}")] }),
+        );
+        assert_eq!(announced["isError"], false, "client {i}: {announced}");
+        // an absent `overlaps` and an empty one are the same answer: nothing was held
+        assert_eq!(
+            announced["structuredContent"]["overlaps"]
+                .as_array()
+                .map_or(0, Vec::len),
+            0,
+            "client {i} collided with a scope nobody holds: {announced}"
+        );
+    }
+
+    // and reads the layer through it, and sees the whole board
+    let mut boards: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
+    for (i, m, _) in clients.iter_mut() {
+        let repo = m.call("majordomus_repository", json!({}));
+        assert_eq!(
+            repo["isError"], false,
+            "client {i} has no working session: {repo}"
+        );
+        assert_eq!(repo["structuredContent"]["state"], "ok", "client {i}");
+        let peers = m.call("majordomus_peers", json!({}));
+        let sc = &peers["structuredContent"];
+        assert_eq!(
+            sc["count"].as_u64(),
+            Some(STORM as u64),
+            "client {i} sees a partial board: {sc}"
+        );
+        let mut seen: Vec<(String, String, String)> = sc["peers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| {
+                (
+                    p["id"].as_str().unwrap_or_default().to_string(),
+                    p["client"]["name"].as_str().unwrap_or_default().to_string(),
+                    p["announcement"]["intent"]
+                        .as_str()
+                        .unwrap_or_default()
+                        .to_string(),
+                )
+            })
+            .collect();
+        seen.sort();
+        boards.push((sc["caller"].as_str().unwrap_or_default().to_string(), seen));
+    }
+
+    // one board, not six: whoever won the election, every client read the same thing
+    let (_, first) = &boards[0];
+    for (caller, seen) in &boards {
+        assert_eq!(seen, first, "the board {caller} read differs from p1's");
+    }
+    let names: std::collections::BTreeSet<&str> =
+        first.iter().map(|(_, name, _)| name.as_str()).collect();
+    let expected: std::collections::BTreeSet<String> =
+        (0..STORM).map(|i| format!("storm-{i}")).collect();
+    assert_eq!(
+        names,
+        expected.iter().map(String::as_str).collect(),
+        "the board names every client that started"
+    );
+    let callers: std::collections::BTreeSet<&str> =
+        boards.iter().map(|(c, _)| c.as_str()).collect();
+    assert_eq!(callers.len(), STORM, "each client answers as itself: {callers:?}");
+    assert_eq!(
+        callers,
+        ids.iter().map(String::as_str).collect(),
+        "the identity a client was given at initialize is the one the board calls it"
+    );
+    for (_, name, intent) in first {
+        let i = name.strip_prefix("storm-").expect(name);
+        assert_eq!(intent, &format!("storm client {i}"), "{first:?}");
+    }
+
+    // the bridges leave, then the one that serves; the lease goes with it and the
+    // repository is what it was before any of them started
+    for (i, m, _) in clients.iter_mut() {
+        if *i != owner {
+            assert_eq!(m.close(), 0, "client {i} did not end cleanly");
+        }
+    }
+    assert_eq!(clients[owner].1.close(), 0, "the server did not end cleanly");
+    assert!(
+        !lease_path(&f).exists(),
+        "the lease outlived the last client of the storm"
+    );
+    assert_eq!(before, f.snapshot(), "the storm changed the repository");
 }
