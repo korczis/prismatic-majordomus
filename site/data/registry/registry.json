@@ -6,24 +6,24 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "434f712510fc3cabc844faf20149b17300f848ce61190493432369732d7b75dd",
+    "fingerprint": "af6901101ccdaf3d7fcd053b7ec30517a40278c0184bdde81d4ddb437cc4644a",
     "summary": {
-      "total": 1187,
+      "total": 1188,
       "builtin": 74,
-      "declarative": 1113,
+      "declarative": 1114,
       "by_kind": {
         "command": 3,
         "query": 71,
-        "resource": 1113
+        "resource": 1114
       },
       "by_stability": {
         "behaviorally_verified": 69,
-        "implemented": 1118
+        "implemented": 1119
       },
       "mcp_tools": 72,
-      "mcp_resources": 1140,
+      "mcp_resources": 1141,
       "http_routes": 74,
-      "cli_commands": 31,
+      "cli_commands": 32,
       "modules": 53,
       "benchmark_required": 71,
       "benchmark_waived": 3,
@@ -20560,6 +20560,12 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/server"
+          },
+          "cli": {
+            "path": [
+              "serve",
+              "status"
+            ]
           }
         },
         "availability": "runtime",
@@ -26758,7 +26764,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 134,
+        "capabilities": 135,
         "capability_ids": []
       },
       {
@@ -26838,7 +26844,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d393dfa0b43b7e261ab113d0273371037157d6c6133b7c645c5db20c8d8912e6",
+    "fingerprint": "f2ccd3deb62f28333d66896306aeb931a1598f62ff498ec8d84c664b41957685",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26886,7 +26892,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 134,
+      "test": 135,
       "use-case": 41,
       "workspace": 1
     },
@@ -27433,7 +27439,7 @@
         "path": ".ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7908,
+        "bytes": 9904,
         "tags": [
           "mcp",
           "architecture",
@@ -30099,7 +30105,7 @@
         "title": "Continuity — how work survives the session that was doing it",
         "path": "docs/CONTINUITY.md",
         "source_class": "document",
-        "bytes": 20056
+        "bytes": 20596
       },
       {
         "uri": "majordomus://document/docs/DESIGN.md",
@@ -30162,7 +30168,7 @@
         "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
         "path": "docs/ENTRY_AUDIT.md",
         "source_class": "document",
-        "bytes": 26555
+        "bytes": 26722
       },
       {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
@@ -30225,7 +30231,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 25216
+        "bytes": 28968
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -32083,7 +32089,7 @@
         "identity": "lib/capture.sh",
         "path": "lib/capture.sh",
         "source_class": "library",
-        "bytes": 71136
+        "bytes": 73235
       },
       {
         "uri": "majordomus://implementation/lib/check.sh",
@@ -32155,7 +32161,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 20232
+        "bytes": 20504
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -35465,7 +35471,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 4569
+        "bytes": 4663
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -37662,6 +37668,14 @@
         "bytes": 4285
       },
       {
+        "uri": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
+        "kind": "test",
+        "identity": "test/cases/108_entry_converges_on_a_server.sh",
+        "path": "test/cases/108_entry_converges_on_a_server.sh",
+        "source_class": "case",
+        "bytes": 5166
+      },
+      {
         "uri": "majordomus://test/test/cases/108_scope_after_trunk_merge.sh",
         "kind": "test",
         "identity": "test/cases/108_scope_after_trunk_merge.sh",
@@ -38051,7 +38065,7 @@
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
         "path": "test/cases/54_session_lifecycle_hooks.sh",
         "source_class": "case",
-        "bytes": 15273
+        "bytes": 15505
       },
       {
         "uri": "majordomus://test/test/cases/55_session_context.sh",
@@ -39300,7 +39314,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 134
+      "objects": 135
     },
     {
       "name": "use-case",
@@ -39574,7 +39588,7 @@
         ],
         "route": "/docs/cli/serve/",
         "executable": true,
-        "usage": "majordomus serve [OPTIONS]",
+        "usage": "majordomus serve [OPTIONS] [COMMAND]",
         "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
         "args": [
           {
@@ -39667,6 +39681,34 @@
             ]
           },
           {
+            "name": "fallback",
+            "long": "fallback",
+            "positional": false,
+            "help": "When the port is taken, bind a free one instead and log both; without this a taken port is an error",
+            "value_name": "FALLBACK",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "idle",
+            "long": "idle",
+            "positional": false,
+            "help": "Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with",
+            "value_name": "SECONDS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "0"
+            ]
+          },
+          {
             "name": "deployment",
             "long": "deployment",
             "positional": false,
@@ -39694,7 +39736,381 @@
             "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped"
           }
         ],
-        "subcommands": []
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "status"
+            ],
+            "route": "/docs/cli/serve/status/",
+            "executable": true,
+            "usage": "majordomus serve status [OPTIONS]",
+            "about": "Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository",
+            "args": [
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-status",
+                "title": "Where this checkout's server stands, and every server of the repository",
+                "description": "The standing of this checkout's server measured against what this executable would serve, the lease it holds, and every checkout git registers for the repository with its own server. Asked of the running server when there is one, so that the answer includes the lease that process holds; answered locally otherwise.",
+                "argv": [
+                  "serve",
+                  "status"
+                ],
+                "command": "majordomus serve status",
+                "setup": [],
+                "expectation": "exits 0; prints standing"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "ensure"
+            ],
+            "route": "/docs/cli/serve/ensure/",
+            "executable": true,
+            "usage": "majordomus serve ensure [OPTIONS]",
+            "about": "Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands",
+            "args": [
+              {
+                "name": "port",
+                "long": "port",
+                "positional": false,
+                "help": "The port the started server asks for first; a taken one is replaced by a free one",
+                "value_name": "PORT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "8741"
+                ]
+              },
+              {
+                "name": "idle",
+                "long": "idle",
+                "positional": false,
+                "help": "The started server stops when no peer has been attached for this many seconds",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "900"
+                ]
+              },
+              {
+                "name": "wait",
+                "long": "wait",
+                "positional": false,
+                "help": "How long to wait for a server to become ready before reporting what stands",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "20"
+                ]
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-ensure-idle",
+                "title": "Make sure a server serves this checkout, and let it end when idle",
+                "description": "Starts a server as a process of its own when none answers, waits until it is ready, and prints one line: the standing, the address, the pid. Run again, it finds the server ready and starts nothing. `--idle` is how long the started server outlives its last peer; one second here, so that the example leaves nothing behind.",
+                "argv": [
+                  "serve",
+                  "ensure",
+                  "--idle",
+                  "1",
+                  "--wait",
+                  "30"
+                ],
+                "command": "majordomus serve ensure --idle 1 --wait 30",
+                "setup": [],
+                "expectation": "exits 0; prints ready"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "serve",
+              "stop"
+            ],
+            "route": "/docs/cli/serve/stop/",
+            "executable": true,
+            "usage": "majordomus serve stop [OPTIONS]",
+            "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go",
+            "args": [
+              {
+                "name": "wait",
+                "long": "wait",
+                "positional": false,
+                "help": "How long to wait for the server to end",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "10"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "serve-stop-nothing",
+                "title": "Stop this checkout's server, when there is one",
+                "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+                "argv": [
+                  "serve",
+                  "stop"
+                ],
+                "command": "majordomus serve stop",
+                "setup": [],
+                "expectation": "exits 0; prints nothing to stop"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       },
       {
         "path": [

@@ -11,7 +11,7 @@
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
 use schemars::JsonSchema;
@@ -256,6 +256,11 @@ pub struct Lease {
     /// When this process took the lease, RFC 3339. Fixed here rather than at publish time
     /// because it is the identity of this server's generation.
     started_at: String,
+    /// `true` from the election until [`Lease::publish`]: the window in which
+    /// [`Lease::keep_alive`] rewrites the file so that it never looks abandoned, and the
+    /// lock under which it and `publish` write, so that a touch can never land on top of
+    /// the URL.
+    binding: Arc<Mutex<bool>>,
 }
 
 /// What the election decided for this process.
@@ -340,6 +345,7 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                     root,
                     released: false,
                     started_at: crate::peers::rfc3339(SystemTime::now()),
+                    binding: Arc::new(Mutex::new(true)),
                 };
                 let text =
                     serde_json::to_string(&lease.document(None)).map_err(|e| Error::Lease {
@@ -351,16 +357,16 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                 return Ok(Role::Server(lease));
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-                match inspect(&path, &root) {
+                let (found, seen) = inspect(&path, &root);
+                match found {
                     Found::Live(url) => return Ok(Role::Peer { url }),
                     Found::Stale(reason) => {
                         tracing::warn!(lease = %path.display(), "{reason}; taking it over");
-                        take_over(&path)?;
+                        take_over(&path, &seen)?;
                     }
-                    Found::Binding if waited_since.elapsed() > BIND_GRACE => {
-                        tracing::warn!(lease = %path.display(), "abandoned lease: its owner never published a URL; taking it over");
-                        take_over(&path)?;
-                    }
+                    // an owner that is still binding keeps its file young (`keep_alive`), so
+                    // a file that is old enough to be abandoned is classified so by `inspect`
+                    // and this arm only ever waits; the whole attempt is bounded below
                     Found::Binding => std::thread::sleep(Duration::from_millis(100)),
                 }
             }
@@ -442,25 +448,33 @@ fn superseded(doc: &LeaseDocument) -> Option<String> {
     ))
 }
 
-/// Read and classify an existing lease file.
-fn inspect(path: &Path, root: &Path) -> Found {
+/// Read and classify an existing lease file. What was read comes back beside the verdict,
+/// so that a take-over can insist on removing the file it judged and not one that arrived
+/// in the meantime.
+fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
     let age = file_age(path);
-    let doc = match LeaseFile::read(path) {
+    let seen = LeaseFile::read(path);
+    let doc = match &seen {
         // gone between the failed create and this read: the next attempt creates it
-        LeaseFile::Absent => return Found::Binding,
+        LeaseFile::Absent => return (Found::Binding, seen),
         LeaseFile::Empty if age > BIND_GRACE => {
-            return Found::Stale("empty lease: its owner never wrote it".into())
+            return (
+                Found::Stale("empty lease: its owner never wrote it".into()),
+                seen,
+            )
         }
-        LeaseFile::Empty => return Found::Binding,
-        LeaseFile::Corrupt(reason) => return Found::Stale(format!("corrupt lease: {reason}")),
-        LeaseFile::Document(doc) => doc,
+        LeaseFile::Empty => return (Found::Binding, seen),
+        LeaseFile::Corrupt(reason) => {
+            return (Found::Stale(format!("corrupt lease: {reason}")), seen)
+        }
+        LeaseFile::Document(doc) => doc.clone(),
     };
     // before asking whether it answers: a server that answers from a binary that has been
     // replaced answers with yesterday's code, which is the harder failure to see
     if let Some(reason) = superseded(&doc) {
-        return Found::Stale(reason);
+        return (Found::Stale(reason), seen);
     }
-    match doc.url.as_deref() {
+    let found = match doc.url.as_deref() {
         Some(url) if probe(url, root) => Found::Live(url.to_string()),
         Some(url) => Found::Stale(format!(
             "stale lease: the server it names at {url} does not answer for this repository"
@@ -469,7 +483,8 @@ fn inspect(path: &Path, root: &Path) -> Found {
             Found::Stale("abandoned lease: its owner never published a URL".into())
         }
         None => Found::Binding,
-    }
+    };
+    (found, seen)
 }
 
 /// How long ago the file was last written; zero when that cannot be read, so that a file
@@ -492,8 +507,14 @@ pub fn file_age(path: &Path) -> Duration {
         .unwrap_or(Duration::ZERO)
 }
 
-/// Remove a lease that cannot be used, so that the next attempt creates a fresh one.
-fn take_over(path: &Path) -> Result<()> {
+/// Remove a lease that cannot be used, so that the next attempt creates a fresh one — but
+/// only the file that was judged: when another process has replaced it since, the file on
+/// disk is somebody's fresh lease, and the next round of the election reads that one.
+fn take_over(path: &Path, seen: &LeaseFile) -> Result<()> {
+    if LeaseFile::read(path) != *seen {
+        tracing::debug!(lease = %path.display(), "the lease changed under the take-over; reading it again");
+        return Ok(());
+    }
     match fs::remove_file(path) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -504,6 +525,21 @@ fn take_over(path: &Path) -> Result<()> {
             ),
         }),
     }
+}
+
+/// This process's lease was taken over by another process: from now on a signal must not
+/// unlink the file, which is somebody else's. Called by the server's own reader when it
+/// finds the file no longer carries its token; nothing else about the process changes — it
+/// serves the peers it has and ends with them.
+///
+/// ```
+/// // a process that holds no lease has nothing to lose; saying so twice changes nothing
+/// majordomus_cli::lease::lost();
+/// majordomus_cli::lease::lost();
+/// assert!(majordomus_cli::lease::held().is_none());
+/// ```
+pub fn lost() {
+    signals::release();
 }
 
 /// Does a Majordomus server answer at `url` for the repository at `root`?
@@ -537,6 +573,65 @@ impl Lease {
         &self.started_at
     }
 
+    /// What makes the file this process's. For the server's own reader, which checks from
+    /// another thread whether the lease is still its own.
+    pub(crate) fn token(&self) -> &str {
+        &self.token
+    }
+
+    /// Keep the lease young while the layer loads. A peer that finds a lease without a URL
+    /// waits for it only as long as the file is younger than [`BIND_GRACE`]; a cold start
+    /// that takes longer than that — a large layer, a machine under load — would otherwise
+    /// be taken for an abandoned one and taken over while its owner is still binding. So
+    /// until [`Lease::publish`], a thread rewrites the same document every third of the
+    /// grace, under the lock `publish` also takes, so that a touch can never land after the
+    /// URL. It writes only while the file is still this process's: a lease that was taken
+    /// over anyway is somebody else's to write.
+    ///
+    /// ```
+    /// use majordomus_cli::lease::{elect, held, LeaseFile, Role};
+    /// use majordomus_cli::Repository;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
+    /// std::fs::write(dir.path().join(".ai/manifest.yaml"),
+    ///     "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").unwrap();
+    /// let repo = Repository::discover(dir.path()).unwrap();
+    /// let Role::Server(lease) = elect(&repo).unwrap() else { panic!("nobody else serves a fresh directory") };
+    /// lease.keep_alive();                         // returns at once; the touching runs beside the load
+    /// assert!(held().is_none(), "nothing is published yet");
+    /// lease.publish("http://127.0.0.1:1").unwrap();  // stops the touching, under the same lock
+    /// assert_eq!(held().unwrap().url.as_deref(), Some("http://127.0.0.1:1"));
+    /// assert!(matches!(LeaseFile::read(lease.path()), LeaseFile::Document(d) if d.url.is_some()));
+    /// lease.release();
+    /// assert_eq!(LeaseFile::read(&dir.path().join(".ai/local/state/mcp/server.json")), LeaseFile::Absent);
+    /// ```
+    pub fn keep_alive(&self) {
+        let path = self.path.clone();
+        let token = self.token.clone();
+        let binding = Arc::clone(&self.binding);
+        let document = serde_json::to_string(&self.document(None)).unwrap_or_default();
+        let tick = BIND_GRACE / 3;
+        let _ = std::thread::Builder::new()
+            .name("majordomus-lease-keep-alive".into())
+            .spawn(move || loop {
+                std::thread::sleep(tick);
+                let Ok(guard) = binding.lock() else { return };
+                if !*guard {
+                    return;
+                }
+                let mine = LeaseFile::read(&path)
+                    .document()
+                    .is_some_and(|d| d.token == token);
+                if !mine {
+                    return;
+                }
+                let tmp = path.with_extension("json.tmp");
+                if fs::write(&tmp, &document).is_ok() {
+                    let _ = fs::rename(&tmp, &path);
+                }
+            });
+    }
+
     fn document(&self, url: Option<&str>) -> LeaseDocument {
         LeaseDocument {
             schema: SCHEMA.into(),
@@ -551,8 +646,22 @@ impl Lease {
     }
 
     /// Record the URL the server is listening on, atomically, so that a peer reading the
-    /// file sees either no URL or the whole one.
+    /// file sees either no URL or the whole one. Refused when the file is no longer this
+    /// process's: a lease taken over while its owner was binding belongs to whoever took it,
+    /// and writing over it would leave two servers claiming one address.
     pub fn publish(&self, url: &str) -> Result<()> {
+        let mut binding = self.binding.lock().map_err(|_| Error::Lease {
+            reason: "the lease's binding lock is poisoned".into(),
+        })?;
+        *binding = false;
+        if !self.is_mine() {
+            return Err(Error::Lease {
+                reason: format!(
+                    "the lease at {} was taken over while this server was starting; another process serves this checkout",
+                    self.path.display()
+                ),
+            });
+        }
         let tmp = self.path.with_extension("json.tmp");
         let document = self.document(Some(url));
         let text = serde_json::to_string(&document).map_err(|e| Error::Lease {
@@ -579,6 +688,9 @@ impl Lease {
     }
 
     fn release_now(&mut self) {
+        if let Ok(mut binding) = self.binding.lock() {
+            *binding = false;
+        }
         if !self.released && self.is_mine() {
             let _ = fs::remove_file(&self.path);
         }

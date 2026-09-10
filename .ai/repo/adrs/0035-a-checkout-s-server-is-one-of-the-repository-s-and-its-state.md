@@ -89,6 +89,26 @@ The decision is a pure function of the lease file, its age, one probe and this e
 version, tested branch by branch; the capability reads the files and the servers on every
 call and caches nothing, because the leases are written by other processes.
 
+**Entry converges, and a server no client owns has a bounded life.** `serve ensure` reads
+the lease and probes the server it names, as the election does, and starts one as a
+process of its own when none answers — `serve --fallback --idle`, its log beside the lease
+— then waits until it is ready; `serve stop` ends the one the lease names when it answers
+for this checkout; `serve status` is the command-line projection of `server.status`. The
+provider's start event calls `ensure` (`session.ensure_server_on_start`, on by default) and
+the briefing names where the server stands, so an agent has a server before its first
+attach; the MCP launcher has always converged the same way through the election; a shell
+entering the repository is told and not served, because the entry hook may start nothing
+(`project.envrc-is-an-adapter`) and a shell is not a client. A server `ensure` starts ends
+when no peer has been attached for `--idle` seconds, which keeps ADR 0003's line — no
+process without a client — true in time rather than at every instant.
+
+**The election keeps its promises under a slow start.** An owner keeps its lease young
+while the layer loads, so a cold start slower than the bind grace is never taken for an
+abandoned one; a take-over removes only the file it judged; an owner whose lease was taken
+over while binding refuses to publish and degrades; a server whose lease is taken over
+later stops claiming it and ends with its peers; and the server's own reader forgets the
+sessions that stopped pinging on every path.
+
 ## Alternatives rejected
 
 - **Moving the lease to the primary checkout, one server per git repository.** It answers
@@ -105,9 +125,15 @@ call and caches nothing, because the leases are written by other processes.
   taken over on `fix/stale-runtime-is-loud`, which is that decision's own branch; the status
   reports the mismatch as `outdated` and the election's behaviour is that branch's to
   change.
-- **A command-line projection in this slice.** `serve status` belongs beside `serve
-  ensure` and `serve stop`, which the next decision brings; a command is furnished once,
-  with its documentation, its fixture and its cases, not twice.
+- **A server started on `cd`.** The mandate that prompted this asks for it; the entry hook
+  may start nothing, ADR 0003 refuses a process without a client, and a shell is not a
+  client. Entry by an agent converges; entry by a shell reports.
+- **A daemon with a supervisor.** Refused by ADR 0003 and unnecessary: `ensure` is
+  idempotent and concurrency-safe through the election, and a server that ends when idle
+  needs nobody to watch it.
+- **Killing an outdated server from `ensure`.** A server that answers is somebody's; the
+  status names it `outdated` with the remedy, `stop` ends it when asked by name, and a
+  replaced executable loses its lease through the election as before.
 
 ## Consequences
 

@@ -9,6 +9,8 @@
 # a session that ended in a crash.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
+# this case is about the boundary; the server the start event would ensure is case 108's
+sed 's/^  ensure_server_on_start: true /  ensure_server_on_start: false /' .ai/repo/policy.yaml > "$T/pol" && cp "$T/pol" .ai/repo/policy.yaml
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
 # how a repository that is not the tool's own checkout reaches majordomus
 PATH="$(dirname "$MJ"):$PATH"; export PATH

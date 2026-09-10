@@ -120,6 +120,26 @@
       "external": false
     },
     {
+      "id": "lib/rust_bin.sh",
+      "kind": "module",
+      "label": "rust_bin",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/mcp/ensure.log",
+      "kind": "artifact",
+      "label": "local/state/mcp/ensure.log",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/checkpoint.sh",
       "kind": "module",
       "label": "checkpoint",
@@ -710,16 +730,6 @@
       "external": false
     },
     {
-      "id": "lib/rust_bin.sh",
-      "kind": "module",
-      "label": "rust_bin",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/search.sh",
       "kind": "module",
       "label": "search",
@@ -1109,6 +1119,11 @@
     {
       "source": "lib/capture.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1780,6 +1795,11 @@
       "source": "lib/watch.sh",
       "target": ".ai/local/state/ledger.jsonl",
       "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/mcp/ensure.log",
+      "kind": "writes"
     },
     {
       "source": "lib/check.sh",

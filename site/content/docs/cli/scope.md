@@ -1,7 +1,7 @@
 +++
 title = "majordomus scope"
 description = "The repository scope: what a worker reads and what it never reads; with paths, whether each is in or out and why"
-weight = 15
+weight = 18
 [extra]
 route = "/docs/cli/scope/"
 command = "majordomus scope"

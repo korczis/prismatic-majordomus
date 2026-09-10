@@ -83,6 +83,60 @@ through the same reading, and it carries the server's `version` beside the execu
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
 
+### Ensuring a server, and stopping it
+
+```text
+majordomus serve status [--format json]     where this checkout's server stands, and every server of the repository
+majordomus serve ensure [--idle S] [--wait S] [--port P]
+                                            a ready server for this checkout, started if it must be
+majordomus serve stop [--wait S]            end the server this checkout's lease names
+```
+
+`serve ensure` reads the lease and probes the server it names, exactly as the election
+does, and converges: `ready` is printed and nothing is started; `starting` is waited for;
+`absent` and `stale` start a server as a process of its own — this executable, `serve
+--fallback --idle S`, its log at `.ai/local/state/mcp/server.log`, in its own process group
+so that it outlives the shell that asked — and wait until it is ready; `outdated` starts one
+only when the election would take the lease over (the same executable, replaced on disk)
+and is otherwise reported with the remedy, because a server of another build that answers
+is not this command's to end. Run twice, it starts nothing the second time; run by three
+shells at once, the election lets one of the three servers bind and the others defer. The
+call is bounded by `--wait`; a server that did not become ready in time is reported with
+the standing it reached and exit 10.
+
+A server `ensure` starts has no client of its own. It ends when no peer has been attached
+for `--idle` seconds (fifteen minutes by default), which is what keeps ADR 0003's line —
+there is no process without a client — true in time rather than at every instant: an
+agent's entry is owed a server before its first attach, and a checkout nobody works in
+does not keep one.
+
+`serve stop` signals the server the lease names, when that server answers for this
+checkout, and waits for the lease to go. A lease that names a server of another checkout,
+or one that does not answer, is left alone and said so; nothing here kills a process that
+was not asked for by name.
+
+**Who calls `ensure`.** The provider's start event does (`session.ensure_server_on_start`
+in the policy, on by default): the one moment a server nobody has started yet is owed one is
+when an agent arrives, and the briefing the event writes carries one line — `Shared server:
+ready http://127.0.0.1:8741 pid 123` — so that a worker knows before its first tool call
+whether the board it is told to read exists. The event never builds the executable: one
+that is missing or older than its sources is named in that line and left alone, because a
+hook is not the place to start a compiler and a server from stale code would answer with
+yesterday's tree. An MCP client's launcher (`bin/majordomus-mcp`) has always converged the
+same way through the election; a shell entering the repository (`.envrc`) is told and not
+served, because `project.envrc-is-an-adapter` forbids the entry hook to start anything and a
+shell is not a client.
+
+**What the election now guards against.** An owner keeps its lease young while the layer
+loads (`Lease::keep_alive`), so a cold start slower than the bind grace is never taken for
+an abandoned one; a take-over removes only the file it judged, never one that arrived in the
+meantime; an owner whose lease was taken over while it was binding refuses to publish and
+degrades, rather than writing over the winner's address; and a server whose lease is taken
+over later stops claiming it — its signal handler no longer unlinks the file, which is
+somebody else's — serves the peers it has, and ends with them. The server's own reader also
+forgets the HTTP sessions that stopped pinging on every path, not only while the owner
+waits for peers to leave, so a dead peer never stays `attached` on the board.
+
 
 ## Starting it from a client
 

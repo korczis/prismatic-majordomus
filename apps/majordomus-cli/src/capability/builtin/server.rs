@@ -43,7 +43,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, BIND_GRACE};
 use crate::repository::{self, GitIdentity, Repository};
@@ -447,7 +449,7 @@ pub fn module() -> ModuleDescriptor {
                         resource: Some(McpResource { uri: SERVER_URI.into(), name: "server".into() }),
                     }),
                     http: get("/api/v1/server"),
-                    cli: None,
+                    cli: Some(CliExposure { path: vec!["serve".into(), "status".into()] }),
                 },
                 tags: ["server", "lease", "coordination", "introspection"],
                 cache: CachePolicy::Disabled,

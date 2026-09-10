@@ -273,6 +273,13 @@ deterministic infrastructure and stays that way.
 
 ## Who runs the lifecycle
 
+The start event also converges on the shared server. With `session.ensure_server_on_start`
+(on by default) it runs `majordomus serve ensure`: a server is started as a process of its
+own when none answers this checkout, never built, and the briefing carries one line naming
+where it stands — `Shared server: ready http://127.0.0.1:8741 pid 123`, or `not ensured:
+the executable is not built (run \`just build\`)`. Discovery, loading and now the server are
+three things a worker no longer has to remember; `docs/MCP.md` has the lifecycle.
+
 Nothing above requires a worker to remember any of it.
 
 Where a provider announces the boundaries of a sitting, its own hooks run the lifecycle.

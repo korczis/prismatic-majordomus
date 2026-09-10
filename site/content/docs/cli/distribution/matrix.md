@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution matrix"
 description = "The release build matrix, as the release workflow reads it"
-weight = 38
+weight = 41
 [extra]
 route = "/docs/cli/distribution/matrix/"
 command = "majordomus distribution matrix"

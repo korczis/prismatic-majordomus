@@ -18,6 +18,7 @@ Where this checkout's server stands — absent, starting, ready, outdated or sta
 | MCP tool | `majordomus_server` |
 | MCP resource | `majordomus://server` |
 | HTTP | `GET /api/v1/server` |
+| CLI | `majordomus serve status` |
 | cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::server |

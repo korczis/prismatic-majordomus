@@ -343,6 +343,10 @@ mj_derive_briefing_body() {
     printf '\nNo active task in this checkout. `majordomus start "<task>" --scope <paths>` opens one; work outside a task is permitted and records nothing that a task would.\n'
   fi
 
+  # --- the shared server, when the start event ensured it: one line, so that a worker
+  # knows before its first tool call whether the board it is about to be told to read exists
+  [ -n "${MJ_BRIEFING_SERVER:-}" ] && printf '\nShared server: %s\n' "$MJ_BRIEFING_SERVER"
+
   # --- what blocks acceptance. First, because it is the only thing here that refuses a
   # command the worker is otherwise about to run.
   local q; q="$(mj_derive_questions)"

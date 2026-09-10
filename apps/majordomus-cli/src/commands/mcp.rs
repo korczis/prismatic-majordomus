@@ -166,6 +166,9 @@ impl Session {
         lease: Lease,
         resume: Option<crate::peers::ClientInfo>,
     ) -> Result<Backend> {
+        // the lease is kept young while the layer loads, so that a peer waiting on it
+        // never mistakes a slow start for an abandoned one
+        lease.keep_alive();
         let app = App::load(&args.repo)?;
         let ctx = app.context.clone();
         let shared = SharedServer::start(
