@@ -605,9 +605,12 @@ impl Router {
         let git = self.git.get_or_init(|| {
             crate::repository::git_identity(std::path::Path::new(&self.ctx.index.repository.root))
         });
-        json_response(
-            200,
-            &json!({
+        // whether this process is still the checkout's server. A server whose lease was
+        // taken over keeps serving the peers it already has, so it goes on answering here,
+        // and every other field is as true of it as of the current server. This is the one
+        // that tells them apart; `lease::probe` reads it under the same name, which is why
+        // the name is the constant and not a literal.
+        let mut index = json!({
                 "name": "majordomus",
                 "version": self.version,
                 "description": crate::about::SUMMARY,
@@ -629,8 +632,9 @@ impl Router {
                 "git_repository_id": git.as_ref().map(|g| g.id.clone()),
                 "linked_worktree": git.as_ref().is_some_and(|g| g.linked),
                 "surfaces": surfaces,
-            }),
-        )
+        });
+        index[crate::lease::LEASEHOLDER_KEY] = json!(!crate::lease::was_lost());
+        json_response(200, &index)
     }
 
     /// The refusal for a state-changing request from another origin, when there is one.

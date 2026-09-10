@@ -63,8 +63,9 @@ said that two such servers belonged to one repository. Now the index route (`GET
 the git repository the checkout belongs to beside the checkout's own identity:
 `repository_id` is the checkout's (a digest of its root, what the lease probe compares),
 `git_repository_id` is the repository's (a digest of the git directory every worktree
-shares; absent where git cannot be asked), and `linked_worktree` says whether this is the
-primary checkout. `GET /api/v1/server` — the tool `majordomus_server`, the resource
+shares; absent where git cannot be asked), `linked_worktree` says whether this is the
+primary checkout, and `leaseholder` says whether the process answering is still the one
+(below). `GET /api/v1/server` — the tool `majordomus_server`, the resource
 `majordomus://server` — lists every checkout git registers for the repository, the primary
 first, each with its lease, where its server stands and how many peers it holds, and says
 where this checkout's own server stands measured against what this executable would serve:
@@ -89,6 +90,33 @@ the election, the read-only `serving`, the environment snapshot and the status a
 through the same reading, and it carries the server's `version` beside the executable it
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
+
+### The server that is no longer the one
+
+A lease can be taken over while the process that held it is still running and still healthy
+— most often because its executable was replaced by a rebuild, which the election reads as
+"it is serving code that is no longer on disk". The superseded process is not killed. It
+keeps its socket, its peer board and the generation of the layer it loaded, and it goes on
+serving the sessions it already had until they end. That is deliberate: a client mid-answer
+should not lose its server because somebody ran `cargo build`.
+
+What it must not do is go on being *the* server. From the moment its own reader finds the
+lease no longer carries its token:
+
+| | |
+|---|---|
+| its index says so | `GET /` answers `leaseholder: false`; every other field — `repository`, `repository_id`, `git_repository_id` — is as true of it as of the current server, which is exactly why one field has to separate them |
+| the probe refuses it | `lease::probe` asks three questions, not two: a Majordomus server, this checkout, still the leaseholder. A client holding an address from before the takeover is told there is no server there rather than served a board nobody else can see |
+| it takes on nobody new | an `initialize` with no session gets `409 lease_lost`, naming the launcher as the way to the current server |
+| its open sessions continue | they are its own until they end, and the process ends with them |
+
+A server too old to answer the third question is accepted by the probe. It cannot be told
+from a current one on that endpoint, and refusing it would be the worse failure: a live
+server taken for dead is taken over, which is how one checkout comes to have two.
+
+This was measured before it was written: on 2026-09-10 this repository had two servers, one
+lease, and a session whose environment carried the older address read a peer board with one
+peer on it while the board everybody else shared had two.
 
 ### Four readings of "ready"
 
