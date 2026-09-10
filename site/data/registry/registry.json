@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "b431f9a1ad7b1c9b3389ff004d70b205a17d25b49b2db20683273f4e1cca4234",
+    "fingerprint": "c50a9dea3cbc09f51eeea27acfb3e4cd999fd1bcf2bf1b2dea5a533e3cd0e70f",
     "summary": {
-      "total": 1189,
+      "total": 1193,
       "builtin": 73,
-      "declarative": 1116,
+      "declarative": 1120,
       "by_kind": {
         "command": 3,
         "query": 70,
-        "resource": 1116
+        "resource": 1120
       },
       "by_stability": {
         "behaviorally_verified": 68,
-        "implemented": 1121
+        "implemented": 1125
       },
       "mcp_tools": 71,
-      "mcp_resources": 1142,
+      "mcp_resources": 1146,
       "http_routes": 73,
       "cli_commands": 31,
       "modules": 52,
@@ -26569,7 +26569,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 113,
         "capability_ids": []
       },
       {
@@ -26689,7 +26689,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2f9f969801d23cf9d48c7cb8b4deb36bb589b9ac0e18c150219d9a0e0463c2a9",
+    "fingerprint": "b02036c6c2b66820a86881958a02b28972d119e1bed9d88ad2ecd01e6edb36b6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26732,7 +26732,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 113,
       "scope": 1,
       "session": 11,
       "skill": 3,
@@ -30034,7 +30034,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 39976
+        "bytes": 41312
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -30232,7 +30232,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 23596
+        "bytes": 24314
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -36166,6 +36166,36 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "kind": "rule",
+        "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "title": "A generator that cannot match the tree refuses rather than rewriting it",
+        "description": "An executable asked to generate this repository's derived artifacts first establishes that it was built from the same declarations the tree carries; when it cannot, it refuses and says so, because a generator that guesses rewrites the documents it was meant to check.",
+        "path": ".ai/repo/rules/project/a-tool-that-cannot-match-the-tree-refuses.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5887,
+        "tags": [
+          "derived",
+          "safety"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "rule",
+        "identity": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "title": "A worker that stops leaves its work where somebody else can find it",
+        "description": "Work that exists only in one worker's working tree is invisible to every other and dies with the worker; anyone who fans work out is responsible for checkpointing it, because a worker's death is not a rollback.",
+        "path": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3791,
+        "tags": [
+          "process",
+          "integration"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "identity": "project.benchmarkable-commands@1",
@@ -36585,6 +36615,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "rule",
+        "identity": "project.never-reported-is-not-green@1",
+        "title": "A verdict that never arrived is not a verdict",
+        "description": "A change is judged against the trunk's own failing set, established by reading a run that finished, and never against the absence of a report; a check that has not spoken is unknown, not passing.",
+        "path": ".ai/repo/rules/project/never-reported-is-not-green.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4077,
+        "tags": [
+          "process",
+          "integration",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.never-store-transcripts@1",
         "kind": "rule",
         "identity": "project.never-store-transcripts@1",
@@ -36768,6 +36814,21 @@
           "documentation",
           "provider",
           "derivation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "rule",
+        "identity": "project.reclaim-only-what-you-own@1",
+        "title": "A worker reclaims only what it owns",
+        "description": "Build output, scratch trees and worktrees belong to whoever is working in them; a worker under disk pressure reclaims its own and says what it removed, because everything else on the machine is another worker's instrument.",
+        "path": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3975,
+        "tags": [
+          "process",
+          "worktrees"
         ]
       },
       {
@@ -39126,7 +39187,7 @@
         "id",
         "version"
       ],
-      "objects": 109
+      "objects": 113
     },
     {
       "name": "scope",
