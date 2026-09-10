@@ -119,7 +119,14 @@ filter that matches nothing is a usage error, an empty case directory is a usage
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
 
 The jobs that run the suite check out the whole history: a case that clones the checkout
-into a fixture and pushes cannot push a shallow clone. A case may read the checkout it
+into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
+other reason: `generate --check` runs there, and the changelog it checks is composed from
+the release records, the decisions and `git log <previous>..<this>`. A checkout one commit
+deep has none of that history, so every release record names a commit the clone does not
+have, the composer writes the degraded document
+`project.release-is-a-projection` requires of it, and the gate reports the committed
+artifact stale for a reason no branch caused. A gate reads its inputs; the job fetches
+them. A case may read the checkout it
 lives in but must not write into it while other cases run;
 the parallel phase checks `git status` before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
