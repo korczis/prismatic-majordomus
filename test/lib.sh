@@ -68,7 +68,15 @@ sha256_of_file() {
 rust_bin() {
   local manifest="$ROOT/apps/majordomus-cli/Cargo.toml" log
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
-    [ -x "$MAJORDOMUS_BIN" ] || { echo "    MAJORDOMUS_BIN is not an executable: $MAJORDOMUS_BIN" >&2; return 1; }
+    # Not there. The words matter more than the exit code: this failure is about the
+    # environment the suite is running in and not about the code the case was written to
+    # measure, and a reader who takes it for the second spends an afternoon on a branch that
+    # was never broken. lib/rust_bin.sh says it, once, for every caller that resolves one.
+    if [ ! -x "$MAJORDOMUS_BIN" ]; then
+      . "$ROOT/lib/rust_bin.sh"
+      mj_rust_bin_missing "$ROOT" "$MAJORDOMUS_BIN" '    '
+      return 1
+    fi
     printf '%s' "$MAJORDOMUS_BIN"; return 0
   fi
   command -v cargo >/dev/null 2>&1 || return 3
