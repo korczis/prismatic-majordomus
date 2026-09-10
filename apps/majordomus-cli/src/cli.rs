@@ -35,6 +35,8 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
     Serve(ServeArgs),
+    /// Print what a client needs to reach this repository's shared MCP server
+    Connect(ConnectArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
@@ -767,6 +769,36 @@ pub struct ScopeArgs {
     /// Exit 10 when any path given is out of the scope
     #[arg(long)]
     pub check: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus connect`: what a client needs in front of it to reach this repository's
+/// shared MCP server. A client is a provider of the distribution, named by its id, and the
+/// answer is the same one `majordomus_connect` and `GET /api/v1/connect` give.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConnectArgs};
+/// let cli = Cli::try_parse_from(["majordomus", "connect", "chatgpt"]).unwrap();
+/// let Command::Connect(args) = cli.command else { panic!("not connect") };
+/// let args: ConnectArgs = args;
+/// assert_eq!(args.client.as_deref(), Some("chatgpt"));
+/// // and with no client named, every one of them
+/// let cli = Cli::try_parse_from(["majordomus", "connect"]).unwrap();
+/// let Command::Connect(args) = cli.command else { panic!("not connect") };
+/// assert!(args.client.is_none());
+/// ```
+pub struct ConnectArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// One client (`chatgpt`, `claude-code`, `codex`, `gemini`, ...); none prints them all
+    pub client: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]

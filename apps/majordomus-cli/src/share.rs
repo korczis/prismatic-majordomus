@@ -208,6 +208,10 @@ impl Share {
                         .and_then(|d| d.title.clone())
                         .unwrap_or_else(|| id.clone()),
                     client_config: decl.and_then(|d| d.client_config.clone()),
+                    client_setup: decl
+                        .map(|d| d.client_setup.clone())
+                        .filter(|l| !l.is_empty())
+                        .map(|l| l.join("\n")),
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
@@ -242,6 +246,8 @@ struct ProviderEntry {
     title: Option<String>,
     #[serde(default)]
     client_config: Option<String>,
+    #[serde(default)]
+    client_setup: Vec<String>,
     #[serde(default)]
     scratch_roots: Vec<String>,
     #[serde(default)]
@@ -374,6 +380,11 @@ pub struct ProviderDeclaration {
     /// The file it reads a project-scoped MCP client configuration from, when it has one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub client_config: Option<String>,
+    /// The vendor's own procedure, for a provider that keeps the configuration inside the
+    /// application rather than in the tree: the declaration's lines joined, prose with the
+    /// tokens `connect` fills.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_setup: Option<String>,
     /// The scratch roots it creates checkouts under, unexpanded.
     #[serde(default)]
     pub scratch_roots: Vec<String>,

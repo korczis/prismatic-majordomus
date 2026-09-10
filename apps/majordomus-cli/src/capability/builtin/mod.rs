@@ -33,6 +33,7 @@
 pub mod artifacts;
 pub(crate) mod capabilities;
 pub mod commands;
+pub mod connect;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;
@@ -130,6 +131,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         objects,
         capabilities,
         commands,
+        connect,
         graph,
         health,
         continuity,

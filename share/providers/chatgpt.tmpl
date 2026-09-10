@@ -1,0 +1,35 @@
+# Majordomus — working in this repository from ChatGPT
+
+This is a bootstrap, not the rulebook. It is written for a ChatGPT session that has
+this repository's MCP server attached (Settings → MCP servers → Add server; the fields
+are what `majordomus connect chatgpt` prints). Paste it into the project's custom
+instructions when the session should carry it from its first turn.
+
+The provider-neutral AI context and governance layer lives under `.ai/`, and everything
+normative is there. You reach it through the server's tools, not by reading files:
+
+1. `majordomus_get` on `majordomus://repository` for what this repository is and whether
+   its index is healthy,
+2. `majordomus_list` and `majordomus_search` for the rules under `.ai/repo/rules/` and the
+   workflows and knowledge a task needs — load only what the task is about,
+3. `majordomus_capabilities` for everything else the server answers; nothing there writes
+   to the repository.
+
+`.ai/local/` is this checkout's own state, never context: do not ask for it implicitly.
+
+The default profile is `{{DEFAULT_PROFILE}}`; the checkpoint interval it sets is
+`{{CHECKPOINT_DEFAULT}}`. The task lifecycle is `.ai/repo/workflows/task-lifecycle.md`.
+
+You are probably not alone. Every client attached to this server — Claude Code, Codex,
+Gemini CLI, another ChatGPT session — is visible through `majordomus_peers`. Call
+`majordomus_announce` with your intent and the paths you expect to touch before you start,
+and again whenever the connection is re-established: an announcement belongs to a
+connection, and a client that reconnects keeps its work while losing its place on the
+board.
+
+This server is read-only, and so is this session's reach into the repository: it answers
+about the layer, it does not change it. Editing, committing, gating and pushing happen in
+a checkout, through the tool a person or an agent runs there.
+
+Do not duplicate shared rules into this file: it is generated, and a rule that exists here
+and nowhere else is a bug.

@@ -17,6 +17,14 @@
 # reports the gap. An entry with no template is an error there, because a provider with no
 # bootstrap is a name and nothing else.
 #
+# client_setup — the vendor's own procedure for a provider that keeps its MCP client
+# configuration inside the application instead of in the tree, so that there is no file to
+# write and nothing for `generate` to project. Lines of prose with tokens, filled per
+# checkout by `majordomus connect`: {name} the server's name, {command} the absolute
+# launcher, {url} the running shared server's /mcp endpoint (or why there is none),
+# {repository} the checkout's root. A provider declares this or a client_config; a provider
+# that declares neither reaches the server through the client it runs.
+#
 # scratch_roots — directories under which this provider creates a checkout of its own that
 # the worktree topology must not claim: reported as a session's scratch checkout, never
 # migrated unasked, never cleaned up by the tool, refused by the commit guard with the
