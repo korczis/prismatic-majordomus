@@ -54,6 +54,74 @@ pub struct SiteRegistry {
     pub http: HttpView,
     /// The benchmark system: targets, coverage, the regression policy, the accepted baselines.
     pub benchmarks: BenchmarksView,
+    /// The composed graph, as a build-time snapshot of its shape.
+    pub graph: GraphView,
+}
+
+/// The composed graph as the published site shows it: what it holds, not what it holds it
+/// in. The whole graph is one generated artifact (`docs/generated/graph.json`), and a page
+/// that inlined nine hundred nodes would make every visitor download it to read a heading;
+/// this is the shape of that artifact — its kinds, its relations and its size — with the
+/// artifact named so a reader can fetch the thing itself.
+///
+/// Everything here is a build-time snapshot of the tree the site was generated from, and
+/// says so: `derived_from` carries the fingerprints it was taken over, and
+/// [`GraphView::runtime`] names where the same model is answered live. A published page
+/// cannot know the state of a running process, and this dataset never pretends otherwise.
+#[derive(Debug, Clone, Serialize)]
+pub struct GraphView {
+    /// The schema id of the artifact this summarises.
+    pub schema: &'static str,
+    /// Repository-relative path of the whole graph, as generated.
+    pub artifact: String,
+    /// The fingerprints the snapshot was taken over: the same tree the rest of this
+    /// dataset describes.
+    pub derived_from: DerivedFrom,
+    /// Where the same graph is answered by a running process, for a reader who needs the
+    /// live one. A published page never serves it.
+    pub runtime: RuntimeSource,
+    /// How many nodes the snapshot holds.
+    pub nodes: usize,
+    /// How many edges.
+    pub edges: usize,
+    /// Whether the edges form a directed acyclic graph.
+    pub acyclic: bool,
+    /// True when the derivation stopped at its node ceiling and the snapshot is a prefix.
+    pub truncated: bool,
+    /// Every node kind the snapshot holds, with what the derivation says it means and how
+    /// many nodes carry it.
+    pub node_kinds: Vec<GraphKindView>,
+    /// Every edge kind, with what it asserts and how many edges assert it.
+    pub edge_kinds: Vec<GraphKindView>,
+}
+
+/// What a snapshot was taken over.
+#[derive(Debug, Clone, Serialize)]
+pub struct DerivedFrom {
+    /// The index's fingerprint.
+    pub index: String,
+    /// The registry's fingerprint.
+    pub registry: String,
+}
+
+/// Where the live model is answered, and by what.
+#[derive(Debug, Clone, Serialize)]
+pub struct RuntimeSource {
+    /// The HTTP route a running server answers the graph on.
+    pub route: String,
+    /// What a reader has to do to reach it.
+    pub requires: &'static str,
+}
+
+/// One kind of node or edge: what it is, what it means, how many there are.
+#[derive(Debug, Clone, Serialize)]
+pub struct GraphKindView {
+    /// The kind, as the derivation declares it.
+    pub kind: String,
+    /// What the derivation says it means.
+    pub meaning: String,
+    /// How many nodes or edges carry it.
+    pub count: usize,
 }
 
 /// The generator's identity.
@@ -577,6 +645,59 @@ pub fn dataset(
         baselines,
     };
 
+    // the same derivation the artifact and the running process use; a second summary
+    // computed from anything else would be a second answer to one question
+    let composed = crate::graph::derive(crate::graph::COMPOSED, registry, index).ok_or_else(|| {
+        Error::Http {
+            reason: format!(
+                "the `{}` graph is not derived by this executable, and the site's dataset is a projection of it",
+                crate::graph::COMPOSED
+            ),
+        }
+    })?;
+    let mut node_counts: BTreeMap<&str, usize> = BTreeMap::new();
+    for n in &composed.nodes {
+        *node_counts.entry(n.kind.as_str()).or_default() += 1;
+    }
+    let mut edge_counts: BTreeMap<&str, usize> = BTreeMap::new();
+    for e in &composed.edges {
+        *edge_counts.entry(e.kind.as_str()).or_default() += 1;
+    }
+    let graph = GraphView {
+        schema: crate::generate::GRAPH_SCHEMA,
+        artifact: format!("{}/graph.json", crate::generate::OUT_DIR),
+        derived_from: DerivedFrom {
+            index: index.fingerprint.clone(),
+            registry: registry.fingerprint().to_string(),
+        },
+        runtime: RuntimeSource {
+            route: "/api/v1/graph?id=composed".into(),
+            requires: "a running majordomus server; a published page holds this snapshot and no live state",
+        },
+        nodes: composed.metadata.nodes,
+        edges: composed.metadata.edges,
+        acyclic: composed.metadata.acyclic,
+        truncated: composed.metadata.truncated,
+        node_kinds: composed
+            .node_kinds
+            .iter()
+            .map(|(kind, meaning)| GraphKindView {
+                kind: kind.clone(),
+                meaning: meaning.clone(),
+                count: node_counts.get(kind.as_str()).copied().unwrap_or(0),
+            })
+            .collect(),
+        edge_kinds: composed
+            .edge_kinds
+            .iter()
+            .map(|(kind, meaning)| GraphKindView {
+                kind: kind.clone(),
+                meaning: meaning.clone(),
+                count: edge_counts.get(kind.as_str()).copied().unwrap_or(0),
+            })
+            .collect(),
+    };
+
     Ok(SiteRegistry {
         schema: SCHEMA,
         generator: Generator {
@@ -604,6 +725,7 @@ pub fn dataset(
         mcp,
         http,
         benchmarks,
+        graph,
     })
 }
 

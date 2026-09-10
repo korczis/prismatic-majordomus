@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "23797ca71ade124488a6217a76b26fb7b487a90afd550273dc366421165afd17",
+    "fingerprint": "c7581721a64ae21876a26db4ef2afabfc96ac0ecbd163a13447dc564445a77f9",
     "summary": {
       "total": 794,
       "builtin": 16,
@@ -5040,7 +5040,7 @@
     ]
   },
   "index": {
-    "fingerprint": "94515361d2a8fc85625c0cf469a29dc5867e021ce6619335d5e26a6ef1e96df7",
+    "fingerprint": "d6f075511be0ab30015a9ccde5f65e9d154f962c6e8fde3e9166928de63dc791",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -6993,7 +6993,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 35121
+        "bytes": 35033
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -9588,7 +9588,7 @@
         "path": ".ai/repo/project/issues/I0908.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2360
+        "bytes": 2368
       },
       {
         "uri": "majordomus://issue/I0909",
@@ -9929,7 +9929,7 @@
         "path": ".ai/repo/project/issues/I1007.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1814
+        "bytes": 1857
       },
       {
         "uri": "majordomus://issue/I1008",
@@ -18823,6 +18823,236 @@
             "p99_us": 589.125
           }
         ]
+      }
+    ]
+  },
+  "graph": {
+    "schema": "majordomus/capability-graph/v1",
+    "artifact": "docs/generated/graph.json",
+    "derived_from": {
+      "index": "d6f075511be0ab30015a9ccde5f65e9d154f962c6e8fde3e9166928de63dc791",
+      "registry": "c7581721a64ae21876a26db4ef2afabfc96ac0ecbd163a13447dc564445a77f9"
+    },
+    "runtime": {
+      "route": "/api/v1/graph?id=composed",
+      "requires": "a running majordomus server; a published page holds this snapshot and no live state"
+    },
+    "nodes": 901,
+    "edges": 2100,
+    "acyclic": true,
+    "truncated": false,
+    "node_kinds": [
+      {
+        "kind": "application",
+        "meaning": "an object of kind `application`",
+        "count": 5
+      },
+      {
+        "kind": "capability",
+        "meaning": "one capability, declared once and projected",
+        "count": 16
+      },
+      {
+        "kind": "claim",
+        "meaning": "an object of kind `claim`",
+        "count": 126
+      },
+      {
+        "kind": "command",
+        "meaning": "a command a scenario runs",
+        "count": 27
+      },
+      {
+        "kind": "context",
+        "meaning": "an object of kind `context`",
+        "count": 22
+      },
+      {
+        "kind": "doctrine",
+        "meaning": "a doctrine a scenario exercises",
+        "count": 0
+      },
+      {
+        "kind": "document",
+        "meaning": "an object of kind `document`",
+        "count": 174
+      },
+      {
+        "kind": "file",
+        "meaning": "a file the layer names and does not hold as an object",
+        "count": 49
+      },
+      {
+        "kind": "implementation",
+        "meaning": "an object of kind `implementation`",
+        "count": 40
+      },
+      {
+        "kind": "issue",
+        "meaning": "an object of kind `issue`",
+        "count": 152
+      },
+      {
+        "kind": "kind",
+        "meaning": "one kind of object the layer indexed",
+        "count": 18
+      },
+      {
+        "kind": "knowledge",
+        "meaning": "an object of kind `knowledge`",
+        "count": 1
+      },
+      {
+        "kind": "milestone",
+        "meaning": "an object of kind `milestone`",
+        "count": 13
+      },
+      {
+        "kind": "module",
+        "meaning": "a capability module of this executable",
+        "count": 9
+      },
+      {
+        "kind": "policy",
+        "meaning": "an object of kind `policy`",
+        "count": 1
+      },
+      {
+        "kind": "profile",
+        "meaning": "an object of kind `profile`",
+        "count": 4
+      },
+      {
+        "kind": "projection",
+        "meaning": "a transport a capability is projected through",
+        "count": 4
+      },
+      {
+        "kind": "prompt",
+        "meaning": "an object of kind `prompt`",
+        "count": 4
+      },
+      {
+        "kind": "rule",
+        "meaning": "an object of kind `rule`",
+        "count": 83
+      },
+      {
+        "kind": "scope",
+        "meaning": "an object of kind `scope`",
+        "count": 1
+      },
+      {
+        "kind": "session",
+        "meaning": "an object of kind `session`",
+        "count": 6
+      },
+      {
+        "kind": "skill",
+        "meaning": "an object of kind `skill`",
+        "count": 3
+      },
+      {
+        "kind": "taxonomy",
+        "meaning": "an object of kind `taxonomy`",
+        "count": 10
+      },
+      {
+        "kind": "test",
+        "meaning": "an object of kind `test`",
+        "count": 96
+      },
+      {
+        "kind": "use-case",
+        "meaning": "an object of kind `use-case`",
+        "count": 37
+      }
+    ],
+    "edge_kinds": [
+      {
+        "kind": "belongs_to",
+        "meaning": "the issue belongs to that milestone",
+        "count": 152
+      },
+      {
+        "kind": "composes",
+        "meaning": "the module composes the capability",
+        "count": 16
+      },
+      {
+        "kind": "defined_in",
+        "meaning": "the claim is defined by that file",
+        "count": 126
+      },
+      {
+        "kind": "depends_on",
+        "meaning": "the rule states it depends on the other",
+        "count": 278
+      },
+      {
+        "kind": "evidences",
+        "meaning": "the object is evidence for that claim",
+        "count": 149
+      },
+      {
+        "kind": "exercises",
+        "meaning": "the scenario exercises that doctrine",
+        "count": 109
+      },
+      {
+        "kind": "governed_by",
+        "meaning": "the application is governed by that doctrine",
+        "count": 15
+      },
+      {
+        "kind": "implemented_by",
+        "meaning": "the claim is implemented by that file",
+        "count": 118
+      },
+      {
+        "kind": "is_a",
+        "meaning": "the object is of that kind",
+        "count": 778
+      },
+      {
+        "kind": "projects",
+        "meaning": "the capability is projected through the transport",
+        "count": 52
+      },
+      {
+        "kind": "put_in_force",
+        "meaning": "the decision put the thing in force",
+        "count": 0
+      },
+      {
+        "kind": "related_to",
+        "meaning": "the object names the other as related",
+        "count": 2
+      },
+      {
+        "kind": "runs",
+        "meaning": "the scenario runs that command",
+        "count": 95
+      },
+      {
+        "kind": "serves",
+        "meaning": "the use case serves that application",
+        "count": 62
+      },
+      {
+        "kind": "supersedes",
+        "meaning": "the decision stands in for the other",
+        "count": 0
+      },
+      {
+        "kind": "tested_by",
+        "meaning": "the claim is proved by that case",
+        "count": 118
+      },
+      {
+        "kind": "tracks",
+        "meaning": "the document tracks that file",
+        "count": 30
       }
     ]
   }
