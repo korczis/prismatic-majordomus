@@ -48,6 +48,16 @@ cockpit-assets:
 cockpit-assets-check:
     scripts/cockpit-assets --check
 
+# Vendor the API viewer into share/swagger/ from the pinned swagger-ui-dist (needs npm ci).
+[group('serve')]
+swagger-assets:
+    scripts/swagger-assets
+
+# The committed API viewer is the pinned package, file for file; exit 10 when it is not.
+[group('serve')]
+swagger-assets-check:
+    scripts/swagger-assets --check
+
 # Every Cockpit route the server serves, answered; then the pages and the interactions in a real browser.
 [group('serve')]
 cockpit-probe *args:

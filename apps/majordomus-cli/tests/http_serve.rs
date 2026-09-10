@@ -64,7 +64,14 @@ fn openapi_docs_and_one_operation_over_a_real_socket() {
         .iter()
         .any(|(k, v)| k == "content-type" && v.starts_with("text/html")));
     assert!(html.contains("url: \"/openapi.json\""), "{html}");
-    assert!(html.contains("swagger-ui-dist@"));
+    assert!(
+        html.contains("src=\"/swagger/assets/vendor/swagger-ui-bundle.js?v="),
+        "the viewer is served by this process: {html}"
+    );
+    assert!(
+        !html.contains("https://"),
+        "the shell loads nothing remote: {html}"
+    );
     assert!(
         !html.contains("\"paths\""),
         "the shell embeds no specification"
@@ -311,6 +318,10 @@ fn a_surface_answers_its_own_mount_and_nothing_invents_a_route_under_it() {
         ("/swagger", 200),
         ("/swagger/", 200),
         ("/swagger/anything", 404),
+        // the one declared exception, and only for a file that is there
+        ("/swagger/assets/vendor/swagger-ui.css", 200),
+        ("/swagger/assets/vendor/nothing.js", 404),
+        ("/swagger/assets/", 404),
         ("/openapi.json", 200),
         ("/openapi.json/more", 404),
         ("/", 200),
@@ -334,6 +345,68 @@ fn a_surface_answers_its_own_mount_and_nothing_invents_a_route_under_it() {
         !body.contains("swagger"),
         "/docs is documentation, never the viewer: {body}"
     );
+}
+
+/// The API viewer, end to end: every URL the shell names is this process's own, each one
+/// answers with the bytes of the file committed under `share/swagger/vendor/`, and the page
+/// carries a policy that would refuse a remote one. This is the black-box half of the claim
+/// that `/swagger` works with no network — the browser half is `scripts/swagger-assets`'s
+/// own README and the measurement in ADR 39.
+#[test]
+fn the_api_viewer_is_served_by_this_process_and_names_no_other_origin() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, headers, html) = s.request("GET", "/swagger", None);
+    assert_eq!(status, 200);
+    let header = |name: &str| {
+        headers
+            .iter()
+            .find(|(k, _)| k == name)
+            .map(|(_, v)| v.clone())
+            .unwrap_or_default()
+    };
+    let policy = header("content-security-policy");
+    assert!(policy.starts_with("default-src 'none'"), "{policy}");
+    assert!(!policy.contains("unsafe-eval"), "{policy}");
+    assert!(!policy.contains("http"), "no origin but this one: {policy}");
+    assert_eq!(header("x-content-type-options"), "nosniff");
+
+    // every URL the page loads, taken off the page rather than typed here
+    let urls: Vec<String> = html
+        .split("=\"/swagger/assets/")
+        .skip(1)
+        .filter_map(|rest| rest.split('"').next())
+        .map(|path| format!("/swagger/assets/{path}"))
+        .collect();
+    assert_eq!(urls.len(), 2, "a stylesheet and a bundle: {urls:?}");
+
+    for url in &urls {
+        let (status, headers, body) = s.request("GET", url, None);
+        assert_eq!(status, 200, "GET {url}");
+        assert!(!body.is_empty(), "GET {url} answered nothing");
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "cache-control" && v.contains("immutable")),
+            "a digest in the URL earns an immutable answer: {url}"
+        );
+        // the bytes are the committed file's, not something rendered
+        let name = url
+            .split("/swagger/assets/")
+            .nth(1)
+            .and_then(|u| u.split('?').next())
+            .expect("a name");
+        let committed = common::dist_share().join("swagger").join(name);
+        assert_eq!(
+            body.len(),
+            std::fs::read_to_string(&committed)
+                .expect("the vendored file")
+                .len(),
+            "{url} is not the bytes of {}",
+            committed.display()
+        );
+    }
 }
 
 #[test]

@@ -76,6 +76,7 @@ jobs:
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       command_graph: ${{ steps.plan.outputs.command_graph }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
+      swagger_assets: ${{ steps.plan.outputs.swagger_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
@@ -324,6 +325,12 @@ jobs:
       - name: the Cockpit stylesheet in sync
         if: needs.plan.outputs.cockpit_assets == 'true'
         run: scripts/ci/timed cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
+      # The API viewer is committed rather than built (ADR 39), so what needs proving is not
+      # that it compiles but that it is still the pinned package: this job has the node
+      # toolchain that can say so, and nothing else in CI does.
+      - name: the API viewer in sync
+        if: needs.plan.outputs.swagger_assets == 'true'
+        run: scripts/ci/timed swagger-assets "swagger-assets --check" timings.tsv scripts/swagger-assets --check
       - name: derived site data in sync
         run: scripts/ci/timed site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       - name: build the site

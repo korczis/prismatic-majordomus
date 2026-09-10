@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# swagger-assets — the API viewer's own files, vendored from the pinned npm package.
+#
+# `/swagger` is a viewer for a document this process generates locally. Until this
+# script existed, the viewer itself was fetched from a CDN, which made the one surface
+# that needs no network the only one that does not work without it: with no egress the
+# reader got HTTP 200 and a blank white page.
+#
+# What is vendored, from swagger-ui-dist at the version the crate pins in
+# `SWAGGER_UI_VERSION` (apps/majordomus-cli/src/http/swagger.rs):
+#
+#   share/swagger/vendor/swagger-ui.css         149 kB   the widget's own stylesheet
+#   share/swagger/vendor/swagger-ui-bundle.js   1.4 MB   the widget, React and all
+#   share/swagger/vendor/LICENSE, NOTICE                 Apache-2.0, as the package ships it
+#
+# All four are COMMITTED, unlike the Cockpit's cytoscape, three and p5, which this
+# repository builds and does not commit. The line those draw is not size, it is whether
+# the surface is complete without the file: each of them enhances a page that already
+# renders, and none of them reaches a release archive, because `scripts/release-package`
+# packs `share/` as the release runner finds it and the release workflow runs no asset
+# build. Here the file *is* the page. Vendoring it the Cockpit's lazy way would trade a
+# CDN for an empty `share/swagger/` in every published archive — the same blank page, on
+# more machines. So this follows the other Cockpit precedent, `vendor/alpine.csp.min.js`:
+# committed, because the surface depends on it.
+#
+#   scripts/swagger-assets            vendor the files
+#   scripts/swagger-assets --check    fail if a committed file is not the pinned package's
+#
+# Node is a build dependency and never a runtime one: the executable serves these files
+# from disk and neither knows nor cares where they came from.
+#
+# Exit codes: 0 ok · 10 drift · 12 a missing prerequisite.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SRC="$ROOT/node_modules/swagger-ui-dist"
+OUT="$ROOT/share/swagger/vendor"
+PIN="$ROOT/apps/majordomus-cli/src/http/swagger.rs"
+FILES="swagger-ui.css swagger-ui-bundle.js LICENSE NOTICE"
+CHECK=0
+[ "${1:-}" = "--check" ] && CHECK=1
+
+[ -d "$SRC" ] || { echo "swagger-assets: node_modules/swagger-ui-dist absent; run: npm ci" >&2; exit 12; }
+
+# The version has one owner: the crate's constant, which is also what the page states.
+# package.json pins the same string so that `npm ci` fetches what the crate promises, and
+# a disagreement between the two is the failure this check exists to name.
+pinned="$(sed -n 's/.*SWAGGER_UI_VERSION: &str = "\([^"]*\)".*/\1/p' "$PIN")"
+[ -n "$pinned" ] || { echo "swagger-assets: no SWAGGER_UI_VERSION in $PIN" >&2; exit 12; }
+installed="$(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$SRC/package.json" | head -1)"
+if [ "$pinned" != "$installed" ]; then
+  echo "swagger-assets: the crate pins swagger-ui $pinned and node_modules holds $installed;" >&2
+  echo "                set both SWAGGER_UI_VERSION and package.json to one version and run: npm install" >&2
+  exit 10
+fi
+
+if [ "$CHECK" = 1 ]; then
+  for f in $FILES; do
+    if ! cmp -s "$SRC/$f" "$OUT/$f"; then
+      echo "swagger-assets: share/swagger/vendor/$f is not swagger-ui-dist@$pinned's; run: scripts/swagger-assets" >&2
+      exit 10
+    fi
+  done
+  echo "==> swagger-assets: the committed viewer is swagger-ui-dist@$pinned, file for file"
+  exit 0
+fi
+
+echo "==> swagger-assets: vendoring swagger-ui-dist@$pinned"
+mkdir -p "$OUT"
+for f in $FILES; do cp "$SRC/$f" "$OUT/$f"; done
+chmod 0644 "$OUT"/*
+ls -l "$OUT" | sed 's/^/    /'

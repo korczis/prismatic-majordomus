@@ -27,7 +27,7 @@ apps/majordomus-cli/target/debug/majordomus serve --port 0   # GET /openapi.json
 
 ## What it does not cover
 
-The command line's other commands (`schema`, `validate`, `mcp`, `serve`, `generate`) are views of the registry or servers of it, not capabilities; the clap tree is hand-written and only the introspection commands dispatch through the registry. Swagger UI's assets are the pinned distribution on unpkg; the page embeds no specification but does need the network for the viewer itself.
+The command line's other commands (`schema`, `validate`, `mcp`, `serve`, `generate`) are views of the registry or servers of it, not capabilities; the clap tree is hand-written and only the introspection commands dispatch through the registry. Swagger UI's assets are the pinned distribution, vendored in `share/swagger/` and served by this process; the page embeds no specification and needs no network at all.
 
 ## Why it exists
 

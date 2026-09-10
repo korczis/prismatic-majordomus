@@ -139,6 +139,14 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  # The API viewer is committed rather than built (ADR 39), which buys an offline /swagger
+  # and owes a check that the committed bytes are still the pinned package's — and that the
+  # crate's constant, package.json and node_modules name one version between them.
+  - id: swagger-assets
+    job: site
+    runs: scripts/swagger-assets --check
+    summary: the committed API viewer is swagger-ui-dist at the version the crate pins, file for file
+
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
   # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
   # literal, a raw palette utility, a bracketed size, a second declaration of a token, a
@@ -309,6 +317,13 @@ classes:
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs, scripts/lib/ui-routes.mjs]
     gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check, design, ui-audit]
+
+  # the API viewer's vendored files and the script that puts them there. Read from disk by
+  # the served executable, so the crate's suites see them, and checked against the pinned
+  # npm package by the gate above.
+  - id: swagger
+    paths: [share/swagger/**, scripts/swagger-assets]
+    gates: [swagger-assets, rust-check, rust-integration, site-build]
 
   # the design tokens and their projections. The canonical file reaches every surface, so a
   # change here is selected by the site, the Cockpit and the crate at once; the class exists

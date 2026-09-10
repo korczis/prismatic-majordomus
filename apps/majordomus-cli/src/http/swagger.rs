@@ -13,8 +13,19 @@
 //! page is served to whoever can reach the socket, and `web::home` withholds the path for
 //! the same reason.
 //!
-//! The UI's own assets are fetched by the browser from the unpkg CDN. That is the one
-//! part of the HTTP projection that is not available offline; the OpenAPI document is.
+//! The UI's own assets are this distribution's, read from `share/swagger/vendor/` and
+//! served beside the page at [`ASSET_PREFIX`] with the digest of their bytes in the URL,
+//! exactly like the Cockpit's. Nothing on this page comes from anywhere but this process,
+//! so the whole HTTP projection now works with no network — which is what every other part
+//! of it already did. `scripts/swagger-assets` puts the files there from the pinned npm
+//! package; ADR 0031 deferred that decision as one about distribution size, and it is
+//! answered in `.ai/repo/adrs/0039-*`.
+//!
+//! And when they are not there — a distribution packed without `share/swagger/`, a proxy
+//! that ate the script — the page says so. The explanation is markup the server already
+//! rendered, not something a script has to draw: a script that has to run in order to
+//! report that no script ran is not a report. Swagger UI, when it does load, takes the
+//! notice off the page as its first act.
 //!
 //! The frame around it is this repository's, and so is what the frame owes a reader: a
 //! `<main>` landmark and a level-one heading, which the page had neither of until the UI
@@ -40,6 +51,11 @@ use crate::web::home::{Identity, ID_SHOWN};
 use crate::web::html;
 
 /// The Swagger UI distribution version the page pins.
+///
+/// The one place the version is written. `package.json` pins the same string so that
+/// `npm ci` fetches what this constant promises, and `scripts/swagger-assets` refuses to
+/// vendor anything else: a half-upgraded pin used to mean a stylesheet from one version
+/// and a bundle from another, which fails in the browser and nowhere else.
 pub const SWAGGER_UI_VERSION: &str = "5.17.14";
 
 /// The path the page loads the specification from.
@@ -119,24 +135,12 @@ window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking
 </body>
 </html>
 "##,
-        v = SWAGGER_UI_VERSION,
-        spec = SPEC_PATH,
+        css = assets.url(STYLESHEET),
+        bundle = assets.url(BUNDLE),
+        notice = notice(assets.has(BUNDLE)),
+        init = &*INIT,
         tokens = crate::web::html::TOKENS
     )
-});
-
-/// The page, rendered once.
-///
-/// ```
-/// use majordomus_cli::http::swagger;
-/// let page = swagger::page();
-/// assert!(page.contains(swagger::SWAGGER_UI_VERSION));
-/// assert!(page.contains("url: \"/openapi.json\""));
-/// assert!(!page.contains("\"paths\""), "the shell embeds no specification");
-/// assert!(page.contains("--font-sans"), "the shell carries the repository's design tokens");
-/// ```
-pub fn page() -> &'static str {
-    PAGE.as_str()
 }
 
 /// Whether this shell may be offered as a link a reader can follow, in an environment
@@ -162,11 +166,28 @@ pub fn offered_by_a_publication() -> bool {
 mod tests {
     use super::*;
 
+    /// A distribution whose `share/swagger/vendor/` holds the two files, with the bytes
+    /// given: enough to render the page the way a real one does.
+    fn distribution(css: &str, bundle: &str) -> (tempfile::TempDir, Swagger) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let vendor = dir.path().join(DIR).join("vendor");
+        std::fs::create_dir_all(&vendor).expect("mkdir");
+        std::fs::write(vendor.join("swagger-ui.css"), css).expect("write");
+        std::fs::write(vendor.join("swagger-ui-bundle.js"), bundle).expect("write");
+        let swagger = Swagger::new(Some(dir.path()));
+        (dir, swagger)
+    }
+
+    fn get(path: &str) -> Request {
+        Request::parse_target("GET", path, Vec::new())
+    }
+
     #[test]
     fn the_shell_points_at_the_generated_document_and_carries_none_of_its_own() {
         // the whole claim this module makes: what a reader sees is whatever the server
         // generated from the registry at the moment of the request, never a copy
-        let shell = page();
+        let (_dir, swagger) = distribution(".swagger-ui{}", "window.SwaggerUIBundle=1");
+        let shell = swagger.page();
         assert!(shell.contains(&format!("url: \"{SPEC_PATH}\"")));
         for embedded in ["\"paths\"", "\"openapi\"", "\"components\""] {
             assert!(
@@ -175,20 +196,125 @@ mod tests {
             );
         }
         // and it is rendered once: two calls hand back the same allocation, not two
-        assert!(std::ptr::eq(shell.as_ptr(), page().as_ptr()));
+        assert!(std::ptr::eq(shell.as_ptr(), swagger.page().as_ptr()));
     }
 
     #[test]
-    fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
-        // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
-        // which fails in the browser and nowhere else
-        let shell = page();
-        assert_eq!(
-            shell
-                .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
-                .count(),
-            2,
-            "the stylesheet and the bundle both come from the pinned version"
+    fn the_page_names_no_origin_but_this_one() {
+        // the defect this module was changed to fix: with no network, the CDN version of
+        // this page was HTTP 200 and nothing at all — no widget, and no word about why
+        let (_dir, swagger) = distribution(".swagger-ui{}", "window.SwaggerUIBundle=1");
+        let shell = swagger.page();
+        assert!(!shell.contains("unpkg.com"), "{shell}");
+        assert!(!shell.contains("https://"), "the page loads nothing remote");
+        assert!(shell.contains(&format!("src=\"{ASSET_PREFIX}{BUNDLE}?v=")));
+        assert!(shell.contains(&format!("href=\"{ASSET_PREFIX}{STYLESHEET}?v=")));
+    }
+
+    #[test]
+    fn the_asset_urls_carry_the_digest_of_the_bytes_this_distribution_holds() {
+        let (_one_dir, one) = distribution(".a{}", "one");
+        let (_two_dir, two) = distribution(".a{}", "two");
+        let url = |s: &Swagger| {
+            s.page()
+                .split(&format!("src=\"{ASSET_PREFIX}{BUNDLE}"))
+                .nth(1)
+                .and_then(|s| s.split('"').next())
+                .expect("a bundle URL")
+                .to_string()
+        };
+        assert_ne!(
+            url(&one),
+            url(&two),
+            "two distributions, two bundles, two URLs: the cache is never told anything"
         );
+        assert!(one.complete() && two.complete());
+    }
+
+    #[test]
+    fn an_absent_viewer_is_explained_on_the_page_rather_than_left_blank() {
+        let swagger = Swagger::new(None);
+        assert!(!swagger.complete());
+        let shell = swagger.page();
+        assert!(shell.contains("The API viewer did not load"));
+        assert!(shell.contains("scripts/swagger-assets"), "it names the fix");
+        assert!(shell.contains(SPEC_PATH), "and what is readable without it");
+        // the explanation is markup, not something a script has to draw: everything a
+        // reader needs is between the tags before any script is fetched
+        let body = shell.split("<body>").nth(1).expect("a body");
+        let before_scripts = body.split("<script").next().expect("markup");
+        assert!(before_scripts.contains("The API viewer did not load"));
+    }
+
+    #[test]
+    fn a_present_viewer_still_carries_the_notice_and_the_script_that_removes_it() {
+        // the other half: when the bundle does load, the reader must not see both
+        let (_dir, swagger) = distribution(".a{}", "window.SwaggerUIBundle=1");
+        let shell = swagger.page();
+        assert!(shell.contains("id=\"swagger-unavailable\""));
+        assert!(INIT.contains("notice.remove()"));
+        assert!(INIT.contains("if (window.SwaggerUIBundle)"), "{}", &*INIT);
+        // and the notice names the situation the server is actually in
+        assert!(shell.contains("so the browser did not run it"), "{shell}");
+    }
+
+    #[test]
+    fn the_policy_allows_this_origin_and_the_one_script_it_ships() {
+        use sha2::{Digest, Sha256};
+        let mut h = Sha256::new();
+        h.update(INIT.as_bytes());
+        let expected = crate::cockpit::base64(&h.finalize());
+        let policy = csp();
+        assert!(
+            policy.contains(&format!("'sha256-{expected}'")),
+            "the policy names the digest of the script it ships"
+        );
+        assert!(!policy.contains("unsafe-eval"), "{policy}");
+        assert!(!policy.contains("http"), "{policy}");
+        let script_src = policy
+            .split("script-src ")
+            .nth(1)
+            .and_then(|s| s.split(';').next())
+            .expect("a script-src directive");
+        assert!(!script_src.contains("unsafe-inline"), "{script_src}");
+    }
+
+    #[test]
+    fn the_viewer_serves_its_own_files_and_nothing_else_under_its_prefix() {
+        let (_dir, swagger) = distribution(".a{}", "bundle bytes");
+        let bundle = swagger.handle(&get(&format!("{ASSET_PREFIX}{BUNDLE}")));
+        assert_eq!(bundle.status, 200);
+        assert_eq!(bundle.body, "bundle bytes");
+        // the traversal the asset server refuses, asked through this surface
+        assert_eq!(
+            swagger
+                .handle(&get(&format!("{ASSET_PREFIX}../../Cargo.toml")))
+                .status,
+            404
+        );
+        // and a file with no extension the asset server serves: the licence is for a
+        // reader of the repository, not for the browser
+        assert_eq!(
+            swagger
+                .handle(&get(&format!("{ASSET_PREFIX}vendor/LICENSE")))
+                .status,
+            404
+        );
+    }
+
+    #[test]
+    fn the_page_carries_the_policy_and_the_two_headers_that_go_with_it() {
+        let (_dir, swagger) = distribution(".a{}", "b");
+        let response = swagger.handle(&get(SWAGGER_PATH));
+        let header = |name: &str| {
+            response
+                .headers
+                .iter()
+                .find(|(k, _)| k == name)
+                .map(|(_, v)| v.clone())
+        };
+        assert_eq!(header("Content-Security-Policy").as_deref(), Some(csp()));
+        assert_eq!(header("X-Content-Type-Options").as_deref(), Some("nosniff"));
+        assert_eq!(header("Referrer-Policy").as_deref(), Some("no-referrer"));
     }
 }
