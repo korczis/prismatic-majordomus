@@ -141,6 +141,12 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Health,
         },
         AreaInfo {
+            id: "quality",
+            label: "Quality",
+            href: "/cockpit/quality",
+            area: Area::Quality,
+        },
+        AreaInfo {
             id: "artifacts",
             label: "Artifacts",
             href: "/cockpit/artifacts",
