@@ -395,7 +395,10 @@ EOF
     printf '# the board of the shared server; one of these sessions is you\n'
     printf '%s\n' "$rows" | while IFS="$(printf '\t')" read -r pid att age intent pscope; do
       printf '%-4s %-5s %4ss  %s\n' "$pid" "$att" "$age" "$intent"
-      [ -n "$pscope" ] && printf '            claims %s\n' "$pscope"
+      # an `if`, not `[ ] &&`: under `set -e` a false test as the last command of the loop
+      # body is the pipeline's status, and a peer that said nothing would end `context`
+      # here with nothing printed and exit 1 (2026-09-10, every board with a silent peer last)
+      if [ -n "$pscope" ]; then printf '            claims %s\n' "$pscope"; fi
     done
     if [ -n "$meets" ]; then
       printf '\nOVERLAP  another worker claims ground this task claims:\n'

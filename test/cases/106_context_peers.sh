@@ -77,6 +77,28 @@ expect_no_grep 'p2 claims site'
 order=$(printf '%s\n' "$LAST_OUT" | grep -E '^## ' | tr '\n' ' ')
 case "$order" in "## GIT ## PEERS ## TASK"*) ;; *) echo "    peers is not between git and task: $order"; exit 1 ;; esac
 
+# --- a peer that said nothing, listed last: the section still prints and context still
+# exits 0. Under `set -e` the bare `[ -n "$pscope" ] &&` on the last row of the listing
+# was the loop's exit status, and every board whose newest peer had not announced ended
+# `context` with nothing on either stream and exit 1 (2026-09-10, the primary checkout).
+cat > "$board" <<'JSON'
+{"count":2,"peers":[
+ {"id":"p1","client":{"name":"codex","version":"1"},"transport":"http","connected_at":"2026-09-09T18:00:00Z","last_seen_seconds_ago":4,"attached":true,
+  "announcement":{"intent":"the evidence subsystem","scope":["lib/evidence.sh"],"at":"2026-09-09T18:00:00Z"}},
+ {"id":"p3","client":{"name":"claude-code","version":"1"},"transport":"http","connected_at":"2026-09-09T19:00:00Z","last_seen_seconds_ago":2,"attached":true}
+]}
+JSON
+kill "$stub" 2>/dev/null || true; wait "$stub" 2>/dev/null || true
+python3 "$srv" "$T/port3" "$board" > /dev/null 2>&1 &
+stub=$!
+i=0; until [ -s "$T/port3" ] || [ "$i" -ge 100 ]; do i=$((i+1)); sleep 0.05; done
+printf '{"schema":"majordomus-mcp-lease/v1","url":"http://127.0.0.1:%s"}\n' "$(cat "$T/port3")" > .ai/local/state/mcp/server.json
+expect_exit 0 "$MJ" context
+expect_grep '^## PEERS'
+expect_grep 'p3   here'
+expect_grep '(said nothing)'
+expect_grep '^## TASK'
+
 # --- a board nobody is on says nothing at all
 printf '{"count":0,"peers":[]}\n' > "$board"
 kill "$stub" 2>/dev/null || true; wait "$stub" 2>/dev/null || true
