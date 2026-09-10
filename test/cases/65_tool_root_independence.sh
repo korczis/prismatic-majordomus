@@ -22,8 +22,8 @@ out_checkout="$LAST_OUT"
 expect_exit 10 "$DIST/bin/majordomus" doctor
 out_dist="$LAST_OUT"
 # the budget line carries a measured wall time, which two runs never share; every other line is data
-a="$(printf '%s\n' "$out_checkout" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | sort)"
-b="$(printf '%s\n' "$out_dist" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | sort)"
+a="$(printf '%s\n' "$out_checkout" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | LC_ALL=C sort)"
+b="$(printf '%s\n' "$out_dist" | grep -E '^(OK|FAIL|WARN)' | grep -v '^WARN budget' | sed 's/  \[reproduce:.*//' | LC_ALL=C sort)"
 [ "$a" = "$b" ] || { echo "    two locations of one version disagree about one repository"; diff <(printf '%s\n' "$a") <(printf '%s\n' "$b"); exit 1; }
 
 # --- the optional in-repository installation: a tool checkout under .majordomus/ is an

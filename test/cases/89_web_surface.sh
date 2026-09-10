@@ -146,9 +146,9 @@ grep -qi '<html\|<h1' "$S/home.html" || { echo "    / did not render a page"; he
 curl -s -H 'Accept: application/json' "$U/" > "$S/home.json" || { echo "    GET / as JSON failed"; exit 1; }
 jq -e '.surfaces | length > 0' "$S/home.json" >/dev/null || { echo "    the machine-readable index carries no surfaces"; exit 1; }
 
-jq -r '.surfaces[] | select(.visibility == "public" and .ready) | .path' "$S/home.json" | sort -u > "$S/index_mounts.txt"
+jq -r '.surfaces[] | select(.visibility == "public" and .ready) | .path' "$S/home.json" | LC_ALL=C sort -u > "$S/index_mounts.txt"
 grep -o 'href="[^"]*"' "$S/home.html" | sed 's/href="//; s/"$//' \
-  | grep '^/' | sed 's#\(..*\)/$#\1#' | sort -u > "$S/page_links.txt"
+  | grep '^/' | sed 's#\(..*\)/$#\1#' | LC_ALL=C sort -u > "$S/page_links.txt"
 while read -r m; do
   [ -n "$m" ] || continue
   grep -qx "$m" "$S/page_links.txt" || { echo "    the index offers $m and the page does not link it"; cat "$S/page_links.txt"; exit 1; }

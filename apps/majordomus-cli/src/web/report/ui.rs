@@ -59,6 +59,77 @@ pub struct Finding {
     pub elements: Vec<Element>,
 }
 
+/// One surface the audit measured, and what it contributed.
+///
+/// A built surface is a directory, and every page of it is visited. A surface the executable
+/// renders has no directory: its routes are crawled out of its own anchors and a sample of
+/// each family is visited, so the number of routes it *has* is reported beside the number
+/// that was *sampled*. A sample rendered as a total would be a report overstating its own
+/// coverage, and the Cockpit's thousands of routes are why that distinction belongs on the
+/// page rather than in somebody's head.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{parse, Surface};
+/// let run = parse(r#"{"schema":"ui-audit/v1","pages":108,"visits":478,"findings":[],
+///     "surfaces":[{"id":"cockpit","mount":"/cockpit","kind":"native-route",
+///                  "routes":2660,"families":14,"sampled":108}]}"#).unwrap();
+/// let surface: &Surface = &run.surfaces[0];
+/// assert_eq!((surface.routes, surface.sampled), (2660, 108));
+/// assert!(!surface.truncated, "a crawl that hit its budget reports a floor, not a total");
+/// ```
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Surface {
+    /// The surface's id in the topology.
+    pub id: String,
+    /// Where the executable serves it.
+    pub mount: String,
+    /// `static-directory` or `native-route`.
+    #[serde(default)]
+    pub kind: String,
+    /// How many routes the surface has, when they were crawled rather than read from disk.
+    #[serde(default)]
+    pub routes: usize,
+    /// How many families those routes fell into.
+    #[serde(default)]
+    pub families: usize,
+    /// How many of them the audit visited.
+    #[serde(default)]
+    pub sampled: usize,
+    /// Whether the crawl hit its budget, so the route count is a floor rather than a total.
+    #[serde(default)]
+    pub truncated: bool,
+}
+
+/// A subtree of a page the engine was told to skip, and what declared it.
+///
+/// A page may carry a component tree that is not this repository's to fix — pinned at a
+/// version, its markup and its stylesheet arriving together. The page declares it with
+/// `data-mj-foreign`; the engine skips it, and the report says so. "Not measured" and
+/// "measured and clean" are different claims, and a report that conflated them would be
+/// worth nothing.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{parse, Foreign};
+/// let run = parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":14,"findings":[],
+///     "foreign":[{"route":"/swagger","selector":"main#swagger-ui",
+///                 "declares":"swagger-ui-dist@5.17.14"}]}"#).unwrap();
+/// let skipped: &Foreign = &run.foreign[0];
+/// assert_eq!(skipped.declares, "swagger-ui-dist@5.17.14");
+/// assert!(run.green(), "a page around a skipped subtree can still be clean");
+/// ```
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Foreign {
+    /// A page it was seen on.
+    #[serde(default)]
+    pub route: String,
+    /// The element that carried the declaration.
+    #[serde(default)]
+    pub selector: String,
+    /// What the page said it is: the third party and its pinned version.
+    #[serde(default)]
+    pub declares: String,
+}
+
 /// A whole audit run.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Run {
@@ -79,6 +150,12 @@ pub struct Run {
     /// The widths the sweep visits.
     #[serde(default)]
     pub viewports: Vec<u32>,
+    /// Every surface the run measured, and what each contributed.
+    #[serde(default)]
+    pub surfaces: Vec<Surface>,
+    /// Every subtree the engine was told to skip, once per declaration.
+    #[serde(default)]
+    pub foreign: Vec<Foreign>,
     /// How many pages were visited.
     pub pages: usize,
     /// How many page-and-width visits that came to.
@@ -270,6 +347,92 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
             .join(", "),
     );
 
+    // Which surfaces were measured at all. This table is the answer to the question ADR 0036
+    // left open — whether the audit reaches the surfaces the executable renders as well as
+    // the ones it serves from a directory — so it is on the page whether the run is green or
+    // not, and it says what a crawled surface was sampled *from*.
+    let surfaces_section = if run.surfaces.is_empty() {
+        String::new()
+    } else {
+        let rows: Vec<Vec<String>> = run
+            .surfaces
+            .iter()
+            .map(|surface| {
+                let native = surface.kind == "native-route";
+                let found = if !native {
+                    "its directory and its sitemap".to_string()
+                } else if surface.routes == 0 {
+                    "no pages: the mount is not a document".to_string()
+                } else {
+                    format!(
+                        "{} route(s) in {} family(ies), crawled from its own anchors{}",
+                        surface.routes,
+                        surface.families,
+                        if surface.truncated {
+                            ", and the crawl hit its budget, so that is a floor"
+                        } else {
+                            ""
+                        }
+                    )
+                };
+                vec![
+                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.id)),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&surface.mount)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&surface.kind)
+                    ),
+                    if native {
+                        format!("<span class=\"num\">{}</span>", surface.sampled)
+                    } else {
+                        "every page".to_string()
+                    },
+                    html::escape(&found),
+                ]
+            })
+            .collect();
+        format!(
+            "<h2>The surfaces this run measured</h2>{}",
+            html::table(&["surface", "mount", "kind", "visited", "found by"], &rows)
+        )
+    };
+
+    // What was not measured, and what declared it. On the page whether the run is green or
+    // not: a reader who cannot see this cannot tell a clean audit from a narrowed one.
+    let foreign_section = if run.foreign.is_empty() {
+        String::new()
+    } else {
+        let rows: Vec<Vec<String>> = run
+            .foreign
+            .iter()
+            .map(|subtree| {
+                vec![
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.declares)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.selector)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.route)
+                    ),
+                ]
+            })
+            .collect();
+        format!(
+            "<h2>Not measured, and why</h2><p class=\"lede\">A page may declare a subtree \
+             that is a third party's to answer for. The accessibility engine skipped these; \
+             everything around them was measured as usual.</p>{}",
+            html::table(&["declared as", "element", "first seen on"], &rows)
+        )
+    };
+
     let findings_section = if run.green() {
         String::new()
     } else {
@@ -284,9 +447,11 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
     };
 
     let body = format!(
-        "{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
+        "{}{}{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
         scope,
         html::summary(&summary),
+        surfaces_section,
+        foreign_section,
         findings_section,
         provenance,
         html::origin(&origin, &[("results.json", "results.json")])

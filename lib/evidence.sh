@@ -355,6 +355,54 @@ mj_obligation_establish() {
   "$fn"
 }
 
+# ---------------------------------------------------------------- the judgement
+# The judgement about one obligation of one task, with no verdict attached: prints
+# "<state><TAB><message><TAB><reproduce>" and returns 0 only when the state is `pass`.
+#
+#   pass   discharged: established true here, or evidence that still describes this tree
+#   unmet  owed and not discharged, or established false
+#   stale  evidence exists and no longer describes this tree or this commit
+#
+# Whether a shortfall *refuses* is not decided here. `check` asks through mj_obl_verdict,
+# where the outcome decides; a live scenario reports the state as its step result. Both
+# reach the same answer about the same tree because there is one judgement and not two
+# (ADR 38) — a second implementation is how `check` and a gate come to disagree about
+# whether the same work is finished.
+mj_obligation_judge() {
+  local task="$1" tok="$2" by est est_rc emsg erep ev head_rec ih_rec ih_now label repro
+  mj_obligations_load
+  if ! mj_obligation_known "$tok"; then
+    printf 'unmet\t%s\t%s\n' "share/obligations.yaml does not declare '$tok'" "majordomus evidence --help"; return 1
+  fi
+  repro="majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'"
+  by="$(mj_obligation_established_by "$tok")"
+  est=""; est_rc=0
+  est="$(mj_obligation_establish "$tok")" || est_rc=$?
+  emsg="${est%%"$MJ_TAB"*}"; erep="${est#*"$MJ_TAB"}"; if [ "$erep" = "$est" ]; then erep=""; fi
+  case "$est_rc" in
+    0) printf 'pass\t%s\t%s\n' "$emsg" "$erep"; return 0 ;;
+    1) printf 'unmet\t%s\t%s\n' "$emsg" "$erep"; return 1 ;;
+  esac
+  if ! ev="$(mj_obligation_evidence "$task" "$tok")"; then
+    printf 'unmet\t%s\t%s\n' "owed, and no evidence was recorded$([ "$by" != none ] && [ -n "$emsg" ] && printf ' (%s)' "$emsg")" "$repro"; return 1
+  fi
+  head_rec="$(printf '%s' "$ev" | cut -f1)"; ih_rec="$(printf '%s' "$ev" | cut -f2)"
+  if mj_obligation_remote "$tok"; then
+    label="$(mj_git_label "$head_rec" "$(mj_git_branch)")"
+    case "$label" in
+      exact) printf 'pass\t%s\t\n' "discharged at this commit"; return 0 ;;
+      advanced) printf 'stale\t%s\t%s\n' "the evidence names $(printf '%s' "$head_rec" | cut -c1-12), and the branch has moved since; the fact it proved is about the older commit" "$repro"; return 1 ;;
+      *) printf 'stale\t%s\t%s\n' "the evidence was taken in a $label context ($(printf '%s' "$head_rec" | cut -c1-12)); it does not describe this branch" "$repro"; return 1 ;;
+    esac
+  fi
+  ih_now="$(mj_obligation_inputs_hash "$tok")"
+  if [ "$ih_rec" = "$ih_now" ]; then
+    printf 'pass\t%s\t\n' "discharged over inputs $(printf '%s' "$ih_now" | cut -c1-12)"; return 0
+  fi
+  printf 'stale\t%s\t%s\n' "the evidence was taken over inputs $(printf '%s' "$ih_rec" | cut -c1-12) and this tree hashes to $(printf '%s' "$ih_now" | cut -c1-12); it no longer describes what it proved" "$repro"
+  return 1
+}
+
 # ---------------------------------------------------------------- doctrine validator
 # Dispatched by check and finish through majordomus.obligation-closure. Skipped for every
 # outcome but completed, as the verification and profile lines already are: a task that
@@ -367,7 +415,7 @@ mj_obl_verdict() {
 }
 
 mj_validate_obligations() {
-  local toks tok ev head_rec ih_rec ih_now label rel est est_rc emsg erep by
+  local toks tok rel j jstate jrest jmsg jrep
   mj_load_current || { mj_doctrine_skip obligation "-" "no active task; nothing owes anything"; return 0; }
   toks="$(mj_task_requires)"
   if [ -z "$toks" ]; then
@@ -386,46 +434,17 @@ mj_validate_obligations() {
       mj_obl_verdict "$rel" "the task requires '$tok', which share/obligations.yaml does not declare" "majordomus evidence --help"
       continue
     fi
-    # First, the fact itself, where the tool can hold it. A token the vocabulary says is
-    # established here never reaches the ledger: it is discharged by being true and refused
-    # by being false, and a recorded line claiming otherwise does not survive either way.
-    by="$(mj_obligation_established_by "$tok")"
-    est=""; est_rc=0
-    est="$(mj_obligation_establish "$tok")" || est_rc=$?
-    emsg="${est%%"$MJ_TAB"*}"; erep="${est#*"$MJ_TAB"}"; [ "$erep" = "$est" ] && erep=""
-    case "$est_rc" in
-      0) mj_doctrine_ok obligation "$tok" "$emsg"; continue ;;
-      1) mj_obl_verdict "$tok" "$emsg" "$erep"; continue ;;
+    # The judgement is mj_obligation_judge's, so that a live scenario asserting the same
+    # token reaches the same answer. What is decided here is only what a shortfall costs.
+    # the state word decides, not the exit code: judge returns non-zero for both unmet
+    # and stale, and those are one verdict here and two words in a live scenario
+    j="$(mj_obligation_judge "$(mj_cur id)" "$tok")" || true
+    jstate="${j%%"$MJ_TAB"*}"; jrest="${j#*"$MJ_TAB"}"
+    jmsg="${jrest%%"$MJ_TAB"*}"; jrep="${jrest#*"$MJ_TAB"}"; if [ "$jrep" = "$jrest" ]; then jrep=""; fi
+    case "$jstate" in
+      pass) mj_doctrine_ok obligation "$tok" "$jmsg" ;;
+      *) mj_obl_verdict "$tok" "$jmsg" "$jrep" ;;
     esac
-    # Undecidable here, so the recorded evidence is what there is. A token that was meant to
-    # be established says why it could not be, because "no evidence was recorded" and "the
-    # site was unreachable from this laptop" are different problems with different fixes.
-    if ! ev="$(mj_obligation_evidence "$(mj_cur id)" "$tok")"; then
-      mj_obl_verdict "$tok" "owed, and no evidence was recorded$([ "$by" != none ] && [ -n "$emsg" ] && printf ' (%s)' "$emsg")" \
-        "majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'"
-      continue
-    fi
-    head_rec="$(printf '%s' "$ev" | cut -f1)"
-    ih_rec="$(printf '%s' "$ev" | cut -f2)"
-    # A remote fact is bound to the commit it was taken about, not to the tree: the site
-    # that serves a commit goes on serving it while the tree moves underneath.
-    if mj_obligation_remote "$tok"; then
-      label="$(mj_git_label "$head_rec" "$(mj_git_branch)")"
-      case "$label" in
-        exact) mj_doctrine_ok obligation "$tok" "discharged at this commit" ;;
-        advanced) mj_obl_verdict "$tok" "the evidence names $(printf '%s' "$head_rec" | cut -c1-12), and the branch has moved since; the fact it proved is about the older commit" "majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'" ;;
-        *) mj_obl_verdict "$tok" "the evidence was taken in a $label context ($(printf '%s' "$head_rec" | cut -c1-12)); it does not describe this branch" "majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'" ;;
-      esac
-      continue
-    fi
-    ih_now="$(mj_obligation_inputs_hash "$tok")"
-    if [ "$ih_rec" = "$ih_now" ]; then
-      mj_doctrine_ok obligation "$tok" "discharged over inputs $(printf '%s' "$ih_now" | cut -c1-12)"
-    else
-      mj_obl_verdict "$tok" \
-        "the evidence was taken over inputs $(printf '%s' "$ih_rec" | cut -c1-12) and this tree hashes to $(printf '%s' "$ih_now" | cut -c1-12); it no longer describes what it proved" \
-        "majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'"
-    fi
   done
   return 0
 }

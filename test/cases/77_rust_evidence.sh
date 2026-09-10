@@ -39,6 +39,7 @@ capabilities validate
 generate --check
 bench coverage --check
 web validate
+quality report
 bench --profile ci --check
 cargo llvm-cov --fail-under-lines $threshold
 artifact $ARTIFACT'
@@ -52,6 +53,7 @@ expect_grep 'cargo bench --no-run' "$RC"
 expect_grep 'cargo run --quiet -- capabilities validate' "$RC"
 expect_grep 'cargo run --quiet -- generate --check' "$RC"
 expect_grep 'cargo run --quiet -- bench coverage --check' "$RC"
+expect_grep 'cargo run --quiet -- quality report' "$RC"
 expect_grep 'cargo llvm-cov --all-targets --summary-only --fail-under-lines "[$]threshold"' "$RC"
 expect_grep 'scripts/rust-coverage-threshold' "$RC"
 

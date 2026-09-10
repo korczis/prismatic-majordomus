@@ -120,6 +120,10 @@
         "handover_on_end": {
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends with its task still active."
+        },
+        "ensure_server_on_start": {
+          "type": "boolean",
+          "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."
         }
       }
     },

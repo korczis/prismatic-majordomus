@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 73,
-    "schemas": 328,
-    "tags": 24
+    "operations": 78,
+    "schemas": 350,
+    "tags": 26
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -30,9 +30,9 @@
   ],
   "external_docs": {
     "description": "The API reference, rendered from this document.",
-    "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
+    "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.4.0",
+  "generated_by": "majordomus-cli 0.5.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -41,7 +41,7 @@
     "license": "MIT",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "infrastructure": [
     {
@@ -2141,6 +2141,28 @@
       "variants": []
     },
     {
+      "description": "What a colour is doing where it was found.",
+      "is_enum": true,
+      "name": "Carries",
+      "properties": [],
+      "type": "\"text\" | \"non_text\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Measured"
+      ],
+      "values": [
+        {
+          "description": "Text: held to [`MINIMUM_TEXT`].",
+          "value": "text"
+        },
+        {
+          "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.",
+          "value": "non_text"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The whole catalogue as a client reads it.",
       "is_enum": false,
       "name": "CatalogueView",
@@ -2597,6 +2619,52 @@
       "used_by": [],
       "used_by_schemas": [
         "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One part of a colour token — a role has one, a status has its text, ground and border.",
+      "is_enum": false,
+      "name": "ColourPart",
+      "properties": [
+        {
+          "description": "`fg`, `bg` or `line`.",
+          "name": "part",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The custom property a surface reads.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "In the light theme.",
+          "name": "light",
+          "refs": [
+            "Resolved"
+          ],
+          "required": true,
+          "type": "Resolved"
+        },
+        {
+          "description": "In the dark theme.",
+          "name": "dark",
+          "refs": [
+            "Resolved"
+          ],
+          "required": true,
+          "type": "Resolved"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Token"
       ],
       "values": [],
       "variants": []
@@ -4229,6 +4297,94 @@
       "variants": []
     },
     {
+      "description": "Every pair the declaration and its consumers state, measured.",
+      "is_enum": false,
+      "name": "ContrastReport",
+      "properties": [
+        {
+          "description": "The fingerprint of the declaration measured.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The standard the thresholds come from.",
+          "name": "standard",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ratio asked of text.",
+          "name": "minimum_text",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "The ratio asked of a non-text element that carries meaning.",
+          "name": "minimum_non_text",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "The stylesheets read, and whether each was found.",
+          "name": "sources",
+          "refs": [
+            "Source"
+          ],
+          "required": true,
+          "type": "array of Source"
+        },
+        {
+          "description": "How many pairs were derived and measured.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every pair, in a stable order: theme, then what it carries, then the two tokens.",
+          "name": "pairs",
+          "refs": [
+            "Measured"
+          ],
+          "required": true,
+          "type": "array of Measured"
+        },
+        {
+          "description": "Declarations skipped because their value is composed at run time.",
+          "name": "composed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio.",
+          "name": "findings",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether every enforced pair reaches its threshold.",
+          "name": "readable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.contrast"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "is_enum": false,
       "name": "CounterSnapshot",
@@ -4749,6 +4905,144 @@
       ],
       "used_by_schemas": [
         "DeploymentList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The design system: what it is and where it goes.",
+      "is_enum": false,
+      "name": "DesignReport",
+      "properties": [
+        {
+          "description": "SHA-256 of the declaration's canonical form.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first twelve digits, as every stylesheet carries them in `--mj-design`.",
+          "name": "design",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The format version of the declaration.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where the declaration lives, repository-relative.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who this is.",
+          "name": "identity",
+          "refs": [
+            "Identity"
+          ],
+          "required": true,
+          "type": "Identity"
+        },
+        {
+          "description": "The two type stacks.",
+          "name": "font",
+          "refs": [
+            "Fonts"
+          ],
+          "required": true,
+          "type": "Fonts"
+        },
+        {
+          "description": "The theme contract.",
+          "name": "theme",
+          "refs": [
+            "ThemeView"
+          ],
+          "required": true,
+          "type": "ThemeView"
+        },
+        {
+          "description": "The widths a browser audit measures every page at.",
+          "name": "viewports",
+          "refs": [],
+          "required": true,
+          "type": "array of integer (uint32)"
+        },
+        {
+          "description": "How many of each kind of token.",
+          "name": "tallies",
+          "refs": [
+            "TokenTallies"
+          ],
+          "required": true,
+          "type": "TokenTallies"
+        },
+        {
+          "description": "Every generated file the declaration is projected into.",
+          "name": "projections",
+          "refs": [
+            "ProjectionView"
+          ],
+          "required": true,
+          "type": "array of ProjectionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.system"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What this executable would want a server of this checkout to be: the address it would\nbind, the version and the executable it would serve from. What `standing` is measured\nagainst.\n\n```\nuse majordomus_cli::capability::builtin::server::Desired;\nlet d = Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None };\nlet v = serde_json::to_value(&d).unwrap();\nassert_eq!(v[\"port\"], 8741);\nassert!(v.get(\"executable\").is_none(), \"an executable that cannot be located is not written as null\");\n```",
+      "is_enum": false,
+      "name": "Desired",
+      "properties": [
+        {
+          "description": "The interface the shared server binds by default.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The port it asks for first.",
+          "name": "port",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint16)"
+        },
+        {
+          "description": "This executable's version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This executable, when it can be located.",
+          "name": "executable",
+          "refs": [
+            "ExecutableIdentity"
+          ],
+          "required": false,
+          "type": "ExecutableIdentity | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus"
       ],
       "values": [],
       "variants": []
@@ -5770,6 +6064,10 @@
         "deploy.get",
         "deploy.list",
         "deploy.check",
+        "design.system",
+        "design.contrast",
+        "design.explain",
+        "design.tokens",
         "directories.list",
         "distribution.model",
         "distribution.artifact",
@@ -5817,6 +6115,7 @@
         "repository.scope",
         "repository.scope_classify",
         "objects.search",
+        "server.status",
         "trace.report",
         "trace.commit",
         "trace.issue",
@@ -6046,6 +6345,42 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The identity of the file an executable was started from: where it is, and the mtime\nand size of the file at that path. A server outlives its own binary — a rebuild replaces\nthe file under a process that keeps serving the code it loaded hours ago — and nothing\nabout the process itself says so. This is what makes that visible.\n\n```\nuse majordomus_cli::lease::ExecutableIdentity;\nlet recorded = ExecutableIdentity { path: \"/opt/majordomus\".into(), mtime: 1_700_000_000, size: 42 };\nlet text = serde_json::to_string(&recorded).unwrap();\nassert_eq!(serde_json::from_str::<ExecutableIdentity>(&text).unwrap(), recorded);\n```",
+      "is_enum": false,
+      "name": "ExecutableIdentity",
+      "properties": [
+        {
+          "description": "The path the process was started from.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file's modification time, seconds since the epoch.",
+          "name": "mtime",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The file's size in bytes.",
+          "name": "size",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Desired",
+        "LeaseView"
       ],
       "values": [],
       "variants": []
@@ -7608,6 +7943,69 @@
       "variants": []
     },
     {
+      "description": "The two type stacks.",
+      "is_enum": false,
+      "name": "Fonts",
+      "properties": [
+        {
+          "description": "The system stack.",
+          "name": "sans",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The monospace stack.",
+          "name": "mono",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```",
+      "is_enum": false,
+      "name": "GitIdentity",
+      "properties": [
+        {
+          "description": "The git directory every work tree of the repository shares, canonical.",
+          "name": "common_dir",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its digest: the same for every checkout of one repository, different across\nrepositories, and never a path.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this checkout is a linked work tree rather than the primary one.",
+          "name": "linked",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What `git` said about the repository.",
       "is_enum": false,
       "name": "GitInfo",
@@ -8237,6 +8635,48 @@
       "variants": []
     },
     {
+      "description": "Who this is.",
+      "is_enum": false,
+      "name": "Identity",
+      "properties": [
+        {
+          "description": "The product name every surface shows.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The mark, relative to the design directory.",
+          "name": "mark",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The full logo, relative to the design directory.",
+          "name": "logo",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The social preview image, relative to the design directory.",
+          "name": "social",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One branch, inspected: where its work tree belongs and what is there.",
       "is_enum": false,
       "name": "InspectReport",
@@ -8676,6 +9116,58 @@
       "variants": []
     },
     {
+      "description": "A lease as a reader sees it: what the server wrote about itself, without the token that\nmakes the file the server's own.\n\n```\nuse majordomus_cli::capability::builtin::server::LeaseView;\nlet view = LeaseView { pid: 7, url: Some(\"http://127.0.0.1:8741\".into()),\n    started_at: \"2026-09-10T00:00:00Z\".into(), executable: None, version: Some(\"1.0.0\".into()) };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"pid\"], 7);\nassert!(v.get(\"token\").is_none() && v.get(\"root\").is_none());\n```",
+      "is_enum": false,
+      "name": "LeaseView",
+      "properties": [
+        {
+          "description": "The server's process id. Informational: nothing decides liveness from it.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The address, once bound.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the server took the lease, RFC 3339.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The executable the server was started from, when it could be located.",
+          "name": "executable",
+          "refs": [
+            "ExecutableIdentity"
+          ],
+          "required": false,
+          "type": "ExecutableIdentity | null"
+        },
+        {
+          "description": "The executable's version; absent for a server too old to have written one.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus",
+        "ServerView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The C library a Linux artifact is linked against.",
       "is_enum": true,
       "name": "Libc",
@@ -9076,6 +9568,113 @@
       "used_by": [],
       "used_by_schemas": [
         "McpExposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One measured pair: a foreground on a ground, in one theme.",
+      "is_enum": false,
+      "name": "Measured",
+      "properties": [
+        {
+          "description": "The foreground token, as the declaration names it (`muted`, `ok`).",
+          "name": "foreground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The palette entry it resolves to in this theme.",
+          "name": "foreground_entry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal that entry holds.",
+          "name": "foreground_value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ground token.",
+          "name": "ground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The palette entry the ground resolves to in this theme.",
+          "name": "ground_entry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal that entry holds.",
+          "name": "ground_value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`light` or `dark`.",
+          "name": "theme",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Text, or a border.",
+          "name": "carries",
+          "refs": [
+            "Carries"
+          ],
+          "required": true,
+          "type": "Carries"
+        },
+        {
+          "description": "The measured ratio, to two decimal places.",
+          "name": "ratio",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "What the standard asks of this pair.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Whether it reaches it.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether falling short is a finding. False for a border; see the module documentation.",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where the pair was read: the stylesheet and the selector that states it.",
+          "name": "seen",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContrastReport"
       ],
       "values": [],
       "variants": []
@@ -10399,7 +10998,7 @@
       "variants": []
     },
     {
-      "description": "The open episode of this worktree, when there is one.",
+      "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.",
       "is_enum": false,
       "name": "OpenSession",
       "properties": [
@@ -10434,6 +11033,13 @@
         {
           "description": "The provider whose event opened it, when one did.",
           "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns.",
+          "name": "provider_session",
           "refs": [],
           "required": false,
           "type": "string"
@@ -12384,6 +12990,34 @@
           "value": "unknown"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One generated projection of the design and what it is for.",
+      "is_enum": false,
+      "name": "ProjectionView",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What reads it.",
+          "name": "read_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -14470,6 +15104,41 @@
       "variants": []
     },
     {
+      "description": "What a colour reference resolved to.",
+      "is_enum": false,
+      "name": "Resolved",
+      "properties": [
+        {
+          "description": "The palette entry or role the declaration named.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal after every reference is followed.",
+          "name": "literal",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ColourPart"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One feature, resolved: the record as its file declares it, and everything derived.",
       "is_enum": false,
       "name": "ResolvedRefs",
@@ -15188,6 +15857,188 @@
       "variants": []
     },
     {
+      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
+      "is_enum": true,
+      "name": "ServerStanding",
+      "properties": [],
+      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus",
+        "ServerView"
+      ],
+      "values": [
+        {
+          "description": "No lease: nothing serves this checkout.",
+          "value": "absent"
+        },
+        {
+          "description": "A lease without an address, young enough that its owner is still binding.",
+          "value": "starting"
+        },
+        {
+          "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version.",
+          "value": "ready"
+        },
+        {
+          "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's.",
+          "value": "outdated"
+        },
+        {
+          "description": "The lease names a server that does not answer, or is not a lease at all.",
+          "value": "stale"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new() };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+      "is_enum": false,
+      "name": "ServerStatus",
+      "properties": [
+        {
+          "description": "This checkout's identity: what this process answers as `repository_id`.",
+          "name": "checkout_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The git repository this checkout belongs to; absent where git cannot be asked.",
+          "name": "git",
+          "refs": [
+            "GitIdentity"
+          ],
+          "required": false,
+          "type": "GitIdentity | null"
+        },
+        {
+          "description": "What this executable would serve, and what `standing` is measured against.",
+          "name": "desired",
+          "refs": [
+            "Desired"
+          ],
+          "required": true,
+          "type": "Desired"
+        },
+        {
+          "description": "The lease this process holds, when it is the server; absent when the question was\nanswered by a process that serves nothing.",
+          "name": "this_process",
+          "refs": [
+            "LeaseView"
+          ],
+          "required": false,
+          "type": "LeaseView | null"
+        },
+        {
+          "description": "Where this checkout's server stands.",
+          "name": "standing",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "Every checkout of the repository, the primary first, each with its server. One entry\n— this checkout — where git cannot be asked.",
+          "name": "servers",
+          "refs": [
+            "ServerView"
+          ],
+          "required": true,
+          "type": "array of ServerView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "server.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```",
+      "is_enum": false,
+      "name": "ServerView",
+      "properties": [
+        {
+          "description": "The checkout, absolute and canonical.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out there, when git names one.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout's identity: what its server answers as `repository_id`.",
+          "name": "checkout_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this is the primary checkout rather than a linked worktree.",
+          "name": "primary",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether this is the checkout the answering process serves.",
+          "name": "this_checkout",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where its server stands.",
+          "name": "standing",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "Why, when the standing is not `ready`: what the lease held, or what answered.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The lease, when the file holds one.",
+          "name": "lease",
+          "refs": [
+            "LeaseView"
+          ],
+          "required": false,
+          "type": "LeaseView | null"
+        },
+        {
+          "description": "How many peers the server reports attached, when it answers.",
+          "name": "peers",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.",
       "is_enum": true,
       "name": "ServiceAvailability",
@@ -15318,6 +16169,34 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One stylesheet the pair set was derived from.",
+      "is_enum": false,
+      "name": "Source",
+      "properties": [
+        {
+          "description": "Where it was read from, as the caller named it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many rules of it state a colour.",
+          "name": "rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContrastReport"
       ],
       "values": [],
       "variants": []
@@ -16389,6 +17268,41 @@
       "variants": []
     },
     {
+      "description": "The theme contract as a client reads it.",
+      "is_enum": false,
+      "name": "ThemeView",
+      "properties": [
+        {
+          "description": "The class on the root element that means dark.",
+          "name": "class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The `localStorage` key the person's choice is kept under.",
+          "name": "storage_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The one pre-paint statement every surface runs.",
+          "name": "bootstrap",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.",
       "is_enum": true,
       "name": "TierState",
@@ -16413,6 +17327,249 @@
           "value": "unavailable"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One token, explained: where it came from, what it resolves to, what reads it.",
+      "is_enum": false,
+      "name": "Token",
+      "properties": [
+        {
+          "description": "The name as declared.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What kind of token.",
+          "name": "kind",
+          "refs": [
+            "TokenKind"
+          ],
+          "required": true,
+          "type": "TokenKind"
+        },
+        {
+          "description": "What it is for, from the declaration.",
+          "name": "about",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The custom properties and Tailwind utilities it becomes.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "For a colour token: its parts, each resolved per theme.",
+          "name": "parts",
+          "refs": [
+            "ColourPart"
+          ],
+          "required": false,
+          "type": "array of ColourPart"
+        },
+        {
+          "description": "For a scalar token: the value.",
+          "name": "value",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "For a state word: the status it is filed under.",
+          "name": "role",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "For a status: the state words filed under it.",
+          "name": "states",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The Flowbite names that are synonyms of it.",
+          "name": "aliases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The generated files the token reaches.",
+          "name": "projections",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.explain"
+      ],
+      "used_by_schemas": [
+        "TokenList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What kind of thing a token is.",
+      "is_enum": true,
+      "name": "TokenKind",
+      "properties": [],
+      "type": "\"font\" | \"palette\" | \"role\" | \"status\" | \"state\" | \"type\" | \"tracking\" | \"layout\" | \"radius\" | \"motion\" | \"theme\"",
+      "used_by": [
+        "design.tokens"
+      ],
+      "used_by_schemas": [
+        "Token"
+      ],
+      "values": [
+        {
+          "description": "A type stack.",
+          "value": "font"
+        },
+        {
+          "description": "A raw palette entry.",
+          "value": "palette"
+        },
+        {
+          "description": "A semantic surface role.",
+          "value": "role"
+        },
+        {
+          "description": "A status meaning.",
+          "value": "status"
+        },
+        {
+          "description": "A state word, filed under a status.",
+          "value": "state"
+        },
+        {
+          "description": "A step of the type scale.",
+          "value": "type"
+        },
+        {
+          "description": "A letter-spacing.",
+          "value": "tracking"
+        },
+        {
+          "description": "A shared layout value.",
+          "value": "layout"
+        },
+        {
+          "description": "A corner radius.",
+          "value": "radius"
+        },
+        {
+          "description": "A duration.",
+          "value": "motion"
+        },
+        {
+          "description": "The theme contract.",
+          "value": "theme"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The tokens, listed.",
+      "is_enum": false,
+      "name": "TokenList",
+      "properties": [
+        {
+          "description": "The fingerprint of the declaration they came from.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many are listed.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The tokens, in the inventory's order.",
+          "name": "tokens",
+          "refs": [
+            "Token"
+          ],
+          "required": true,
+          "type": "array of Token"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.tokens"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How many of each kind of token.",
+      "is_enum": false,
+      "name": "TokenTallies",
+      "properties": [
+        {
+          "description": "Raw palette entries.",
+          "name": "palette",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Semantic roles.",
+          "name": "roles",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Status meanings.",
+          "name": "statuses",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "State words filed under a status.",
+          "name": "states",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Steps of the type scale.",
+          "name": "type_steps",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Flowbite names declared as synonyms.",
+          "name": "aliases",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -18589,6 +19746,253 @@
       ]
     },
     {
+      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+      "name": "design",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design\"",
+          "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+          "id": "design.system",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "design",
+            "uri": "majordomus://design"
+          },
+          "mcp_tool": "majordomus_design",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/design",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The design system: the result.",
+              "schema": "DesignReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DesignReport",
+          "stability": "behaviorally_verified",
+          "summary": "The design system"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/contrast\"",
+          "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+          "id": "design.contrast",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_contrast",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/design/contrast",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether the declared colours can be read: the result.",
+              "schema": "ContrastReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ContrastReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether the declared colours can be read"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/explain?token=fg\"",
+          "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+          "id": "design.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`).",
+              "examples": [
+                {
+                  "case": "role",
+                  "value": "\"fg\""
+                },
+                {
+                  "case": "state",
+                  "value": "\"succeeded\""
+                }
+              ],
+              "name": "token",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/design/explain",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What a design token means: the result.",
+              "schema": "Token",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Token",
+          "stability": "behaviorally_verified",
+          "summary": "What a design token means"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/tokens?kind=role\"",
+          "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+          "id": "design.tokens",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_tokens",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only tokens of this kind.",
+              "examples": [
+                {
+                  "case": "roles",
+                  "value": "\"role\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "TokenKind | null"
+            }
+          ],
+          "path": "/api/v1/design/tokens",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The design tokens: the result.",
+              "schema": "TokenList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TokenList",
+          "stability": "behaviorally_verified",
+          "summary": "The design tokens"
+        }
+      ]
+    },
+    {
       "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
       "name": "directories",
       "operations": [
@@ -19751,7 +21155,7 @@
       ]
     },
     {
-      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
       "name": "health",
       "operations": [
         {
@@ -19763,7 +21167,7 @@
           "cache_detail": "max_entries=4, ttl_seconds=5",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/health\"",
-          "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+          "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
           "id": "health.report",
           "kind": "query",
           "mcp_resource": {
@@ -21797,6 +23201,67 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
+        }
+      ]
+    },
+    {
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+      "name": "server",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "serve status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server\"",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "id": "server.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "server",
+            "uri": "majordomus://server"
+          },
+          "mcp_tool": "majordomus_server",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/server",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::server",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The shared server, and every server of the repository: the result.",
+              "schema": "ServerStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ServerStatus",
+          "stability": "behaviorally_verified",
+          "summary": "The shared server, and every server of the repository"
         }
       ]
     },

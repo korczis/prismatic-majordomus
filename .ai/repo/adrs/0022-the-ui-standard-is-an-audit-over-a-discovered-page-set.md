@@ -11,6 +11,7 @@ related:
   - rule:project.web-surface-topology
   - file:scripts/ui
   - file:scripts/lib/ui-discover.mjs
+  - file:scripts/lib/ui-routes.mjs
   - file:scripts/lib/ui-audit.mjs
   - file:scripts/lib/ui-static.mjs
   - file:scripts/lib/ui-contrast.mjs

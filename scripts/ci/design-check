@@ -1,128 +1,266 @@
 #!/usr/bin/env bash
 # design-check — the design is one declaration, and no surface carries a second one.
 #
-# Two questions, both machine-answerable:
+# The declaration is share/design/tokens.yaml. `majordomus generate design` projects it
+# into every stylesheet, dataset and document a surface consumes, and `generate --check`
+# (the rust-generated gate) is what proves those projections current — the same way every
+# other generated artifact is proved. This gate asks the questions a projection check
+# cannot: whether any *source* a person writes carries a design decision of its own.
 #
-#   1. Are the projections current? `scripts/design-tokens --check` regenerates
-#      share/design/theme.css, share/design/surface.css and
-#      apps/majordomus-cli/src/web/tokens.css from share/design/tokens.yaml and fails when
-#      a committed one differs. A value changed in the canonical file and not projected is
-#      a value that reaches one surface and not the others.
-#
-#   2. Does anything choose a colour outside the canonical file? A stylesheet, a template,
-#      a script that supplies CSS values, or Rust that writes a <style> block may name a
-#      token; it may not invent one. Every hexadecimal, rgb(), hsl() or oklch() literal
-#      outside share/design/tokens.yaml is a second decision, and a second decision is how
-#      four surfaces came to have four palettes.
+#   1. No file that puts a colour on a screen names one outside the declaration: no
+#      hexadecimal, rgb(), hsl() or oklch() literal in a stylesheet, a template, a script
+#      that supplies CSS values, or Rust that writes a <style> block.
+#   2. No first-party stylesheet or template reaches past the roles for a raw Tailwind
+#      palette utility (`text-green-700`, `bg-red-50`, `border-l-amber-500`): a status is
+#      the status vocabulary, and a surface that colours `succeeded` green by hand has
+#      decided it again.
+#   3. No first-party stylesheet writes a bracketed pixel size or letter-spacing
+#      (`text-[11px]`, `tracking-[0.12em]`): a size is a step of the named scale.
+#   4. No file outside the generated projections declares a canonical custom property
+#      (`--mj-*`, `--font-sans`, `--text-<step>`): a second declaration is a second value.
+#   5. Every `--mj-` token a surface reads is one the declaration emits. An undeclared
+#      custom property is the empty string, never an error; a reader gets nothing and uses
+#      whatever fallback stands beside it, for ever, silently.
+#   6. Every copy of the brand a surface serves is byte for byte the canonical file under
+#      share/design/brand/, and no other copy of a mark exists.
+#   7. No first-party script or template names the theme storage key or the theme class:
+#      both come from the declaration, through the page.
+#   8. The projections are current — when a built executable is at hand. Without one the
+#      question is delegated, in so many words, to the rust-generated gate that always has
+#      one; a delegation printed is not a skip.
+#   9. Every colour the declaration pairs with a ground can be read on it: WCAG 2.1 AA,
+#      4.5:1 for text, in both themes. The pairs are not listed here — they are derived by
+#      the executable from the declaration and from the primitives that consume it, so a
+#      role added tomorrow is measured tomorrow (`design.contrast`, crate::design::contrast).
 #
 # What is exempt, and why — an exemption is a reason, never a path somebody added:
 #
 #   share/design/*.css, apps/majordomus-cli/src/web/tokens.css
 #       the generated projections themselves. They are made of literals; that is their job.
-#   */vendor/*, share/cockpit/cockpit.css
-#       third-party bytes and a compiled artifact. Neither is written here.
-#   *.svg
-#       an icon is an image. A favicon cannot reach a custom property — a browser renders
-#       it outside any document — so its colours are in the file by necessity.
+#   */vendor/*, share/cockpit/cockpit.css, site/static/app.css
+#       third-party bytes and compiled artifacts. Neither is written here.
+#   share/design/brand/*.svg
+#       the canonical marks. A favicon cannot reach a custom property — a browser renders
+#       it outside any document — so its colours are in the file by necessity. Every other
+#       .svg is checked in question 6 against these.
+#   apps/majordomus-cli/src/design/*.rs
+#       the model that *implements* the declaration: it parses colours, resolves them,
+#       validates them and renders the projections. Its unit fixtures are declarations in
+#       miniature and its examples show what a value resolves to, so both are made of
+#       literals for the same reason the projections are — and one test deliberately adds a
+#       role to a fixture to prove a new token needs no registration, which is a read of a
+#       token the *canonical* declaration does not emit. This module renders nothing to
+#       anybody: it is the implementation, never a surface. What holds it honest is that
+#       every value it emits for a surface comes from share/design/tokens.yaml through
+#       `generate --check`, which compares bytes.
 #   share/cockpit/graph.js
 #       computes a hue per node kind from the number of kinds. That is a categorical scale
 #       over data, generated at run time; there is no literal palette to share.
 #   scripts/lib/ui-contrast.mjs, scripts/lib/ui.test.mjs, scripts/lib/cockpit-probe.mjs
-#       colour arithmetic and colour measurement, not colour choice. The contrast library
-#       searches between pure black and pure white and documents itself with examples; the
-#       probe compares a computed background against the fully transparent sentinel. None
-#       of them paints anything, and none of them would go stale if a token changed.
+#       colour arithmetic and colour measurement, not colour choice.
 #
-# `color-mix()` is deliberately not a literal: it composes values that are already tokens
-# or CSS-wide keywords. `color-mix(in oklch, var(--color-accent-500) 22%, transparent)`
-# names no colour of its own. A raw literal *inside* one is still caught, because the
-# literal itself is what this looks for.
+# `color-mix()` is deliberately not a literal: it composes values that are already tokens.
 #
 #   scripts/ci/design-check
+#   scripts/ci/design-check --root DIR     the same questions over another tree (the case)
 #
-# Exit: 0 clean, 10 a projection is stale or a surface carries its own colour.
+# Exit: 0 clean, 10 a surface carries a design decision of its own or a projection is stale.
 #
-# The rule is project.design-tokens-declared-once; ADR 0031 records the decision.
+# The rule is project.design-tokens-declared-once; ADR 0031 and ADR 0036 record the decisions.
 set -eu
-# Where the scripts are is not where the tree under test is. `--root DIR` moves the second
-# and never the first, so the case in test/cases drives the real gate over a fixture.
 HERE="$(cd "$(dirname "$0")/../.." && pwd)"
 if [ "${1:-}" = "--root" ]; then ROOT="${2:?--root needs a directory}"; shift 2; else
   ROOT="$HERE"
 fi
 cd "$ROOT"
 status=0
+fail() { echo "FAIL $1"; status=10; }
 
-echo "== the projections are current"
-"$HERE/scripts/design-tokens" --root "$ROOT" --check || status=10
+# every tracked file, once; the questions below filter it
+tracked="$(git ls-files 2>/dev/null || true)"
+first_party() { # the files a person writes that can put something on a screen
+  printf '%s\n' "$tracked" | grep -E '\.(css|html|rs|js|mjs|tera)$' | grep -vE \
+    -e '^share/design/[^/]+\.css$' -e '^apps/majordomus-cli/src/web/tokens\.css$' \
+    -e '^apps/majordomus-cli/src/design/.*\.rs$' \
+    -e '/vendor/' -e '^share/cockpit/cockpit\.css$' -e '^site/static/app\.css$' -e '^node_modules/' \
+    -e '^share/cockpit/graph\.js$' \
+    -e '^scripts/lib/ui-contrast\.mjs$' -e '^scripts/lib/ui\.test\.mjs$' -e '^scripts/lib/cockpit-probe\.mjs$' \
+    -e '^scripts/ci/design-check$' || true
+}
 
-echo "== no surface carries a colour of its own"
-# What counts as a literal, and what deliberately does not:
-#
-#   #rrggbb, #rrggbbaa   always. Six hexadecimal digits in a row are a colour and nothing
-#                        else anybody writes.
-#   #rgb                 only in a value position — after `:`, `(` or `,`. Three hexadecimal
-#                        digits are also a pull request (`#117`), an issue, an anchor
-#                        (`#features` is `#fea` followed by more letters, which the word
-#                        boundary already excludes) and a C preprocessor line. A gate that
-#                        cannot tell `--bg: #fff` from `Merge pull request #117` is a gate
-#                        somebody switches off, and then it protects nothing.
-#   rgb() hsl() oklch()  always. A colour function is only ever a colour.
-#
-# The set of files asked is every tracked source that can put a colour on a screen.
-LITERAL='#([0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b|[:(,][[:space:]]*#[0-9a-fA-F]{3}\b|\b(rgba?|hsla?|oklch|oklab|lch)\('
-found=0
-for file in $(git ls-files -- '*.css' '*.html' '*.rs' '*.js' '*.mjs' '*.tera' 2>/dev/null); do
-  case "$file" in
-    share/design/*.css|apps/majordomus-cli/src/web/tokens.css) continue ;;
-    */vendor/*|share/cockpit/cockpit.css|node_modules/*) continue ;;
-    *.svg|share/cockpit/graph.js) continue ;;
-    scripts/lib/ui-contrast.mjs|scripts/lib/ui.test.mjs|scripts/lib/cockpit-probe.mjs) continue ;;
-    scripts/ci/design-check|scripts/design-tokens) continue ;;
-  esac
+echo "== 1. no surface carries a colour of its own"
+#   #rrggbb, #rrggbbaa   always; #rgb only in a value position (after `:` or `,`), so that
+#   a pull request number, an anchor or a "(#117)" in prose is not a colour; rgb() hsl()
+#   oklch() always.
+LITERAL='#([0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b|[:,][[:space:]]*#[0-9a-fA-F]{3}\b|\b(rgba?|hsla?|oklch|oklab|lch)\('
+for file in $(first_party); do
   hits="$(grep -nE "$LITERAL" "$file" 2>/dev/null || true)"
   [ -n "$hits" ] || continue
-  found=1
   printf '%s\n' "$hits" | while IFS= read -r line; do
-    echo "FAIL $file:${line%%:*}  a colour chosen outside share/design/tokens.yaml"
-    echo "     ${line#*:}" | sed 's/^[0-9]*://' | sed 's/^[[:space:]]*/     /'
+    fail "$file:${line%%:*}  a colour chosen outside share/design/tokens.yaml"
+  done
+  status=10
+done
+
+echo "== 2. no first-party surface reaches past the roles for a raw palette utility"
+# Tailwind's palette utilities, by family and shade. A status word is coloured by the
+# generated status sheet; a role is a `--mj-*` token; nothing in between is a decision a
+# stylesheet or a template may make. Rust and scripts are asked too: a class string is a
+# class string wherever it is written.
+PALETTE_UTILITY='\b(text|bg|border|border-[lrtbxy]|ring|fill|stroke|outline|decoration|from|to|via|accent|caret|divide|shadow)-(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-[0-9]{2,3}\b'
+for file in $(first_party); do
+  case "$file" in scripts/ci/*|test/*) continue ;; esac
+  hits="$(grep -nE "$PALETTE_UTILITY" "$file" 2>/dev/null || true)"
+  [ -n "$hits" ] || continue
+  printf '%s\n' "$hits" | while IFS= read -r line; do
+    fail "$file:${line%%:*}  a raw palette utility; name a role (--mj-*) or file the word under a status"
+  done
+  status=10
+done
+
+echo "== 3. no first-party stylesheet writes a size the scale does not name"
+for file in $(first_party | grep -E '\.css$'); do
+  hits="$(grep -nE '\b(text|tracking|leading)-\[[^]]*\]' "$file" 2>/dev/null || true)"
+  [ -n "$hits" ] || continue
+  printf '%s\n' "$hits" | while IFS= read -r line; do
+    fail "$file:${line%%:*}  a bracketed size; add a step to share/design/tokens.yaml and use its utility"
+  done
+  status=10
+done
+
+echo "== 4. a canonical custom property is declared by the projections alone"
+# a declaration is the property after a line start, a `{` or a `;`, then a colon — so a
+# one-line `:root { --mj-fg: red; }` is caught and a read like `var(--mj-fg)` is not
+CANONICAL='(^|[{;])[[:space:]]*(--mj-[a-z0-9-]+|--font-(sans|mono)|--text-[a-z]+(--line-height)?|--tracking-[a-z]+|--radius-(sm|md|lg))[[:space:]]*:'
+for file in $(first_party | grep -E '\.(css|html|rs|tera)$'); do
+  hits="$(grep -nE "$CANONICAL" "$file" 2>/dev/null | grep -vE -- '--mj-status-(fg|bg|line)' || true)"
+  [ -n "$hits" ] || continue
+  printf '%s\n' "$hits" | while IFS= read -r line; do
+    fail "$file:${line%%:*}  declares a canonical custom property; only share/design/tokens.yaml decides one"
+  done
+  status=10
+done
+
+echo "== 5. every token a surface reads is a token the declaration emits"
+declared="$( { cat share/design/surface.css share/design/status.css apps/majordomus-cli/src/web/tokens.css 2>/dev/null || true; } \
+  | grep -oE -- '--mj-[a-z0-9][a-z0-9-]*[[:space:]]*:' | sed 's/[[:space:]]*:$//' | LC_ALL=C sort -u)"
+[ -n "$declared" ] || fail "share/design/surface.css declares nothing: run majordomus generate design"
+for file in $(printf '%s\n' "$tracked" | grep -E '\.(js|mjs|css|rs|html|tera)$' | grep -vE '/vendor/|^node_modules/|^share/design/|^apps/majordomus-cli/src/(web/tokens\.css|design/.*\.rs)$|^scripts/ci/design-check$'); do
+  for token in $(grep -hoE -- '--mj-[a-z0-9][a-z0-9-]*' "$file" 2>/dev/null | LC_ALL=C sort -u); do
+    # the three indirection properties are set per state by the generated status sheet and
+    # read by the primitives with a fallback; `--mj-design` is the fingerprint every sheet
+    # carries; `--mj-status-` and `--mj-design` are therefore declared by construction
+    case "$token" in --mj-status-fg|--mj-status-bg|--mj-status-line|--mj-design) continue ;; esac
+    printf '%s\n' "$declared" | grep -qx -- "$token" && continue
+    fail "$file  reads $token, which the declaration does not emit"
   done
 done
-if [ "$found" = 1 ]; then
-  echo "design-check: a surface declares a colour of its own." >&2
-  echo "design-check: name it in share/design/tokens.yaml and use var(--<token>), or, if it" >&2
-  echo "design-check: genuinely cannot reach a custom property, say why in this script's" >&2
-  echo "design-check: exemptions — with the reason, not the path." >&2
+
+echo "== 6. every copy of the brand is the canonical file"
+mark="share/design/brand/logo-mark.svg"; logo="share/design/brand/logo.svg"; social="share/design/brand/social-card.png"
+strip_banner() { sed '1,/-->/{/^<!-- GENERATED FILE/,/-->/d;}' "$1"; }
+for copy in apps/majordomus-cli/src/cockpit/logo-mark.svg share/cockpit/favicon.svg site/static/favicon.svg site/static/images/logo-mark.svg; do
+  [ -f "$copy" ] || { fail "$copy  missing: run majordomus generate design"; continue; }
+  cmp -s <(strip_banner "$copy") "$mark" || fail "$copy  differs from $mark: run majordomus generate design"
+done
+if [ -f site/static/images/logo.svg ]; then
+  cmp -s <(strip_banner site/static/images/logo.svg) "$logo" || fail "site/static/images/logo.svg  differs from $logo: run majordomus generate design"
+fi
+if [ -f site/static/images/social-card.png ]; then
+  cmp -s site/static/images/social-card.png "$social" || fail "site/static/images/social-card.png  differs from $social: run scripts/site-build"
+fi
+# no other svg in the tree is a mark of its own: an icon a template inlines is fine, a copy
+# of the brand under another name is not
+for svg in $(printf '%s\n' "$tracked" | grep -E '\.svg$' | grep -vE '^share/design/brand/|^apps/majordomus-cli/src/cockpit/logo-mark\.svg$|^share/cockpit/favicon\.svg$|^site/static/favicon\.svg$|^site/static/images/'); do
+  fail "$svg  a mark outside share/design/brand; the generator writes every copy"
+done
+
+echo "== 7. the theme contract is read from the page, never named"
+# the key and the class come from the declaration; a source that spells either one out has
+# copied a decision the page already carries as data-theme-key / data-theme-class
+THEME_KEY="$(awk '/^theme:/{p=1;next} p&&/^[a-z]/{p=0} p&&/storage-key:/{print $2; exit}' share/design/tokens.yaml 2>/dev/null || true)"
+THEME_CLASS="$(awk '/^theme:/{p=1;next} p&&/^[a-z]/{p=0} p&&/^  class:/{print $2; exit}' share/design/tokens.yaml 2>/dev/null || true)"
+[ -n "$THEME_KEY" ] && [ -n "$THEME_CLASS" ] || fail "share/design/tokens.yaml declares no theme contract"
+for file in $(first_party | grep -E '\.(js|mjs|html|tera|rs)$'); do
+  case "$file" in apps/majordomus-cli/src/design/*) continue ;; esac
+  hits="$(grep -nE "localStorage\.(get|set)Item\(['\"]${THEME_KEY:-color-theme}['\"]|classList\.(add|toggle|remove|contains)\(['\"]${THEME_CLASS:-dark}['\"]" "$file" 2>/dev/null || true)"
+  [ -n "$hits" ] || continue
+  printf '%s\n' "$hits" | while IFS= read -r line; do
+    fail "$file:${line%%:*}  names the theme key or class; read data-theme-key / data-theme-class from the page"
+  done
   status=10
+done
+
+echo "== 8. the projections are current"
+# The executable proves this in full. Where one is already built it is asked here too, so a
+# stale projection is named next to the source that moved; where none is, the delegation
+# is stated rather than the question dropped. Only this repository is asked: a fixture
+# handed in with --root is a tree of stylesheets, not a repository the generator can load.
+# Where the executable is, the way every other script here finds it: MAJORDOMUS_BIN, else
+# the crate's debug build. Naming a helper that does not exist would make this question
+# vanish in silence, which is the failure this whole gate is against.
+if [ "$ROOT" != "$HERE" ]; then
+  MJ=""
+  echo "OK   a fixture is not asked about projection drift; the executable's generate --check answers for the repository"
+else
+  MJ="${MAJORDOMUS_BIN:-$HERE/apps/majordomus-cli/target/debug/majordomus}"
+fi
+if [ -n "$MJ" ] && [ -x "$MJ" ]; then
+  if env -u MAJORDOMUS_SHARE "$MJ" generate design --check --repo "$ROOT" >/dev/null 2>&1; then
+    echo "OK   the projections of share/design/tokens.yaml are current ($MJ)"
+  else
+    fail "the projections are stale against share/design/tokens.yaml: run majordomus generate design"
+  fi
+elif [ "$ROOT" = "$HERE" ]; then
+  echo "OK   projection drift is proven by the rust-generated gate (majordomus generate --check); no executable is built here"
 fi
 
-echo "== every token a surface reads is a token something declares"
-# The bug this exists for: site/graph.js read seven `--mj-graph-*` properties, no stylesheet
-# had ever declared one of them, so every lookup returned the empty string and every drawing
-# was painted from the fallback table in its own source — under a comment saying the palette
-# came from the page. Nothing failed. Nothing could fail: an undeclared custom property is
-# the empty string, not an error, and the fallback is right there to make the result look
-# deliberate.
+echo "== 9. every colour the declaration pairs with a ground can be read on it"
+# ADR 0036 pairs a foreground with a ground — reading text on the page, a status word on
+# its own tint, a primary action's label on its fill — in a light theme and a dark one, and
+# nothing measured one of them: a person chose them by eye while `scripts/site-build` was
+# raising a *third party's* highlighting palette to the same standard. This question is that
+# measurement, and it is the executable's: `crate::design::contrast` already has the typed
+# model and resolves every role and status to a literal per theme, so the maths of
+# scripts/lib/ui-contrast.mjs is ported there rather than the model re-implemented here.
 #
-# Only the `--mj-` namespace is asked. `--tw-`, `--color-`, `--spacing-` and the rest belong
-# to Tailwind and are declared by a build, not by this repository; asking about them would
-# make this check noisy, and a noisy check is a check nobody reads.
-declared="$(git ls-files -- '*.css' | xargs grep -ho -- '--mj-[a-z0-9][a-z0-9-]*[[:space:]]*:' 2>/dev/null \
-  | sed 's/[[:space:]]*:$//' | LC_ALL=C sort -u)"
-undeclared=0
-for file in $(git ls-files -- '*.js' '*.mjs' '*.css' '*.rs' '*.html' '*.tera' 2>/dev/null); do
-  case "$file" in */vendor/*|node_modules/*) continue ;; esac
-  for token in $(grep -ho -- '--mj-[a-z0-9][a-z0-9-]*' "$file" 2>/dev/null | LC_ALL=C sort -u); do
-    printf '%s\n' "$declared" | grep -qx -- "$token" && continue
-    echo "FAIL $file  reads $token, which no stylesheet declares"
-    undeclared=1
-  done
-done
-if [ "$undeclared" = 1 ]; then
-  echo "design-check: a surface reads a token nothing declares. It will read the empty" >&2
-  echo "design-check: string for ever, silently, and use whatever fallback stands beside" >&2
-  echo "design-check: it. Declare it in share/design/tokens.yaml, or stop reading it." >&2
-  status=10
+# The pairs are not a list — a list would go stale the day a role is added. They are derived
+# from the declaration, which files each status's text with its own ground, and from the
+# primitives that consume it: a rule that sets a colour and a background states a pair, a
+# rule that sets only a colour states a foreground that lands on every ground a container
+# sets, and `--mj-status-fg` expands per status so emerald is never measured on rose.
+#
+# The threshold is the one this repository already states: WCAG 2.1 AA, 4.5:1 for text
+# (1.4.3), as scripts/lib/ui-contrast.mjs exports it. A border is measured against 3:1
+# (1.4.11) and reported, not enforced: the primitive that draws them says the word is always
+# shown, so a badge's rule repeats a distinction its text already carries.
+#
+# `design.contrast` is exposed over MCP and HTTP and not on the command line, so it is asked
+# the way a client asks it — one standalone session, nothing written, no shared server
+# touched. test/cases/109_design_system.sh asks the design the same way.
+MJC="${MAJORDOMUS_BIN:-$HERE/apps/majordomus-cli/target/debug/majordomus}"
+if [ ! -x "$MJC" ]; then
+  echo "OK   readability is proven by the crate's own tests (cargo test -p majordomus-cli design::contrast); no executable is built here"
+elif [ ! -f "$ROOT/share/kinds.yaml" ] || [ ! -f "$ROOT/share/design/primitives.css" ]; then
+  echo "OK   this tree ships no distribution: the pairs are stated by the primitives under a share directory, and there is none here"
+else
+  report="$(
+    {
+      printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"design-check","version":"0"}}}\n'
+      printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_design_contrast","arguments":{}}}\n'
+    } | env -u MAJORDOMUS_SHARE "$MJC" mcp --standalone --repo "$ROOT" 2>/dev/null \
+      | sed -n '2p' | jq -r '.result.content[0].text // empty' 2>/dev/null
+  )"
+  if [ -z "$report" ]; then
+    fail "design.contrast answered nothing; $MJC could not measure the declaration"
+  elif [ "$(printf '%s' "$report" | jq -r '.readable')" = true ]; then
+    echo "OK   $(printf '%s' "$report" | jq -r '"\(.measured) pair(s) measured in two themes; every one reaches \(.standard)"')"
+  else
+    printf '%s' "$report" | jq -r '.findings[]' | while IFS= read -r finding; do
+      echo "FAIL $finding"
+    done
+    fail "a declared pair cannot be read: darken it in share/design/tokens.yaml, keeping the hue, or state why the pair is not rendered"
+  fi
 fi
 
 [ "$status" = 0 ] && echo "==> design-check: one declaration, and every surface projects it"

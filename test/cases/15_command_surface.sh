@@ -6,7 +6,7 @@
 #
 # The list is read from the dispatch table rather than written here, so adding a command
 # to bin/majordomus adds it to every check below instead of quietly escaping them.
-COMMANDS="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u)"
+COMMANDS="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | LC_ALL=C sort -u)"
 [ "$(printf '%s\n' "$COMMANDS" | wc -w | tr -d ' ')" -ge 8 ] \
   || { echo "    the dispatch table in bin/majordomus changed shape; update this case"; exit 1; }
 # the commands that must exist whatever else is added
@@ -83,9 +83,9 @@ done
 
 # the read-only commands stay read-only: nothing under state/ changes when they run
 "$MJ" update >/dev/null
-before="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | sort)"
+before="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 for c in doctor watch context history search; do
   "$MJ" "$c" x >/dev/null 2>&1 || true
 done
-after="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | sort)"
+after="$(find .ai/local/state -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 [ "$before" = "$after" ] || { echo "    a read-only command wrote to .ai/local/state"; exit 1; }

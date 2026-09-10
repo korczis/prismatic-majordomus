@@ -4,7 +4,7 @@ description = "The repository's web surfaces: what is exposed, where it is mount
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 16
+weight = 19
 [extra]
 route = "/docs/cli/web/"
 command = "majordomus web"

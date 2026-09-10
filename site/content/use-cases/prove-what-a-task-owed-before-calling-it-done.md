@@ -1,7 +1,7 @@
 +++
 title = "Prove what a task owed before calling it done"
 description = "A task declares what it owes, records evidence against each obligation, and is refused when that evidence no longer describes the tree it was taken over."
-weight = 18
+weight = 19
 [extra]
 id = "prove-what-a-task-owed-before-calling-it-done"
 source = ".ai/repo/use-cases/prove-what-a-task-owed-before-calling-it-done.md"

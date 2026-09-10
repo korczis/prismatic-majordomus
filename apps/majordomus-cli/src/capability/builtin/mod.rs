@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
+pub(crate) mod design;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
@@ -51,6 +52,7 @@ pub mod quality;
 pub mod release;
 pub mod repository;
 mod scope;
+pub mod server;
 pub mod trace;
 mod views;
 pub mod web;
@@ -68,6 +70,9 @@ pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CO
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
 };
+// the Cockpit's Design page renders these two; everything else the module declares is
+// read as JSON through the executor, like every other capability's output
+pub(crate) use design::{DesignReport, TokenList};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
@@ -101,6 +106,7 @@ pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use server::{Desired, LeaseView, ServerStanding, ServerStatus, ServerView, SERVER_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -127,6 +133,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         deploy,
         executions,
         peers,
+        server,
         perf,
         plan,
         directories,
@@ -136,6 +143,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         web,
+        design,
         worktree,
         trace,
         product

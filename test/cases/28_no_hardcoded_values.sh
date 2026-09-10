@@ -26,7 +26,7 @@ done
 "$MJ" init >/dev/null
 ( . "$ROOT/lib/common.sh"; mj_yaml_flatten "$ROOT/share/skeleton/policy.yaml" ) > skeleton.flat
 for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$ROOT/lib" | grep -v '^[[:space:]]*#' \
-           | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+           | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
   grep -qx "$k=.*" skeleton.flat || grep -q "^$k\." skeleton.flat \
     || { echo "    lib/ reads policy key '$k' which share/skeleton/policy.yaml does not declare"; exit 1; }
 done
@@ -43,7 +43,7 @@ reset_policy; "$MJ" update >/dev/null
 # ---------------------------------------------------------------- commands
 # Derived from the dispatch table: usage, reference documentation and a behavioural case
 # are required for every command, so a new one cannot arrive undocumented or untested.
-COMMANDS="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u)"
+COMMANDS="$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | LC_ALL=C sort -u)"
 [ "$(printf '%s\n' "$COMMANDS" | wc -w | tr -d ' ')" -ge 8 ] || { echo "    could not read the dispatch table"; exit 1; }
 for c in $COMMANDS; do
   grep -qE "^  $c( |$)" "$ROOT/bin/majordomus" || { echo "    $c is dispatched but absent from usage"; exit 1; }
@@ -83,7 +83,7 @@ done
 # manifest would vendor a hash that fails every repository's doctor on the first init
 "$ROOT/scripts/rules-package" check >/dev/null || { echo "    share/standard/majordomus/manifest.yaml does not match its rule files (run: scripts/rules-package write)"; exit 1; }
 # and no validator exists that no rule declares
-for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
+for fn in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$ROOT/lib" | sed -e 's/^mj_validate_//' -e 's/()//' | LC_ALL=C sort -u); do
   case "$declared" in *" $fn "*) ;; *) echo "    lib/ defines mj_validate_$fn, which no rule declares"; exit 1 ;; esac
 done
 
@@ -116,7 +116,7 @@ for f in "$ROOT/scripts/generate-site-data" "$ROOT/scripts/site-check"; do
     && { echo "    $(basename "$f") lists the claim statuses instead of deriving them"; exit 1; }
 done
 # every status a claim actually uses is one the matrix declares
-for st in $(grep -E '^    status:' "$ROOT/docs/CLAIMS.yaml" | sed 's/^    status: //' | sort -u); do
+for st in $(grep -E '^    status:' "$ROOT/docs/CLAIMS.yaml" | sed 's/^    status: //' | LC_ALL=C sort -u); do
   awk '/^statuses:/{c=1;next} /^claims:/{c=0} c&&/^  - id: /{print $3}' "$ROOT/docs/CLAIMS.yaml" \
     | grep -qx "$st" || { echo "    a claim uses status '$st', which the matrix does not declare"; exit 1; }
 done
@@ -195,7 +195,7 @@ grep -q 'fixture_repo' "$ROOT/test/lib.sh" || { echo "    test/lib.sh has no der
 for f in "$ROOT"/test/cases/*.sh; do
   grep -q 'generate-site-data' "$f" || continue
   # the top-level directory of each canonical input, minus the runtime a fixture always copies
-  for p in $("$ROOT/scripts/generate-site-data" --inputs | grep '/' | cut -d/ -f1 | sort -u); do
+  for p in $("$ROOT/scripts/generate-site-data" --inputs | grep '/' | cut -d/ -f1 | LC_ALL=C sort -u); do
     case "$p" in bin|lib|share|scripts|docs) continue ;; esac
     # a copy of the tree, not any mention of it and not a copy of a file inside it: every
     # case sources "$ROOT/test/lib.sh", and sourcing a file is not copying a tree. Matching

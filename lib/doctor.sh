@@ -86,7 +86,7 @@ mj_validate_policy() {
   if [ "$(mj_pol version)" = 1 ]; then
     unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_ALLOW_DIR/policy.txt" || true)"
       if [ -z "$unk" ]; then mj_doctrine_ok policy "$(mj_rel "$MJ_POLICY_FILE")" "parsed, version 1"
-      else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
+      else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | LC_ALL=C sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
   else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)"; fi
 
   local pf n count=0
@@ -357,7 +357,7 @@ EOF
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order
 mj_hook_candidates() {
   printf '%s\n' "$1"
-  if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | sort; fi
+  if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | LC_ALL=C sort; fi
   return 0
 }
 # does the hook line that invokes "<prog> <arg0>" name an executable binary?
@@ -400,7 +400,7 @@ mj_validate_policy_defaults() {
   mj_yaml_flatten "$skel" > "$flat" 2>/dev/null || { rm -f "$flat"; mj_doctrine_fail policy "skeleton" "share/skeleton/policy.yaml does not parse" "majordomus doctor"; return 0; }
   # a key is letters, digits and underscores per segment (benchmark.regression.p95 is one)
   for k in $(grep -rhE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' "$MJ_LIB_DIR" | grep -v '^[[:space:]]*#' \
-             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | sort -u); do
+             | grep -oE 'mj_pol(_req)? +[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)*' | sed -E 's/mj_pol(_req)? +//' | LC_ALL=C sort -u); do
     n=$((n + 1))
     if [ -z "$(mj_yget "$flat" "$k")" ] && ! grep -qE "^${k}\." "$flat"; then
       mj_doctrine_fail policy "$k" "read by lib/ but absent from share/skeleton/policy.yaml" "grep -rn 'mj_pol_req $k' lib/"; bad=1
@@ -621,7 +621,7 @@ mj_validate_doctrine_wiring() {
   # 2. the other direction — a validator no doctrine declares
   local f declared=" "
   i=0; while mj_doc_row "$i"; do declared="$declared$MJ_DR_VAL "; i=$((i+1)); done
-  for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | sort -u); do
+  for f in $(grep -rhoE '^mj_validate_[a-z_]+\(\)' "$lib" | sed -e 's/^mj_validate_//' -e 's/()//' | LC_ALL=C sort -u); do
     case "$declared" in *" $f "*) ;; *) mj_doctrine_fail doctrine "mj_validate_$f" "validator exists but no rule declares it; it runs under no rule" "grep -rn 'validator: $f' $(mj_rel "$MJ_RULES_DIR")"; bad=1 ;; esac
   done
 
@@ -726,9 +726,9 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "no authored roadmap section; the roadmap is only a projection"
     return 0
   fi
-  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | sort -u)"
+  canon="$(awk -F'\t' '$1=="M" && $9!="" { print $9 }' "$MJ_PJ/model.tsv" | LC_ALL=C sort -u)"
   doc="$(awk '/^## Roadmap/{f=1;next} /^## /{f=0} f' "$readme" \
-         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | sort -u)"
+         | sed -n 's/^| *\**\([0-9][0-9.]*\)\** *|.*/\1/p' | LC_ALL=C sort -u)"
   # A section that lists no versions is prose pointing at the projection, not a second
   # authority. The rule is about an authored version list, not about the heading: a partial
   # list is the dangerous case, and no list at all is the intended end state.
@@ -736,8 +736,8 @@ mj_validate_roadmap() {
     mj_doctrine_ok roadmap "README.md" "the roadmap section lists no versions; it points at the projection rather than restating it"
     return 0
   fi
-  missing="$(comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
-  extra="$(comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  missing="$(LC_ALL=C comm -23 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
+  extra="$(LC_ALL=C comm -13 <(printf '%s\n' "$canon") <(printf '%s\n' "$doc") | tr '\n' ' ')"
   missing="${missing% }"; extra="${extra% }"
   if [ -n "$extra" ]; then
     mj_doctrine_fail roadmap "README.md" "lists version(s) no milestone declares: $extra" "majordomus plan roadmap"
@@ -837,7 +837,7 @@ mj_validate_schema_integrity() {
   fi
 
   local k fmt sch unschemad="" named=" " n=0
-  for k in $(sed -n 's/^kinds\.\([a-z0-9_-]*\)\.format=.*/\1/p' "$flat" | sort -u); do
+  for k in $(sed -n 's/^kinds\.\([a-z0-9_-]*\)\.format=.*/\1/p' "$flat" | LC_ALL=C sort -u); do
     n=$((n + 1))
     fmt="$(mj_yget "$flat" "kinds.$k.format")"
     sch="$(mj_yget "$flat" "kinds.$k.schema")"

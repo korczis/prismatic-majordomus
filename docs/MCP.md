@@ -55,6 +55,125 @@ registry entry, none declared in the MCP code. The decision is
 | degraded | when the lease cannot be written or replaced, or the shared server cannot start, the client is served alone exactly as `--standalone` would, and the log says `cannot use the shared server` with the path and the reason |
 | `serve` | the same shared server without a stdio session of its own; when one already runs it logs the URL and exits 0 |
 
+### One repository, every server of it
+
+A server serves a checkout. A linked worktree is a checkout of its own — it has the
+manifest, so it has a root, a lease and a server of its own — and until ADR 0035 nothing
+said that two such servers belonged to one repository. Now the index route (`GET /`) names
+the git repository the checkout belongs to beside the checkout's own identity:
+`repository_id` is the checkout's (a digest of its root, what the lease probe compares),
+`git_repository_id` is the repository's (a digest of the git directory every worktree
+shares; absent where git cannot be asked), and `linked_worktree` says whether this is the
+primary checkout. `GET /api/v1/server` — the tool `majordomus_server`, the resource
+`majordomus://server` — lists every checkout git registers for the repository, the primary
+first, each with its lease, where its server stands and how many peers it holds, and says
+where this checkout's own server stands measured against what this executable would serve:
+
+| standing | meaning |
+|---|---|
+| `absent` | no lease: nothing serves this checkout |
+| `starting` | a lease without an address, young enough that its owner is still binding |
+| `ready` | the server the lease names answers for this checkout, from the file on disk, at this executable's version |
+| `outdated` | it answers, but from another version, or from a file replaced since it started: everything it says is yesterday's |
+| `stale` | the lease names a server that does not answer, or is not a lease at all; the reason says which |
+
+The lease itself is one type, read once (`lease::LeaseDocument`, `lease::LeaseFile::read`):
+the election, the read-only `serving`, the environment snapshot and the status all parse it
+through the same reading, and it carries the server's `version` beside the executable it
+was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
+`cat`; the status is where a program does.
+
+### Four readings of "ready"
+
+This executable answers "ready" four times, and the audit that prompted ADR 0035 counted
+three of them as an accident (`docs/ENTRY_AUDIT.md`, root cause 5). They are not one
+question badly split: they are four questions about four subjects, and merging any two
+would lose the one thing that reader needs. Each is named here with its owner, so that the
+next reader does not have to rediscover which one they are looking at.
+
+| the question | the answer | who asks it |
+|---|---|---|
+| Is a **surface's** producer's output on disk? | `http::Served::ready(surface_id)` — the directory a producer writes into has files in it; a route this executable answers is always ready | the home page (`GET /`), which renders a surface with no output as `not built` rather than serving a 404 |
+| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, and how the layer read. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
+| Does **anything** accept a connection at the address the lease published? | `environment::ServiceAvailability` — one TCP connect with a hard budget and no name resolution (`environment::probe::reachable`) | the environment snapshot, which runs on a shell prompt (`majordomus env`, `.envrc`) and may not spend an HTTP round trip or reach DNS to say what it knows |
+| Is what answers there **current**? | `ServerStanding` — `server.status`, from `lease::probe` (this checkout's identity, over HTTP) and the version and executable the lease carries | anyone who has to trust what the server says: `serve ensure`, `serve stop`, the `server` check of `health.report`, and the session briefing |
+
+Read down the column and the ladder is plain: the third asks whether a socket is open, the
+fourth whether the process behind it is this checkout's, from the file on disk, at this
+build. A stale server answers the third and fails the fourth, which is exactly the class
+that has cost this repository a day before now.
+
+`health.report` carries the fourth and only the fourth. The first is per surface and
+belongs on the page that renders surfaces; the second is a statement about the process
+answering the report, which cannot be false where the report is being produced; and the
+third cannot tell a live server from a socket somebody else holds. The check delegates to
+`capability::builtin::server::standing_at` — the same reading `server.status` answers from
+— so the health report and the status cannot say two different words about one lease.
+
+### Ensuring a server, and stopping it
+
+```text
+majordomus serve status [--format json]     where this checkout's server stands, and every server of the repository
+majordomus serve ensure [--idle S] [--wait S] [--port P]
+                                            a ready server for this checkout, started if it must be
+majordomus serve stop [--wait S]            end the server this checkout's lease names
+```
+
+`serve ensure` reads the lease and probes the server it names, exactly as the election
+does, and converges: `ready` is printed and nothing is started; `starting` is waited for;
+`absent` and `stale` start a server as a process of its own — this executable, `serve
+--fallback --idle S`, its log at `.ai/local/state/mcp/server.log`, in its own process group
+so that it outlives the shell that asked — and wait until it is ready; `outdated` starts one
+only when the election would take the lease over (the same executable, replaced on disk)
+and is otherwise reported with the remedy, because a server of another build that answers
+is not this command's to end. Run twice, it starts nothing the second time; run by three
+shells at once, the election lets one of the three servers bind and the others defer. The
+call is bounded by `--wait`; a server that did not become ready in time is reported with
+the standing it reached and exit 10.
+
+A server `ensure` starts has no client of its own. It ends when no peer has been attached
+for `--idle` seconds (fifteen minutes by default), which is what keeps ADR 0003's line —
+there is no process without a client — true in time rather than at every instant: an
+agent's entry is owed a server before its first attach, and a checkout nobody works in
+does not keep one.
+
+`serve stop` signals the server the lease names, when that server answers for this
+checkout, and waits for the lease to go. A lease that names a server of another checkout,
+or one that does not answer, is left alone and said so; nothing here kills a process that
+was not asked for by name.
+
+**Who calls `ensure`.** The provider's start event does (`session.ensure_server_on_start`
+in the policy, on by default): the one moment a server nobody has started yet is owed one is
+when an agent arrives, and the briefing the event writes carries one line — `Shared server:
+ready http://127.0.0.1:8741 pid 123` — so that a worker knows before its first tool call
+whether the board it is told to read exists. The event never builds the executable: one
+that is missing or older than its sources is named in that line and left alone, because a
+hook is not the place to start a compiler and a server from stale code would answer with
+yesterday's tree. An MCP client's launcher (`bin/majordomus-mcp`) has always converged the
+same way through the election; a shell entering the repository (`.envrc`) is told and not
+served, because `project.envrc-is-an-adapter` forbids the entry hook to start anything and a
+shell is not a client.
+
+**An announcement outlives the server it was made to.** The bridge sees every frame its
+client sends, so it keeps the arguments of the last announcement the server accepted and
+says them again wherever the client lands next: after a re-attach, once the session is
+re-opened; after a takeover, onto the board of the server the bridge's own process has
+become. A worker that announced once is on the board of every server that serves it,
+without being asked to announce again; the instruction to announce again after a
+reconnect stays in the bootstrap for the one case a bridge cannot cover, a client whose own
+process is the server and restarts.
+
+**What the election now guards against.** An owner keeps its lease young while the layer
+loads (`Lease::keep_alive`), so a cold start slower than the bind grace is never taken for
+an abandoned one; a take-over removes only the file it judged, never one that arrived in the
+meantime; an owner whose lease was taken over while it was binding refuses to publish and
+degrades, rather than writing over the winner's address; and a server whose lease is taken
+over later stops claiming it — its signal handler no longer unlinks the file, which is
+somebody else's — serves the peers it has, and ends with them. The server's own reader also
+forgets the HTTP sessions that stopped pinging on every path, not only while the owner
+waits for peers to leave, so a dead peer never stays `attached` on the board.
+
+
 ## Starting it from a client
 
 The root of this repository carries the configuration each client reads, all naming the
@@ -272,7 +391,11 @@ empty or abandoned lease being taken over, two clients starting in the same inst
 unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
 restarted server answer byte for byte what the first server did. The doctrine behind the
-failure table is the rule `project.shared-server-resilience`. `tests/hot_path.rs` sends
+failure table is the rule `project.shared-server-resilience`. `tests/server_status.rs` holds
+the two-worktree case and the stale-lease case; `tests/health_server.rs` holds the `server`
+check of `health.report` against a real server, a checkout nobody serves and a lease naming
+an address nobody answers at, and asserts that the check and the status say one word about
+one lease. `tests/hot_path.rs` sends
 hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
 `majordomus bench` times every tool through a real child process
 ([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)

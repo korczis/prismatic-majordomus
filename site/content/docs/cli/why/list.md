@@ -1,7 +1,7 @@
 +++
 title = "majordomus why list"
 description = "Every operational moment, narrowed by any facet the catalogue reports"
-weight = 27
+weight = 30
 [extra]
 route = "/docs/cli/why/list/"
 command = "majordomus why list"
