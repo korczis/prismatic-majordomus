@@ -53,7 +53,7 @@ answers and names another commit is a refusal, exit 10 — this work is not publ
 that never answered was not measured, exit 12 — the check could not be made, and a laptop
 with no network must not be able to fail a task it cannot see.
 
-## Live, not recorded — and why
+## Why it is live rather than recorded
 
 Both are defensible and the alternative is worth stating. A ledger line records *when* the
 fact was true, which is what somebody auditing the history a month later wants, and it keeps

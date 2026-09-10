@@ -355,6 +355,14 @@ mj_context_peers() {
   mj_has curl || return 0
   local url; url="$(jq -r '.url // empty' "$lease" 2>/dev/null)" || return 0
   [ -n "$url" ] || return 0
+  # Nothing leaves this machine. SECURITY.md's "local only" carries exactly one exception
+  # and this request is it, so the exception is only as wide as its guard: a lease naming
+  # anything but loopback is not the shared server of this repository, and the section is
+  # not written rather than the promise being quietly widened.
+  case "$url" in
+    http://127.0.0.1:*|http://localhost:*|"http://[::1]:"*) ;;
+    *) return 0 ;;
+  esac
   local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 0
   printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 0
 

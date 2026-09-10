@@ -3,8 +3,8 @@ id: project.no-network-no-eval
 version: 1
 kind: rule
 title: No network, no telemetry, no eval, no silent overwrite, no recursive deletion
-description: bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.
-statement: bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.
+description: bin/, lib/, share/ and test/ contain no telemetry, no eval, no curl piped to a shell, no silent overwrite, no recursive deletion outside a temporary directory, and no network client but the one declared exception SECURITY.md names.
+statement: bin/, lib/, share/ and test/ contain no telemetry, no eval, no curl piped to a shell, no silent overwrite, no recursive deletion outside a temporary directory, and no network client but the one declared exception SECURITY.md names.
 status: active
 class: blocking
 depends_on: []
@@ -17,7 +17,9 @@ SECURITY.md states these as commitments; a commitment without a scan is a hope.
 
 # Required behaviour
 
-bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.
+bin/, lib/, share/ and test/ contain no telemetry, no eval, no curl piped to a shell, no silent overwrite, no recursive deletion outside a temporary directory, and no network client but the one declared exception SECURITY.md names.
+
+The exception is `majordomus context` reading the peer board of the shared MCP server this repository itself started, at the loopback URL in that server's own lease. It is one call site in `lib/context.sh`, bounded by `--max-time`, guarded to loopback, and silent on any failure. An exception is declared here and held to its shape by the scan; it is not a precedent for a second one.
 
 # Failure behaviour
 

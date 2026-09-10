@@ -37,17 +37,26 @@ for tag in $(jq -r '.tags[].name' "$DOC"); do
     || { echo "    tag $tag names no module that puts a capability on the wire"; exit 1; }
 done
 
-# --- the examples are the benchmark cases: every GET parameter a case sets shows it, every POST body shows its cases
+# --- the examples are the benchmark cases: every GET parameter a case sets shows it, every
+#     POST body shows its cases. An operation whose benchmark is waived has no cases by
+#     declaration, so it has no examples either; that is the waiver, not a gap, and the
+#     document carries the waiver and its reason on the operation itself. Asserting that
+#     every operation shows an example was the contract until the execution capabilities
+#     waived theirs (transient state cannot be measured reproducibly).
+measured_ops="$(jq '[.paths[][] | select(.["x-majordomus-benchmark"].policy != "waived") | select((.parameters // []) | length > 0)] | length' "$DOC")"
+[ "$measured_ops" -gt 0 ] || { echo "    no measured operation carries a parameter; the example checks are vacuous"; exit 1; }
+jq -e '[.paths[][] | select(.["x-majordomus-benchmark"].policy == "waived") | select(((.["x-majordomus-benchmark"].reason // "") | length) == 0)] | length == 0' "$DOC" >/dev/null \
+  || { echo "    an operation waives its benchmark without a reason"; exit 1; }
 jq -e '[.paths[] | .get? // empty | .parameters[] | select(.schema.type | if type == "array" then index("null") != null else false end)] | length == 0' "$DOC" >/dev/null \
   || { echo "    a query parameter is declared nullable; a query string is never null"; exit 1; }
 jq -e '[.paths[] | .get? // empty | .parameters[] | select(has("default") and .default == null)] | length == 0' "$DOC" >/dev/null \
   || { echo "    a query parameter carries default: null"; exit 1; }
-jq -e '[.paths[] | .get? // empty | .parameters[] | select(.required == true and (has("examples") | not))] | length == 0' "$DOC" >/dev/null \
-  || { echo "    a required query parameter has no example, so no case sets it"; exit 1; }
-jq -e '[.paths[] | .post? // empty | select((.requestBody.content["application/json"].examples // {} | length) == 0)] | length == 0' "$DOC" >/dev/null \
-  || { echo "    a POST operation has no request body example"; exit 1; }
-jq -e '[.paths[][] | select((.parameters // []) | length > 0) | select([.parameters[] | has("examples")] | any | not)] | length == 0' "$DOC" >/dev/null \
-  || { echo "    an operation with parameters shows no example on any of them"; exit 1; }
+jq -e '[.paths[] | .get? // empty | select(.["x-majordomus-benchmark"].policy != "waived") | .parameters[] | select(.required == true and (has("examples") | not))] | length == 0' "$DOC" >/dev/null \
+  || { echo "    a required query parameter of a measured operation has no example, so no case sets it"; exit 1; }
+jq -e '[.paths[] | .post? // empty | select(.["x-majordomus-benchmark"].policy != "waived") | select((.requestBody.content["application/json"].examples // {} | length) == 0)] | length == 0' "$DOC" >/dev/null \
+  || { echo "    a measured POST operation has no request body example"; exit 1; }
+jq -e '[.paths[][] | select(.["x-majordomus-benchmark"].policy != "waived") | select((.parameters // []) | length > 0) | select([.parameters[] | has("examples")] | any | not)] | length == 0' "$DOC" >/dev/null \
+  || { echo "    a measured operation with parameters shows no example on any of them"; exit 1; }
 # the example of objects.get names an object the repository holds, and the CLI reads it back
 uri="$(jq -r '.paths["/api/v1/object"].get.parameters[] | select(.name == "uri") | .examples[] | .value' "$DOC" | head -1)"
 [ -n "$uri" ] || { echo "    objects.get has no uri example"; exit 1; }
