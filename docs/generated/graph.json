@@ -6726,11 +6726,11 @@
             "15"
           ],
           "json": false,
-          "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused.",
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
             ".ai/local/state/current.yaml",
+            "share/obligations.yaml",
             "git worktree list"
           ],
           "requires_installed": true,
@@ -6738,7 +6738,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
