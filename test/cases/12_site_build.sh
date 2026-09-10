@@ -66,7 +66,7 @@ expect_no_grep '<meta name="robots" content="noindex">' "$P/index.html"
 expect_grep "$(sed -n 's/^boundary = "\(.\{0,60\}\).*$/\1/p' "$ROOT/site/data/marketing.toml" | head -1)" "$P/index.html"
 expect_grep 'Install Majordomus' "$P/index.html"
 # every homepage tile is a link to a page that exists
-for href in $(grep -oE 'href="[^"]*/(features|profiles|guarantees|commands|why|doctrines)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
+for href in $(grep -oE 'href="[^"]*/(features|profiles|guarantees|commands|why|doctrines)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#^href="##; s#^https?://[^/]+##; s#^/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/features/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
 # The recognition grid is the moments that declare themselves featured, counted from the

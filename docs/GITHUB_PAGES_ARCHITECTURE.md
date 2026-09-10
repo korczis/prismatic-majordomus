@@ -420,6 +420,15 @@ branch source is kept instead of the native Pages artifact flow, which would mak
 run the only way to publish. The procedure is `.ai/repo/skills/deploy-site/SKILL.md`. Pointing
 Pages at the branch is a one-time `scripts/site-deploy --configure-pages`.
 
+The site answers at its own domain, and one file keeps it there. `site/static/CNAME` names the
+host; the build copies it into `site/public` like any other static file and `scripts/site-deploy`
+publishes it with the rest. GitHub Pages reads that file on every deploy and unsets the custom
+domain the moment a published tree stops carrying it — which would take the advertised install
+command down with the site, so `scripts/site-check` refuses a build whose `CNAME` and `base_url`
+disagree. Those are the two places the host is written, and there is no third: `base_url` is what
+every generated link and every check resolves against, `CNAME` is what GitHub reads. The project
+address the site was published at before, under `korczis.github.io`, redirects here.
+
 ## Sync guarantee
 
 `scripts/derive-check` is the one read-only gate; it composes the generators' own checks
