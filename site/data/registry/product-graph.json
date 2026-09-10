@@ -434,7 +434,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "33 object(s) of the layer",
+      "summary": "34 object(s) of the layer",
       "route": "/registry/modules/adr/",
       "source": "share/kinds.yaml"
     },
@@ -720,6 +720,15 @@
       "summary": "Repository",
       "route": "/registry/modules/repository/",
       "source": "apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:server",
+      "kind": "module",
+      "label": "server",
+      "summary": "Server",
+      "route": "/registry/modules/server/",
+      "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1128,6 +1137,11 @@
     {
       "source": "feature:coordination",
       "target": "module:peers",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:coordination",
+      "target": "module:server",
       "kind": "made_of"
     },
     {
@@ -2071,6 +2085,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:server",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:server",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:server",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:trace",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2142,8 +2171,8 @@
     }
   ],
   "metadata": {
-    "nodes": 90,
-    "edges": 270,
+    "nodes": 91,
+    "edges": 274,
     "acyclic": false,
     "truncated": false
   },

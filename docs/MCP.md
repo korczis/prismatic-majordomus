@@ -55,6 +55,35 @@ registry entry, none declared in the MCP code. The decision is
 | degraded | when the lease cannot be written or replaced, or the shared server cannot start, the client is served alone exactly as `--standalone` would, and the log says `cannot use the shared server` with the path and the reason |
 | `serve` | the same shared server without a stdio session of its own; when one already runs it logs the URL and exits 0 |
 
+### One repository, every server of it
+
+A server serves a checkout. A linked worktree is a checkout of its own — it has the
+manifest, so it has a root, a lease and a server of its own — and until ADR 0035 nothing
+said that two such servers belonged to one repository. Now the index route (`GET /`) names
+the git repository the checkout belongs to beside the checkout's own identity:
+`repository_id` is the checkout's (a digest of its root, what the lease probe compares),
+`git_repository_id` is the repository's (a digest of the git directory every worktree
+shares; absent where git cannot be asked), and `linked_worktree` says whether this is the
+primary checkout. `GET /api/v1/server` — the tool `majordomus_server`, the resource
+`majordomus://server` — lists every checkout git registers for the repository, the primary
+first, each with its lease, where its server stands and how many peers it holds, and says
+where this checkout's own server stands measured against what this executable would serve:
+
+| standing | meaning |
+|---|---|
+| `absent` | no lease: nothing serves this checkout |
+| `starting` | a lease without an address, young enough that its owner is still binding |
+| `ready` | the server the lease names answers for this checkout, from the file on disk, at this executable's version |
+| `outdated` | it answers, but from another version, or from a file replaced since it started: everything it says is yesterday's |
+| `stale` | the lease names a server that does not answer, or is not a lease at all; the reason says which |
+
+The lease itself is one type, read once (`lease::LeaseDocument`, `lease::LeaseFile::read`):
+the election, the read-only `serving`, the environment snapshot and the status all parse it
+through the same reading, and it carries the server's `version` beside the executable it
+was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
+`cat`; the status is where a program does.
+
+
 ## Starting it from a client
 
 The root of this repository carries the configuration each client reads, all naming the

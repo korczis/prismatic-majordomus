@@ -51,6 +51,7 @@ pub mod quality;
 pub mod release;
 pub mod repository;
 mod scope;
+pub mod server;
 pub mod trace;
 mod views;
 pub mod web;
@@ -101,6 +102,7 @@ pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use server::{Desired, LeaseView, ServerStanding, ServerStatus, ServerView, SERVER_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -127,6 +129,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         deploy,
         executions,
         peers,
+        server,
         perf,
         plan,
         directories,

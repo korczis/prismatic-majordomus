@@ -11,7 +11,7 @@ weight: 30
 featured: true
 areas: [coordination]
 audiences: [ai-native-team, platform-team]
-modules: [peers, worktree]
+modules: [peers, server, worktree]
 commands: [start, check, finish]
 rules: [majordomus.scope-integrity, majordomus.isolated-parallelism, majordomus.one-worker-one-scope, project.worktree-topology, project.shared-server-resilience]
 docs: [docs/WORKTREES.md, docs/MCP.md, docs/ADOPTION.md]

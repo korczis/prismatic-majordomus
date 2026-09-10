@@ -249,9 +249,9 @@ run first died on a silent peer.
 ## Dependency graph
 
 ```text
-A  identity: one repository, one server ─────────────┐
-   (lease and digest keyed on the git common dir;    │
-    a worktree is a scope, not a repository)         │
+A  identity: one repository, every server of it ─────┐
+   (the git repository named beside the checkout;    │
+    the servers of one listed from any of them)      │
                                                      ▼
 B  the server's state as one typed value ──────►  C  ensure: entry converges
    (lease read once by a Lease type; status,         (the start event and the MCP launcher
@@ -270,7 +270,10 @@ H  gates: cold start through the configured path, storm, crash, two worktrees, t
 ```
 
 A must land first: every later step that says "the repository" means the git repository,
-and today the code means the checkout. B before C: `ensure` reports the state it converged
+and today the code means the checkout. ADR 0035 takes A and B: the election stays per
+checkout, because a server serves the layer of the checkout it started in, and what was
+missing — that the servers of one repository can be told from the servers of two, and
+listed from any of them — is answered by the index route and `server.status`. B before C: `ensure` reports the state it converged
 to, so the state must have a type first. D is independent of A–C and blocks the pack's
 "session registers automatically" on its own. E depends on the journal branch or replaces
 it, and must not be built twice. F, G, H follow.
@@ -279,6 +282,8 @@ it, and must not be built twice. F, G, H follow.
 
 Delete or merge:
 
+- the four hand parsers of the lease (item 13): done for the executable's three by
+  `LeaseFile::read`; the two shell readers remain until stage 09;
 - `lib/context.sh`'s own lease reader and board fetch (`:344-370`), once the executable
   reports the board and the shell tool asks it — one reader, not two.
 - `.just/serve.just:12-20` (`mcp-status`, `open`) parsing the lease with `sed`; the recipes
@@ -318,7 +323,7 @@ Preserve, and build on:
 | stage | slice | branch | lands |
 |---|---|---|---|
 | 01 | this audit; the `context` fix | `feature/entry-convergence`, `fix/context-survives-a-silent-peer` | now |
-| 02 | ADR 0035: one repository, one server; the lease read once by a `Lease` type; `repository::identity` over the git common dir; a `server` state value (pid, url, started, executable, version, readiness, peers) served like every other capability | `feature/entry-convergence` | next |
+| 02 | ADR 0035: a checkout's server is one of the repository's (`git_repository_id` on the index route, every checkout's server listed by `server.status`); the lease read once by `LeaseDocument`; the server's standing — absent, starting, ready, outdated, stale — served like every other capability | `feature/entry-convergence` | with this document |
 | 03 | `serve ensure` / `serve status` / `serve stop` / `serve explain` on the executable; the start shim and the MCP launcher call ensure; the idle life of a server no client owns; the election races (grace after load, conditional take-over, `HELD` cleared on loss); concurrent-start test at N≥3 | `feature/entry-convergence` | after 02 |
 | 04 | one episode per provider session; the board reaper on the owner path; expiry on announcements; the reinitialize response reaches the model; claims are the task's scope | `feature/session-per-provider`, on top of ADR 0034's journal branch | parallel to 03 |
 | 05 | peers, lease and health on the typed channel; a Cockpit area for peers and the server; the navigation derived from the areas it declares; page lists in tests and docs derived | `feature/entry-surfaces` | after 03, 04 |
