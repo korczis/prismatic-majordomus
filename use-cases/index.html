@@ -180,8 +180,8 @@
 </nav>
 <h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Use cases</h1><p class="mt-3 max-w-3xl text-lg text-body">What people do with it: a task, the commands that answer it, and what you are left holding, each one proved against the tool. Every step is a real invocation, every rule and promise a real object, and every example below was executed to make this page.</p>
   <dl class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">41</dd></div>
-    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">described</dt><dd class="font-mono text-heading">41</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/" class="text-fg-brand hover:underline">137 of 187 targets</a></dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">42</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">described</dt><dd class="font-mono text-heading">42</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/coverage/" class="text-fg-brand hover:underline">138 of 188 targets</a></dd></div>
   </dl>
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><div x-data="{ q: '', app: 'all', actor: 'all', m: 'all' }">
@@ -396,7 +396,7 @@
     </section>
     <section class="mt-10" aria-labelledby="cat-completion">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="cat-completion" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/completion/" class="hover:underline">Completion and quality gates</a> <span class="font-mono text-sm text-body-subtle">4</span></h2>
+        <h2 id="cat-completion" class="text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/use-cases/completion/" class="hover:underline">Completion and quality gates</a> <span class="font-mono text-sm text-body-subtle">5</span></h2>
         <p class="text-sm text-body">Deciding whether work is finished, with a contract every line of which passes or fails.</p>
       </div>
       <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
@@ -430,6 +430,14 @@
             <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Prove what a task owed before calling it done</h3>
             <p class="text-sm leading-relaxed text-body">A task declares what it owes, records evidence against each obligation, and is refused when that evidence no longer describes the tree it was taken over.</p>
             <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">start · evidence · check · finish</span>
+          </a>
+        </li>
+        <li x-show="(app === 'all' || ''.includes(app)) && (actor === 'all' || 'maintainer agent'.includes(actor)) && (m === 'all' || m === 'described') && ('say-what-reached-the-remote-and-what-did-not say what reached the remote and what did not evidence check finish majordomus.obligation-closure'.includes(q.toLowerCase()))">
+          <a href="https://korczis.github.io/prismatic-majordomus/use-cases/say-what-reached-the-remote-and-what-did-not/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span></span><span class="font-mono text-xs text-body-subtle">basic</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Say what reached the remote and what did not</h3>
+            <p class="text-sm leading-relaxed text-body">The obligations that reach past the working tree are settled by asking git and the published site, so a report cannot call uncommitted work committed or unpushed work pushed.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">evidence · check · finish</span>
           </a>
         </li></ul>
     </section>
@@ -618,7 +626,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/beaee865435a94ee01a25e507726912f970e4ec0" class="font-mono underline">beaee86</a> · inputs <span class="font-mono">c49a7ba7d4c4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31285bdf537ef78a1b301dc6a8d2b211045f1266" class="font-mono underline">31285bd</a> · inputs <span class="font-mono">42e6f9ea4076</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

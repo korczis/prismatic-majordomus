@@ -339,6 +339,15 @@ before the outcome <code>completed</code> is available. The tokens are declared 
 <code>share/obligations.yaml</code> — implementation, tests, docs, generated, rules, commit, push,
 target, pages, deploy, verify — each naming the command that discharges it and, where the
 fact is local, the pathspecs its evidence is taken over.</p>
+<p>Four of them are never recorded here. <code>commit</code>, <code>push</code>, <code>target</code> and <code>pages</code> name facts the
+tool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that
+reaches it, a published site that serves it — and <code>check</code> and <code>finish</code> settle those live at
+HEAD instead of asking a worker to transcribe them. Recording one has no effect: an
+established obligation discharges by being true and refuses by being false. Where the
+checkout cannot settle it (no remote, no default branch recorded, a site that never
+answered) the token falls back to the recorded line, and the finding says which it was.
+<code>deploy</code> and <code>verify</code> stay hand-recorded, and <code>share/obligations.yaml</code> says in one line why:
+a deployment is a fact about a machine this repository never contacts.</p>
 <p><code>--command</code> or <code>--artifact</code> is required: narrative is not evidence. A token the vocabulary
 does not declare exits <code>2</code>; a token the active task never promised exits <code>15</code>, because
 recording evidence for something nobody asked for is how a checklist grows entries nobody
@@ -383,7 +392,7 @@ and refusing that would teach them to claim <code>completed</code> instead.</p>
         </ul>
       </div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/obligation-closure/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything</span></a></li></ul></div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/obligation-closure/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/obligation-establishment/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it</span></a></li></ul></div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Set up</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/init/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">init</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/update/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">update</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/migrate/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">migrate</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Begin</p>
@@ -412,7 +421,7 @@ and refusing that would teach them to claim <code>completed</code> instead.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/beaee865435a94ee01a25e507726912f970e4ec0" class="font-mono underline">beaee86</a> · inputs <span class="font-mono">c49a7ba7d4c4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/31285bdf537ef78a1b301dc6a8d2b211045f1266" class="font-mono underline">31285bd</a> · inputs <span class="font-mono">42e6f9ea4076</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
