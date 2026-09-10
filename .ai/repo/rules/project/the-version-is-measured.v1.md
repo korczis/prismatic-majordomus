@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: The version is measured against the public surface, not claimed
 description: What a release's version number says about compatibility is decided by comparing the capability registry of the last release with this tree — an atom of the surface that is gone is a breaking change, one that is new is an addition — and a version smaller than what moved is refused. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.
-statement: A version number is derived from the difference between the public surface of the last release and this tree, never from the words in the commit messages; a declared version smaller than the surface change requires is refused, and a removal is named in the release record whatever the number.
+statement: A version number is derived from the difference between the public surface of the last release and this tree, never from the words in the commit messages; a declared version smaller than the surface change requires is refused, and a removal is named as a breaking change in the release that carries it whatever the number.
 status: active
 class: blocking
 depends_on: [project.land-and-publish@1, project.interfaces-are-projections@1]
@@ -20,10 +20,19 @@ the words in the commit messages: `feat:` meant minor, `fix:` meant patch, and a
 deleted under a `refactor:` heading meant nothing at all.
 
 A number a person chooses is a claim, and a claim about compatibility is the kind nobody can
-check by reading. This repository shipped one: between `v0.3.1` and `0.4.0` the command
-`majordomus scope classify` left the command line — `scope` takes its paths directly now —
-and a caller who typed the old form gets exit 13. Every gate was green throughout. The
-change was correct; the silence about it was not.
+check by reading. This repository shipped one: between `v0.3.1` and `0.4.0` the atom
+`command scope classify` left the public surface and no release said so.
+
+What left was a claim rather than a dispatch, and that is what made the silence expensive.
+`repository.scope_classify` declared `cli: ["scope", "classify"]` so that its command module
+could find its own id by path; the clap tree never had that subcommand, at `v0.3.1` or now,
+and `majordomus scope classify <path>` parses `classify` as a path to judge and answers `out
+undeclared classify [absent]` with exit 0. The generated reference, the OpenAPI document and
+the published site advertised the command anyway, because each is a projection of the
+registry — so a caller read it there, typed it, and got a plausible wrong answer rather than
+a refusal. Deleting the claim was deliberate and correct (ADR 0027,
+`project.commands-are-projections`). Every gate was green throughout, because until this rule
+none of them looked at the surface.
 
 Elm's package manager answers this by refusing to accept a version number a human chose: it
 diffs the public API and computes the magnitude, and a package whose number is smaller than
@@ -60,8 +69,19 @@ strongest signal 0.x has instead of demanding 1.0.0 for one removal. **When the 
 reaches 1, the shift ends** and the implied bump is the required one.
 
 **A removal is named whatever the verdict is.** Below 1.0.0 it does not refuse the release,
-and it still belongs in the release record and in the changelog as a breaking change: a
-caller who held what is gone otherwise finds out by breaking.
+and it is still stated as a breaking change: a caller who held what is gone otherwise finds
+out by breaking.
+
+Where it is stated is decided by what can hold it. The changelog is derived and the release
+record is evidence written by the pipeline, so neither is authored — the one authored input
+either of them reads about a change is the commit message. A removal is therefore named in
+the subject of a commit inside the release that carries it, marked `type(scope)!:` or with a
+`BREAKING CHANGE:` trailer, which `release/commits.rs` reads and `release/changelog.rs`
+renders with a leading `**BREAKING**`. `majordomus release changelog` shows it under
+`## Unreleased` at once; `docs/generated/changelog.*` shows it when the version ships,
+because the committed artifact carries only published releases. The mechanism, and the field
+the release record does not have, are in `docs/RELEASE.md` under *Where a removal is written
+down*.
 
 # Failure behaviour
 
