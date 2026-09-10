@@ -235,7 +235,10 @@ A gate that never fires is worse than one that fails, because the verdict still 
 complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
 about, and each of them cost a real outage or a real afternoon.
 
-**The staleness catch cannot run on the path most merges take.** `.gitattributes` sends
+**The staleness catch cannot run on the path most merges take** — the driver resolving to
+ours is a design decision working correctly, and the defect is that the only thing checking
+its result runs in a `pre-commit` hook, while no hook of any kind runs for a merge the server
+creates. `.gitattributes` sends
 derived artifacts to `scripts/merge-derived`, which resolves them to *ours* and exits clean.
 That is deliberate: a derived file carries a fingerprint of the tree it was generated from,
 so after a merge neither side's value is right and the answer comes from running the
@@ -254,6 +257,13 @@ The vivid form: a stale recording rides through a merge untouched, so two consec
 merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
 coverage is inverse to its usage is worse than a missing one, because nobody notices it is
 absent.
+
+The condition above was observed on 2026-09-10 and then repaired, and the gap it illustrates
+is structural rather than a description of how the trunk stands today — so do not test this
+by looking at the trunk and concluding the finding expired. The commits carry their own
+evidence permanently: `git show <commit>:site/data/generated/source.json` beside
+`scripts/pages fingerprint` on that tree, and `git log -1 --format=%cn` for who committed the
+merge.
 
 **A check whose input goes empty can vanish instead of failing.** `scripts/site-check`
 derives `PREFIX` by stripping scheme and host from `base_url`. At an apex domain the path
@@ -287,6 +297,11 @@ machine-dependent is the **generated content**: `%h` abbreviates against the loc
 store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling
 worktree root. A build that re-derived could therefore publish a third answer matching neither
 side. State it as content-dependence, never as fingerprint non-determinism.
+
+One thing the generation guard is not: the digest it compares is taken over `Cargo.toml`,
+`Cargo.lock`, `build.rs` and `src` only, with `benches/` and `tests/` deliberately outside
+it — which is why a branch that changes no Rust may legitimately use a binary built in
+another worktree.
 
 **A note about the plan.** `majordomus plan validate` refuses an issue that names no
 milestone. So an area of standing work with no milestone is not merely unfiled — the work in
