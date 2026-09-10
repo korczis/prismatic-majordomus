@@ -21,6 +21,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
+| `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `plan` | The plan and its derivations | behaviorally_verified | 8 | [`modules/plan.md`](modules/plan.md) |
@@ -72,6 +73,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |
 | `objects.verify` | `objects` | query | behaviorally_verified | `majordomus_verify_objects` | — | `GET /api/v1/objects/verify` | — | — | required |
+| `obligations.closure` | `obligations` | query | behaviorally_verified | `majordomus_obligation_closure` | `majordomus://obligations/closure` | `GET /api/v1/obligations/closure` | — | process, 2 entries, 2s | required |
+| `obligations.vocabulary` | `obligations` | query | behaviorally_verified | `majordomus_obligations` | `majordomus://obligations` | `GET /api/v1/obligations` | — | process, 2 entries | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
@@ -89,8 +92,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `product.providers` | `product` | query | behaviorally_verified | `majordomus_providers` | `majordomus://product/providers` | `GET /api/v1/product/providers` | `majordomus product providers` | process, 2 entries | required |
 | `product.validate` | `product` | query | behaviorally_verified | `majordomus_product_validate` | — | `GET /api/v1/product/validate` | `majordomus product validate` | process, 2 entries | required |
 | `quality.report` | `quality` | query | behaviorally_verified | `majordomus_quality` | `majordomus://quality` | `GET /api/v1/quality` | `majordomus quality report` | process, 8 entries, 10s | required |
-| `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
-| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | — | required |
+| `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | `majordomus release changelog` | — | required |
+| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | `majordomus release version` | — | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | — | — | required |

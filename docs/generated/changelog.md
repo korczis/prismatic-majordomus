@@ -21,6 +21,8 @@ Current version: **0.4.0**
 
 ### Added
 
+- **obligations**: the outer obligations are established from git and the published site, not typed into a ledger by the worker who owes them (`f2000a52c`)
+- **obligations**: what a task owes, and whether its evidence still describes this tree, over every surface (`dc14dd0d3`)
 - **rules**: an empty result and a failed command must not look alike (`824223cb5`)
 - **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **plan**: one issue walks the whole chain and back, and a remote close still does not complete it (`67d6298c2`)
@@ -63,6 +65,9 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **obligations**: the pathspecs an obligation is hashed over reach every depth (`c5268505b`)
+- **scope**: a task that merged the trunk has not touched what the trunk touched (`83775c7ab`)
+- **derive**: where cargo builds is asked, not assumed (`bd63891d9`)
 - **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
 - **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
@@ -162,9 +167,12 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`789e95ab8`)
 - **derive**: the projections follow the merge of #142 (`c1a3e7930`)
 - **derive**: the projections follow the master merge (`08348b0c1`)
+- **derive**: the projections follow the merge of #128 (`7c3e9f9ac`)
 - **derive**: the projections follow the master merge (`c4b6d0715`)
+- **derive**: the projections follow the target-directory fix (`6be9c8080`)
 - **derive**: the projections follow master once more (`f36420c30`)
 - **derive**: the projections follow the master merge (`8c53e2b11`)
 - **derive**: the projections follow the master merge (`a4f9780b0`)
@@ -234,6 +242,8 @@ Current version: **0.4.0**
 
 ### Other
 
+- Merge origin/master into feature/github-work-graph (`6b5c2eb45`)
+- the interactive changelog and its derived links, before merging master (`b9745faf4`)
 - Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone (`d52f43334`)
 - **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
 - **feature/deployment-core**: uncommitted work found in the worktree at the topology migration, committed as it was (`6579f1978`)

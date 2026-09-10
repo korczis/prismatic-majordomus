@@ -1,7 +1,7 @@
 +++
 title = "A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured"
 description = "Given the repository and a branch name there is exactly one path for that branch's"
-weight = 155
+weight = 156
 [extra]
 claim_id = "worktree-topology-derived"
 status = "guaranteed"

@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 71,
-    "schemas": 319,
-    "tags": 23
+    "operations": 73,
+    "schemas": 326,
+    "tags": 24
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -131,6 +131,13 @@
           "type": "array of string"
         },
         {
+          "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared.",
+          "name": "requires",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
           "description": "When it started.",
           "name": "started_at",
           "refs": [],
@@ -148,6 +155,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Closure",
         "Continuity"
       ],
       "values": [],
@@ -2437,6 +2445,94 @@
         "Announced",
         "Peer"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What this checkout's active task owes, and how much of it is still true.\n\nA clone that has never run the lifecycle answers this too, and answers it as absence:\n`present` false, no task, and a finding saying so. \"Nothing owed\" and \"nothing to owe\nit\" are different facts, and a served instance must not report the second as the first.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Closure;\nlet fresh: Closure = serde_json::from_str(\n    r#\"{\"present\":false,\"worktree\":\"/srv/clone\",\"branch\":\"master\",\"closed\":false,\n        \"tallies\":{},\n        \"findings\":[\"no active task in this checkout (.ai/local/state/current.yaml); nothing owes anything here\"]}\"#,\n)\n.unwrap();\nassert!(!fresh.present && !fresh.closed, \"nothing that does not exist is closed\");\nassert!(fresh.task.is_none() && fresh.obligations.is_empty());\nassert_eq!(fresh.findings.len(), 1, \"absence is reported, not implied\");\n```",
+      "is_enum": false,
+      "name": "Closure",
+      "properties": [
+        {
+          "description": "Whether this checkout has a task to report about at all. False in a clone that has\nnever run the lifecycle, which is not a fault and is not \"nothing owed\".",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The worktree this answer is about. Every reading below is scoped to it, and to no\nother checkout of the same repository.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch, or `DETACHED`.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit this checkout is on.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "`clean` or `dirty`.",
+          "name": "working_tree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The active task, or `None`. Its `requires` is the list the entries below expand.",
+          "name": "task",
+          "refs": [
+            "ActiveTask"
+          ],
+          "required": false,
+          "type": "ActiveTask | null"
+        },
+        {
+          "description": "True when the task declares obligations and every one of them is discharged and\ncurrent — that is, when `majordomus.obligation-closure` would not refuse\n`finish --outcome completed`. False when anything is owed, stale or undeclared, and\nfalse when there is no task: nothing that does not exist is closed.",
+          "name": "closed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many obligations stand where, by state word. Absent states are absent rather\nthan zero, so a reader never has to know the vocabulary to read the tallies.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every obligation the task declared, in the order it declared them.",
+          "name": "obligations",
+          "refs": [
+            "ObligationClosure"
+          ],
+          "required": false,
+          "type": "array of ObligationClosure"
+        },
+        {
+          "description": "What a reader should know before trusting any of the above: an unreadable\nvocabulary, a ledger that could not be read, a task that declares nothing. Empty is\nthe ordinary case.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "obligations.closure"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -5257,6 +5353,7 @@
       "type": "\"exact\" | \"advanced\" | \"diverged\" | \"different_context\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "ObligationClosure",
         "Record"
       ],
       "values": [
@@ -5596,6 +5693,8 @@
         "objects.get",
         "objects.list",
         "objects.verify",
+        "obligations.vocabulary",
+        "obligations.closure",
         "peers.list",
         "peers.announce",
         "perf.counters",
@@ -5723,6 +5822,83 @@
         "executions.events"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The `task.evidence` line that discharged an obligation, as the ledger holds it.\n\nNothing older is consulted: evidence is superseded by evidence, and the ledger keeps\nthe history for a reader that wants it.\n```\nuse majordomus_cli::capability::builtin::obligations::Evidence;\nlet e: Evidence = serde_json::from_str(\n    r#\"{\"recorded_at\":\"2026-09-09T21:01:00Z\",\"head\":\"f00ba7\",\"branch\":\"master\",\n        \"kind\":\"ci\",\"command\":\"scripts/ci/reference-check\",\"inputs_hash\":\"7f68b9\"}\"#,\n)\n.unwrap();\nassert_eq!(e.head, \"f00ba7\", \"the envelope's commit is what a remote fact is judged against\");\nassert!(e.artifact.is_empty(), \"one of command and artifact; narrative is not evidence\");\n```",
+      "is_enum": false,
+      "name": "Evidence",
+      "properties": [
+        {
+          "description": "When the line was appended.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the ledger's envelope stamped on it.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch it was recorded on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "How it was taken: `test`, `build`, `ci`, `artifact` or `manual`.",
+          "name": "kind",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The command that produced it. Narrative is not evidence, so one of this and\n`artifact` is always present.",
+          "name": "command",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The reference it points at, such as a published URL.",
+          "name": "artifact",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "What the command said, when its output was the point.",
+          "name": "result",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The episode that recorded it, when one was open.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The hash of the token's declared inputs at the moment it was taken. Empty for a\ntoken that declares none.",
+          "name": "inputs_hash",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObligationClosure"
+      ],
       "values": [],
       "variants": []
     },
@@ -9911,6 +10087,210 @@
       "variants": []
     },
     {
+      "description": "One token a task may declare in `requires`, as the distribution ships it.\n\n`remote` and `inputs` are what decide how its evidence is judged, and they are the\nfile's decision rather than this reader's: a fact the working tree cannot establish is\nbound to the commit it was taken at, and everything else is bound to the bytes of the\nfiles its pathspecs select.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Obligation;\nlet push: Obligation = serde_json::from_str(\n    r#\"{\"id\":\"push\",\"title\":\"The commit reached the remote\",\n        \"summary\":\"The branch's head exists on the remote it tracks.\",\n        \"discharged_by\":\"git\",\"remote\":true}\"#,\n)\n.unwrap();\nassert!(push.remote);\nassert!(push.inputs.is_empty(), \"a remote fact is bound to a commit, not to a tree\");\n```",
+      "is_enum": false,
+      "name": "Obligation",
+      "properties": [
+        {
+          "description": "The token, as a task's `requires` names it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The obligation as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a worker is being asked to have done.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that produces the evidence. `none` for a token held by another line of\nthe contract and listed so that a report can say it rather than leave a hole.",
+          "name": "discharged_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pathspecs the evidence is hashed over. Empty for a token whose fact is remote,\nand empty for one bound to neither: see [`ObligationClosure::staleness`].",
+          "name": "inputs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "True when the fact cannot be established from the working tree alone — a push, a\npublication, a deployment. Such evidence is bound to a commit, not to a tree.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What the vocabulary says about the token beyond its summary.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Vocabulary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One obligation the task declared, joined with what the vocabulary says about it and\nwith the evidence that does or does not discharge it.\n\nThe vocabulary's fields are repeated here on purpose: a client asking what this task\nowes gets the token's title, its summary and the command that would discharge it in the\nsame answer, and needs no second call to render a report.\n\n```\nuse majordomus_cli::capability::builtin::obligations::{ObligationClosure, ObligationState};\nlet owed: ObligationClosure = serde_json::from_str(\n    r#\"{\"id\":\"pages\",\"title\":\"The published site serves this commit\",\"remote\":true,\n        \"state\":\"owed\",\"detail\":\"owed, and no evidence was recorded\",\n        \"reproduce\":\"majordomus evidence --covers pages --command 'scripts/pages verify'\"}\"#,\n)\n.unwrap();\nassert_eq!(owed.state, ObligationState::Owed);\nassert!(owed.evidence.is_none() && owed.staleness.is_none(), \"nothing to label\");\nassert!(owed.reproduce.starts_with(\"majordomus evidence\"), \"a finding carries its repair\");\n```",
+      "is_enum": false,
+      "name": "ObligationClosure",
+      "properties": [
+        {
+          "description": "The token, as the task's `requires` names it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "From the vocabulary; the token itself when it declares none.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "From the vocabulary.",
+          "name": "summary",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "From the vocabulary: the command that produces the evidence.",
+          "name": "discharged_by",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "From the vocabulary: whether the fact is remote.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "From the vocabulary: the pathspecs the evidence is hashed over.",
+          "name": "inputs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "ObligationState"
+          ],
+          "required": true,
+          "type": "ObligationState"
+        },
+        {
+          "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here.",
+          "name": "staleness",
+          "refs": [
+            "Divergence"
+          ],
+          "required": false,
+          "type": "Divergence | null"
+        },
+        {
+          "description": "The line that discharged it, or `None`.",
+          "name": "evidence",
+          "refs": [
+            "Evidence"
+          ],
+          "required": false,
+          "type": "Evidence | null"
+        },
+        {
+          "description": "What the token's inputs hash to in this tree now — the other half of \"stale against\nwhat\". `None` for a token that declares no inputs, and `None` when git could not be\nasked which files they select.",
+          "name": "inputs_hash_now",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many tracked files that hash was taken over. Reported because the shell's\nselection and this one are not always the same set — see the module header — and a\ncount is the cheapest way for a reader to see it rather than be told it.",
+          "name": "inputs_files",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "One line: what this obligation's standing actually is, in the words the validator\nuses when it refuses.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that would discharge it. Every finding here carries the way to act on\nit, as `project.finding-carries-reproduce` asks.",
+          "name": "reproduce",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Closure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one obligation stands.\n\nThe words are the validator's verdicts, not a severity scale: `stale` is not a worse\n`owed`, it is evidence that was true and no longer describes what it proved.\n\n```\nuse majordomus_cli::capability::builtin::obligations::ObligationState;\n// only one of the four lets a task be called completed\nlet completable = |s: ObligationState| s == ObligationState::Discharged;\nassert!(completable(ObligationState::Discharged));\nassert!(!completable(ObligationState::Stale), \"evidence that no longer describes the tree\");\nassert!(!completable(ObligationState::Owed));\nassert!(!completable(ObligationState::Undeclared));\n```",
+      "is_enum": true,
+      "name": "ObligationState",
+      "properties": [],
+      "type": "\"owed\" | \"discharged\" | \"stale\" | \"undeclared\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ObligationClosure"
+      ],
+      "values": [
+        {
+          "description": "Declared, and no evidence for it was ever recorded.",
+          "value": "owed"
+        },
+        {
+          "description": "Evidence exists and still describes this tree, or this commit.",
+          "value": "discharged"
+        },
+        {
+          "description": "Evidence exists and no longer describes what it proved: the inputs changed, or the\ncommit it named is not this one.",
+          "value": "stale"
+        },
+        {
+          "description": "The task requires a token the shipped vocabulary does not declare. Nothing can\ndischarge it, because nothing knows what would.",
+          "value": "undeclared"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The open episode of this worktree, when there is one.",
       "is_enum": false,
       "name": "OpenSession",
@@ -12817,6 +13197,22 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds.",
+          "name": "references",
+          "refs": [
+            "ReleaseReference"
+          ],
+          "required": false,
+          "type": "array of ReleaseReference"
         }
       ],
       "type": "object",
@@ -13036,12 +13432,61 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "ReleaseSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.",
+      "is_enum": false,
+      "name": "ReleaseReference",
+      "properties": [
+        {
+          "description": "`issue` or `milestone`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`I1305`, `M000`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is, from the record itself.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is published on this site, when it has a page.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChange"
       ],
       "values": [],
       "variants": []
@@ -13085,6 +13530,27 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The release notes the record names — the published release itself.",
+          "name": "notes_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every commit between the previous release and this one, as the forge renders it.",
+          "name": "compare_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The tree at this release.",
+          "name": "tree_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The decisions dated inside this release's window.",
@@ -16672,6 +17138,50 @@
       "variants": []
     },
     {
+      "description": "The vocabulary the distribution ships: every token there is.\n\n`count` is measured from `obligations` rather than written down, so a token added to\nthe file is counted by the same act that declares it.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Vocabulary;\nlet v: Vocabulary = serde_json::from_str(\n    r#\"{\"version\":1,\"source\":\"/opt/majordomus/share/obligations.yaml\",\"count\":1,\n        \"obligations\":[{\"id\":\"commit\",\"title\":\"The work is committed\",\n                        \"summary\":\"In the branch's history, not the working tree.\",\n                        \"discharged_by\":\"git\",\"remote\":false}]}\"#,\n)\n.unwrap();\nassert_eq!(v.count, v.obligations.len());\nassert_eq!(v.version, 1, \"the only shape this reader accepts\");\n```",
+      "is_enum": false,
+      "name": "Vocabulary",
+      "properties": [
+        {
+          "description": "The file's own format version. `1` is the only one this reader accepts.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where it was read from, absolute: the distribution's share directory, which is not\nnecessarily inside the repository.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many tokens there are. No number anywhere is written down.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every token, in the order the file declares them.",
+          "name": "obligations",
+          "refs": [
+            "Obligation"
+          ],
+          "required": true,
+          "type": "array of Obligation"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "obligations.vocabulary"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand.",
       "is_enum": true,
       "name": "WaiverReason",
@@ -19528,6 +20038,122 @@
       ]
     },
     {
+      "description": "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events.",
+      "name": "obligations",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/obligations\"",
+          "description": "The tokens a task may declare in `requires`: what each one asks of a worker, the command that discharges it, the pathspecs its evidence is hashed over, and whether its fact is remote and therefore bound to a commit rather than to a tree. Shipped data, identical in every clone, so this answers in a checkout that has never run the lifecycle.",
+          "id": "obligations.vocabulary",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "obligations",
+            "uri": "majordomus://obligations"
+          },
+          "mcp_tool": "majordomus_obligations",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/obligations",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::obligations",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every obligation there is: the result.",
+              "schema": "Vocabulary",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Vocabulary",
+          "stability": "behaviorally_verified",
+          "summary": "Every obligation there is"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/obligations/closure\"",
+          "description": "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed.",
+          "id": "obligations.closure",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "obligation-closure",
+            "uri": "majordomus://obligations/closure"
+          },
+          "mcp_tool": "majordomus_obligation_closure",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/obligations/closure",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::obligations",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What this task still owes: the result.",
+              "schema": "Closure",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Closure",
+          "stability": "behaviorally_verified",
+          "summary": "What this task still owes"
+        }
+      ]
+    },
+    {
       "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
       "name": "peers",
       "operations": [
@@ -20677,7 +21303,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "",
+          "cli": "release changelog",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/changelog?version=0.3.1\"",
           "description": "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
           "id": "release.changelog",
@@ -20745,7 +21371,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "",
+          "cli": "release version",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/version\"",
           "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
           "id": "release.version",
