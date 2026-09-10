@@ -7,7 +7,7 @@ profile: deep-work
 parallel_safe: true
 objective: "Register `deployment` as a kind of the AI layer — allowed keys, schema, directory contract — and describe this repository's own deployment as one object under .ai/repo/deployments/, so that every later projection reads one file and no provider file is ever authoritative."
 why: "A Dockerfile and a fly.toml written by hand would restate the port, the routes, the resources and the build inputs that the repository already knows. The layer already has a mechanism for canonical facts: a kind, its allowed keys, its schema and its directory contract. Deployment is a kind, and everything downstream is a projection."
-current_state: "No deployment kind, no .ai/repo/deployments directory, no allow file and no schema exist. share/kinds.yaml registers every other kind the layer holds."
+current_state: "The kind exists on the trunk: share/kinds.yaml declares deployment against the schema majordomus.deployment/v1, share/allow/deployment.txt closes its keys and is generated from that schema, and .ai/repo/deployments/majordomus.yaml describes this repository's own deployment beside the directory's README. The work reached master with feature/deployment-core and nothing was ever recorded against this issue, so the milestone reads PLANNED 0/32 while its first artifacts are on the trunk. Measured on master 6042f4286, 2026-09-10; not marked complete here because this issue's own validation (bash test/run.sh, bin/majordomus doctor) has not been rerun against that tree."
 desired_state: "A deployment object is indexed, readable through the same object surface as every other kind, closed by an allow file, described by a schema, and living in a directory that carries its own context document."
 scope:
   - .ai/repo/deployments
@@ -35,4 +35,4 @@ evidence_required:
   - object_indexed
 risk: "A schema written for one deployment becomes either a Kubernetes-grade abstraction nobody needs or a Fly file with a different extension. It has to be generic where a second provider would plausibly reuse it and concrete everywhere else."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10
