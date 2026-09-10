@@ -41,7 +41,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
-| `environment.status` | environment | query | process, 4 entries, 3s | covered | covered | covered | `default` |
+| `environment.status` | environment | query | — | covered | covered | covered | `default` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
 | `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
 | `executions.events` | executions | query | — | waived | waived | waived | — |
