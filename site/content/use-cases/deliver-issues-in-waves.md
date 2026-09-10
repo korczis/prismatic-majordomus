@@ -1,7 +1,7 @@
 +++
 title = "Deliver issues in waves the graph computes, and take the next one"
 description = "Validate the plan, read the execution waves the dependency graph yields, see which issues are ready and which are blocked on what, and take the one issue a worker should do now."
-weight = 27
+weight = 28
 [extra]
 id = "deliver-issues-in-waves"
 source = ".ai/repo/use-cases/deliver-issues-in-waves.md"
