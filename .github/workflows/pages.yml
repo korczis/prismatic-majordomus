@@ -23,28 +23,33 @@ on:
       - .github/workflows/pages.yml
       - .nojekyll
       - AGENTS.md
+      - CLAUDE.md
+      - CONTRIBUTING.md
+      - LICENSE
+      - README.md
+      - SECURITY.md
+      - apps/majordomus-cli/src/capability/builtin/design.rs
+      - apps/majordomus-cli/src/cockpit/logo-mark.svg
+      - apps/majordomus-cli/src/design/**
       - apps/majordomus-cli/src/web/tokens.css
       - assets/**
       - bin/**
-      - CLAUDE.md
-      - CONTRIBUTING.md
       - docs/**
+      - docs/DESIGN_SYSTEM.md
       - docs/generated/**
       - examples/**
       - lib/**
-      - LICENSE
       - package-lock.json
       - package.json
-      - README.md
       - scripts/ci/design-check
       - scripts/cockpit-assets
       - scripts/cockpit-probe
-      - scripts/design-tokens
       - scripts/generate-site-data
       - scripts/github-sync
       - scripts/lib/**
       - scripts/lib/cockpit-probe.mjs
       - scripts/lib/ui-*.mjs
+      - scripts/lib/ui-routes.mjs
       - scripts/pages
       - scripts/rules-package
       - scripts/site-basepath-check
@@ -54,13 +59,13 @@ on:
       - scripts/site-probe
       - scripts/site-serve
       - scripts/ui
-      - SECURITY.md
       - share/**
       - share/allow/**
       - share/cockpit/**
       - share/design/**
       - site/**
       - site/data/registry/**
+      - site/data/registry/design.json
       - test/**
   workflow_dispatch:
 
@@ -73,9 +78,29 @@ permissions:
 # worth nothing the moment a newer push exists. A superseded run is cancelled rather than
 # finished; the branch push is idempotent and last-writer-wins, so cancelling one loses nothing
 # but the seconds it would have spent.
+#
+# Cancelling cannot strand the site, and that is a property of the group rather than a hope: a
+# run is only ever cancelled here by a *newer run of this same workflow starting*, so every
+# cancellation is by construction succeeded by a run of a newer commit, and the chain ends in a
+# run that publishes or in one that goes red. Twenty pull requests landed on 2026-09-10 and the
+# runs bear it out — seventeen cancelled runs over two days, fourteen of which had already
+# pushed gh-pages before they died (the job's own five-minute bound killed them mid-probe, which
+# is the defect the `deploy` job's timeouts below were rewritten for), and the three that died
+# before publishing were each followed by a run of a newer commit. What the cancellation does
+# cost is real and is named here: a run cancelled before it published had a publishable commit,
+# and if its successor then fails to build, the site keeps the older publication. That is a
+# stale site, and what reports it is the `pages-live` gate of .ai/repo/ci/gates.yaml, which
+# refuses once a publication has been owed longer than the deploy window.
+#
+# `cancel-in-progress` is a push's privilege, not a dispatch's. A dispatch of this workflow is
+# the recovery path — it is run *because* the automatic one did not publish — and a recovery
+# that kills a deploy which is mid-`git push` to gh-pages, to publish the same tree a moment
+# later, is a race with nothing to win. With the expression false for a dispatch, a manual run
+# waits for the run in flight instead of cancelling it; a push still supersedes everything,
+# because a push always carries a newer tree than whatever is running.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   # The bound is over two different kinds of second, so it is written twice, and the two
@@ -139,6 +164,7 @@ jobs:
 
       # the one deploy path, the same script a person runs
       - name: publish
+        id: publish
         timeout-minutes: 3
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
@@ -171,6 +197,26 @@ jobs:
           MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 600
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
+
+      # A cancelled run is not a failure, and on a cancelled run nothing above this line has a
+      # conclusion anybody reads: `gh run list` says `cancelled` whether the branch was pushed
+      # or not. Fourteen of the seventeen cancelled runs of 2026-09-09/10 had published, and no
+      # reader could tell them from the three that had not. So the run states it itself, in one
+      # line, before it disappears: an annotation on the run and a line in its summary. This is
+      # evidence, not a gate — a cancelled job cannot be made red from inside — and the gate
+      # that acts on it is `pages-live`, on the next validation of master.
+      - name: publication state
+        if: always()
+        env:
+          PUBLISH: ${{ steps.publish.outcome }}
+        run: |
+          if [ "$PUBLISH" = success ]; then
+            echo "::notice title=Published::gh-pages was pushed with $GITHUB_SHA before this run ended"
+            printf '\nPublication: **pushed** — gh-pages carries %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error title=Not published::this run ended (publish: $PUBLISH) without pushing gh-pages; the site still serves an older commit"
+            printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - if: always()
         run: |
