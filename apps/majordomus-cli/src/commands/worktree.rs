@@ -860,3 +860,311 @@ fn remove(
     }
     Ok(0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::worktree::{
+        ContainerView, DiagnosticCode, RepositoryView, TopologyTallies, TrunkSource, TrunkView,
+        UpstreamState, WorktreeKind,
+    };
+
+    fn state(label: &str, standing: Standing) -> WorktreeState {
+        WorktreeState {
+            path: "/a/foo-wt/feature/x".into(),
+            kind: WorktreeKind::Linked,
+            standing,
+            branch: Some(label.into()),
+            label: label.into(),
+            head: Some("abcdef0123456789".into()),
+            detached: false,
+            expected_path: Some("/a/foo-wt/feature/x".into()),
+            exists: true,
+            current: false,
+            locked: None,
+            prunable: None,
+            dirty: None,
+            upstream: None,
+            issue: None,
+            diagnostics: Vec::new(),
+        }
+    }
+
+    /// The text listing is what a person reads; every extra line under a worktree is there
+    /// because it changes what they would do next. A destination is printed only when the
+    /// worktree is misplaced — printing it beside a canonical worktree would say "belongs
+    /// at" about the path it is already at, and a reader would go looking for a move that
+    /// is not needed.
+    #[test]
+    fn the_destination_is_printed_only_for_a_worktree_that_has_to_move() {
+        let canonical = state("feature/x", Standing::Canonical);
+        let line = render_worktree_line(&canonical);
+        assert!(line.starts_with("CANONICAL"), "{line}");
+        assert!(
+            line.contains("feature/x") && line.contains("/a/foo-wt/feature/x"),
+            "{line}"
+        );
+        assert!(!line.contains("belongs at"), "{line}");
+
+        let misplaced = state("feature/x", Standing::Misplaced);
+        let line = render_worktree_line(&misplaced);
+        assert!(line.starts_with("MISPLACED"), "{line}");
+        assert!(line.contains("-> belongs at /a/foo-wt/feature/x"), "{line}");
+    }
+
+    /// "You are here" is the marker a person navigates by when several worktrees hold
+    /// similar branches, and the dirty line is the warning before a migration. Both are
+    /// suppressed when they do not apply: a clean worktree that printed "dirty: clean"
+    /// would make every listing look alarming.
+    #[test]
+    fn the_current_marker_and_the_dirty_line_appear_only_when_they_mean_something() {
+        let mut w_ = state("feature/x", Standing::Canonical);
+        assert!(!render_worktree_line(&w_).contains("you are here"));
+        w_.current = true;
+        assert!(render_worktree_line(&w_).contains("(you are here)"));
+
+        w_.dirty = Some(DirtyState {
+            clean: true,
+            ..Default::default()
+        });
+        assert!(
+            !render_worktree_line(&w_).contains("dirty:"),
+            "a clean tree says nothing"
+        );
+        w_.dirty = Some(DirtyState {
+            unstaged: 2,
+            untracked: 1,
+            clean: false,
+            ..Default::default()
+        });
+        assert!(
+            render_worktree_line(&w_).contains("dirty: 2 unstaged, 1 untracked"),
+            "{}",
+            render_worktree_line(&w_)
+        );
+    }
+
+    /// An upstream is worth a line only when the branch has moved away from it. Printing
+    /// "ahead 0, behind 0" under every worktree would bury the one that is behind, and a
+    /// gone upstream — the branch was merged and deleted on the remote — is the single most
+    /// useful thing the listing can say about a stale worktree.
+    #[test]
+    fn the_upstream_line_appears_only_when_the_branch_and_its_upstream_have_moved_apart() {
+        let mut w_ = state("feature/x", Standing::Canonical);
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: Some(0),
+            behind: Some(0),
+            gone: false,
+        });
+        assert!(
+            !render_worktree_line(&w_).contains("upstream"),
+            "an up-to-date branch is not news"
+        );
+
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: Some(3),
+            behind: Some(1),
+            gone: false,
+        });
+        assert!(
+            render_worktree_line(&w_).contains("upstream origin/feature/x: ahead 3, behind 1"),
+            "{}",
+            render_worktree_line(&w_)
+        );
+
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: None,
+            behind: None,
+            gone: true,
+        });
+        let line = render_worktree_line(&w_);
+        assert!(line.contains("upstream origin/feature/x: gone"), "{line}");
+        assert!(
+            !line.contains("ahead"),
+            "a gone upstream has no distance to report: {line}"
+        );
+
+        w_.issue = Some("I0931".into());
+        assert!(render_worktree_line(&w_).contains("issue I0931"));
+    }
+
+    /// A diagnostic without its remedy is a complaint. Every rendering carries the code a
+    /// script matches on, the sentence a person reads, and the command that fixes it; the
+    /// location lines are printed only when the diagnostic has them, because a
+    /// repository-wide finding has no single path.
+    #[test]
+    fn a_rendered_diagnostic_always_carries_its_code_and_its_remedy() {
+        let full = TopologyDiagnostic {
+            code: DiagnosticCode::PathMismatch,
+            severity: Severity::Error,
+            path: Some("/tmp/scratch".into()),
+            branch: Some("feature/x".into()),
+            expected: Some("/a/foo-wt/feature/x".into()),
+            message: "branch 'feature/x' belongs at /a/foo-wt/feature/x".into(),
+            remedy: "majordomus worktree migrate".into(),
+        };
+        let s = render_diagnostic(&full);
+        assert!(s.starts_with("ERROR"), "{s}");
+        assert!(s.contains("worktree.path_mismatch"), "{s}");
+        assert!(s.contains("at /tmp/scratch"), "{s}");
+        assert!(s.contains("expected /a/foo-wt/feature/x"), "{s}");
+        assert!(s.contains("[remedy: majordomus worktree migrate]"), "{s}");
+
+        let bare = TopologyDiagnostic {
+            path: None,
+            expected: None,
+            severity: Severity::Warning,
+            ..full
+        };
+        let s = render_diagnostic(&bare);
+        assert!(s.starts_with("WARNING"), "{s}");
+        assert!(!s.contains("\n         at "), "{s}");
+        assert!(!s.contains("expected"), "{s}");
+        assert!(s.contains("[remedy:"), "the remedy is never optional: {s}");
+    }
+
+    /// The trunk is discovered, not configured, so the listing says *how* it was decided.
+    /// A person seeing the wrong trunk needs to know whether to fix a remote's HEAD, a
+    /// config value, or a branch name; `Unknown` has to say so rather than print nothing.
+    #[test]
+    fn every_way_the_trunk_can_be_decided_has_words_of_its_own() {
+        let words: Vec<&str> = [
+            TrunkSource::RemoteHead,
+            TrunkSource::DefaultBranchConfig,
+            TrunkSource::ConventionalName,
+            TrunkSource::PrimaryCheckout,
+            TrunkSource::Unknown,
+        ]
+        .into_iter()
+        .map(trunk_source_word)
+        .collect();
+        assert_eq!(
+            words,
+            vec![
+                "the remote's HEAD",
+                "init.defaultBranch",
+                "the conventional name",
+                "the primary checkout's branch",
+                "unknown",
+            ]
+        );
+        assert_eq!(
+            words
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len(),
+            5,
+            "two sources rendering the same words would make the answer unactionable"
+        );
+    }
+
+    /// The tally line is the summary a person reads when the listing is too long to scan,
+    /// and the counts must be the topology's own. A line that dropped `misplaced` would let
+    /// a repository look healthy while the guard refuses every commit in it.
+    #[test]
+    fn the_tally_line_reports_the_counts_the_topology_holds() {
+        let t = RepositoryTopology {
+            schema: crate::worktree::SCHEMA.into(),
+            repository: RepositoryView {
+                primary_worktree: "/a/foo".into(),
+                git_common_dir: "/a/foo/.git".into(),
+                name: "foo".into(),
+            },
+            container: ContainerView {
+                path: "/a/foo-wt".into(),
+                suffix: "-wt".into(),
+                exists: true,
+            },
+            trunk: TrunkView {
+                branch: Some("master".into()),
+                source: TrunkSource::ConventionalName,
+                checked_out_at: Some("/a/foo".into()),
+            },
+            observed_from: "/a/foo".into(),
+            worktrees: Vec::new(),
+            branches: Vec::new(),
+            diagnostics: Vec::new(),
+            tallies: TopologyTallies {
+                worktrees: 7,
+                canonical: 4,
+                misplaced: 2,
+                detached: 1,
+                ephemeral: 0,
+                missing: 3,
+                locked: 0,
+                dirty: 0,
+                branches: 9,
+                branches_without_worktree: 5,
+                cleanup_eligible: 2,
+                errors: 6,
+                warnings: 8,
+            },
+            valid: false,
+        };
+        assert_eq!(
+            tallies_line(&t),
+            "7 worktree(s): 4 canonical, 2 misplaced, 1 detached, 3 missing; \
+             9 branch(es), 5 without a worktree, 2 cleanup-eligible; 6 error(s), 8 warning(s)"
+        );
+    }
+
+    /// A commit is shown short enough to read and long enough to be unambiguous, and a
+    /// worktree with no commit — an unborn repository — prints a dash rather than an empty
+    /// column that would shift everything after it.
+    #[test]
+    fn a_commit_is_shortened_and_a_missing_one_is_a_dash() {
+        assert_eq!(
+            short(&Some("abcdef0123456789abcdef".into())),
+            "abcdef012345"
+        );
+        assert_eq!(
+            short(&Some("abc".into())),
+            "abc",
+            "a commit shorter than the window is not padded or panicked over"
+        );
+        assert_eq!(short(&None), "-");
+        assert_eq!(
+            dirty_word(&None),
+            "-",
+            "not asked for is not the same as clean"
+        );
+        assert_eq!(
+            dirty_word(&Some(DirtyState {
+                clean: true,
+                ..Default::default()
+            })),
+            "clean"
+        );
+    }
+
+    /// The service's refusal reaches the shell with the service's own exit code and its own
+    /// words. Rephrasing it here would give one condition two wordings, and flattening the
+    /// code would make every refusal look alike to a script.
+    #[test]
+    fn a_refusal_keeps_the_services_exit_code_and_its_own_sentence() {
+        let e = crate::worktree::WorktreeError::NoSuchWorktree {
+            selector: "nope".into(),
+        };
+        let sentence = e.to_string();
+        match refuse(e) {
+            Error::Refused { code, reason } => {
+                assert_eq!(code, crate::worktree::EXIT_MISSING);
+                assert_eq!(reason, sentence, "the words were rephrased on the way out");
+            }
+            other => panic!("a worktree refusal became {other:?}"),
+        }
+
+        let dirty = crate::worktree::WorktreeError::DirtyWorktree {
+            path: "/a/foo-wt/feature/x".into(),
+            summary: "1 untracked".into(),
+            operation: "remove".into(),
+        };
+        match refuse(dirty) {
+            Error::Refused { code, .. } => assert_eq!(code, EXIT_REFUSED),
+            other => panic!("{other:?}"),
+        }
+    }
+}

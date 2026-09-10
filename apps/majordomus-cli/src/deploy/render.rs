@@ -72,7 +72,11 @@ fn runtime_inputs(d: &Deployment) -> Vec<&str> {
 /// compiler, no cargo registry, no repository history and no shell history — what is not
 /// copied in cannot leak out.
 pub fn dockerfile(d: &Deployment, source: &str) -> String {
-    let mut out = header("#", source, "The container image of this repository's deployment.");
+    let mut out = header(
+        "#",
+        source,
+        "The container image of this repository's deployment.",
+    );
     let pkg = package_dir(d).unwrap_or("apps");
     out.push_str(&format!(
         "FROM {RUST_IMAGE} AS build\n\

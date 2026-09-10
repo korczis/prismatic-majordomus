@@ -566,3 +566,230 @@ pub fn copy_tree(from: &Path, to: &Path) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tree(files: &[(&str, &str)]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        for (path, content) in files {
+            let p = dir.path().join(path);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, content).unwrap();
+        }
+        dir
+    }
+
+    /// A move that crosses filesystems is the one case `git worktree move` cannot do, and
+    /// the only evidence of it is the wording of git's own stderr. Recognising it wrong in
+    /// either direction is costly: missed, a person is told the move failed for no stated
+    /// reason; claimed falsely, a rename that failed for some other reason — a permission
+    /// problem, a destination that appeared — would be answered by copying the tree and
+    /// deleting the original.
+    #[test]
+    fn only_gits_cross_device_wording_is_read_as_a_cross_device_move() {
+        let git = |stderr: &str| WorktreeError::GitCommandFailed {
+            command: "worktree move".into(),
+            status: "128".into(),
+            stderr: stderr.into(),
+        };
+        assert!(is_cross_device(&git(
+            "fatal: failed to move: Invalid cross-device link"
+        )));
+        assert!(
+            is_cross_device(&git("rename failed: EXDEV")),
+            "the errno spelling is what some platforms print"
+        );
+        assert!(
+            is_cross_device(&git("Cross-Device Link")),
+            "the comparison is case-insensitive, because the wording is not ours"
+        );
+        assert!(!is_cross_device(&git("fatal: permission denied")));
+        assert!(!is_cross_device(&git("")));
+        assert!(
+            !is_cross_device(&WorktreeError::Io {
+                path: PathBuf::from("/a"),
+                reason: "Invalid cross-device link".into(),
+            }),
+            "only git's own refusal is read this way; an IO error carrying the same words is not a failed `worktree move`"
+        );
+    }
+
+    /// The staging path is where the container's own occupant waits between its two moves.
+    /// It has to be *beside* the container and not under it — the container does not exist
+    /// yet at that moment, and a staging path inside it would be a directory inside the
+    /// worktree being moved — and it has to be unique to this process, or two migrations
+    /// running at once would stage into one directory.
+    #[test]
+    fn the_staging_path_is_beside_the_container_and_belongs_to_this_process() {
+        let container = Path::new("/a/foo-wt");
+        let staging = staging_path(container);
+        assert_eq!(staging.parent(), Some(Path::new("/a")));
+        assert!(
+            !staging.starts_with(container),
+            "staging inside the container would put it inside the worktree being moved: {}",
+            staging.display()
+        );
+        let name = staging.file_name().unwrap().to_string_lossy().to_string();
+        assert!(name.starts_with("foo-wt.migrating-"), "{name}");
+        assert!(
+            name.ends_with(&std::process::id().to_string()),
+            "two concurrent migrations must not share a staging path: {name}"
+        );
+        assert_eq!(
+            staging_path(container),
+            staging,
+            "the same process derives the same path twice"
+        );
+    }
+
+    /// A relative symbolic link written for the old path — `node_modules -> ../shared/node_modules`
+    /// is the case this exists for — stops resolving when the worktree moves. It is reported
+    /// and never rewritten. An absolute link and a link that still resolves are not findings:
+    /// reporting them would bury the one that matters in noise.
+    #[cfg(unix)]
+    #[test]
+    fn only_relative_links_that_stopped_resolving_are_reported_and_none_are_rewritten() {
+        let dir = tempfile::tempdir().unwrap();
+        let wt = dir.path().join("worktree");
+        std::fs::create_dir_all(wt.join("real")).unwrap();
+        std::fs::write(wt.join("file"), "x").unwrap();
+
+        std::os::unix::fs::symlink("real", wt.join("resolves")).unwrap();
+        std::os::unix::fs::symlink("../gone/node_modules", wt.join("node_modules")).unwrap();
+        std::os::unix::fs::symlink("../also-gone", wt.join("aaa")).unwrap();
+        std::os::unix::fs::symlink("/definitely/not/here", wt.join("absolute")).unwrap();
+
+        let found = dangling_relative_links(&wt);
+        assert_eq!(
+            found,
+            vec![
+                "aaa -> ../also-gone".to_string(),
+                "node_modules -> ../gone/node_modules".to_string()
+            ],
+            "sorted, relative only, and only the ones that stopped resolving"
+        );
+        assert_eq!(
+            std::fs::read_link(wt.join("node_modules")).unwrap(),
+            PathBuf::from("../gone/node_modules"),
+            "the link is the person's and the move did not change it"
+        );
+        assert!(
+            dangling_relative_links(&dir.path().join("nothing-here")).is_empty(),
+            "a directory that cannot be read is not a list of findings"
+        );
+    }
+
+    /// The copy is the fallback a cross-device move takes, and the original is deleted after
+    /// it. Anything the copy silently changed is work lost with no way back: a symbolic link
+    /// followed into a duplicate of its target, an executable bit dropped from a script, a
+    /// nested directory skipped. The fingerprint's tree manifest is what proves the copy,
+    /// and it is asserted here against the copy this function actually makes.
+    #[test]
+    fn the_copy_reproduces_the_tree_exactly_enough_for_the_manifest_to_accept_it() {
+        let src = tree(&[
+            ("a.txt", "one"),
+            ("deep/nested/b.txt", "two"),
+            ("deep/c.txt", "three"),
+        ]);
+        std::fs::create_dir(src.path().join("empty")).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::os::unix::fs::symlink("a.txt", src.path().join("link")).unwrap();
+            let script = src.path().join("run.sh");
+            std::fs::write(&script, "#!/bin/sh\n").unwrap();
+            std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+
+        let into = tempfile::tempdir().unwrap();
+        let dst = into.path().join("copy");
+        copy_tree(src.path(), &dst).unwrap();
+
+        assert_eq!(
+            fingerprint::tree_manifest(&dst).unwrap(),
+            fingerprint::tree_manifest(src.path()).unwrap(),
+            "the manifest is what verifies a copy-based migration; if it differs the move is refused"
+        );
+        assert_eq!(
+            std::fs::read_to_string(dst.join("deep/nested/b.txt")).unwrap(),
+            "two"
+        );
+        assert!(
+            dst.join("empty").is_dir(),
+            "an empty directory is content too"
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert!(
+                std::fs::symlink_metadata(dst.join("link"))
+                    .unwrap()
+                    .file_type()
+                    .is_symlink(),
+                "a link copied as a file would double the bytes and lose the link"
+            );
+            assert_eq!(
+                std::fs::read_link(dst.join("link")).unwrap(),
+                PathBuf::from("a.txt")
+            );
+            assert_eq!(
+                std::fs::metadata(dst.join("run.sh"))
+                    .unwrap()
+                    .permissions()
+                    .mode()
+                    & 0o777,
+                0o755,
+                "a script that lost its executable bit is a broken checkout"
+            );
+        }
+
+        assert!(
+            copy_tree(src.path(), &dst).is_err(),
+            "copying onto a destination that already exists would merge two trees; it is refused"
+        );
+    }
+
+    /// Git resolves a relative path against its own working directory and matches a bare
+    /// name against the *suffix* of any registered worktree. Passing either to
+    /// `git worktree move` is how a worktree ends up somewhere nobody asked for, so every
+    /// path this module hands to git is made absolute first.
+    #[test]
+    fn every_path_handed_to_git_is_made_absolute_first() {
+        assert_eq!(absolute(Path::new("/a/foo-wt/x")), "/a/foo-wt/x");
+        let relative = absolute(Path::new("some/relative/path"));
+        assert!(
+            Path::new(&relative).is_absolute(),
+            "a relative path reached git: {relative}"
+        );
+        assert!(relative.ends_with("some/relative/path"), "{relative}");
+        assert!(
+            relative.starts_with(&std::env::current_dir().unwrap().display().to_string()),
+            "it is resolved against this process's working directory: {relative}"
+        );
+    }
+
+    /// The action and the outcome are read by the Cockpit and by the JSON form of
+    /// `worktree migrate --plan`, and `snake_case` is what those consumers match on. A
+    /// renamed variant would still compile everywhere and silently change the wire form.
+    #[test]
+    fn the_action_and_the_outcome_serialise_under_the_names_consumers_match_on() {
+        for (action, name) in [
+            (MigrationAction::Move, "move"),
+            (MigrationAction::MoveViaStaging, "move_via_staging"),
+            (MigrationAction::CopyAndRepair, "copy_and_repair"),
+            (MigrationAction::None, "none"),
+        ] {
+            assert_eq!(serde_json::to_value(action).unwrap(), name, "{action:?}");
+        }
+        for (outcome, name) in [
+            (StepOutcome::Planned, "planned"),
+            (StepOutcome::Blocked, "blocked"),
+            (StepOutcome::Moved, "moved"),
+            (StepOutcome::Failed, "failed"),
+        ] {
+            assert_eq!(serde_json::to_value(outcome).unwrap(), name, "{outcome:?}");
+        }
+    }
+}

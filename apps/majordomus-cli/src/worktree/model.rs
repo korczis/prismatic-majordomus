@@ -521,3 +521,230 @@ pub struct RepairReport {
     /// Whether anything was changed.
     pub applied: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every string a schemars schema offers as an allowed value of a unit-variant enum,
+    /// however that version of schemars chooses to render it (`enum`, or `oneOf` of
+    /// `const`). This is the derive's own view of the type, which is what makes it usable
+    /// as an independent witness against a hand-written list.
+    fn schema_values(value: &serde_json::Value) -> std::collections::BTreeSet<String> {
+        let mut out = std::collections::BTreeSet::new();
+        fn walk(v: &serde_json::Value, out: &mut std::collections::BTreeSet<String>) {
+            match v {
+                serde_json::Value::Object(map) => {
+                    if let Some(serde_json::Value::String(s)) = map.get("const") {
+                        out.insert(s.clone());
+                    }
+                    if let Some(serde_json::Value::Array(items)) = map.get("enum") {
+                        for i in items {
+                            if let serde_json::Value::String(s) = i {
+                                out.insert(s.clone());
+                            }
+                        }
+                    }
+                    for (_, child) in map {
+                        walk(child, out);
+                    }
+                }
+                serde_json::Value::Array(items) => {
+                    for i in items {
+                        walk(i, out);
+                    }
+                }
+                _ => {}
+            }
+        }
+        walk(value, &mut out);
+        out
+    }
+
+    fn serialised(v: &impl Serialize) -> String {
+        match serde_json::to_value(v).unwrap() {
+            serde_json::Value::String(s) => s,
+            other => panic!("expected a string, got {other}"),
+        }
+    }
+
+    /// `DiagnosticCode::ALL` is what the documentation, the tests and the site iterate over.
+    /// Nothing in the language makes a hand-written array follow a new variant, so a code
+    /// added to the enum and forgotten here would be invisible to every one of them. The
+    /// schemars derive sees the type itself, so it is the witness the array cannot fake.
+    #[test]
+    fn every_diagnostic_code_of_the_type_is_in_all_and_nothing_else_is() {
+        let from_type = schema_values(&schemars::schema_for!(DiagnosticCode).to_value());
+        let from_list: std::collections::BTreeSet<String> =
+            DiagnosticCode::ALL.iter().map(serialised).collect();
+        assert_eq!(
+            from_list, from_type,
+            "DiagnosticCode::ALL does not hold exactly the variants of the type"
+        );
+        assert_eq!(
+            DiagnosticCode::ALL.len(),
+            from_list.len(),
+            "DiagnosticCode::ALL lists a code twice"
+        );
+    }
+
+    /// `as_str()` is what the command line prints and `serde` is what the API, MCP and the
+    /// Cockpit emit. They are two hand-maintained renderings of one name: if they drift, a
+    /// person reading `worktree doctor` and a script reading the JSON would be matching on
+    /// different strings for the same condition, and neither would be wrong on its own.
+    #[test]
+    fn the_printed_code_and_the_serialised_code_are_the_same_string() {
+        for code in DiagnosticCode::ALL {
+            assert_eq!(code.as_str(), serialised(code), "{code:?}");
+            assert!(
+                code.as_str().starts_with("worktree."),
+                "{code:?} is not namespaced"
+            );
+            let round: DiagnosticCode =
+                serde_json::from_value(serde_json::Value::String(code.as_str().into())).unwrap();
+            assert_eq!(
+                round, *code,
+                "{code:?} does not deserialise from its own code"
+            );
+        }
+    }
+
+    /// The same contract for the two enums a person sees in every listing. `Standing` is
+    /// printed upper-cased in the text form and matched lower-case in the JSON form.
+    #[test]
+    fn a_standing_and_a_kind_print_the_word_they_serialise() {
+        for standing in [
+            Standing::Primary,
+            Standing::Canonical,
+            Standing::Misplaced,
+            Standing::Detached,
+            Standing::Ephemeral,
+            Standing::Missing,
+        ] {
+            assert_eq!(standing.as_str(), serialised(&standing), "{standing:?}");
+        }
+        for kind in [WorktreeKind::Primary, WorktreeKind::Linked] {
+            assert_eq!(kind.as_str(), serialised(&kind), "{kind:?}");
+        }
+        let from_type = schema_values(&schemars::schema_for!(Standing).to_value());
+        assert_eq!(from_type.len(), 6, "a standing was added: {from_type:?}");
+    }
+
+    /// The path rule, in one predicate. `Primary` and `Detached` are outside it by design —
+    /// the primary checkout has no canonical path under the container and a detached HEAD
+    /// has no branch to derive one from — while `Ephemeral` is *not* an exemption: a
+    /// scratch checkout holds a branch away from where it belongs, and calling it acceptable
+    /// would let the guard wave through a commit from a session's temporary directory.
+    #[test]
+    fn only_misplaced_missing_and_ephemeral_fail_the_path_rule() {
+        assert!(Standing::Primary.is_acceptable());
+        assert!(Standing::Canonical.is_acceptable());
+        assert!(Standing::Detached.is_acceptable());
+        assert!(!Standing::Misplaced.is_acceptable());
+        assert!(!Standing::Missing.is_acceptable());
+        assert!(
+            !Standing::Ephemeral.is_acceptable(),
+            "a scratch checkout holds a branch away from its canonical path; the guard has to see that"
+        );
+    }
+
+    /// The summary is the sentence a refusal quotes when it says a move would lose work. A
+    /// count silently dropped from it would make `worktree remove` say "dirty (1 staged)"
+    /// about a tree with forty untracked files, and a person would believe it.
+    #[test]
+    fn the_dirty_summary_counts_every_kind_and_says_clean_only_when_it_is() {
+        let clean = DirtyState {
+            clean: true,
+            ..Default::default()
+        };
+        assert_eq!(clean.summary(), "clean");
+
+        let all = DirtyState {
+            staged: 1,
+            unstaged: 2,
+            untracked: 3,
+            conflicted: 4,
+            clean: false,
+            in_progress: Some("rebase".into()),
+        };
+        assert_eq!(
+            all.summary(),
+            "1 staged, 2 unstaged, 3 untracked, 4 conflicted, rebase in progress"
+        );
+
+        let untracked_only = DirtyState {
+            untracked: 40,
+            clean: false,
+            ..Default::default()
+        };
+        assert_eq!(
+            untracked_only.summary(),
+            "40 untracked",
+            "a zero count is left out rather than printed as `0 staged`"
+        );
+
+        // `clean` is the recorded verdict, not a re-derivation: a state that says it is
+        // clean says so, and the counts are what the parser found.
+        let mid_rebase = DirtyState {
+            clean: false,
+            in_progress: Some("merge".into()),
+            ..Default::default()
+        };
+        assert_eq!(
+            mid_rebase.summary(),
+            "merge in progress",
+            "an operation in progress is dirtiness even with nothing modified"
+        );
+    }
+
+    /// Every document carries the schema string, and consumers pin it. Changing it is a
+    /// breaking change to the API, MCP and the Cockpit at once; this is the line that makes
+    /// that deliberate rather than incidental.
+    #[test]
+    fn the_topology_schema_string_is_versioned_and_stable() {
+        assert_eq!(SCHEMA, "majordomus/worktree-topology/v1");
+    }
+
+    /// The optional fields of a work tree are skipped rather than serialised as `null`.
+    /// A consumer written against `"branch" in state` — the Cockpit's own listing is — would
+    /// start seeing every detached work tree as branched if this changed.
+    #[test]
+    fn absent_optional_fields_are_omitted_from_the_json_rather_than_null() {
+        let state = WorktreeState {
+            path: "/a/foo".into(),
+            kind: WorktreeKind::Primary,
+            standing: Standing::Primary,
+            branch: None,
+            label: "detached/abc123456789".into(),
+            head: None,
+            detached: true,
+            expected_path: None,
+            exists: true,
+            current: false,
+            locked: None,
+            prunable: None,
+            dirty: None,
+            upstream: None,
+            issue: None,
+            diagnostics: Vec::new(),
+        };
+        let value = serde_json::to_value(&state).unwrap();
+        let map = value.as_object().unwrap();
+        for absent in [
+            "branch",
+            "head",
+            "expected_path",
+            "locked",
+            "prunable",
+            "dirty",
+            "upstream",
+            "issue",
+        ] {
+            assert!(!map.contains_key(absent), "{absent} was serialised as null");
+        }
+        assert_eq!(map.get("standing").unwrap(), "primary");
+        assert_eq!(map.get("kind").unwrap(), "primary");
+        let back: WorktreeState = serde_json::from_value(value).unwrap();
+        assert_eq!(back, state, "the document does not round-trip");
+    }
+}

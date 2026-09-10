@@ -398,4 +398,291 @@ mod tests {
             assert_eq!(via.real, real_dir.join("deeper/x"));
         }
     }
+
+    // ---------------------------------------------------- the trunk, and the identity
+
+    /// A repository with one commit, whose branch is named by the caller. Nothing about the
+    /// developer's own git configuration is allowed to reach it: `init.defaultBranch` is set
+    /// per-repository by every case that cares.
+    fn repo_on(branch: &str) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        git_in(dir.path(), &["init", "-q", "-b", branch, "."]);
+        // Neutralise whatever this machine configures globally: an empty value is not a
+        // branch name, so the configured-default rule stands down unless a case sets it.
+        git_in(dir.path(), &["config", "init.defaultBranch", ""]);
+        git_in(
+            dir.path(),
+            &[
+                "-c",
+                "user.email=t@example.com",
+                "-c",
+                "user.name=t",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "i",
+            ],
+        );
+        dir
+    }
+
+    fn git_in(cwd: &Path, args: &[&str]) {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(cwd)
+            .args(args)
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    fn records_of(primary: &Path) -> Vec<WorktreeRecord> {
+        topology::read(primary).unwrap()
+    }
+
+    /// The trunk is discovered, never configured here, and the *order* is the contract: what
+    /// the remote calls its default branch outranks a local convention, because a fork whose
+    /// primary branch is `develop` must not be told its trunk is `main` merely because that
+    /// name exists. Collapsing the order would make the primary-checkout rule — and every
+    /// refusal built on it — wrong for exactly those repositories.
+    #[test]
+    fn the_remotes_own_head_outranks_every_local_guess() {
+        let dir = repo_on("develop");
+        // A second branch with a conventional name, so that the local rules would answer
+        // differently if they were consulted first.
+        git_in(dir.path(), &["branch", "main"]);
+        git_in(dir.path(), &["config", "init.defaultBranch", "main"]);
+        // A remote whose HEAD names `develop`, written locally: no network is touched.
+        git_in(
+            dir.path(),
+            &["remote", "add", "origin", "https://example.invalid/x.git"],
+        );
+        git_in(
+            dir.path(),
+            &["update-ref", "refs/remotes/origin/develop", "HEAD"],
+        );
+        git_in(
+            dir.path(),
+            &[
+                "symbolic-ref",
+                "refs/remotes/origin/HEAD",
+                "refs/remotes/origin/develop",
+            ],
+        );
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_eq!(trunk.source, TrunkSource::RemoteHead);
+        assert_eq!(trunk.branch.as_deref(), Some("develop"));
+        assert!(trunk.is("develop") && !trunk.is("main"));
+    }
+
+    /// `init.defaultBranch` is consulted only when that branch actually exists here. A
+    /// configuration naming a branch this repository has never had would otherwise make the
+    /// primary checkout permanently "on a non-trunk branch", and the guard would refuse
+    /// every commit in a repository that is perfectly in order.
+    #[test]
+    fn the_configured_default_branch_counts_only_when_the_branch_is_really_here() {
+        let dir = repo_on("trunk");
+        git_in(dir.path(), &["config", "init.defaultBranch", "trunk"]);
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_eq!(trunk.source, TrunkSource::DefaultBranchConfig);
+        assert_eq!(trunk.branch.as_deref(), Some("trunk"));
+
+        let dir = repo_on("trunk");
+        git_in(
+            dir.path(),
+            &["config", "init.defaultBranch", "never-created"],
+        );
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_ne!(
+            trunk.source,
+            TrunkSource::DefaultBranchConfig,
+            "a configured name that is not a branch here is not this repository's trunk"
+        );
+        assert_eq!(trunk.branch.as_deref(), Some("trunk"));
+        assert_eq!(trunk.source, TrunkSource::PrimaryCheckout);
+    }
+
+    /// The conventional names are a tie-break, not a rule: `main` and `master` both present
+    /// says nothing about which one is the trunk, so the guess is declined and the primary
+    /// checkout's own branch answers instead. Picking one would be this tool inventing a
+    /// fact about somebody's repository.
+    #[test]
+    fn one_conventional_name_decides_and_two_decline_to() {
+        let dir = repo_on("master");
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_eq!(trunk.source, TrunkSource::ConventionalName);
+        assert_eq!(trunk.branch.as_deref(), Some("master"));
+
+        git_in(dir.path(), &["branch", "main"]);
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_eq!(
+            trunk.source,
+            TrunkSource::PrimaryCheckout,
+            "with both names present the convention says nothing"
+        );
+        assert_eq!(trunk.branch.as_deref(), Some("master"));
+    }
+
+    /// With nothing to go on the trunk is unknown, and it says so. A fabricated trunk would
+    /// make the primary checkout's branch an error in a repository that has no trunk at all,
+    /// which is why `is_in_place` treats `Unknown` as an exemption rather than a failure.
+    #[test]
+    fn nothing_to_go_on_is_answered_unknown_rather_than_guessed() {
+        let dir = repo_on("develop");
+        // Detached: the primary checkout has no branch to fall back to either.
+        git_in(dir.path(), &["checkout", "-q", "--detach", "HEAD"]);
+        let trunk = detect_trunk(dir.path(), &records_of(dir.path())).unwrap();
+        assert_eq!(trunk.source, TrunkSource::Unknown);
+        assert_eq!(trunk.branch, None);
+        assert!(!trunk.is("develop"), "an unknown trunk is not every branch");
+    }
+
+    /// The identity is what the container is named after and what every worktree of the
+    /// repository shares. Discovered from any directory inside any work tree, it must answer
+    /// the same primary checkout and the same common git directory — this is the property
+    /// that makes `<repo>-wt` one container rather than one per directory somebody stood in.
+    #[test]
+    fn the_identity_is_the_same_from_a_subdirectory_as_from_the_root() {
+        let dir = repo_on("master");
+        let deep = dir.path().join("a/b/c");
+        std::fs::create_dir_all(&deep).unwrap();
+
+        let root = RepositoryIdentity::discover(dir.path()).unwrap();
+        let inner = RepositoryIdentity::discover(&deep).unwrap();
+        assert!(root.primary_worktree().same_as(inner.primary_worktree()));
+        assert!(root.git_common_dir().same_as(inner.git_common_dir()));
+        assert_eq!(root.repository_name(), inner.repository_name());
+        assert_eq!(
+            root.repository_name(),
+            dir.path().file_name().unwrap().to_string_lossy(),
+            "the container is named after the primary checkout's directory and nothing else"
+        );
+        assert!(
+            inner.current_worktree().same_as(root.primary_worktree()),
+            "a subdirectory is inside the same work tree"
+        );
+    }
+
+    /// A directory outside every repository is refused by name. Walking on up to whatever
+    /// repository happens to be an ancestor — a home directory under version control is the
+    /// case — would answer confidently about the wrong one.
+    #[test]
+    fn a_directory_in_no_repository_is_refused_rather_than_attributed_to_an_ancestor() {
+        let outside = tempfile::tempdir().unwrap();
+        match RepositoryIdentity::discover(outside.path()) {
+            Err(e) => assert_eq!(e.code(), "NotInGitRepository"),
+            Ok(found) => panic!(
+                "a temporary directory was attributed to {}",
+                found.primary_worktree().path.display()
+            ),
+        }
+    }
+
+    /// The record lookups are what `judge`, the guard and the migration use to tell "this
+    /// worktree" from "some other worktree". A path is matched on its resolved form, so the
+    /// same directory reached by two spellings is one worktree; a branch is matched exactly,
+    /// because a prefix match would confuse `feature/x` with `feature/x-2`.
+    #[test]
+    fn a_record_is_found_by_resolved_path_and_by_exact_branch_name() {
+        let dir = repo_on("master");
+        let identity = RepositoryIdentity::discover(dir.path()).unwrap();
+        let primary = identity.primary_worktree().clone();
+
+        let found = identity
+            .record_at(&primary)
+            .expect("the primary checkout is registered");
+        assert_eq!(found.branch.as_deref(), Some("master"));
+        assert!(identity.is_primary(found) && identity.is_current(found));
+        assert_eq!(
+            identity.current_record().map(|r| &r.path),
+            Some(&found.path)
+        );
+
+        // The same directory, spelled with a `.` component: one worktree, not two.
+        let spelled = ResolvedPath::of(primary.path.join("."));
+        assert!(
+            identity.record_at(&spelled).is_some(),
+            "a path is matched on what it resolves to, not on how it is written"
+        );
+
+        assert_eq!(
+            identity.record_of_branch("master").map(|r| &r.path),
+            Some(&found.path)
+        );
+        assert!(identity.record_of_branch("mast").is_none());
+        assert!(
+            identity.record_of_branch("master-2").is_none(),
+            "an exact name, or `feature/x` would claim `feature/x-2`'s worktree"
+        );
+        assert!(identity
+            .record_at(&ResolvedPath::of("/definitely/not/here"))
+            .is_none());
+    }
+
+    /// A migration moves worktrees and then asks git again. `refresh` is what makes the
+    /// second answer the new one: without it the verification would check the registration
+    /// as it was before the move and call every migration verified.
+    #[test]
+    fn refreshing_picks_up_a_worktree_registered_since_discovery() {
+        let outer = tempfile::tempdir().unwrap();
+        let primary = outer.path().join("nested/repo");
+        std::fs::create_dir_all(&primary).unwrap();
+        git_in(&primary, &["init", "-q", "-b", "master", "."]);
+        git_in(
+            &primary,
+            &[
+                "-c",
+                "user.email=t@example.com",
+                "-c",
+                "user.name=t",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "i",
+            ],
+        );
+        let mut identity = RepositoryIdentity::discover(&primary).unwrap();
+        assert_eq!(identity.registered_worktrees().len(), 1);
+
+        let added = outer.path().join("repo-wt/feature/x");
+        git_in(
+            &primary,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "feature/x",
+                added.to_str().unwrap(),
+            ],
+        );
+        assert_eq!(
+            identity.registered_worktrees().len(),
+            1,
+            "the identity is a snapshot until it is refreshed"
+        );
+        identity.refresh().unwrap();
+        assert_eq!(identity.registered_worktrees().len(), 2);
+        let registered = identity
+            .record_of_branch("feature/x")
+            .map(|r| ResolvedPath::of(&r.path))
+            .expect("the new worktree is registered after the refresh");
+        assert!(
+            registered.same_as(&ResolvedPath::of(&added)),
+            "{} is not the directory that was added",
+            registered.path.display()
+        );
+        assert!(
+            identity
+                .primary_worktree()
+                .same_as(&ResolvedPath::of(&primary)),
+            "refreshing does not move the primary checkout"
+        );
+    }
 }

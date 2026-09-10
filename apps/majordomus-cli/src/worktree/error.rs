@@ -371,3 +371,263 @@ impl WorktreeError {
 
 /// The result of every worktree operation.
 pub type Result<T> = std::result::Result<T, WorktreeError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// One value of every variant, so that a variant added without a `code()` arm, an
+    /// `exit_code()` classification or a message cannot slip past these tests.
+    fn one_of_each() -> Vec<WorktreeError> {
+        use WorktreeError::*;
+        vec![
+            NotInGitRepository {
+                start: PathBuf::from("/elsewhere"),
+            },
+            BareRepositoryUnsupported {
+                git_dir: PathBuf::from("/a/foo.git"),
+            },
+            CannotDeterminePrimaryWorktree {
+                git_common_dir: PathBuf::from("/a/foo/.git"),
+            },
+            NoParentDirectory {
+                primary: PathBuf::from("/"),
+            },
+            InvalidBranchName {
+                given: "a b".into(),
+                reason: "it contains ` `".into(),
+            },
+            PathEscape {
+                branch: "x".into(),
+                path: PathBuf::from("/etc"),
+                root: PathBuf::from("/a/foo-wt"),
+            },
+            ContainerNotADirectory {
+                path: PathBuf::from("/a/foo-wt"),
+            },
+            WorktreeAlreadyExists {
+                path: PathBuf::from("/a/foo-wt/feature/x"),
+                branch: "feature/x".into(),
+            },
+            BranchAlreadyCheckedOut {
+                branch: "feature/x".into(),
+                path: PathBuf::from("/tmp/scratch"),
+                expected: PathBuf::from("/a/foo-wt/feature/x"),
+            },
+            DestinationConflict {
+                path: PathBuf::from("/a/foo-wt/feature/x"),
+                what: "a file".into(),
+            },
+            BaseDoesNotExist {
+                base: "origin/nope".into(),
+            },
+            Misplaced {
+                path: PathBuf::from("/tmp/scratch"),
+                branch: "feature/x".into(),
+                expected: PathBuf::from("/a/foo-wt/feature/x"),
+            },
+            PrimaryOnNonTrunk {
+                path: PathBuf::from("/a/foo"),
+                branch: "feature/x".into(),
+                trunk: "master".into(),
+                expected: PathBuf::from("/a/foo-wt/feature/x"),
+            },
+            DirtyWorktree {
+                path: PathBuf::from("/a/foo-wt/feature/x"),
+                summary: "2 unstaged, 1 untracked".into(),
+                operation: "remove".into(),
+            },
+            LockedWorktree {
+                path: PathBuf::from("/a/foo-wt/feature/x"),
+                reason: Some("in use".into()),
+            },
+            PrimaryWorktreeProtected {
+                path: PathBuf::from("/a/foo"),
+                operation: "remove".into(),
+            },
+            NoSuchWorktree {
+                selector: "nope".into(),
+            },
+            NotThisRepository {
+                path: PathBuf::from("/other/repo"),
+                git_common_dir: PathBuf::from("/a/foo/.git"),
+            },
+            MigrationUnsafe {
+                path: PathBuf::from("/tmp/scratch"),
+                reason: "the step was not planned as a move".into(),
+            },
+            VerificationFailed {
+                path: PathBuf::from("/a/foo-wt/feature/x"),
+                differences: vec!["the index differs".into(), "HEAD changed".into()],
+            },
+            LockUnavailable {
+                path: PathBuf::from("/a/foo/.git/majordomus-worktree.lock"),
+                holder: Some("pid 42".into()),
+            },
+            TopologyInvalid { count: 3 },
+            GitCommandFailed {
+                command: "worktree move -- /a /b".into(),
+                status: "128".into(),
+                stderr: "fatal: cannot move".into(),
+            },
+            GitUnavailable {
+                reason: "no such file or directory".into(),
+            },
+            Io {
+                path: PathBuf::from("/a/foo"),
+                reason: "permission denied".into(),
+            },
+        ]
+    }
+
+    /// `code()` is what a script and a test match on instead of the prose, and the contract
+    /// is that it is the variant's own name. `Debug` is derived, so it carries that name
+    /// independently of the hand-written `code()` arms: renaming a variant and forgetting
+    /// the arm, or copying an arm and leaving the wrong string in it, is exactly what this
+    /// catches. Remove the assertion and a stable machine name could drift from the type
+    /// silently, and every consumer matching on it would stop matching.
+    #[test]
+    fn every_variants_code_is_its_own_name_and_no_two_share_one() {
+        let all = one_of_each();
+        assert_eq!(all.len(), 25, "a variant was added or removed");
+        let mut seen = std::collections::BTreeSet::new();
+        for e in &all {
+            let debug = format!("{e:?}");
+            let name: &str = debug
+                .split([' ', '{'])
+                .next()
+                .expect("a debug rendering begins with the variant name");
+            assert_eq!(e.code(), name, "the code of {debug} is not its own name");
+            assert!(seen.insert(e.code()), "{name} shares a code with another");
+        }
+        assert_eq!(seen.len(), 25);
+    }
+
+    /// The three exit codes are the executable's contract with a shell script: 12 means the
+    /// thing asked for is not there, 13 means the tool or git broke, and everything else is
+    /// a refusal at 10. Without this a refusal could start exiting 13, and a caller's
+    /// `if [ $? -eq 10 ]` would stop recognising the case it was written for.
+    #[test]
+    fn the_exit_code_separates_missing_from_broken_from_refused() {
+        use WorktreeError::*;
+        for e in one_of_each() {
+            let want = match &e {
+                NoSuchWorktree { .. } | BaseDoesNotExist { .. } => EXIT_MISSING,
+                GitCommandFailed { .. } | GitUnavailable { .. } | Io { .. } => EXIT_INTERNAL,
+                _ => EXIT_REFUSED,
+            };
+            assert_eq!(e.exit_code(), want, "{}", e.code());
+        }
+        assert_eq!((EXIT_REFUSED, EXIT_MISSING, EXIT_INTERNAL), (10, 12, 13));
+    }
+
+    /// Every message is what a person reads instead of a debug struct, and each one has to
+    /// name the thing it is about. A message that lost its path or its branch is a message
+    /// that cannot be acted on; a `{path}` left unformatted would still compile.
+    #[test]
+    fn every_message_names_the_subject_it_refuses_about() {
+        for e in one_of_each() {
+            let msg = e.to_string();
+            assert!(!msg.is_empty(), "{} has no message", e.code());
+            assert!(
+                !msg.contains('{') && !msg.contains('}'),
+                "{} left a format placeholder in its message: {msg}",
+                e.code()
+            );
+        }
+        let e = WorktreeError::Misplaced {
+            path: PathBuf::from("/tmp/scratch"),
+            branch: "feature/x".into(),
+            expected: PathBuf::from("/a/foo-wt/feature/x"),
+        };
+        let msg = e.to_string();
+        assert!(msg.contains("/tmp/scratch"), "{msg}");
+        assert!(msg.contains("feature/x"), "{msg}");
+        assert!(msg.contains("/a/foo-wt/feature/x"), "{msg}");
+        assert!(
+            msg.contains("majordomus worktree migrate"),
+            "the remedy is in the message: {msg}"
+        );
+    }
+
+    /// Three messages format a field conditionally. A lock with no recorded reason must not
+    /// render an empty pair of brackets, and a lock with one must show it — this is the
+    /// only difference between a message a person can act on and one that says nothing.
+    #[test]
+    fn a_lock_without_a_reason_does_not_render_an_empty_parenthesis() {
+        let quiet = WorktreeError::LockedWorktree {
+            path: PathBuf::from("/a/wt"),
+            reason: None,
+        };
+        assert!(
+            quiet.to_string().starts_with("worktree /a/wt is locked;"),
+            "{quiet}"
+        );
+        let empty = WorktreeError::LockedWorktree {
+            path: PathBuf::from("/a/wt"),
+            reason: Some(String::new()),
+        };
+        assert!(
+            empty.to_string().starts_with("worktree /a/wt is locked;"),
+            "git records an empty reason, and an empty reason is not a reason: {empty}"
+        );
+        let given = WorktreeError::LockedWorktree {
+            path: PathBuf::from("/a/wt"),
+            reason: Some("in use".into()),
+        };
+        assert!(
+            given
+                .to_string()
+                .starts_with("worktree /a/wt is locked (in use);"),
+            "{given}"
+        );
+        assert!(
+            given.to_string().contains("git worktree unlock /a/wt"),
+            "the command that clears it is in the message: {given}"
+        );
+
+        let unheld = WorktreeError::LockUnavailable {
+            path: PathBuf::from("/a/l"),
+            holder: None,
+        };
+        assert!(!unheld.to_string().contains("held by"), "{unheld}");
+        let held = WorktreeError::LockUnavailable {
+            path: PathBuf::from("/a/l"),
+            holder: Some("pid 42".into()),
+        };
+        assert!(held.to_string().contains("held by pid 42"), "{held}");
+    }
+
+    /// A failed verification is the one message that must carry *what* differs: it is the
+    /// only evidence a person has that a move lost something, and joining the differences
+    /// is what puts it in front of them.
+    #[test]
+    fn a_failed_verification_lists_every_difference_it_was_given() {
+        let e = WorktreeError::VerificationFailed {
+            path: PathBuf::from("/a/foo-wt/feature/x"),
+            differences: vec![
+                "the index differs".into(),
+                "the staged changes differ".into(),
+            ],
+        };
+        let msg = e.to_string();
+        assert!(msg.contains("the index differs"), "{msg}");
+        assert!(msg.contains("the staged changes differ"), "{msg}");
+        assert!(msg.contains("; "), "the differences are joined: {msg}");
+        assert_eq!(e.exit_code(), EXIT_REFUSED);
+    }
+
+    /// `io` is the one constructor, and it has to carry the operating system's own words
+    /// through: a message that said only "the file could not be read" would leave a person
+    /// guessing between a missing directory and a permission problem.
+    #[test]
+    fn the_io_constructor_keeps_the_operating_systems_own_words() {
+        let os = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "permission denied");
+        let e = WorktreeError::io("/a/foo", &os);
+        assert_eq!(e.code(), "Io");
+        assert_eq!(e.exit_code(), EXIT_INTERNAL);
+        let msg = e.to_string();
+        assert!(msg.contains("/a/foo"), "{msg}");
+        assert!(msg.contains("permission denied"), "{msg}");
+    }
+}
