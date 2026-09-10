@@ -6,6 +6,13 @@
 //! The UI's own assets are fetched by the browser from the unpkg CDN. That is the one
 //! part of the HTTP projection that is not available offline; the OpenAPI document is.
 //!
+//! The frame around it is this repository's, and so is what the frame owes a reader: a
+//! `<main>` landmark and a level-one heading, which the page had neither of until the UI
+//! audit was first allowed to look at this surface. The widget itself carries
+//! `data-mj-foreign`, the declaration a page makes when a subtree is a third party's to
+//! answer for: the accessibility engine skips it and the audit's report says it was
+//! skipped and why, rather than reporting a clean page or an unfixable one.
+//!
 //! The frame around it is this repository's. The type stack and the accent come from
 //! `share/design/tokens.yaml` like every other surface, compiled in through `tokens.css`,
 //! so the API viewer reads as part of the same tool rather than as a stock installation of
@@ -55,10 +62,15 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
 .swagger-ui .topbar {{ display: none; }}
 .swagger-ui .info .title small.version-stamp {{ background: var(--mj-accent-fill); }}
 .swagger-ui a {{ color: var(--mj-accent); }}
+/* The frame owes the page a landmark and a heading; the widget renders its own title as an
+   h2 beneath this one, so the order holds. Without them the page has neither, which is what
+   the audit found the first time it was allowed to look at this surface. */
+.mj-api-title {{ margin: 0; padding: 1rem 1.25rem 0; color: var(--mj-fg); }}
 </style>
 </head>
 <body>
-<div id="swagger-ui"></div>
+<h1 class="mj-api-title">Majordomus API</h1>
+<main id="swagger-ui" data-mj-foreign="swagger-ui-dist@{v}"></main>
 <script src="https://unpkg.com/swagger-ui-dist@{v}/swagger-ui-bundle.js" crossorigin></script>
 <script>
 window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking: true }});

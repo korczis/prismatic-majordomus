@@ -45,6 +45,21 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
   const rules = {};
   for (const finding of findings) rules[finding.rule] = (rules[finding.rule] ?? 0) + 1;
 
+  // What the run did not measure, and what declared it. A subtree a page marks
+  // `data-mj-foreign` is a third-party component tree the repository has decided not to
+  // restyle, and the engine was told to skip it; saying so is the difference between a clean
+  // report and a report that quietly narrowed its own question. Deduplicated by what was
+  // declared, because one widget on forty pages is one decision.
+  const foreign = [];
+  const declared = new Set();
+  for (const visit of visits) {
+    for (const subtree of visit.foreign ?? []) {
+      if (declared.has(subtree.declares)) continue;
+      declared.add(subtree.declares);
+      foreign.push({ route: visit.route, ...subtree });
+    }
+  }
+
   return {
     schema: RESULTS_SCHEMA,
     origin,
@@ -60,6 +75,7 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     // `<` and `>` compare code units, the way every Rust and shell comparator here does.
     // `localeCompare` would order this report by whoever's machine rendered it.
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
+    foreign,
     findings,
   };
 }

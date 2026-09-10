@@ -446,8 +446,17 @@ pub fn mono(value: impl Into<String>) -> El {
 
 /// A block of text the repository holds, shown as it is. Escaped by the builder; nothing
 /// in it is ever interpreted as markup.
+///
+/// `tabindex="0"` because `.mj-pre` scrolls inside itself: a box a mouse can scroll and a
+/// keyboard cannot reach fails WCAG 2.1.1, and the audit found exactly that on every object
+/// page that shows a record. The site solves the same problem in its build, because it does
+/// not write the markup its highlighter emits; here the markup is ours, so it is solved at
+/// its source.
 pub fn pre(value: impl Into<String>) -> El {
-    el("pre").class("mj-pre").child(el("code").text(value))
+    el("pre")
+        .class("mj-pre")
+        .attr("tabindex", "0")
+        .child(el("code").text(value))
 }
 
 /// An alert: `ok`, `warn`, `fail`, `info`.

@@ -176,6 +176,12 @@ if [ "$build" = 1 ]; then
   # it never touches the published tree.
   echo "== building the documentation the server serves" >&2
   "$ROOT/scripts/site-build" --serve --no-data >/dev/null
+  # And the Cockpit's own assets, whose lazily loaded half is deliberately not committed. A
+  # page measured without them is a page no reader gets: every graph page asks for the
+  # drawing library, and a checkout that has not built it reads as 35 console errors that
+  # say nothing about the Cockpit.
+  echo "== building the Cockpit's assets" >&2
+  "$ROOT/scripts/cockpit-assets" >/dev/null
 fi
 
 start_server

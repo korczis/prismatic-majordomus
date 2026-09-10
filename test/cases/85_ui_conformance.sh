@@ -49,6 +49,17 @@ mkdir -p public/delta && printf '<html></html>' > public/delta/index.html
 expect_exit 0 routes
 expect_grep '"/delta/"' -
 
+# ---------------------------------------------------------------- the width set is derived
+# The breakpoints are the media queries the CSS build emitted, in px and in rem, each with
+# the pixel below it, where a layout discontinuity hides.
+expect_grep '640' -
+expect_grep '639' -
+expect_grep '768' -                                # 48rem, converted
+printf '@media (min-width: 900px) { .c { color: red } }\n' >> theme.css
+expect_exit 0 routes
+expect_grep '900' -
+expect_grep '899' -
+
 # ------------------------------------------- the page set of a surface with no directory
 # A surface the executable renders has no directory to read, so its pages come from the
 # surface itself: its own anchors, crawled from its mount. The crawl takes its fetcher from
@@ -95,8 +106,8 @@ expect_grep '^leaves 25$' -                        # every leaf the listing pagi
 expect_grep 'truncated false' -
 expect_grep '^assets 0$' -                         # a <link> is not an anchor, so it is not a route
 expect_grep '^document false pages 0$' -           # a mount that answers no document has no pages
-expect_grep '^anchors \["/b?x=1&y=2"\]$' -         # the entity is decoded; a fragment is not a route
-expect_grep '^family /panel/item/\* /panel/list?page /\*$' -
+expect_grep '^anchors \["/b\?x=1&y=2"\]$' -         # the entity is decoded; a fragment is not a route
+expect_grep '^family /panel/item/\* /panel/list\?page /\*$' -
 expect_grep '^owner /panel /$' -                   # the longest mount owns the route
 expect_grep '^spread \["a","c","e"\]$' -           # the first, the last, and the spread between
 # the crawl pays for the listing it has to follow and not for the leaves that teach it
@@ -125,17 +136,6 @@ expect_grep '/panel/x/2 critical /panel/x/\*' -    # the rest take the critical 
 expect_grep '"kind":"native-route"' -
 expect_grep '"routes":4' -                         # what the surface has, beside what was visited
 expect_grep "crawled from the surface's own anchors" -
-
-# ---------------------------------------------------------------- the width set is derived
-# The breakpoints are the media queries the CSS build emitted, in px and in rem, each with
-# the pixel below it, where a layout discontinuity hides.
-expect_grep '640' -
-expect_grep '639' -
-expect_grep '768' -                                # 48rem, converted
-printf '@media (min-width: 900px) { .c { color: red } }\n' >> theme.css
-expect_exit 0 routes
-expect_grep '900' -
-expect_grep '899' -
 
 # ---------------------------------------------------------------- markup we write
 # A scrolling box a keyboard cannot reach is refused wherever this repository writes one.
@@ -240,6 +240,11 @@ cat > run-ui.json <<'JSON'
   "source": {"pages": "the built site", "viewports": "the stylesheet"},
   "breakpoints": [640], "viewports": [320, 639, 640, 1440],
   "pages": 1, "visits": 1, "seconds": 2,
+  "surfaces": [{"id": "docs", "mount": "/docs", "kind": "static-directory"},
+               {"id": "cockpit", "mount": "/cockpit", "kind": "native-route",
+                "routes": 2645, "families": 15, "sampled": 115, "truncated": false}],
+  "foreign": [{"route": "/swagger", "selector": "main#swagger-ui",
+               "declares": "swagger-ui-dist@5.17.14"}],
   "findings": [{"route": "/", "width": 320, "tier": "sweep",
     "rule": "responsive.horizontal-overflow", "detail": "the document is 420px wide",
     "elements": [{"selector": "pre.code", "right": 420}]}]
@@ -251,6 +256,14 @@ expect_file target/web/tests/ui/results.json
 expect_grep 'narrowed' target/web/tests/ui/index.html
 expect_grep 'responsive.horizontal-overflow' target/web/tests/ui/index.html
 expect_grep 'pre.code' target/web/tests/ui/index.html
+# a surface the executable renders reports what it has beside what was visited, so a sample
+# can never be read as a total; a built surface reports that every page of it was visited
+expect_grep '2645 route\(s\) in 15 family\(ies\)' target/web/tests/ui/index.html
+expect_grep '>115<' target/web/tests/ui/index.html
+expect_grep 'every page' target/web/tests/ui/index.html
+# and what the run did not measure is on the page, with what declared it
+expect_grep 'Not measured, and why' target/web/tests/ui/index.html
+expect_grep 'swagger-ui-dist@5.17.14' target/web/tests/ui/index.html
 [ -f target/web/tests/ui/surface.json ] && { echo "    a section of another surface declared one of its own"; exit 1; }
 # the enclosing surface exists, and there is exactly one of it
 "$BIN" web list > list.txt

@@ -67,6 +67,16 @@ pub struct Finding {
 /// that was *sampled*. A sample rendered as a total would be a report overstating its own
 /// coverage, and the Cockpit's thousands of routes are why that distinction belongs on the
 /// page rather than in somebody's head.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{parse, Surface};
+/// let run = parse(r#"{"schema":"ui-audit/v1","pages":108,"visits":478,"findings":[],
+///     "surfaces":[{"id":"cockpit","mount":"/cockpit","kind":"native-route",
+///                  "routes":2660,"families":14,"sampled":108}]}"#).unwrap();
+/// let surface: &Surface = &run.surfaces[0];
+/// assert_eq!((surface.routes, surface.sampled), (2660, 108));
+/// assert!(!surface.truncated, "a crawl that hit its budget reports a floor, not a total");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Surface {
     /// The surface's id in the topology.
@@ -88,6 +98,26 @@ pub struct Surface {
     /// Whether the crawl hit its budget, so the route count is a floor rather than a total.
     #[serde(default)]
     pub truncated: bool,
+}
+
+/// A subtree of a page the engine was told to skip, and what declared it.
+///
+/// A page may carry a component tree that is not this repository's to fix — pinned at a
+/// version, its markup and its stylesheet arriving together. The page declares it with
+/// `data-mj-foreign`; the engine skips it, and the report says so. "Not measured" and
+/// "measured and clean" are different claims, and a report that conflated them would be
+/// worth nothing.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Foreign {
+    /// A page it was seen on.
+    #[serde(default)]
+    pub route: String,
+    /// The element that carried the declaration.
+    #[serde(default)]
+    pub selector: String,
+    /// What the page said it is: the third party and its pinned version.
+    #[serde(default)]
+    pub declares: String,
 }
 
 /// A whole audit run.
@@ -113,6 +143,9 @@ pub struct Run {
     /// Every surface the run measured, and what each contributed.
     #[serde(default)]
     pub surfaces: Vec<Surface>,
+    /// Every subtree the engine was told to skip, once per declaration.
+    #[serde(default)]
+    pub foreign: Vec<Foreign>,
     /// How many pages were visited.
     pub pages: usize,
     /// How many page-and-width visits that came to.
@@ -351,6 +384,30 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
         )
     };
 
+    // What was not measured, and what declared it. On the page whether the run is green or
+    // not: a reader who cannot see this cannot tell a clean audit from a narrowed one.
+    let foreign_section = if run.foreign.is_empty() {
+        String::new()
+    } else {
+        let rows: Vec<Vec<String>> = run
+            .foreign
+            .iter()
+            .map(|subtree| {
+                vec![
+                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.declares)),
+                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.selector)),
+                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.route)),
+                ]
+            })
+            .collect();
+        format!(
+            "<h2>Not measured, and why</h2><p class=\"lede\">A page may declare a subtree \
+             that is a third party's to answer for. The accessibility engine skipped these; \
+             everything around them was measured as usual.</p>{}",
+            html::table(&["declared as", "element", "first seen on"], &rows)
+        )
+    };
+
     let findings_section = if run.green() {
         String::new()
     } else {
@@ -365,10 +422,11 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
     };
 
     let body = format!(
-        "{}{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
+        "{}{}{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
         scope,
         html::summary(&summary),
         surfaces_section,
+        foreign_section,
         findings_section,
         provenance,
         html::origin(&origin, &[("results.json", "results.json")])
