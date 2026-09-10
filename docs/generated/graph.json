@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.4.0",
+  "generator": "majordomus-cli 0.5.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -160,6 +160,42 @@
         "summary": "Deployments",
         "route": "/cockpit/capabilities/deploy.list",
         "source": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.contrast",
+        "kind": "capability",
+        "label": "design.contrast",
+        "summary": "Whether the declared colours can be read",
+        "route": "/cockpit/capabilities/design.contrast",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.explain",
+        "kind": "capability",
+        "label": "design.explain",
+        "summary": "What a design token means",
+        "route": "/cockpit/capabilities/design.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.system",
+        "kind": "capability",
+        "label": "design.system",
+        "summary": "The design system",
+        "route": "/cockpit/capabilities/design.system",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:design.tokens",
+        "kind": "capability",
+        "label": "design.tokens",
+        "summary": "The design tokens",
+        "route": "/cockpit/capabilities/design.tokens",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
         "status": "query"
       },
       {
@@ -595,6 +631,15 @@
         "status": "query"
       },
       {
+        "id": "capability:server.status",
+        "kind": "capability",
+        "label": "server.status",
+        "summary": "The shared server, and every server of the repository",
+        "route": "/cockpit/capabilities/server.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:trace.commit",
         "kind": "capability",
         "label": "trace.commit",
@@ -981,6 +1026,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
+        "kind": "file",
+        "label": "design.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
         "kind": "file",
         "label": "executions.rs",
@@ -1106,6 +1159,22 @@
         "label": "semantics.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/design/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/design/render.rs",
+        "kind": "file",
+        "label": "render.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/design/render.rs",
         "external": true
       },
       {
@@ -1485,14 +1554,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/design-tokens",
-        "kind": "file",
-        "label": "design-tokens",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/design-tokens",
-        "external": true
-      },
-      {
         "id": "file:scripts/generate-site-data",
         "kind": "file",
         "label": "generate-site-data",
@@ -1658,6 +1719,14 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
+        "external": true
+      },
+      {
+        "id": "file:share/design/primitives.css",
+        "kind": "file",
+        "label": "primitives.css",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/design/primitives.css",
         "external": true
       },
       {
@@ -2629,7 +2698,7 @@
             "rule:project.interfaces-are-projections",
             "rule:project.derived-files-regenerated",
             "file:share/design/tokens.yaml",
-            "file:scripts/design-tokens",
+            "file:apps/majordomus-cli/src/design/render.rs",
             "file:scripts/ci/design-check",
             "file:apps/majordomus-cli/src/web/html.rs",
             "file:apps/majordomus-cli/src/http/swagger.rs",
@@ -2694,6 +2763,83 @@
             "http",
             "cockpit",
             "agents"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0035",
+        "kind": "adr",
+        "label": "adr-0035",
+        "summary": "A checkout's server is one of the repository's, and its state is served like every other fact",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0035",
+        "source": ".ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-10",
+          "tags": [
+            "mcp",
+            "architecture",
+            "coordination"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0036",
+        "kind": "adr",
+        "label": "adr-0036",
+        "summary": "The design system is a typed declaration in the crate and every first-party surface consumes its projections",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0036",
+        "source": ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.design-tokens-declared-once",
+            "rule:project.ui-conformance",
+            "rule:project.interfaces-are-projections",
+            "rule:project.generated-artifacts-are-typed",
+            "file:share/design/tokens.yaml",
+            "file:apps/majordomus-cli/src/design/mod.rs",
+            "file:apps/majordomus-cli/src/design/render.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/design.rs",
+            "file:share/design/primitives.css",
+            "file:scripts/ci/design-check",
+            "file:docs/DESIGN_SYSTEM.md",
+            "test:test/cases/107_design_tokens.sh",
+            "test:test/cases/109_design_system.sh"
+          ],
+          "tags": [
+            "design",
+            "ui",
+            "cockpit",
+            "site",
+            "projections",
+            "derived"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0037",
+        "kind": "adr",
+        "label": "adr-0037",
+        "summary": "A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0037",
+        "source": ".ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "file:.ai/repo/adrs/0006-ci-planned-from-one-model-and-the-site-deployed-from-its-verified-run.md",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:.github/workflows/validate.yml",
+            "file:.github/workflows/pages.yml",
+            "file:scripts/ci-plan",
+            "file:docs/CI.md",
+            "file:test/cases/94_ci_plan.sh",
+            "file:test/cases/26_ci_wiring.sh"
+          ],
+          "tags": [
+            "ci"
           ]
         }
       },
@@ -5983,12 +6129,13 @@
         "source": "share/commands.yaml",
         "facts": {
           "category": "task",
-          "class": "local-mutation",
+          "class": "state-mutating",
           "demo": "obligation-evidence",
           "exit_codes": [
             "0",
             "2",
             "12",
+            "13",
             "15"
           ],
           "json": true,
@@ -5998,7 +6145,7 @@
           ],
           "requires_installed": true,
           "requires_repository": true,
-          "requires_task": "active",
+          "requires_task": "required",
           "stage": "work",
           "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
           "syntax": "majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]",
@@ -6459,6 +6606,7 @@
           ],
           "json": true,
           "reads": [
+            ".ai/local/state/sessions-open/",
             ".ai/local/state/session-current.yaml",
             ".ai/repo/sessions/",
             ".ai/local/state/ledger.jsonl"
@@ -6471,6 +6619,7 @@
           "syntax": "majordomus session <start|status|close|list|show|latest|context> [options]",
           "visibility": "public",
           "writes": [
+            ".ai/local/state/sessions-open/",
             ".ai/local/state/session-current.yaml",
             ".ai/repo/sessions/",
             ".ai/local/session-contexts/",
@@ -7602,6 +7751,14 @@
         "source": "docs/DESIGN.md"
       },
       {
+        "id": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "kind": "document",
+        "label": "docs/DESIGN_SYSTEM.md",
+        "summary": "The design system — one declaration, every surface",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
+        "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
         "kind": "document",
         "label": "docs/DISTRIBUTION.md",
@@ -7640,6 +7797,22 @@
         "summary": "Economics",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FECONOMICS.md",
         "source": "docs/ECONOMICS.md"
+      },
+      {
+        "id": "majordomus://document/docs/ENTRY.md",
+        "kind": "document",
+        "label": "docs/ENTRY.md",
+        "summary": "Entering the repository",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FENTRY.md",
+        "source": "docs/ENTRY.md"
+      },
+      {
+        "id": "majordomus://document/docs/ENTRY_AUDIT.md",
+        "kind": "document",
+        "label": "docs/ENTRY_AUDIT.md",
+        "summary": "Repository entry: what is automatic, what is decorative, and where it breaks",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FENTRY_AUDIT.md",
+        "source": "docs/ENTRY_AUDIT.md"
       },
       {
         "id": "majordomus://document/docs/ENVIRONMENT.md",
@@ -9171,6 +9344,7 @@
             "worktrees",
             "health",
             "artifacts",
+            "design",
             "api"
           ],
           "docs": [
@@ -9400,6 +9574,7 @@
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "modules": [
             "peers",
+            "server",
             "worktree"
           ],
           "related": [
@@ -24958,26 +25133,28 @@
         }
       },
       {
-        "id": "majordomus://rule/project.design-tokens-declared-once@1",
+        "id": "majordomus://rule/project.design-tokens-declared-once@2",
         "kind": "rule",
-        "label": "project.design-tokens-declared-once@1",
-        "summary": "A design value is chosen once and every stylesheet is a projection of it",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.design-tokens-declared-once%401",
-        "source": ".ai/repo/rules/project/design-tokens-declared-once.v1.md",
+        "label": "project.design-tokens-declared-once@2",
+        "summary": "The design is one typed declaration and every first-party surface consumes its projections",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.design-tokens-declared-once%402",
+        "source": ".ai/repo/rules/project/design-tokens-declared-once.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
             "project.derived-files-regenerated@1",
             "project.interfaces-are-projections@1",
+            "project.generated-artifacts-are-typed@1",
             "project.ui-conformance@1"
           ],
-          "statement": "A design value is chosen in one place and every surface derives it; a surface that carries a colour of its own is a bug, and an exemption is a reason rather than a path.",
           "tags": [
             "design",
             "ui",
             "derived",
-            "projections"
+            "projections",
+            "cockpit",
+            "site"
           ]
         }
       },
@@ -25390,7 +25567,6 @@
         "facts": {
           "class": "blocking",
           "depends_on": [],
-          "statement": "bin/, lib/, share/ and test/ contain no network client, no telemetry, no eval, no curl piped to a shell, no silent overwrite and no recursive deletion outside a temporary directory.",
           "tags": [
             "security"
           ]
@@ -25746,6 +25922,30 @@
           "statement": "Behavioural cases run through bash test/run.sh in a temporary repository each, never against this checkout.",
           "tags": [
             "testing"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "rule",
+        "label": "project.the-lease-is-read-once@1",
+        "summary": "The shared server's lease has one reader",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-lease-is-read-once%401",
+        "source": ".ai/repo/rules/project/the-lease-is-read-once.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.derived-once@1",
+            "project.no-machine-paths@1"
+          ],
+          "statement": "The lease is read by `lease::LeaseFile::read` and by nothing else; a caller that needs to know where a server is asks the executable, and never the file.",
+          "tags": [
+            "mcp",
+            "coordination",
+            "derived",
+            "gates"
           ]
         }
       },
@@ -27186,6 +27386,13 @@
         "source": "test/cases/107_runtime_staleness_is_loud.sh"
       },
       {
+        "id": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
+        "kind": "test",
+        "label": "test/cases/108_entry_converges_on_a_server.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F108_entry_converges_on_a_server.sh",
+        "source": "test/cases/108_entry_converges_on_a_server.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/108_scope_after_trunk_merge.sh",
         "kind": "test",
         "label": "test/cases/108_scope_after_trunk_merge.sh",
@@ -27193,11 +27400,46 @@
         "source": "test/cases/108_scope_after_trunk_merge.sh"
       },
       {
+        "id": "majordomus://test/test/cases/109_design_system.sh",
+        "kind": "test",
+        "label": "test/cases/109_design_system.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F109_design_system.sh",
+        "source": "test/cases/109_design_system.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/10_site_data.sh",
         "kind": "test",
         "label": "test/cases/10_site_data.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F10_site_data.sh",
         "source": "test/cases/10_site_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/110_lease_reader.sh",
+        "kind": "test",
+        "label": "test/cases/110_lease_reader.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F110_lease_reader.sh",
+        "source": "test/cases/110_lease_reader.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/111_design_contrast.sh",
+        "kind": "test",
+        "label": "test/cases/111_design_contrast.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_design_contrast.sh",
+        "source": "test/cases/111_design_contrast.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/111_session_per_provider.sh",
+        "kind": "test",
+        "label": "test/cases/111_session_per_provider.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_session_per_provider.sh",
+        "source": "test/cases/111_session_per_provider.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/111_unblock.sh",
+        "kind": "test",
+        "label": "test/cases/111_unblock.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_unblock.sh",
+        "source": "test/cases/111_unblock.sh"
       },
       {
         "id": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -27933,6 +28175,13 @@
         "label": "test/cases/97_product_features.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F97_product_features.sh",
         "source": "test/cases/97_product_features.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/97_site_probe_attribution.sh",
+        "kind": "test",
+        "label": "test/cases/97_site_probe_attribution.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F97_site_probe_attribution.sh",
+        "source": "test/cases/97_site_probe_attribution.sh"
       },
       {
         "id": "majordomus://test/test/cases/98_cli_reference.sh",
@@ -29830,6 +30079,11 @@
         "label": "deploy"
       },
       {
+        "id": "module:design",
+        "kind": "module",
+        "label": "design"
+      },
+      {
         "id": "module:directories",
         "kind": "module",
         "label": "directories"
@@ -29903,6 +30157,11 @@
         "id": "module:repository",
         "kind": "module",
         "label": "repository"
+      },
+      {
+        "id": "module:server",
+        "kind": "module",
+        "label": "server"
       },
       {
         "id": "module:trace",
@@ -30139,6 +30398,66 @@
         "kind": "projects"
       },
       {
+        "source": "capability:design.contrast",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.contrast",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.contrast",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.system",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.system",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.system",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.tokens",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.tokens",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:design.tokens",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:directories.list",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -30935,6 +31254,26 @@
       },
       {
         "source": "capability:repository.scope_classify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:server.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -31830,6 +32169,11 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
+        "target": "file:apps/majordomus-cli/src/design/render.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0031",
         "target": "file:apps/majordomus-cli/src/http/swagger.rs",
         "kind": "put_in_force"
       },
@@ -31841,11 +32185,6 @@
       {
         "source": "majordomus://adr/adr-0031",
         "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:scripts/design-tokens",
         "kind": "put_in_force"
       },
       {
@@ -31865,7 +32204,7 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://rule/project.design-tokens-declared-once@1",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
         "kind": "put_in_force"
       },
       {
@@ -31971,6 +32310,126 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0035",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:apps/majordomus-cli/src/design/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:apps/majordomus-cli/src/design/render.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:scripts/ci/design-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:share/design/primitives.css",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "file:share/design/tokens.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://rule/project.design-tokens-declared-once@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://rule/project.generated-artifacts-are-typed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://test/test/cases/107_design_tokens.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0036",
+        "target": "majordomus://test/test/cases/109_design_system.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "file:.github/workflows/pages.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "file:.github/workflows/validate.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "file:scripts/ci-plan",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "majordomus://adr/adr-0006",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "majordomus://document/docs/CI.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "majordomus://test/test/cases/26_ci_wiring.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0037",
+        "target": "majordomus://test/test/cases/94_ci_plan.sh",
         "kind": "put_in_force"
       },
       {
@@ -35689,6 +36148,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/DISTRIBUTION.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -35710,6 +36174,16 @@
       },
       {
         "source": "majordomus://document/docs/ECONOMICS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/ENTRY.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/ENTRY_AUDIT.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -41274,22 +41748,27 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.design-tokens-declared-once@1",
+        "source": "majordomus://rule/project.design-tokens-declared-once@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.design-tokens-declared-once@1",
+        "source": "majordomus://rule/project.design-tokens-declared-once@2",
         "target": "majordomus://rule/project.derived-files-regenerated@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.design-tokens-declared-once@1",
+        "source": "majordomus://rule/project.design-tokens-declared-once@2",
+        "target": "majordomus://rule/project.generated-artifacts-are-typed@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.design-tokens-declared-once@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.design-tokens-declared-once@1",
+        "source": "majordomus://rule/project.design-tokens-declared-once@2",
         "target": "majordomus://rule/project.ui-conformance@1",
         "kind": "depends_on"
       },
@@ -41694,6 +42173,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.the-lease-is-read-once@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-lease-is-read-once@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-lease-is-read-once@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-lease-is-read-once@1",
+        "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.ui-conformance@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42044,12 +42543,42 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/108_entry_converges_on_a_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/108_scope_after_trunk_merge.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/109_design_system.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/10_site_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/110_lease_reader.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/111_design_contrast.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/111_session_per_provider.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/111_unblock.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -42575,6 +43104,11 @@
       },
       {
         "source": "majordomus://test/test/cases/97_product_features.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/97_site_probe_attribution.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -45239,6 +45773,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:design",
+        "target": "capability:design.contrast",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.system",
+        "kind": "composes"
+      },
+      {
+        "source": "module:design",
+        "target": "capability:design.tokens",
+        "kind": "composes"
+      },
+      {
         "source": "module:directories",
         "target": "capability:directories.list",
         "kind": "composes"
@@ -45479,6 +46033,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:server",
+        "target": "capability:server.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:trace",
         "target": "capability:trace.commit",
         "kind": "composes"
@@ -45550,8 +46109,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1386,
-      "edges": 3118,
+      "nodes": 1410,
+      "edges": 3178,
       "acyclic": true,
       "truncated": false
     }

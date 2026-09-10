@@ -59,7 +59,7 @@ command -v jq >/dev/null 2>&1 || { echo "version-matches-surface: jq is not inst
 # read from git rather than from a list here, so a release nobody told this script about is
 # still the one it compares with.
 if [ -z "$SINCE" ]; then
-  SINCE="$(git tag --list 'v[0-9]*' | sort -V | tail -n 1)"
+  SINCE="$(git tag --list 'v[0-9]*' | LC_ALL=C sort -V | tail -n 1)"
   [ -n "$SINCE" ] || { echo "version-matches-surface: this repository has no version tag to compare with" >&2; exit 12; }
 fi
 git rev-parse --verify --quiet "$SINCE^{commit}" >/dev/null || {

@@ -300,6 +300,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/sessions-open",
+      "kind": "artifact",
+      "label": "local/state/sessions-open",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -798,11 +808,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/session-current.yaml",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
@@ -1162,6 +1167,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/common.sh",
+      "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/context.sh",
       "target": "lib/context_docs.sh",
       "kind": "sources"
@@ -1429,6 +1439,16 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {
@@ -1748,7 +1768,17 @@
     },
     {
       "source": "lib/session.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
       "target": ".ai/local/state/sessions",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {
@@ -1844,11 +1874,6 @@
     {
       "source": "lib/project.sh",
       "target": ".ai/repo/project/milestones",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/session.sh",
-      "target": ".ai/local/state/session-current.yaml",
       "kind": "writes"
     },
     {

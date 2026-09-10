@@ -1390,6 +1390,7 @@ Events and their extra fields:
 |---|---|
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
+| `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
 | `decision.recorded` | `decision` (the entry's title) |

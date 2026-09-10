@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the resolved web topology of this repository; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.4.0
+# Generator: majordomus-cli 0.5.0
 schema: majordomus/web-topology/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the resolved web topology of this repository; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.4.0
+generator: majordomus-cli 0.5.0
 generated_root: target/web
 reserved:
   home: /
@@ -102,26 +102,6 @@ surfaces:
     provenance:
       mount:
         source: registry
-  - id: tests
-    title: Test results
-    category: report
-    visibility: public
-    kind: static-directory
-    mount: /tests
-    producer: "bash test/run.sh + cargo test, rendered by majordomus web report tests"
-    artifact: target/web/tests
-    index: index.html
-    availability: both
-    provenance:
-      artifact:
-        source: filesystem
-        path: target/web/tests/surface.json
-      kind:
-        source: filesystem
-        path: target/web/tests/surface.json
-      mount:
-        source: producer-declaration
-        path: target/web/tests/surface.json
   - id: app
     title: The site as it is deployed
     category: documentation
