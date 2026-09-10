@@ -333,27 +333,42 @@ mj_ctx_render() {
 # worker is already told to look — `majordomus context`, the first thing the bootstrap asks
 # for — rather than waiting to be asked for.
 #
-# It degrades to nothing rather than to noise. No lease, no server, no jq, no curl, a server
-# that does not answer within two seconds, or a board holding nobody but the caller: the
-# section is not written at all, because a repository with one worker in it must not grow a
-# section about being alone. Nothing here fails a command: a coordination hint that can
-# break `context` would be worse than no hint.
+# It degrades to nothing rather than to noise. No executable, no server, no jq, no curl, a
+# server that does not answer within two seconds, or a board holding nobody but the caller:
+# the section is not written at all, because a repository with one worker in it must not
+# grow a section about being alone. Nothing here fails a command: a coordination hint that
+# can break `context` would be worse than no hint.
 mj_context_peers() {
   local have_task="$1"
-  # The lease is repository-scoped and `.ai/local/` is checkout-scoped, so a linked worktree
-  # looking for the shared server in its own state finds nothing: one server serves the
-  # repository, and its lease is written by whoever started it, in the primary checkout.
-  # `--git-common-dir` is the one thing that names that checkout from any worktree.
-  local common primary lease
-  common="$(git -C "$MJ_ROOT" rev-parse --git-common-dir 2>/dev/null)" || return 0
-  case "$common" in /*) ;; *) common="$MJ_ROOT/$common" ;; esac
-  primary="$(dirname "$common")"
-  lease="$MJ_STATE_DIR/mcp/server.json"
-  [ -f "$lease" ] || lease="$primary/.ai/local/state/mcp/server.json"
-  [ -f "$lease" ] || return 0
   mj_has jq || return 0
   mj_has curl || return 0
-  local url; url="$(jq -r '.url // empty' "$lease" 2>/dev/null)" || return 0
+  # Where the server is comes from the one reader of the lease: `serve status`, the
+  # executable's typed reading of that file served like every other fact (ADR 0035,
+  # project.the-lease-is-read-once). This function used to find the lease itself — its own
+  # checkout's path, a guess at the primary checkout's path when this worktree had none,
+  # and `jq` over the document — which is a second parser of a file one type owns and a
+  # second idea of where a server may be. The status answers both: every checkout git
+  # registers for the repository, each with the address its lease published.
+  #
+  # Never a build. An executable that is not there is not compiled here: `context` is what
+  # a worker runs first, and a coordination hint that can stall it for a `cargo build`
+  # would be worse than no hint — the policy the start event's `serve ensure` keeps too.
+  local bin share status url
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_HOME")"
+  # a subshell, so that the share this tool would use is the executable's and not exported
+  # into everything `context` runs after it
+  status="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" serve status --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 0
+  # this checkout's server if it has one, else the primary's: the order this function asked
+  # for before, now answered rather than guessed
+  url="$(printf '%s' "$status" | jq -r '
+    [ (.servers[]? | select(.this_checkout == true)),
+      (.servers[]? | select(.primary == true)) ]
+    | map(select((.lease.url // "") != "")) | .[0].lease.url // empty' 2>/dev/null)" || return 0
   [ -n "$url" ] || return 0
   local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 0
   printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 0

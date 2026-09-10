@@ -53,9 +53,16 @@ bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
 # silently bypassed — the Cockpit check below says so and names what to do.
 BASE="${COCKPIT_PROBE_URL:-}"
 SRV=""
-LEASE="$ROOT/.ai/local/state/mcp/server.json"
-if [ -z "$BASE" ] && [ -f "$LEASE" ]; then
-  held="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$LEASE")"
+# Where that server is comes from `serve status`, the executable's one typed reading of the
+# lease (ADR 0035, project.the-lease-is-read-once). This used to be a `sed` regular
+# expression over the lease file, which would have found nothing — and reported "no server"
+# rather than "I cannot read this" — the day anything wrote that document pretty-printed.
+# Only an executable that is already built is asked: compiling one to find out whether a
+# server is already running would spend exactly the build this shortcut exists to save.
+HELD_BIN="${MAJORDOMUS_BIN:-$CRATE/target/debug/majordomus}"
+if [ -z "$BASE" ] && [ -x "$HELD_BIN" ] && command -v jq >/dev/null; then
+  held="$("$HELD_BIN" serve status --repo "$ROOT" --format json 2>/dev/null \
+    | jq -r '[.servers[]? | select(.this_checkout == true)] | .[0].lease.url // empty' 2>/dev/null || true)"
   if [ -n "$held" ] && curl -sf -o /dev/null --max-time 2 "$held/"; then
     BASE="$held"
     ok lease "this repository's shared server is at $BASE; measuring it rather than starting a second one"
