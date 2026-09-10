@@ -49,6 +49,8 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// Release identity: the four versions and where they disagree, why the next version must be what it must be, the public contract diff, the changelog every surface renders, and the preparation of a release
+    Release(ReleaseArgs),
     /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
     Env(EnvArgs),
     /// Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it
@@ -186,6 +188,71 @@ pub enum CompletionShell {
     Zsh,
     /// bash
     Bash,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus release`. The output shape is global so that `release status --json` reads
+/// the way a person writes it, and is declared once.
+pub struct ReleaseArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the release state; none reports the status.
+    pub command: Option<ReleaseCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus release`.
+pub enum ReleaseCommand {
+    /// The four versions — what this tree would release, what is published, what this process is, what each deployment reports — and every disagreement between them
+    Version,
+    /// The whole release state: versions, baseline, compatibility, minimum version, readiness and every diagnostic
+    Status,
+    /// Why the next version must be at least what it must be, step by step from the contract change to the policy
+    Explain,
+    /// Every difference between the public contract at the last published release and the contract this tree states
+    Diff {
+        /// Only the changes carrying this impact
+        #[arg(long, value_name = "IMPACT")]
+        impact: Option<String>,
+        /// Only the changes on this surface
+        #[arg(long, value_name = "SURFACE")]
+        surface: Option<String>,
+    },
+    /// The changelog: the unreleased changes and every published version's, as CHANGELOG.md carries them
+    Changelog {
+        /// Only this version's section, as its release notes
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+    },
+    /// One release explained: compatibility, contract fingerprints, changes, migration documents and artifacts
+    Manifest {
+        /// The version; the one this tree would publish when absent
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+    },
+    /// What `release prepare` would write and what it would publish, without writing anything
+    Plan,
+    /// Every release invariant this repository can decide locally; exit 10 when one does not hold
+    Check,
+    /// Set the canonical version and regenerate everything derived from it, so that a release can be reviewed as a commit
+    Prepare {
+        /// The version to prepare, which must clear the minimum the contract change requires
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+        /// The bump to apply to the published release, which must be at least the one required
+        #[arg(long, value_name = "BUMP")]
+        bump: Option<String>,
+        /// Report what would be written and write nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Debug, Args)]

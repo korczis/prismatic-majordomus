@@ -9,6 +9,7 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::ChangelogReport;
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
@@ -21,6 +22,8 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::release::diff::CompatibilityImpact;
+use crate::release::{Agreement, ReleaseState};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,

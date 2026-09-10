@@ -45,8 +45,30 @@ pub struct Shell<'a> {
     pub scripts: Vec<String>,
     /// Whether the distribution has an asset directory at all.
     pub assets_present: bool,
-    /// The executable's version, shown in the footer.
+    /// The executable's version, shown in the topbar and the footer.
     pub version: &'a str,
+    /// The state of the release the version belongs to, when the release engine could
+    /// answer: the word and its colour, and the page that explains it.
+    ///
+    /// `None` only when the engine refused — a repository with no layer, a snapshot that
+    /// cannot be read. The version still renders in that case: a version display that
+    /// disappears because a release check failed is worse than one that shows the number
+    /// alone.
+    pub release: Option<ReleaseIndicator>,
+}
+
+/// What the topbar says about the version beside it.
+///
+/// The one place the topbar's version becomes more than a string. It is built from
+/// `release.status` — the same capability the release page renders — so the word here and
+/// the word there cannot disagree.
+pub struct ReleaseIndicator {
+    /// The state in one word: `released`, `unreleased`, `drift`, `blocked`.
+    pub word: String,
+    /// The badge tone: `ok`, `warn`, `fail`.
+    pub tone: String,
+    /// What a person is told on hover: the whole state in one sentence.
+    pub title: String,
 }
 
 /// Render one page into the shell.
@@ -179,7 +201,26 @@ fn header(shell: &Shell<'_>) -> El {
                         .text("Theme"),
                 ),
         )
-        .child(el("span").class("mj-version").text(shell.version))
+        .child(version_indicator(shell))
+}
+
+/// The version, as the topbar shows it.
+///
+/// It was a `<span>` with a number in it. It is a link to the release page with the state
+/// of that release beside it, because the number alone answers the least interesting of
+/// the four questions a person has about a version — and answers it in a way that looks
+/// like an answer to the other three.
+fn version_indicator(shell: &Shell<'_>) -> El {
+    let anchor = el("a")
+        .class("mj-version")
+        .attr("href", "/cockpit/release")
+        .child(el("span").text(shell.version));
+    match &shell.release {
+        Some(indicator) => anchor
+            .attr("title", indicator.title.clone())
+            .child(badge(&indicator.tone, &indicator.word)),
+        None => anchor.attr("title", "The release state could not be read"),
+    }
 }
 
 fn sidebar(shell: &Shell<'_>) -> El {

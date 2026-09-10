@@ -6,6 +6,13 @@ set -eu
 MJ_VERSION="0.5.0"
 MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
+# The version this tool prints. Generated into share/version.txt from the crate's
+# manifest, which is the one authority, and read here rather than restated: an
+# installed tree carries share/ and has no Cargo.toml, and a second hand-edited
+# literal is a second version that drifts. `majordomus generate` writes it and
+# `majordomus generate --check` refuses a tree where the two disagree.
+MJ_VERSION="$(sed -n 's/^version=//p' "$MJ_BIN_DIR/../share/version.txt" 2>/dev/null || true)"
+: "${MJ_VERSION:=unknown}"
 # The path to write down. An installation puts the tool in a versioned directory and
 # reaches it through a launcher whose path does not move when the version does, and the
 # launcher says so; a checkout has no launcher and this file's own path is the answer.

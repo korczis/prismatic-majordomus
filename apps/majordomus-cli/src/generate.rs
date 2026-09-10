@@ -108,6 +108,15 @@ pub enum Target {
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
     Distribution,
+    /// Everything derived from the release state (see [`crate::release`]): the public
+    /// contract snapshot every future release is measured against, `CHANGELOG.md`, one
+    /// manifest per recorded release, and the version line the shell tool prints.
+    ///
+    /// The version line is here rather than hand-edited because the crate's version is the
+    /// authority and the shell tool cannot read a manifest at run time: an installed tree
+    /// has no `Cargo.toml`. Generating it is what turns "two writers who must be kept in
+    /// step" into one writer and one projection.
+    Release,
     /// `docs/generated/artifacts.{json,yaml,md}`: every artifact of every other target,
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
@@ -174,6 +183,7 @@ impl Target {
             Target::Web => "web",
             Target::Changelog => "changelog",
             Target::Distribution => "distribution",
+            Target::Release => "release",
             Target::Manifest => "manifest",
             Target::Deployment => "deployment",
             Target::Graph => "graph",
@@ -198,6 +208,12 @@ pub enum ArtifactFormat {
     /// provenance as `#` comments.
     Text,
 }
+
+/// Where the version the shell tool prints is projected.
+///
+/// Under `share/`, which a release archive carries in full, so that an installed tree can
+/// read it exactly as a checkout does.
+pub const VERSION_PATH: &str = "share/version.txt";
 
 /// The schema of `web.json`.
 pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";

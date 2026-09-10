@@ -145,6 +145,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         environment,
         quality,
         distribution,
+        release,
         why,
         web,
         design,

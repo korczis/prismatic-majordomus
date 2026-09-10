@@ -206,6 +206,12 @@ sources:
     pathspec: ':(glob).ai/repo/releases/*.yaml'
     required: false
 
+  - id: change
+    kind: change
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/changes/*.md'
+    required: false
+
   # The implementation and test classes exist so that the chain a claim already declares —
   # claim, the file that implements it, the case that proves it — resolves to real nodes
   # instead of to three strings. Without them every claim's edges dangle by construction,

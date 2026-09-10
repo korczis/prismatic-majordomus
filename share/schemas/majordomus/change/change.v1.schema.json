@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/change/change.v1.schema.json",
+  "x-majordomus-schema": "majordomus.change/v1",
+  "x-majordomus-derived-from": "majordomus/change/change.v1.proto",
+  "x-majordomus-allow": "change",
+  "description": "The whole record: the YAML front matter, then the Markdown body.",
+  "title": "change",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "description": "The front matter. Every field is read by the release engine or by the changelog projection; none is decoration.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "kind",
+        "title",
+        "type",
+        "impact"
+      ],
+      "properties": {
+        "schema": {
+          "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+          "const": "change/v1"
+        },
+        "id": {
+          "description": "The identity, allocated once and never reused. It fixes the file name and survives a retitle, so a changelog entry can be pointed at from a commit or an issue.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "kind": {
+          "const": "change"
+        },
+        "title": {
+          "description": "One line, in the present tense, as it appears in the changelog. What changed for the reader, not what was done to the code.",
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "description": "Which section of a changelog it belongs under.",
+          "enum": [
+            "added",
+            "changed",
+            "deprecated",
+            "removed",
+            "fixed",
+            "security"
+          ]
+        },
+        "impact": {
+          "description": "What it costs the people who already depend on this. It must not understate the contract: a record claiming `patch` for an entry the contract diff calls breaking is refused, because the changelog would then promise something the artifact does not.",
+          "enum": [
+            "none",
+            "patch",
+            "additive",
+            "breaking"
+          ]
+        },
+        "released_in": {
+          "description": "The version this change was published in. Absent means unreleased: the change belongs to whatever the next release turns out to be, and `majordomus release prepare` stamps it. Written by the release pipeline, and by nothing else.",
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+        },
+        "scopes": {
+          "description": "The surfaces a reader of this change cares about: `cli`, `api`, `mcp`, `cockpit`, `site`, `installer`, `layer`, `docs`. A projection groups by them; nothing validates that a scope exists, because a change may be about something the tool does not model.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "contract": {
+          "description": "The contract entries this record accounts for, as `<surface>:<id>` — `capability:release.status`, `command:executable.release.status`, `document-kind:majordomus.change/v1`, `target:linux-x86_64-musl`. This is what makes coverage checkable: a breaking contract change no record names is a release the changelog does not explain, and `majordomus release check` refuses it.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(capability|command|document-kind|target):.+$"
+          }
+        },
+        "issues": {
+          "description": "The issues this change closes, as the work graph names them.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_/.-]*$"
+          }
+        },
+        "pull_requests": {
+          "description": "The pull requests that carried it, as numbers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+$"
+          }
+        },
+        "commits": {
+          "description": "The commits that carried it, full forty-character shas.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          }
+        },
+        "adrs": {
+          "description": "The decisions behind it. Each must resolve to a record under .ai/repo/adrs/.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^adr-[0-9]{4}$"
+          }
+        },
+        "migration": {
+          "description": "The migration guidance, repository-relative. Required for a breaking change: a break without a way through it is a break nobody can follow, and `majordomus release check` refuses a release that has one.",
+          "type": "string",
+          "pattern": "^[^/].*\\.md$"
+        }
+      }
+    },
+    "Section": {
+      "description": "One section of the body, as the reader of a Markdown document meets it.",
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The Markdown body: what the front matter cannot say.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Summary",
+          "level": 2,
+          "required": true,
+          "non_empty": true,
+          "description": "What changed and why it mattered, for somebody reading the changelog months later with no memory of the work."
+        },
+        {
+          "heading": "Migration",
+          "level": 2,
+          "required": false,
+          "non_empty": false,
+          "description": "What a reader has to do about it. Required in substance for a breaking change — the `migration` field names the document, and this section is the short form of it."
+        }
+      ]
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/change/change.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.3.2"
+}

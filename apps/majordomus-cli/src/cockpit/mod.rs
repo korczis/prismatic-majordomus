@@ -131,6 +131,7 @@ impl Cockpit {
             scripts,
             assets_present: self.assets.present(),
             version: self.version,
+            release: self.release_indicator(),
         };
         let body = view::page(&shell, page.main);
         let mut response = Response::new(page.status, "text/html; charset=utf-8", body);
@@ -150,6 +151,47 @@ impl Cockpit {
             .headers
             .push(("Referrer-Policy".into(), "no-referrer".into()));
         response
+    }
+
+    /// What the topbar says about the version it shows.
+    ///
+    /// Asked through the executor like every other page value, so it is cached and counted
+    /// with the rest. `None` when the engine cannot answer, which leaves the number and
+    /// drops the word rather than failing the page: every page in the Cockpit carries this
+    /// topbar, and a release check must never be able to take the Cockpit down.
+    fn release_indicator(&self) -> Option<view::ReleaseIndicator> {
+        let state: crate::release::ReleaseState = self
+            .ctx
+            .execute("release.status", serde_json::json!({}))
+            .ok()
+            .and_then(|v| serde_json::from_value(v).ok())?;
+        let drifting = state
+            .versions
+            .deployed
+            .iter()
+            .any(|d| d.agreement == crate::release::Agreement::Drift);
+        let (word, tone) = if drifting {
+            ("drift", "fail")
+        } else if state.readiness.is_blocking() {
+            (state.readiness.as_str(), "fail")
+        } else if state.versions.unreleased {
+            ("unreleased", "warn")
+        } else {
+            ("released", "ok")
+        };
+        let title = match (&state.versions.published, state.versions.unreleased) {
+            (Some(published), true) => format!(
+                "source {} · published {published} · {}",
+                state.versions.source, word
+            ),
+            (Some(published), false) => format!("published {published} · {word}"),
+            (None, _) => format!("source {} · nothing published", state.versions.source),
+        };
+        Some(view::ReleaseIndicator {
+            word: word.to_string(),
+            tone: tone.to_string(),
+            title,
+        })
     }
 
     fn route(&self, req: &Request) -> pages::Page {
@@ -175,6 +217,7 @@ impl Cockpit {
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/design" => pages::design(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
+            "/cockpit/release" => pages::release(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),
             other => {
