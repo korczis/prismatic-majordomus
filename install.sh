@@ -5,7 +5,7 @@
 #
 # Majordomus installer.
 #
-#   curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+#   curl -fsSL https://majordomus.dev/install.sh | sh
 #
 # It downloads one archive for this machine, verifies its SHA-256 against the release
 # metadata, unpacks it into a versioned directory under a prefix in your home, and writes
@@ -21,7 +21,7 @@
 #
 # Read it before running it, if you like:
 #
-#   curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh -o install.sh
+#   curl -fsSL https://majordomus.dev/install.sh -o install.sh
 #   less install.sh && sh install.sh
 #
 # This file has two halves. The block below is generated from share/distribution.yaml and
@@ -35,7 +35,7 @@ set -eu
 # `just derive`; editing this region is undone by the next generation and refused by CI.
 MJ_BINARY='majordomus'
 MJ_REPOSITORY='korczis/prismatic-majordomus'
-MJ_BASE_URL='https://korczis.github.io/prismatic-majordomus'
+MJ_BASE_URL='https://majordomus.dev'
 MJ_DOWNLOAD_PREFIX='https://github.com/korczis/prismatic-majordomus/releases/download/'
 MJ_ARCHIVE_EXTENSION='tar.gz'
 MJ_DEFAULT_INSTALL_DIR="$HOME/.local/bin"
