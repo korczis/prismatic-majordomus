@@ -12,8 +12,8 @@ use serde_json::{json, Value};
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
-    TokenList,
+    InstallabilityReport, LeaseView, ObjectList, ObjectSummary, PeerList, QualityAnswer, Record,
+    RepositoryReport, ServerStanding, ServerStatus, ServerView, TokenList,
 };
 use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
@@ -21,6 +21,7 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::peers::{Overlap, Peer};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -4166,9 +4167,662 @@ pub fn design(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Design", None)])
 }
 
+// ----------------------------------------------------------------------- board
+
+/// The declared status word a server standing wears, so that a badge on this page is
+/// coloured by the design system's vocabulary rather than by a word this file invented.
+/// The standing's own word is what the reader sees; only the colour is translated.
+fn server_status(standing: ServerStanding) -> &'static str {
+    match standing {
+        ServerStanding::Ready => "ok",
+        ServerStanding::Starting => "info",
+        ServerStanding::Outdated => "warn",
+        ServerStanding::Stale => "fail",
+        // nothing serves that checkout, which is the ordinary state of a worktree nobody
+        // is working in and not a fault of any kind
+        ServerStanding::Absent => "neutral",
+    }
+}
+
+/// How a peer is named wherever this page names one: the board's id and the client behind
+/// it, because `p2` alone is not something a person recognises and `claude-code` alone is
+/// not something a person can tell from the other three.
+fn peer_label(peer: &Peer) -> String {
+    format!("{} {}", peer.id, peer.client.name)
+}
+
+/// How long ago, in the coarsest unit that still says something. A board is read at a
+/// glance, and the seconds of an hour-old session are noise on it.
+fn ago(seconds: u64) -> String {
+    match seconds {
+        0 => "just now".to_string(),
+        1..=90 => format!("{seconds}s ago"),
+        91..=5_400 => format!("{}m ago", seconds / 60),
+        5_401..=172_800 => format!("{}h ago", seconds / 3_600),
+        _ => format!("{}d ago", seconds / 86_400),
+    }
+}
+
+/// Which listed peer holds the near side of an overlap.
+///
+/// `peers.list` reports each colliding pair once and names only the far peer; the claims
+/// on the near side arrive as paths under `yours` with nobody's name on them. The near
+/// peer is resolved out of the same answer — it is the peer whose own announcement holds
+/// every one of those claims — and never by comparing two paths, which is the server's
+/// judgement and not this page's. A claim no listed announcement holds resolves to
+/// `None`, and the collision is shown with one side unnamed rather than with a guess.
+///
+/// ```text
+/// overlap { peer: p1, paths: [{ yours: "test/cases", theirs: "test" }] }
+/// p3 announced ["test/cases"]  ->  the near side is p3, and the pair reads "p3 and p1"
+/// ```
+fn near_side<'a>(peers: &'a [Peer], overlap: &Overlap) -> Option<&'a Peer> {
+    peers.iter().find(|p| {
+        p.id != overlap.peer
+            && p.announcement.as_ref().is_some_and(|a| {
+                overlap
+                    .paths
+                    .iter()
+                    .all(|path| a.scope.contains(&path.yours))
+            })
+    })
+}
+
+/// One collision, rendered so that a reader who scrolls past everything else still sees
+/// it: both sessions named, both intents quoted, and every pair of claims that meet.
+fn collision(peers: &[Peer], overlap: &Overlap) -> El {
+    let near = near_side(peers, overlap);
+    let near_name = near
+        .map(peer_label)
+        .unwrap_or_else(|| "a session no longer on the board".to_string());
+    let far_name = peers
+        .iter()
+        .find(|p| p.id == overlap.peer)
+        .map(peer_label)
+        .unwrap_or_else(|| overlap.peer.to_string());
+    let near_claims = format!("{near_name} claims");
+    let far_claims = format!("{far_name} claims");
+    let rows: Vec<El> = overlap
+        .paths
+        .iter()
+        .map(|p| row(vec![cell(mono(&p.yours)), cell(mono(&p.theirs))]))
+        .collect();
+
+    card_with(
+        format!("{near_name} and {far_name}"),
+        if overlap.attached {
+            badge("blocked", "both attached")
+        } else {
+            badge("warn", "one has left")
+        },
+        el("div")
+            .child(alert(
+                "fail",
+                format!(
+                    "{} claim(s) meet. Two sessions have said they will touch the same ground; \
+                     whichever commits second finds out.",
+                    overlap.paths.len()
+                ),
+            ))
+            .when(near.is_some(), |d| {
+                d.child(el("p").class("mj-prose").text(format!(
+                    "{near_name}: {}",
+                    near.and_then(|p| p.announcement.as_ref())
+                        .map(|a| a.intent.as_str())
+                        .unwrap_or_default()
+                )))
+            })
+            .child(
+                el("p")
+                    .class("mj-prose")
+                    .text(format!("{far_name}: {}", overlap.intent)),
+            )
+            .child(table(&[near_claims.as_str(), far_claims.as_str()], rows)),
+    )
+}
+
+/// One peer's announcement as a cell: what it said it is doing, the ground it claimed, and
+/// when it said so. A peer that has announced nothing says so, because a silent session is
+/// the thing this board exists to make visible.
+fn announcement_cell(peer: &Peer) -> El {
+    match &peer.announcement {
+        Some(a) => el("div")
+            .child(el("p").class("mj-prose").text(&a.intent))
+            .when(!a.scope.is_empty(), |d| {
+                d.child(
+                    el("div")
+                        .class("mj-marks")
+                        // `mono`, not `tag`: a claim is a path, and a path is the one thing
+                        // on this page long enough to push a phone-width column sideways.
+                        // `.mj-mono` breaks inside a word; `.mj-tag` does not.
+                        .children(a.scope.iter().map(mono).collect::<Vec<_>>()),
+                )
+            })
+            .child(el("p").class("mj-note").text(format!("announced {}", a.at))),
+        None => nothing("said nothing"),
+    }
+}
+
+/// The lease a reader is being shown, as facts: the address, the process, the version and
+/// the moment it was taken, plus the executable it names when the lease carries one.
+fn lease_facts(lease: Option<&LeaseView>) -> El {
+    let Some(l) = lease else {
+        return nothing("No lease: nothing has taken this checkout's server.");
+    };
+    facts(vec![
+        (
+            "Address",
+            match &l.url {
+                Some(url) => Node::Element(mono(url)),
+                None => Node::Element(el("span").class("mj-note").text("not bound yet")),
+            },
+        ),
+        ("Process", Node::Element(mono(l.pid.to_string()))),
+        (
+            "Version",
+            match &l.version {
+                Some(v) => Node::Element(mono(v)),
+                None => Node::Element(
+                    el("span")
+                        .class("mj-note")
+                        .text("written by a server too old to record one"),
+                ),
+            },
+        ),
+        ("Taken", Node::Element(mono(&l.started_at))),
+        (
+            "Executable",
+            match &l.executable {
+                Some(e) => Node::Element(mono(e.path.display().to_string())),
+                None => Node::Element(el("span").class("mj-note").text("not recorded")),
+            },
+        ),
+    ])
+}
+
+/// The board: every session attached to this checkout's shared server, what each announced
+/// it is working on, where two of them have claimed the same ground, and where the server
+/// of this checkout and of every other checkout of this repository stands.
+///
+/// Read through `peers.list` and `server.status` and derived from nothing else. Every
+/// standing, address, pid, version, timestamp, intent, claim and overlap on the page is a
+/// field one of those two capabilities already answers; this page reads no lease, probes no
+/// port and compares no path. The one thing it works out for itself is which of the listed
+/// peers holds the near side of an overlap, which it resolves by looking the claim up among
+/// the announcements in the very same answer — see [`near_side`].
+pub fn board(ctx: &Context) -> Page {
+    let peers: PeerList = match ask(ctx, "peers.list", json!({})) {
+        Ok(p) => p,
+        Err(e) => return failed(Area::Board, "Board", e),
+    };
+    let status: ServerStatus = match ask(ctx, "server.status", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Board, "Board", e),
+    };
+
+    let announced = peers
+        .peers
+        .iter()
+        .filter(|p| p.announcement.is_some())
+        .count();
+    let ready = status
+        .servers
+        .iter()
+        .filter(|s| s.standing == ServerStanding::Ready)
+        .count();
+    let statistics = el("div")
+        .class("mj-stats")
+        .child(statistic(
+            peers.count.to_string(),
+            "sessions attached",
+            "peers.list",
+        ))
+        .child(statistic(
+            announced.to_string(),
+            "have announced",
+            "peers.list",
+        ))
+        .child(statistic(
+            peers.overlaps.len().to_string(),
+            "collisions",
+            "peers.list",
+        ))
+        .child(statistic(
+            status.servers.len().to_string(),
+            "checkouts of this repository",
+            "server.status",
+        ))
+        .child(statistic(
+            ready.to_string(),
+            "servers ready",
+            "server.status",
+        ));
+
+    // first, and never behind anything: a collision is the one thing on this page that
+    // costs somebody a day if it is scrolled past
+    let collisions: Vec<El> = if peers.overlaps.is_empty() {
+        vec![card(
+            "Collisions",
+            nothing(
+                "No two sessions on this board have claimed the same ground. Every announcement \
+                 stands on its own paths.",
+            ),
+        )]
+    } else {
+        peers
+            .overlaps
+            .iter()
+            .map(|o| collision(&peers.peers, o))
+            .collect()
+    };
+
+    let peer_rows: Vec<El> = peers
+        .peers
+        .iter()
+        .map(|p| {
+            row(vec![
+                cell(mono(p.id.as_str())),
+                cell(if p.attached {
+                    badge("connected", "attached")
+                } else {
+                    badge("disconnected", "gone")
+                }),
+                cell(
+                    el("span")
+                        .child(mono(&p.client.name))
+                        .when(!p.client.version.is_empty(), |e| {
+                            e.text(format!(" {}", p.client.version))
+                        })
+                        .when(p.client.title.is_some(), |e| {
+                            e.child(el("br"))
+                                .child(tag(p.client.title.clone().unwrap_or_default()))
+                        }),
+                ),
+                cell(word_badge(&word(&p.transport))),
+                cell(mono(&p.connected_at)),
+                text_cell(ago(p.last_seen_seconds_ago)),
+                cell(announcement_cell(p)),
+            ])
+        })
+        .collect();
+    let peers_card = card_with(
+        "Sessions on this board",
+        link("/cockpit/capabilities/peers.list", "peers.list"),
+        if peer_rows.is_empty() {
+            nothing(
+                "Nothing is attached. The board is this process's own memory: a server that has \
+                 just started has an empty one, and so has one every client has left.",
+            )
+        } else {
+            table(
+                &[
+                    "Peer",
+                    "Standing",
+                    "Client",
+                    "Transport",
+                    "Attached at",
+                    "Last seen",
+                    "Working on",
+                ],
+                peer_rows,
+            )
+        },
+    );
+
+    let here = status.servers.iter().find(|s| s.this_checkout);
+    let lease = status
+        .this_process
+        .as_ref()
+        .or_else(|| here.and_then(|s| s.lease.as_ref()));
+    let this_server = card_with(
+        "This checkout's server",
+        link("/cockpit/capabilities/server.status", "server.status"),
+        el("div")
+            .child(facts(vec![
+                (
+                    "Standing",
+                    Node::Element(
+                        el("span")
+                            .child(badge(
+                                server_status(status.standing),
+                                status.standing.as_str(),
+                            ))
+                            .when(here.and_then(|s| s.reason.as_ref()).is_some(), |e| {
+                                e.text(format!(
+                                    " {}",
+                                    here.and_then(|s| s.reason.as_deref()).unwrap_or_default()
+                                ))
+                            }),
+                    ),
+                ),
+                (
+                    "Checkout",
+                    Node::Element(mono(
+                        here.map(|s| s.worktree.display().to_string())
+                            .unwrap_or_else(|| "(not enumerated)".to_string()),
+                    )),
+                ),
+                (
+                    "Branch",
+                    Node::Element(mono(
+                        here.and_then(|s| s.branch.clone())
+                            .unwrap_or_else(|| "(detached)".to_string()),
+                    )),
+                ),
+                ("Checkout id", Node::Element(mono(&status.checkout_id))),
+                (
+                    "Repository",
+                    match &status.git {
+                        Some(g) => Node::Element(mono(&g.id)),
+                        None => Node::Element(
+                            el("span").class("mj-note").text("git cannot be asked here"),
+                        ),
+                    },
+                ),
+                // the keys of `mj-facts` size a `max-content` grid column, so a long one
+                // pushes its own value off a phone screen: what this key means is said in
+                // the note under the card instead
+                (
+                    "Would serve",
+                    Node::Element(mono(format!(
+                        "{}:{} · {}",
+                        status.desired.host, status.desired.port, status.desired.version
+                    ))),
+                ),
+            ]))
+            .child(
+                el("h3")
+                    .class("mj-card-title")
+                    .text(if status.this_process.is_some() {
+                        "The lease this process holds"
+                    } else {
+                        "The lease this checkout's file holds"
+                    }),
+            )
+            .child(lease_facts(lease))
+            .child(el("p").class("mj-note").text(
+                "\"Would serve\" is what this executable would bind and answer as, and it is what \
+                 the standing is measured against. The standing itself is decided by \
+                 `server.status` from the lease above, from whether the server it names answers \
+                 for this checkout, and from whether what answers is this executable's code. \
+                 Nothing on this page reads a lease itself.",
+            )),
+    );
+
+    let checkout_row = |s: &ServerView| {
+        {
+            row(vec![
+                cell(badge(server_status(s.standing), s.standing.as_str())),
+                cell(
+                    el("span")
+                        .child(mono(s.worktree.display().to_string()))
+                        .when(s.primary, |e| e.text(" ").child(tag("primary")))
+                        .when(s.this_checkout, |e| e.text(" ").child(tag("here"))),
+                ),
+                cell(mono(
+                    s.branch.clone().unwrap_or_else(|| "(detached)".to_string()),
+                )),
+                text_cell(
+                    s.peers
+                        .map(|n| n.to_string())
+                        .unwrap_or_else(|| "—".to_string()),
+                ),
+                cell(match s.lease.as_ref().and_then(|l| l.url.clone()) {
+                    Some(url) => mono(url),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                cell(match s.lease.as_ref().and_then(|l| l.version.clone()) {
+                    Some(v) => mono(v),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                cell(match s.lease.as_ref() {
+                    Some(l) => mono(&l.started_at),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                text_cell(s.reason.clone().unwrap_or_default()),
+            ])
+        }
+    };
+    const CHECKOUT_COLUMNS: &[&str] = &[
+        "Standing", "Checkout", "Branch", "Peers", "Address", "Version", "Started", "Why",
+    ];
+    // a checkout nothing serves is the ordinary state of a worktree nobody is working in,
+    // and on a machine with a hundred and sixty of them it is also every row of the table.
+    // The ones with a server are what a reader came for; the rest are complete, counted and
+    // one click away, so nothing is dropped and nothing is scrolled past.
+    let (served, unserved): (Vec<&ServerView>, Vec<&ServerView>) = status
+        .servers
+        .iter()
+        .partition(|s| s.standing != ServerStanding::Absent);
+    let checkouts = card_with(
+        "Every checkout of this repository",
+        link("/cockpit/capabilities/server.status", "server.status"),
+        el("div")
+            .child(if served.is_empty() {
+                nothing("No checkout of this repository has a server. This process is answering without a lease.")
+            } else {
+                table(
+                    CHECKOUT_COLUMNS,
+                    served.iter().map(|s| checkout_row(s)).collect(),
+                )
+            })
+            .when(!unserved.is_empty(), |d| {
+                d.child(details(
+                    format!("{} checkout(s) with no server", unserved.len()),
+                    table(
+                        CHECKOUT_COLUMNS,
+                        unserved.iter().map(|s| checkout_row(s)).collect(),
+                    ),
+                ))
+            }),
+    );
+
+    Page::new(
+        Area::Board,
+        "Board",
+        el("div")
+            .class("mj-grid")
+            .child(statistics)
+            .children(collisions)
+            .child(peers_card)
+            .child(this_server)
+            .child(checkouts),
+    )
+    .subtitle(
+        "Who else is working in this repository, what each of them announced, and where two \
+         of them are about to collide.",
+    )
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Board", None)])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------------------------- board
+
+    /// A peer as the board lists one, for the tests below. Every field is the one the
+    /// capability answers; nothing here is a shape this page invented.
+    fn a_peer(id: &str, client: &str, attached: bool, scope: &[&str]) -> Peer {
+        Peer {
+            id: serde_json::from_value(json!(id)).expect("a peer id"),
+            client: crate::peers::ClientInfo {
+                name: client.to_string(),
+                version: "1".into(),
+                title: None,
+            },
+            transport: crate::peers::Transport::Http,
+            connected_at: "2026-09-10T21:00:00Z".into(),
+            last_seen_seconds_ago: 4,
+            attached,
+            announcement: (!scope.is_empty()).then(|| crate::peers::Announcement {
+                intent: format!("what {id} is doing"),
+                scope: scope.iter().map(|s| s.to_string()).collect(),
+                at: "2026-09-10T21:00:01Z".into(),
+            }),
+        }
+    }
+
+    #[test]
+    fn a_standing_wears_a_status_word_the_design_declares() {
+        for standing in [
+            ServerStanding::Absent,
+            ServerStanding::Starting,
+            ServerStanding::Ready,
+            ServerStanding::Outdated,
+            ServerStanding::Stale,
+        ] {
+            let status = server_status(standing);
+            assert!(
+                crate::design::DesignSystem::compiled()
+                    .expect("the compiled declaration")
+                    .role_of_state(status)
+                    .is_some(),
+                "{standing:?} wears '{status}', which the design system does not file"
+            );
+        }
+        // the reader still sees the standing's own word, not the colour's
+        assert_eq!(ServerStanding::Outdated.as_str(), "outdated");
+    }
+
+    #[test]
+    fn a_board_glance_reads_in_the_coarsest_unit_that_still_says_something() {
+        assert_eq!(ago(0), "just now");
+        assert_eq!(ago(4), "4s ago");
+        assert_eq!(ago(600), "10m ago");
+        assert_eq!(ago(7_200), "2h ago");
+        assert_eq!(ago(864_000), "10d ago");
+    }
+
+    #[test]
+    fn the_near_side_of_a_collision_is_resolved_out_of_the_same_answer() {
+        let peers = vec![
+            a_peer("p1", "codex", true, &["apps/majordomus-cli"]),
+            a_peer("p2", "claude-code", true, &["docs"]),
+            a_peer(
+                "p3",
+                "claude-code",
+                true,
+                &["apps/majordomus-cli/src/cockpit"],
+            ),
+        ];
+        let overlap = Overlap {
+            peer: serde_json::from_value(json!("p1")).expect("a peer id"),
+            attached: true,
+            intent: "what p1 is doing".into(),
+            paths: vec![crate::peers::OverlapPath {
+                yours: "apps/majordomus-cli/src/cockpit".into(),
+                theirs: "apps/majordomus-cli".into(),
+            }],
+        };
+        let near = near_side(&peers, &overlap).expect("the peer whose claim it is");
+        assert_eq!(near.id.as_str(), "p3");
+        assert_eq!(peer_label(near), "p3 claude-code");
+
+        // a claim nobody on the board announced names nobody, rather than the first peer
+        let orphan = Overlap {
+            paths: vec![crate::peers::OverlapPath {
+                yours: "site".into(),
+                theirs: "apps/majordomus-cli".into(),
+            }],
+            ..overlap
+        };
+        assert!(near_side(&peers, &orphan).is_none());
+    }
+
+    #[test]
+    fn a_collision_names_both_sessions_and_every_claim_that_meets() {
+        let peers = vec![
+            a_peer("p1", "codex", true, &["test"]),
+            a_peer("p2", "claude-code", true, &["test/cases/125.sh"]),
+        ];
+        let overlap = Overlap {
+            peer: serde_json::from_value(json!("p1")).expect("a peer id"),
+            attached: true,
+            intent: "what p1 is doing".into(),
+            paths: vec![crate::peers::OverlapPath {
+                yours: "test/cases/125.sh".into(),
+                theirs: "test".into(),
+            }],
+        };
+        let rendered = collision(&peers, &overlap).render();
+        assert!(
+            rendered.contains("p2 claude-code and p1 codex"),
+            "{rendered}"
+        );
+        assert!(rendered.contains("what p1 is doing"), "{rendered}");
+        assert!(rendered.contains("what p2 is doing"), "{rendered}");
+        assert!(rendered.contains("test/cases/125.sh"), "{rendered}");
+        // a collision is an alert and not a table row
+        assert!(rendered.contains("mj-alert--fail"), "{rendered}");
+        assert!(rendered.contains("mj-badge--blocked"), "{rendered}");
+    }
+
+    #[test]
+    fn a_session_that_announced_nothing_says_so_and_one_that_did_shows_its_claims() {
+        let silent = announcement_cell(&a_peer("p9", "gemini-cli", true, &[])).render();
+        assert!(silent.contains("said nothing"), "{silent}");
+
+        let spoken = announcement_cell(&a_peer("p8", "codex", true, &["lib", "docs"])).render();
+        assert!(spoken.contains("what p8 is doing"), "{spoken}");
+        assert!(
+            spoken.contains(">lib<") && spoken.contains(">docs<"),
+            "{spoken}"
+        );
+        assert!(
+            spoken.contains("announced 2026-09-10T21:00:01Z"),
+            "{spoken}"
+        );
+    }
+
+    #[test]
+    fn a_checkout_with_no_lease_says_so_rather_than_rendering_an_empty_fact_list() {
+        assert!(lease_facts(None).render().contains("No lease"));
+        let held = lease_facts(Some(&LeaseView {
+            pid: 4321,
+            url: Some("http://127.0.0.1:8741".into()),
+            started_at: "2026-09-10T20:00:00Z".into(),
+            executable: None,
+            version: Some("0.5.0".into()),
+        }))
+        .render();
+        assert!(held.contains("http://127.0.0.1:8741"), "{held}");
+        assert!(held.contains("4321"), "{held}");
+        assert!(held.contains("0.5.0"), "{held}");
+        assert!(held.contains("not recorded"), "{held}");
+    }
+
+    #[test]
+    fn the_board_renders_from_the_two_capabilities_and_names_this_checkout() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        ctx.peers.attach(crate::peers::Transport::Http);
+        let id = ctx.peers.attach(crate::peers::Transport::Stdio);
+        ctx.peers.identify(
+            &id,
+            crate::peers::ClientInfo {
+                name: "claude-code".into(),
+                version: "9".into(),
+                title: None,
+            },
+        );
+        ctx.peers
+            .announce(&id, "the board itself", vec!["apps/majordomus-cli".into()]);
+
+        let page = board(&ctx);
+        assert_eq!(page.status, 200);
+        assert_eq!(page.area, Area::Board);
+        let rendered = page.main.render();
+        assert!(rendered.contains("claude-code"), "{rendered}");
+        assert!(rendered.contains("the board itself"), "{rendered}");
+        assert!(rendered.contains("sessions attached"), "{rendered}");
+        assert!(
+            rendered.contains("checkouts of this repository"),
+            "{rendered}"
+        );
+        // a peer that has attached and not initialised is on the board too, and named
+        assert!(rendered.contains("(not initialized)"), "{rendered}");
+    }
 
     #[test]
     fn a_nullable_integer_is_edited_as_a_number() {
