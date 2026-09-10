@@ -92,6 +92,58 @@ LICENSE"
 # first.
 LC_ALL=C; export LC_ALL
 
+# The use cases, their taxonomy and the applications are inputs of a repository that has
+# them. Whether it has them is the manifest's answer, not this list's: a layer that names no
+# use-cases section has none, the pages that would show them are not rendered, and a glob
+# left unexpanded here would be reported as a missing canonical input — which is what a
+# fixture without them used to hit. The section being named while its objects are absent is
+# still refused, further down, where all four combinations are spelled out.
+UC_SEC="$(mj_man sections.use-cases)"; AP_SEC="$(mj_man sections.applications)"
+UC_INPUTS=""
+[ -n "$UC_SEC" ] && [ -d "$ROOT/$AI/$UC_SEC" ] && UC_INPUTS="$ROOT/$AI/$UC_SEC/*.md $ROOT/$AI/$UC_SEC/taxonomy.yaml"
+[ -n "$AP_SEC" ] && [ -d "$ROOT/$AI/$AP_SEC" ] && UC_INPUTS="$UC_INPUTS $ROOT/$AI/$AP_SEC/*.md"
+
+# The layer says these objects are optional: the source classes `use_case`, `taxonomy` and
+# `application` in sources.yaml carry `required: false`, and lib/usecase.sh honours it. This
+# generator used to be the one reader that made absence fatal, which is a semantic definition
+# kept in a second place and disagreeing with the two that own it. All four combinations,
+# written out so that nobody has to infer the third from the absence of a line:
+#
+#   section named + objects present  -> the repository: validate, run every scenario, render
+#   section named + objects absent   -> refused: the manifest promises what the layer lacks
+#   section absent + objects present -> refused: objects nobody named would go unproven
+#   section absent + objects absent  -> nothing to render, and so nothing to run
+#
+# Only the last changes, and it is the one a fixture is in. A page that shows a demonstration
+# must have run it; a build that renders no such page must not pay for one. The refusals are
+# here, before anything is read, rather than eight hundred lines further on.
+#
+# "Objects present" is read from the source class's own pathspec — the same registration
+# every other reader asks — rather than from a directory name spelled here: a guard that
+# invents its own idea of where objects live is a second opinion, not a guard.
+. "$ROOT/lib/knowledge.sh"
+mj_src_glob() {                     # source-class id -> its pathspec as a filesystem glob
+  local i n spec; mj_ksrc_load; n="$(mj_ksrc_count)"; i=0
+  while [ "$i" -lt "$n" ]; do
+    if [ "$(mj_ksrc "$i" id)" = "$1" ]; then
+      spec="$(mj_ksrc "$i" pathspec)"; printf '%s' "${spec#:(glob)}"; return 0
+    fi
+    i=$((i + 1))
+  done
+}
+mj_src_any() {                      # does any file match the class's pathspec?
+  local g; g="$(mj_src_glob "$1")"; [ -n "$g" ] || return 1
+  ( cd "$ROOT" && for f in $g; do [ -e "$f" ] && exit 0; done; exit 1 )
+}
+UC_PRESENT=0; mj_src_any use_case && UC_PRESENT=1
+AP_PRESENT=0; mj_src_any application && AP_PRESENT=1
+[ -z "$UC_SEC" ] && [ "$UC_PRESENT" = 1 ] && { echo "generate-site-data: the manifest names no use-cases section, but the source class 'use_case' matches files: they would go unproven" >&2; exit 10; }
+[ -z "$AP_SEC" ] && [ "$AP_PRESENT" = 1 ] && { echo "generate-site-data: the manifest names no applications section, but the source class 'application' matches files" >&2; exit 10; }
+[ -n "$UC_SEC" ] && [ ! -d "$ROOT/$AI/$UC_SEC" ] && { echo "generate-site-data: the manifest names a use-cases section, and $AI/$UC_SEC is absent" >&2; exit 10; }
+[ -n "$AP_SEC" ] && [ ! -d "$ROOT/$AI/$AP_SEC" ] && { echo "generate-site-data: the manifest names an applications section, and $AI/$AP_SEC is absent" >&2; exit 10; }
+CATALOGUE=1
+[ -z "$UC_SEC" ] && [ "$UC_PRESENT" = 0 ] && CATALOGUE=0
+
 # test cases are inputs because each one declares which commands it covers, and that
 # metadata is the evidence the command pages render
 for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomus/rules/*.md "$ROOT"/docs/*.md "$ROOT"/docs/claims/*.md \
@@ -99,7 +151,7 @@ for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomu
          "$ROOT"/test/cases/*.sh \
          "$ROOT"/test/fixtures/commands/*.json "$ROOT"/test/fixtures/commands/setup/*.sh \
          "$ROOT"/test/fixtures/commands/stdin/* \
-         "$ROOT"/.ai/repo/use-cases/*.md "$ROOT"/.ai/repo/use-cases/taxonomy.yaml "$ROOT"/.ai/repo/applications/*.md \
+         $UC_INPUTS \
          "$ROOT"/lib/usecase.sh \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
@@ -911,6 +963,7 @@ for f in "$AP_DIR"/*.md; do
   front_json "$f" | jq -c --arg path "$(mj_rel "$f")" '. + {path: $path}' >> "$STAGE/ap.jsonl"
   mkdir -p "$STAGE/ap-bodies"; body_of "$f" > "$STAGE/ap-bodies/$(basename "$f")"
 done
+if [ "$CATALOGUE" = 1 ]; then
 [ -s "$STAGE/uc.jsonl" ] || { echo "generate-site-data: no use case under $(mj_rel "$UC_DIR")" >&2; exit 10; }
 TAXf="$(flat "$UC_DIR/taxonomy.yaml")"
 jq -R -n '
@@ -949,6 +1002,13 @@ else
   exit 10; }
 fi
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
+else
+  # nothing to render: the empty shapes the assembly below reads, so the catalogue is a
+  # catalogue of nothing rather than a special case threaded through the rest of the file
+  printf '{"categories":[]}\n' > "$STAGE/taxonomy.json"
+  printf '{"results":[]}\n'    > "$STAGE/uc-run.json"
+  printf '{}\n'                > "$STAGE/uc-coverage.json"
+fi
 jq -n \
   --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \
   --slurpfile aps <(jq -s . "$STAGE/ap.jsonl") \
