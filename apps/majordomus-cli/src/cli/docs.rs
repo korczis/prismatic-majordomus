@@ -82,6 +82,10 @@ pub struct ArgDoc {
     pub value_name: Option<String>,
     /// Whether the argument takes a value at all (a flag does not).
     pub takes_value: bool,
+    /// Whether it takes more than one value: a repeatable option, or a positional that
+    /// swallows the rest. Read from clap, so that a projection knows whether another
+    /// value may follow without a second declaration anywhere.
+    pub variadic: bool,
     /// Must be given.
     pub required: bool,
     /// Accepted by every command under the one that declares it.
@@ -212,6 +216,10 @@ fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
                 .and_then(|names| names.first())
                 .map(|n| n.to_string()),
             takes_value: a.get_action().takes_values(),
+            variadic: a
+                .get_num_args()
+                .map(|n| n.max_values() > 1)
+                .unwrap_or(false),
             required: a.is_required_set(),
             global: a.is_global_set(),
             possible_values: a
