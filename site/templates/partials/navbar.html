@@ -17,8 +17,15 @@
         <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
       </button>
     </div>
-    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
-      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+    {#- The menu row wraps. The bar around it already wraps — the logo, the menu and the
+        buttons fall onto separate lines long before a desktop width — but the row of
+        groups itself did not, and at the `md` boundary its six groups measure more than
+        the line they are on, which made every page of the site 66px wider than the
+        viewport at 768px. Wrapping is what the bar already does one level up; the gap
+        replaces `space-x`, which puts a margin on the wrong side of a wrapped row and
+        needed `rtl:space-x-reverse` to be right in the first place. -#}
+    <div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
         {% for g in nav.groups %}
         {% set items = g.items or [] %}
         {% set active = cp == g.href or cp in [i.href for i in items] %}
