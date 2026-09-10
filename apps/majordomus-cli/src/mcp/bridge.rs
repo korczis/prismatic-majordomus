@@ -6,6 +6,7 @@
 //! loopback request needs (the server always answers with `Content-Length`, never
 //! chunked); no HTTP library is pulled in for it.
 
+use std::collections::BTreeMap;
 use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
@@ -142,20 +143,28 @@ pub enum BridgeError {
 ///
 /// Besides the frames, the bridge keeps two things it saw pass through: the client's
 /// `initialize`, so that a session can be re-opened without the client noticing, and the
-/// arguments of the client's last accepted announcement, so that what the client said it
-/// was working on outlives the server it said it to. An announcement was the one fact
-/// that died with a server: on 2026-09-09 a session's intent vanished from the board when
-/// its transport was re-established, and eight peers could not see it for three hours.
+/// arguments of every accepted announcement the client has made, so that what the client
+/// said it was working on outlives the server it said it to. An announcement was the one
+/// fact that died with a server: on 2026-09-09 a session's intent vanished from the board
+/// when its transport was re-established, and eight peers could not see it for three hours.
 /// The bridge is the one place that sees both the announcement and the reconnection, so
-/// the bridge replays it — after a re-attach through [`Bridge::reinitialize`], and, for a
-/// takeover, through [`Bridge::announcement`] onto the new server's own board.
+/// the bridge replays them — after a re-attach through [`Bridge::reinitialize`], and, for a
+/// takeover, through [`Bridge::announcements`] onto the new server's own board.
+///
+/// *Every* announcement, one per claim name, and not merely the last one: a client may
+/// hold several claims at once, and replaying only the most recent would restore one of
+/// them and quietly drop the rest — which is the same loss the replay exists to prevent,
+/// arriving by a different route.
 #[derive(Debug)]
 pub struct Bridge {
     url: String,
     session: Option<String>,
     initialize: Option<Value>,
     client: Option<ClientInfo>,
-    announcement: Option<Value>,
+    /// The arguments of the last accepted announcement per claim name, `""` for the
+    /// unnamed claim. A `BTreeMap` so a replay is in a stable order and re-announcing a
+    /// name replaces rather than appends, exactly as the board itself does.
+    announcements: BTreeMap<String, Value>,
 }
 
 impl Bridge {
@@ -166,14 +175,23 @@ impl Bridge {
             session: None,
             initialize: None,
             client: None,
-            announcement: None,
+            announcements: BTreeMap::new(),
         }
     }
 
-    /// The arguments of the client's last announcement the server accepted, when it made
-    /// one: what a takeover replays onto the new server's board.
-    pub fn announcement(&self) -> Option<&Value> {
-        self.announcement.as_ref()
+    /// The arguments of every announcement the server accepted, one per claim name, in
+    /// name order: what a takeover replays onto the new server's board.
+    ///
+    /// Empty when the client has announced nothing, which is every bridge that has only
+    /// just been made — nothing has passed through it yet to be remembered.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::Bridge;
+    /// let bridge = Bridge::new("http://127.0.0.1:8741/mcp".into());
+    /// assert_eq!(bridge.announcements().count(), 0);
+    /// ```
+    pub fn announcements(&self) -> impl Iterator<Item = &Value> {
+        self.announcements.values()
     }
 
     /// The server's URL.
@@ -219,7 +237,14 @@ impl Bridge {
             }
         };
         if let Some(arguments) = announcement_in(message, answer.as_ref()) {
-            self.announcement = Some(arguments);
+            let name = arguments
+                .get("claim")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|c| !c.is_empty())
+                .unwrap_or("")
+                .to_string();
+            self.announcements.insert(name, arguments);
         }
         Ok(answer)
     }
@@ -241,8 +266,9 @@ impl Bridge {
         }
         let _ = self.send(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }))?;
         tracing::info!(url = %self.url, "session re-opened on the shared server");
-        // what the client said it was working on is said again, to whoever serves now
-        if let Some(arguments) = self.announcement.clone() {
+        // what the client said it was working on is said again, to whoever serves now —
+        // every claim it holds, because restoring one of several is still a loss
+        for arguments in self.announcements.values().cloned().collect::<Vec<_>>() {
             let replay = json!({
                 "jsonrpc": "2.0",
                 "id": "majordomus-bridge-announce",
@@ -367,5 +393,75 @@ fn first_initialize_params(message: &Value) -> Value {
             .map(|m| m["params"].clone())
             .unwrap_or(Value::Null),
         m => m["params"].clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A bridge remembers one announcement per claim name, so that a client holding several
+    /// claims has all of them replayed after a re-attach rather than the newest one. Before
+    /// named claims this was a single slot, and a client that announced twice replayed only
+    /// the second — a loss the replay itself exists to prevent, arriving by another route.
+    #[test]
+    fn a_bridge_remembers_one_announcement_per_claim() {
+        let mut bridge = Bridge::new("http://127.0.0.1:1/mcp".into());
+        let call = |claim: Option<&str>, intent: &str| {
+            let mut arguments = json!({ "intent": intent, "scope": ["docs"] });
+            if let Some(c) = claim {
+                arguments["claim"] = json!(c);
+            }
+            json!({
+                "method": "tools/call",
+                "params": { "name": crate::capability::builtin::peers::ANNOUNCE_TOOL, "arguments": arguments },
+            })
+        };
+        let accepted = json!({ "result": { "isError": false } });
+
+        // remembering is what `send` does after an answer; do the same thing here without
+        // a socket, because the remembering is the behaviour under test and not the transport
+        for (claim, intent) in [
+            (None, "the unnamed claim"),
+            (Some("worker-a"), "the guard"),
+            (Some("worker-b"), "the cockpit"),
+            (Some("worker-a"), "the guard, narrowed"),
+        ] {
+            let message = call(claim, intent);
+            let arguments = announcement_in(&message, Some(&accepted)).expect("accepted");
+            let name = arguments
+                .get("claim")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_string();
+            bridge.announcements.insert(name, arguments);
+        }
+
+        let held: Vec<&str> = bridge
+            .announcements()
+            .map(|a| a["intent"].as_str().unwrap())
+            .collect();
+        assert_eq!(
+            held,
+            vec!["the unnamed claim", "the guard, narrowed", "the cockpit"],
+            "three claims, in name order, and the repeated name updated rather than appended"
+        );
+    }
+
+    /// An announcement the server refused is not remembered, so a takeover does not replay a
+    /// claim the board never accepted.
+    #[test]
+    fn a_refused_announcement_is_not_remembered() {
+        let message = json!({
+            "method": "tools/call",
+            "params": {
+                "name": crate::capability::builtin::peers::ANNOUNCE_TOOL,
+                "arguments": { "intent": "refused", "scope": [] },
+            },
+        });
+        let refused = json!({ "result": { "isError": true } });
+        assert!(announcement_in(&message, Some(&refused)).is_none());
+        let errored = json!({ "error": { "code": -32000 } });
+        assert!(announcement_in(&message, Some(&errored)).is_none());
     }
 }
