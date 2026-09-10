@@ -117,12 +117,15 @@ gates:
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
-  # stylesheets from it and greps the tree. Cheap enough to run beside the structure checks
-  # rather than behind the site build, which is where a gate stops being run.
+  # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
+  # literal, a raw palette utility, a bracketed size, a second declaration of a token, a
+  # read of a token nothing emits, a copy of the brand, a theme key named by hand. Cheap
+  # enough to run beside the structure checks; the projections themselves are proved
+  # current by generate --check in the rust job, like every other generated artifact.
   - id: design
     job: structure
     runs: scripts/ci/design-check
-    summary: the three generated stylesheets match share/design/tokens.yaml, and no file that puts a colour on a screen names one outside it
+    summary: no source carries a design decision of its own — every colour, size, status word, brand copy and theme key comes from share/design/tokens.yaml through its projections
 
   - id: worktree-topology
     job: structure
@@ -239,8 +242,8 @@ classes:
   # change here is selected by the site, the Cockpit and the crate at once; the class exists
   # so that the gate also runs when only the generator or the gate itself is edited.
   - id: design
-    paths: [share/design/**, scripts/design-tokens, scripts/ci/design-check, apps/majordomus-cli/src/web/tokens.css]
-    gates: [design, cockpit-assets, rust-check, site-build, site-probe, ui-audit]
+    paths: [share/design/**, scripts/ci/design-check, apps/majordomus-cli/src/design/**, apps/majordomus-cli/src/capability/builtin/design.rs, apps/majordomus-cli/src/web/tokens.css, apps/majordomus-cli/src/cockpit/logo-mark.svg, site/data/registry/design.json, docs/DESIGN_SYSTEM.md]
+    gates: [design, cockpit-assets, cockpit-probe, rust-check, rust-integration, site-build, site-probe, ui-audit]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of

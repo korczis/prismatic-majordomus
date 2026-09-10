@@ -29,6 +29,27 @@
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
     },
     {
+      "document": "design-mark",
+      "format": "text",
+      "path": "apps/majordomus-cli/src/cockpit/logo-mark.svg",
+      "schema": null,
+      "source": "share/design/brand/logo-mark.svg, the canonical mark"
+    },
+    {
+      "document": "design-declaration",
+      "format": "yaml",
+      "path": "apps/majordomus-cli/src/design/tokens.yaml",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "document": "design-tokens",
+      "format": "text",
+      "path": "apps/majordomus-cli/src/web/tokens.css",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
       "document": "deployment",
       "format": "text",
       "path": "deploy/Dockerfile",
@@ -134,6 +155,27 @@
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
     },
     {
+      "document": "design",
+      "format": "json",
+      "path": "docs/generated/design.json",
+      "schema": "majordomus/design-system/v1",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "document": "design",
+      "format": "markdown",
+      "path": "docs/generated/design.md",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "document": "design",
+      "format": "yaml",
+      "path": "docs/generated/design.yaml",
+      "schema": "majordomus/design-system/v1",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
       "document": "distribution-matrix",
       "format": "json",
       "path": "docs/generated/distribution-matrix.json",
@@ -174,6 +216,13 @@
       "path": "docs/generated/modules/deploy.md",
       "schema": null,
       "source": "the `deploy` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/design",
+      "format": "markdown",
+      "path": "docs/generated/modules/design.md",
+      "schema": null,
+      "source": "the `design` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/directories",
@@ -554,6 +603,34 @@
       "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
     },
     {
+      "document": "design-mark",
+      "format": "text",
+      "path": "share/cockpit/favicon.svg",
+      "schema": null,
+      "source": "share/design/brand/logo-mark.svg, the canonical mark"
+    },
+    {
+      "document": "design-status",
+      "format": "text",
+      "path": "share/design/status.css",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "document": "design-surface",
+      "format": "text",
+      "path": "share/design/surface.css",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "document": "design-theme",
+      "format": "text",
+      "path": "share/design/theme.css",
+      "schema": null,
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
       "document": "schemas/majordomus.adr/v1",
       "format": "json",
       "path": "share/schemas/majordomus/adr/adr.v1.schema.json",
@@ -673,6 +750,13 @@
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     },
     {
+      "document": "site-design",
+      "format": "json",
+      "path": "site/data/registry/design.json",
+      "schema": "majordomus-site-design/v1",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
       "document": "site-distribution",
       "format": "json",
       "path": "site/data/registry/distribution.json",
@@ -713,6 +797,27 @@
       "path": "site/data/registry/why.json",
       "schema": "majordomus-site-why/v1",
       "source": "the operational moments, audiences and areas of this repository's layer"
+    },
+    {
+      "document": "design-mark",
+      "format": "text",
+      "path": "site/static/favicon.svg",
+      "schema": null,
+      "source": "share/design/brand/logo-mark.svg, the canonical mark"
+    },
+    {
+      "document": "design-mark",
+      "format": "text",
+      "path": "site/static/images/logo-mark.svg",
+      "schema": null,
+      "source": "share/design/brand/logo-mark.svg, the canonical mark"
+    },
+    {
+      "document": "design-logo",
+      "format": "text",
+      "path": "site/static/images/logo.svg",
+      "schema": null,
+      "source": "share/design/brand/logo.svg, the canonical logo"
     },
     {
       "document": "installer",
@@ -968,6 +1073,65 @@
     },
     {
       "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
+      "id": "design",
+      "schema": "majordomus/design-system/v1",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
+        "yaml"
+      ],
+      "id": "design-declaration",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-logo",
+      "source": "share/design/brand/logo.svg, the canonical logo"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-mark",
+      "source": "share/design/brand/logo-mark.svg, the canonical mark"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-status",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-surface",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-theme",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "design-tokens",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
+    },
+    {
+      "formats": [
         "json"
       ],
       "id": "distribution-matrix",
@@ -1021,6 +1185,13 @@
       ],
       "id": "modules/deploy",
       "source": "the `deploy` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/design",
+      "source": "the `design` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -1335,6 +1506,14 @@
       ],
       "id": "sections/use-case",
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-design",
+      "schema": "majordomus-site-design/v1",
+      "source": "share/design/tokens.yaml, the one declaration of the design"
     },
     {
       "formats": [

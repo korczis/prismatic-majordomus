@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 73 | 70 | 0 | 3 |
-| http | 73 | 70 | 0 | 3 |
-| mcp | 71 | 68 | 0 | 3 |
+| direct | 76 | 73 | 0 | 3 |
+| http | 76 | 73 | 0 | 3 |
+| mcp | 74 | 71 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 230 | 221 | 0 | 9 |
+| total | 239 | 230 | 0 | 9 |
 
 ## Capabilities
 
@@ -30,6 +30,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
+| `design.system` | design | query | — | covered | covered | covered | `default` |
+| `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |

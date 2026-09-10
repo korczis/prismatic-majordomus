@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 73,
-    "schemas": 326,
-    "tags": 24
+    "operations": 76,
+    "schemas": 337,
+    "tags": 25
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -2602,6 +2602,52 @@
       "variants": []
     },
     {
+      "description": "One part of a colour token — a role has one, a status has its text, ground and border.",
+      "is_enum": false,
+      "name": "ColourPart",
+      "properties": [
+        {
+          "description": "`fg`, `bg` or `line`.",
+          "name": "part",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The custom property a surface reads.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "In the light theme.",
+          "name": "light",
+          "refs": [
+            "Resolved"
+          ],
+          "required": true,
+          "type": "Resolved"
+        },
+        {
+          "description": "In the dark theme.",
+          "name": "dark",
+          "refs": [
+            "Resolved"
+          ],
+          "required": true,
+          "type": "Resolved"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Token"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One argument of a command, as the declaration gives it plus what can be inferred.",
       "is_enum": false,
       "name": "CommandArgument",
@@ -4754,6 +4800,100 @@
       "variants": []
     },
     {
+      "description": "The design system: what it is and where it goes.",
+      "is_enum": false,
+      "name": "DesignReport",
+      "properties": [
+        {
+          "description": "SHA-256 of the declaration's canonical form.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first twelve digits, as every stylesheet carries them in `--mj-design`.",
+          "name": "design",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The format version of the declaration.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where the declaration lives, repository-relative.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who this is.",
+          "name": "identity",
+          "refs": [
+            "Identity"
+          ],
+          "required": true,
+          "type": "Identity"
+        },
+        {
+          "description": "The two type stacks.",
+          "name": "font",
+          "refs": [
+            "Fonts"
+          ],
+          "required": true,
+          "type": "Fonts"
+        },
+        {
+          "description": "The theme contract.",
+          "name": "theme",
+          "refs": [
+            "ThemeView"
+          ],
+          "required": true,
+          "type": "ThemeView"
+        },
+        {
+          "description": "The widths a browser audit measures every page at.",
+          "name": "viewports",
+          "refs": [],
+          "required": true,
+          "type": "array of integer (uint32)"
+        },
+        {
+          "description": "How many of each kind of token.",
+          "name": "tallies",
+          "refs": [
+            "TokenTallies"
+          ],
+          "required": true,
+          "type": "TokenTallies"
+        },
+        {
+          "description": "Every generated file the declaration is projected into.",
+          "name": "projections",
+          "refs": [
+            "ProjectionView"
+          ],
+          "required": true,
+          "type": "array of ProjectionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.system"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
       "is_enum": false,
       "name": "Diagnosis",
@@ -5770,6 +5910,9 @@
         "deploy.get",
         "deploy.list",
         "deploy.check",
+        "design.system",
+        "design.explain",
+        "design.tokens",
         "directories.list",
         "distribution.model",
         "distribution.artifact",
@@ -7608,6 +7751,34 @@
       "variants": []
     },
     {
+      "description": "The two type stacks.",
+      "is_enum": false,
+      "name": "Fonts",
+      "properties": [
+        {
+          "description": "The system stack.",
+          "name": "sans",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The monospace stack.",
+          "name": "mono",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What `git` said about the repository.",
       "is_enum": false,
       "name": "GitInfo",
@@ -8234,6 +8405,48 @@
           "value": "POST"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Who this is.",
+      "is_enum": false,
+      "name": "Identity",
+      "properties": [
+        {
+          "description": "The product name every surface shows.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The mark, relative to the design directory.",
+          "name": "mark",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The full logo, relative to the design directory.",
+          "name": "logo",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The social preview image, relative to the design directory.",
+          "name": "social",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -12387,6 +12600,34 @@
       "variants": []
     },
     {
+      "description": "One generated projection of the design and what it is for.",
+      "is_enum": false,
+      "name": "ProjectionView",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What reads it.",
+          "name": "read_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it.",
       "is_enum": false,
       "name": "ProtocolReport",
@@ -14304,6 +14545,41 @@
           "value": "full"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What a colour reference resolved to.",
+      "is_enum": false,
+      "name": "Resolved",
+      "properties": [
+        {
+          "description": "The palette entry or role the declaration named.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal after every reference is followed.",
+          "name": "literal",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ColourPart"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -16226,6 +16502,41 @@
       "variants": []
     },
     {
+      "description": "The theme contract as a client reads it.",
+      "is_enum": false,
+      "name": "ThemeView",
+      "properties": [
+        {
+          "description": "The class on the root element that means dark.",
+          "name": "class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The `localStorage` key the person's choice is kept under.",
+          "name": "storage_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The one pre-paint statement every surface runs.",
+          "name": "bootstrap",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.",
       "is_enum": true,
       "name": "TierState",
@@ -16250,6 +16561,249 @@
           "value": "unavailable"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One token, explained: where it came from, what it resolves to, what reads it.",
+      "is_enum": false,
+      "name": "Token",
+      "properties": [
+        {
+          "description": "The name as declared.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What kind of token.",
+          "name": "kind",
+          "refs": [
+            "TokenKind"
+          ],
+          "required": true,
+          "type": "TokenKind"
+        },
+        {
+          "description": "What it is for, from the declaration.",
+          "name": "about",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The custom properties and Tailwind utilities it becomes.",
+          "name": "css",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "For a colour token: its parts, each resolved per theme.",
+          "name": "parts",
+          "refs": [
+            "ColourPart"
+          ],
+          "required": false,
+          "type": "array of ColourPart"
+        },
+        {
+          "description": "For a scalar token: the value.",
+          "name": "value",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "For a state word: the status it is filed under.",
+          "name": "role",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "For a status: the state words filed under it.",
+          "name": "states",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The Flowbite names that are synonyms of it.",
+          "name": "aliases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The generated files the token reaches.",
+          "name": "projections",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.explain"
+      ],
+      "used_by_schemas": [
+        "TokenList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What kind of thing a token is.",
+      "is_enum": true,
+      "name": "TokenKind",
+      "properties": [],
+      "type": "\"font\" | \"palette\" | \"role\" | \"status\" | \"state\" | \"type\" | \"tracking\" | \"layout\" | \"radius\" | \"motion\" | \"theme\"",
+      "used_by": [
+        "design.tokens"
+      ],
+      "used_by_schemas": [
+        "Token"
+      ],
+      "values": [
+        {
+          "description": "A type stack.",
+          "value": "font"
+        },
+        {
+          "description": "A raw palette entry.",
+          "value": "palette"
+        },
+        {
+          "description": "A semantic surface role.",
+          "value": "role"
+        },
+        {
+          "description": "A status meaning.",
+          "value": "status"
+        },
+        {
+          "description": "A state word, filed under a status.",
+          "value": "state"
+        },
+        {
+          "description": "A step of the type scale.",
+          "value": "type"
+        },
+        {
+          "description": "A letter-spacing.",
+          "value": "tracking"
+        },
+        {
+          "description": "A shared layout value.",
+          "value": "layout"
+        },
+        {
+          "description": "A corner radius.",
+          "value": "radius"
+        },
+        {
+          "description": "A duration.",
+          "value": "motion"
+        },
+        {
+          "description": "The theme contract.",
+          "value": "theme"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The tokens, listed.",
+      "is_enum": false,
+      "name": "TokenList",
+      "properties": [
+        {
+          "description": "The fingerprint of the declaration they came from.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many are listed.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The tokens, in the inventory's order.",
+          "name": "tokens",
+          "refs": [
+            "Token"
+          ],
+          "required": true,
+          "type": "array of Token"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.tokens"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How many of each kind of token.",
+      "is_enum": false,
+      "name": "TokenTallies",
+      "properties": [
+        {
+          "description": "Raw palette entries.",
+          "name": "palette",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Semantic roles.",
+          "name": "roles",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Status meanings.",
+          "name": "statuses",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "State words filed under a status.",
+          "name": "states",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Steps of the type scale.",
+          "name": "type_steps",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Flowbite names declared as synonyms.",
+          "name": "aliases",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DesignReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -18422,6 +18976,201 @@
           "result_schema": "DeploymentCheck",
           "stability": "behaviorally_verified",
           "summary": "Would these deployments work"
+        }
+      ]
+    },
+    {
+      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+      "name": "design",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design\"",
+          "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+          "id": "design.system",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "design",
+            "uri": "majordomus://design"
+          },
+          "mcp_tool": "majordomus_design",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/design",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The design system: the result.",
+              "schema": "DesignReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DesignReport",
+          "stability": "behaviorally_verified",
+          "summary": "The design system"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/explain?token=fg\"",
+          "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+          "id": "design.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`).",
+              "examples": [
+                {
+                  "case": "role",
+                  "value": "\"fg\""
+                },
+                {
+                  "case": "state",
+                  "value": "\"succeeded\""
+                }
+              ],
+              "name": "token",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/design/explain",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What a design token means: the result.",
+              "schema": "Token",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Token",
+          "stability": "behaviorally_verified",
+          "summary": "What a design token means"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/tokens?kind=role\"",
+          "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+          "id": "design.tokens",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_tokens",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only tokens of this kind.",
+              "examples": [
+                {
+                  "case": "roles",
+                  "value": "\"role\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "TokenKind | null"
+            }
+          ],
+          "path": "/api/v1/design/tokens",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The design tokens: the result.",
+              "schema": "TokenList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TokenList",
+          "stability": "behaviorally_verified",
+          "summary": "The design tokens"
         }
       ]
     },

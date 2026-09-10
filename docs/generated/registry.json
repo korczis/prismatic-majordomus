@@ -44,6 +44,14 @@
       "capabilities": 3
     },
     {
+      "id": "design",
+      "title": "Design system",
+      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 3
+    },
+    {
       "id": "directories",
       "title": "Directory contracts",
       "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
@@ -5647,6 +5655,865 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+    },
+    {
+      "id": "design.explain",
+      "module": "design",
+      "kind": "query",
+      "title": "What a design token means",
+      "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+      "input": {
+        "name": "ExplainTokenInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "token": {
+              "type": "string",
+              "description": "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`)."
+            }
+          },
+          "required": [
+            "token"
+          ],
+          "description": "The input of `design.explain`: one token by name.",
+          "title": "ExplainTokenInput"
+        }
+      },
+      "output": {
+        "name": "Token",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name as declared."
+            },
+            "kind": {
+              "$ref": "#/$defs/TokenKind",
+              "description": "What kind of token."
+            },
+            "about": {
+              "type": "string",
+              "description": "What it is for, from the declaration."
+            },
+            "css": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The custom properties and Tailwind utilities it becomes."
+            },
+            "parts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ColourPart"
+              },
+              "description": "For a colour token: its parts, each resolved per theme."
+            },
+            "value": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "For a scalar token: the value."
+            },
+            "role": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "For a state word: the status it is filed under."
+            },
+            "states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "For a status: the state words filed under it."
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The Flowbite names that are synonyms of it."
+            },
+            "projections": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The generated files the token reaches."
+            }
+          },
+          "required": [
+            "name",
+            "kind",
+            "about",
+            "css",
+            "projections"
+          ],
+          "description": "One token, explained: where it came from, what it resolves to, what reads it.",
+          "title": "Token",
+          "$defs": {
+            "TokenKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "font",
+                  "description": "A type stack."
+                },
+                {
+                  "type": "string",
+                  "const": "palette",
+                  "description": "A raw palette entry."
+                },
+                {
+                  "type": "string",
+                  "const": "role",
+                  "description": "A semantic surface role."
+                },
+                {
+                  "type": "string",
+                  "const": "status",
+                  "description": "A status meaning."
+                },
+                {
+                  "type": "string",
+                  "const": "state",
+                  "description": "A state word, filed under a status."
+                },
+                {
+                  "type": "string",
+                  "const": "type",
+                  "description": "A step of the type scale."
+                },
+                {
+                  "type": "string",
+                  "const": "tracking",
+                  "description": "A letter-spacing."
+                },
+                {
+                  "type": "string",
+                  "const": "layout",
+                  "description": "A shared layout value."
+                },
+                {
+                  "type": "string",
+                  "const": "radius",
+                  "description": "A corner radius."
+                },
+                {
+                  "type": "string",
+                  "const": "motion",
+                  "description": "A duration."
+                },
+                {
+                  "type": "string",
+                  "const": "theme",
+                  "description": "The theme contract."
+                }
+              ],
+              "description": "What kind of thing a token is."
+            },
+            "ColourPart": {
+              "type": "object",
+              "properties": {
+                "part": {
+                  "type": "string",
+                  "description": "`fg`, `bg` or `line`."
+                },
+                "css": {
+                  "type": "string",
+                  "description": "The custom property a surface reads."
+                },
+                "light": {
+                  "$ref": "#/$defs/Resolved",
+                  "description": "In the light theme."
+                },
+                "dark": {
+                  "$ref": "#/$defs/Resolved",
+                  "description": "In the dark theme."
+                }
+              },
+              "required": [
+                "part",
+                "css",
+                "light",
+                "dark"
+              ],
+              "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+            },
+            "Resolved": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "description": "The palette entry or role the declaration named."
+                },
+                "css": {
+                  "type": "string",
+                  "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                },
+                "literal": {
+                  "type": "string",
+                  "description": "The literal after every reference is followed."
+                }
+              },
+              "required": [
+                "reference",
+                "css",
+                "literal"
+              ],
+              "description": "What a colour reference resolved to."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_design_explain"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/design/explain"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "design",
+        "ui",
+        "provenance",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+    },
+    {
+      "id": "design.system",
+      "module": "design",
+      "kind": "query",
+      "title": "The design system",
+      "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "DesignReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "fingerprint": {
+              "type": "string",
+              "description": "SHA-256 of the declaration's canonical form."
+            },
+            "design": {
+              "type": "string",
+              "description": "The first twelve digits, as every stylesheet carries them in `--mj-design`."
+            },
+            "schema": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The format version of the declaration."
+            },
+            "source": {
+              "type": "string",
+              "description": "Where the declaration lives, repository-relative."
+            },
+            "identity": {
+              "$ref": "#/$defs/Identity",
+              "description": "Who this is."
+            },
+            "font": {
+              "$ref": "#/$defs/Fonts",
+              "description": "The two type stacks."
+            },
+            "theme": {
+              "$ref": "#/$defs/ThemeView",
+              "description": "The theme contract."
+            },
+            "viewports": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0
+              },
+              "description": "The widths a browser audit measures every page at."
+            },
+            "tallies": {
+              "$ref": "#/$defs/TokenTallies",
+              "description": "How many of each kind of token."
+            },
+            "projections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProjectionView"
+              },
+              "description": "Every generated file the declaration is projected into."
+            }
+          },
+          "required": [
+            "fingerprint",
+            "design",
+            "schema",
+            "source",
+            "identity",
+            "font",
+            "theme",
+            "viewports",
+            "tallies",
+            "projections"
+          ],
+          "description": "The design system: what it is and where it goes.",
+          "title": "DesignReport",
+          "$defs": {
+            "Identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The product name every surface shows."
+                },
+                "mark": {
+                  "type": "string",
+                  "description": "The mark, relative to the design directory."
+                },
+                "logo": {
+                  "type": "string",
+                  "description": "The full logo, relative to the design directory."
+                },
+                "social": {
+                  "type": "string",
+                  "description": "The social preview image, relative to the design directory."
+                }
+              },
+              "required": [
+                "name",
+                "mark",
+                "logo",
+                "social"
+              ],
+              "description": "Who this is."
+            },
+            "Fonts": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sans": {
+                  "type": "string",
+                  "description": "The system stack."
+                },
+                "mono": {
+                  "type": "string",
+                  "description": "The monospace stack."
+                }
+              },
+              "required": [
+                "sans",
+                "mono"
+              ],
+              "description": "The two type stacks."
+            },
+            "ThemeView": {
+              "type": "object",
+              "properties": {
+                "class": {
+                  "type": "string",
+                  "description": "The class on the root element that means dark."
+                },
+                "storage_key": {
+                  "type": "string",
+                  "description": "The `localStorage` key the person's choice is kept under."
+                },
+                "bootstrap": {
+                  "type": "string",
+                  "description": "The one pre-paint statement every surface runs."
+                }
+              },
+              "required": [
+                "class",
+                "storage_key",
+                "bootstrap"
+              ],
+              "description": "The theme contract as a client reads it."
+            },
+            "TokenTallies": {
+              "type": "object",
+              "properties": {
+                "palette": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Raw palette entries."
+                },
+                "roles": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Semantic roles."
+                },
+                "statuses": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Status meanings."
+                },
+                "states": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "State words filed under a status."
+                },
+                "type_steps": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Steps of the type scale."
+                },
+                "aliases": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Flowbite names declared as synonyms."
+                }
+              },
+              "required": [
+                "palette",
+                "roles",
+                "statuses",
+                "states",
+                "type_steps",
+                "aliases"
+              ],
+              "description": "How many of each kind of token."
+            },
+            "ProjectionView": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                },
+                "read_by": {
+                  "type": "string",
+                  "description": "What reads it."
+                }
+              },
+              "required": [
+                "path",
+                "read_by"
+              ],
+              "description": "One generated projection of the design and what it is for."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_design",
+          "resource": {
+            "uri": "majordomus://design",
+            "name": "design"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/design"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "design",
+        "ui",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+    },
+    {
+      "id": "design.tokens",
+      "module": "design",
+      "kind": "query",
+      "title": "The design tokens",
+      "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+      "input": {
+        "name": "TokensInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TokenKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only tokens of this kind."
+            }
+          },
+          "description": "The input of `design.tokens`: every token, or one kind of them.",
+          "title": "TokensInput",
+          "$defs": {
+            "TokenKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "font",
+                  "description": "A type stack."
+                },
+                {
+                  "type": "string",
+                  "const": "palette",
+                  "description": "A raw palette entry."
+                },
+                {
+                  "type": "string",
+                  "const": "role",
+                  "description": "A semantic surface role."
+                },
+                {
+                  "type": "string",
+                  "const": "status",
+                  "description": "A status meaning."
+                },
+                {
+                  "type": "string",
+                  "const": "state",
+                  "description": "A state word, filed under a status."
+                },
+                {
+                  "type": "string",
+                  "const": "type",
+                  "description": "A step of the type scale."
+                },
+                {
+                  "type": "string",
+                  "const": "tracking",
+                  "description": "A letter-spacing."
+                },
+                {
+                  "type": "string",
+                  "const": "layout",
+                  "description": "A shared layout value."
+                },
+                {
+                  "type": "string",
+                  "const": "radius",
+                  "description": "A corner radius."
+                },
+                {
+                  "type": "string",
+                  "const": "motion",
+                  "description": "A duration."
+                },
+                {
+                  "type": "string",
+                  "const": "theme",
+                  "description": "The theme contract."
+                }
+              ],
+              "description": "What kind of thing a token is."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "TokenList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "fingerprint": {
+              "type": "string",
+              "description": "The fingerprint of the declaration they came from."
+            },
+            "total": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many are listed."
+            },
+            "tokens": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Token"
+              },
+              "description": "The tokens, in the inventory's order."
+            }
+          },
+          "required": [
+            "fingerprint",
+            "total",
+            "tokens"
+          ],
+          "description": "The tokens, listed.",
+          "title": "TokenList",
+          "$defs": {
+            "Token": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name as declared."
+                },
+                "kind": {
+                  "$ref": "#/$defs/TokenKind",
+                  "description": "What kind of token."
+                },
+                "about": {
+                  "type": "string",
+                  "description": "What it is for, from the declaration."
+                },
+                "css": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The custom properties and Tailwind utilities it becomes."
+                },
+                "parts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ColourPart"
+                  },
+                  "description": "For a colour token: its parts, each resolved per theme."
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "For a scalar token: the value."
+                },
+                "role": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "For a state word: the status it is filed under."
+                },
+                "states": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "For a status: the state words filed under it."
+                },
+                "aliases": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The Flowbite names that are synonyms of it."
+                },
+                "projections": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The generated files the token reaches."
+                }
+              },
+              "required": [
+                "name",
+                "kind",
+                "about",
+                "css",
+                "projections"
+              ],
+              "description": "One token, explained: where it came from, what it resolves to, what reads it."
+            },
+            "TokenKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "font",
+                  "description": "A type stack."
+                },
+                {
+                  "type": "string",
+                  "const": "palette",
+                  "description": "A raw palette entry."
+                },
+                {
+                  "type": "string",
+                  "const": "role",
+                  "description": "A semantic surface role."
+                },
+                {
+                  "type": "string",
+                  "const": "status",
+                  "description": "A status meaning."
+                },
+                {
+                  "type": "string",
+                  "const": "state",
+                  "description": "A state word, filed under a status."
+                },
+                {
+                  "type": "string",
+                  "const": "type",
+                  "description": "A step of the type scale."
+                },
+                {
+                  "type": "string",
+                  "const": "tracking",
+                  "description": "A letter-spacing."
+                },
+                {
+                  "type": "string",
+                  "const": "layout",
+                  "description": "A shared layout value."
+                },
+                {
+                  "type": "string",
+                  "const": "radius",
+                  "description": "A corner radius."
+                },
+                {
+                  "type": "string",
+                  "const": "motion",
+                  "description": "A duration."
+                },
+                {
+                  "type": "string",
+                  "const": "theme",
+                  "description": "The theme contract."
+                }
+              ],
+              "description": "What kind of thing a token is."
+            },
+            "ColourPart": {
+              "type": "object",
+              "properties": {
+                "part": {
+                  "type": "string",
+                  "description": "`fg`, `bg` or `line`."
+                },
+                "css": {
+                  "type": "string",
+                  "description": "The custom property a surface reads."
+                },
+                "light": {
+                  "$ref": "#/$defs/Resolved",
+                  "description": "In the light theme."
+                },
+                "dark": {
+                  "$ref": "#/$defs/Resolved",
+                  "description": "In the dark theme."
+                }
+              },
+              "required": [
+                "part",
+                "css",
+                "light",
+                "dark"
+              ],
+              "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+            },
+            "Resolved": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string",
+                  "description": "The palette entry or role the declaration named."
+                },
+                "css": {
+                  "type": "string",
+                  "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                },
+                "literal": {
+                  "type": "string",
+                  "description": "The literal after every reference is followed."
+                }
+              },
+              "required": [
+                "reference",
+                "css",
+                "literal"
+              ],
+              "description": "What a colour reference resolved to."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::design"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_design_tokens"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/design/tokens"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "design",
+        "ui",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
     },
     {
       "id": "directories.list",

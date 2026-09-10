@@ -188,6 +188,57 @@
       "tool": "majordomus_deployments"
     },
     {
+      "api_anchor": "/docs/api/#op-design-explain",
+      "claims": [],
+      "cli": null,
+      "id": "design.explain",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-explain/",
+      "slug": "design-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "What a design token means",
+      "tool": "majordomus_design_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-design-system",
+      "claims": [],
+      "cli": null,
+      "id": "design.system",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": "majordomus://design",
+      "route": "/registry/capabilities/design-system/",
+      "slug": "design-system",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "The design system",
+      "tool": "majordomus_design"
+    },
+    {
+      "api_anchor": "/docs/api/#op-design-tokens",
+      "claims": [],
+      "cli": null,
+      "id": "design.tokens",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-tokens/",
+      "slug": "design-tokens",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "The design tokens",
+      "tool": "majordomus_design_tokens"
+    },
+    {
       "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
@@ -1533,9 +1584,9 @@
     ]
   },
   "counts": {
-    "capabilities": 73,
+    "capabilities": 76,
     "claims": 35,
-    "modules": 24
+    "modules": 25
   },
   "generator": "majordomus-cli 0.4.0",
   "modules": [
@@ -1648,6 +1699,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
       "title": "Deployment"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "design.explain",
+          "route": "/registry/capabilities/design-explain/",
+          "slug": "design-explain"
+        },
+        {
+          "id": "design.system",
+          "route": "/registry/capabilities/design-system/",
+          "slug": "design-system"
+        },
+        {
+          "id": "design.tokens",
+          "route": "/registry/capabilities/design-tokens/",
+          "slug": "design-tokens"
+        }
+      ],
+      "claims": [],
+      "id": "design",
+      "route": "/registry/modules/design/",
+      "slug": "design",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "title": "Design system"
     },
     {
       "capabilities": [

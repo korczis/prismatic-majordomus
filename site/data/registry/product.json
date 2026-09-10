@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "706bd7b0cc9832d1226441d936270b6600bebaf321fb4c3ad68574f79aa3e41e",
+  "fingerprint": "55073e71fd3b27614baab2accdd8a957a266763a9ca1eda53c163ea718d9ceca",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 24,
+    "modules": 25,
     "modules_covered": 16,
     "commands": 28,
     "commands_covered": 27,
@@ -2439,7 +2439,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 33
+          "objects": 34
         },
         {
           "name": "knowledge",
@@ -2447,7 +2447,7 @@
         },
         {
           "name": "document",
-          "objects": 209
+          "objects": 210
         }
       ],
       "rule_refs": [
@@ -2696,11 +2696,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 244,
+        "mcp_resources": 246,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 243,
+        "objects": 245,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -4055,6 +4055,7 @@
         "worktrees",
         "health",
         "artifacts",
+        "design",
         "api"
       ],
       "web": [
@@ -4190,6 +4191,11 @@
           "id": "artifacts",
           "title": "Artifacts",
           "route": "/cockpit/artifacts"
+        },
+        {
+          "id": "design",
+          "title": "Design",
+          "route": "/cockpit/design"
         },
         {
           "id": "api",
@@ -7374,6 +7380,11 @@
         "features": []
       },
       {
+        "id": "design",
+        "title": "Design system",
+        "features": []
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "features": [
@@ -7713,7 +7724,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (33)",
+        "title": "adr (34)",
         "features": [
           "knowledge"
         ]
@@ -8601,25 +8612,30 @@
       "route": "/cockpit/artifacts"
     },
     {
+      "id": "design",
+      "title": "Design",
+      "route": "/cockpit/design"
+    },
+    {
       "id": "api",
       "title": "API",
       "route": "/cockpit/api"
     }
   ],
   "telemetry": {
-    "capabilities": 1184,
-    "builtin": 73,
-    "declarative": 1111,
-    "modules": 24,
-    "mcp_tools": 71,
-    "mcp_resources": 1137,
-    "http_routes": 73,
+    "capabilities": 1190,
+    "builtin": 76,
+    "declarative": 1114,
+    "modules": 25,
+    "mcp_tools": 74,
+    "mcp_resources": 1141,
+    "http_routes": 76,
     "cli_commands": 88,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1111,
+    "objects": 1114,
     "by_kind": {
-      "adr": 33,
+      "adr": 34,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8628,7 +8644,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 209,
+      "document": 210,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -8644,7 +8660,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 134,
+      "test": 135,
       "use-case": 41,
       "workspace": 1
     },

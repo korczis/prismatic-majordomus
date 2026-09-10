@@ -32,6 +32,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Web => &[Target::Web],
         GenerateTarget::Changelog => &[Target::Changelog],
         GenerateTarget::Deployment => &[Target::Deployment],
+        GenerateTarget::Design => &[Target::Design],
     };
     let artifacts = generate::plan(&app, targets)?;
     // the contract before the bytes: an artifact that carries no provenance, declares an

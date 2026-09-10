@@ -1,120 +1,340 @@
-# The design tokens of every surface this repository renders, declared once.
+# The design system of every surface this repository renders, declared once.
 #
-# Four surfaces put HTML in front of a person — the published site, the Cockpit, the
-# generated reports and the Swagger UI shell — and before this file each carried a palette
-# and a type stack of its own. They were not four designs anybody chose; they were one
-# design decided four times, by four authors, in four syntaxes, and they had already
-# drifted: the site named a font it never loaded, the Cockpit declared an accent ramp
-# nothing else knew about, a report page hard-coded seven hexadecimal literals, and the
-# API viewer inherited whatever a third party shipped that week.
+# Four surfaces put HTML in front of a person — the site published to GitHub Pages, the
+# Cockpit, the pages the executable renders itself, and the Swagger UI shell. This file
+# is the only place a visual decision is made for any of them. The Rust executable reads
+# it (`crate::design`), validates it, fingerprints it, and `majordomus generate design`
+# projects it into every stylesheet, dataset and document a surface consumes:
 #
-# So the tokens are data, and every stylesheet is a projection of them:
+#   share/design/theme.css        the Tailwind `@theme` both Tailwind builds import: the
+#                                 type stacks, the named type scale, the radii, and the
+#                                 site's Flowbite vocabulary declared as aliases of the
+#                                 roles below, so `text-heading` and `--mj-fg` are one value
+#   share/design/surface.css      the semantic surface: every role and status colour as a
+#                                 `--mj-*` custom property, light on `:root`, dark under
+#                                 the theme class, plus layout, motion and the fingerprint
+#   share/design/status.css       the status vocabulary: one selector group per state word,
+#                                 so `.mj-badge--succeeded` is styled the day the word is
+#                                 declared here and nowhere else
+#   apps/majordomus-cli/src/web/tokens.css
+#                                 the same values as plain custom properties, compiled into
+#                                 the executable for the pages that have no Tailwind
+#   apps/majordomus-cli/src/design/tokens.yaml
+#                                 this file, compiled into the executable, so the `design.*`
+#                                 capabilities, the Cockpit's inspector and `explain`
+#                                 answer from the same declaration the stylesheets came from
+#   apps/majordomus-cli/src/cockpit/logo-mark.svg, share/cockpit/favicon.svg,
+#   site/static/favicon.svg, site/static/images/logo-mark.svg, site/static/images/logo.svg
+#                                 every copy of the brand a surface serves, from brand/
+#   site/data/registry/design.json
+#                                 what the site's templates read: the state vocabulary, the
+#                                 theme contract, the audit widths, the fingerprint
+#   docs/generated/design.{json,yaml,md}
+#                                 the inventory a reader gets
 #
-#   share/design/tokens.yaml              <- this file, the only place a value is chosen
-#     -> share/design/theme.css           the Tailwind `@theme`, imported by the site's
-#                                         entry point and by the Cockpit's
-#     -> apps/majordomus-cli/src/web/tokens.css
-#                                         plain custom properties, compiled into the
-#                                         executable for the pages it renders itself,
-#                                         which have no Tailwind and fetch no asset
+# A consumer names a token; it never chooses a value. The rule is
+# `project.design-tokens-declared-once`; ADR 0031 records the first version of this
+# arrangement and ADR 0036 the one this file is written under.
 #
-# `scripts/design-tokens` writes both; `scripts/design-tokens --check` proves the committed
-# projections match this file, and the `design` gate runs it. Changing a value here and
-# regenerating changes every surface at once, which is the only way four surfaces stay one
-# design. The rule is `project.design-tokens-declared-once`; ADR 0029 records the decision.
-#
-# The values are Tailwind v4's own palette, quoted exactly, because the site is built on
-# Flowbite's default theme over that palette and the point of this file is to bring the
-# other three surfaces to where the site already was — not to restyle the site. A comment
-# names the scale entry every colour came from, so a reader can check it against
-# node_modules/tailwindcss/theme.css rather than trust the number.
-schema: 1
+# Values are Tailwind v4's own palette, quoted exactly, because the published site is
+# Flowbite's default theme over that palette and the site is the visual reference: the
+# roles below are the values the site already rendered, named, and the other surfaces are
+# brought to them. `scripts/cockpit-assets --check` proves every palette entry named like a
+# Tailwind scale step still equals Tailwind's, so a dependency upgrade that moves a colour
+# is a failing gate and not a quiet restyle.
+schema: 2
+
+# Who this is. The marks live beside this file under brand/; every copy a surface serves is
+# written from there by the generator and compared byte for byte by the design gate.
+identity:
+  name: Majordomus
+  mark: brand/logo-mark.svg
+  logo: brand/logo.svg
+  social: brand/social-card.png
 
 # Type. One system stack and one monospace stack; nothing is fetched over the network at
 # any width, on any surface. Flowbite's default theme names Inter first and the site never
-# loaded it, so the site has always rendered in this stack — naming it is what makes that
-# true on purpose rather than by accident. The emoji families are the tail of Flowbite's
-# own stack, kept: they are what a platform without automatic emoji fallback reaches for,
-# and dropping them while claiming the change is invisible would not have been true.
+# loaded it, so the site has always rendered in this stack.
 font:
   sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
   mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace
 
-# The one accent. Everything else is neutral, because a control plane that colours
-# everything says nothing with colour. Hue 250 is the blue the Cockpit already used and
-# the family Flowbite's brand tokens sit in.
-accent:
-  50: oklch(0.97 0.02 250)
-  200: oklch(0.87 0.07 250)
-  500: oklch(0.62 0.16 250)
-  600: oklch(0.55 0.16 250)
-  900: oklch(0.32 0.10 250)
+# The raw palette. Internal: a role or a status names an entry here, and nothing outside
+# this file ever does. Every entry named like a Tailwind scale step *is* that step.
+palette:
+  white: "#fff"
+  gray-50: oklch(98.5% 0.002 247.839)
+  gray-100: oklch(96.7% 0.003 264.542)
+  gray-200: oklch(92.8% 0.006 264.531)
+  gray-400: oklch(70.7% 0.022 261.325)
+  gray-500: oklch(55.1% 0.027 264.364)
+  gray-600: oklch(44.6% 0.03 256.802)
+  gray-800: oklch(27.8% 0.033 256.848)
+  gray-900: oklch(21% 0.034 264.665)
+  gray-950: oklch(13% 0.028 261.692)
+  blue-50: oklch(97% 0.014 254.604)
+  blue-200: oklch(88.2% 0.059 254.128)
+  blue-400: oklch(70.7% 0.165 254.624)
+  blue-500: oklch(62.3% 0.214 259.815)
+  blue-600: oklch(54.6% 0.245 262.881)
+  blue-700: oklch(48.8% 0.243 264.376)
+  blue-900: oklch(37.9% 0.146 265.522)
+  blue-950: oklch(28.2% 0.091 267.935)
+  emerald-50: oklch(97.9% 0.021 166.113)
+  emerald-200: oklch(90.5% 0.093 164.15)
+  emerald-300: oklch(84.5% 0.143 164.978)
+  emerald-900: oklch(37.8% 0.077 168.94)
+  emerald-950: oklch(26.2% 0.051 172.552)
+  orange-50: oklch(98% 0.016 73.684)
+  orange-200: oklch(90.1% 0.076 70.697)
+  orange-300: oklch(83.7% 0.128 66.29)
+  orange-900: oklch(40.8% 0.123 38.172)
+  orange-950: oklch(26.6% 0.079 36.259)
+  rose-50: oklch(96.9% 0.015 12.422)
+  rose-200: oklch(89.2% 0.058 10.001)
+  rose-300: oklch(81% 0.117 11.638)
+  rose-900: oklch(41% 0.159 10.272)
+  rose-950: oklch(27.1% 0.105 12.094)
 
-# The semantic surface. Three of the four surfaces need these and none of them can reach a
-# Tailwind utility for them: the Cockpit sets them on :root and switches them with the `dark`
-# class, and the pages the executable renders have no Tailwind at all. Before this file each
-# had its own set — the Cockpit's dark was hue 250 at its own lightnesses, a report's was
-# seven hexadecimal literals — which is how one design became three.
-#
-# Light is Tailwind's gray, which is what the site's own theme already resolves to. Dark is
-# the Cockpit's, kept: it was chosen for a dense control plane read for hours, and it is the
-# better of the two sets. A report page inherits it rather than the other way round.
-#
-#   bg      the page
-#   raised  a card or a panel that sits on the page
-#   sunken  a header cell, a well, a table stripe
-#   line    every border and rule
-#   fg      body text
-#   muted   secondary text
-#   faint   a third level, below muted. The Cockpit's stylesheet has asked for
-#           `var(--mj-text-faint, var(--mj-text-muted))` since it was written and nothing
-#           ever declared it, so every element wearing it has rendered as muted.
-#   ok/warn/bad  the only three colours that carry meaning rather than decoration
-surface-light:
-  bg: "#fff"                          # white
-  raised: "#fff"                      # white
-  sunken: oklch(98.5% 0.002 247.839)  # gray-50
-  line: oklch(92.8% 0.006 264.531)    # gray-200
-  fg: oklch(21% 0.034 264.665)        # gray-900
-  muted: oklch(55.1% 0.027 264.364)   # gray-500
-  faint: oklch(70.7% 0.022 261.325)   # gray-400
-  ok: oklch(50.8% 0.118 165.612)      # emerald-700
-  warn: oklch(55.5% 0.163 48.998)     # amber-700
-  bad: oklch(51.4% 0.222 16.935)      # rose-700
+# The semantic surface. Each role has a light and a dark value, each the name of a palette
+# entry; a consumer reads `--mj-<role>` and gets the right one for the theme in force.
+# Light and dark are both the site's — Flowbite's default theme resolved over Tailwind's
+# palette — so the published site does not move and the other surfaces come to it.
+roles:
+  bg:
+    about: the page
+    light: white
+    dark: gray-950
+  raised:
+    about: a card, a panel, a header bar that sits on the page
+    light: white
+    dark: gray-900
+  sunken:
+    about: a well, a table stripe, a code block, a header cell
+    light: gray-50
+    dark: gray-800
+  line:
+    about: every border and rule
+    light: gray-200
+    dark: gray-800
+  fg:
+    about: headings, identifiers, values; the text that carries the page
+    light: gray-900
+    dark: white
+  body:
+    about: reading text
+    light: gray-600
+    dark: gray-400
+  muted:
+    about: secondary text; labels, captions, provenance
+    light: gray-500
+    dark: gray-400
+  faint:
+    about: a third level below muted; placeholders, disabled text
+    light: gray-400
+    dark: gray-500
+  accent:
+    about: links, the focus ring, the one colour that means interactive
+    light: blue-700
+    dark: blue-500
+  accent-strong:
+    about: the accent where it must read as text on the accent's soft ground
+    light: blue-900
+    dark: blue-400
+  accent-soft:
+    about: the accent as a ground; a selected row, the current navigation entry
+    light: blue-50
+    dark: blue-950
+  accent-line:
+    about: the accent as a border around its soft ground
+    light: blue-200
+    dark: blue-900
+  accent-fill:
+    about: a primary action's background; always carries on-accent text
+    light: blue-700
+    dark: blue-600
+  on-accent:
+    about: text on a primary action
+    light: white
+    dark: white
 
-surface-dark:
-  bg: oklch(0.19 0.005 250)
-  raised: oklch(0.23 0.006 250)
-  sunken: oklch(0.16 0.005 250)
-  line: oklch(0.32 0.008 250)
-  fg: oklch(0.94 0.004 250)
-  muted: oklch(0.68 0.008 250)
-  faint: oklch(0.55 0.008 250)
-  ok: oklch(76.5% 0.177 163.223)      # emerald-400
-  warn: oklch(82.8% 0.189 84.429)     # amber-400
-  bad: oklch(71.2% 0.194 13.428)      # rose-400
+# Status semantics. Five meanings, each with a text colour, a ground and a border per
+# theme; and the vocabulary — every state word any surface renders — filed under the
+# meaning it carries. A word is coloured by the meaning it is filed under and by nothing
+# else, so `succeeded` on the Cockpit and `done` on the site are the same green because they
+# are the same statement. A word absent here renders neutral; the design gate refuses a
+# word a surface emits that this list does not hold.
+status:
+  roles:
+    ok:
+      about: healthy, done, passing, present, in agreement
+      fg:
+        light: emerald-900
+        dark: emerald-300
+      bg:
+        light: emerald-50
+        dark: emerald-950
+      line:
+        light: emerald-200
+        dark: emerald-900
+    warn:
+      about: attention without failure; stale, partial, advisory, cancelled
+      fg:
+        light: orange-900
+        dark: orange-300
+      bg:
+        light: orange-50
+        dark: orange-950
+      line:
+        light: orange-200
+        dark: orange-900
+    bad:
+      about: failed, missing, blocked, refused
+      fg:
+        light: rose-900
+        dark: rose-300
+      bg:
+        light: rose-50
+        dark: rose-950
+      line:
+        light: rose-200
+        dark: rose-900
+    info:
+      about: in progress, active, informational; the accent as a status
+      fg:
+        light: blue-900
+        dark: blue-400
+      bg:
+        light: blue-50
+        dark: blue-950
+      line:
+        light: blue-200
+        dark: blue-900
+    neutral:
+      about: no meaning carried by colour; unknown, planned, external, draft
+      fg:
+        light: fg
+        dark: fg
+      bg:
+        light: sunken
+        dark: sunken
+      line:
+        light: line
+        dark: line
+  states:
+    ok: [ok, pass, passed, succeeded, completed, done, current, declared, covered, guaranteed, healthy, live, present, synced, stable, read-only, connected, accepted, enforced, wired]
+    warn: [warn, warning, stale, partial, advisory, cancelled, cancelling, not-generated, reconnecting, verify, executable, ahead, behind, dirty, proposed, deprecated, degraded]
+    bad: [bad, fail, failed, error, missing, blocked, rejected, blocking, refused, disconnected, offline, lost, stderr, superseded, unwired]
+    info: [info, running, queued, active, verified, generated, cached, runtime, resource, pending, loading, streaming]
+    neutral: [neutral, unknown, external, planned, described, draft, ready, inactive, stopped, idle, query, command]
 
-# The Cockpit's own names for the same values. Its stylesheet is 800 lines written against
-# `--mj-*` and renaming them would be churn with no reader; declaring them once as aliases
-# of the canonical properties costs nothing and cannot drift, because an alias has no value
-# of its own to drift from. A name here is a synonym, never a second decision.
-# The graph and diagram views read these names from the page at run time. They were read
-# before this file existed too — and every one of them resolved to nothing, because no
-# stylesheet ever declared them, so every drawing fell through to a literal in JavaScript
-# while its comment said the palette came from the page. Declaring them is what makes that
-# comment true. An `accent-N` target is a step of the accent ramp above.
+# The type scale the dense surfaces use, as named steps: Tailwind emits a `text-<name>`
+# utility for each, and the compiled-in block carries the same names for the pages that
+# have no Tailwind. The site reads at Tailwind's own scale; the Cockpit and the reports are
+# read for hours and at density, and these four steps are the sizes they were already set
+# in, named, so a size is a decision here and never a bracketed number in a stylesheet.
+type:
+  scale:
+    meta:
+      about: the smallest legible step; counts, provenance, table headers
+      size: 10px
+      leading: 1.4
+    label:
+      about: labels, badges, breadcrumbs, keys of a fact list
+      size: 11px
+      leading: 1.4
+    small:
+      about: secondary text at density; notes, log lines, monospace inline
+      size: 12px
+      leading: 1.5
+    dense:
+      about: the body text of a control plane
+      size: 13.5px
+      leading: 1.6
+  tracking:
+    caps:
+      about: the letter-spacing of an uppercase label
+      value: 0.12em
+
+# Layout values more than one component shares. A value only one component uses stays in
+# that component's rule.
+layout:
+  measure:
+    about: the widest a reading column gets
+    value: 62rem
+  cockpit:
+    about: the widest the Cockpit's layout gets before it centres
+    value: 1600px
+  topbar:
+    about: the Cockpit's top bar; the sidebar and a sticky header sit under it
+    value: 2.75rem
+
+# Corner radii. Tailwind v4's own values, named here so that the pages without Tailwind
+# round the same corners, and so that a change is one line.
+radius:
+  sm:
+    about: a badge, a chip, an input
+    value: 0.25rem
+  md:
+    about: a button, a code block
+    value: 0.375rem
+  lg:
+    about: a card, a panel
+    value: 0.5rem
+
+# Motion. One duration; everything that moves does so for a state change, and reduced
+# motion turns it off.
+motion:
+  fast:
+    about: a progress bar, a hover; anything a state change animates
+    value: 150ms
+
+# The theme contract every surface honours: the class on the root element that means dark,
+# and the storage key the person's choice is kept under. Flowbite's documented key, because
+# the site had it first.
+theme:
+  class: dark
+  storage-key: color-theme
+
+# The widths a browser audit measures every page at. A phone, a large phone, a tablet in
+# landscape, a laptop, a wide desktop. The probes read them from the dataset; none of them
+# holds a list of its own.
+viewports: [320, 390, 1024, 1280, 1600]
+
+# The site's vocabulary. Flowbite names its semantic colours and the site's templates are
+# written in those names; each one listed here is declared as `var(--mj-<token>)` in the
+# generated theme, after Flowbite's own declaration, so the site resolves the role and not
+# Flowbite's default. A name is a synonym of a role or of a status colour (`ok`, `ok-bg`,
+# `ok-line`), never a value of its own, so it cannot drift. A Flowbite name absent here keeps
+# Flowbite's value: it is not a decision this repository shares.
 alias:
-  --mj-graph-text: fg
-  --mj-graph-muted: muted
-  --mj-graph-line: line
-  --mj-graph-surface: raised
-  --mj-graph-accent: accent-600
-  --mj-graph-warn: warn
-  --mj-graph-good: ok
-  --mj-bg: bg
-  --mj-bg-raised: raised
-  --mj-bg-sunken: sunken
-  --mj-border: line
-  --mj-text: fg
-  --mj-text-muted: muted
-  --mj-text-faint: faint
+  flowbite:
+    heading: fg
+    body: body
+    body-subtle: muted
+    default: line
+    default-subtle: line
+    default-medium: line
+    default-strong: line
+    neutral-primary: bg
+    neutral-primary-soft: raised
+    neutral-primary-medium: raised
+    neutral-primary-strong: raised
+    neutral-secondary: sunken
+    neutral-secondary-soft: sunken
+    neutral-secondary-medium: sunken
+    neutral-secondary-strong: sunken
+    brand: accent-fill
+    brand-softer: accent-soft
+    brand-subtle: accent-line
+    fg-brand: accent
+    fg-brand-strong: accent-strong
+    success-soft: ok-bg
+    success-subtle: ok-line
+    fg-success-strong: ok
+    danger-soft: bad-bg
+    danger-subtle: bad-line
+    fg-danger-strong: bad
+    warning-soft: warn-bg
+    warning-subtle: warn-line
+    fg-warning: warn

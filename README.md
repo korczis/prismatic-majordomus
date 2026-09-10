@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://korczis.github.io/prismatic-majordomus"><img src="assets/logo.svg" alt="Prismatic Majordomus" width="420"></a>
+  <a href="https://korczis.github.io/prismatic-majordomus"><img src="share/design/brand/logo.svg" alt="Prismatic Majordomus" width="420"></a>
 </p>
 
 # Prismatic Majordomus

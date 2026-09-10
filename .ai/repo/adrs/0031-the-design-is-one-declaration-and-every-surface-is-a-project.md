@@ -12,7 +12,7 @@ related:
   - rule:project.interfaces-are-projections
   - rule:project.derived-files-regenerated
   - file:share/design/tokens.yaml
-  - file:scripts/design-tokens
+  - file:apps/majordomus-cli/src/design/render.rs
   - file:scripts/ci/design-check
   - file:apps/majordomus-cli/src/web/html.rs
   - file:apps/majordomus-cli/src/http/swagger.rs

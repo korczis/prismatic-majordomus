@@ -141,6 +141,41 @@ documents:
     source: .ai/repo/deployments/majordomus.yaml
     formats:
       - text
+  - id: design
+    schema: majordomus/design-system/v1
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - json
+      - markdown
+      - yaml
+  - id: design-declaration
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - yaml
+  - id: design-logo
+    source: "share/design/brand/logo.svg, the canonical logo"
+    formats:
+      - text
+  - id: design-mark
+    source: "share/design/brand/logo-mark.svg, the canonical mark"
+    formats:
+      - text
+  - id: design-status
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - text
+  - id: design-surface
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - text
+  - id: design-theme
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - text
+  - id: design-tokens
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - text
   - id: distribution-matrix
     source: share/distribution.yaml and the release records
     formats:
@@ -171,6 +206,10 @@ documents:
       - markdown
   - id: modules/deploy
     source: "the `deploy` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/design
+    source: "the `design` module of the canonical Majordomus capability registry"
     formats:
       - markdown
   - id: modules/directories
@@ -355,6 +394,11 @@ documents:
     source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     formats:
       - text
+  - id: site-design
+    schema: majordomus-site-design/v1
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    formats:
+      - json
   - id: site-distribution
     source: share/distribution.yaml and the release records
     formats:
@@ -413,6 +457,24 @@ artifacts:
     source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
     bytes: 4764
     sha256: df66c8ab8c0917e8fe3cb4d92d5014b6a48d87eb1d3d41734015d64ee0a49ec2
+  - path: apps/majordomus-cli/src/cockpit/logo-mark.svg
+    document: design-mark
+    format: text
+    source: "share/design/brand/logo-mark.svg, the canonical mark"
+    bytes: 903
+    sha256: 4a0cab33442c2ebe0a0b4a01d1d89c8d6edc7173b0d78b72e4f6fa1d652b5de4
+  - path: apps/majordomus-cli/src/design/tokens.yaml
+    document: design-declaration
+    format: yaml
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 13791
+    sha256: a968961e95ea8d3f5a279b98d9587f89a5b2166c41f53ad2b832618137160c0c
+  - path: apps/majordomus-cli/src/web/tokens.css
+    document: design-tokens
+    format: text
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 4618
+    sha256: 71f9bc1f01d2251606b91219d42adaa8b8355698fd3acab9ba0b3a33099006bf
   - path: deploy/Dockerfile
     document: deployment
     format: text
@@ -447,27 +509,27 @@ artifacts:
     format: json
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 21076
-    sha256: 8c0171eb67e161582d7c5f45722b767dbd3bc59208ef24fc9e4b925f6784ef0c
+    bytes: 21800
+    sha256: b590c2f750177310120befaaa25279d6e573a396021864d9bf50f9b7c644866f
   - path: docs/generated/benchmarks.md
     document: benchmarks
     format: markdown
     source: the benchmark projection of the canonical capability registry
-    bytes: 9800
-    sha256: 07aa7df832e051726ec8183afdb5858de9155d8a9ef135afc89944962593bb3c
+    bytes: 10067
+    sha256: e934c5a86bda9736a4f039613d5fc1d49ff256acd3aff9432075a256bb59baca
   - path: docs/generated/benchmarks.yaml
     document: benchmarks
     format: yaml
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 14977
-    sha256: 211385b4692f24fdc728a076f46d1c84ab099288f61c0edbd78c5604e0a66ce1
+    bytes: 15467
+    sha256: 9faa436b5f671653f86ff941904a3ac44d6b8ef3b8243dd8cea2aaa43c2274fa
   - path: docs/generated/capabilities.md
     document: capabilities
     format: markdown
     source: the canonical Majordomus capability registry
-    bytes: 17282
-    sha256: de023b436647433947cd4ba42de51401197dc63bbbc06e71a8ce5ece136a7682
+    bytes: 17842
+    sha256: d36f87b2069e8fb5f3ae7cd6e878f004ecc64aeec86753ec874c74d61a9b0508
   - path: docs/generated/changelog.json
     document: changelog
     format: json
@@ -493,21 +555,41 @@ artifacts:
     format: json
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 500594
-    sha256: 9276f3d0b8a06f6a3f6b367d503177351bdd2c5d2f284ada28322e2796228cd3
+    bytes: 500936
+    sha256: ff38f3fb17cc14fc842d5f8e34dac8526ad65a6bf052a65c8e2a83f11431b840
   - path: docs/generated/cli.md
     document: cli
     format: markdown
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 210281
-    sha256: d90b4cf3cc0fe430c69f5e477a13eddf0ee89f06d9736c3f8086117a9a417b87
+    bytes: 210553
+    sha256: 3054ae8f7de94546f948816a4b5425aab19c553f37b322ff2a1ecb9e3abaaa42
   - path: docs/generated/cli.yaml
     document: cli
     format: yaml
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 389343
-    sha256: d06ba5c1658aafee82a20724627e6c225e0e6e3aa043f3897e5ba939b2785c7a
+    bytes: 389641
+    sha256: 4476eda12c4827b66fa666c7a2df418190eb549a47ea2f198e368c4b306d8839
+  - path: docs/generated/design.json
+    document: design
+    format: json
+    schema: majordomus/design-system/v1
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 94465
+    sha256: 3f1045094299499ae5e04e465e50ba28fb0b7e848c3b11a96dc030e2c3b52105
+  - path: docs/generated/design.md
+    document: design
+    format: markdown
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 7232
+    sha256: aa05a2efe590f8b8ada989aff460299b461f6281f8d380ff394ef9cbc2883772
+  - path: docs/generated/design.yaml
+    document: design
+    format: yaml
+    schema: majordomus/design-system/v1
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 76730
+    sha256: 1934e7fef74d4bb2331cb999e2494ab2dea6b22c59349e66c32a0d77f060cb71
   - path: docs/generated/distribution-matrix.json
     document: distribution-matrix
     format: json
@@ -544,6 +626,12 @@ artifacts:
     source: "the `deploy` module of the canonical Majordomus capability registry"
     bytes: 2737
     sha256: 41fa51c925b8c2404a43fdaacc7031f959082cc5ba48ca5240d27b94ffb0ede9
+  - path: docs/generated/modules/design.md
+    document: modules/design
+    format: markdown
+    source: "the `design` module of the canonical Majordomus capability registry"
+    bytes: 3095
+    sha256: 3177cb593d372619dd446e644b16fbfbcd0be9dceb404c95756c4980b2b7eb88
   - path: docs/generated/modules/directories.md
     document: modules/directories
     format: markdown
@@ -662,14 +750,14 @@ artifacts:
     document: openapi
     format: json
     source: the canonical Majordomus capability registry
-    bytes: 725135
-    sha256: d94065d420bc8920305231dc5ab2f45e8e5e45b8e571932244128f9d43744948
+    bytes: 747422
+    sha256: 004ec4b1c3963f3ff1590bd6b6f7b1bd8c8864a2fddb9d065efdb16c3a9fc6e8
   - path: docs/generated/openapi.yaml
     document: openapi
     format: yaml
     source: the canonical Majordomus capability registry
-    bytes: 564313
-    sha256: 2cd619036c3f09aa52323009503af24eeab49f6010f5ac946b409f16061f234a
+    bytes: 581163
+    sha256: 244cbb9bc5a8b8d50b36015fd2db8bdd3f4960a7c61bfe358d12156411d24bcb
   - path: docs/generated/providers.json
     document: providers
     format: json
@@ -695,15 +783,15 @@ artifacts:
     format: json
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 972544
-    sha256: 43a4ddd577ec86e4ade723d08a171dbc0090edeab226ddc24508e58921bc5883
+    bytes: 1000965
+    sha256: 89f20048ed923eb6130010b892aebcf8721fb52b7146d77d19bdb51d5afd2f7e
   - path: docs/generated/registry.yaml
     document: registry
     format: yaml
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 749556
-    sha256: 44b77f18f24bc0ccca6d87e93c09b2bd2edecb90be6f486ba45115470f1aba7e
+    bytes: 770554
+    sha256: 8513ea0efe639115217040e394246fc473f90aabcd15c461370b709dcd734c25
   - path: docs/generated/web.json
     document: web
     format: json
@@ -874,6 +962,30 @@ artifacts:
     source: "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
     bytes: 567
     sha256: 23d56d323dda19ab6136a91f05407984fdf0cea82c175a6f8f69e2dcc4ddcc8a
+  - path: share/cockpit/favicon.svg
+    document: design-mark
+    format: text
+    source: "share/design/brand/logo-mark.svg, the canonical mark"
+    bytes: 903
+    sha256: 4a0cab33442c2ebe0a0b4a01d1d89c8d6edc7173b0d78b72e4f6fa1d652b5de4
+  - path: share/design/status.css
+    document: design-status
+    format: text
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 7619
+    sha256: 9bdfb3898d561bd40d88d6218435a3c75435247c88be73dc51df54eb2f8fd1e6
+  - path: share/design/surface.css
+    document: design-surface
+    format: text
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 2858
+    sha256: 8a23ce4577bef438aac89c0daea014a7f3ec70eafb03347a0c1d3a5996db006a
+  - path: share/design/theme.css
+    document: design-theme
+    format: text
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 2378
+    sha256: 6d7461eeefc97008dccfa85927fd7b2b302e0d34a0a713a59e604639555a9f70
   - path: share/schemas/majordomus/adr/adr.v1.schema.json
     document: schemas/majordomus.adr/v1
     format: json
@@ -976,6 +1088,13 @@ artifacts:
     source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     bytes: 289
     sha256: d5dc7da86ab749a13514b6d9d7e608ffe475706da3a724804120e7669823fb04
+  - path: site/data/registry/design.json
+    document: site-design
+    format: json
+    schema: majordomus-site-design/v1
+    source: "share/design/tokens.yaml, the one declaration of the design"
+    bytes: 7320
+    sha256: 8eba57e4941218198dcc62ceb058c58063c355f3eca62d079d6f8aeb17aab3d7
   - path: site/data/registry/distribution.json
     document: site-distribution
     format: json
@@ -987,21 +1106,21 @@ artifacts:
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
     bytes: 60224
-    sha256: 70399cf9320897c2cdc0517a79372aade36bf00f72496ed80d4f735b02806101
+    sha256: 286b1e770fbeec26fcd67a36bc8edb16ec1dc9d23391d43275244e9922e62059
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 303688
-    sha256: e2e30d16cb8c551bcf7a31019d798750d99489c9a236cf01605559befcfdbfa3
+    bytes: 304010
+    sha256: 1809c14280c71a98acf5d38df8f063a592a17b38d600af5834f5c60f4dc8246e
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 2320696
-    sha256: 83f0f41f5466b659e28a20cfbed2b535b8d517398a342cde04ad44c66e5c936a
+    bytes: 2360567
+    sha256: 19dd633c43f4f0202631463cc12ee471c920f4f93c462779d086b7d0c842f4fe
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
@@ -1015,6 +1134,24 @@ artifacts:
     source: "the operational moments, audiences and areas of this repository's layer"
     bytes: 349951
     sha256: 626b03ff72b5b235a6235cd1cef630d8532ba05bd088e70f93abb76bdc0354f4
+  - path: site/static/favicon.svg
+    document: design-mark
+    format: text
+    source: "share/design/brand/logo-mark.svg, the canonical mark"
+    bytes: 903
+    sha256: 4a0cab33442c2ebe0a0b4a01d1d89c8d6edc7173b0d78b72e4f6fa1d652b5de4
+  - path: site/static/images/logo-mark.svg
+    document: design-mark
+    format: text
+    source: "share/design/brand/logo-mark.svg, the canonical mark"
+    bytes: 903
+    sha256: 4a0cab33442c2ebe0a0b4a01d1d89c8d6edc7173b0d78b72e4f6fa1d652b5de4
+  - path: site/static/images/logo.svg
+    document: design-logo
+    format: text
+    source: "share/design/brand/logo.svg, the canonical logo"
+    bytes: 1058
+    sha256: 70d4956414346be2d2fd6906d37622fb6d17ad9e58601af72852c68ba79b0d89
   - path: site/static/install.sh
     document: installer
     format: text

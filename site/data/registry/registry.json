@@ -6,26 +6,26 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "6f2c6494aa349236bbaf00a4872265fefedf686ee3cb30252a85205fc1bdcc24",
+    "fingerprint": "1db7c266129221aafb01bea246b186d97a36ffb679a0cb029cc6b4e9ab9dd28b",
     "summary": {
-      "total": 1184,
-      "builtin": 73,
-      "declarative": 1111,
+      "total": 1190,
+      "builtin": 76,
+      "declarative": 1114,
       "by_kind": {
         "command": 3,
-        "query": 70,
-        "resource": 1111
+        "query": 73,
+        "resource": 1114
       },
       "by_stability": {
-        "behaviorally_verified": 68,
-        "implemented": 1116
+        "behaviorally_verified": 71,
+        "implemented": 1119
       },
-      "mcp_tools": 71,
-      "mcp_resources": 1137,
-      "http_routes": 73,
+      "mcp_tools": 74,
+      "mcp_resources": 1141,
+      "http_routes": 76,
       "cli_commands": 31,
-      "modules": 52,
-      "benchmark_required": 70,
+      "modules": 53,
+      "benchmark_required": 73,
       "benchmark_waived": 3,
       "cached": 25
     },
@@ -5480,6 +5480,865 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "design.explain",
+        "module": "design",
+        "kind": "query",
+        "title": "What a design token means",
+        "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+        "input": {
+          "name": "ExplainTokenInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "string",
+                "description": "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`)."
+              }
+            },
+            "required": [
+              "token"
+            ],
+            "description": "The input of `design.explain`: one token by name.",
+            "title": "ExplainTokenInput"
+          }
+        },
+        "output": {
+          "name": "Token",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name as declared."
+              },
+              "kind": {
+                "$ref": "#/$defs/TokenKind",
+                "description": "What kind of token."
+              },
+              "about": {
+                "type": "string",
+                "description": "What it is for, from the declaration."
+              },
+              "css": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The custom properties and Tailwind utilities it becomes."
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ColourPart"
+                },
+                "description": "For a colour token: its parts, each resolved per theme."
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "For a scalar token: the value."
+              },
+              "role": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "For a state word: the status it is filed under."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "For a status: the state words filed under it."
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The Flowbite names that are synonyms of it."
+              },
+              "projections": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The generated files the token reaches."
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "about",
+              "css",
+              "projections"
+            ],
+            "description": "One token, explained: where it came from, what it resolves to, what reads it.",
+            "title": "Token",
+            "$defs": {
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              },
+              "ColourPart": {
+                "type": "object",
+                "properties": {
+                  "part": {
+                    "type": "string",
+                    "description": "`fg`, `bg` or `line`."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The custom property a surface reads."
+                  },
+                  "light": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the light theme."
+                  },
+                  "dark": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the dark theme."
+                  }
+                },
+                "required": [
+                  "part",
+                  "css",
+                  "light",
+                  "dark"
+                ],
+                "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+              },
+              "Resolved": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "description": "The palette entry or role the declaration named."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                  },
+                  "literal": {
+                    "type": "string",
+                    "description": "The literal after every reference is followed."
+                  }
+                },
+                "required": [
+                  "reference",
+                  "css",
+                  "literal"
+                ],
+                "description": "What a colour reference resolved to."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_explain"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/explain"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "provenance",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.system",
+        "module": "design",
+        "kind": "query",
+        "title": "The design system",
+        "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DesignReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "SHA-256 of the declaration's canonical form."
+              },
+              "design": {
+                "type": "string",
+                "description": "The first twelve digits, as every stylesheet carries them in `--mj-design`."
+              },
+              "schema": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The format version of the declaration."
+              },
+              "source": {
+                "type": "string",
+                "description": "Where the declaration lives, repository-relative."
+              },
+              "identity": {
+                "$ref": "#/$defs/Identity",
+                "description": "Who this is."
+              },
+              "font": {
+                "$ref": "#/$defs/Fonts",
+                "description": "The two type stacks."
+              },
+              "theme": {
+                "$ref": "#/$defs/ThemeView",
+                "description": "The theme contract."
+              },
+              "viewports": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0
+                },
+                "description": "The widths a browser audit measures every page at."
+              },
+              "tallies": {
+                "$ref": "#/$defs/TokenTallies",
+                "description": "How many of each kind of token."
+              },
+              "projections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProjectionView"
+                },
+                "description": "Every generated file the declaration is projected into."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "design",
+              "schema",
+              "source",
+              "identity",
+              "font",
+              "theme",
+              "viewports",
+              "tallies",
+              "projections"
+            ],
+            "description": "The design system: what it is and where it goes.",
+            "title": "DesignReport",
+            "$defs": {
+              "Identity": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The product name every surface shows."
+                  },
+                  "mark": {
+                    "type": "string",
+                    "description": "The mark, relative to the design directory."
+                  },
+                  "logo": {
+                    "type": "string",
+                    "description": "The full logo, relative to the design directory."
+                  },
+                  "social": {
+                    "type": "string",
+                    "description": "The social preview image, relative to the design directory."
+                  }
+                },
+                "required": [
+                  "name",
+                  "mark",
+                  "logo",
+                  "social"
+                ],
+                "description": "Who this is."
+              },
+              "Fonts": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sans": {
+                    "type": "string",
+                    "description": "The system stack."
+                  },
+                  "mono": {
+                    "type": "string",
+                    "description": "The monospace stack."
+                  }
+                },
+                "required": [
+                  "sans",
+                  "mono"
+                ],
+                "description": "The two type stacks."
+              },
+              "ThemeView": {
+                "type": "object",
+                "properties": {
+                  "class": {
+                    "type": "string",
+                    "description": "The class on the root element that means dark."
+                  },
+                  "storage_key": {
+                    "type": "string",
+                    "description": "The `localStorage` key the person's choice is kept under."
+                  },
+                  "bootstrap": {
+                    "type": "string",
+                    "description": "The one pre-paint statement every surface runs."
+                  }
+                },
+                "required": [
+                  "class",
+                  "storage_key",
+                  "bootstrap"
+                ],
+                "description": "The theme contract as a client reads it."
+              },
+              "TokenTallies": {
+                "type": "object",
+                "properties": {
+                  "palette": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Raw palette entries."
+                  },
+                  "roles": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Semantic roles."
+                  },
+                  "statuses": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Status meanings."
+                  },
+                  "states": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "State words filed under a status."
+                  },
+                  "type_steps": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Steps of the type scale."
+                  },
+                  "aliases": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Flowbite names declared as synonyms."
+                  }
+                },
+                "required": [
+                  "palette",
+                  "roles",
+                  "statuses",
+                  "states",
+                  "type_steps",
+                  "aliases"
+                ],
+                "description": "How many of each kind of token."
+              },
+              "ProjectionView": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path."
+                  },
+                  "read_by": {
+                    "type": "string",
+                    "description": "What reads it."
+                  }
+                },
+                "required": [
+                  "path",
+                  "read_by"
+                ],
+                "description": "One generated projection of the design and what it is for."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design",
+            "resource": {
+              "uri": "majordomus://design",
+              "name": "design"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "design.tokens",
+        "module": "design",
+        "kind": "query",
+        "title": "The design tokens",
+        "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+        "input": {
+          "name": "TokensInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/TokenKind"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Only tokens of this kind."
+              }
+            },
+            "description": "The input of `design.tokens`: every token, or one kind of them.",
+            "title": "TokensInput",
+            "$defs": {
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "TokenList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of the declaration they came from."
+              },
+              "total": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many are listed."
+              },
+              "tokens": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Token"
+                },
+                "description": "The tokens, in the inventory's order."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "total",
+              "tokens"
+            ],
+            "description": "The tokens, listed.",
+            "title": "TokenList",
+            "$defs": {
+              "Token": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The name as declared."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/TokenKind",
+                    "description": "What kind of token."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "What it is for, from the declaration."
+                  },
+                  "css": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The custom properties and Tailwind utilities it becomes."
+                  },
+                  "parts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ColourPart"
+                    },
+                    "description": "For a colour token: its parts, each resolved per theme."
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "For a scalar token: the value."
+                  },
+                  "role": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "For a state word: the status it is filed under."
+                  },
+                  "states": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "For a status: the state words filed under it."
+                  },
+                  "aliases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The Flowbite names that are synonyms of it."
+                  },
+                  "projections": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The generated files the token reaches."
+                  }
+                },
+                "required": [
+                  "name",
+                  "kind",
+                  "about",
+                  "css",
+                  "projections"
+                ],
+                "description": "One token, explained: where it came from, what it resolves to, what reads it."
+              },
+              "TokenKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "font",
+                    "description": "A type stack."
+                  },
+                  {
+                    "type": "string",
+                    "const": "palette",
+                    "description": "A raw palette entry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "role",
+                    "description": "A semantic surface role."
+                  },
+                  {
+                    "type": "string",
+                    "const": "status",
+                    "description": "A status meaning."
+                  },
+                  {
+                    "type": "string",
+                    "const": "state",
+                    "description": "A state word, filed under a status."
+                  },
+                  {
+                    "type": "string",
+                    "const": "type",
+                    "description": "A step of the type scale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tracking",
+                    "description": "A letter-spacing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "layout",
+                    "description": "A shared layout value."
+                  },
+                  {
+                    "type": "string",
+                    "const": "radius",
+                    "description": "A corner radius."
+                  },
+                  {
+                    "type": "string",
+                    "const": "motion",
+                    "description": "A duration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "theme",
+                    "description": "The theme contract."
+                  }
+                ],
+                "description": "What kind of thing a token is."
+              },
+              "ColourPart": {
+                "type": "object",
+                "properties": {
+                  "part": {
+                    "type": "string",
+                    "description": "`fg`, `bg` or `line`."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The custom property a surface reads."
+                  },
+                  "light": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the light theme."
+                  },
+                  "dark": {
+                    "$ref": "#/$defs/Resolved",
+                    "description": "In the dark theme."
+                  }
+                },
+                "required": [
+                  "part",
+                  "css",
+                  "light",
+                  "dark"
+                ],
+                "description": "One part of a colour token — a role has one, a status has its text, ground and border."
+              },
+              "Resolved": {
+                "type": "object",
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "description": "The palette entry or role the declaration named."
+                  },
+                  "css": {
+                    "type": "string",
+                    "description": "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+                  },
+                  "literal": {
+                    "type": "string",
+                    "description": "The literal after every reference is followed."
+                  }
+                },
+                "required": [
+                  "reference",
+                  "css",
+                  "literal"
+                ],
+                "description": "What a colour reference resolved to."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_tokens"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/tokens"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
       },
       {
         "id": "directories.list",
@@ -25925,7 +26784,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 33,
+        "capabilities": 34,
         "capability_ids": []
       },
       {
@@ -26051,6 +26910,20 @@
         "capability_ids": []
       },
       {
+        "id": "design",
+        "title": "Design system",
+        "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "design.explain",
+          "design.system",
+          "design.tokens"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
@@ -26091,7 +26964,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 209,
+        "capabilities": 210,
         "capability_ids": []
       },
       {
@@ -26404,7 +27277,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 134,
+        "capabilities": 135,
         "capability_ids": []
       },
       {
@@ -26484,7 +27357,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9ad638ec2874f94a6bf214b594f05bfd77ac556599502d7835d18843a3ce79dc",
+    "fingerprint": "28f4fd750059e703272940a852a7219e10afc059d8516e6a2d051968cc1b87b7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26507,7 +27380,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 33,
+      "adr": 34,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -26516,7 +27389,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 209,
+      "document": 210,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -26532,7 +27405,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 134,
+      "test": 135,
       "use-case": 41,
       "workspace": 1
     },
@@ -27028,7 +27901,7 @@
         "path": ".ai/repo/adrs/0031-the-design-is-one-declaration-and-every-surface-is-a-project.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7429,
+        "bytes": 7448,
         "tags": [
           "design",
           "ui",
@@ -27068,6 +27941,25 @@
           "http",
           "cockpit",
           "agents"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0036",
+        "kind": "adr",
+        "identity": "adr-0036",
+        "title": "The design system is a typed declaration in the crate and every first-party surface consumes its projections",
+        "description": "The design system is a typed declaration in the crate and every first-party surface consumes its projections",
+        "path": ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12544,
+        "tags": [
+          "design",
+          "ui",
+          "cockpit",
+          "site",
+          "projections",
+          "derived"
         ]
       },
       {
@@ -29621,7 +30513,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 33864
+        "bytes": 33876
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -29693,7 +30585,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 24618
+        "bytes": 25387
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -29739,6 +30631,15 @@
         "path": "docs/DESIGN.md",
         "source_class": "document",
         "bytes": 34743
+      },
+      {
+        "uri": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "kind": "document",
+        "identity": "docs/DESIGN_SYSTEM.md",
+        "title": "The design system — one declaration, every surface",
+        "path": "docs/DESIGN_SYSTEM.md",
+        "source_class": "document",
+        "bytes": 13371
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -29855,7 +30756,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2518
+        "bytes": 2698
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -29909,7 +30810,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 13625
+        "bytes": 14006
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -29981,7 +30882,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 9463
+        "bytes": 9950
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -29999,7 +30900,7 @@
         "title": "The web surface — discovered from its producer, projected once",
         "path": "docs/WEB.md",
         "source_class": "document",
-        "bytes": 10895
+        "bytes": 11596
       },
       {
         "uri": "majordomus://document/docs/WHY.md",
@@ -31381,7 +32282,7 @@
         "path": ".ai/repo/features/cockpit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2223,
+        "bytes": 2231,
         "tags": [
           "cockpit",
           "interface"
@@ -36092,20 +36993,22 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.design-tokens-declared-once@1",
+        "uri": "majordomus://rule/project.design-tokens-declared-once@2",
         "kind": "rule",
-        "identity": "project.design-tokens-declared-once@1",
-        "title": "A design value is chosen once and every stylesheet is a projection of it",
-        "description": "Type, palette and accent are declared in one canonical file and generated into the Tailwind theme both builds import, the surface block the Cockpit is written against, and the custom properties compiled into the executable; a file that puts a colour on a screen may name a token and may not invent one, and a token it names is one something declares.",
-        "path": ".ai/repo/rules/project/design-tokens-declared-once.v1.md",
+        "identity": "project.design-tokens-declared-once@2",
+        "title": "The design is one typed declaration and every first-party surface consumes its projections",
+        "description": "Roles, status semantics, type scale, layout, radius, motion, theme contract and brand are declared once in share/design/tokens.yaml, read by the crate as a typed model, and projected by `majordomus generate design` into the stylesheets both Tailwind builds import, the tokens and declaration compiled into the executable, every copy of the brand, the site's dataset and the reference; a first-party surface names a token and never chooses a value, a state word is coloured by the meaning it is filed under, and a token added to the declaration reaches every surface with no consumer edited.",
+        "path": ".ai/repo/rules/project/design-tokens-declared-once.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6089,
+        "bytes": 9649,
         "tags": [
           "design",
           "ui",
           "derived",
-          "projections"
+          "projections",
+          "cockpit",
+          "site"
         ]
       },
       {
@@ -37272,7 +38175,7 @@
         "identity": "test/cases/107_design_tokens.sh",
         "path": "test/cases/107_design_tokens.sh",
         "source_class": "case",
-        "bytes": 8577
+        "bytes": 6550
       },
       {
         "uri": "majordomus://test/test/cases/107_runtime_staleness_is_loud.sh",
@@ -37289,6 +38192,14 @@
         "path": "test/cases/108_scope_after_trunk_merge.sh",
         "source_class": "case",
         "bytes": 2030
+      },
+      {
+        "uri": "majordomus://test/test/cases/109_design_system.sh",
+        "kind": "test",
+        "identity": "test/cases/109_design_system.sh",
+        "path": "test/cases/109_design_system.sh",
+        "source_class": "case",
+        "bytes": 9721
       },
       {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
@@ -38666,7 +39577,7 @@
       "identity": [
         "id"
       ],
-      "objects": 33
+      "objects": 34
     },
     {
       "name": "application",
@@ -38752,7 +39663,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 209
+      "objects": 210
     },
     {
       "name": "feature",
@@ -38921,7 +39832,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 134
+      "objects": 135
     },
     {
       "name": "use-case",
@@ -40168,6 +41079,10 @@
               {
                 "name": "deployment",
                 "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+              },
+              {
+                "name": "design",
+                "help": "The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*"
               }
             ],
             "defaults": [
@@ -52494,6 +53409,36 @@
         "output": "DeploymentList"
       },
       {
+        "name": "majordomus_design_explain",
+        "id": "design.explain",
+        "title": "What a design token means",
+        "description": "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ExplainTokenInput",
+        "output": "Token"
+      },
+      {
+        "name": "majordomus_design",
+        "id": "design.system",
+        "title": "The design system",
+        "description": "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DesignReport"
+      },
+      {
+        "name": "majordomus_design_tokens",
+        "id": "design.tokens",
+        "title": "The design tokens",
+        "description": "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind.",
+        "kind": "query",
+        "read_only": true,
+        "input": "TokensInput",
+        "output": "TokenList"
+      },
+      {
         "name": "majordomus_directories",
         "id": "directories.list",
         "title": "The layer's directory contracts",
@@ -53124,6 +54069,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://design",
+        "name": "design",
+        "id": "design.system",
+        "title": "The design system",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://directories",
         "name": "directories",
         "id": "directories.list",
@@ -53346,6 +54298,24 @@
         "method": "GET",
         "path": "/api/v1/deployments",
         "id": "deploy.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/explain",
+        "id": "design.explain",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design",
+        "id": "design.system",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/tokens",
+        "id": "design.tokens",
         "kind": "query"
       },
       {
@@ -54232,6 +55202,151 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/deployments"
+      },
+      {
+        "key": "design.explain|direct|role",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false
+      },
+      {
+        "key": "design.explain|direct|state",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false
+      },
+      {
+        "key": "design.explain|mcp|role",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false,
+        "tool": "majordomus_design_explain"
+      },
+      {
+        "key": "design.explain|mcp|state",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false,
+        "tool": "majordomus_design_explain"
+      },
+      {
+        "key": "design.explain|http|role",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.explain",
+        "module": "design",
+        "case": "role",
+        "cached": false,
+        "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.explain|http|state",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.explain",
+        "module": "design",
+        "case": "state",
+        "cached": false,
+        "route": "GET /api/v1/design/explain"
+      },
+      {
+        "key": "design.system|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "design.system|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_design"
+      },
+      {
+        "key": "design.system|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.system",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/design"
+      },
+      {
+        "key": "design.tokens|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false
+      },
+      {
+        "key": "design.tokens|direct|roles",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false
+      },
+      {
+        "key": "design.tokens|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false,
+        "tool": "majordomus_design_tokens"
+      },
+      {
+        "key": "design.tokens|mcp|roles",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false,
+        "tool": "majordomus_design_tokens"
+      },
+      {
+        "key": "design.tokens|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "all",
+        "cached": false,
+        "route": "GET /api/v1/design/tokens"
+      },
+      {
+        "key": "design.tokens|http|roles",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.tokens",
+        "module": "design",
+        "case": "roles",
+        "cached": false,
+        "route": "GET /api/v1/design/tokens"
       },
       {
         "key": "directories.list|direct|whole-tree",
@@ -57150,6 +58265,69 @@
           "cases": 1
         },
         {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.explain",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.system",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "design.tokens",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "directories.list",
           "module": "directories",
           "transport": "direct",
@@ -58540,20 +59718,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 73,
-          "covered": 70,
+          "required": 76,
+          "covered": 73,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 73,
-          "covered": 70,
+          "required": 76,
+          "covered": 73,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 71,
-          "covered": 68,
+          "required": 74,
+          "covered": 71,
           "missing": 0,
           "waived": 3
         },
@@ -58564,8 +59742,8 @@
           "waived": 0
         },
         "total": {
-          "required": 230,
-          "covered": 221,
+          "required": 239,
+          "covered": 230,
           "missing": 0,
           "waived": 9
         }

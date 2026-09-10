@@ -31,6 +31,8 @@ tags:
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
   - name: deploy
     description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
+  - name: design
+    description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
   - name: directories
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
   - name: distribution
@@ -818,6 +820,184 @@ paths:
         ttl_seconds: 5
       x-majordomus-mcp:
         tool: majordomus_deploy_check
+  "/api/v1/design":
+    get:
+      operationId: design.system
+      summary: The design system
+      description: "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into."
+      tags:
+        - design
+      parameters: []
+      responses:
+        "200":
+          description: "The design system: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DesignReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: design.system
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::design
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_design
+        resource:
+          uri: majordomus://design
+          name: design
+  "/api/v1/design/explain":
+    get:
+      operationId: design.explain
+      summary: What a design token means
+      description: "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches."
+      tags:
+        - design
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`)."
+          examples:
+            role:
+              value: fg
+            state:
+              value: succeeded
+      responses:
+        "200":
+          description: "What a design token means: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Token"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: design.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::design
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_design_explain
+  "/api/v1/design/tokens":
+    get:
+      operationId: design.tokens
+      summary: The design tokens
+      description: "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind."
+      tags:
+        - design
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/TokenKind"
+              - type: "null"
+          description: Only tokens of this kind.
+          examples:
+            roles:
+              value: role
+      responses:
+        "200":
+          description: "The design tokens: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TokenList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: design.tokens
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::design
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_design_tokens
   "/api/v1/directories":
     get:
       operationId: directories.list
@@ -5988,6 +6168,27 @@ components:
         - title
         - route
       description: One area of the Cockpit the feature names.
+    ColourPart:
+      type: object
+      properties:
+        part:
+          type: string
+          description: "`fg`, `bg` or `line`."
+        css:
+          type: string
+          description: The custom property a surface reads.
+        light:
+          "$ref": "#/components/schemas/Resolved"
+          description: In the light theme.
+        dark:
+          "$ref": "#/components/schemas/Resolved"
+          description: In the dark theme.
+      required:
+        - part
+        - css
+        - light
+        - dark
+      description: "One part of a colour token — a role has one, a status has its text, ground and border."
     CommandArgument:
       type: object
       properties:
@@ -7192,6 +7393,59 @@ components:
         - region
         - provider
       description: "One deployment as this process reads it, with where it came from."
+    DesignReport:
+      type: object
+      properties:
+        fingerprint:
+          type: string
+          description: "SHA-256 of the declaration's canonical form."
+        design:
+          type: string
+          description: "The first twelve digits, as every stylesheet carries them in `--mj-design`."
+        schema:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The format version of the declaration.
+        source:
+          type: string
+          description: "Where the declaration lives, repository-relative."
+        identity:
+          "$ref": "#/components/schemas/Identity"
+          description: Who this is.
+        font:
+          "$ref": "#/components/schemas/Fonts"
+          description: The two type stacks.
+        theme:
+          "$ref": "#/components/schemas/ThemeView"
+          description: The theme contract.
+        viewports:
+          type: array
+          items:
+            type: integer
+            format: uint32
+            minimum: 0
+          description: The widths a browser audit measures every page at.
+        tallies:
+          "$ref": "#/components/schemas/TokenTallies"
+          description: How many of each kind of token.
+        projections:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProjectionView"
+          description: Every generated file the declaration is projected into.
+      required:
+        - fingerprint
+        - design
+        - schema
+        - source
+        - identity
+        - font
+        - theme
+        - viewports
+        - tallies
+        - projections
+      description: "The design system: what it is and where it goes."
     Diagnosis:
       type: object
       properties:
@@ -8831,6 +9085,20 @@ components:
           description: When the edge considers a machine loaded.
           default: null
       description: "Fly.io's own facts: what has no meaning for any other provider."
+    Fonts:
+      type: object
+      additionalProperties: false
+      properties:
+        sans:
+          type: string
+          description: The system stack.
+        mono:
+          type: string
+          description: The monospace stack.
+      required:
+        - sans
+        - mono
+      description: The two type stacks.
     GitInfo:
       type: object
       properties:
@@ -9190,6 +9458,28 @@ components:
           const: POST
           description: The input is bound from the JSON body. No builtin uses it yet.
       description: The HTTP methods a capability may be bound to.
+    Identity:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: The product name every surface shows.
+        mark:
+          type: string
+          description: "The mark, relative to the design directory."
+        logo:
+          type: string
+          description: "The full logo, relative to the design directory."
+        social:
+          type: string
+          description: "The social preview image, relative to the design directory."
+      required:
+        - name
+        - mark
+        - logo
+        - social
+      description: Who this is.
     InspectReport:
       type: object
       properties:
@@ -11572,6 +11862,19 @@ components:
           const: unknown
           description: "It could not be rendered, so nothing can be said."
       description: Where one provider projection stands against its policy.
+    ProjectionView:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Repository-relative path.
+        read_by:
+          type: string
+          description: What reads it.
+      required:
+        - path
+        - read_by
+      description: One generated projection of the design and what it is for.
     ProtocolReport:
       type: object
       properties:
@@ -12620,6 +12923,23 @@ components:
           const: full
           description: "Everything, including the index. Writes the cache."
       description: "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
+    Resolved:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: The palette entry or role the declaration named.
+        css:
+          type: string
+          description: "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+        literal:
+          type: string
+          description: The literal after every reference is followed.
+      required:
+        - reference
+        - css
+        - literal
+      description: What a colour reference resolved to.
     ResolvedRefs:
       type: object
       properties:
@@ -13695,6 +14015,23 @@ components:
         - status
         - artifact
       description: "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
+    ThemeView:
+      type: object
+      properties:
+        class:
+          type: string
+          description: The class on the root element that means dark.
+        storage_key:
+          type: string
+          description: "The `localStorage` key the person's choice is kept under."
+        bootstrap:
+          type: string
+          description: The one pre-paint statement every surface runs.
+      required:
+        - class
+        - storage_key
+        - bootstrap
+      description: The theme contract as a client reads it.
     TierState:
       oneOf:
         - type: string
@@ -13707,6 +14044,158 @@ components:
           const: unavailable
           description: Neither available; the values are absent and the reason is a diagnostic.
       description: "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero."
+    Token:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name as declared.
+        kind:
+          "$ref": "#/components/schemas/TokenKind"
+          description: What kind of token.
+        about:
+          type: string
+          description: "What it is for, from the declaration."
+        css:
+          type: array
+          items:
+            type: string
+          description: The custom properties and Tailwind utilities it becomes.
+        parts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ColourPart"
+          description: "For a colour token: its parts, each resolved per theme."
+        value:
+          type:
+            - string
+            - "null"
+          description: "For a scalar token: the value."
+        role:
+          type:
+            - string
+            - "null"
+          description: "For a state word: the status it is filed under."
+        states:
+          type: array
+          items:
+            type: string
+          description: "For a status: the state words filed under it."
+        aliases:
+          type: array
+          items:
+            type: string
+          description: The Flowbite names that are synonyms of it.
+        projections:
+          type: array
+          items:
+            type: string
+          description: The generated files the token reaches.
+      required:
+        - name
+        - kind
+        - about
+        - css
+        - projections
+      description: "One token, explained: where it came from, what it resolves to, what reads it."
+    TokenKind:
+      oneOf:
+        - type: string
+          const: font
+          description: A type stack.
+        - type: string
+          const: palette
+          description: A raw palette entry.
+        - type: string
+          const: role
+          description: A semantic surface role.
+        - type: string
+          const: status
+          description: A status meaning.
+        - type: string
+          const: state
+          description: "A state word, filed under a status."
+        - type: string
+          const: type
+          description: A step of the type scale.
+        - type: string
+          const: tracking
+          description: A letter-spacing.
+        - type: string
+          const: layout
+          description: A shared layout value.
+        - type: string
+          const: radius
+          description: A corner radius.
+        - type: string
+          const: motion
+          description: A duration.
+        - type: string
+          const: theme
+          description: The theme contract.
+      description: What kind of thing a token is.
+    TokenList:
+      type: object
+      properties:
+        fingerprint:
+          type: string
+          description: The fingerprint of the declaration they came from.
+        total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many are listed.
+        tokens:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Token"
+          description: "The tokens, in the inventory's order."
+      required:
+        - fingerprint
+        - total
+        - tokens
+      description: "The tokens, listed."
+    TokenTallies:
+      type: object
+      properties:
+        palette:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Raw palette entries.
+        roles:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Semantic roles.
+        statuses:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Status meanings.
+        states:
+          type: integer
+          format: uint
+          minimum: 0
+          description: State words filed under a status.
+        type_steps:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Steps of the type scale.
+        aliases:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Flowbite names declared as synonyms.
+      required:
+        - palette
+        - roles
+        - statuses
+        - states
+        - type_steps
+        - aliases
+      description: How many of each kind of token.
     ToolchainAvailability:
       oneOf:
         - type: string

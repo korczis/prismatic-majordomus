@@ -1,0 +1,255 @@
+{
+  "schema": "majordomus-site-design/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.4.0",
+  "fingerprint": "433c061480590fc5e22c2b870f9a3fe3ba879e7cdad91a0d459d0afd88e1790b",
+  "design": "433c06148059",
+  "source": "share/design/tokens.yaml",
+  "identity": {
+    "name": "Majordomus",
+    "mark": "brand/logo-mark.svg",
+    "logo": "brand/logo.svg",
+    "social": "brand/social-card.png"
+  },
+  "theme": {
+    "class": "dark",
+    "storage_key": "color-theme",
+    "bootstrap": "try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}"
+  },
+  "font": {
+    "sans": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+    "mono": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
+  },
+  "roles": [
+    {
+      "name": "bg",
+      "css": "--mj-bg",
+      "about": "the page",
+      "light": "#fff",
+      "dark": "oklch(13% 0.028 261.692)"
+    },
+    {
+      "name": "raised",
+      "css": "--mj-raised",
+      "about": "a card, a panel, a header bar that sits on the page",
+      "light": "#fff",
+      "dark": "oklch(21% 0.034 264.665)"
+    },
+    {
+      "name": "sunken",
+      "css": "--mj-sunken",
+      "about": "a well, a table stripe, a code block, a header cell",
+      "light": "oklch(98.5% 0.002 247.839)",
+      "dark": "oklch(27.8% 0.033 256.848)"
+    },
+    {
+      "name": "line",
+      "css": "--mj-line",
+      "about": "every border and rule",
+      "light": "oklch(92.8% 0.006 264.531)",
+      "dark": "oklch(27.8% 0.033 256.848)"
+    },
+    {
+      "name": "fg",
+      "css": "--mj-fg",
+      "about": "headings, identifiers, values; the text that carries the page",
+      "light": "oklch(21% 0.034 264.665)",
+      "dark": "#fff"
+    },
+    {
+      "name": "body",
+      "css": "--mj-body",
+      "about": "reading text",
+      "light": "oklch(44.6% 0.03 256.802)",
+      "dark": "oklch(70.7% 0.022 261.325)"
+    },
+    {
+      "name": "muted",
+      "css": "--mj-muted",
+      "about": "secondary text; labels, captions, provenance",
+      "light": "oklch(55.1% 0.027 264.364)",
+      "dark": "oklch(70.7% 0.022 261.325)"
+    },
+    {
+      "name": "faint",
+      "css": "--mj-faint",
+      "about": "a third level below muted; placeholders, disabled text",
+      "light": "oklch(70.7% 0.022 261.325)",
+      "dark": "oklch(55.1% 0.027 264.364)"
+    },
+    {
+      "name": "accent",
+      "css": "--mj-accent",
+      "about": "links, the focus ring, the one colour that means interactive",
+      "light": "oklch(48.8% 0.243 264.376)",
+      "dark": "oklch(62.3% 0.214 259.815)"
+    },
+    {
+      "name": "accent-strong",
+      "css": "--mj-accent-strong",
+      "about": "the accent where it must read as text on the accent's soft ground",
+      "light": "oklch(37.9% 0.146 265.522)",
+      "dark": "oklch(70.7% 0.165 254.624)"
+    },
+    {
+      "name": "accent-soft",
+      "css": "--mj-accent-soft",
+      "about": "the accent as a ground; a selected row, the current navigation entry",
+      "light": "oklch(97% 0.014 254.604)",
+      "dark": "oklch(28.2% 0.091 267.935)"
+    },
+    {
+      "name": "accent-line",
+      "css": "--mj-accent-line",
+      "about": "the accent as a border around its soft ground",
+      "light": "oklch(88.2% 0.059 254.128)",
+      "dark": "oklch(37.9% 0.146 265.522)"
+    },
+    {
+      "name": "accent-fill",
+      "css": "--mj-accent-fill",
+      "about": "a primary action's background; always carries on-accent text",
+      "light": "oklch(48.8% 0.243 264.376)",
+      "dark": "oklch(54.6% 0.245 262.881)"
+    },
+    {
+      "name": "on-accent",
+      "css": "--mj-on-accent",
+      "about": "text on a primary action",
+      "light": "#fff",
+      "dark": "#fff"
+    }
+  ],
+  "statuses": [
+    {
+      "name": "ok",
+      "about": "healthy, done, passing, present, in agreement",
+      "fg": "--mj-ok",
+      "bg": "--mj-ok-bg",
+      "line": "--mj-ok-line",
+      "light": "oklch(37.8% 0.077 168.94)",
+      "dark": "oklch(84.5% 0.143 164.978)"
+    },
+    {
+      "name": "warn",
+      "about": "attention without failure; stale, partial, advisory, cancelled",
+      "fg": "--mj-warn",
+      "bg": "--mj-warn-bg",
+      "line": "--mj-warn-line",
+      "light": "oklch(40.8% 0.123 38.172)",
+      "dark": "oklch(83.7% 0.128 66.29)"
+    },
+    {
+      "name": "bad",
+      "about": "failed, missing, blocked, refused",
+      "fg": "--mj-bad",
+      "bg": "--mj-bad-bg",
+      "line": "--mj-bad-line",
+      "light": "oklch(41% 0.159 10.272)",
+      "dark": "oklch(81% 0.117 11.638)"
+    },
+    {
+      "name": "info",
+      "about": "in progress, active, informational; the accent as a status",
+      "fg": "--mj-info",
+      "bg": "--mj-info-bg",
+      "line": "--mj-info-line",
+      "light": "oklch(37.9% 0.146 265.522)",
+      "dark": "oklch(70.7% 0.165 254.624)"
+    },
+    {
+      "name": "neutral",
+      "about": "no meaning carried by colour; unknown, planned, external, draft",
+      "fg": "--mj-neutral",
+      "bg": "--mj-neutral-bg",
+      "line": "--mj-neutral-line",
+      "light": "oklch(21% 0.034 264.665)",
+      "dark": "#fff"
+    }
+  ],
+  "states": {
+    "ok": "ok",
+    "pass": "ok",
+    "passed": "ok",
+    "succeeded": "ok",
+    "completed": "ok",
+    "done": "ok",
+    "current": "ok",
+    "declared": "ok",
+    "covered": "ok",
+    "guaranteed": "ok",
+    "healthy": "ok",
+    "live": "ok",
+    "present": "ok",
+    "synced": "ok",
+    "stable": "ok",
+    "read-only": "ok",
+    "connected": "ok",
+    "accepted": "ok",
+    "enforced": "ok",
+    "wired": "ok",
+    "warn": "warn",
+    "warning": "warn",
+    "stale": "warn",
+    "partial": "warn",
+    "advisory": "warn",
+    "cancelled": "warn",
+    "cancelling": "warn",
+    "not-generated": "warn",
+    "reconnecting": "warn",
+    "verify": "warn",
+    "executable": "warn",
+    "ahead": "warn",
+    "behind": "warn",
+    "dirty": "warn",
+    "proposed": "warn",
+    "deprecated": "warn",
+    "degraded": "warn",
+    "bad": "bad",
+    "fail": "bad",
+    "failed": "bad",
+    "error": "bad",
+    "missing": "bad",
+    "blocked": "bad",
+    "rejected": "bad",
+    "blocking": "bad",
+    "refused": "bad",
+    "disconnected": "bad",
+    "offline": "bad",
+    "lost": "bad",
+    "stderr": "bad",
+    "superseded": "bad",
+    "unwired": "bad",
+    "info": "info",
+    "running": "info",
+    "queued": "info",
+    "active": "info",
+    "verified": "info",
+    "generated": "info",
+    "cached": "info",
+    "runtime": "info",
+    "resource": "info",
+    "pending": "info",
+    "loading": "info",
+    "streaming": "info",
+    "neutral": "neutral",
+    "unknown": "neutral",
+    "external": "neutral",
+    "planned": "neutral",
+    "described": "neutral",
+    "draft": "neutral",
+    "ready": "neutral",
+    "inactive": "neutral",
+    "stopped": "neutral",
+    "idle": "neutral",
+    "query": "neutral",
+    "command": "neutral"
+  },
+  "viewports": [
+    320,
+    390,
+    1024,
+    1280,
+    1600
+  ]
+}

@@ -9,7 +9,7 @@
 // the static checks both consume it, so they cannot disagree about what a page is.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 
 /** The narrowest viewport every page must remain usable at (WCAG 2.2 reflow, 320 CSS px). */
 export const REFLOW_FLOOR = 320;
@@ -132,13 +132,30 @@ export function breakpointsFromCss(cssPath) {
  * pixel below it — where a layout discontinuity hides — and one desktop width. Deduplicated
  * and sorted, so a theme with two names for one width costs one visit.
  */
-export function viewports(breakpoints) {
-  const widths = new Set([REFLOW_FLOOR, DESKTOP]);
+export function viewports(breakpoints, declared = []) {
+  const widths = new Set([REFLOW_FLOOR, DESKTOP, ...declared]);
   for (const breakpoint of breakpoints) {
     widths.add(breakpoint - 1);
     widths.add(breakpoint);
   }
   return [...widths].filter((w) => w >= REFLOW_FLOOR).sort((a, b) => a - b);
+}
+
+/**
+ * The widths the design declaration asks every page to be measured at, read from the
+ * dataset `majordomus generate design` writes beside the stylesheet's site. They join the
+ * breakpoint-derived set rather than replace it: the declaration says what a person
+ * decided, the media queries say what the build did, and a page must work at both.
+ * `[]` when the dataset is not there — the breakpoints still stand.
+ */
+export function declaredViewports(cssPath) {
+  try {
+    const site = dirname(dirname(cssPath));
+    const data = JSON.parse(readFileSync(join(site, 'data', 'registry', 'design.json'), 'utf8'));
+    return Array.isArray(data.viewports) ? data.viewports.filter((w) => Number.isInteger(w)) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -185,14 +202,15 @@ export function criticalWidths(viewportList) {
 /** The whole audit target set for one directory: pages × widths, with the provenance of both. */
 export function plan(publicDir, cssPath) {
   const breakpoints = breakpointsFromCss(cssPath);
-  const widths = viewports(breakpoints);
+  const declared = declaredViewports(cssPath);
+  const widths = viewports(breakpoints, declared);
   return {
     pages: tierPages(discoverPages(publicDir), widths),
     breakpoints,
-    viewports: viewports(breakpoints),
+    viewports: widths,
     source: {
       pages: 'the built site: its filesystem and its sitemap, unioned',
-      viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
+      viewports: `the media queries of ${relative(process.cwd(), cssPath)}${declared.length ? ', and the widths share/design/tokens.yaml declares' : ''}`,
     },
   };
 }
@@ -224,7 +242,8 @@ export function mounted(mount, route) {
  */
 export function planSurfaces(surfaces, cssPath) {
   const breakpoints = breakpointsFromCss(cssPath);
-  const widths = viewports(breakpoints);
+  const declared = declaredViewports(cssPath);
+  const widths = viewports(breakpoints, declared);
   const pages = [];
   for (const surface of surfaces) {
     for (const page of discoverPages(surface.dir)) {
@@ -246,7 +265,7 @@ export function planSurfaces(surfaces, cssPath) {
     surfaces: surfaces.map((s) => ({ id: s.id, mount: s.mount })),
     source: {
       pages: `every static surface the executable serves (${surfaces.map((s) => `${s.id} at ${s.mount}`).join(', ') || 'none'}), each from its filesystem and its sitemap`,
-      viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
+      viewports: `the media queries of ${relative(process.cwd(), cssPath)}${declared.length ? ', and the widths share/design/tokens.yaml declares' : ''}`,
     },
   };
 }

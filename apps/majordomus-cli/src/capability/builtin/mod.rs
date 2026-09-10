@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
+pub mod design;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
@@ -67,6 +68,10 @@ pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, Des
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
+};
+pub use design::{
+    DesignReport, ExplainTokenInput, ProjectionView, ThemeView, TokenList, TokenTallies,
+    TokensInput, DESIGN_URI,
 };
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
@@ -136,6 +141,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         web,
+        design,
         worktree,
         trace,
         product

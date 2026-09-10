@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 42
+weight = 43
 [extra]
 source = "docs/UI.md"
 +++
@@ -25,6 +25,13 @@ idiom, one route mounted over a section of the site. Not one of them is a page's
 
 So the standard is executable, it runs over every page rather than a sample, and a finding
 is treated as a shared source until proven otherwise.
+
+The widths every page is audited at are the media queries the theme compiled *and* the
+widths `share/design/tokens.yaml` declares (`viewports`), unioned; the two browser probes
+(`scripts/site-probe`, `scripts/cockpit-probe`) measure at the declared widths alone and
+also assert the design contract — that the stylesheet a page loaded, the page itself and
+the executable carry one fingerprint. How the design itself is declared and projected is
+[`DESIGN_SYSTEM.md`](@/docs/design-system.md).
 
 ## The commands
 

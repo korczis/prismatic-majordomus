@@ -1,45 +1,74 @@
-/* GENERATED FILE - DO NOT EDIT DIRECTLY
-   Source: share/design/tokens.yaml, the one place a design value is chosen
-   Generator: scripts/design-tokens */
+/* GENERATED FILE — DO NOT EDIT DIRECTLY
+   Source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`
+   Generator: majordomus-cli 0.4.0 */
 @layer base {
   :root {
     color-scheme: light;
-    --bad: oklch(51.4% 0.222 16.935);
-    --bg: #fff;
-    --faint: oklch(70.7% 0.022 261.325);
-    --fg: oklch(21% 0.034 264.665);
-    --line: oklch(92.8% 0.006 264.531);
-    --muted: oklch(55.1% 0.027 264.364);
-    --ok: oklch(50.8% 0.118 165.612);
-    --raised: #fff;
-    --sunken: oklch(98.5% 0.002 247.839);
-    --warn: oklch(55.5% 0.163 48.998);
-    --mj-bg: var(--bg);
-    --mj-bg-raised: var(--raised);
-    --mj-bg-sunken: var(--sunken);
-    --mj-border: var(--line);
-    --mj-graph-accent: var(--color-accent-600);
-    --mj-graph-good: var(--ok);
-    --mj-graph-line: var(--line);
-    --mj-graph-muted: var(--muted);
-    --mj-graph-surface: var(--raised);
-    --mj-graph-text: var(--fg);
-    --mj-graph-warn: var(--warn);
-    --mj-text: var(--fg);
-    --mj-text-faint: var(--faint);
-    --mj-text-muted: var(--muted);
+    --mj-design: "433c06148059";
+    --mj-measure: 62rem;
+    --mj-cockpit: 1600px;
+    --mj-topbar: 2.75rem;
+    --mj-motion-fast: 150ms;
+    --mj-bg: #fff;
+    --mj-raised: #fff;
+    --mj-sunken: oklch(98.5% 0.002 247.839);
+    --mj-line: oklch(92.8% 0.006 264.531);
+    --mj-fg: oklch(21% 0.034 264.665);
+    --mj-body: oklch(44.6% 0.03 256.802);
+    --mj-muted: oklch(55.1% 0.027 264.364);
+    --mj-faint: oklch(70.7% 0.022 261.325);
+    --mj-accent: oklch(48.8% 0.243 264.376);
+    --mj-accent-strong: oklch(37.9% 0.146 265.522);
+    --mj-accent-soft: oklch(97% 0.014 254.604);
+    --mj-accent-line: oklch(88.2% 0.059 254.128);
+    --mj-accent-fill: oklch(48.8% 0.243 264.376);
+    --mj-on-accent: #fff;
+    --mj-ok: oklch(37.8% 0.077 168.94);
+    --mj-ok-bg: oklch(97.9% 0.021 166.113);
+    --mj-ok-line: oklch(90.5% 0.093 164.15);
+    --mj-warn: oklch(40.8% 0.123 38.172);
+    --mj-warn-bg: oklch(98% 0.016 73.684);
+    --mj-warn-line: oklch(90.1% 0.076 70.697);
+    --mj-bad: oklch(41% 0.159 10.272);
+    --mj-bad-bg: oklch(96.9% 0.015 12.422);
+    --mj-bad-line: oklch(89.2% 0.058 10.001);
+    --mj-info: oklch(37.9% 0.146 265.522);
+    --mj-info-bg: oklch(97% 0.014 254.604);
+    --mj-info-line: oklch(88.2% 0.059 254.128);
+    --mj-neutral: var(--mj-fg);
+    --mj-neutral-bg: var(--mj-sunken);
+    --mj-neutral-line: var(--mj-line);
   }
-  :where(.dark) {
+  .dark {
     color-scheme: dark;
-    --bad: oklch(71.2% 0.194 13.428);
-    --bg: oklch(0.19 0.005 250);
-    --faint: oklch(0.55 0.008 250);
-    --fg: oklch(0.94 0.004 250);
-    --line: oklch(0.32 0.008 250);
-    --muted: oklch(0.68 0.008 250);
-    --ok: oklch(76.5% 0.177 163.223);
-    --raised: oklch(0.23 0.006 250);
-    --sunken: oklch(0.16 0.005 250);
-    --warn: oklch(82.8% 0.189 84.429);
+    --mj-bg: oklch(13% 0.028 261.692);
+    --mj-raised: oklch(21% 0.034 264.665);
+    --mj-sunken: oklch(27.8% 0.033 256.848);
+    --mj-line: oklch(27.8% 0.033 256.848);
+    --mj-fg: #fff;
+    --mj-body: oklch(70.7% 0.022 261.325);
+    --mj-muted: oklch(70.7% 0.022 261.325);
+    --mj-faint: oklch(55.1% 0.027 264.364);
+    --mj-accent: oklch(62.3% 0.214 259.815);
+    --mj-accent-strong: oklch(70.7% 0.165 254.624);
+    --mj-accent-soft: oklch(28.2% 0.091 267.935);
+    --mj-accent-line: oklch(37.9% 0.146 265.522);
+    --mj-accent-fill: oklch(54.6% 0.245 262.881);
+    --mj-on-accent: #fff;
+    --mj-ok: oklch(84.5% 0.143 164.978);
+    --mj-ok-bg: oklch(26.2% 0.051 172.552);
+    --mj-ok-line: oklch(37.8% 0.077 168.94);
+    --mj-warn: oklch(83.7% 0.128 66.29);
+    --mj-warn-bg: oklch(26.6% 0.079 36.259);
+    --mj-warn-line: oklch(40.8% 0.123 38.172);
+    --mj-bad: oklch(81% 0.117 11.638);
+    --mj-bad-bg: oklch(27.1% 0.105 12.094);
+    --mj-bad-line: oklch(41% 0.159 10.272);
+    --mj-info: oklch(70.7% 0.165 254.624);
+    --mj-info-bg: oklch(28.2% 0.091 267.935);
+    --mj-info-line: oklch(37.9% 0.146 265.522);
+    --mj-neutral: var(--mj-fg);
+    --mj-neutral-bg: var(--mj-sunken);
+    --mj-neutral-line: var(--mj-line);
   }
 }
