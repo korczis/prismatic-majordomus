@@ -14,4 +14,5 @@
   <a href="{{ get_url(path=ex.routes.http, trailing_slash=true) }}" class="{{ off }}">HTTP API</a>
   <a href="{{ get_url(path=ex.routes.artifacts, trailing_slash=true) }}" class="{% if current == 'artifacts' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'artifacts' %} aria-current="page"{% endif %}>Artifacts</a>
   <a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}" class="{% if current == 'benchmarks' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'benchmarks' %} aria-current="page"{% endif %}>Benchmarks</a>
+  <a href="{{ get_url(path="/registry/graph/", trailing_slash=true) }}" class="{% if current == 'graph' %}{{ on }}{% else %}{{ off }}{% endif %}"{% if current == 'graph' %} aria-current="page"{% endif %}>Graph</a>
 </nav>
