@@ -64,6 +64,17 @@ out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" || {
   echo "    the gate reported prose as a blocking call:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1
 }
 
+# ---------------------------------------------------------------- a waiver is a decision
+# A fixture that exists to be a violation says so on the line, with its reason. That is
+# different from the baseline: the baseline holds debt nobody has decided about, a waiver
+# records a decision where a reader of the line will see it.
+printf '#!/usr/bin/env bash\nsleep 99 &  # liveness-check: intentional - the fixture is the point\necho done\n' > "$F/scripts/waived"
+chmod +x "$F/scripts/waived"
+( cd "$F" && git add -A && git commit -qm waived ) || { echo "    could not commit the waived fixture"; exit 1; }
+out="$( cd "$F" && ./scripts/liveness-check 2>&1 )" || {
+  echo "    a declared waiver was reported anyway:"; printf '%s\n' "$out" | sed 's/^/      /'; exit 1
+}
+
 # ---------------------------------------------------------------- the ratchet cannot rot
 # A baseline entry that matches nothing is reported, so the list shrinks as files are fixed
 # instead of quietly outliving them.
