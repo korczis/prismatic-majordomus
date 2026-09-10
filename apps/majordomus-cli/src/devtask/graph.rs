@@ -216,7 +216,9 @@ pub fn transitive_dependents(issues: &[PlanIssue], id: &str) -> Vec<String> {
     let mut seen: BTreeSet<String> = BTreeSet::new();
     let mut queue: Vec<&str> = vec![id];
     while let Some(next) = queue.pop() {
-        let Some(node) = by_id.get(next) else { continue };
+        let Some(node) = by_id.get(next) else {
+            continue;
+        };
         for d in &node.dependents {
             if d != id && seen.insert(d.clone()) {
                 queue.push(d.as_str());
@@ -255,7 +257,8 @@ pub fn cycles(issues: &[PlanIssue]) -> Vec<Vec<String>> {
     // canonical order of the nodes, so the walk is reproducible
     let mut order: Vec<&str> = issues.iter().map(|i| i.id.as_str()).collect();
     order.sort_by(|a, b| natural_cmp(a, b));
-    let position: BTreeMap<&str, usize> = order.iter().enumerate().map(|(n, id)| (*id, n)).collect();
+    let position: BTreeMap<&str, usize> =
+        order.iter().enumerate().map(|(n, id)| (*id, n)).collect();
     let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); order.len()];
     for i in issues {
         let Some(&from) = position.get(i.id.as_str()) else {
@@ -640,7 +643,10 @@ impl MilestoneGraph {
             &self.cancelled,
         ] {
             counted += bucket.len();
-            if !bucket.iter().all(|id| self.nodes.iter().any(|n| &n.issue == id)) {
+            if !bucket
+                .iter()
+                .all(|id| self.nodes.iter().any(|n| &n.issue == id))
+            {
                 return false;
             }
         }
@@ -655,8 +661,7 @@ impl MilestoneGraph {
     /// Is every attested field's invariant held?
     pub fn is_consistent(&self) -> bool {
         [&self.title, &self.outcome, &self.status].iter().all(|f| {
-            f.is_consistent()
-                && (f.provenance != FieldProvenance::Unknown || f.reason.is_some())
+            f.is_consistent() && (f.provenance != FieldProvenance::Unknown || f.reason.is_some())
         })
     }
 }
@@ -664,7 +669,9 @@ impl MilestoneGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::plan::{PlanCounts, PlanEdge, PlanFinding, PlanMilestone, PlanProject, PlanVocabulary};
+    use crate::plan::{
+        PlanCounts, PlanEdge, PlanFinding, PlanMilestone, PlanProject, PlanVocabulary,
+    };
 
     fn node(id: &str, status: &str, depends_on: &[&str], scope: &[&str]) -> PlanIssue {
         PlanIssue {
@@ -744,8 +751,14 @@ mod tests {
                 active_milestone: "m1".into(),
             },
             statuses: PlanVocabulary {
-                issue: crate::plan::ISSUE_STATUSES.iter().map(|s| (*s).to_string()).collect(),
-                milestone: crate::plan::MILESTONE_STATUSES.iter().map(|s| (*s).to_string()).collect(),
+                issue: crate::plan::ISSUE_STATUSES
+                    .iter()
+                    .map(|s| (*s).to_string())
+                    .collect(),
+                milestone: crate::plan::MILESTONE_STATUSES
+                    .iter()
+                    .map(|s| (*s).to_string())
+                    .collect(),
             },
             milestones: vec![PlanMilestone {
                 id: "m1".into(),
@@ -833,7 +846,11 @@ mod tests {
         );
         let g = MilestoneGraph::build(&plan, "m1", None);
         assert_eq!(g.blocked, ["I0004"]);
-        let names: Vec<&str> = g.critical_blockers.iter().map(|c| c.issue.as_str()).collect();
+        let names: Vec<&str> = g
+            .critical_blockers
+            .iter()
+            .map(|c| c.issue.as_str())
+            .collect();
         assert_eq!(names, ["I0001", "I0002", "I0003"]);
         assert!(g.critical_blockers.iter().all(|c| c.weight == 1));
     }
@@ -883,7 +900,10 @@ mod tests {
         let plan = plan_of(vec![node("I0001", "READY", &[], &[]), alone], Vec::new());
         let g = MilestoneGraph::build(&plan, "m1", None);
         let sets: Vec<Vec<String>> = g.parallelizable.iter().map(|s| s.issues.clone()).collect();
-        assert_eq!(sets, vec![vec!["I0001".to_string()], vec!["I0002".to_string()]]);
+        assert_eq!(
+            sets,
+            vec![vec!["I0001".to_string()], vec!["I0002".to_string()]]
+        );
     }
 
     /// A cycle is reported as its component, and every issue in it loses its wave rather
@@ -900,16 +920,27 @@ mod tests {
                 level: "FAIL".into(),
                 code: "cycle".into(),
                 subject: "graph".into(),
-                message: "a dependency cycle prevents these issues from ever becoming ready: I0001 I0002".into(),
+                message:
+                    "a dependency cycle prevents these issues from ever becoming ready: I0001 I0002"
+                        .into(),
             }],
         );
         let g = MilestoneGraph::build(&plan, "m1", None);
-        assert_eq!(g.cycles, vec![vec!["I0001".to_string(), "I0002".to_string()]]);
+        assert_eq!(
+            g.cycles,
+            vec![vec!["I0001".to_string(), "I0002".to_string()]]
+        );
         for id in ["I0001", "I0002"] {
             let n = g.nodes.iter().find(|n| n.issue == id).unwrap();
             assert!(n.wave.is_none(), "{id} was given a wave despite the cycle");
         }
-        assert!(g.nodes.iter().find(|n| n.issue == "I0003").unwrap().wave.is_some());
+        assert!(g
+            .nodes
+            .iter()
+            .find(|n| n.issue == "I0003")
+            .unwrap()
+            .wave
+            .is_some());
         assert!(g.has_failures());
     }
 

@@ -185,6 +185,7 @@ fn issue_text(v: &Value) -> String {
         ("commits", "commits"),
         ("trunk", "trunk"),
         ("sessions", "sessions"),
+        ("sessions_by_branch", "sessions_by_branch"),
     ] {
         out.push(field(label, &e[key]));
     }
@@ -275,7 +276,9 @@ fn milestone_text(v: &Value) -> String {
             "{:<width$}  {:<18}  {:<5}  {:<8}  {}",
             n["issue"].as_str().unwrap_or(""),
             n["readiness"].as_str().unwrap_or(""),
-            n["wave"].as_u64().map_or("—".to_string(), |w| w.to_string()),
+            n["wave"]
+                .as_u64()
+                .map_or("—".to_string(), |w| w.to_string()),
             n["transitive_dependents"].as_u64().unwrap_or(0),
             n["title"].as_str().unwrap_or(""),
             width = width

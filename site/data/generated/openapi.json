@@ -5823,8 +5823,17 @@
           "type": "AttestedText"
         },
         {
-          "description": "The session records that name this issue. Inferred: a session record declares the\nbranch it was written on and never the issue, so the edge is the branch-name rule\nand it can be wrong.",
+          "description": "The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode's ledger events, not authored and not guessed.",
           "name": "sessions",
+          "refs": [
+            "AttestedList"
+          ],
+          "required": true,
+          "type": "AttestedList"
+        },
+        {
+          "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one.",
+          "name": "sessions_by_branch",
           "refs": [
             "AttestedList"
           ],

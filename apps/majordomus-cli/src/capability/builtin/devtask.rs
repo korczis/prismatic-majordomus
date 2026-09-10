@@ -149,12 +149,15 @@ fn issue_ids(index: &Index) -> Vec<String> {
     ids
 }
 
-/// The session records whose branch names this issue, in the order the index holds them.
+/// The session records that reach this issue, each carrying how strongly.
 ///
-/// The rule is [`crate::worktree::state::issue_of`]'s and is not restated here: a component
-/// of the branch name is the issue id, or is that id followed by a hyphen. It is a rule
-/// about a name, so the edge it produces is *inferred* and the field that carries it says
-/// so — a session record declares the branch it was written on and never an issue.
+/// Two relations, and they are deliberately not merged. A record's own `issues` key is what
+/// `share/schemas/majordomus/session-record` calls "the issues it moved, by id — derived
+/// from the ledger's own events for this episode; never authored": a canonical link. Its
+/// branch name is a rule about a string — [`crate::worktree::state::issue_of`]'s, not
+/// restated here — which a rename can break. The first is derived, the second inferred, and
+/// [`SessionRef::declares_issue`] is which, so that the field carrying each can state its
+/// own provenance instead of one of them borrowing the other's.
 fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
     let ids = vec![issue.to_string()];
     let mut out: Vec<SessionRef> = index
@@ -162,8 +165,21 @@ fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
         .iter()
         .filter(|o| o.kind == "session")
         .filter_map(|o| {
-            let branch = o.metadata.get("branch").and_then(Value::as_str)?;
-            crate::worktree::state::issue_of(branch, &ids)?;
+            let branch = o
+                .metadata
+                .get("branch")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let declares_issue = o
+                .metadata
+                .get("issues")
+                .and_then(Value::as_array)
+                .is_some_and(|items| items.iter().any(|i| i.as_str() == Some(issue)));
+            // a record that neither declares the issue nor carries a branch naming it is
+            // not this issue's session, and is left out rather than reported weakly
+            if !declares_issue && crate::worktree::state::issue_of(branch, &ids).is_none() {
+                return None;
+            }
             Some(SessionRef {
                 session_id: o.identity.clone(),
                 branch: branch.to_string(),
@@ -174,6 +190,7 @@ fn sessions_of(index: &Index, issue: &str) -> Vec<SessionRef> {
                     .unwrap_or_default()
                     .to_string(),
                 path: o.provenance.path.clone(),
+                declares_issue,
             })
         })
         .collect();
@@ -433,7 +450,12 @@ mod tests {
             let g = MilestoneGraph::build(&plan, &m.id, record);
             assert!(g.is_partitioned(), "{} is not partitioned", m.id);
             assert!(g.is_consistent(), "{} has an inconsistent field", m.id);
-            assert_eq!(g.status.text(), m.status, "{} disagrees with the plan", m.id);
+            assert_eq!(
+                g.status.text(),
+                m.status,
+                "{} disagrees with the plan",
+                m.id
+            );
         }
     }
 }

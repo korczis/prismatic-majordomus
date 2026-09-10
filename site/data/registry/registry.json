@@ -6,22 +6,22 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "f7fed53ad90303e5209d68c2b8fdb041dad72bcf4701558cd0ffe96a571df58e",
+    "fingerprint": "1220b29365d27bfffb49e28908b5a9f73fb306e84b2e36da3dedcb746c3b2e13",
     "summary": {
-      "total": 1238,
+      "total": 1239,
       "builtin": 80,
-      "declarative": 1158,
+      "declarative": 1159,
       "by_kind": {
         "command": 3,
         "query": 77,
-        "resource": 1158
+        "resource": 1159
       },
       "by_stability": {
         "behaviorally_verified": 75,
-        "implemented": 1163
+        "implemented": 1164
       },
       "mcp_tools": 78,
-      "mcp_resources": 1186,
+      "mcp_resources": 1187,
       "http_routes": 80,
       "cli_commands": 34,
       "modules": 55,
@@ -7034,7 +7034,11 @@
                   },
                   "sessions": {
                     "$ref": "#/$defs/AttestedList",
-                    "description": "The session records that name this issue. Inferred: a session record declares the\nbranch it was written on and never the issue, so the edge is the branch-name rule\nand it can be wrong."
+                    "description": "The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode's ledger events, not authored and not guessed."
+                  },
+                  "sessions_by_branch": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one."
                   }
                 },
                 "required": [
@@ -7044,7 +7048,8 @@
                   "commits",
                   "trunk",
                   "commits_complete",
-                  "sessions"
+                  "sessions",
+                  "sessions_by_branch"
                 ],
                 "description": "Local execution state: what actually happened in this checkout's git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which."
               },
@@ -29556,7 +29561,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 152,
+        "capabilities": 153,
         "capability_ids": []
       },
       {
@@ -29636,7 +29641,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9c25b306acfe3701fede60b98d64715c1b39754e28483021c8fa205b5bae497e",
+    "fingerprint": "9dada1a4a7f1dcfeedfead2537c9cb6e85ecd4a2dcdbb1d07563de1b1f5d8fac",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -29684,7 +29689,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 152,
+      "test": 153,
       "use-case": 43,
       "workspace": 1
     },
@@ -40961,6 +40966,14 @@
         "bytes": 3691
       },
       {
+        "uri": "majordomus://test/test/cases/129_executable_issues.sh",
+        "kind": "test",
+        "identity": "test/cases/129_executable_issues.sh",
+        "path": "test/cases/129_executable_issues.sh",
+        "source_class": "case",
+        "bytes": 14149
+      },
+      {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
         "kind": "test",
         "identity": "test/cases/12_site_build.sh",
@@ -42613,7 +42626,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 152
+      "objects": 153
     },
     {
       "name": "use-case",

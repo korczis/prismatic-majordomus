@@ -7225,7 +7225,11 @@
                 },
                 "sessions": {
                   "$ref": "#/$defs/AttestedList",
-                  "description": "The session records that name this issue. Inferred: a session record declares the\nbranch it was written on and never the issue, so the edge is the branch-name rule\nand it can be wrong."
+                  "description": "The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode's ledger events, not authored and not guessed."
+                },
+                "sessions_by_branch": {
+                  "$ref": "#/$defs/AttestedList",
+                  "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one."
                 }
               },
               "required": [
@@ -7235,7 +7239,8 @@
                 "commits",
                 "trunk",
                 "commits_complete",
-                "sessions"
+                "sessions",
+                "sessions_by_branch"
               ],
               "description": "Local execution state: what actually happened in this checkout's git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which."
             },

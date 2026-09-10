@@ -60,17 +60,35 @@ pub struct RecordRef<'a> {
     pub metadata: &'a Value,
 }
 
-/// One session record that names this issue.
+/// One session record that names this issue, and how strongly.
+///
+/// The two ways a session reaches an issue are not equally good, and the difference is the
+/// whole reason this carries a flag rather than being a bare id:
+///
+/// * the record's own `issues` key. `share/schemas/majordomus/session-record` describes it
+///   as "the issues it moved, by id — derived from the ledger's own events for this
+///   episode; never authored", so it is a canonical link that a machine worked out from
+///   events it can read. That is [`FieldProvenance::Derived`].
+/// * the branch name. A record always declares the branch it was written on, and
+///   [`crate::worktree::state::issue_of`] reads an issue id out of one. It is a rule about a
+///   name and it can be wrong — a branch renamed, an id that is a prefix of another — so it
+///   is [`FieldProvenance::Inferred`].
+///
+/// Reporting both under one provenance would make the weaker of them look like the
+/// stronger, which is the defect this whole module exists to prevent.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SessionRef {
     /// The episode's id.
     pub session_id: String,
-    /// The branch it was written on: the only thing that connects it to an issue.
+    /// The branch it was written on.
     pub branch: String,
     /// When the record says it was written.
     pub created_at: String,
     /// Repository-relative path of the record.
     pub path: String,
+    /// True when the record's own `issues` key names this issue: a canonical link, not a
+    /// guess about a branch name.
+    pub declares_issue: bool,
 }
 
 // ---------------------------------------------------------------- the groups
@@ -189,10 +207,14 @@ pub struct DevTaskExecution {
     /// without a merge commit of its own, so part of the work cannot be told from the
     /// trunk's — reported rather than counted as zero.
     pub commits_complete: AttestedText,
-    /// The session records that name this issue. Inferred: a session record declares the
-    /// branch it was written on and never the issue, so the edge is the branch-name rule
-    /// and it can be wrong.
+    /// The session records whose own `issues` key names this issue. Derived: the key is
+    /// worked out from the episode's ledger events, not authored and not guessed.
     pub sessions: AttestedList,
+    /// The session records that reach this issue only through their branch name, and which
+    /// therefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that
+    /// declared the issue is reported there and not here, so the weaker relation never
+    /// stands in for the stronger one.
+    pub sessions_by_branch: AttestedList,
 }
 
 /// The external projection. Nothing here is ever written by this executable, and the fields
@@ -316,10 +338,9 @@ fn authored_list(record: Option<RecordRef<'_>>, key: &str) -> AttestedList {
         Some(other) if !other.is_null() => {
             AttestedList::explicit(vec![crate::plan::scalar(Some(other))], source)
         }
-        _ if record.is_none() => AttestedList::unknown(
-            source,
-            "the canonical model declares no issue with this id",
-        ),
+        _ if record.is_none() => {
+            AttestedList::unknown(source, "the canonical model declares no issue with this id")
+        }
         _ => AttestedList::unknown(source, format!("the record declares no `{key}`")),
     }
 }
@@ -338,10 +359,7 @@ fn source_of(record: Option<RecordRef<'_>>, key: &str) -> String {
 fn evidence_field(record: Option<RecordRef<'_>>, key: &str) -> AttestedList {
     let source = source_of(record, &format!("evidence[].{key}"));
     let Some(RecordRef { metadata, .. }) = record else {
-        return AttestedList::unknown(
-            source,
-            "the canonical model declares no issue with this id",
-        );
+        return AttestedList::unknown(source, "the canonical model declares no issue with this id");
     };
     match metadata.get("evidence") {
         Some(Value::Array(items)) => AttestedList::explicit(
@@ -406,8 +424,12 @@ impl DevTask {
         let position = Self::position(model.plan, derived, milestone);
         let execution = Self::execution(model.trace, &model.sessions);
         let synchronisation = Self::synchronisation(model.repository);
-        let readiness =
-            Self::readiness(model.plan, derived, &declaration, milestone.map(|m| m.id.as_str()));
+        let readiness = Self::readiness(
+            model.plan,
+            derived,
+            &declaration,
+            milestone.map(|m| m.id.as_str()),
+        );
         let diagnostics = Self::diagnostics(model.plan, issue);
 
         let mut task = DevTask {
@@ -501,13 +523,23 @@ impl DevTask {
 
     fn execution(trace: Option<&IssueTrace>, sessions: &[SessionRef]) -> DevTaskExecution {
         let unasked = "git was not consulted for this answer";
-        let session_rule =
-            "a session record declares the branch it was written on and never an issue; \
-             the edge is the branch-name rule of worktree::state::issue_of";
-        let sessions_field = AttestedList::inferred(
-            sessions.iter().map(|s| s.session_id.clone()).collect(),
+        let declared_field = AttestedList::derived(
+            sessions
+                .iter()
+                .filter(|s| s.declares_issue)
+                .map(|s| s.session_id.clone())
+                .collect(),
+            "kind:session#issues",
+        );
+        let branch_field = AttestedList::inferred(
+            sessions
+                .iter()
+                .filter(|s| !s.declares_issue)
+                .map(|s| s.session_id.clone())
+                .collect(),
             "kind:session#branch",
-            session_rule,
+            "the record's own `issues` key does not name this issue; the link is the \
+             branch-name rule of worktree::state::issue_of, which a rename can break",
         );
         let Some(t) = trace else {
             return DevTaskExecution {
@@ -517,7 +549,8 @@ impl DevTask {
                 commits: AttestedCount::unknown(Self::TRACE, unasked),
                 trunk: AttestedText::unknown(Self::TRACE, unasked),
                 commits_complete: AttestedText::unknown(Self::TRACE, unasked),
-                sessions: sessions_field,
+                sessions: declared_field,
+                sessions_by_branch: branch_field,
             };
         };
         DevTaskExecution {
@@ -543,7 +576,8 @@ impl DevTask {
                 |trunk| AttestedText::derived(trunk, Self::TRACE),
             ),
             commits_complete: AttestedText::derived(t.complete.to_string(), Self::TRACE),
-            sessions: sessions_field,
+            sessions: declared_field,
+            sessions_by_branch: branch_field,
         }
     }
 
@@ -556,9 +590,17 @@ impl DevTask {
             adapter: PROJECTION_ADAPTER.to_string(),
             repository: repository.map_or_else(
                 || {
+                    // Deliberately not "project.yaml names no repository". In this
+                    // repository the file does name one and the header is empty anyway:
+                    // `.ai/repo/knowledge/sources.yaml` declares a source class for
+                    // `project/milestones/*.yaml` and one for `project/issues/*.yaml` and
+                    // none for `project/project.yaml`, so the `project` kind has no objects
+                    // and `Plan::project` is blank for every reader of it. Saying the file
+                    // is silent would be this module inventing a fact about a file it did
+                    // not read, which is the whole thing it exists not to do.
                     AttestedText::unknown(
-                        ".ai/repo/project/project.yaml#repository",
-                        "project.yaml names no repository",
+                        "plan.model#project.repository",
+                        "the derived plan's header carries no repository",
                     )
                 },
                 |r| AttestedText::explicit(r, ".ai/repo/project/project.yaml#repository"),
@@ -657,7 +699,9 @@ impl DevTask {
             }
         }
         let reason = match state {
-            TaskReadiness::Ready => "no dependency and no gate holds it; nobody has started it".into(),
+            TaskReadiness::Ready => {
+                "no dependency and no gate holds it; nobody has started it".into()
+            }
             TaskReadiness::Blocked => format!(
                 "{} of its dependencies {} not DONE",
                 blockers
@@ -687,7 +731,9 @@ impl DevTask {
                 "completion is recorded and the evidence the record requires is not all there"
                     .into()
             }
-            TaskReadiness::Complete => "completion is recorded and every required evidence token is present".into(),
+            TaskReadiness::Complete => {
+                "completion is recorded and every required evidence token is present".into()
+            }
             TaskReadiness::Cancelled => "withdrawn".into(),
             TaskReadiness::Undeclared => format!(
                 "the plan assigned the status `{}`, which its own vocabulary does not declare",
@@ -771,6 +817,7 @@ impl DevTask {
             &self.execution.branches,
             &self.execution.merged_branches,
             &self.execution.sessions,
+            &self.execution.sessions_by_branch,
         ] {
             t.count(f.provenance);
         }
@@ -920,7 +967,10 @@ mod tests {
             "title": "Ship it",
             "depends_on": [],
         });
-        let plan = plan_of(vec![milestone("m1", "ACTIVE")], vec![issue("I0001", "m1", "READY")]);
+        let plan = plan_of(
+            vec![milestone("m1", "ACTIVE")],
+            vec![issue("I0001", "m1", "READY")],
+        );
         let model = DevTaskModel {
             plan: &plan,
             record: Some(RecordRef {
@@ -939,7 +989,10 @@ mod tests {
             ".ai/repo/project/issues/I0001.yaml#title"
         );
         // authored as an empty list: explicit and empty, not unknown
-        assert_eq!(t.declaration.depends_on.provenance, FieldProvenance::Explicit);
+        assert_eq!(
+            t.declaration.depends_on.provenance,
+            FieldProvenance::Explicit
+        );
         assert!(t.declaration.depends_on.is_empty());
         // absent entirely
         assert_eq!(t.declaration.objective.provenance, FieldProvenance::Unknown);
@@ -950,11 +1003,17 @@ mod tests {
     /// the capability that owns it.
     #[test]
     fn the_status_is_the_plans_and_says_so() {
-        let plan = plan_of(vec![milestone("m1", "ACTIVE")], vec![issue("I0001", "m1", "ACTIVE")]);
+        let plan = plan_of(
+            vec![milestone("m1", "ACTIVE")],
+            vec![issue("I0001", "m1", "ACTIVE")],
+        );
         let meta = json!({ "id": "I0001", "milestone": "m1" });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: Vec::new(),
             repository: None,
@@ -971,11 +1030,17 @@ mod tests {
     /// realised it" are different answers and a work surface must not merge them.
     #[test]
     fn git_not_consulted_is_unknown_rather_than_empty() {
-        let plan = plan_of(vec![milestone("m1", "ACTIVE")], vec![issue("I0001", "m1", "READY")]);
+        let plan = plan_of(
+            vec![milestone("m1", "ACTIVE")],
+            vec![issue("I0001", "m1", "READY")],
+        );
         let meta = json!({ "id": "I0001", "milestone": "m1" });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: Vec::new(),
             repository: None,
@@ -989,12 +1054,18 @@ mod tests {
     /// A session is linked by a branch name and never by a declaration, so the field is
     /// inferred and carries the rule. Several sessions of one issue is the ordinary case.
     #[test]
-    fn sessions_are_inferred_and_several_are_ordinary() {
-        let plan = plan_of(vec![milestone("m1", "ACTIVE")], vec![issue("I0001", "m1", "ACTIVE")]);
+    fn a_declared_session_link_is_derived_and_a_branch_guess_is_inferred() {
+        let plan = plan_of(
+            vec![milestone("m1", "ACTIVE")],
+            vec![issue("I0001", "m1", "ACTIVE")],
+        );
         let meta = json!({ "id": "I0001", "milestone": "m1" });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: vec![
                 SessionRef {
@@ -1002,20 +1073,38 @@ mod tests {
                     branch: "feature/I0001-a".into(),
                     created_at: "2026-01-01T00:00:00Z".into(),
                     path: "a.md".into(),
+                    declares_issue: true,
                 },
                 SessionRef {
                     session_id: "s-2".into(),
                     branch: "feature/I0001-b".into(),
                     created_at: "2026-01-02T00:00:00Z".into(),
                     path: "b.md".into(),
+                    declares_issue: false,
                 },
             ],
             repository: None,
         };
         let t = DevTask::build(&model, "I0001");
-        assert_eq!(t.execution.sessions.provenance, FieldProvenance::Inferred);
-        assert_eq!(t.execution.sessions.values, ["s-1", "s-2"]);
-        assert!(t.execution.sessions.reason.is_some(), "an inferred field states its rule");
+        // the record that declared the issue is a canonical link
+        assert_eq!(t.execution.sessions.provenance, FieldProvenance::Derived);
+        assert_eq!(t.execution.sessions.values, ["s-1"]);
+        // the one reached only by its branch name is not allowed to look the same
+        assert_eq!(
+            t.execution.sessions_by_branch.provenance,
+            FieldProvenance::Inferred
+        );
+        assert_eq!(t.execution.sessions_by_branch.values, ["s-2"]);
+        assert!(
+            t.execution.sessions_by_branch.reason.is_some(),
+            "an inferred field states its rule"
+        );
+        // and neither list stands in for the other
+        assert!(t.execution.sessions.values.iter().all(|s| !t
+            .execution
+            .sessions_by_branch
+            .values
+            .contains(s)));
     }
 
     /// The external half is never claimed and never writable, and the reason names the one
@@ -1034,9 +1123,18 @@ mod tests {
         assert!(!t.synchronisation.writable);
         assert_eq!(t.synchronisation.adapter, PROJECTION_ADAPTER);
         assert_eq!(t.synchronisation.state.provenance, FieldProvenance::Unknown);
-        assert!(t.synchronisation.state.reason.as_deref().unwrap().contains(PROJECTION_ADAPTER));
+        assert!(t
+            .synchronisation
+            .state
+            .reason
+            .as_deref()
+            .unwrap()
+            .contains(PROJECTION_ADAPTER));
         // the repository the projection targets is authored, in project.yaml
-        assert_eq!(t.synchronisation.repository.provenance, FieldProvenance::Explicit);
+        assert_eq!(
+            t.synchronisation.repository.provenance,
+            FieldProvenance::Explicit
+        );
     }
 
     /// Completion recorded without the evidence the record requires is its own state, and
@@ -1056,7 +1154,10 @@ mod tests {
         });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: Vec::new(),
             repository: None,
@@ -1086,7 +1187,10 @@ mod tests {
         let meta = json!({ "id": "I0001", "milestone": "m1" });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: Vec::new(),
             repository: None,
@@ -1113,7 +1217,10 @@ mod tests {
         let meta = json!({ "id": "I0001" });
         let model = DevTaskModel {
             plan: &plan,
-            record: Some(RecordRef { path: "p.yaml", metadata: &meta }),
+            record: Some(RecordRef {
+                path: "p.yaml",
+                metadata: &meta,
+            }),
             trace: None,
             sessions: Vec::new(),
             repository: None,
@@ -1121,7 +1228,10 @@ mod tests {
         let t = DevTask::build(&model, "I0001");
         assert!(t.declared);
         assert_eq!(t.declaration.milestone.provenance, FieldProvenance::Unknown);
-        assert_eq!(t.position.milestone_status.provenance, FieldProvenance::Unknown);
+        assert_eq!(
+            t.position.milestone_status.provenance,
+            FieldProvenance::Unknown
+        );
         assert_eq!(t.readiness.state, TaskReadiness::Ready);
         assert!(t.diagnostics.iter().any(|d| d.code == "no_milestone"));
         assert!(t.diagnostics.iter().all(|d| !d.reproduce.is_empty()));
