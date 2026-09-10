@@ -307,6 +307,8 @@ pub struct Router {
     version: &'static str,
     /// The OpenAPI document, rendered once: the registry is immutable for the process.
     openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
+    /// The Swagger UI shell, rendered once for the same reason and naming this checkout.
+    swagger: Arc<std::sync::OnceLock<String>>,
     /// MCP over HTTP at the mount its surface declares, when this router serves a shared
     /// server.
     mcp: Option<Arc<McpEndpoint>>,
@@ -335,6 +337,7 @@ impl Router {
             ctx,
             version,
             openapi: Arc::new(std::sync::OnceLock::new()),
+            swagger: Arc::new(std::sync::OnceLock::new()),
             mcp: None,
             cockpit: None,
             served: Arc::new(std::sync::OnceLock::new()),
@@ -503,7 +506,7 @@ impl Router {
             }
             Bound::Route(Native::Home) => self.home(req, resolution),
             Bound::Route(Native::OpenApi) => self.openapi(),
-            Bound::Route(Native::Swagger) => swagger_response(),
+            Bound::Route(Native::Swagger) => swagger_response(self),
             Bound::Route(Native::Mcp) => match &self.mcp {
                 Some(endpoint) => endpoint.handle(req),
                 None => error_response(
@@ -564,16 +567,8 @@ impl Router {
         }
         let topology = resolution.served.topology();
         if prefers_html(req) {
-            let identity = home::Identity {
-                version: self.version,
-                summary: crate::about::SUMMARY,
-                repository: repository_name(&self.ctx.index.repository.root),
-                revision: match &self.ctx.index.repository.git {
-                    crate::git::GitState::Available(info) => info.head.as_deref(),
-                    crate::git::GitState::Unavailable { .. } => None,
-                },
-                capabilities: self.ctx.registry.summary().total,
-            };
+            let id = self.repository_id();
+            let identity = self.identity(&id);
             let ready = |id: &str| {
                 if resolution.served.ready(id) {
                     home::Availability::Ready
@@ -828,6 +823,39 @@ pub fn prefers_html(req: &Request) -> bool {
 
 /// The repository's name: the last component of its root, which is what a person calls it.
 /// The root itself is a filesystem path and is not put on a page anyone can reach.
+impl Router {
+    /// The identity of the repository this process answers for: the root hashed, never
+    /// the root. Computed here so that every surface naming a checkout names the same one.
+    fn repository_id(&self) -> String {
+        crate::repository::identity(std::path::Path::new(&self.ctx.index.repository.root))
+    }
+
+    /// What every surface says about the process, from the model this router already
+    /// holds rather than from a second look at the filesystem.
+    fn identity<'a>(&'a self, id: &'a str) -> home::Identity<'a> {
+        home::Identity {
+            version: self.version,
+            summary: crate::about::SUMMARY,
+            repository: repository_name(&self.ctx.index.repository.root),
+            id,
+            revision: match &self.ctx.index.repository.git {
+                crate::git::GitState::Available(info) => info.head.as_deref(),
+                crate::git::GitState::Unavailable { .. } => None,
+            },
+            capabilities: self.ctx.registry.summary().total,
+        }
+    }
+
+    /// The Swagger UI shell for this process, rendered once: the registry and the
+    /// repository are immutable for its lifetime, so the banner cannot go stale within it.
+    fn swagger_page(&self) -> &str {
+        self.swagger.get_or_init(|| {
+            let id = self.repository_id();
+            swagger::page(&self.identity(&id))
+        })
+    }
+}
+
 fn repository_name(root: &str) -> &str {
     root.rsplit('/')
         .find(|s| !s.is_empty())
@@ -836,8 +864,12 @@ fn repository_name(root: &str) -> &str {
 
 /// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its
 /// distribution and the document by absolute path, so neither form can resolve wrongly.
-fn swagger_response() -> Response {
-    Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
+fn swagger_response(router: &Router) -> Response {
+    Response::new(
+        200,
+        "text/html; charset=utf-8",
+        router.swagger_page().to_string(),
+    )
 }
 
 fn json_response(status: u16, v: &Value) -> Response {
@@ -960,7 +992,7 @@ mod tests {
 
     #[test]
     fn the_swagger_shell_is_the_same_page_however_it_is_reached() {
-        let page = swagger_response();
+        let page = swagger_response(self);
         assert_eq!(page.status, 200);
         assert!(page.content_type.starts_with("text/html"));
         assert!(page.body.text().contains("/openapi.json"));
