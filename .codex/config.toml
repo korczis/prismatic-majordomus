@@ -3,7 +3,12 @@
 # by bin/majordomus-mcp. The same server serves Claude Code (.mcp.json) and Gemini CLI
 # (.gemini/settings.json); the first client to start it owns it, every later one attaches,
 # and each sees the others through the majordomus_peers tool.
+#
+# `--provider codex` is entry: Codex fires no session event a command can run, so the
+# launcher opens or resumes this checkout's episode and ensures the shared server on the one
+# thing Codex does do, which is start this launcher. The launcher consumes the argument and
+# never passes it on. docs/ENTRY.md has the measurement it came out of.
 [mcp_servers.majordomus]
 command = "./bin/majordomus-mcp"
-args = []
+args = ["--provider", "codex"]
 startup_timeout_sec = 120

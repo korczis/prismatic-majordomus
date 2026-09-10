@@ -24,8 +24,15 @@ expect_exit 12 "$MJ" capture session --provider claude-code
 expect_grep 'must be one of start end compact'
 expect_exit 12 "$MJ" capture session --event start
 expect_grep 'provider is required'
-expect_exit 12 "$MJ" capture session --provider codex --event start
+# A provider Majordomus has no lifecycle adapter for is refused rather than guessed at: the
+# adapter is what reads that provider's payload, and there is no such thing as a default
+# shape for one. `agents` is a provider of this repository with no events of its own.
+expect_exit 12 "$MJ" capture session --provider agents --event start
 expect_grep 'no lifecycle adapter'
+# ... except for the entry a client makes by starting the launcher, which carries no payload
+# and therefore needs no adapter. It is the start event and nothing else.
+expect_exit 12 "$MJ" capture session --provider agents --event end --launcher
+expect_grep 'the start event only'
 
 # ---------------------------------------------------------------- install
 expect_exit 0 "$MJ" capture install

@@ -346,11 +346,11 @@ commands:
     requires_task: none
     json: true
     syntax: majordomus capture status [--json]
-    reads: [.claude/settings.json, .ai/repo/policy.yaml]
-    writes: [.ai/local/prompts/, .ai/local/session-contexts/, .claude/hooks/majordomus-capture, .claude/settings.json]
+    reads: [.claude/settings.json, .codex/hooks.json, .gemini/settings.json, .ai/repo/policy.yaml]
+    writes: [.ai/local/prompts/, .ai/local/session-contexts/, .claude/hooks/majordomus-capture, .claude/settings.json, .codex/hooks/, .codex/hooks.json, .gemini/hooks/]
     exit_codes: [0, 2, 12, 13, 15]
     demo: capture-status
-    note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add."
+    note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add. Which events a provider has, which file it declares them in and how it names a path inside the repository are data in the adapter tables, so a provider is a line rather than a branch; a provider with no documented event is reported unsupported and never given an invented one. 'capture session --launcher' is the entry a client makes by starting bin/majordomus-mcp, for the clients that fire no start event of their own: no payload, the start event only, and the same code the hook reaches."
 
   - id: search
     title: search

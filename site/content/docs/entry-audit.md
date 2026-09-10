@@ -100,9 +100,14 @@ run first died on a silent peer.
    (`.envrc:24`, `:33`); `bin/majordomus-env` never builds (`bin/majordomus-env:31-50`); the
    SessionStart shim opens an episode and touches no server (`lib/capture.sh:797-816`). The
    server exists only after an MCP client spawns `bin/majordomus-mcp`. A person's shell, a
-   Codex or Gemini session without a lifecycle adapter, or a Claude session whose MCP
-   handshake failed, all enter a repository that has no server and are told nothing that
-   says so. `MAJORDOMUS_URL` is simply absent (`src/environment/shell.rs:116-130`).
+   session of any provider that had no lifecycle adapter (every one of them but Claude
+   Code — the table is projected in `docs/generated/providers.md`), or a Claude session
+   whose MCP handshake failed, all enter a repository that has no server and are told
+   nothing that says so. `MAJORDOMUS_URL` is simply absent
+   (`src/environment/shell.rs:116-130`).
+
+   *Closed at stage 06 for every provider with a documented event and for every MCP client
+   without one; `docs/ENTRY.md` carries the measurement and the two paths.*
    Reproduce: with no lease, `bin/majordomus-env export --shell direnv | grep -c URL`.
 
 3. **The episode is one per checkout, keyed on nothing the provider sent.** `session start
@@ -361,7 +366,7 @@ Preserve, and build on:
 | 03 | `serve status` / `serve ensure` / `serve stop` on the executable; the start event calls ensure (`session.ensure_server_on_start`) and the briefing names the server; the idle life of a server no client owns; the election races (the lease kept alive while loading, conditional take-over, publish refused after a take-over, the lease released on loss); the reaper on every path; concurrent ensure at N≥3, a killed server, a stale lease, a taken port | `feature/entry-convergence` | with this document |
 | 04 | one episode per provider session; the board reaper on the owner path; expiry on announcements; the reinitialize response reaches the model; claims are the task's scope | `feature/session-per-provider`, on top of ADR 0034's journal branch | parallel to 03 |
 | 05 | peers, lease and health on the typed channel; a Cockpit area for peers and the server; the navigation derived from the areas it declares; page lists in tests and docs derived | `feature/entry-surfaces` | after 03, 04 |
-| 06 | the Codex and Gemini lifecycle adapters (data in `share/providers.yaml`, not code) | `feature/lifecycle-adapters` | parallel |
+| 06 | the Codex and Gemini lifecycle adapters (data in the lifecycle table, not code), and the launcher as the entry of every MCP client that has no event of its own | `feature/every-provider-enters` | parallel — landed, `test/cases/126_every_provider_enters.sh` |
 | 07 | rule `project.entry-converges` with a gate; `docs/ENTRY.md`; `HARDCODING_LEDGER.yaml` rows for item 15; the bootstrap template names the launcher | `feature/entry-convergence` | with 03 |
 | 08 | cold start through `.mcp.json` on the default port as an exclusive case; storm; crash at the shell level; two worktrees, one server; two providers; drift injection into the board | `feature/entry-gates` | after 05 |
 | 09 | delete the readers in `lib/context.sh` and `.just/serve.just`; ~~the three readiness answers~~ (named, not merged: `feature/health-names-the-server`, with the `server` check on `health.report`); the documents in item 14 | `feature/entry-convergence`, `feature/health-names-the-server` | last |
