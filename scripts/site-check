@@ -568,7 +568,7 @@ done
   || ok skills "0 skills in the catalogue and no skill page (an empty section, not a broken one)"
 
 # 13b. graphs: every edge endpoint resolves to a node, and no graph is empty
-for g in architecture claims-graph; do
+for g in architecture claims-graph governance-graph; do
   gf="$SITE/data/generated/$g.json"
   dangling="$(jq -r '[.nodes[].id] as $n | [.edges[] | select((.source | IN($n[]) | not) or (.target | IN($n[]) | not)) | .source + " -> " + .target] | .[]' "$gf")"
   [ -z "$dangling" ] || bad graphs "$g.json has an edge to a node that does not exist: $(printf '%s' "$dangling" | head -1)"
@@ -578,7 +578,52 @@ done
 for r in $(jq -r '.nodes[] | select(.kind=="claim") | .route' "$SITE/data/generated/claims-graph.json"); do
   [ -f "$PUB${r}index.html" ] || bad graphs "claims-graph node route $r has no page"
 done
-ok graphs "architecture and claims graphs are connected and their routes resolve"
+# every rule node of the governance graph reaches its own page, and every rule of the package
+# is in the graph: a rule that fell out of the projection would leave the picture quietly smaller
+for r in $(jq -r '.nodes[] | select(.kind=="rule") | .route' "$SITE/data/generated/governance-graph.json"); do
+  [ -f "$PUB${r}index.html" ] || bad graphs "governance-graph node route $r has no page"
+done
+gg_rules="$(jq '[.nodes[] | select(.kind=="rule")] | length' "$SITE/data/generated/governance-graph.json")"
+[ "$gg_rules" = "$(jq '.doctrines | length' "$SITE/data/generated/doctrines.json")" ] \
+  || bad graphs "the governance graph holds $gg_rules rules and the package declares $(jq '.doctrines | length' "$SITE/data/generated/doctrines.json")"
+ok graphs "architecture, claims and governance graphs are connected and their routes resolve"
+
+# 13b'. the method pages are a projection of method.json: every layer, axis, surface and gap it
+# holds is on the page, and no count beside them was typed. A row the generator stops deriving
+# has to disappear from the page rather than survive as prose nobody notices is stale.
+MJ="$SITE/data/generated/method.json"
+mth_bad=0
+[ -f "$PUB/method/index.html" ] || { bad method "/method/ was not built"; mth_bad=1; }
+[ -f "$PUB/method/axes/index.html" ] || { bad method "/method/axes/ was not built"; mth_bad=1; }
+if [ "$mth_bad" = 0 ]; then
+  for lvl in $(jq -r '.layers[].level' "$MJ"); do
+    grep -qF ">$lvl</a>" "$PUB/method/index.html" || { bad method "/method/ does not carry the layer $lvl"; mth_bad=1; }
+  done
+  for n in $(jq -r '.layers[].count' "$MJ"); do
+    grep -qF ">$n</span>" "$PUB/method/index.html" || { bad method "/method/ does not print the derived count $n"; mth_bad=1; }
+  done
+  for ax in $(jq -r '.axes[].axis' "$MJ"); do
+    grep -qF ">$ax</h3>" "$PUB/method/axes/index.html" || { bad method "/method/axes/ does not carry the axis $ax"; mth_bad=1; }
+  done
+  for m in $(jq -r '.exposure.by_module[].module' "$MJ"); do
+    grep -qF ">$m</th>" "$PUB/method/axes/index.html" || { bad method "/method/axes/ does not carry the module $m"; mth_bad=1; }
+  done
+  # the worked chain is the data's choice, so the page must name what the data chose
+  grep -qF "$(jq -r '.example.validator' "$MJ")" "$PUB/method/index.html" \
+    || { bad method "/method/ does not name the validator of the worked example"; mth_bad=1; }
+  grep -qF "$(jq -r '.example.test' "$MJ")" "$PUB/method/index.html" \
+    || { bad method "/method/ does not name the test of the worked example"; mth_bad=1; }
+  # the gaps are on the page or the honesty is decoration
+  for g in $(jq -r '.governance.rules_without_principle[].slug' "$MJ"); do
+    grep -qF "/doctrines/$g/" "$PUB/method/index.html" || { bad method "/method/ hides the rule $g, which descends from no principle"; mth_bad=1; }
+  done
+fi
+# the claim /method/axes/ makes about profiles, decided rather than asserted: no profile file
+# names a vendor or a model, so the axis stays four wide
+if grep -rilE '\b(claude|gpt|gemini|opus|sonnet|haiku|llama|mistral|anthropic|openai)\b' "$ROOT"/share/skeleton/profiles/*.yaml >/dev/null 2>&1; then
+  bad method "a shipped profile names a model or a vendor; /method/axes/ says none does"
+fi
+[ "$mth_bad" = 0 ] && ok method "the method pages carry every layer, axis, module and gap of method.json, and no shipped profile names a model"
 
 # 14. claims: the guarantees page carries every claim id count
 n="$(jq '.claims | length' "$SITE/data/generated/capabilities.json")"; m="$(grep -o '<tr class="align-top">' "$PUB/guarantees/index.html" | wc -l | tr -d ' ')"
