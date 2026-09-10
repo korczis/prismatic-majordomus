@@ -67,6 +67,7 @@ Current version: **0.4.0**
 - **ci**: the probe reads 426 from the WebSocket route as a surface answering (`7af40d230`)
 - **ci**: master is green again on the three causes nobody owned (`6c979b376`)
 - **site**: two checks meet new content and stop reading it as an inventory (`709407a1d`)
+- **worktree**: a new path starts approved for direnv (`b3ffee4e9`)
 - **scope**: a task that merged the trunk has not touched what the trunk touched (`83775c7ab`)
 - **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
@@ -167,6 +168,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`04599afd2`)
 - **derive**: the projections follow the master merge (`ea5592a9e`)
 - **derive**: the projections follow the master merge (`789e95ab8`)
 - **derive**: the projections follow the merge of #142 (`c1a3e7930`)

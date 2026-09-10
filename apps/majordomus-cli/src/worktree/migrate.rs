@@ -19,6 +19,7 @@ use std::path::{Path, PathBuf};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::direnv::{self, EnvrcApproval};
 use super::error::{Result, WorktreeError};
 use super::fingerprint::{self, WorktreeFingerprint};
 use super::git;
@@ -86,6 +87,10 @@ pub struct MigrationStep {
     pub after: Option<WorktreeFingerprint>,
     /// What differs between the two; empty when verified.
     pub differences: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// What became of its `.envrc` under direnv once it was at its new path: the primary
+    /// checkout's approval carried there, or why it was not. Only on a moved step.
+    pub envrc: Option<EnvrcApproval>,
 }
 
 /// A migration, planned or applied.
@@ -190,6 +195,7 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
                     before: None,
                     after: None,
                     differences: Vec::new(),
+                    envrc: None,
                 });
             }
             Standing::Missing | Standing::Detached => {
@@ -375,6 +381,7 @@ fn execute(
                 step.outcome = StepOutcome::Moved;
                 step.message =
                     Some("moved by copy across filesystems, verified, original removed".into());
+                step.envrc = Some(direnv::approve(primary, to));
                 return Ok(());
             }
             Err(e) => return Err(e),
@@ -425,6 +432,10 @@ fn execute(
         return Ok(());
     }
     step.outcome = StepOutcome::Moved;
+    // A moved `.envrc` is a new path to direnv, and the approval it had is gone with the old
+    // one; carry it, and say what happened beside the fingerprint that says the move was
+    // faithful.
+    step.envrc = Some(direnv::approve(primary, to));
     let dangling = dangling_relative_links(to);
     if !dangling.is_empty() {
         step.message = Some(format!(

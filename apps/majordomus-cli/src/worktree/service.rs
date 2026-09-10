@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::direnv::{self, EnvrcApproval};
 use super::error::{Result, WorktreeError};
 use super::git;
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
@@ -65,6 +66,10 @@ pub struct CreateReport {
     pub container_created: bool,
     /// The worktree already existed at its canonical path and nothing was created.
     pub existed: bool,
+    /// What became of its `.envrc` under direnv: the primary checkout's approval carried to
+    /// this path, or why it was not. A worktree that starts blocked is the recurring
+    /// "direnv does not work again"; this says so before the first `cd` does.
+    pub envrc: EnvrcApproval,
 }
 
 /// What a remove did.
@@ -816,6 +821,9 @@ impl WorktreeService {
         if let Some(existing) = identity.record_of_branch(name.as_str()) {
             if ResolvedPath::of(&existing.path).same_as(&resolved_target) {
                 if ensure {
+                    // Found rather than made, and approved all the same: a worktree that
+                    // exists and is blocked is what `ensure` is most often asked about.
+                    let envrc = direnv::approve(&primary, &existing.path);
                     return Ok(CreateReport {
                         path: display(&existing.path),
                         branch: name.as_str().to_string(),
@@ -824,6 +832,7 @@ impl WorktreeService {
                         container: display(&self.container.path),
                         container_created: false,
                         existed: true,
+                        envrc,
                     });
                 }
                 return Err(WorktreeError::WorktreeAlreadyExists {
@@ -897,6 +906,8 @@ impl WorktreeService {
                          nothing was cleaned up because that would risk deleting real work"
                     .into(),
             })?;
+        // The path exists now; this is the moment direnv's approval is carried to it.
+        let envrc = direnv::approve(&primary, &registered.path);
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
@@ -905,6 +916,7 @@ impl WorktreeService {
             container: display(&self.container.path),
             container_created,
             existed: false,
+            envrc,
         })
     }
 
