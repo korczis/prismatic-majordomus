@@ -241,6 +241,11 @@ gates:
     runs: scripts/ci/version-matches-surface
     summary: the declared version is at least the bump the public surface has changed by since the last release, and a removal is named
 
+  - id: case-numbers
+    job: structure
+    runs: scripts/ci/case-numbers-unique
+    summary: no two behavioural cases share a number, beyond the debt recorded on the baseline
+
   - id: pages-live
     job: pages
     runs: scripts/ci/pages-check
