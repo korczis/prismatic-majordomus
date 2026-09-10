@@ -605,19 +605,19 @@ mod tests {
             .find(|(k, _)| k == "warn")
             .unwrap()
             .1
-            .push("experimental".into());
+            .push("provisional".into());
         assert!(d.validate().is_empty(), "{:?}", d.validate());
         assert!(surface_css(&d).contains("--mj-overlay: oklch(21% 0.034 264.665);"));
         assert!(tokens_css(&d).contains("--mj-overlay:"));
         assert!(status_css(&d).contains(".mj-swatch--overlay"));
-        assert!(status_css(&d).contains(".mj-badge--experimental"));
-        assert_eq!(site_document(&d, "0")["states"]["experimental"], "warn");
+        assert!(status_css(&d).contains(".mj-badge--provisional"));
+        assert_eq!(site_document(&d, "0")["states"]["provisional"], "warn");
         assert_eq!(
-            d.explain("experimental").unwrap().role.as_deref(),
+            d.explain("provisional").unwrap().role.as_deref(),
             Some("warn")
         );
         assert!(reference_markdown(&d).contains("`--mj-overlay`"));
-        assert!(reference_markdown(&d).contains("`experimental`"));
+        assert!(reference_markdown(&d).contains("`provisional`"));
         assert_ne!(d.fingerprint(), design().fingerprint());
     }
 }

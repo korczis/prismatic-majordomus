@@ -85,23 +85,23 @@ import sys, re
 p = sys.argv[1]; s = open(p).read()
 s = s.replace("  on-accent:\n    about: text on a primary action\n    light: white\n    dark: white\n",
               "  on-accent:\n    about: text on a primary action\n    light: white\n    dark: white\n  overlay:\n    about: a scrim behind a dialog\n    light: gray-900\n    dark: gray-50\n")
-s = re.sub(r"(\n    warn: \[)", r"\1experimental, ", s, count=1)
+s = re.sub(r"(\n    warn: \[)", r"\1provisional, ", s, count=1)
 open(p, "w").write(s)
 PY
 grep -q '^  overlay:' share/design/tokens.yaml
-grep -q 'warn: \[experimental,' share/design/tokens.yaml
+grep -q 'warn: \[provisional,' share/design/tokens.yaml
 expect_exit 10 gen --check            # the declaration moved; the projections did not
 expect_exit 0 gen
 grep -q -- '--mj-overlay: oklch(21% 0.034 264.665);' share/design/surface.css
 grep -q -- '--mj-overlay:' apps/majordomus-cli/src/web/tokens.css
 grep -q '\.mj-swatch--overlay' share/design/status.css
-grep -q '\.mj-badge--experimental' share/design/status.css
-grep -q '\.mj-status--experimental' share/design/status.css
-[ "$(jq -r '.states.experimental' site/data/registry/design.json)" = warn ]
+grep -q '\.mj-badge--provisional' share/design/status.css
+grep -q '\.mj-status--provisional' share/design/status.css
+[ "$(jq -r '.states.provisional' site/data/registry/design.json)" = warn ]
 jq -e '.roles[] | select(.name == "overlay")' site/data/registry/design.json >/dev/null
-jq -e '.tokens[] | select(.name == "experimental" and .kind == "state" and .role == "warn")' docs/generated/design.json >/dev/null
+jq -e '.tokens[] | select(.name == "provisional" and .kind == "state" and .role == "warn")' docs/generated/design.json >/dev/null
 grep -q '`--mj-overlay`' docs/generated/design.md
-grep -q '`experimental`' docs/generated/design.md
+grep -q '`provisional`' docs/generated/design.md
 fp2="$(jq -r '.design' site/data/registry/design.json)"
 [ "$fp2" != "$fp" ] || { echo "    the fingerprint did not move with the declaration"; exit 1; }
 grep -q -- "--mj-design: \"$fp2\";" share/design/surface.css
@@ -115,11 +115,11 @@ cp share/design/status.css "$S/status.before"
 python3 - share/design/tokens.yaml <<'PY'
 import sys
 p = sys.argv[1]; s = open(p).read()
-s = s.replace("    bad: [bad,", "    bad: [bad, experimental,", 1)   # filed twice
+s = s.replace("    bad: [bad,", "    bad: [bad, provisional,", 1)   # filed twice
 open(p, "w").write(s)
 PY
 expect_exit 10 gen
-expect_grep "'experimental' is already filed under 'warn'"
+expect_grep "'provisional' is already filed under 'warn'"
 cmp -s share/design/status.css "$S/status.before" || { echo "    a refused declaration was projected"; exit 1; }
 git checkout -q -- . 2>/dev/null || true
 expect_exit 0 gen
