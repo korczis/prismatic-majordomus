@@ -11,8 +11,17 @@ build:
 build-release:
     RUSTFLAGS='' cargo build --locked --release --manifest-path "{{manifest}}"
 
-# Remove the Rust build output.
+# Remove the Rust build output of THIS checkout (refuses to remove another checkout's).
+#
+# `cargo clean --manifest-path X` does not clean X's target directory: with CARGO_TARGET_DIR
+# set it cleans that instead, and the manifest decides nothing — which is how a worker
+# reclaiming their own worktree removed the build directory several other worktrees were
+# sharing, twice in one day, while their own target/ survived and the prompt they answered
+# named a path under their own checkout. The recipe cannot name the directory here either:
+# the prompt is a literal and the answer is only known at run time. So the decision is
+# lib/rust_bin.sh's, which resolves where cargo would really clean, refuses when that is
+# outside this checkout and says why, and otherwise hands cargo the directory explicitly.
 [group('build')]
-[confirm("Remove apps/majordomus-cli/target? [y/N]")]
+[confirm("Remove this checkout's Rust build directory? [y/N]")]
 clean:
-    cargo clean --manifest-path "{{manifest}}"
+    source "{{root}}/lib/rust_bin.sh" && mj_rust_clean "{{root}}"
