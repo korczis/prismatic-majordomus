@@ -81,7 +81,7 @@ fi
 # 5. every command the CLI dispatches has a behavioural case somewhere in the suite, so a
 #    new command cannot ship with no coverage at all. The command list is read from the
 #    dispatcher itself, so adding a command to bin/majordomus adds it to this check.
-dispatched=$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u)
+dispatched=$(grep -oE '^  [a-z|]+\)$' "$ROOT/bin/majordomus" | tr -d ' )' | tr '|' '\n' | LC_ALL=C sort -u)
 [ "$(printf '%s\n' "$dispatched" | wc -w | tr -d ' ')" -ge 15 ] || {
   echo "    could not read the command list from the dispatcher (got: $dispatched)"; exit 1; }
 for c in $dispatched; do
@@ -150,7 +150,7 @@ grep -q 'scripts/ci-plan ' "$W" || { echo "    validate.yml does not run scripts
 grep -q 'scripts/ci/verdict ' "$W" || { echo "    validate.yml does not run scripts/ci/verdict"; exit 1; }
 "$PLAN" --full "probe" > full.json
 jobs="$(grep -oE '^  [a-z]+:$' "$W" | tr -d ' :')"
-for j in $(jq -r '.gates[].job' full.json | sort -u); do
+for j in $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$jobs" | grep -qx "$j" || { echo "    the model names job $j and validate.yml has no such job"; exit 1; }
 done
 for g in $(jq -r '.gates[] | select(.job != "structure") | .id' full.json); do
@@ -159,7 +159,7 @@ for g in $(jq -r '.gates[] | select(.job != "structure") | .id' full.json); do
     || { echo "    job $job is not gated on the plan's output for $g"; exit 1; }
 done
 ci_needs="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | sed -n 's/^    needs: \[\(.*\)\]$/\1/p' | tr -d ' ' | tr ',' '\n')"
-for j in plan $(jq -r '.gates[].job' full.json | sort -u); do
+for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
 awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }

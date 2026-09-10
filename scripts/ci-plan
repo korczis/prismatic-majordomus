@@ -62,7 +62,7 @@ for g in $gate_ids; do
     printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
   done
 done
-[ "$(printf '%s\n' "$gate_ids" | sort | uniq -d | wc -l | tr -d ' ')" = 0 ] || { echo "ci-plan: a gate id is declared twice" >&2; bad=1; }
+[ "$(printf '%s\n' "$gate_ids" | LC_ALL=C sort | uniq -d | wc -l | tr -d ' ')" = 0 ] || { echo "ci-plan: a gate id is declared twice" >&2; bad=1; }
 class_ids="$(awk -F= '$1 ~ /^classes\.[0-9]+\.id$/ { print $2 }' "$FLAT")"
 [ -n "$class_ids" ] || { echo "ci-plan: $MODEL declares no classes" >&2; exit 10; }
 n_classes="$(printf '%s\n' "$class_ids" | wc -l | tr -d ' ')"
@@ -99,7 +99,7 @@ else
     git -C "$ROOT" diff --name-only "$BASE" "$HEAD" > "$LIST" || { echo "ci-plan: git diff $BASE $HEAD failed" >&2; exit 12; }
   else
     HEAD="worktree"
-    { git -C "$ROOT" diff --name-only "$BASE" HEAD && git -C "$ROOT" status --porcelain | sed 's/^...//; s/.* -> //'; } | sort -u > "$LIST" \
+    { git -C "$ROOT" diff --name-only "$BASE" HEAD && git -C "$ROOT" status --porcelain | sed 's/^...//; s/.* -> //'; } | LC_ALL=C sort -u > "$LIST" \
       || { echo "ci-plan: git diff $BASE failed" >&2; exit 12; }
   fi
 fi
@@ -155,7 +155,7 @@ for g in $gate_ids; do
   if [ "$mode" = full ]; then add "$g" "full"
   elif [ "$(mj_yget "$FLAT" "gates.$i.always")" = true ]; then add "$g" "always"
   else
-    by="$(printf '%s\n' "$MATCH" | awk -F'\t' -v g="$g" '$1=="gate" && $2==g {print $3}' | sort -u | tr '\n' ' ')"
+    by="$(printf '%s\n' "$MATCH" | awk -F'\t' -v g="$g" '$1=="gate" && $2==g {print $3}' | LC_ALL=C sort -u | tr '\n' ' ')"
     [ -n "$by" ] && add "$g" "class ${by% }"
   fi
 done
@@ -187,7 +187,7 @@ case "$FORMAT" in
     done ;;
   json)
     {
-      printf '%s\n' "$MATCH" | awk -F'\t' '$1=="class" {print $2 "\t" $3}' | sort -u
+      printf '%s\n' "$MATCH" | awk -F'\t' '$1=="class" {print $2 "\t" $3}' | LC_ALL=C sort -u
     } > "$FLAT.classes"
     jq -n --arg mode "$mode" --arg reason "$reason" --arg base "$BASE" --arg head "$HEAD" --arg model "${MODEL#"$ROOT"/}" \
       --rawfile changed "$LIST" --rawfile classes "$FLAT.classes" \

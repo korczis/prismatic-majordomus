@@ -60,11 +60,11 @@ done
 [ "$declared_cases" -ge 15 ] || { echo "    only $declared_cases cases declare coverage; the headers are not being read"; exit 1; }
 
 covers() { grep -qE "^$1 $2 " "$CLAIMS"; }          # command, layer
-cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | sort -u | tr '\n' ' '; }
+cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | LC_ALL=C sort -u | tr '\n' ' '; }
 
 # ---- a declared cover must name a command that exists. A header pointing at a command
 #      that was renamed or removed is a broken reference, not harmless documentation.
-for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | sort -u); do
+for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
   printf '%s\n' $public | grep -qx "$c" || {
     echo "    a test case declares coverage of '$c', which is not a public command"
     echo "    reproduce: grep -rn 'majordomus-covers\\|majordomus-negative' test/cases/ | grep $c"

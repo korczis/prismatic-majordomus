@@ -62,7 +62,7 @@ mj_prompt_validate() {
   [ -n "$(mj_yget "$flat" description)" ] || { printf 'description is empty\n'; rc=1; }
   rm -f "$fm" "$flat"
   known=" $MJ_PROMPT_INLINE_TOKENS $MJ_PROMPT_BLOCK_TOKENS "
-  for tok in $(mj_record_body "$f" | grep -oE '\{\{[A-Z_]+\}\}' | sed -e 's/^{{//' -e 's/}}$//' | sort -u || true); do
+  for tok in $(mj_record_body "$f" | grep -oE '\{\{[A-Z_]+\}\}' | sed -e 's/^{{//' -e 's/}}$//' | LC_ALL=C sort -u || true); do
     case "$known" in *" $tok "*) ;; *) printf 'unknown token {{%s}}\n' "$tok"; rc=1; continue ;; esac
     case " $MJ_PROMPT_BLOCK_TOKENS " in
       *" $tok "*)

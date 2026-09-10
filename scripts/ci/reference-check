@@ -39,7 +39,7 @@ rc=0
 # What is there: the tracked paths and every directory prefix of one. Tracked, not present
 # on disk — an untracked local file must not satisfy a reference that a fresh clone cannot.
 git ls-files > "$TMP/files"
-awk '{ print; while (sub(/\/[^\/]*$/, "")) print }' "$TMP/files" | sort -u > "$TMP/have"
+awk '{ print; while (sub(/\/[^\/]*$/, "")) print }' "$TMP/files" | LC_ALL=C sort -u > "$TMP/have"
 
 # The trees whose files are records, and the derived surfaces that project them.
 is_exempt() {
@@ -77,7 +77,7 @@ tokens() {
         sub(/[.,;:)]+$/, "", tok)
         print FILENAME "\t" tok
       }
-    }' | sort -u
+    }' | LC_ALL=C sort -u
 }
 # awk's `NR == FNR` join reads its lookup file first, and when that file is empty the test
 # is still true for the first records of the second file: the join swallows them and the
@@ -102,7 +102,7 @@ awk -F'\t' 'NR == FNR { have[$0]; next } !($2 in have)' "$TMP/have" "$TMP/refs.e
 # .ai/local/, the build outputs under site/static/ and site/data/, the machine's own
 # benchmark baseline. Documents are expected to name those — a reader needs to know where
 # the tool writes — and a fresh clone is expected not to carry them.
-cut -f2 "$TMP/absent" | sort -u > "$TMP/absent.paths"
+cut -f2 "$TMP/absent" | LC_ALL=C sort -u > "$TMP/absent.paths"
 printf '%s\n' "$NEVER" > "$TMP/ignored"
 [ -s "$TMP/absent.paths" ] && git check-ignore --stdin < "$TMP/absent.paths" >> "$TMP/ignored" 2>/dev/null || true
 awk -F'\t' 'NR == FNR { ign[$0]; next } !($2 in ign)' "$TMP/ignored" "$TMP/absent" > "$TMP/absent.kept" || true
@@ -133,7 +133,7 @@ git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
     ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
     ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
     ':!site/content/plan' ':!site/content/sessions' ':!test' 2>/dev/null \
-  | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | sort -u > "$TMP/schemapaths" || true
+  | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | LC_ALL=C sort -u > "$TMP/schemapaths" || true
 : > "$TMP/badschema"
 while IFS= read -r sp; do
   [ -n "$sp" ] || continue
@@ -153,7 +153,7 @@ fi
 if command -v jq >/dev/null 2>&1; then
   for f in site/data/generated/*.json; do
     [ -f "$f" ] || continue
-    for c in $(jq -r '.. | objects | select(has("contract")) | .contract | select(type == "string")' "$f" 2>/dev/null | sort -u); do
+    for c in $(jq -r '.. | objects | select(has("contract")) | .contract | select(type == "string")' "$f" 2>/dev/null | LC_ALL=C sort -u); do
       case "$c" in ''|http*|/*) continue ;; esac
       grep -qxF "$c" "$TMP/have" || { printf '%s publishes contract %s, which is not in the repository\n' "$f" "$c" >&2; rc=1; }
     done

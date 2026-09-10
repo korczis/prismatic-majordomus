@@ -100,7 +100,7 @@ plan docs/DESIGN.md > plan.json
 # A needs context: the jobs the caller names, plus every other job the model declares, as
 # skipped. Naming them all here would go stale the day a job is added, and the verdict would
 # then report the new job as absent rather than the case reporting what it is testing.
-JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | sort -u | tr '\n' ' ')"
+JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | LC_ALL=C sort -u | tr '\n' ' ')"
 needs() {
   jq -n --arg s "$1" --arg jobs "plan $JOBS" '
     ($s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries) as $named
@@ -186,7 +186,7 @@ W="$ROOT/.github/workflows/validate.yml"
 [ -f "$W" ] || { echo "    the workflow this check is about is not at $W"; exit 1; }
 grep -q 'needs\.plan\.outputs\.' "$W" || { echo "    no job reads a plan output; this check has stopped checking anything"; exit 1; }
 missing=""
-for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | sort -u); do
+for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | LC_ALL=C sort -u); do
   grep -qE "^      $ref: \\\$\{\{ steps\.plan\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
 done
 [ -z "$missing" ] || { echo "    job(s) gated on plan output(s) the plan job never exposes:$missing"; exit 1; }

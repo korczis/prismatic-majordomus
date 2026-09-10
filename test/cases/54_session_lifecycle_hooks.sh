@@ -205,7 +205,7 @@ out="$(printf '{"session_id":"cc-9"}' | ./.claude/hooks/majordomus-session-compa
 expect_exit 0 "$MJ" session status
 expect_grep 'Session: +s-'          # still open: a compaction is not an ending
 # what it wrote is a checkpoint, derived rather than typed, and within the policy's cap
-c="$(find .ai/local/state/checkpoints -maxdepth 1 -name '*.md' | sort | tail -n 1)"
+c="$(find .ai/local/state/checkpoints -maxdepth 1 -name '*.md' | LC_ALL=C sort | tail -n 1)"
 grep -qF 'Derived, not authored' "$c"
 cap="$(awk '/^  max_body_lines:/ { print $2 }' .ai/repo/policy.yaml)"
 body="$(awk 'c>=2{print} /^---$/{c++}' "$c" | wc -l | tr -d ' ')"
@@ -217,7 +217,7 @@ was_handovers="$(handovers)"
 printf '{"session_id":"cc-9","reason":"clear"}' | ./.claude/hooks/majordomus-session-end >/dev/null 2>"$T/err"
 [ "$(handovers)" = "$((was_handovers + 1))" ] || { echo "    the end event wrote no continuation record"; sed 's/^/    | /' "$T/err"; exit 1; }
 grep -qF 'continuation written' "$T/err"
-h="$(find .ai/local/state/handovers -maxdepth 1 -name '*.md' | sort | tail -n 1)"
+h="$(find .ai/local/state/handovers -maxdepth 1 -name '*.md' | LC_ALL=C sort | tail -n 1)"
 grep -qF '# Objective' "$h"
 grep -qF '# Current State' "$h"
 grep -qF '# Next Action' "$h"

@@ -173,7 +173,7 @@ mj_bench_text() {
   printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' 'NF { printf "%-12s %-5s %-8s %5s %7s %7s %7s %7s  %s\n", $1, $2, $5, $6, $8, $10, $11, $12, $4 }'
   printf '\nslowest by warm p95 (cold where warm does not apply):\n'
   printf '%s' "$MJ_BENCH_ROWS" | awk -F'\t' 'NF { if ($2 == "warm" || !(($1) in seen)) { seen[$1] = 1; p[$1] = $10 } }
-    END { for (c in p) printf "%s\t%s\n", p[c], c }' | sort -rn | head -n 5 | awk -F'\t' '{ printf "  %-12s p95 %s ms\n", $2, $1 }'
+    END { for (c in p) printf "%s\t%s\n", p[c], c }' | LC_ALL=C sort -rn | head -n 5 | awk -F'\t' '{ printf "  %-12s p95 %s ms\n", $2, $1 }'
 }
 
 # ---------------------------------------------------------------- persistence
