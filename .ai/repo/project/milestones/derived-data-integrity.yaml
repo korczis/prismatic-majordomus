@@ -1,0 +1,37 @@
+id: derived-data-integrity
+title: A committed derivation describes something it can be a projection of
+slug: derived-data-integrity
+version: "0.5"
+order: 95
+priority: p1
+problem: "A derived artifact is committed with a fingerprint of what produced it, and the gates compare that fingerprint with the tree. Two things make the recording unable to stay true. It hashes the whole input set, so an unrelated change landing on the trunk invalidates a derivation that is not wrong - the tree simply moved; and where it hashes HEAD, a file inside a commit cannot describe the commit it is in, which apps/majordomus-cli/src/release/changelog.rs:75 states in its own comment while the gate reaches past it. The costs are paid daily and separately: every branch re-derives after every merge, six to thirty-five minutes each time; a fixture without history cannot evaluate the artifact at all; and the refusal that catches a stale recording lives in a pre-commit hook, which cannot run for a merge the server creates. So the first thing in the pipeline that can say no is the publication."
+outcome: "A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site."
+current_state: "Measured on 2026-09-10. master 3fb515f5c records source_hash e6abaa4665163bcd while its tree hashes to 4fe657a09b10, and three consecutive master Pages runs failed identically at the build step on that refusal; the site last answered from 5e67318db. Two of those three merges were committed by GitHub, where no pre-commit hook exists, and gh api branches/master/protection returns 404 Branch not protected, so the site gate that does check currency is advisory and reports after the merge. c44c2d4c8 and 2ce8d66e5 record the same source_hash as each other - the merge driver resolves derived artifacts to ours, so a stale recording rides through a merge untouched. test/cases/56_derived_current_gate.sh exports git archive HEAD into a fixture with no commits, so the changelog composition reports fatal: Not a valid commit name. One branch paid 185s, 1125s and 2135s of re-derivation in one evening, entirely because the trunk moved underneath it."
+desired_state: "The recording covers what the commit owns. The gate that refuses a stale one runs where merges happen. The changelog composes from something a fixture can evaluate. Nobody re-derives to answer a question the derivation was already right about."
+scope:
+  - scripts
+  - apps/majordomus-cli/src/release
+  - .ai/repo/ci
+  - test/cases
+  - docs/CI.md
+non_scope:
+  - Making the Pages build re-derive instead of refusing. The input fingerprint is deterministic - three runs on one tree are byte-identical - but the generated content is machine-dependent: %h abbreviates against the local object store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling worktree root. A build that re-derived could produce a third answer matching neither side. Recorded here because this exit will be proposed again, and because an objection stated as non-determinism of the fingerprint is refutable in one command and would take the correct objection down with it.
+  - Turning on branch protection, or choosing which check is required. A repository setting, and the operator's decision.
+  - Weakening the derived merge driver. Resolving to ours is correct; what is missing is the refusal downstream of it on the server-side path.
+acceptance_criteria:
+  - A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk
+  - A fixture whose object database does not contain the commit under test can evaluate every derived artifact
+  - The staleness refusal runs on the path a server-side merge takes, or the record names the decision taken instead
+  - No document claims a guard that a merge created by GitHub cannot reach
+validation:
+  - scripts/derive-check
+  - scripts/pages current
+  - test/run.sh 56_derived_current_gate
+evidence_required:
+  - derivation_survives_an_unrelated_merge
+  - fixture_without_history_evaluates
+risks:
+  - "Narrowing what the recording covers is silent in the dangerous direction: too narrow and staleness stops being detectable, which reads as green rather than as noise. Every change here needs a case that proves the gate still refuses something."
+  - "The subsystem is touched by every branch, so a change lands into constant contention with whatever else is deriving."
+created_at: 2026-09-10
+updated_at: 2026-09-10
