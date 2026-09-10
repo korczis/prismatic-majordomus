@@ -263,7 +263,11 @@ mj_layout_table() {
   done
 }
 
-mj_git() { mj_count git; git -C "$MJ_ROOT" "$@"; }
+# --no-pager, always: git pages whenever its stdout is a terminal, and `log`, `diff` and
+# `show` all reach this wrapper. Most call sites capture the output and so never noticed,
+# but the one that does not blocks on a keypress -- which a person eventually sends and an
+# agent never does. The pager is a presentation choice this tool does not make.
+mj_git() { mj_count git; git --no-pager -C "$MJ_ROOT" "$@"; }
 # The repository a checkout belongs to, as an absolute path: the git common directory,
 # which every worktree of one repository shares and no two repositories do. $1 names the
 # checkout to ask; the default is MJ_ROOT, and the value records write is that one.

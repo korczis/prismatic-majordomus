@@ -13,6 +13,15 @@
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
 #   MAJORDOMUS_BIN=<path>               the Rust cases drive this prebuilt executable instead
 #                                       of building the crate (see rust_bin in test/lib.sh)
+#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 2400). A
+#                                       case that needs longer declares it itself with
+#                                       "# majordomus-timeout: <seconds>"; 0 disables the
+#                                       bound for a deliberate, supervised run
+#
+# Every case runs under a bound. A case that hangs is terminated, reported as `TIMEOUT` and
+# the run continues: before this, one wedged case held the whole suite until CI's job timeout
+# fired hours later and reported `cancelled`, which reads like infrastructure rather than the
+# case that stopped. A wait with no bound is not a wait, it is a hang with a nice name.
 #
 # A case runs in its own repository and may read the checkout it lives in; it may not write
 # into that checkout while other cases run. A case that must (the site cases build into
@@ -27,14 +36,66 @@ pass=0; fail=0; failed_names=""
 # ---------------------------------------------------------------- one case
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up.
+# The bound one case runs under: its own "# majordomus-timeout:" header when it declares
+# one, else MJ_TEST_CASE_TIMEOUT, else 2400 seconds. The site cases legitimately take about
+# half an hour, so the default is generous; the point of the bound is that a wedged case
+# ends, not that a slow one is rushed.
+# Only the header block is read -- the leading run of comments, up to the first line of
+# actual script. A case that builds another case in a heredoc has the header's own text in
+# its body, and scanning the whole file made such a case inherit the bound it was writing
+# for its fixture. The header is a declaration about this file, and it is over once the
+# file starts doing something.
+case_timeout() {
+  local declared
+  declared="$(awk '/^[[:space:]]*$/ { next }
+                   /^#/ { if (match($0, /^# majordomus-timeout: *[0-9]+/)) {
+                            v = $0; sub(/^# majordomus-timeout: */, "", v); sub(/[^0-9].*$/, "", v)
+                            print v; exit } ; next }
+                   { exit }' "$1" 2>/dev/null | head -n 1)"
+  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-2400}"; fi
+}
+
+# Runs one case in a fresh repository. The case's output streams through; the status is
+# 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
 run_case() {
-  local case="$1" T rc=0
+  local case="$1" T rc=0 limit pid waited grace
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
   ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
     && git commit -q --allow-empty -m init ) || { rm -rf "$T"; return 2; }
+  limit="$(case_timeout "$case")"
   # a case that runs the runner itself (26 does, in a harness of its own) gets a fresh
   # serial runner, never this run's worker mode, log directory, pool or report
-  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT && T="$T" bash -eu "$case" ) || rc=1
+  #
+  # Job control is enabled around the spawn, not inside it: a background job started while
+  # `set -m` is on becomes the leader of a process group of its own, so the signal below
+  # reaches the servers and children the case started. Turning it on inside the subshell
+  # is too late -- the subshell is already in this shell's group by then, and a killed case
+  # leaves its background server holding a port for the next one.
+  set -m
+  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT && T="$T" bash -eu "$case" ) &
+  pid=$!
+  set +m
+  if [ "$limit" = 0 ]; then
+    wait "$pid" || rc=1
+  else
+    waited=0
+    while kill -0 "$pid" 2>/dev/null; do
+      if [ "$waited" -ge "$limit" ]; then
+        # terminate the group first so the case's own EXIT traps run and release its
+        # servers, then insist; a process that ignores both is reported, never waited on
+        kill -TERM "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+        grace=0
+        while kill -0 "$pid" 2>/dev/null && [ "$grace" -lt 10 ]; do grace=$((grace+1)); sleep 1; done
+        kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+        wait "$pid" 2>/dev/null || true
+        echo "    the case did not finish within ${limit}s and was terminated" >&2
+        rm -rf "$T"
+        return 3
+      fi
+      sleep 1; waited=$((waited+1))
+    done
+    wait "$pid" || rc=1
+  fi
   rm -rf "$T"
   return "$rc"
 }
@@ -43,9 +104,11 @@ verdict() {   # name status seconds phase -> counts it, prints its line, records
   case "$rc" in
     0) pass=$((pass+1)); echo "ok   $name" ;;
     2) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name (setup)" ;;
+    3) fail=$((fail+1)); failed_names="$failed_names $name"; echo "TIMEOUT $name" ;;
     *) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name" ;;
   esac
-  [ -n "${report:-}" ] && printf '%s\t%s\t%s\t%s\n' "$name" "$([ "$rc" = 0 ] && echo ok || echo FAIL)" "$sec" "$phase" >> "$report"
+  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; *) word=FAIL ;; esac
+  [ -n "${report:-}" ] && printf '%s\t%s\t%s\t%s\n' "$name" "$word" "$sec" "$phase" >> "$report"
   return 0
 }
 
@@ -59,7 +122,11 @@ if [ "${MJ_TEST_WORKER:-}" = 1 ]; then
   run_case "$ROOT/test/cases/$name.sh" > "$L/$name.log" 2>&1; rc=$?
   sec=$(( $(date +%s) - t0 ))
   printf '%s\n' "$rc" > "$L/$name.rc"; printf '%s\n' "$sec" > "$L/$name.sec"
-  [ "$rc" = 0 ] && printf 'ok   %s  %ss\n' "$name" "$sec" || printf 'FAIL %s  %ss\n' "$name" "$sec"
+  case "$rc" in
+    0) printf 'ok      %s  %ss\n' "$name" "$sec" ;;
+    3) printf 'TIMEOUT %s  %ss\n' "$name" "$sec" ;;
+    *) printf 'FAIL    %s  %ss\n' "$name" "$sec" ;;
+  esac
   exit 0
 fi
 
