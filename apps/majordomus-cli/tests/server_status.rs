@@ -2,6 +2,11 @@
 //! git repository listed from any checkout of it — the primary and its linked worktrees
 //! each with a lease of their own, the same repository named on each, and a server that
 //! stops turning `absent` on the next reading.
+//!
+//! And the narrower question beside it: `checkouts=this` answers for the checkout the
+//! reading is made in and enumerates no other, while agreeing with the wide list about
+//! that one, because a caller must never have to choose between the cheap answer and the
+//! true one.
 
 mod common;
 
@@ -185,6 +190,58 @@ fn every_checkout_of_a_repository_lists_every_server_of_it() {
     );
     assert_eq!(seen[1]["this_checkout"], true);
 
+    // the narrow question, from the primary: this checkout alone, and the same answer
+    // about it that the wide list gave
+    let (status, narrow) = primary.get("/api/v1/server?checkouts=this");
+    assert_eq!(status, 200, "{narrow}");
+    let only = narrow["servers"].as_array().unwrap();
+    assert_eq!(only.len(), 1, "this checkout alone: {narrow}");
+    assert_eq!(only[0]["this_checkout"], true);
+    for field in [
+        "worktree",
+        "branch",
+        "checkout_id",
+        "primary",
+        "standing",
+        "peers",
+    ] {
+        assert_eq!(
+            only[0][field], servers[0][field],
+            "the two questions disagree about {field}: {narrow}"
+        );
+    }
+    assert_eq!(narrow["standing"], s["standing"]);
+    assert_eq!(narrow["checkout_id"], s["checkout_id"]);
+    assert_eq!(
+        narrow["git"]["id"], s["git"]["id"],
+        "the repository is named either way"
+    );
+    assert_eq!(
+        narrow["this_process"]["url"], s["this_process"]["url"],
+        "the lease this process holds does not depend on how wide the question was"
+    );
+
+    // and from the linked worktree, where `primary` cannot be inferred from being first
+    let (_, narrow_linked) = linked.get("/api/v1/server?checkouts=this");
+    let only = narrow_linked["servers"].as_array().unwrap();
+    assert_eq!(only.len(), 1, "{narrow_linked}");
+    assert_eq!(
+        only[0]["primary"], false,
+        "a linked work tree is not the primary: {narrow_linked}"
+    );
+    assert_eq!(only[0]["branch"], "feature/x");
+    assert_eq!(only[0]["this_checkout"], true);
+    for field in ["worktree", "checkout_id", "primary", "standing", "branch"] {
+        assert_eq!(
+            only[0][field], seen[1][field],
+            "the two questions disagree about {field}: {narrow_linked}"
+        );
+    }
+
+    // a word that is not one of the two is refused by name rather than guessed at
+    let (status, refused) = primary.get("/api/v1/server?checkouts=everything");
+    assert_eq!(status, 400, "{refused}");
+
     // the linked worktree's server stops: its lease is released and the next reading says so
     assert_eq!(linked.stop(), 0);
     let (_, s) = primary.get("/api/v1/server");
@@ -237,4 +294,26 @@ fn a_process_that_serves_nothing_holds_no_lease() {
     assert_eq!(value["servers"].as_array().unwrap().len(), 1);
     assert_eq!(value["servers"][0]["this_checkout"], true);
     assert_eq!(value["servers"][0]["primary"], true);
+
+    // asking nothing is asking for the repository, and in a checkout that is the only one
+    // of its repository the narrow answer is the same answer
+    let narrow = app
+        .context
+        .execute("server.status", serde_json::json!({ "checkouts": "this" }))
+        .expect("server.status answers the narrow question");
+    assert_eq!(narrow, value);
+    let wide = app
+        .context
+        .execute(
+            "server.status",
+            serde_json::json!({ "checkouts": "repository" }),
+        )
+        .expect("server.status answers the wide question");
+    assert_eq!(wide, value, "the default is the wide question");
+    app.context
+        .execute(
+            "server.status",
+            serde_json::json!({ "checkouts": "everything" }),
+        )
+        .expect_err("a word that is not one of the two is refused");
 }
