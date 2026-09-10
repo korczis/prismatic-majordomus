@@ -77,3 +77,11 @@ site/static/install.sh              merge=derived
 # file per release plus latest.json out of the release declarations, so two branches that
 # cut or record a release conflict here on content neither of them decides.
 site/static/releases/**             merge=derived
+
+# The deployment artifacts: `majordomus generate` writes fly.toml, deploy/Dockerfile and
+# .dockerignore out of .ai/repo/deployments/majordomus.yaml. They landed with the deployment
+# module and had no rule, so a merge of two branches that each moved the deployment model
+# conflicted on three files whose content neither side decides.
+fly.toml                            merge=derived
+deploy/Dockerfile                   merge=derived
+.dockerignore                       merge=derived

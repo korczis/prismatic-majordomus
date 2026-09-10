@@ -5,7 +5,8 @@
 //! is why the style is *inline*; it is not why the values would be *chosen* here. The
 //! palette and the type stack are `tokens.css`, generated from `share/design/tokens.yaml`
 //! and compiled in, so a report renders in the same design as the site and the Cockpit
-//! without fetching anything. Layout below is this page's own; colour and type are not.
+//! without fetching anything. Layout below is this page's own; colour, type, radius and
+//! measure are tokens.
 //! It is
 //! mobile-first in the same sense the site is — one readable column at any width, tables
 //! that scroll inside their own box rather than pushing the page sideways — because these
@@ -54,31 +55,31 @@ pub fn page(title: &str, subtitle: &str, body: &str) -> String {
 <title>{title}</title>
 <style>
 {TOKENS}* {{ box-sizing: border-box; }}
-body {{ margin: 0; padding: 1.25rem 1rem 3rem; background: var(--bg); color: var(--fg);
-        font: 15px/1.55 var(--font-sans); }}
-main {{ max-width: 62rem; margin: 0 auto; }}
+body {{ margin: 0; padding: 1.25rem 1rem 3rem; background: var(--mj-bg); color: var(--mj-fg);
+        font: 1rem/1.5 var(--font-sans); }}
+main {{ max-width: var(--mj-measure); margin: 0 auto; }}
 h1 {{ font-size: 1.5rem; margin: 0 0 .25rem; }}
-h2 {{ font-size: 1.1rem; margin: 2rem 0 .5rem; }}
-p.lede {{ color: var(--muted); margin: 0 0 1.5rem; }}
+h2 {{ font-size: 1.125rem; margin: 2rem 0 .5rem; }}
+p.lede {{ color: var(--mj-muted); margin: 0 0 1.5rem; }}
 dl.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
               gap: .75rem; margin: 0 0 1.5rem; padding: 0; }}
 /* min-width: 0 because a grid item does not shrink below its content by default, and a
    summary value is whatever the run measured — one long unbreakable figure widens its track,
    the track widens the grid, and the page scrolls sideways at every width the track does not
    fit. The wrap on the value is the other half: the figure gives way before the layout does. */
-dl.summary > div {{ min-width: 0; border: 1px solid var(--line); border-radius: .5rem; padding: .75rem; background: var(--sunken); }}
-dl.summary dt {{ color: var(--muted); font-size: .8rem; margin: 0; }}
+dl.summary > div {{ min-width: 0; border: 1px solid var(--mj-line); border-radius: var(--radius-lg); padding: .75rem; background: var(--mj-sunken); }}
+dl.summary dt {{ color: var(--mj-muted); font-size: .875rem; margin: 0; }}
 dl.summary dd {{ margin: .25rem 0 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }}
-.scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: .5rem; }}
-table {{ border-collapse: collapse; width: 100%; font-size: .9rem; }}
-th, td {{ text-align: left; padding: .5rem .65rem; border-bottom: 1px solid var(--line); white-space: nowrap; }}
-th {{ background: var(--sunken); font-weight: 600; }}
+.scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--mj-line); border-radius: var(--radius-lg); }}
+table {{ border-collapse: collapse; width: 100%; font-size: .875rem; }}
+th, td {{ text-align: left; padding: .5rem .65rem; border-bottom: 1px solid var(--mj-line); white-space: nowrap; }}
+th {{ background: var(--mj-sunken); font-weight: 600; }}
 td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
 tr:last-child td {{ border-bottom: 0; }}
-.pass {{ color: var(--ok); font-weight: 600; }}
-.fail {{ color: var(--bad); font-weight: 600; }}
-code, .mono {{ font-family: var(--font-mono); font-size: .85em; }}
-footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .8rem; border-top: 1px solid var(--line); padding-top: .75rem; }}
+.pass {{ color: var(--mj-ok); font-weight: 600; }}
+.fail {{ color: var(--mj-bad); font-weight: 600; }}
+code, .mono {{ font-family: var(--font-mono); font-size: .875em; }}
+footer {{ margin-top: 2.5rem; color: var(--mj-muted); font-size: .875rem; border-top: 1px solid var(--mj-line); padding-top: .75rem; }}
 a {{ color: inherit; text-decoration: underline; }}
 </style>
 </head>

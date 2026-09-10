@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.4.0",
-  "version": "0.4.0",
+  "generator": "majordomus-cli 0.5.0",
+  "version": "0.5.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -1611,6 +1611,14 @@
               {
                 "name": "deployment",
                 "help": "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
+              },
+              {
+                "name": "graph",
+                "help": "docs/generated/graph.json and its schema: the composed graph as data"
+              },
+              {
+                "name": "design",
+                "help": "The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*"
               }
             ],
             "defaults": [

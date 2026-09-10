@@ -39,6 +39,27 @@ build_css() { # destination
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SRC" -o "$1" --minify 2>/dev/null )
 }
 
+# The palette is Tailwind's, quoted. share/design/tokens.yaml names every entry the way
+# Tailwind names its scale steps and promises the value is Tailwind's; this is where that
+# promise meets the installed Tailwind, so a dependency upgrade that moves a colour is a
+# failing build and not a quiet restyle of three surfaces. Read from the declaration by
+# name; nothing here holds a value of its own.
+check_palette() {
+  theme="$ROOT/node_modules/tailwindcss/theme.css"
+  [ -f "$theme" ] || { echo "cockpit-assets: node_modules/tailwindcss/theme.css absent" >&2; return 12; }
+  bad=0
+  while IFS= read -r line; do
+    name="${line%%:*}"; value="${line#*: }"
+    case "$name" in *-[0-9]*|white|black) ;; *) continue ;; esac
+    expected="$(sed -n "s/^[[:space:]]*--color-$name: \(.*\);/\1/p" "$theme" | head -1)"
+    [ -n "$expected" ] || { echo "cockpit-assets: palette.$name is named like a Tailwind step and Tailwind has none" >&2; bad=1; continue; }
+    [ "$value" = "$expected" ] || { echo "cockpit-assets: palette.$name is $value; Tailwind's --color-$name is $expected" >&2; bad=1; }
+  done <<< "$(awk '/^palette:/{p=1;next} p&&/^[a-z]/{p=0} p&&/^  [a-z]/{sub(/^  /,""); n=$0; sub(/:.*$/,"",n); v=$0; sub(/^[^:]*:[ \t]*/,"",v); if (v !~ /^"?#/) sub(/[ \t]+#.*$/,"",v); gsub(/"/,"",v); print n ": " v}' "$ROOT/share/design/tokens.yaml")"
+  [ "$bad" = 0 ] || { echo "cockpit-assets: the declared palette has drifted from Tailwind's; correct share/design/tokens.yaml, run majordomus generate design" >&2; return 10; }
+  echo "==> cockpit-assets: every palette entry named like a Tailwind step is Tailwind's"
+}
+check_palette || exit $?
+
 if [ "$CHECK" = 1 ]; then
   tmp="$(mktemp -t cockpit-css.XXXXXX)"
   trap 'rm -f "$tmp"' EXIT

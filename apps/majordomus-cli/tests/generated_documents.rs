@@ -200,8 +200,10 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
         // Documents whose only reader is a program are committed as JSON alone: the ones the
-        // website loads, the matrix the release workflow reads, and the public metadata of
-        // each release. A YAML twin of any of them would be a file nobody opens.
+        // website loads, the matrix the release workflow reads, the public metadata of each
+        // release, and the composed graph with its schema — a megabyte of nodes and edges
+        // read by the Cockpit and the site. A YAML twin of any of them would be a file
+        // nobody opens.
         .filter(|a| {
             !matches!(
                 a.document.as_str(),
@@ -212,6 +214,8 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
                     | "site-product-graph"
                     | "site-distribution"
                     | "distribution-matrix"
+                    | "graph"
+                    | "graph-schema"
             ) && !a.document.starts_with("release/")
         })
         // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a

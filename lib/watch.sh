@@ -40,7 +40,7 @@ mj_cmd_watch() {
         if grep -q "\"event\":\"task.finished\".*\"task_id\":\"$id\"" "$MJ_STATE_DIR/ledger.jsonl" 2>/dev/null; then mj_ok verification "$id" "$(mj_cur outcome) with a finish record"
         else mj_drift verification "$id" "marked $(mj_cur outcome) but no task.finished record in the ledger" "grep task.finished $(mj_rel "$MJ_STATE_DIR")/ledger.jsonl"; fi ;;
       handed_over)
-        local hv; hv="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | sort | tail -n1)"
+        local hv; hv="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | LC_ALL=C sort | tail -n1)"
         if [ -z "$hv" ]; then mj_drift handover "$id" "marked handed_over but no handover file names it" "ls $(mj_rel "$MJ_STATE_DIR")/handovers"
         else local miss; miss="$(mj_check_sections "$hv" "$(mj_ylist "$MJ_POL_FLAT" handover.required_sections | tr '\n' '|')")"
           if [ -z "$miss" ]; then mj_ok handover "$id" "$(basename "$hv")"; else mj_drift handover "$(basename "$hv")" "missing section(s): $miss" "grep -n '^# ' $hv"; fi; fi ;;

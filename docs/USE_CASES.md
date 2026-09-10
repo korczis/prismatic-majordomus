@@ -102,10 +102,61 @@ carries the exit code and, optionally, `stdout_contains`, `stdout_not_contains`,
 `files_exist` and `files_contain` (extended regular expressions over the combined
 output or a file). `then` says in words what the assertions proved.
 
+## Where a scenario runs
+
+`mode` says which repository the scenario is about. It is `fixture` unless written down,
+and that is the whole of the paragraph above: a setup script, a disposable repository,
+committed evidence, reproduced by CI.
+
+`mode: live` is the other one. A live scenario asks its questions of the repository the
+command was invoked in. It names no setup, because it prepares nothing, and it may run
+only commands `share/commands.yaml` declares `class: read-only` — `usecase validate`
+refuses anything else, so a live scenario cannot change the thing it is asking about
+however it is written. Mutation stays with `start`, `check` and `finish`, which supervise
+it.
+
+A live scenario may also carry a step that runs nothing:
+
+```yaml
+  - id: the-cases-were-run
+    obligation: tests
+```
+
+An **obligation step** asserts that one token of `share/obligations.yaml` has been
+discharged, through the same judgement `check` reads (`mj_obligation_judge` in
+`lib/evidence.sh`): established live where git or the published site can settle it, and
+read from the ledger where they cannot. It resolves to `pass`, `unmet` — owed and not
+discharged — or `stale`, meaning evidence exists and no longer describes this tree.
+Obligation steps are valid only in `live` mode; a disposable repository owes nothing.
+
+This is what lets a *class* of work state what it owes. `check` judges the obligations
+one task declared at `start`; a task that declared none is told so, truthfully and
+uselessly. A live scenario says what a defect fix or a finished change owes whether or not
+anybody remembered to promise it, and because both read one judgement, a gate and a task's
+own contract cannot come to disagree about the same tree.
+
+A live scenario's verdict is **`unmet`, not `fail`**. A failing fixture scenario is a
+defect in the tool; a live scenario with an outstanding obligation is work not done, and
+the two are not the same news. `usecase run` exits 10 for either — *contract unmet* — and
+counts and prints them apart.
+
+```bash
+majordomus usecase run                 # the fixtures, and only the fixtures
+majordomus usecase run --live          # the live scenarios as well
+majordomus usecase run know-whether-this-work-is-finished   # by name, whatever its mode
+```
+
+Live evidence lands under `.ai/local/evidence/live/` and is never committed: it describes
+one tree, on one machine, at one minute, and a derived file whose content depends on who
+derived it is what [ADR 5](../.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+forbids. For the same reason `usecase coverage` counts a live scenario as naming a command
+and never as covering it: a guarantee CI cannot re-run is not a guarantee. The decision is
+[ADR 38](../.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md).
+
 ## Running and evidence
 
 ```bash
-majordomus usecase run                     # every scenario; exit 10 when a step fails
+majordomus usecase run                     # every fixture scenario; exit 10 when a step fails
 majordomus usecase run prove-a-rule-is-enforced --keep   # keep the repository for a look
 majordomus usecase show prove-a-rule-is-enforced         # the file, and its last evidence
 ```

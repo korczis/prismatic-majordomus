@@ -79,7 +79,7 @@
           <a href="#{{ anchor }}" class="font-mono text-xs text-body-subtle hover:underline">{{ o.id }}</a>
         </div>
         <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">{{ o.summary }}</h3>
-        <p class="mt-1 text-sm text-body">{{ o.description }}</p>
+        <p class="mt-1 break-words text-sm text-body">{{ o.description }}</p>
         <ul class="mt-3 flex flex-wrap gap-2 text-xs">
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ o.kind }}</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ o.stability }}</span></li>
@@ -154,7 +154,12 @@
           <h3 class="font-mono text-base font-semibold text-heading">{{ s.name }}</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">{{ s.type }}</span>
         </div>
-        {%- if s.description %}<p class="mt-2 text-sm text-body">{{ s.description | markdown(inline=true) | safe }}</p>{% endif -%}
+        {#- The type's doc comment, rendered as the markdown it is: paragraphs, and the code
+            fence a Rust doc comment usually ends on. That is block content — it cannot live in
+            a <p>, where the parser closes the paragraph and hands the <pre> to this article,
+            which clips nothing — so it gets a block of its own, one that lets a long listing
+            scroll inside itself and lets `module::path::Type` break inside the word. -#}
+        {%- if s.description %}<div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ s.description | markdown(inline=true) | safe }}</div>{% endif -%}
         {%- if s.values | length > 0 -%}
         <ul class="mt-3 space-y-1 text-sm">{% for v in s.values %}<li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">{{ v.value }}</code><span class="min-w-0 text-body">{{ v.description }}</span></li>{% endfor %}</ul>
         {%- endif -%}
@@ -176,7 +181,7 @@
         </div>
         {%- endif -%}
         {%- for v in s.variants -%}
-        <p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> {{ v.description }}</p>
+        <p class="mt-3 break-words text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> {{ v.description }}</p>
         <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
           <table class="w-full min-w-[32rem] text-left text-sm">
             <tbody>

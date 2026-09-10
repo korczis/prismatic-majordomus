@@ -154,6 +154,18 @@ opinion:
 | version control | git, asked once at startup |
 | benchmark coverage | the benchmark projection's coverage — the same one `bench coverage --check` reads |
 | committed projections | the same rendering `majordomus generate` writes, compared with what is committed |
+| the shared server | the decision `server.status` makes, from this checkout's lease and one probe of the server it names |
+| attached clients | the in-memory peer board of this process |
+
+The server check reports where this checkout's shared server stands — `absent`,
+`starting`, `ready`, `outdated` or `stale` — with its address, the version it serves and
+the reason when the answer is not `ready`. `absent` and `starting` are `ok`: a checkout
+nobody serves is not an unhealthy one, and a lease still binding resolves itself within the
+bind grace. `outdated` and `stale` are `warn` with the reason as a finding: a server
+answering from code this tree no longer has, and a lease naming an address nobody answers
+at, are both somebody's to clear and neither stops this process from serving. It is the
+fourth of this crate's four readings of "ready", and the only one that belongs in a health
+report; `docs/MCP.md` names all four and what each is for.
 
 It deliberately does **not** re-render every committed projection on each call: that would
 rebuild canonical state per request. It compares the one artifact derived from code alone
@@ -233,16 +245,23 @@ scripts/cockpit-assets --check    # fail if the committed stylesheet differs fro
 
 | File | Committed? | Why |
 |---|---|---|
-| `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite's theme; drift-checked |
-| `src/cockpit.css` | yes | the source: design tokens and one semantic class per component |
-| `*.js`, `favicon.svg` | yes | written by hand, no build step |
+| `cockpit.css` | yes | a generated artifact, compiled from `src/cockpit.css` with Tailwind and Flowbite's theme over the shared design sheets; drift-checked |
+| `src/cockpit.css` | yes | the source: what only the Cockpit has (shell, palette, runner, log, canvases), one semantic class per component, over the tokens and primitives it imports from `share/design/` |
+| `favicon.svg` | yes | a generated copy of the canonical mark `share/design/brand/logo-mark.svg`, written by `majordomus generate design` |
+| `*.js` | yes | written by hand, no build step |
 | `vendor/alpine.csp.min.js` | yes | the interaction depends on it and it is 70 kB |
 | `vendor/{cytoscape,three.module,three.core,p5}.min.js` | no | ~2 MB, lazy, optional, every page complete without them |
 
 There are no utility classes in the Rust that renders the pages. Everything the markup
-names is defined in `src/cockpit.css` as a composition of Tailwind utilities, which keeps
-the design readable in one file and makes the compiled stylesheet a function of that file
-and the pinned versions alone — which is what makes `--check` exact.
+names is defined in `src/cockpit.css` or in the shared `share/design/primitives.css` as a
+composition of Tailwind utilities over the design tokens, which keeps the design readable
+and makes the compiled stylesheet a function of those files and the pinned versions alone —
+which is what makes `--check` exact. No colour, size, status colour, theme key or mark is
+decided in the Cockpit: every one comes from `share/design/tokens.yaml` through the
+generated sheets, the same sheets the published site imports, and `scripts/ci/design-check`
+refuses a second decision. The Design page (`/cockpit/design`) renders the declaration the
+executable was built with and says whether the stylesheet it loaded agrees.
+See [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
 
 Node is a **build** dependency. The Rust executable serves these files from disk and has no
 idea they were built.

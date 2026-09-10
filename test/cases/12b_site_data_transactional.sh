@@ -10,7 +10,7 @@ git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 
 # a good generation first
 expect_exit 0 "$T/scripts/generate-site-data"
-before_files="$(ls "$T/site/data/generated" | sort)"
+before_files="$(ls "$T/site/data/generated" | LC_ALL=C sort)"
 before_project="$(cat "$T/site/data/generated/project.json")"
 before_claims="$(cat "$T/docs/SITE_CLAIMS.md")"
 before_content="$(ls "$T/site/content/guarantees" | wc -l | tr -d ' ')"
@@ -22,7 +22,7 @@ expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep 'has no docs/claims/typed-outcome.md'
 
 # nothing published: every previous artifact is byte-identical and still complete
-[ "$(ls "$T/site/data/generated" | sort)" = "$before_files" ]
+[ "$(ls "$T/site/data/generated" | LC_ALL=C sort)" = "$before_files" ]
 [ "$(cat "$T/site/data/generated/project.json")" = "$before_project" ]
 [ "$(cat "$T/docs/SITE_CLAIMS.md")" = "$before_claims" ]
 [ "$(ls "$T/site/content/guarantees" | wc -l | tr -d ' ')" = "$before_content" ]

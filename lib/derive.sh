@@ -232,7 +232,7 @@ mj_derive_gather() {
       index($0, "\"session\":\"" s "\"") == 0 { next }
       index($0, "\"issue\":\"") == 0 { next }
       { v = $0; sub(/^.*"issue":"/, "", v); sub(/".*$/, "", v); print v }' \
-      "$MJ_STATE_DIR/ledger.jsonl" | sort -u | tr '\n' ' ' | sed 's/ $//; s/ /, /g')"
+      "$MJ_STATE_DIR/ledger.jsonl" | LC_ALL=C sort -u | tr '\n' ' ' | sed 's/ $//; s/ /, /g')"
   fi
 
   if [ "$MJ_DV_TASK_ID" != none ] && mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$MJ_DV_TASK_ID"; then

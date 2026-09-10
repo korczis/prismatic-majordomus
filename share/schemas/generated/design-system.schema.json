@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/design-system.schema.json",
+  "title": "Design system",
+  "description": "docs/generated/design.json: the design system as this executable carries it — its fingerprint, every token explained, and the declaration behind them (share/design/tokens.yaml). Written by `majordomus generate design`. The top level and the shape of a token are fixed; the declaration itself stays open, so a token added to it is not a schema change.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "fingerprint", "design", "source", "projections", "counts", "tokens", "declaration"],
+  "properties": {
+    "schema": { "const": "majordomus/design-system/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the declaration's canonical form." },
+    "design": { "type": "string", "pattern": "^[0-9a-f]{12}$", "description": "The first twelve digits, as every stylesheet carries them in --mj-design." },
+    "source": { "type": "string", "minLength": 1 },
+    "projections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Every generated file the declaration is projected into, repository-relative."
+    },
+    "counts": {
+      "type": "object",
+      "description": "How many tokens of each kind.",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "kind", "about", "css", "projections"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "kind": { "enum": ["font", "palette", "role", "status", "state", "type", "tracking", "layout", "radius", "motion", "theme"] },
+          "about": { "type": "string" },
+          "css": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["part", "css", "light", "dark"],
+              "properties": {
+                "part": { "enum": ["fg", "bg", "line"] },
+                "css": { "type": "string", "pattern": "^--mj-" },
+                "light": { "$ref": "#/$defs/resolved" },
+                "dark": { "$ref": "#/$defs/resolved" }
+              }
+            }
+          },
+          "value": { "type": "string" },
+          "role": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "states": { "type": "array", "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
+          "aliases": { "type": "array", "items": { "type": "string", "pattern": "^--color-" } },
+          "projections": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "declaration": {
+      "type": "object",
+      "required": ["schema", "identity", "font", "palette", "roles", "status", "type", "layout", "radius", "motion", "theme", "viewports", "alias"],
+      "properties": {
+        "schema": { "const": 2 }
+      }
+    }
+  },
+  "$defs": {
+    "resolved": {
+      "type": "object",
+      "required": ["reference", "css", "literal"],
+      "properties": {
+        "reference": { "type": "string", "minLength": 1, "description": "The palette entry or role the declaration named." },
+        "css": { "type": "string", "minLength": 1, "description": "What a stylesheet gets: a literal, or var(--mj-<role>)." },
+        "literal": { "type": "string", "minLength": 1, "description": "The literal after every reference is followed." }
+      }
+    }
+  }
+}

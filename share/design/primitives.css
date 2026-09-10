@@ -1,0 +1,306 @@
+/* The shared presentation primitives: the components more than one surface renders,
+   written once as `.mj-*` classes over the design tokens and imported by both Tailwind
+   entry points. A page says what a thing *is* — a badge, a table, a code block, a card —
+   and this file says how that thing looks, on the site and in the Cockpit alike.
+
+   Every colour is a token (`--mj-*`, generated from share/design/tokens.yaml); every size
+   is a step of the named scale (`text-meta`, `text-label`, `text-small`, `text-dense`) or
+   Tailwind's own; every status is the indirection the generated status sheet sets
+   (`--mj-status-fg`, `--mj-status-bg`, `--mj-status-line`) — so a state word declared in
+   the tokens file is styled here the day it exists, and nothing in this file names one.
+
+   What is *not* here is anything only one surface has: the Cockpit's shell, sidebar,
+   palette, runner and log live in share/cockpit/src/cockpit.css; the site's reading
+   layout is Flowbite's, over the same tokens through the generated aliases.
+
+   Dense by default. These primitives were born in a control plane; where the site uses
+   one it inherits the density, which is what a registry table on a documentation page
+   should have. */
+
+@layer components {
+  /* ------------------------------------------------------------------- status */
+
+  /* A badge names a state. The word is always shown, so nothing is carried by colour
+     alone; the colour is the status the word is filed under, or neutral when it is filed
+     under none. */
+  .mj-badge {
+    @apply inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-label font-medium;
+    color: var(--mj-status-fg, var(--mj-fg));
+    background: var(--mj-status-bg, var(--mj-sunken));
+    border: 1px solid var(--mj-status-line, var(--mj-line));
+  }
+  .mj-badge-dot {
+    @apply h-1.5 w-1.5 shrink-0 rounded-full;
+    background: currentColor;
+  }
+  /* Text that carries a status without a badge's chrome: a mark, a stream name, a verdict. */
+  .mj-status {
+    color: var(--mj-status-fg, inherit);
+  }
+  /* A neutral label: a kind, an encoding, a tag. */
+  .mj-tag {
+    @apply rounded-sm px-1.5 py-0.5 font-mono text-meta uppercase tracking-caps;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-muted);
+  }
+  .mj-marks {
+    @apply inline-flex flex-wrap items-center gap-1;
+  }
+
+  /* An alert: a sentence with a status. The left rule is the status's text colour. */
+  .mj-alert {
+    @apply mb-3 rounded-md p-3 text-small;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    border-left: 3px solid var(--mj-status-fg, var(--mj-line));
+    color: var(--mj-fg);
+  }
+
+  /* ------------------------------------------------------------------ surfaces */
+
+  .mj-card {
+    @apply rounded-lg p-4;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-card-head {
+    @apply mb-3 flex flex-wrap items-center justify-between gap-3;
+  }
+  .mj-card-title {
+    @apply text-label font-semibold uppercase tracking-caps;
+    color: var(--mj-muted);
+  }
+  .mj-card > .mj-card-title {
+    @apply mb-3;
+  }
+  .mj-subheading {
+    @apply mb-1 mt-3 text-label font-semibold uppercase tracking-caps;
+    color: var(--mj-muted);
+  }
+  .mj-empty {
+    @apply rounded-md border border-dashed p-4 text-center;
+    border-color: var(--mj-line);
+    color: var(--mj-muted);
+  }
+  .mj-note {
+    @apply mt-2 text-small;
+    color: var(--mj-muted);
+  }
+  .mj-muted {
+    color: var(--mj-muted);
+  }
+  .mj-fg {
+    color: var(--mj-fg);
+  }
+  .mj-prose {
+    @apply max-w-[var(--mj-measure)];
+  }
+
+  /* -------------------------------------------------------------------- tables */
+
+  /* The wrapper scrolls sideways; the page never does. No negative margin: it made the
+     wrapper wider than its parent, which the browser probe measured as a page wider than
+     the viewport. */
+  .mj-table-wrap {
+    @apply w-full overflow-x-auto;
+  }
+  .mj-table {
+    @apply w-full border-collapse text-left;
+  }
+  .mj-table th {
+    @apply whitespace-nowrap px-2 py-1.5 text-meta font-semibold uppercase tracking-caps;
+    color: var(--mj-muted);
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-table td {
+    @apply px-2 py-1.5 align-top;
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-table tbody tr:nth-child(even) td {
+    background: color-mix(in oklab, var(--mj-sunken) 55%, transparent);
+  }
+  .mj-table tbody tr:hover td {
+    background: var(--mj-sunken);
+  }
+  .mj-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  /* An identifier is one word and stays on its line: truncated, whole in its tooltip. */
+  .mj-cell-id {
+    @apply max-w-[22rem];
+  }
+  .mj-cell-id .mj-id {
+    @apply block truncate;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+  .mj-id {
+    color: var(--mj-fg);
+  }
+
+  /* A key–value list. */
+  .mj-facts {
+    @apply grid gap-x-4 gap-y-1;
+    grid-template-columns: minmax(min(8rem, 40%), max-content) minmax(0, 1fr);
+  }
+  .mj-facts-key {
+    @apply text-label uppercase tracking-caps;
+    color: var(--mj-muted);
+  }
+  .mj-facts-value {
+    @apply min-w-0 break-words;
+    color: var(--mj-fg);
+  }
+  .mj-list {
+    @apply list-disc space-y-0.5 pl-5;
+  }
+
+  /* --------------------------------------------------------------------- chips */
+
+  /* The way into a long listing: its own parts, each with how many it holds. */
+  .mj-chips {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+  .mj-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-small no-underline;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-chip:hover {
+    background: var(--mj-sunken);
+  }
+  .mj-chip--current {
+    @apply font-semibold;
+    background: var(--mj-accent-soft);
+    border-color: var(--mj-accent-line);
+    color: var(--mj-accent-strong);
+  }
+  .mj-chip-count {
+    @apply font-mono text-meta;
+    color: var(--mj-muted);
+  }
+  .mj-chip--current .mj-chip-count {
+    color: inherit;
+  }
+
+  /* ------------------------------------------------------------ inline pieces */
+
+  .mj-link {
+    @apply underline decoration-1 underline-offset-2;
+    color: var(--mj-accent);
+  }
+  .mj-link:hover {
+    @apply decoration-2;
+  }
+  .mj-mono {
+    @apply font-mono text-small;
+    color: var(--mj-fg);
+  }
+  a.mj-mono {
+    @apply break-all;
+  }
+  .mj-kbd {
+    @apply rounded-sm px-1.5 py-0.5 font-mono text-label;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  /* A code block: the repository's own text, shown as it is, scrolling inside itself. */
+  .mj-pre {
+    @apply max-h-[32rem] overflow-auto rounded-md p-3 font-mono text-small leading-snug;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+
+  .mj-details {
+    @apply mt-2 rounded-md;
+    border: 1px solid var(--mj-line);
+  }
+  .mj-summary {
+    @apply cursor-pointer select-none px-3 py-1.5 font-mono text-small;
+    color: var(--mj-muted);
+  }
+  .mj-summary:hover {
+    color: var(--mj-fg);
+  }
+  .mj-details[open] .mj-summary {
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-details > *:not(.mj-summary) {
+    @apply m-2;
+  }
+
+  /* --------------------------------------------------------------------- forms */
+
+  .mj-field {
+    @apply flex min-w-0 flex-col gap-1 sm:min-w-[10rem];
+  }
+  .mj-field-label {
+    @apply flex items-baseline gap-2 text-label font-medium uppercase tracking-caps;
+    color: var(--mj-muted);
+  }
+  .mj-field-type {
+    @apply font-mono text-meta normal-case tracking-normal opacity-70;
+  }
+  .mj-required {
+    @apply text-meta normal-case tracking-normal;
+    color: var(--mj-bad);
+  }
+  .mj-optional {
+    @apply text-meta normal-case tracking-normal opacity-60;
+  }
+  .mj-field-help {
+    @apply text-label;
+    color: var(--mj-muted);
+  }
+  .mj-input,
+  .mj-select,
+  .mj-textarea {
+    @apply w-full rounded-sm px-2 py-1.5 font-mono text-small;
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-textarea {
+    @apply leading-snug;
+  }
+  .mj-checkbox {
+    @apply h-4 w-4 rounded-sm;
+    border: 1px solid var(--mj-line);
+    accent-color: var(--mj-accent-fill);
+  }
+  .mj-button {
+    @apply rounded-md px-3 py-1.5 text-small font-medium;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+    color: var(--mj-fg);
+  }
+  .mj-button:hover {
+    border-color: var(--mj-accent);
+  }
+  .mj-button--primary {
+    background: var(--mj-accent-fill);
+    border-color: var(--mj-accent-fill);
+    color: var(--mj-on-accent);
+  }
+  .mj-button--quiet {
+    @apply px-2 py-1 text-label;
+    color: var(--mj-muted);
+  }
+  .mj-button[disabled] {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* ------------------------------------------------------------------ swatches */
+
+  /* A colour shown as itself, for the design inspector. The colour comes from the
+     generated `.mj-swatch--<token>` class, or from an inline value the inspector resolved
+     from the declaration for the theme it is not currently in. */
+  .mj-swatch {
+    @apply inline-block h-5 w-8 shrink-0 rounded-sm align-middle;
+    border: 1px solid var(--mj-line);
+  }
+}

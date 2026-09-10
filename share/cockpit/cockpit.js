@@ -91,13 +91,13 @@ export function palette() {
   const body = getComputedStyle(document.body);
   const read = (name, fallback) => (style.getPropertyValue(name) || fallback).trim();
   return {
-    background: read('--mj-bg-sunken', body.backgroundColor),
-    surface: read('--mj-bg-raised', body.backgroundColor),
-    border: read('--mj-border', body.color),
-    text: read('--mj-text', body.color),
-    muted: read('--mj-text-muted', body.color),
-    accent: read('--color-accent-500', body.color),
-    dark: document.documentElement.classList.contains('dark'),
+    background: read('--mj-sunken', body.backgroundColor),
+    surface: read('--mj-raised', body.backgroundColor),
+    border: read('--mj-line', body.color),
+    text: read('--mj-fg', body.color),
+    muted: read('--mj-muted', body.color),
+    accent: read('--mj-accent', body.color),
+    dark: document.documentElement.classList.contains(THEME_CLASS),
   };
 }
 
@@ -148,9 +148,15 @@ export function whileVisible(element, frame) {
 
 // --------------------------------------------------------------------- the theme
 
-const THEME_KEY = 'mj-theme';
+// The theme contract is the design declaration's, not this file's: the shell writes the
+// storage key and the class onto <body> from the compiled declaration, and this reads them
+// there. A page without them (a distribution whose compiled declaration is invalid) gets a
+// toggle that works for the page and stores nothing.
+const THEME_KEY = (document.body && document.body.dataset.themeKey) || null;
+const THEME_CLASS = (document.body && document.body.dataset.themeClass) || 'dark';
 
 function storedTheme() {
+  if (!THEME_KEY) return null;
   try {
     return localStorage.getItem(THEME_KEY);
   } catch (e) {
@@ -159,6 +165,7 @@ function storedTheme() {
 }
 
 function storeTheme(value) {
+  if (!THEME_KEY) return;
   try {
     localStorage.setItem(THEME_KEY, value);
   } catch (e) {
@@ -189,7 +196,7 @@ export function component() {
     },
 
     toggleTheme() {
-      const dark = document.documentElement.classList.toggle('dark');
+      const dark = document.documentElement.classList.toggle(THEME_CLASS);
       storeTheme(dark ? 'dark' : 'light');
     },
 
@@ -231,9 +238,52 @@ if (!storedTheme()) {
   window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', (event) => {
-      document.documentElement.classList.toggle('dark', event.matches);
+      document.documentElement.classList.toggle(THEME_CLASS, event.matches);
     });
 }
+
+// --------------------------------------------------------------- the design check
+//
+// The stylesheet this page loaded carries the fingerprint of the declaration it was
+// projected from (`--mj-design`); the executable that rendered the page carries the
+// fingerprint of the declaration it was built with (`data-design` on <body>). The two are
+// the same file in the repository and can still differ on a machine — a stylesheet compiled
+// before the declaration moved, an executable built before it was regenerated — and a
+// mismatch is invisible to every check that reads files. So the page says so, once, at the
+// top, and the Design page shows the verdict as a badge.
+export function designCheck() {
+  const built = document.body && document.body.dataset.design;
+  const served = getComputedStyle(document.documentElement)
+    .getPropertyValue('--mj-design')
+    .trim()
+    .replace(/^"|"$/g, '');
+  const badge = document.getElementById('mj-design-check');
+  const same = built && served && built === served;
+  if (badge) {
+    badge.className = 'mj-badge mj-badge--' + (same ? 'ok' : served ? 'stale' : 'missing');
+    badge.textContent = same
+      ? 'stylesheet and executable agree'
+      : served
+        ? 'stylesheet ' + served + ', executable ' + built
+        : 'the stylesheet carries no design fingerprint';
+  }
+  if (built && served && !same) {
+    const main = document.getElementById('main');
+    if (main) {
+      const alert = document.createElement('div');
+      alert.className = 'mj-alert mj-alert--stale';
+      alert.setAttribute('role', 'status');
+      alert.textContent =
+        'The stylesheet this page loaded was projected from design ' +
+        served +
+        '; this executable was built with ' +
+        built +
+        '. One of them is stale: run scripts/cockpit-assets after `majordomus generate design`, rebuild, and restart the server.';
+      main.prepend(alert);
+    }
+  }
+}
+designCheck();
 
 // the ES module build: it exports Alpine and starts nothing, so the component is
 // registered before the first element is initialised. The CDN build starts itself on a

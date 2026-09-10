@@ -8,7 +8,27 @@ chk() { # pattern description
   if grep -nE -- "$1" $files 2>/dev/null | grep -vE '^[^:]+:[0-9]+:\s*#'; then printf '    forbidden: %s\n' "$2"; bad=1; fi
 }
 chk '(^|[^a-zA-Z_])eval[[:space:]]'                       'eval'
-chk '(^|[^a-zA-Z_./-])(curl|wget|nc|ssh|scp)[[:space:]]'  'network client'
+chk '(^|[^a-zA-Z_./-])(wget|nc|ssh|scp)[[:space:]]'       'network client'
+# `curl` is forbidden in the same breath, with one exception that is declared rather than
+# tolerated: `majordomus context` reads the peer board of the shared MCP server this
+# repository itself started, from the loopback URL in that server's own lease. SECURITY.md
+# names it and so does the rule; here it is held to its shape, in both directions, so that
+# it can neither spread nor quietly disappear while the promise still describes it.
+net="$(grep -nE -- '(^|[^a-zA-Z_./-])curl[[:space:]]' $files 2>/dev/null | grep -vE '^[^:]+:[0-9]+:\s*#' || true)"
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  case "$line" in
+    "$ROOT/lib/context.sh:"*"mj_has curl "*) ;;                              # a presence probe, not a call
+    "$ROOT/lib/context.sh:"*'curl -fsS --max-time '*'/api/v1/peers"'*) ;;    # the one declared request
+    *) printf '%s\n    forbidden: network client\n' "$line"; bad=1 ;;
+  esac
+done <<EOF
+$net
+EOF
+grep -qE 'curl -fsS --max-time [0-9]+ "[$]url/api/v1/peers".*\|\| return 0' "$ROOT/lib/context.sh" \
+  || { printf '    the declared peer-board exception is not one bounded request whose failure is silence\n'; bad=1; }
+grep -qF 'http://127.0.0.1:*|http://localhost:*' "$ROOT/lib/context.sh" \
+  || { printf '    the declared exception does not refuse a lease outside loopback\n'; bad=1; }
 chk '/dev/(tcp|udp)/'                                       'bash network redirection'
 chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_ROOT'  'recursive delete of the repository'
 chk 'rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f?[[:space:]]+"?\$MJ_(AI_DIR|AI_REPO_DIR|AI_LOCAL_DIR|STATE_DIR|HOME|SHARE_DIR)'   'recursive delete of the AI layer or the distribution'

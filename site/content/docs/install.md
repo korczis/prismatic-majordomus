@@ -10,12 +10,12 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.4.0 -->
+     Generator: majordomus-cli 0.5.0 -->
 
 ## Quick install
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 ```
 
 Then, in the repository you want supervised:
@@ -27,7 +27,7 @@ majordomus init
 ## Install and initialise in one command
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --init
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --init
 ```
 
 `--init` runs `majordomus init` in the current directory using the executable that was just
@@ -89,31 +89,31 @@ so a platform listed here is a platform a release actually built.
 ## Choosing where it goes
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --install-dir "$HOME/bin"
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --prefix "$HOME/opt/majordomus"
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --install-dir "$HOME/bin"
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --prefix "$HOME/opt/majordomus"
 ```
 
 or, equivalently:
 
 ```bash
-MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh | sh
 ```
 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.3.1
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.3.1
 ```
 
-A pinned installation resolves `https://korczis.github.io/prismatic-majordomus/releases/v0.3.1.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.3.1.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
-installation resolves `https://korczis.github.io/prismatic-majordomus/releases/latest.json`, which is the latest stable release and moves
+installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
 
 ## Using it in CI
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.3.1
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.3.1
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -149,7 +149,7 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.3.1` (latest) | 2026-09-08 | stable | 6 | [`v0.3.1.json`](https://korczis.github.io/prismatic-majordomus/releases/v0.3.1.json) |
+| `v0.3.1` (latest) | 2026-09-08 | stable | 6 | [`v0.3.1.json`](https://majordomus.dev/releases/v0.3.1.json) |
 
 </div>
 
@@ -191,7 +191,7 @@ recorded next step, not a claim made here — see `docs/DISTRIBUTION.md`.
 `curl … | sh` runs a script you have not read. If you would rather read it first:
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh -o install-majordomus.sh
+curl -fsSL https://majordomus.dev/install.sh -o install-majordomus.sh
 less install-majordomus.sh
 sh install-majordomus.sh
 ```
@@ -221,8 +221,8 @@ installer adds nothing of its own.
 **Seeing what it would do.**
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --dry-run
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --verbose
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --dry-run
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --verbose
 ```
 
 `--dry-run` resolves the platform, the release and every path, prints them, and changes

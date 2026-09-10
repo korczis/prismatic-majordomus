@@ -264,7 +264,7 @@ record_state() {
 # including its colour and description, because those are somebody's choice and not ours.
 if [ "$MODE" = apply ]; then
   have_labels="$(gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' 2>/dev/null || true)"
-  for id in $(selected_issues); do labels_of "$id"; done | tr ',' '\n' | sort -u | while read -r l; do
+  for id in $(selected_issues); do labels_of "$id"; done | tr ',' '\n' | LC_ALL=C sort -u | while read -r l; do
     [ -n "$l" ] || continue
     printf '%s\n' "$have_labels" | grep -qxF "$l" && continue
     case "$l" in

@@ -28,7 +28,7 @@ grep -q "$source_file" "$WF" \
   grep -qF -- "$triple" "$WF" && { echo "    the workflow names the target $triple"; exit 1; }
   :
 done
-runners="$(sed -n 's/.*"runner": "\([^"]*\)".*/\1/p' "$ROOT/$source_file" | sort -u)"
+runners="$(sed -n 's/.*"runner": "\([^"]*\)".*/\1/p' "$ROOT/$source_file" | LC_ALL=C sort -u)"
 for runner in $runners; do
   case "$runner" in
     ubuntu-24.04) continue ;;   # the coordination jobs run there too; it is not a target's runner

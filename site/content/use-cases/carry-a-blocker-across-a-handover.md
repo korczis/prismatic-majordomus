@@ -1,7 +1,7 @@
 +++
 title = "Hand work over with a question still open, and keep it blocking"
 description = "Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there."
-weight = 16
+weight = 17
 [extra]
 id = "carry-a-blocker-across-a-handover"
 source = ".ai/repo/use-cases/carry-a-blocker-across-a-handover.md"

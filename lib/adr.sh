@@ -437,7 +437,7 @@ mj_adr_next_id() {
   } | while IFS= read -r num; do
         num="$(printf '%s' "$num" | sed 's/^0*//')"; [ -z "$num" ] && num=0
         printf '%s\n' "$num"
-      done | sort -n | tail -1 | {
+      done | LC_ALL=C sort -n | tail -1 | {
         read -r max || max=0
         [ -n "${max:-}" ] || max=0
         printf '%04d' "$((max + 1))"

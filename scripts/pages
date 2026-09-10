@@ -200,7 +200,7 @@ cmd_benchmark() {
   local out
   out="$(jq -Rn --arg samples "$n" --arg routes "$(find "$ROOT/$OUTPUT" -name index.html | wc -l | tr -d ' ')" \
     --arg platform "$(mj_pages_platform)" --rawfile rows "$tmp" '
-    def stats(a): (a | sort) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
+    def stats(a): (a | sort_by(.)) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
                                         p90: $s[((($s | length) * 0.9) - 1 | floor | if . < 0 then 0 else . end)],
                                         max: $s[-1] };
     ($rows | split("\n") | map(select(length > 0)) | map(split("\t") | map(tonumber))) as $r
@@ -291,6 +291,16 @@ cmd_verify() {
   esac; done
   [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
   [ -n "$commit" ] || commit="$(git -C "$ROOT" rev-parse HEAD)"
+  # A prefix names a commit only when it is long enough to name one: `b` is an abbreviation
+  # of nothing and must not pass for everything. Seven is git's own default abbreviation and
+  # the floor it will resolve, so it is the floor here, and anything shorter or not a sha at
+  # all is a usage error rather than a verdict nobody meant.
+  case "$commit" in
+    *[!0-9a-fA-F]*) echo "pages verify: --commit takes a commit sha, not '$commit'" >&2; exit 2 ;;
+  esac
+  [ "${#commit}" -ge 7 ] || {
+    echo "pages verify: --commit $commit is too short to name a commit; use seven characters or more" >&2
+    exit 2; }
   command -v curl >/dev/null || { echo "pages verify: curl is required" >&2; return 12; }
   t0="$(now)"
   while :; do
@@ -301,7 +311,13 @@ cmd_verify() {
     else
       served=""
     fi
-    if [ -n "$served" ] && [ "$served" = "$commit" ]; then
+    # The site states the full forty characters; a caller states the commit however it has
+    # it, and the shortest way to have it is to read it off a gh-pages subject. So the
+    # served value is matched as beginning with the one asked for, which is what
+    # `scripts/ci/pages-check` already does with this same pair. An exact compare answers
+    # "still serves beaee8654..., not beaee8654" — the two strings it prints agree — and
+    # spends the whole timeout before saying it.
+    if [ -n "$served" ] && [ "${served#"$commit"}" != "$served" ]; then
       waited=$(( $(now) - t0 ))
       [ "$quiet" = 1 ] || printf 'pages verify: %s serves %s after %s s\n' "${url%/}/$IDENTITY" "${commit:0:12}" "$waited"
       printf '%s\n' "$waited" > "${MJ_PAGES_WAITED:-/dev/null}"

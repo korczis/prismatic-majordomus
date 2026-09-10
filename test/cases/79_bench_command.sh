@@ -16,8 +16,8 @@ expect_exit 0 "$MJ" bench --list
 public="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$MJ_LIB_DIR/common.sh"; . "$MJ_LIB_DIR/commands.sh"; mj_cmdreg_load; mj_cmdreg_public' | grep -vx bench)"
 for c in $public; do expect_grep "^$c +" ; done
 expect_no_grep '^bench +'
-listed="$(printf '%s\n' "$LAST_OUT" | awk 'NR > 1 { print $1 }' | sort)"
-[ "$listed" = "$(printf '%s\n' "$public" | sort)" ] || { echo "    --list does not equal the registry's public commands"; printf '%s\n' "$LAST_OUT"; exit 1; }
+listed="$(printf '%s\n' "$LAST_OUT" | awk 'NR > 1 { print $1 }' | LC_ALL=C sort)"
+[ "$listed" = "$(printf '%s\n' "$public" | LC_ALL=C sort)" ] || { echo "    --list does not equal the registry's public commands"; printf '%s\n' "$LAST_OUT"; exit 1; }
 expect_exit 0 "$MJ" bench --list --format json
 printf '%s\n' "$LAST_OUT" | jq -e '.targets | map(.command) | index("doctor")' >/dev/null || { echo "    --list --format json does not carry the targets"; exit 1; }
 

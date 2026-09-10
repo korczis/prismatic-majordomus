@@ -150,7 +150,7 @@ mj_pj_statuses()  { mj_pj_rows S | awk -F'\t' -v k="$1" '$2 == k { print $3 }'; 
 # derived from the graph; no list of versions is maintained anywhere.
 mj_pj_roadmap() {
   awk -F'\t' '$1=="M" { printf "%s\t%s\t%s\n", $10+0, $4+0, $2 }' "$MJ_PJ/model.tsv" \
-    | sort -k1,1n -k2,2n -k3,3 | cut -f3
+    | LC_ALL=C sort -k1,1n -k2,2n -k3,3 | cut -f3
 }
 # milestone ids in one derived state
 mj_pj_m_in_state() { awk -F'\t' -v s="$1" '$1=="M" && $3==s { print $2 }' "$MJ_PJ/model.tsv"; }
@@ -198,7 +198,7 @@ mj_pj_ready_ranked() {
   awk -F'\t' -v m="$1" '$1=="I" && $4=="READY" && ($3==m || m=="") {
       p = $6; rank = (p=="p0"?0:(p=="p1"?1:(p=="p2"?2:3)))
       printf "%d\t%d\t%s\n", $5, rank, $2 }' "$MJ_PJ/model.tsv" \
-    | sort -k1,1n -k2,2n -k3,3 | head -n 1 | cut -f3
+    | LC_ALL=C sort -k1,1n -k2,2n -k3,3 | head -n 1 | cut -f3
 }
 
 # ---------------------------------------------------------------- unknown keys

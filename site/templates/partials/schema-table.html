@@ -4,7 +4,10 @@
 {%- set req = schema.required | default(value=[]) -%}
 <div class="min-w-0">
   <h3 class="font-mono text-sm font-semibold text-heading">{{ label }}{% if schema.title %} · {{ schema.title }}{% endif %}</h3>
-  {%- if schema.description %}<p class="mt-1 text-sm text-body">{{ schema.description }}</p>{% endif -%}
+  {#- The Rust doc comment of the type, as text. It carries `module::path::Type` names and
+      whole code fences that no space breaks, so the paragraph is told it may break inside a
+      word: without that a phone's page scrolls sideways to reach the end of one identifier. -#}
+  {%- if schema.description %}<p class="mt-1 break-words text-sm text-body">{{ schema.description }}</p>{% endif -%}
   {%- if schema.properties -%}
   <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm">

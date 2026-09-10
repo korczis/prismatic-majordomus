@@ -75,7 +75,7 @@ n="$(grep -cF 'a file with spaces' shared.txt)"
 #     root-document pathspec makes * cross a directory separator, at which point *.md also
 #     matches .ai/local/state/handovers/*.md — and every handover in the checkout is
 #     discovered as shared repository knowledge. The mutation was run; this case fails on it.
-dupes="$(awk '{print $NF}' shared.txt | sort | uniq -d)"
+dupes="$(awk '{print $NF}' shared.txt | LC_ALL=C sort | uniq -d)"
 [ -z "$dupes" ] || { echo "    a file was discovered by two classes: $dupes"; exit 1; }
 
 # --- a required class that finds nothing is a finding, not a silence
