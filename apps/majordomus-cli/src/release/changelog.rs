@@ -192,6 +192,15 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
 ///
 /// Done here rather than in each renderer: the Markdown, the site and any other reader get
 /// the same order because they are given it, not because they each reimplemented it.
+///
+/// One group per kind, exactly. The rank is a *presentation* order and two kinds may share
+/// one — `Ci` and `Build` are both rank 6, `Chore` and `Style` both rank 7 — so a sort keyed
+/// on the rank alone leaves equal-ranked kinds interleaved in the order their commits
+/// arrived, and `dedup`, which removes only *adjacent* repeats, then leaves the same kind
+/// standing several times. That is what put six `chore` groups and five `style` ones on the
+/// changelog page, each rendering all of its changes again under an id the page had already
+/// used, and what repeated their headings in the Markdown. The key is therefore total: the
+/// rank first, then the kind's own order, so equal ranks are adjacent and one survives.
 fn grouped(mut changes: Vec<Change>) -> Vec<ChangeGroup> {
     if let Some(base) = forge() {
         for c in &mut changes {
@@ -199,7 +208,7 @@ fn grouped(mut changes: Vec<Change>) -> Vec<ChangeGroup> {
         }
     }
     let mut kinds: Vec<_> = changes.iter().map(|c| c.kind).collect();
-    kinds.sort_by_key(|k| k.rank());
+    kinds.sort_by_key(|k| (k.rank(), *k));
     kinds.dedup();
     kinds
         .into_iter()
@@ -725,6 +734,50 @@ mod tests {
         let live = compose(dir.path(), &[]);
         assert_eq!(live.sections.len(), 1);
         assert!(live.sections[0].unreleased);
+    }
+
+    /// One group per kind, whatever order the commits arrived in and however many kinds
+    /// share a rank.
+    ///
+    /// The page gives each group an id built from its kind, and the Markdown gives each one
+    /// a heading; both are unique only if this is. It was not: the sort was keyed on the
+    /// rank alone, `Chore` and `Style` share rank 7, and `dedup` removes only adjacent
+    /// repeats — so alternating chore and style commits produced a group per commit.
+    #[test]
+    fn a_kind_gets_one_group_however_the_commits_interleave() {
+        let change = |kind: ChangeKind, commit: &str| Change {
+            kind,
+            scope: None,
+            subject: "s".into(),
+            breaking: false,
+            commit: commit.into(),
+            url: None,
+            references: Vec::new(),
+        };
+        // Chore and Style share rank 7; Ci and Build share rank 6.
+        let groups = grouped(vec![
+            change(ChangeKind::Ci, "a"),
+            change(ChangeKind::Chore, "b"),
+            change(ChangeKind::Style, "c"),
+            change(ChangeKind::Chore, "d"),
+            change(ChangeKind::Build, "e"),
+            change(ChangeKind::Style, "f"),
+            change(ChangeKind::Chore, "g"),
+        ]);
+        let kinds: Vec<_> = groups.iter().map(|g| g.kind).collect();
+        assert_eq!(
+            kinds,
+            vec![
+                ChangeKind::Ci,
+                ChangeKind::Build,
+                ChangeKind::Chore,
+                ChangeKind::Style
+            ],
+            "a kind appears more than once, or the ranks are out of order"
+        );
+        // and every change is carried exactly once, by the one group of its kind
+        assert_eq!(groups.iter().map(|g| g.changes.len()).sum::<usize>(), 7);
+        assert!(groups.windows(2).all(|w| w[0].rank <= w[1].rank));
     }
 
     #[test]
