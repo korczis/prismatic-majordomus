@@ -138,6 +138,17 @@ gates:
     runs: scripts/ci/order-check
     summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
 
+  # Entering the repository converges on a ready shared server (ADR 0035), and every piece of
+  # that is one reasonable line away from being undone: a `serve ensure` in the file a shell
+  # evaluates on entry, a build on either entry path, a switch the schema was never taught, a
+  # shim unwired from the provider, a fourth hand parser of the lease. File reads only, so it
+  # belongs beside the structure checks; the convergence itself is test/cases/108, which the
+  # suite runs, which is why the gate is given --no-suite here rather than running it twice.
+  - id: entry-converges
+    job: structure
+    runs: scripts/ci/entry-converges --no-suite
+    summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
+
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
@@ -218,7 +229,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -247,18 +258,18 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data]
+    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data, entry-converges]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection, entry-converges]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs

@@ -203,9 +203,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `d06856785900aae7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `d5dc7da86ab749a1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 61048 | `734ac84182464b0b` |
-| `site/data/registry/product.json` | `site-product` | json | 304772 | `b1b94535528e7064` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2372909 | `d445ff4acddda1b0` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 61048 | `2ac6c162fa82283e` |
+| `site/data/registry/product.json` | `site-product` | json | 304772 | `da4578a3f3dce8bb` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2374169 | `bcc02859a928e9a6` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

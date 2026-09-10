@@ -133,6 +133,17 @@ majordomus context                       what the next worker needs to know now
 majordomus doctor                        whether Majordomus itself is healthy and wired here
 ```
 
+## What holds it shut
+
+`project.entry-converges` is the rule, and `scripts/ci/entry-converges` the gate that
+decides it: entry by a shell starts nothing and builds nothing, the switch is declared in
+the policy, the skeleton, the allow list and the schema together, the start shim is wired
+where the policy says so that `doctor` reconciles it, the briefing has one author, the
+lease has one typed reader, and a server nobody owns has a bounded life. What no script can
+decide — that entry actually converges — is `test/cases/108_entry_converges_on_a_server.sh`,
+which drives the provider's own shim; `test/cases/118_entry_converges_by_rule.sh` proves the
+gate by planting each thing the rule forbids and watching it refused.
+
 ## Related
 
 `docs/MCP.md` has the shared server's lifecycle and the election in full; `docs/ENVIRONMENT.md`
