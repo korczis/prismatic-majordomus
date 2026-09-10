@@ -17,7 +17,8 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::release::{self, model::VersionReport, Changelog};
+use crate::capability::registry::CapabilityRegistry;
+use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
 use crate::{capability, module};
 
 use super::{get, Empty};
@@ -68,7 +69,7 @@ pub fn module() -> ModuleDescriptor {
         stability: Stability::Implemented,
         capabilities: [
             capability! {
-                id: "release.changelog",
+                id: CHANGELOG_ID,
                 title: "The changelog",
                 description: "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
                 input: ChangelogInput,
@@ -80,6 +81,11 @@ pub fn module() -> ModuleDescriptor {
                         resource: Some(McpResource { uri: CHANGELOG_URI.into(), name: "changelog".into() }),
                     }),
                     http: get("/api/v1/changelog"),
+                    // Not a CLI projection: `majordomus release changelog` is a local
+                    // command that *renders* this capability for a person at a terminal,
+                    // and cli::LOCAL says so once (`RendersCapability`). Declaring the
+                    // path here as well is the double accounting `tests/quality.rs`
+                    // refuses (OPERATION_CLASSIFICATION_CONFLICT).
                     cli: None,
                 },
                 tags: ["release", "changelog"],
@@ -107,9 +113,60 @@ pub fn module() -> ModuleDescriptor {
     }
 }
 
+/// The capability's own id. Beside its declaration, so the two cannot drift apart without
+/// the test below noticing; the document carries it so that no page has to enumerate where
+/// this value is served.
+pub const CHANGELOG_ID: &str = "release.changelog";
+
+/// Where else the changelog can be had, read off the declarations that already say so.
+///
+/// One answer for every writer of the document: the handler that serves it and the generator
+/// that commits it both ask here, so the committed artifact and the live answer name the same
+/// surfaces. The route, the tool and the resource are the capability's own declaration; the
+/// command line is the local command that renders this capability, which `cli::LOCAL`
+/// declares once beside the reason it is local. Nothing is spelled out a second time, and a
+/// page that lists these resolves each against the datasets the registry generates rather
+/// than typing a route of its own. `None` only when the registry does not carry the
+/// capability at all, which the module's own test refuses.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::{module, produced_by};
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+///
+/// let registry = CapabilityRegistry::builder()
+///     .with_modules(vec![module()])
+///     .build()
+///     .expect("the release module composes on its own");
+/// let by = produced_by(&registry).expect("the registry carries release.changelog");
+/// assert_eq!(by.capability, "release.changelog");
+/// assert_eq!(by.cli.as_deref(), Some("majordomus release changelog"));
+/// assert_eq!(by.http.as_deref(), Some("/api/v1/changelog"));
+/// assert_eq!(by.mcp_tool.as_deref(), Some("majordomus_changelog"));
+/// assert_eq!(by.mcp_resource.as_deref(), Some("majordomus://changelog"));
+/// ```
+pub fn produced_by(registry: &CapabilityRegistry) -> Option<ProducedBy> {
+    let c = registry.get(CHANGELOG_ID)?;
+    let cli = crate::cli::local::LOCAL
+        .iter()
+        .find(|l| l.reason.renders() == Some(CHANGELOG_ID))
+        .map(|l| format!("majordomus {}", l.command));
+    Some(ProducedBy {
+        capability: c.id.to_string(),
+        cli,
+        http: c.exposure.http.as_ref().map(|h| h.path.clone()),
+        mcp_tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
+        mcp_resource: c
+            .exposure
+            .mcp
+            .as_ref()
+            .and_then(|m| m.resource.as_ref().map(|r| r.uri.clone())),
+    })
+}
+
 fn changelog(ctx: &Context, input: ChangelogInput) -> Result<Changelog, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
     let mut log = release::compose(root, &ctx.index.objects);
+    log.produced_by = produced_by(&ctx.registry);
     if let Some(wanted) = input.version.as_deref() {
         log.sections.retain(|s| {
             s.version == wanted
