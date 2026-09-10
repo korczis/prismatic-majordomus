@@ -199,6 +199,33 @@
         "status": "query"
       },
       {
+        "id": "capability:devcontext.compile",
+        "kind": "capability",
+        "label": "devcontext.compile",
+        "summary": "Compile the context for a piece of work",
+        "route": "/cockpit/capabilities/devcontext.compile",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:devcontext.explain",
+        "kind": "capability",
+        "label": "devcontext.explain",
+        "summary": "Why one thing is or is not in a compiled context",
+        "route": "/cockpit/capabilities/devcontext.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:devcontext.policy",
+        "kind": "capability",
+        "label": "devcontext.policy",
+        "summary": "The compiler's own rules",
+        "route": "/cockpit/capabilities/devcontext.policy",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:directories.list",
         "kind": "capability",
         "label": "directories.list",
@@ -28054,6 +28081,13 @@
         "source": "test/cases/12c_graph_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_context_compiler.sh",
+        "kind": "test",
+        "label": "test/cases/130_context_compiler.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_context_compiler.sh",
+        "source": "test/cases/130_context_compiler.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -30704,6 +30738,11 @@
         "label": "design"
       },
       {
+        "id": "module:devcontext",
+        "kind": "module",
+        "label": "devcontext"
+      },
+      {
         "id": "module:directories",
         "kind": "module",
         "label": "directories"
@@ -31074,6 +31113,66 @@
       },
       {
         "source": "capability:design.tokens",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43563,6 +43662,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_context_compiler.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/13_region_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -46788,6 +46892,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.compile",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.policy",
+        "kind": "composes"
+      },
+      {
         "source": "module:directories",
         "target": "capability:directories.list",
         "kind": "composes"
@@ -47104,8 +47223,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1441,
-      "edges": 3253,
+      "nodes": 1446,
+      "edges": 3269,
       "acyclic": true,
       "truncated": false
     }

@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.5.0
 coverage:
   - scope: direct
-    required: 78
-    covered: 75
+    required: 81
+    covered: 78
     missing: 0
     waived: 3
   - scope: http
-    required: 78
-    covered: 75
+    required: 81
+    covered: 78
     missing: 0
     waived: 3
   - scope: mcp
-    required: 76
-    covered: 73
+    required: 79
+    covered: 76
     missing: 0
     waived: 3
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 245
-    covered: 236
+    required: 254
+    covered: 245
     missing: 0
     waived: 9
 capabilities:
@@ -173,6 +173,37 @@ capabilities:
     cases:
       - all
       - roles
+  - id: devcontext.compile
+    module: devcontext
+    kind: query
+    cache: "process, 16 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - no-seed
+      - issue
+      - milestone
+      - intent
+  - id: devcontext.explain
+    module: devcontext
+    kind: query
+    cache: "process, 8 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - policy
+      - absent
+  - id: devcontext.policy
+    module: devcontext
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: directories.list
     module: directories
     kind: query

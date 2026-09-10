@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 78,
-    "schemas": 351,
-    "tags": 26
+    "operations": 81,
+    "schemas": 374,
+    "tags": 27
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1262,6 +1262,72 @@
       "used_by": [],
       "used_by_schemas": [
         "IssueTrace"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The budget, and what became of it.",
+      "is_enum": false,
+      "name": "Budget",
+      "properties": [
+        {
+          "description": "The ceiling this answer was compiled under, in estimated tokens.",
+          "name": "limit_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What the survivors cost.",
+          "name": "used_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep.",
+          "name": "required_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`limit - used`, floored at zero.",
+          "name": "remaining_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "True when the required entries alone exceed the limit.",
+          "name": "over_budget",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Bytes per token, the divisor the estimate uses.",
+          "name": "bytes_per_token",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Per tier, in the order the budget spends in.",
+          "name": "tiers",
+          "refs": [
+            "TierSpend"
+          ],
+          "required": true,
+          "type": "array of TierSpend"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext",
+        "Explanation"
       ],
       "values": [],
       "variants": []
@@ -3992,6 +4058,41 @@
       "variants": []
     },
     {
+      "description": "One commit the layer itself names, and the record that named it.",
+      "is_enum": false,
+      "name": "CommitReference",
+      "properties": [
+        {
+          "description": "The commit as the record wrote it.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The entry that named it.",
+          "name": "named_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the record says the commit was for.",
+          "name": "covers",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GitContext"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How closely a file could be compared with what the index holds.\n\nA file that is one object is compared byte for byte, because the index kept its whole\ncontent. A collection file holds one object per member, and what the index kept for each\nis that member as JSON rather than the file's text — so the strongest thing that can be\nsaid without re-parsing it is whether its size is what it was. The report says which\ncomparison was made rather than implying the stronger one.",
       "is_enum": true,
       "name": "Comparison",
@@ -4011,6 +4112,264 @@
           "value": "size"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is.",
+      "is_enum": false,
+      "name": "CompileInput",
+      "properties": [
+        {
+          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "A milestone id or slug, or its canonical identifier.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
+          "name": "uris",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.",
+          "name": "budget_tokens",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.",
+          "name": "max_depth",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.",
+          "name": "floor",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
+          "name": "all_blocking_rules",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A compiled development context: what to give a session, what was left out, what\ncollapsed into what, and the budget it was all decided under.\n\nThis is the canonical form. Rendering it as a prompt is a downstream projection of this\nvalue and is not performed here — the structure is what lets a caller re-budget, re-order\nor explain the selection without recompiling it.",
+      "is_enum": false,
+      "name": "CompiledContext",
+      "properties": [
+        {
+          "description": "The format of this answer.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The index this was compiled from, over every object's path and content. Two answers\nwith the same fingerprint and the same request are the same answer; a different\nfingerprint is a different tree.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The head the answer is true of.",
+          "name": "git",
+          "refs": [
+            "GitContext"
+          ],
+          "required": true,
+          "type": "GitContext"
+        },
+        {
+          "description": "What was asked for.",
+          "name": "seeds",
+          "refs": [
+            "Seed"
+          ],
+          "required": true,
+          "type": "array of Seed"
+        },
+        {
+          "description": "What to give the session, in the order the budget spent: tier, then relevance, then\ncanonical identifier.",
+          "name": "selected",
+          "refs": [
+            "ContextEntry"
+          ],
+          "required": true,
+          "type": "array of ContextEntry"
+        },
+        {
+          "description": "What was reached and not given, with the reason for each.",
+          "name": "excluded",
+          "refs": [
+            "Excluded"
+          ],
+          "required": true,
+          "type": "array of Excluded"
+        },
+        {
+          "description": "What collapsed into what.",
+          "name": "deduplicated",
+          "refs": [
+            "Deduplicated"
+          ],
+          "required": true,
+          "type": "array of Deduplicated"
+        },
+        {
+          "description": "What does not agree with what.",
+          "name": "conflicts",
+          "refs": [
+            "Conflict"
+          ],
+          "required": true,
+          "type": "array of Conflict"
+        },
+        {
+          "description": "The budget and its per-tier spend.",
+          "name": "budget",
+          "refs": [
+            "Budget"
+          ],
+          "required": true,
+          "type": "Budget"
+        },
+        {
+          "description": "What the compiler could not read: a knowledge source the layer names and does not\nhold, a session record that no longer describes this checkout. Never an error: an\nabsent source is an answer.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "devcontext.compile"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer.",
+      "is_enum": false,
+      "name": "CompilerPolicy",
+      "properties": [
+        {
+          "description": "The format of this answer.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The graph the relations are read from.",
+          "name": "graph",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The tiers, in the order the budget spends in.",
+          "name": "tiers",
+          "refs": [
+            "TierRule"
+          ],
+          "required": true,
+          "type": "array of TierRule"
+        },
+        {
+          "description": "Every edge kind the composed graph has, followed or refused.",
+          "name": "edges",
+          "refs": [
+            "EdgeRule"
+          ],
+          "required": true,
+          "type": "array of EdgeRule"
+        },
+        {
+          "description": "The selectors, and which of them infer.",
+          "name": "selectors",
+          "refs": [
+            "SelectorRule"
+          ],
+          "required": true,
+          "type": "array of SelectorRule"
+        },
+        {
+          "description": "The default ceiling in estimated tokens.",
+          "name": "default_budget_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The default depth limit.",
+          "name": "default_max_depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The default relevance floor.",
+          "name": "default_floor",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Bytes per estimated token.",
+          "name": "bytes_per_token",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "devcontext.policy"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -4072,6 +4431,48 @@
       "variants": []
     },
     {
+      "description": "Two things in the answer that do not agree, named rather than silently ordered.",
+      "is_enum": false,
+      "name": "Conflict",
+      "properties": [
+        {
+          "description": "The entry the compiler treats as current.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The entry it stands against.",
+          "name": "against",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What kind of disagreement: `supersedes` or `version`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The same, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The container, as the topology reports it.",
       "is_enum": false,
       "name": "ContainerView",
@@ -4103,6 +4504,132 @@
       "used_by_schemas": [
         "RepositoryTopology",
         "StatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it.",
+      "is_enum": false,
+      "name": "ContextEntry",
+      "properties": [
+        {
+          "description": "The canonical identifier: `majordomus://<kind>/<identity>`, unique in the answer.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kind the layer declared for it.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title, when it has one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where it lives.",
+          "name": "provenance",
+          "refs": [
+            "EntryProvenance"
+          ],
+          "required": true,
+          "type": "EntryProvenance"
+        },
+        {
+          "description": "Which tier's budget it is spent from.",
+          "name": "tier",
+          "refs": [
+            "Tier"
+          ],
+          "required": true,
+          "type": "Tier"
+        },
+        {
+          "description": "0.0 to 1.0, deterministic for a given tree and request. The order within a tier.",
+          "name": "relevance",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "The highest confidence of any path that reached it.",
+          "name": "confidence",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened.",
+          "name": "discovered_by",
+          "refs": [
+            "Discovery"
+          ],
+          "required": true,
+          "type": "array of Discovery"
+        },
+        {
+          "description": "The shortest number of hops from a seed.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one.",
+          "name": "cost_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The file's bytes, the measured half of the cost.",
+          "name": "cost_bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The version or date the object states about itself, when it states one: a rule's\nversion, an ADR's date, an issue's `updated_at`.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The status word the object declares, when it declares one.",
+          "name": "status",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "True when a blocking rule, a policy or the scope: never dropped for budget.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Facts worth carrying about this entry that are not the object's prose — a rule's\nclass, an issue's milestone, the commits an issue's evidence names.",
+          "name": "facts",
+          "refs": [],
+          "required": false,
+          "type": "map of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext",
+        "Explanation"
       ],
       "values": [],
       "variants": []
@@ -4637,6 +5164,56 @@
       "variants": []
     },
     {
+      "description": "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line.",
+      "is_enum": false,
+      "name": "Deduplicated",
+      "properties": [
+        {
+          "description": "The entry that survived.",
+          "name": "kept",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What was folded into it, or dropped for it.",
+          "name": "dropped",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What made them the same thing: `uri`, `path` or `identity`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The same, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many discovery paths reached the surviving entry.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext",
+        "Explanation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.demonstrate`.",
       "is_enum": false,
       "name": "DemonstrateReport",
@@ -5070,6 +5647,40 @@
       "variants": []
     },
     {
+      "description": "What one identifier's standing in a compiled context is.",
+      "is_enum": true,
+      "name": "DevContextStanding",
+      "properties": [],
+      "type": "\"selected\" | \"excluded\" | \"deduplicated\" | \"not_reached\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Explanation"
+      ],
+      "values": [
+        {
+          "description": "In the answer.",
+          "value": "selected"
+        },
+        {
+          "description": "Reached and not given; the exclusion says why.",
+          "value": "excluded"
+        },
+        {
+          "description": "Folded into another identifier, or dropped for one.",
+          "value": "deduplicated"
+        },
+        {
+          "description": "The index holds it and this request never reached it.",
+          "value": "not_reached"
+        },
+        {
+          "description": "The index holds nothing under that identifier.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
       "is_enum": false,
       "name": "Diagnosis",
@@ -5206,6 +5817,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "CompiledContext",
         "RepositoryEnvironment",
         "RepositoryReport"
       ],
@@ -5562,6 +6174,71 @@
       "variants": []
     },
     {
+      "description": "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide.",
+      "is_enum": false,
+      "name": "Discovery",
+      "properties": [
+        {
+          "description": "What reached it.",
+          "name": "selector",
+          "refs": [
+            "Selector"
+          ],
+          "required": true,
+          "type": "Selector"
+        },
+        {
+          "description": "Why it was included, in words a person reads without this file.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The entry this one was reached from, when it was reached from one.",
+          "name": "via",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The edge kind followed, for `Relation`.",
+          "name": "edge",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Hops from a seed; a seed is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "1.0 when the repository declared this path, less when it was inferred.",
+          "name": "confidence",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "What this path contributes to the entry's relevance.",
+          "name": "weight",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContextEntry"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The distribution, as a person or a script asks for it.",
       "is_enum": false,
       "name": "DistributionReport",
@@ -5864,6 +6541,62 @@
       "variants": []
     },
     {
+      "description": "One edge of the composed graph, and what the compiler does with it.",
+      "is_enum": false,
+      "name": "EdgeRule",
+      "properties": [
+        {
+          "description": "The edge kind, as the composed graph names it.",
+          "name": "edge",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the graph asserts by it.",
+          "name": "means",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The relevance multiplier when followed source to target; absent when refused.",
+          "name": "forward",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "The multiplier when followed target to source; absent when refused.",
+          "name": "reverse",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Why the target is context for the source, or why the edge is refused.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the compiler will not follow it in either direction.",
+          "name": "refused",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompilerPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One contract in a directory's effective chain, in the order it is applied.",
       "is_enum": false,
       "name": "EffectiveEntry",
@@ -5922,6 +6655,55 @@
       "used_by": [],
       "used_by_schemas": [
         "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated.",
+      "is_enum": false,
+      "name": "EntryProvenance",
+      "properties": [
+        {
+          "description": "Repository-relative path, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directory it sits in.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The `sources.yaml` class that discovered it.",
+          "name": "source_class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The manifest section it falls under, when it falls under one.",
+          "name": "section",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Size of the file in bytes.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContextEntry"
       ],
       "values": [],
       "variants": []
@@ -6090,6 +6872,9 @@
         "design.contrast",
         "design.explain",
         "design.tokens",
+        "devcontext.compile",
+        "devcontext.explain",
+        "devcontext.policy",
         "directories.list",
         "distribution.model",
         "distribution.artifact",
@@ -6369,6 +7154,112 @@
         "MomentDetail"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing.",
+      "is_enum": false,
+      "name": "Excluded",
+      "properties": [
+        {
+          "description": "The canonical identifier, or the name the layer used when nothing resolves.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its kind, when it resolved to something.",
+          "name": "kind",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The tier it would have been spent from.",
+          "name": "tier",
+          "refs": [
+            "Tier"
+          ],
+          "required": true,
+          "type": "Tier"
+        },
+        {
+          "description": "Why it is not in the answer.",
+          "name": "reason",
+          "refs": [
+            "ExclusionReason"
+          ],
+          "required": true,
+          "type": "ExclusionReason"
+        },
+        {
+          "description": "The same, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it would have cost, so that a reader can decide whether to raise the budget.",
+          "name": "cost_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What its relevance was.",
+          "name": "relevance",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext",
+        "Explanation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why something the compiler selected did not survive.",
+      "is_enum": true,
+      "name": "ExclusionReason",
+      "properties": [],
+      "type": "\"budget\" | \"relevance\" | \"depth\" | \"stale\" | \"superseded\" | \"unresolved\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Excluded"
+      ],
+      "values": [
+        {
+          "description": "The budget ran out before its tier was filled.",
+          "value": "budget"
+        },
+        {
+          "description": "Its relevance fell below the floor the request set.",
+          "value": "relevance"
+        },
+        {
+          "description": "It is beyond the depth the request allows.",
+          "value": "depth"
+        },
+        {
+          "description": "The object says it is deprecated or superseded.",
+          "value": "stale"
+        },
+        {
+          "description": "A newer version of the same thing is in the answer.",
+          "value": "superseded"
+        },
+        {
+          "description": "The layer names it and holds nothing under that name.",
+          "value": "unresolved"
+        }
+      ],
       "variants": []
     },
     {
@@ -7256,6 +8147,161 @@
       "variants": []
     },
     {
+      "description": "The input of `devcontext.explain`: one identifier, and the request to judge it under.",
+      "is_enum": false,
+      "name": "ExplainInput",
+      "properties": [
+        {
+          "description": "The canonical identifier to explain.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "A milestone id or slug, or its canonical identifier.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.",
+          "name": "uris",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent.",
+          "name": "budget_tokens",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent.",
+          "name": "max_depth",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent.",
+          "name": "floor",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
+          "name": "all_blocking_rules",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why one identifier is, or is not, in a compiled context.",
+      "is_enum": false,
+      "name": "Explanation",
+      "properties": [
+        {
+          "description": "What was asked about.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "standing",
+          "refs": [
+            "DevContextStanding"
+          ],
+          "required": true,
+          "type": "DevContextStanding"
+        },
+        {
+          "description": "The same, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The entry, when it is in the answer.",
+          "name": "entry",
+          "refs": [
+            "ContextEntry"
+          ],
+          "required": false,
+          "type": "ContextEntry | null"
+        },
+        {
+          "description": "The exclusion, when it was reached and not given.",
+          "name": "excluded",
+          "refs": [
+            "Excluded"
+          ],
+          "required": false,
+          "type": "Excluded | null"
+        },
+        {
+          "description": "The collapse it was part of, when it was folded or dropped for another.",
+          "name": "deduplicated",
+          "refs": [
+            "Deduplicated"
+          ],
+          "required": false,
+          "type": "Deduplicated | null"
+        },
+        {
+          "description": "The budget the judgement was made under, so that \"excluded for budget\" can be acted\non without a second call.",
+          "name": "budget",
+          "refs": [
+            "Budget"
+          ],
+          "required": true,
+          "type": "Budget"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "devcontext.explain"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The projections a capability declares. Absence is explicit: `None` means not exposed\nthere, and nothing infers an exposure a descriptor did not declare.",
       "is_enum": false,
       "name": "Exposure",
@@ -7988,6 +9034,50 @@
       "used_by": [],
       "used_by_schemas": [
         "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The head this answer was compiled against. A compiled context is only true of one tree,\nand these three fields plus the index fingerprint are what say which.",
+      "is_enum": false,
+      "name": "GitContext",
+      "properties": [
+        {
+          "description": "The branch, when the checkout is on one.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The head commit.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`clean`, `dirty`, or what git said.",
+          "name": "working_tree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Commits the selected entries name as their own evidence, newest record first.\nDerived from the layer's records, never from a log walk.",
+          "name": "commits",
+          "refs": [
+            "CommitReference"
+          ],
+          "required": false,
+          "type": "array of CommitReference"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext"
       ],
       "values": [],
       "variants": []
@@ -15879,6 +16969,121 @@
       "variants": []
     },
     {
+      "description": "What the request asked to compile a context about.",
+      "is_enum": false,
+      "name": "Seed",
+      "properties": [
+        {
+          "description": "The canonical identifier of the seed, or the literal the request gave for an\nintent or a path.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`issue`, `milestone`, `path`, `intent`, or the kind of the object named.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it came from: which field of the request.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the compiler resolved it to, when the request named something by a short name.",
+          "name": "resolved",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust.",
+      "is_enum": true,
+      "name": "Selector",
+      "properties": [],
+      "type": "\"seed\" | \"relation\" | \"scope_path\" | \"contract\" | \"governance\" | \"session_state\" | \"intent_match\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Discovery",
+        "SelectorRule"
+      ],
+      "values": [
+        {
+          "description": "Named in the request.",
+          "value": "seed"
+        },
+        {
+          "description": "Reached along a typed edge of the composed graph.",
+          "value": "relation"
+        },
+        {
+          "description": "Its path lies under a path the request or a seed declares.",
+          "value": "scope_path"
+        },
+        {
+          "description": "A directory contract that reaches one of those paths.",
+          "value": "contract"
+        },
+        {
+          "description": "A rule or policy the layer applies to everything.",
+          "value": "governance"
+        },
+        {
+          "description": "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint.",
+          "value": "session_state"
+        },
+        {
+          "description": "Inferred: the words of the intent occur in the object's own words.",
+          "value": "intent_match"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One selector, and whether what it produces was declared or inferred.",
+      "is_enum": false,
+      "name": "SelectorRule",
+      "properties": [
+        {
+          "description": "The selector.",
+          "name": "selector",
+          "refs": [
+            "Selector"
+          ],
+          "required": true,
+          "type": "Selector"
+        },
+        {
+          "description": "Declared by the repository, or inferred by the compiler.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompilerPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
       "is_enum": true,
       "name": "ServerStanding",
@@ -17320,6 +18525,149 @@
       "used_by": [],
       "used_by_schemas": [
         "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections.",
+      "is_enum": true,
+      "name": "Tier",
+      "properties": [],
+      "type": "\"task\" | \"governance\" | \"source\" | \"decision\" | \"knowledge\" | \"history\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContextEntry",
+        "Excluded",
+        "TierRule",
+        "TierSpend"
+      ],
+      "values": [
+        {
+          "description": "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one.",
+          "value": "task"
+        },
+        {
+          "description": "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped.",
+          "value": "governance"
+        },
+        {
+          "description": "The code and the cases the work touches.",
+          "value": "source"
+        },
+        {
+          "description": "The architectural decisions already in force over it.",
+          "value": "decision"
+        },
+        {
+          "description": "What a previous session left: handovers, session records, curated knowledge.",
+          "value": "knowledge"
+        },
+        {
+          "description": "Supporting evidence: use cases, claims, features, and the rest of the layer.",
+          "value": "history"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One tier, as the policy reports it.",
+      "is_enum": false,
+      "name": "TierRule",
+      "properties": [
+        {
+          "description": "The tier.",
+          "name": "tier",
+          "refs": [
+            "Tier"
+          ],
+          "required": true,
+          "type": "Tier"
+        },
+        {
+          "description": "Its position in the order the budget spends in; 1 is spent first.",
+          "name": "position",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What it is for.",
+          "name": "meaning",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kinds of object that land in it.",
+          "name": "kinds",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompilerPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one tier cost and what it was allowed.",
+      "is_enum": false,
+      "name": "TierSpend",
+      "properties": [
+        {
+          "description": "The tier.",
+          "name": "tier",
+          "refs": [
+            "Tier"
+          ],
+          "required": true,
+          "type": "Tier"
+        },
+        {
+          "description": "What it is for.",
+          "name": "meaning",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many entries survived in it.",
+          "name": "selected",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many were dropped from it for budget.",
+          "name": "excluded",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Tokens the survivors cost.",
+          "name": "tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Entries in it that cannot be dropped.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Budget"
       ],
       "values": [],
       "variants": []
@@ -20011,6 +21359,171 @@
           "result_schema": "TokenList",
           "stability": "behaviorally_verified",
           "summary": "The design tokens"
+        }
+      ]
+    },
+    {
+      "description": "The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself.",
+      "name": "devcontext",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=16",
+          "cli": "devcontext compile",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext\"",
+          "description": "The objects a session working on this issue, milestone, intent or set of paths should be given: each with its canonical identifier, the index's own provenance, every discovery path that reached it with the reason and the confidence, its version, its tier and its cost in estimated tokens — followed by everything reached and not given with the reason for each, everything that collapsed into one entry, every pair that does not agree, and the per-tier spend against the budget. Deterministic for a given tree and request; the index fingerprint it was compiled from is in the answer.",
+          "id": "devcontext.compile",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_devcontext",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/devcontext",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::devcontext",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Compile the context for a piece of work: the result.",
+              "schema": "CompiledContext",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CompiledContext",
+          "stability": "behaviorally_verified",
+          "summary": "Compile the context for a piece of work"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8",
+          "cli": "devcontext explain",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext/explain\"",
+          "description": "One canonical identifier judged under a request: whether it was selected, reached and excluded, folded into another identifier, held by the index and never reached, or unknown — with the entry, the exclusion or the collapse itself, and the budget the judgement was made under so that `excluded for budget` can be acted on without a second call.",
+          "id": "devcontext.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_devcontext_explain",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/devcontext/explain",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::devcontext",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Why one thing is or is not in a compiled context: the result.",
+              "schema": "Explanation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Explanation",
+          "stability": "behaviorally_verified",
+          "summary": "Why one thing is or is not in a compiled context"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "devcontext policy",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext/policy\"",
+          "description": "What the compiler decides and how: the tiers in the order the budget spends in with the kinds that land in each, every edge kind the composed graph declares with the relevance multiplier the compiler follows it by in each direction — or the reason it refuses to follow it at all — the selectors with which of them infer rather than read, and the defaults for the budget, the depth and the relevance floor. Read this rather than inferring the policy from an answer.",
+          "id": "devcontext.policy",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "devcontext-policy",
+            "uri": "majordomus://devcontext/policy"
+          },
+          "mcp_tool": "majordomus_devcontext_policy",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/devcontext/policy",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::devcontext",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The compiler's own rules: the result.",
+              "schema": "CompilerPolicy",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CompilerPolicy",
+          "stability": "behaviorally_verified",
+          "summary": "The compiler's own rules"
         }
       ]
     },

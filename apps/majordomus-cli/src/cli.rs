@@ -68,6 +68,8 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
+    Devcontext(DevcontextArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1316,6 +1318,72 @@ pub enum CompletionShell {
     Bash,
     /// fish
     Fish,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
+/// capability; the request flags are declared once and shared by `compile` and `explain`.
+pub struct DevcontextArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `compile`, `explain` or `policy`.
+    pub command: DevcontextCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// What to ask of the context compiler.
+pub enum DevcontextCommand {
+    /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
+    Compile(DevcontextRequest),
+    /// Why one canonical identifier is or is not in the context a request compiles to
+    Explain {
+        /// The canonical identifier, `majordomus://<kind>/<identity>`
+        uri: String,
+        #[command(flatten)]
+        /// The request to judge it under.
+        request: DevcontextRequest,
+    },
+    /// The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults
+    Policy,
+}
+
+#[derive(Debug, Clone, Args)]
+/// What to compile a context about; every flag is optional.
+pub struct DevcontextRequest {
+    /// An issue id (`I0301`) or its canonical identifier
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// A milestone id or slug, or its canonical identifier
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// What the session is trying to do, in words; the only input the compiler infers from
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// A repository-relative path the work touches; repeat for each
+    #[arg(long = "path")]
+    pub paths: Vec<String>,
+    /// A canonical identifier to seed with directly; repeat for each
+    #[arg(long = "uri")]
+    pub uris: Vec<String>,
+    /// The ceiling in estimated tokens
+    #[arg(long)]
+    pub budget_tokens: Option<u64>,
+    /// How far from a seed the walk goes
+    #[arg(long)]
+    pub max_depth: Option<usize>,
+    /// Relevance below which an entry is reported rather than given, between 0 and 1
+    #[arg(long)]
+    pub floor: Option<f64>,
+    /// Every blocking rule of the layer, not only the ones the work reaches
+    #[arg(long)]
+    pub all_blocking_rules: bool,
 }
 
 // ------------------------------------------------------------------ the command line as data
@@ -2576,5 +2644,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "devcontext compile",
+        examples: &[
+            ExampleDoc {
+                id: "devcontext-compile-issue",
+                title: "The context a session working on one issue should be given",
+                description: "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.",
+                argv: &["devcontext", "compile", "--issue", "I0001"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SELECTED", "majordomus://issue/I0001", "EXCLUDED"]),
+            },
+            ExampleDoc {
+                id: "devcontext-compile-json",
+                title: "The same, as the structure every other surface answers with",
+                description: "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.",
+                argv: &["devcontext", "compile", "--issue", "I0001", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/selected/0/uri", "/selected/0/discovered_by/0/reason", "/budget/limit_tokens", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "devcontext explain",
+        examples: &[ExampleDoc {
+            id: "devcontext-explain-seed",
+            title: "Why one thing is in the context",
+            description: "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.",
+            argv: &["devcontext", "explain", "majordomus://issue/I0001", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected", "majordomus://issue/I0001"]),
+        }],
+    },
+    CommandExamples {
+        command: "devcontext policy",
+        examples: &[ExampleDoc {
+            id: "devcontext-policy",
+            title: "The compiler's own rules",
+            description: "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.",
+            argv: &["devcontext", "policy"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
     },
 ];

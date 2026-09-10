@@ -256,6 +256,57 @@
       "tool": "majordomus_design_tokens"
     },
     {
+      "api_anchor": "/docs/api/#op-devcontext-compile",
+      "claims": [],
+      "cli": "majordomus devcontext compile",
+      "id": "devcontext.compile",
+      "kind": "query",
+      "module": "devcontext",
+      "module_route": "/registry/modules/devcontext/",
+      "resource": null,
+      "route": "/registry/capabilities/devcontext-compile/",
+      "slug": "devcontext-compile",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "tests": [],
+      "title": "Compile the context for a piece of work",
+      "tool": "majordomus_devcontext"
+    },
+    {
+      "api_anchor": "/docs/api/#op-devcontext-explain",
+      "claims": [],
+      "cli": "majordomus devcontext explain",
+      "id": "devcontext.explain",
+      "kind": "query",
+      "module": "devcontext",
+      "module_route": "/registry/modules/devcontext/",
+      "resource": null,
+      "route": "/registry/capabilities/devcontext-explain/",
+      "slug": "devcontext-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "tests": [],
+      "title": "Why one thing is or is not in a compiled context",
+      "tool": "majordomus_devcontext_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-devcontext-policy",
+      "claims": [],
+      "cli": "majordomus devcontext policy",
+      "id": "devcontext.policy",
+      "kind": "query",
+      "module": "devcontext",
+      "module_route": "/registry/modules/devcontext/",
+      "resource": "majordomus://devcontext/policy",
+      "route": "/registry/capabilities/devcontext-policy/",
+      "slug": "devcontext-policy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "tests": [],
+      "title": "The compiler's own rules",
+      "tool": "majordomus_devcontext_policy"
+    },
+    {
       "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
@@ -1625,9 +1676,9 @@
     ]
   },
   "counts": {
-    "capabilities": 78,
+    "capabilities": 81,
     "claims": 36,
-    "modules": 26
+    "modules": 27
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -1771,6 +1822,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
       "title": "Design system"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "devcontext.compile",
+          "route": "/registry/capabilities/devcontext-compile/",
+          "slug": "devcontext-compile"
+        },
+        {
+          "id": "devcontext.explain",
+          "route": "/registry/capabilities/devcontext-explain/",
+          "slug": "devcontext-explain"
+        },
+        {
+          "id": "devcontext.policy",
+          "route": "/registry/capabilities/devcontext-policy/",
+          "slug": "devcontext-policy"
+        }
+      ],
+      "claims": [],
+      "id": "devcontext",
+      "route": "/registry/modules/devcontext/",
+      "slug": "devcontext",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "title": "Development context"
     },
     {
       "capabilities": [
