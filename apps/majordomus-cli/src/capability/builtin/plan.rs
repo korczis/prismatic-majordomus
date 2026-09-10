@@ -50,6 +50,20 @@ fn plan_of(ctx: &Context) -> Result<Plan, CapabilityError> {
 
 // ---------------------------------------------------------------- inputs
 
+/// The milestone the benchmark cases name, declared once because three case sets need it.
+///
+/// A repository with no plan still has to be timed on these capabilities — the coverage
+/// gate counts targets, not repositories — and its OpenAPI operation still has to show an
+/// example of every parameter it declares, because the examples *are* the cases and case
+/// 92 refuses a parameter no case ever sets. So the fallback names a milestone that exists
+/// nowhere: the empty answer is the operation being measured there, and it is the answer a
+/// caller filtering on a milestone that does not exist gets.
+fn case_milestone(plan: &Plan) -> String {
+    plan.milestones
+        .first()
+        .map_or_else(|| "M000".to_string(), |m| m.id.clone())
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// Which issues to answer with.
@@ -69,10 +83,6 @@ pub struct PlanIssueFilter {
 
 impl BenchmarkCases for PlanIssueFilter {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let milestone = Plan::build(ctx.index)
-            .milestones
-            .first()
-            .map(|m| m.id.clone());
         vec![
             NamedCase::new("all", PlanIssueFilter::default()),
             NamedCase::new(
@@ -85,7 +95,7 @@ impl BenchmarkCases for PlanIssueFilter {
             NamedCase::new(
                 "one-milestone",
                 PlanIssueFilter {
-                    milestone,
+                    milestone: Some(case_milestone(&Plan::build(ctx.index))),
                     ..PlanIssueFilter::default()
                 },
             ),
@@ -105,13 +115,14 @@ pub struct PlanMilestoneFilter {
 
 impl BenchmarkCases for PlanMilestoneFilter {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let milestone = Plan::build(ctx.index)
-            .milestones
-            .first()
-            .map(|m| m.id.clone());
         vec![
             NamedCase::new("whole-plan", PlanMilestoneFilter::default()),
-            NamedCase::new("one-milestone", PlanMilestoneFilter { milestone }),
+            NamedCase::new(
+                "one-milestone",
+                PlanMilestoneFilter {
+                    milestone: Some(case_milestone(&Plan::build(ctx.index))),
+                },
+            ),
         ]
     }
 }
@@ -125,10 +136,9 @@ pub struct PlanRecordInput {
 }
 
 impl BenchmarkCases for PlanRecordInput {
-    /// A repository with no plan still has to be timed on this capability — the coverage
-    /// gate counts targets, not repositories — so the cases fall back to an id that names
-    /// nothing. The refusal is the operation being measured there, and it is the one a
-    /// caller asking for a record that does not exist gets.
+    /// The fallback of [`case_milestone`], for the issue half too: a repository with no
+    /// plan still has to be timed on this capability, and the refusal is the operation
+    /// being measured there.
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let plan = Plan::build(ctx.index);
         vec![
@@ -144,10 +154,7 @@ impl BenchmarkCases for PlanRecordInput {
             NamedCase::new(
                 "milestone",
                 PlanRecordInput {
-                    id: plan
-                        .milestones
-                        .first()
-                        .map_or_else(|| "M000".to_string(), |m| m.id.clone()),
+                    id: case_milestone(&plan),
                 },
             ),
         ]
