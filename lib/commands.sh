@@ -21,6 +21,16 @@ mj_cmdreg_load() {
   [ "$(mj_yget "$MJ_CMDREG_FLAT" version)" = 1 ] || return 1
 }
 mj_cmdreg() { mj_yget "$MJ_CMDREG_FLAT" "commands.$1.$2"; }
+# the class of one command, by id: read-only, state-mutating or generated-output-mutating.
+# One pass, for the same reason mj_cmdreg_public makes one: the callers are loops. Empty
+# when the registry does not describe the command.
+mj_cmdreg_class() {
+  awk -F= -v want="$1" '/^commands\.[0-9]+\.(id|class)=/ {
+      split($1, k, "."); v = $0; sub(/^[^=]*=/, "", v)
+      if (k[3] == "id") id[k[2]] = v; else cls[k[2]] = v
+      if (k[2] + 0 > max) max = k[2] + 0 }
+    END { for (i = 0; i <= max; i++) if ((i in id) && id[i] == want) { print cls[i]; exit } }' "$MJ_CMDREG_FLAT"
+}
 # ids of the commands the registry marks public, one per line, in registry order. One pass
 # over the flat file: the previous shape ran one awk per index per field, and was called
 # from inside loops, which is where the command-coverage validator spent three seconds.
