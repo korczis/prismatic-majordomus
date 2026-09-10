@@ -56,7 +56,7 @@ That is a promise with a number in it, which is what makes it testable.
 The documented path, followed to the letter and with nothing else done to the repository:
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 cd <fresh repository>
 majordomus init
 majordomus update
@@ -167,7 +167,7 @@ wording question with no design content and should not ride on the larger decisi
 
 ```bash
 T=$(mktemp -d); export HOME="$T"
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 mkdir "$T/r" && cd "$T/r" && git init -q . && git commit -q --allow-empty -m init
 "$T/.local/bin/majordomus" init
 "$T/.local/bin/majordomus" update

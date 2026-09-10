@@ -33,7 +33,7 @@ and stops.
 ## How to see it
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --dry-run
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --dry-run
 bash test/run.sh 85_installer
 ```
 
