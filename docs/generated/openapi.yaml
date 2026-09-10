@@ -406,7 +406,6 @@ paths:
         resource:
           uri: majordomus://changelog
           name: changelog
-      x-majordomus-cli: release changelog
   "/api/v1/command":
     get:
       operationId: commands.get
@@ -3503,7 +3502,6 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_release_version
-      x-majordomus-cli: release version
   "/api/v1/repository":
     get:
       operationId: repository.info
@@ -12258,7 +12256,7 @@ components:
           description: The MCP resource URI.
       required:
         - capability
-      description: "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one."
+      description: "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```"
     ReleaseReference:
       type: object
       properties:
@@ -12280,7 +12278,7 @@ components:
         - kind
         - id
         - title
-      description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
+      description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
     ReleaseSection:
       type: object
       properties:

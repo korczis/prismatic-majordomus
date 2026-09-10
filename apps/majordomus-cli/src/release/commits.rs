@@ -67,6 +67,14 @@ pub fn in_range(root: &Path, range: &str, objects: &[Object]) -> Vec<Change> {
 /// that matches the shape but names nothing is dropped, so this can never produce a link to
 /// a record that does not exist. The scan is over the subject and the body together, because
 /// a commit that explains itself in its body is the one most worth linking.
+///
+/// ```
+/// use majordomus_cli::release::commits::references;
+/// // the shape alone is not a reference: against a layer that holds nothing, nothing resolves
+/// assert!(references("fix(link): resolves I4242 and mentions M000", &[]).is_empty());
+/// // and a word that merely starts with the letter is never a candidate
+/// assert!(references("Interesting: M1 and I12345 are not ids", &[]).is_empty());
+/// ```
 pub fn references(text: &str, objects: &[Object]) -> Vec<Reference> {
     let mut out: Vec<Reference> = Vec::new();
     let mut seen: Vec<String> = Vec::new();

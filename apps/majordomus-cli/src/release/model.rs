@@ -114,6 +114,22 @@ impl ChangeKind {
 /// subject or a body is a reference, and the layer already holds the object it refers to. A
 /// reference to something the layer does not have is not carried — a link to a record that
 /// does not exist is worse than no link, because the reader cannot tell until they follow it.
+///
+/// ```
+/// use majordomus_cli::release::model::Reference;
+/// let r = Reference {
+///     kind: "issue".into(),
+///     id: "I1305".into(),
+///     title: "An observed contract has a fingerprint".into(),
+///     route: Some("/plan/i1305/".into()),
+/// };
+/// let json = serde_json::to_value(&r).unwrap();
+/// assert_eq!(json["id"], "I1305");
+/// assert_eq!(json["route"], "/plan/i1305/");
+/// // a reference the site has no page for carries no route rather than an invented one
+/// let bare = Reference { route: None, ..r };
+/// assert!(serde_json::to_value(&bare).unwrap().get("route").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseReference")]
 pub struct Reference {
@@ -248,6 +264,22 @@ pub struct ReleaseSection {
 /// over MCP — can find the same value elsewhere without anything having to enumerate the
 /// routes. A page that listed them would be declaring them a second time, which is the
 /// failure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.
+///
+/// ```
+/// use majordomus_cli::release::model::ProducedBy;
+/// let by = ProducedBy {
+///     capability: "release.changelog".into(),
+///     cli: Some("majordomus release changelog".into()),
+///     http: Some("/api/v1/changelog".into()),
+///     mcp_tool: None,
+///     mcp_resource: Some("majordomus://changelog".into()),
+/// };
+/// let json = serde_json::to_value(&by).unwrap();
+/// assert_eq!(json["capability"], "release.changelog");
+/// // a surface the capability is not projected on is absent, not null
+/// assert!(json.get("mcp_tool").is_none());
+/// assert_eq!(ProducedBy::default().capability, "");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseProducedBy")]
 pub struct ProducedBy {

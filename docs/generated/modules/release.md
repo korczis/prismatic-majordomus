@@ -18,7 +18,6 @@ Every release the layer records, newest first, with the work that has not been r
 | MCP tool | `majordomus_changelog` |
 | MCP resource | `majordomus://changelog` |
 | HTTP | `GET /api/v1/changelog` |
-| CLI | `majordomus release changelog` |
 | cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::release |
@@ -40,7 +39,6 @@ The version the crate manifest declares, the version the shell tool prints, and 
 | stability | implemented |
 | MCP tool | `majordomus_release_version` |
 | HTTP | `GET /api/v1/release/version` |
-| CLI | `majordomus release version` |
 | cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::release |

@@ -92,8 +92,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `product.providers` | `product` | query | behaviorally_verified | `majordomus_providers` | `majordomus://product/providers` | `GET /api/v1/product/providers` | `majordomus product providers` | process, 2 entries | required |
 | `product.validate` | `product` | query | behaviorally_verified | `majordomus_product_validate` | — | `GET /api/v1/product/validate` | `majordomus product validate` | process, 2 entries | required |
 | `quality.report` | `quality` | query | behaviorally_verified | `majordomus_quality` | `majordomus://quality` | `GET /api/v1/quality` | `majordomus quality report` | process, 8 entries, 10s | required |
-| `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | `majordomus release changelog` | — | required |
-| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | `majordomus release version` | — | required |
+| `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
+| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | — | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | — | — | required |

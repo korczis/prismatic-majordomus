@@ -13586,7 +13586,7 @@
       "variants": []
     },
     {
-      "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.",
+      "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```",
       "is_enum": false,
       "name": "ReleaseProducedBy",
       "properties": [
@@ -13635,7 +13635,7 @@
       "variants": []
     },
     {
-      "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.",
+      "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```",
       "is_enum": false,
       "name": "ReleaseReference",
       "properties": [
@@ -21488,7 +21488,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "release changelog",
+          "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/changelog?version=0.3.1\"",
           "description": "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
           "id": "release.changelog",
@@ -21556,7 +21556,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "release version",
+          "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/version\"",
           "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
           "id": "release.version",

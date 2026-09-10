@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::registry::CapabilityRegistry;
 use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
@@ -81,15 +81,12 @@ pub fn module() -> ModuleDescriptor {
                         resource: Some(McpResource { uri: CHANGELOG_URI.into(), name: "changelog".into() }),
                     }),
                     http: get("/api/v1/changelog"),
-                    // The command line reaches this capability, and saying so is what lets
-                    // the command graph join the two: without it `commands explain` reports
-                    // that `release changelog` reaches no machine surface, while the
-                    // capability behind it is an MCP tool and an HTTP route. The path must
-                    // be a command the clap tree really has — a declaration naming one it
-                    // does not is the `scope classify` defect, and the graph refuses it.
-                    cli: Some(CliExposure {
-                        path: vec!["release".into(), "changelog".into()],
-                    }),
+                    // Not a CLI projection: `majordomus release changelog` is a local
+                    // command that *renders* this capability for a person at a terminal,
+                    // and cli::LOCAL says so once (`RendersCapability`). Declaring the
+                    // path here as well is the double accounting `tests/quality.rs`
+                    // refuses (OPERATION_CLASSIFICATION_CONFLICT).
+                    cli: None,
                 },
                 tags: ["release", "changelog"],
                 handler: changelog,
@@ -107,9 +104,7 @@ pub fn module() -> ModuleDescriptor {
                         resource: None,
                     }),
                     http: get("/api/v1/release/version"),
-                    cli: Some(CliExposure {
-                        path: vec!["release".into(), "version".into()],
-                    }),
+                    cli: None,
                 },
                 tags: ["release", "version"],
                 handler: version,
@@ -123,22 +118,41 @@ pub fn module() -> ModuleDescriptor {
 /// this value is served.
 pub const CHANGELOG_ID: &str = "release.changelog";
 
-/// Where else the changelog can be had, read off the registry entry that produces it.
+/// Where else the changelog can be had, read off the declarations that already say so.
 ///
 /// One answer for every writer of the document: the handler that serves it and the generator
 /// that commits it both ask here, so the committed artifact and the live answer name the same
-/// surfaces. Nothing is spelled out — the command line, the route, the tool and the resource
-/// are the capability's own declaration, and a page that lists them resolves each against the
-/// datasets the registry generates rather than typing a route of its own. `None` only when the
-/// registry does not carry the capability at all, which the module's own test refuses.
+/// surfaces. The route, the tool and the resource are the capability's own declaration; the
+/// command line is the local command that renders this capability, which `cli::LOCAL`
+/// declares once beside the reason it is local. Nothing is spelled out a second time, and a
+/// page that lists these resolves each against the datasets the registry generates rather
+/// than typing a route of its own. `None` only when the registry does not carry the
+/// capability at all, which the module's own test refuses.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::{module, produced_by};
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+///
+/// let registry = CapabilityRegistry::builder()
+///     .with_modules(vec![module()])
+///     .build()
+///     .expect("the release module composes on its own");
+/// let by = produced_by(&registry).expect("the registry carries release.changelog");
+/// assert_eq!(by.capability, "release.changelog");
+/// assert_eq!(by.cli.as_deref(), Some("majordomus release changelog"));
+/// assert_eq!(by.http.as_deref(), Some("/api/v1/changelog"));
+/// assert_eq!(by.mcp_tool.as_deref(), Some("majordomus_changelog"));
+/// assert_eq!(by.mcp_resource.as_deref(), Some("majordomus://changelog"));
+/// ```
 pub fn produced_by(registry: &CapabilityRegistry) -> Option<ProducedBy> {
-    registry.get(CHANGELOG_ID).map(|c| ProducedBy {
+    let c = registry.get(CHANGELOG_ID)?;
+    let cli = crate::cli::local::LOCAL
+        .iter()
+        .find(|l| l.reason.renders() == Some(CHANGELOG_ID))
+        .map(|l| format!("majordomus {}", l.command));
+    Some(ProducedBy {
         capability: c.id.to_string(),
-        cli: c
-            .exposure
-            .cli
-            .as_ref()
-            .map(|e| format!("majordomus {}", e.path.join(" "))),
+        cli,
         http: c.exposure.http.as_ref().map(|h| h.path.clone()),
         mcp_tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
         mcp_resource: c

@@ -277,13 +277,13 @@ withholds it. The read half is two capabilities, and the command line renders th
 *executing* them rather than by calling the code underneath, so the terminal and the API
 cannot drift apart.
 
-Each read capability also declares its `cli` exposure — the path the clap tree really has,
-`release changelog` and `release version` — which is what lets the command graph join the
-command to the capability. Without it the join was missing in one direction only:
-`majordomus commands explain executable.release.changelog` reported that the command reached
-no machine surface, while the capability behind it was already an MCP tool and an HTTP route.
-The declaration must name a command the clap tree carries; one that names a command it does
-not is the `scope classify` defect, and the graph refuses it.
+Neither read capability declares a `cli` exposure, and that is deliberate: `majordomus release
+changelog` is a *local* command that renders the capability for a person at a terminal, and
+`cli::LOCAL` says so once — `RendersCapability("release.changelog")` — beside the reason it
+is local. A capability that declared the same path would be the same command accounted for
+twice, which `tests/quality.rs` refuses as `OPERATION_CLASSIFICATION_CONFLICT`. What reads
+that one declaration is `produced_by` below, so the document can name its command line
+without the crate stating it a second time.
 
 The generated document is a generated artifact like any other — one value written as JSON
 for a program, YAML beside it and Markdown for a reader, each declaring its schema

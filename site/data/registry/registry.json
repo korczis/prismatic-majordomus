@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "5f89daa0a74565852fbba669d16fc15b3b314c32ce0b5fbd0dc94c82ab3c237f",
+    "fingerprint": "8ceada34a36344f16b856904c362a927a6023c2f92546effbe27c403ac58e3fb",
     "summary": {
       "total": 1186,
       "builtin": 73,
@@ -23,7 +23,7 @@
       "mcp_tools": 71,
       "mcp_resources": 1139,
       "http_routes": 73,
-      "cli_commands": 33,
+      "cli_commands": 31,
       "modules": 52,
       "benchmark_required": 70,
       "benchmark_waived": 3,
@@ -19018,7 +19018,7 @@
                   "id",
                   "title"
                 ],
-                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
+                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
               },
               "ReleaseChangelogArtifact": {
                 "type": "object",
@@ -19082,7 +19082,7 @@
                 "required": [
                   "capability"
                 ],
-                "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one."
+                "description": "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```"
               }
             }
           }
@@ -19102,12 +19102,6 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/changelog"
-          },
-          "cli": {
-            "path": [
-              "release",
-              "changelog"
-            ]
           }
         },
         "availability": "runtime",
@@ -19340,7 +19334,7 @@
                   "id",
                   "title"
                 ],
-                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
+                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
               }
             }
           }
@@ -19356,12 +19350,6 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/release/version"
-          },
-          "cli": {
-            "path": [
-              "release",
-              "version"
-            ]
           }
         },
         "availability": "runtime",
@@ -26701,7 +26689,7 @@
     ]
   },
   "index": {
-    "fingerprint": "299459a44766193a14ef919e68f3f596b021b8072736d2af80b98b0eed7f3143",
+    "fingerprint": "47cadbff69f56b66ccf5ebd779902beef89b777033de1e7cb0ac170f3b7b4864",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -30135,7 +30123,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 20161
+        "bytes": 20149
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
