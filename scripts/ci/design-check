@@ -28,6 +28,10 @@
 #   8. The projections are current — when a built executable is at hand. Without one the
 #      question is delegated, in so many words, to the rust-generated gate that always has
 #      one; a delegation printed is not a skip.
+#   9. Every colour the declaration pairs with a ground can be read on it: WCAG 2.1 AA,
+#      4.5:1 for text, in both themes. The pairs are not listed here — they are derived by
+#      the executable from the declaration and from the primitives that consume it, so a
+#      role added tomorrow is measured tomorrow (`design.contrast`, crate::design::contrast).
 #
 # What is exempt, and why — an exemption is a reason, never a path somebody added:
 #
@@ -209,6 +213,54 @@ if [ -n "$MJ" ] && [ -x "$MJ" ]; then
   fi
 elif [ "$ROOT" = "$HERE" ]; then
   echo "OK   projection drift is proven by the rust-generated gate (majordomus generate --check); no executable is built here"
+fi
+
+echo "== 9. every colour the declaration pairs with a ground can be read on it"
+# ADR 0036 pairs a foreground with a ground — reading text on the page, a status word on
+# its own tint, a primary action's label on its fill — in a light theme and a dark one, and
+# nothing measured one of them: a person chose them by eye while `scripts/site-build` was
+# raising a *third party's* highlighting palette to the same standard. This question is that
+# measurement, and it is the executable's: `crate::design::contrast` already has the typed
+# model and resolves every role and status to a literal per theme, so the maths of
+# scripts/lib/ui-contrast.mjs is ported there rather than the model re-implemented here.
+#
+# The pairs are not a list — a list would go stale the day a role is added. They are derived
+# from the declaration, which files each status's text with its own ground, and from the
+# primitives that consume it: a rule that sets a colour and a background states a pair, a
+# rule that sets only a colour states a foreground that lands on every ground a container
+# sets, and `--mj-status-fg` expands per status so emerald is never measured on rose.
+#
+# The threshold is the one this repository already states: WCAG 2.1 AA, 4.5:1 for text
+# (1.4.3), as scripts/lib/ui-contrast.mjs exports it. A border is measured against 3:1
+# (1.4.11) and reported, not enforced: the primitive that draws them says the word is always
+# shown, so a badge's rule repeats a distinction its text already carries.
+#
+# `design.contrast` is exposed over MCP and HTTP and not on the command line, so it is asked
+# the way a client asks it — one standalone session, nothing written, no shared server
+# touched. test/cases/109_design_system.sh asks the design the same way.
+MJC="${MAJORDOMUS_BIN:-$HERE/apps/majordomus-cli/target/debug/majordomus}"
+if [ ! -x "$MJC" ]; then
+  echo "OK   readability is proven by the crate's own tests (cargo test -p majordomus-cli design::contrast); no executable is built here"
+elif [ ! -f "$ROOT/share/kinds.yaml" ] || [ ! -f "$ROOT/share/design/primitives.css" ]; then
+  echo "OK   this tree ships no distribution: the pairs are stated by the primitives under a share directory, and there is none here"
+else
+  report="$(
+    {
+      printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"design-check","version":"0"}}}\n'
+      printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_design_contrast","arguments":{}}}\n'
+    } | env -u MAJORDOMUS_SHARE "$MJC" mcp --standalone --repo "$ROOT" 2>/dev/null \
+      | sed -n '2p' | jq -r '.result.content[0].text // empty' 2>/dev/null
+  )"
+  if [ -z "$report" ]; then
+    fail "design.contrast answered nothing; $MJC could not measure the declaration"
+  elif [ "$(printf '%s' "$report" | jq -r '.readable')" = true ]; then
+    echo "OK   $(printf '%s' "$report" | jq -r '"\(.measured) pair(s) measured in two themes; every one reaches \(.standard)"')"
+  else
+    printf '%s' "$report" | jq -r '.findings[]' | while IFS= read -r finding; do
+      echo "FAIL $finding"
+    done
+    fail "a declared pair cannot be read: darken it in share/design/tokens.yaml, keeping the hue, or state why the pair is not rendered"
+  fi
 fi
 
 [ "$status" = 0 ] && echo "==> design-check: one declaration, and every surface projects it"

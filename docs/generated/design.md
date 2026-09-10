@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.4.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `5585f6ea6f3f732b00d6d96133f6d12a576d1eab9ec6d54120771640f64e34da` (`--mj-design: "5585f6ea6f3f"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `1c73468b1437a8c9066eef0eb69fd19f2392c8cbb080db92d7c630195bdce2be` (`--mj-design: "1c73468b1437"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -33,8 +33,8 @@ Each role is one custom property; its value follows the theme.
 | `--mj-fg` | `gray-900` | `white` | `--color-heading` | headings, identifiers, values; the text that carries the page |
 | `--mj-body` | `gray-600` | `gray-400` | `--color-body` | reading text |
 | `--mj-muted` | `gray-500` | `gray-400` | `--color-body-subtle` | secondary text; labels, captions, provenance |
-| `--mj-faint` | `gray-400` | `gray-500` | — | a third level below muted; placeholders, disabled text |
-| `--mj-accent` | `blue-700` | `blue-500` | `--color-fg-brand` | links, the focus ring, the one colour that means interactive |
+| `--mj-faint` | `gray-500` | `gray-400` | — | the quietest text; placeholders, disabled text, a navigation group's heading. Measured, not chosen - gray-400 read 2.60:1 on the page and gray-500 4.16:1 on the dark page, so it carries muted's values until the palette holds a Tailwind step between them. |
+| `--mj-accent` | `blue-700` | `blue-400` | `--color-fg-brand` | links, the focus ring, the one colour that means interactive |
 | `--mj-accent-strong` | `blue-900` | `blue-400` | `--color-fg-brand-strong` | the accent where it must read as text on the accent's soft ground |
 | `--mj-accent-soft` | `blue-50` | `blue-950` | `--color-brand-softer` | the accent as a ground; a selected row, the current navigation entry |
 | `--mj-accent-line` | `blue-200` | `blue-900` | `--color-brand-subtle` | the accent as a border around its soft ground |

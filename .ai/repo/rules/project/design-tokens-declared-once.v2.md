@@ -88,6 +88,15 @@ a layout value added to the declaration and regenerated is in every stylesheet, 
 dataset, the inventory, `explain` and the Cockpit's Design page with no consumer edited.
 `test/cases/109_design_system.sh` and the crate's render tests prove it by doing it.
 
+**A declared pairing is readable.** A foreground role is rendered on a ground, and which
+grounds is knowable from the declaration and the primitives that consume it — so it is
+measured rather than reviewed. Every pair, in both themes, reaches WCAG 2.1 AA (4.5:1 for
+text). A pair below the floor is a finding naming the role, the ground, the theme and the
+ratio; the repair is a value in `share/design/tokens.yaml`, never a local override. A border
+or an outline is measured against 3:1 (1.4.11) and reported rather than refused: the
+primitive that draws one always shows the word beside it, so the floor this rule enforces is
+the text one.
+
 **The page can tell.** Every generated sheet carries `--mj-design`, the declaration's
 fingerprint; the executable stamps the same fingerprint on every page it renders and answers
 it from `design.system`. The Cockpit compares the two on load; the site probe and the
@@ -118,8 +127,21 @@ page that does not carry the declaration's fingerprint. `scripts/site-probe` and
 `scripts/cockpit-probe` refuse a page whose stylesheet carries a different fingerprint from
 the dataset or the executable, or renders in a stack other than the declared one.
 
-This rule governs where a value is *declared*, never what the value should be. Whether the
-accent should be blue is intent; a person states it, in the one file that holds it.
+This rule governs where a value is *declared*, and it sets one floor on the value itself:
+a colour pairing that cannot be read is refused. Those are not in tension. Whether the
+accent should be blue is intent — a person states it, in the one file that holds it — but
+whether text at that colour on that ground reaches WCAG 2.1 AA is measurable, and a
+declaration is not a place to state that a thing shall be illegible. Everything above the
+floor is taste and this rule is silent about it.
+
+The floor is not free, and the first measurement showed why it must be enforced rather than
+assumed. The declaration named three levels of quiet text — `muted`, then `faint` below it —
+and `faint` measured 2.60:1 on the page. There is no repair that keeps three levels: on
+white, 4.5:1 allows a relative luminance of at most 0.1833, which is a perceptual lightness
+of about 56.8%, and `muted` already sits at 55.1%. Any legible `faint` is `muted` to the eye.
+The third level was never a level; it was text nobody could read, and the hierarchy it was
+meant to carry is carried instead by size, weight and letter-spacing, which cost no
+contrast. A rule that only asked where the value was declared would have kept it for ever.
 
 # Verification
 
@@ -132,5 +154,10 @@ fixture's declaration reach every stylesheet, the site's dataset and the invento
 `generate design`; an inconsistent declaration projects nothing; `generate --check` refuses
 a stale projection; and the capabilities answer the same fingerprint the sheets carry. The
 crate's own tests hold the validator's refusals, the renderer's shape — including that the
-dark block is a class after the root block — and the zero-registration property. ADR 0036
-records the decision and what it left undone.
+dark block is a class after the root block — and the zero-registration property.
+`test/cases/111_design_contrast.sh` proves the readability floor the same way: the
+declaration measures clean in both themes; a rule added to a primitive is measured with
+nothing registered anywhere, so the pair set is derived and not listed; and a rule that puts
+a colour on a ground it cannot be read on is a finding that names role, ground, theme and
+ratio, which `scripts/ci/design-check` refuses. ADR 0036 records the decision and what it
+left undone.
