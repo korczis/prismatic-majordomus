@@ -8,7 +8,7 @@
 #   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
 #   scripts/ui test                the UI tooling's own tests
 #
-# Options of `audit`:
+# Options of `audit`, and of `pages` and `viewports` where they apply:
 #   --only SUBSTRING   only pages whose route contains it (local iteration; marks the run partial)
 #   --limit N          only the first N pages (the same)
 #   --out FILE         where the results document goes (default target/web/run-ui.json)
@@ -20,15 +20,20 @@
 #   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
 #
 # Nothing here holds a list, and nothing here decides where a page is served from. The
-# surfaces come from `majordomus web list` — every static directory the executable serves,
-# with the mount the topology gives it — so a page is visited at the path the server actually
+# surfaces come from `majordomus web list` — every surface the executable serves, with the
+# mount the topology gives it — so a page is visited at the path the server actually
 # answers. A built directory does not know that: the documentation is generated once and
 # mounted at /docs by the executable and at the root by the published site, and an audit that
 # assumed either would measure paths nobody answers.
 #
-# The pages of each surface come from its filesystem and its sitemap, unioned, so an orphan is
-# still audited; the widths come from the media queries the CSS build emitted, so a breakpoint
-# added to the theme is audited without a test changing.
+# A built surface's pages come from its filesystem and its sitemap, unioned, so an orphan is
+# still audited. A surface the executable renders — the Cockpit, the home page, the Swagger
+# shell — has no directory to read, so its pages come from the surface itself: its own
+# anchors, crawled from its mount, sampled per family. Every question about the page set
+# therefore needs the server, which is why `pages` starts one too.
+#
+# The widths come from the media queries the CSS build emitted, so a breakpoint added to the
+# theme is audited without a test changing.
 #
 # Exit: 0 clean, 10 findings, 12 the site is not built, 13 no browser.
 set -eu
@@ -36,30 +41,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CSS="$ROOT/site/static/app.css"
 MJ="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
 
-# Every static directory the executable serves, as `<id> <mount> <absolute dir>` lines, read
-# from the topology — the one place a mount is written. A surface whose producer has not run
-# is not a target; `web validate --artifacts` is where a *missing* artifact is a finding.
-surfaces() {
-  [ -x "$MJ" ] || { echo "ui: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; return 12; }
-  "$MJ" web list --format json --repo "$ROOT" | python3 -c '
-import json, os, sys
-root = sys.argv[1]
-document = json.load(sys.stdin)
-for s in (document["surfaces"] if isinstance(document, dict) else document):
-    if s.get("kind") != "static-directory" or not s.get("artifact"):
-        continue
-    if s.get("availability") == "published-only":
-        continue                    # not served: the publication audits its own tree
-    d = os.path.join(root, s["artifact"])
-    if os.path.isdir(d):
-        print("\t".join((s["id"], s["mount"], d)))
-' "$ROOT"
-}
-
-usage() { sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
-json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=1
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) json=1 ;;
@@ -83,6 +68,10 @@ case "$sub" in
   pages|viewports|audit) ;;
   *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
 esac
+
+# `audit` builds the documentation it is about to measure; asking what the page set is does
+# not rebuild the site behind the caller's back.
+[ -n "$build" ] || { [ "$sub" = audit ] && build=1 || build=0; }
 
 # ------------------------------------------------------------------- the static check
 # The check reads markup, so it reads files that *are* markup: every tracked .html of the
@@ -127,65 +116,84 @@ fi
 
 [ -f "$CSS" ] || { echo "ui: the stylesheet is not compiled ($CSS); run: scripts/site-build" >&2; exit 12; }
 
+# ------------------------------------------------------------------------- the server
+# Every question below needs one: a built surface's pages are on disk, but a surface the
+# executable renders only exists while it is running, and the audit drives the repository's
+# own server so that it holds no second opinion about how a page is served.
+server_pid=""; server_log=""
+
+cleanup() {
+  if [ -n "$server_pid" ] && ! kill -0 "$server_pid" 2>/dev/null; then
+    echo "ui: the server exited before the run finished; the last of its log follows" >&2
+    [ -n "$server_log" ] && tail -30 "$server_log" >&2
+  fi
+  [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null
+  [ -n "$server_log" ] && rm -f "$server_log"
+  rm -f "${surf:-}"
+  return 0
+}
+trap 'cleanup' EXIT INT TERM
+
+start_server() {
+  [ -n "$origin" ] && return 0
+  origin="http://127.0.0.1:$port"
+  [ -x "$MJ" ] || { echo "ui: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
+  log="$(mktemp "${TMPDIR:-/tmp}/mj-ui-serve.XXXXXX")"
+  "$MJ" serve --repo "$ROOT" --port "$port" >"$log" 2>&1 &
+  server_pid=$!
+  # readiness is a request that answers, not a line in a log: the log names the origin
+  # while it is still taking over a stale lease, which is not the same as listening
+  ready=0
+  for _ in $(seq 1 150); do
+    curl -fsS --max-time 5 -o /dev/null "$origin/" 2>/dev/null && { ready=1; break; }
+    kill -0 "$server_pid" 2>/dev/null || { cat "$log" >&2; echo "ui: the server exited before it answered on $origin" >&2; exit 12; }
+    sleep 0.2
+  done
+  [ "$ready" = 1 ] || { cat "$log" >&2; echo "ui: the server did not answer on $origin" >&2; exit 12; }
+  echo "== serving $origin" >&2
+  server_log="$log"                              # kept: a server that dies mid-run leaves evidence
+}
+
+# Every surface the executable serves, as one JSON document: a built one with the directory
+# it is rendered into, a rendered one with the routes crawled out of it. The topology is the
+# one place a mount is written and the server is the one place a native route exists, so
+# neither is asked twice.
+write_surfaces() {
+  "$MJ" web list --format json --repo "$ROOT" | node --input-type=module -e '
+import { statSync } from "node:fs";
+import { servedSurfaces } from "'"$ROOT"'/scripts/lib/ui-routes.mjs";
+const topology = JSON.parse(await new Promise((r) => { let s = ""; process.stdin.on("data", (d) => (s += d)); process.stdin.on("end", () => r(s)); }));
+const isDirectory = (p) => { try { return statSync(p).isDirectory(); } catch { return false; } };
+const surfaces = await servedSurfaces(topology, { origin: "'"$origin"'", root: "'"$ROOT"'", isDirectory });
+console.log(JSON.stringify(surfaces));
+' > "$1"
+}
+
+if [ "$build" = 1 ]; then
+  # The served documentation is a build of its own — mounted under /docs, written into the
+  # generated web root, with a base URL that is a path rather than an origin, so it resolves
+  # its assets wherever it is served from. Building it is what makes it a target at all, and
+  # it never touches the published tree.
+  echo "== building the documentation the server serves" >&2
+  "$ROOT/scripts/site-build" --serve --no-data >/dev/null
+fi
+
+start_server
+surf="$(mktemp "${TMPDIR:-/tmp}/mj-ui-surfaces.XXXXXX")"
+write_surfaces "$surf"
+[ -s "$surf" ] || { echo "ui: the executable serves no surface with pages; run: scripts/site-build --serve" >&2; exit 12; }
+
 # ---------------------------------------------------------------------------- the audit
 if [ "$sub" = audit ]; then
   [ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] || {
     echo "SKIP ui audit: playwright and axe-core are not installed; run: npm ci" >&2; exit 13; }
 
-  server_pid=""; server_log=""
-  trap 'cleanup' EXIT INT TERM
-
-  cleanup() {
-    if [ -n "$server_pid" ] && ! kill -0 "$server_pid" 2>/dev/null; then
-      echo "ui: the server exited before the audit finished; the last of its log follows" >&2
-      [ -n "$server_log" ] && tail -30 "$server_log" >&2
-    fi
-    [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null
-    [ -n "$server_log" ] && rm -f "$server_log"
-    return 0
-  }
-
-  # The served documentation is a build of its own — mounted under /docs, written into the
-  # generated web root, with a base URL that is a path rather than an origin, so it resolves
-  # its assets wherever it is served from. Building it is what makes it a target at all, and
-  # it never touches the published tree.
-  if [ "$build" = 1 ]; then
-    echo "== building the documentation the server serves"
-    "$ROOT/scripts/site-build" --serve --no-data >/dev/null
-  fi
-
-  if [ -z "$origin" ]; then
-    origin="http://127.0.0.1:$port"
-    [ -x "$MJ" ] || { echo "ui: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
-    log="$(mktemp "${TMPDIR:-/tmp}/mj-ui-serve.XXXXXX")"
-    "$MJ" serve --repo "$ROOT" --port "$port" >"$log" 2>&1 &
-    server_pid=$!
-    # readiness is a request that answers, not a line in a log: the log names the origin
-    # while it is still taking over a stale lease, which is not the same as listening
-    ready=0
-    for _ in $(seq 1 150); do
-      curl -fsS --max-time 5 -o /dev/null "$origin/" 2>/dev/null && { ready=1; break; }
-      kill -0 "$server_pid" 2>/dev/null || { cat "$log" >&2; echo "ui: the server exited before it answered on $origin" >&2; exit 12; }
-      sleep 0.2
-    done
-    [ "$ready" = 1 ] || { cat "$log" >&2; echo "ui: the server did not answer on $origin" >&2; exit 12; }
-    echo "== serving $origin"
-    server_log="$log"                              # kept: a server that dies mid-run leaves evidence
-  fi
-
-  surf="$(mktemp "${TMPDIR:-/tmp}/mj-ui-surfaces.XXXXXX")"
-  surfaces > "$surf" || exit $?
-  [ -s "$surf" ] || { echo "ui: the executable serves no static surface; run: scripts/site-build --serve" >&2; rm -f "$surf"; exit 12; }
   node --input-type=module -e '
 import { readFileSync } from "node:fs";
 import { run, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
-const surfaces = readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean).map((line) => {
-  const [id, mount, dir] = line.split("\t");
-  return { id, mount, dir };
-});
+const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
-const started = Date.now();
 const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
   select: only, limit,
   onVisit: (visit, done) => {
@@ -204,7 +212,6 @@ else {
 process.exitCode = total ? 10 : 0;
 ' "$surf" || status=$?
   status="${status:-0}"
-  rm -f "$surf"
   if [ "$render" = 1 ]; then
     "${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}" web report ui --from "$out" --repo "$ROOT"
   fi
@@ -212,29 +219,25 @@ process.exitCode = total ? 10 : 0;
 fi
 
 # ------------------------------------------------------------------- pages and viewports
-surf="$(mktemp "${TMPDIR:-/tmp}/mj-ui-surfaces.XXXXXX")"
-trap 'rm -f "$surf"' EXIT
-surfaces > "$surf" || exit $?
 node --input-type=module -e '
 import { readFileSync } from "node:fs";
 import { planSurfaces } from "'"$ROOT"'/scripts/lib/ui-discover.mjs";
-const surfaces = readFileSync(process.argv[1], "utf8").split("\n").filter(Boolean).map((line) => {
-  const [id, mount, dir] = line.split("\t");
-  return { id, mount, dir };
-});
+const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const p = planSurfaces(surfaces, "'"$CSS"'");
 const sub = "'"$sub"'", json = '"$json"';
-if (json) { console.log(JSON.stringify(sub === "pages" ? { schema: 1, source: p.source.pages, pages: p.pages } : { schema: 1, source: p.source.viewports, breakpoints: p.breakpoints, viewports: p.viewports }, null, 2)); }
+const visits = p.pages.reduce((n, page) => n + page.widths.length, 0);
+if (json) { console.log(JSON.stringify(sub === "pages" ? { schema: 1, source: p.source.pages, surfaces: p.surfaces, pages: p.pages } : { schema: 1, source: p.source.viewports, breakpoints: p.breakpoints, viewports: p.viewports }, null, 2)); }
 else if (sub === "pages") {
-  console.log("ROUTE".padEnd(52) + "TIER      WIDTHS  RENDERED  PUBLISHED");
+  console.log("ROUTE".padEnd(52) + "SURFACE".padEnd(10) + "TIER      WIDTHS  FOUND IN");
   for (const page of p.pages)
-    console.log(page.route.padEnd(52) + page.tier.padEnd(10) + String(page.widths.length).padEnd(8) + String(page.rendered).padEnd(10) + page.published);
-  const visits = p.pages.reduce((n, page) => n + page.widths.length, 0);
+    console.log(page.route.padEnd(52) + page.surface.padEnd(10) + page.tier.padEnd(10) + String(page.widths.length).padEnd(8) + page.found);
+  for (const s of p.surfaces)
+    if (s.kind === "native-route")
+      console.log(`  ${s.id}: ${s.routes} route(s) in ${s.families} family(ies), ${s.sampled} sampled, ${s.fetched} fetch(es)${s.truncated ? ", TRUNCATED" : ""}`);
   console.log(`${p.pages.length} page(s), ${visits} visit(s), from ${p.source.pages}`);
 } else {
   console.log(`breakpoints: ${p.breakpoints.join(", ")} (from ${p.source.viewports})`);
   console.log(`viewports:   ${p.viewports.join(", ")}`);
-  const visits = p.pages.reduce((n, page) => n + page.widths.length, 0);
   const sweeps = p.pages.filter((page) => page.tier === "sweep").length;
   console.log(`${p.viewports.length} width(s) in the sweep, ${p.pages.length} page(s), ${sweeps} of them swept: ${visits} visit(s)`);
 }

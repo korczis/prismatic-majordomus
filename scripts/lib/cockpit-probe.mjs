@@ -2,14 +2,17 @@
 // server and hands this script its URL; every route it visits is derived from that server,
 // never listed here.
 //
-// Route derivation, in order of how much it can be wrong:
-//   1. the areas         — crawled out of the shell's own navigation, which the server
-//                          rendered from the registry, the index and the graph derivations
-//   2. every capability  — /api/v1/capabilities
-//   3. every graph       — /api/v1/graphs
-//   4. every object      — /api/v1/objects
-// A capability, a kind or a graph added to the backend is therefore probed the first time
-// it exists, and a route this file forgot is a route the crawl still finds.
+// The derivation is not this file's. `scripts/lib/ui-routes.mjs` crawls a served surface out
+// of its own anchors and files what it finds into families, and both browser instruments
+// over this repository — this probe and the UI audit — import it, so the two cannot disagree
+// about what a Cockpit route is. A capability, a kind or a graph added to the backend is
+// probed the first time it exists, and a page added to the Cockpit is probed the first time
+// something links to it.
+//
+// What this probe still owns is what it asserts, which is not what the audit asserts: the
+// shell, the security headers, the design fingerprint, the interactions and the claim that
+// the browser layer is optional. The audit owns the contrast, the accessibility engine, the
+// landmarks, the components and the width sweep. Two instruments, one page set.
 //
 // What the sweep asserts on every route it visits: the page answers 200 as HTML, carries the
 // shell and the security headers, has no horizontal overflow at three widths, produces no
@@ -23,6 +26,8 @@
 // downloaded. The caller decides whether a missing browser is a skip.
 
 import { chromium } from 'playwright';
+
+import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
 
 const BASE = process.argv[2];
 const MODE = process.argv[3] || 'full'; // full | quick
@@ -50,58 +55,24 @@ async function api(path) {
 }
 
 /**
- * Every Cockpit route this server serves, derived from it. The areas come from the shell's
- * own navigation — one fetch, then every in-Cockpit href it carries — so a page added to
- * the Cockpit is probed without this file learning its name.
+ * Every Cockpit route this server serves, crawled out of the Cockpit itself.
+ *
+ * The mount is a proper prefix of every route the surface owns, so no other surface's
+ * mount has to be named for the crawl to stay inside it.
  */
 async function routes() {
-  const shell = await (await fetch(BASE + '/cockpit')).text();
-  const hrefs = new Set();
-  for (const m of shell.matchAll(/href="(\/cockpit[^"#]*)"/g)) {
-    const href = m[1].replace(/&amp;/g, '&');
-    if (!href.startsWith('/cockpit/assets/')) hrefs.add(href);
-  }
-  hrefs.add('/cockpit');
-
-  const [capabilities, graphs, objects] = await Promise.all([
-    api('/api/v1/capabilities'),
-    api('/api/v1/graphs'),
-    api('/api/v1/objects'),
-  ]);
-
-  const groups = {
-    area: [...hrefs].sort(),
-    capability: capabilities.capabilities.map(
-      (c) => '/cockpit/capabilities/' + encodeURIComponent(c.id),
-    ),
-    graph: graphs.graphs.map((g) => '/cockpit/graphs/' + encodeURIComponent(g.id)),
-    object: objects.objects.map((o) => '/cockpit/object?uri=' + encodeURIComponent(o.uri)),
-  };
-  // the two views that exist for their library alone, and are reached from the graph pages
-  groups.area.push('/cockpit/graphs/topology', '/cockpit/activity');
-  groups.area = [...new Set(groups.area)].sort();
-  return groups;
+  return crawl({ mount: '/cockpit', fetchText: documentFetcher(BASE) });
 }
 
 /**
- * The routes the browser visits. Every area, because each is its own page function; and a
- * sample of each generated family, because a thousand capability pages share one renderer
- * and the sample that matters is the widest and the narrowest of them. The status sweep in
- * the shell script visits every one of them.
+ * The routes the browser visits: everything the shell puts in front of a reader, because
+ * each of those is its own page function, and a sample of each generated family, because a
+ * thousand capability pages share one renderer and what is worth visiting is a spread
+ * across them. Quick mode narrows the families to one member each and leaves the
+ * navigation whole.
  */
-function sample(groups) {
-  const take = (list, n) => {
-    if (list.length <= n) return list;
-    const step = Math.floor(list.length / n);
-    return Array.from({ length: n }, (_, i) => list[i * step]);
-  };
-  const n = MODE === 'quick' ? 1 : 4;
-  return [
-    ...groups.area.map((r) => ['area', r]),
-    ...take(groups.capability, n).map((r) => ['capability', r]),
-    ...take(groups.graph, n).map((r) => ['graph', r]),
-    ...take(groups.object, n).map((r) => ['object', r]),
-  ];
+function sample(derived) {
+  return sampleFamilies(derived, MODE === 'quick' ? 1 : FAMILY_SAMPLE);
 }
 
 /** Watch one page for anything a browser considers broken. */
@@ -424,16 +395,13 @@ async function graph(context) {
 }
 
 /** Every page, with JavaScript turned off: the claim that the browser layer is optional. */
-async function withoutJavaScript(browser, groups) {
+async function withoutJavaScript(browser, derived) {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  const sampled = [
-    '/cockpit',
-    '/cockpit/health',
-    '/cockpit/graphs/registry',
-    groups.capability[0],
-    groups.object[0],
-  ];
+  // one member of each family, spread: the claim is about the renderers, and there is one
+  // renderer per family. Nothing is named here either.
+  const perFamily = Object.values(derived.families).map((routes) => routes[0]);
+  const sampled = spread([derived.entry, ...perFamily.filter((r) => r !== derived.entry)], MODE === 'quick' ? 3 : 8);
   for (const route of sampled) {
     const response = await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
     const shape = await page.evaluate(() => ({
@@ -469,8 +437,8 @@ async function framing(context) {
 
 const browser = await chromium.launch({ channel: 'chrome' });
 try {
-  const groups = await routes();
-  const total = Object.values(groups).reduce((n, g) => n + g.length, 0);
+  const derived = await routes();
+  const total = derived.routes.length;
   // the design contract: the widths, the fingerprint the stylesheet must carry, and the
   // vocabulary every badge word must be filed under
   DESIGN = await api('/api/v1/design');
@@ -481,14 +449,14 @@ try {
       .map((t) => t.name),
   );
   const badgeWords = new Set();
-  const visiting = sample(groups);
+  const visiting = sample(derived);
   ok(
     'routes',
-    `${total} route(s) derived from the server (${groups.area.length} area, ${groups.capability.length} capability, ${groups.graph.length} graph, ${groups.object.length} object); ${visiting.length} visited in a browser at ${WIDTHS.length} widths`,
+    `${total} route(s) crawled out of the Cockpit in ${derived.fetched} fetch(es), in ${Object.keys(derived.families).length} family(ies), ${derived.navigation.length} of them advertised by the shell; ${visiting.length} visited in a browser at ${WIDTHS.length} widths`,
   );
 
   const context = await browser.newContext();
-  for (const [, route] of visiting) {
+  for (const route of visiting) {
     const page = await context.newPage();
     watch(page, route);
     let first = true;
@@ -538,7 +506,7 @@ try {
   }
   await context.close();
   try {
-    await withoutJavaScript(browser, groups);
+    await withoutJavaScript(browser, derived);
   } catch (e) {
     fail('nojs', String(e.message || e).split('\n')[0].slice(0, 200));
   }

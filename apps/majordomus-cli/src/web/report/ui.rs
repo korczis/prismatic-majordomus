@@ -59,6 +59,37 @@ pub struct Finding {
     pub elements: Vec<Element>,
 }
 
+/// One surface the audit measured, and what it contributed.
+///
+/// A built surface is a directory, and every page of it is visited. A surface the executable
+/// renders has no directory: its routes are crawled out of its own anchors and a sample of
+/// each family is visited, so the number of routes it *has* is reported beside the number
+/// that was *sampled*. A sample rendered as a total would be a report overstating its own
+/// coverage, and the Cockpit's thousands of routes are why that distinction belongs on the
+/// page rather than in somebody's head.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Surface {
+    /// The surface's id in the topology.
+    pub id: String,
+    /// Where the executable serves it.
+    pub mount: String,
+    /// `static-directory` or `native-route`.
+    #[serde(default)]
+    pub kind: String,
+    /// How many routes the surface has, when they were crawled rather than read from disk.
+    #[serde(default)]
+    pub routes: usize,
+    /// How many families those routes fell into.
+    #[serde(default)]
+    pub families: usize,
+    /// How many of them the audit visited.
+    #[serde(default)]
+    pub sampled: usize,
+    /// Whether the crawl hit its budget, so the route count is a floor rather than a total.
+    #[serde(default)]
+    pub truncated: bool,
+}
+
 /// A whole audit run.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Run {
@@ -79,6 +110,9 @@ pub struct Run {
     /// The widths the sweep visits.
     #[serde(default)]
     pub viewports: Vec<u32>,
+    /// Every surface the run measured, and what each contributed.
+    #[serde(default)]
+    pub surfaces: Vec<Surface>,
     /// How many pages were visited.
     pub pages: usize,
     /// How many page-and-width visits that came to.
@@ -270,6 +304,53 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
             .join(", "),
     );
 
+    // Which surfaces were measured at all. This table is the answer to the question ADR 0036
+    // left open — whether the audit reaches the surfaces the executable renders as well as
+    // the ones it serves from a directory — so it is on the page whether the run is green or
+    // not, and it says what a crawled surface was sampled *from*.
+    let surfaces_section = if run.surfaces.is_empty() {
+        String::new()
+    } else {
+        let rows: Vec<Vec<String>> = run
+            .surfaces
+            .iter()
+            .map(|surface| {
+                let native = surface.kind == "native-route";
+                let found = if !native {
+                    "its directory and its sitemap".to_string()
+                } else if surface.routes == 0 {
+                    "no pages: the mount is not a document".to_string()
+                } else {
+                    format!(
+                        "{} route(s) in {} family(ies), crawled from its own anchors{}",
+                        surface.routes,
+                        surface.families,
+                        if surface.truncated {
+                            ", and the crawl hit its budget, so that is a floor"
+                        } else {
+                            ""
+                        }
+                    )
+                };
+                vec![
+                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.id)),
+                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.mount)),
+                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.kind)),
+                    if native {
+                        format!("<span class=\"num\">{}</span>", surface.sampled)
+                    } else {
+                        "every page".to_string()
+                    },
+                    html::escape(&found),
+                ]
+            })
+            .collect();
+        format!(
+            "<h2>The surfaces this run measured</h2>{}",
+            html::table(&["surface", "mount", "kind", "visited", "found by"], &rows)
+        )
+    };
+
     let findings_section = if run.green() {
         String::new()
     } else {
@@ -284,9 +365,10 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
     };
 
     let body = format!(
-        "{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
+        "{}{}{}{}{}<p><a href=\"../\">The test run this belongs to</a></p>{}",
         scope,
         html::summary(&summary),
+        surfaces_section,
         findings_section,
         provenance,
         html::origin(&origin, &[("results.json", "results.json")])

@@ -18,9 +18,11 @@ export const RESULTS_SCHEMA = 'ui-audit/v1';
 /**
  * Run the plan against a running origin and return the results document.
  *
- * `surfaces` is what the topology says the executable serves: `[{ id, mount, dir }]`. The
- * mount matters — a built directory does not know where it is served from, and a plan that
- * assumed the root would visit paths nobody answers.
+ * `surfaces` is what the topology says the executable serves, as `ui-routes.mjs` resolved
+ * it: a built surface carries the directory it was rendered into, and a surface the
+ * executable renders carries the routes crawled out of it. The mount matters — a built
+ * directory does not know where it is served from, and a plan that assumed the root would
+ * visit paths nobody answers.
  *
  * `select` narrows the pages for local iteration; a narrowed run says so in the document,
  * so a partial run can never be read as a clean full one.

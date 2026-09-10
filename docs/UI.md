@@ -41,11 +41,36 @@ missing precondition, 13 a missing dependency.
 
 ## What is discovered, and what that buys
 
-**The pages** are the union of two sources: every `index.html` under the built site, and
-every `<loc>` of its sitemap. Neither alone is right — a page the sitemap omits is an orphan
-and still has to work, and a page the sitemap advertises has to exist. The sitemap's entries
-carry the published base URL, so the common prefix is inferred and stripped rather than
-configured.
+**The pages of a built surface** are the union of two sources: every `index.html` under the
+built site, and every `<loc>` of its sitemap. Neither alone is right — a page the sitemap
+omits is an orphan and still has to work, and a page the sitemap advertises has to exist. The
+sitemap's entries carry the published base URL, so the common prefix is inferred and stripped
+rather than configured.
+
+**The pages of a surface the executable renders** — the Cockpit, the server's home page, the
+Swagger shell — cannot come from a directory, because there is not one. They come from the
+surface itself: its own `<a href>` anchors, crawled from its mount and staying inside it. A
+page a reader can reach is a page something links to, so that closure *is* the page set, and
+a page linked from nowhere is out of the crawl's reach for the same reason it is out of a
+reader's. Reading anchors rather than every `href` is also why nothing needs a list of file
+extensions to tell a page from a stylesheet: the markup already made that distinction.
+
+Whether a surface has pages at all is the server's answer rather than a list here: a mount
+that returns a document to an `Accept: text/html` request is a page surface, and `/api/v1`,
+`/events` and `/mcp` are not — none of them had to be named to be left out.
+
+The crawl is bounded by what it learns rather than by a depth. A route is expanded while
+routes of its shape are still yielding routes nobody had seen, so a paginated listing is
+followed to its last page and a thousand leaf pages whose only links go back to the shell
+cost two fetches between them. Measured: **2660 Cockpit routes derived in 108 requests**, in
+about fourteen seconds, with no route named anywhere.
+
+That derivation lives in `scripts/lib/ui-routes.mjs` and it is the only one there is:
+`scripts/cockpit-probe` imports the same module, so the two browser instruments over this
+repository cannot disagree about what a Cockpit route is. What differs is what each asserts —
+the probe owns the shell, the security headers, the design fingerprint, the interactions and
+the claim that the browser layer is optional; the audit owns contrast, the accessibility
+engine, the landmarks, the components and the width sweep.
 
 **The widths** are the `min-width` media queries the CSS build emitted, converted from `rem`
 where the theme used them, each contributing the boundary *and* the pixel below it, plus a
@@ -53,9 +78,19 @@ reflow floor of 320 and a desktop width. A breakpoint added to the theme is audi
 it compiles.
 
 **The tiers** are derived too. Every page is visited at the floor, a middle width and the
-desktop end; one page per section of the site — the first path segment — takes the full
-sweep across every boundary. Sections are where templates change, so the sweep buys
-structural coverage without anybody naming a page.
+desktop end; one page per section takes the full sweep across every boundary. On a built
+surface a section is the first path segment, because that is where templates change; on a
+crawled surface it is the *family* — the shape a route shares with its siblings, `?`-keys
+when it has a query and the parent path when it does not. Both are where a renderer changes,
+so the sweep buys structural coverage without anybody naming a page.
+
+**The sample** is derived as well, and only a crawled surface has one. Every route the
+surface advertises is visited, because each of those is its own page; of every family the
+audit takes four members spread across the sorted set, because a family is one renderer over
+many records and what varies is the record. Four is a budget spent on whatever members
+exist, not a list — a family with fewer members is visited whole, which is why no navigation
+entry is ever dropped. The Cockpit's 2660 routes come to 108 pages this way, and the report
+prints both numbers so that a sample can never be read as a total.
 
 Nothing in any of this is a list. `scripts/ui pages` prints its own provenance, and so does
 the generated report.
@@ -104,9 +139,14 @@ is visible to it.
 **A built directory does not know where it is served from.** The same documentation is
 generated once and mounted at `/docs` by the executable and at the root by the published
 site. So the audit does not name a directory: it reads `majordomus web list`, takes every
-static surface the executable *serves*, and visits each one's pages under the mount the
-topology gives it. That is why `/tests` and `/benchmarks` are audited too — they are surfaces
-like any other, and nothing had to be added to a list to include them.
+surface the executable *serves*, and visits each one's pages under the mount the topology
+gives it. That is why `/tests` and `/benchmarks` are audited too — they are surfaces like any
+other, and nothing had to be added to a list to include them.
+
+It is also why `scripts/ui pages` now starts a server. Half the page set only exists while
+the executable is running, so "which pages will be audited" became a question only the server
+can answer; `--origin URL` points at one somebody else is running, and `--no-build` skips the
+documentation build.
 
 It builds with `scripts/site-build --serve`, whose base URL is a path rather than an origin,
 so the pages resolve their assets wherever they are served. `--no-build` skips that, for a

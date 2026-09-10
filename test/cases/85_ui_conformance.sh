@@ -49,6 +49,83 @@ mkdir -p public/delta && printf '<html></html>' > public/delta/index.html
 expect_exit 0 routes
 expect_grep '"/delta/"' -
 
+# ------------------------------------------- the page set of a surface with no directory
+# A surface the executable renders has no directory to read, so its pages come from the
+# surface itself: its own anchors, crawled from its mount. The crawl takes its fetcher from
+# the caller, so this stays a case with no server, no browser and no port.
+#
+# The fixture is shaped like the Cockpit and nothing about that shape is in the module: an
+# entry that advertises a listing, a listing that paginates, and leaves that link only back.
+cat > surface.mjs <<'MJS'
+import { crawl, sample, anchors, family, owner, spread } from "@UI@/ui-routes.mjs";
+
+const LEAVES = 25, PER_PAGE = 5, PAGES = LEAVES / PER_PAGE;
+const link = (href) => `<a class="x" href="${href}">t</a>`;
+let fetched = 0;
+const fetchText = async (route) => {
+  fetched += 1;
+  if (route === "/panel") return `<link href="/panel/assets/a.css">${link("/panel/list")}${link("/panel/health")}`;
+  if (route === "/panel/health") return link("/panel");
+  if (route.startsWith("/panel/list")) {
+    const page = Number(new URLSearchParams(route.split("?")[1] || "").get("page") || 1);
+    if (page > PAGES) return null;
+    const items = Array.from({ length: PER_PAGE }, (_, i) =>
+      link(`/panel/item/i${String((page - 1) * PER_PAGE + i).padStart(2, "0")}`));
+    return [link("/panel"), ...items, link(`/panel/list?page=${page + 1}`)].join("");
+  }
+  if (route.startsWith("/panel/item/")) return link("/panel");
+  return null;
+};
+
+const derived = await crawl({ mount: "/panel", mounts: ["/", "/panel"], fetchText });
+console.log(`routes ${derived.routes.length} nav ${derived.navigation.length} families ${Object.keys(derived.families).length} fetched ${fetched} truncated ${derived.truncated}`);
+console.log(`leaves ${derived.routes.filter((r) => r.startsWith("/panel/item/")).length}`);
+console.log(`sample ${sample(derived, 4).length}`);
+console.log(`assets ${derived.routes.filter((r) => r.includes("/assets/")).length}`);
+const quiet = await crawl({ mount: "/api", mounts: ["/", "/api"], fetchText: async () => null });
+console.log(`document ${quiet.document} pages ${sample(quiet).length}`);
+console.log(`anchors ${JSON.stringify(anchors('<link href="/a.css"><a href="/b?x=1&amp;y=2">b</a><a href="#c">c</a>'))}`);
+console.log(`family ${family("/panel/item/i01")} ${family("/panel/list?page=2")} ${family("/panel")}`);
+console.log(`owner ${owner("/panel/health", ["/", "/panel"])} ${owner("/elsewhere", ["/", "/panel"])}`);
+console.log(`spread ${JSON.stringify(spread(["a", "b", "c", "d", "e"], 3))}`);
+MJS
+sed "s|@UI@|$UI|" surface.mjs > surface.run.mjs
+expect_exit 0 node surface.run.mjs
+expect_grep '^leaves 25$' -                        # every leaf the listing paginates to is found
+expect_grep 'truncated false' -
+expect_grep '^assets 0$' -                         # a <link> is not an anchor, so it is not a route
+expect_grep '^document false pages 0$' -           # a mount that answers no document has no pages
+expect_grep '^anchors \["/b?x=1&y=2"\]$' -         # the entity is decoded; a fragment is not a route
+expect_grep '^family /panel/item/\* /panel/list?page /\*$' -
+expect_grep '^owner /panel /$' -                   # the longest mount owns the route
+expect_grep '^spread \["a","c","e"\]$' -           # the first, the last, and the spread between
+# the crawl pays for the listing it has to follow and not for the leaves that teach it
+# nothing: 33 routes for fewer than half as many requests
+expect_grep 'routes 33 nav 2 families 4 fetched 1[0-6] ' -
+expect_grep '^sample 11$' -                        # the entry, what it advertises, four per family
+
+# and a crawled surface reaches the plan: its pages are tiered by family, because a family
+# is where the renderer changes, exactly as a directory is on a built surface
+cat > native.mjs <<'MJS'
+import { crawl } from "@UI@/ui-routes.mjs";
+import { planSurfaces } from "@UI@/ui-discover.mjs";
+const fetchText = async (route) =>
+  route === "/panel" ? '<a href="/panel/a">a</a><a href="/panel/x/1">x</a><a href="/panel/x/2">y</a>' : '<a href="/panel">u</a>';
+const derived = await crawl({ mount: "/panel", mounts: ["/panel"], fetchText });
+const surface = { id: "panel", mount: "/panel", kind: "native-route", derived, pages: derived.routes };
+const p = planSurfaces([surface], "@T@/theme.css");
+for (const page of p.pages) console.log(`${page.route} ${page.tier} ${page.family} ${page.surface}`);
+console.log(JSON.stringify(p.surfaces));
+console.log(p.source.pages);
+MJS
+sed "s|@UI@|$UI|;s|@T@|$T|" native.mjs > native.run.mjs
+expect_exit 0 node native.run.mjs
+expect_grep '/panel/x/1 sweep /panel/x/\*' -       # one member of each family takes the boundary sweep
+expect_grep '/panel/x/2 critical /panel/x/\*' -    # the rest take the critical widths
+expect_grep '"kind":"native-route"' -
+expect_grep '"routes":4' -                         # what the surface has, beside what was visited
+expect_grep "crawled from the surface's own anchors" -
+
 # ---------------------------------------------------------------- the width set is derived
 # The breakpoints are the media queries the CSS build emitted, in px and in rem, each with
 # the pixel below it, where a layout discontinuity hides.
