@@ -48,6 +48,29 @@ A capability you add or change has use cases: run `majordomus usecase impact` an
 scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
 case that executes (`.ai/repo/workflows/use-cases.md`); `finish` refuses a required gap.
 
+You are probably not alone. One shared server serves this repository, and every worker
+attached to it is visible to every other through `majordomus_peers`. Announce what you are
+doing and the paths you expect to touch, with `majordomus_announce`, before you start — and
+again whenever the connection is re-established, because an announcement belongs to a
+connection and a worker that reconnects keeps its work while losing its place on the board.
+Read the board before you open a mandate and before you fan work out: two workers built the
+same subsystem in one afternoon because neither looked first. A scope announced there is a
+claim, not a lock; the task's own scope and `check --overlap` are what refuse a commit.
+
+Push what you have, early. A branch whose commits reach no remote is invisible to every
+other worker, cannot be integrated by anyone but you, and is one disk away from being lost;
+`majordomus doctor` names those branches.
+
+Before implementing something new — a module, a command group, a document kind, a
+generated artifact — run `scripts/collision-check --new <paths>` to see which other
+branches already carry those paths, not only who the peer board says is working now: a
+branch pushed before this session started carries no announcement and no less of a claim.
+Announce with `majordomus_announce` once the paths are clear, and announce the
+identifier you are about to allocate — an ADR number, a case number, an issue id —
+not only the paths: a branch scan sees what was pushed, and the board is the only
+thing that sees a number two sessions are taking in the same minute. The rule is
+`project.work-is-claimed-before-it-is-built`.
+
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
 checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived
 from git and never chosen or registered; the primary checkout hosts the trunk. Before

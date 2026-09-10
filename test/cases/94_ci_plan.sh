@@ -20,6 +20,17 @@ grep -q no-such-gate broken.yaml || { echo "    the mutation did not take"; exit
 expect_exit 10 "$PLAN" --model broken.yaml --check
 expect_grep 'names a gate that does not exist: no-such-gate'
 
+# --- the usage a person guesses. `ci-plan <path> <path>` is the obvious first try and the
+# one thing the parser cannot take, so the refusal names the spelling it wanted rather than
+# reporting a path as an option; a misspelt option is a different mistake and still says so.
+# Both exit 2.
+expect_exit 2 "$PLAN" docs/DESIGN.md docs/CLI.md
+expect_grep 'paths are not given as arguments'
+expect_grep '--files -'
+expect_no_grep 'unknown option'
+expect_exit 2 "$PLAN" --fils docs/DESIGN.md
+expect_grep 'unknown option --fils'
+
 # --- the gates that always run are in every plan, and an empty change selects nothing else.
 # Which gates those are comes from the model, not from a list here: a gate that gains
 # `always: true` should not have to be spelled in a case to be believed.

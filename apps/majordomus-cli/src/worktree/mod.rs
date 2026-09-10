@@ -55,6 +55,7 @@ pub(crate) mod path;
 pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
+pub(crate) mod trace;
 
 pub use direnv::EnvrcApproval;
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
@@ -71,3 +72,7 @@ pub use model::{
 pub use path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
 pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
+pub use trace::{
+    Attribution, BranchTrace, CommitAttribution, CommitRef, Integration, IssueTrace, TraceReport,
+    TraceTallies, Tracer,
+};

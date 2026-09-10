@@ -33,6 +33,12 @@ gates:
     runs: scripts/ui check
     summary: the static half of UI conformance — every scrolling box this repository writes is reachable from the keyboard
 
+  - id: pipefail-check
+    job: structure
+    always: true
+    runs: scripts/ci/pipefail-check
+    summary: a script that pipes under `set -e` may not report its pipeline's failure as its last command's success; a ratchet over the scripts that still can
+
   - id: core-check
     job: structure
     always: true
@@ -65,6 +71,11 @@ gates:
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
+  - id: command-furnished
+    job: structure
+    runs: scripts/ci/command-furnished
+    summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
+
   - id: rust-command
     job: structure
     runs: scripts/ci/rust-command-check --strict
@@ -74,6 +85,11 @@ gates:
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
     summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
+
+  - id: generation-converges
+    job: structure
+    runs: scripts/ci/generation-converges
+    summary: generating twice changes nothing the second time — no artifact is written from a value the same run also writes
 
   - id: rust-coverage
     job: coverage
@@ -100,15 +116,32 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
+  # stylesheets from it and greps the tree. Cheap enough to run beside the structure checks
+  # rather than behind the site build, which is where a gate stops being run.
+  - id: design
+    job: structure
+    runs: scripts/ci/design-check
+    summary: the three generated stylesheets match share/design/tokens.yaml, and no file that puts a colour on a screen names one outside it
+
   - id: worktree-topology
     job: structure
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
+  # The one structural gate that reads the remote. It needs a token (issues:read) and says
+  # so rather than passing when it has none: a projection gate that skips quietly is the
+  # disease it was written to cure — --check has exited 11 on drift since the adapter was
+  # written, and nothing ever called it.
   - id: order-check
     job: structure
     runs: scripts/ci/order-check
     summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
+
+  - id: github-projection
+    job: structure
+    runs: scripts/ci/github-check
+    summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
   - id: providers-data
     job: structure
@@ -185,7 +218,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -200,7 +233,14 @@ classes:
   # union of every matching class, so both apply.
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs]
-    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check]
+    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check, design]
+
+  # the design tokens and their projections. The canonical file reaches every surface, so a
+  # change here is selected by the site, the Cockpit and the crate at once; the class exists
+  # so that the gate also runs when only the generator or the gate itself is edited.
+  - id: design
+    paths: [share/design/**, scripts/design-tokens, scripts/ci/design-check, apps/majordomus-cli/src/web/tokens.css]
+    gates: [design, cockpit-assets, rust-check, site-build, site-probe, ui-audit]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of
@@ -212,13 +252,13 @@ classes:
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
@@ -228,7 +268,7 @@ classes:
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

@@ -8,7 +8,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CapabilityKind, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::peers::{Peer, PeerId};
+use crate::peers::{Announced, Overlap, Peer, PeerId};
 use crate::{capability, module};
 
 use super::{get, mcp, post, Empty};
@@ -23,16 +23,23 @@ pub struct PeerList {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The caller's own peer id, when the call came through an MCP session.
     pub caller: Option<PeerId>,
-    /// The peers, in attachment order; `p1` started the server.
+    /// The peers, in attachment order; `p1` started the server. A peer that announced
+    /// something and then went away is still here, with `attached: false`.
     pub peers: Vec<Peer>,
+    /// Every pair of peers whose claimed scope meets, each pair once. Empty is the
+    /// ordinary case, and a reader who sees an entry here is looking at two sessions
+    /// about to do the same work.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub overlaps: Vec<Overlap>,
 }
 
 fn peers_list(ctx: &Context, _: Empty) -> Result<PeerList, CapabilityError> {
     let peers = ctx.peers.list();
     Ok(PeerList {
-        count: peers.len(),
+        count: peers.iter().filter(|p| p.attached).count(),
         caller: ctx.caller.clone(),
         peers,
+        overlaps: ctx.peers.overlaps(),
     })
 }
 
@@ -62,7 +69,7 @@ impl BenchmarkCases for AnnounceInput {
     }
 }
 
-fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Peer, CapabilityError> {
+fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Announced, CapabilityError> {
     let Some(caller) = &ctx.caller else {
         return Err(CapabilityError::Refused(
             "announce needs an MCP session: this call came through an interface with no peer identity (call the majordomus_announce tool)".into(),
@@ -109,7 +116,7 @@ pub fn module() -> ModuleDescriptor {
                 title: "Announce what this peer is working on",
                 description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
                 input: AnnounceInput,
-                output: Peer,
+                output: Announced,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure { mcp: mcp("majordomus_announce"), http: post("/api/v1/peers/announce"), cli: None },
                 tags: ["peers", "coordination"],

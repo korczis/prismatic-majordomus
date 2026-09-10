@@ -8,7 +8,8 @@
     "documentation": "/docs",
     "swagger": "/swagger",
     "openapi": "/openapi.json",
-    "capabilities": "/api/v1/"
+    "capabilities": "/api/v1/",
+    "events": "/events"
   },
   "surfaces": [
     {
@@ -71,6 +72,21 @@
       }
     },
     {
+      "id": "events",
+      "title": "The live channel: what this process's executions are doing",
+      "category": "protocol",
+      "visibility": "internal",
+      "kind": "native-route",
+      "mount": "/events",
+      "producer": "http::events",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
       "id": "mcp",
       "title": "MCP over HTTP for attached clients",
       "category": "protocol",
@@ -94,7 +110,7 @@
       "kind": "native-route",
       "mount": "/openapi.json",
       "producer": "capability registry",
-      "availability": "served-only",
+      "availability": "both",
       "provenance": {
         "mount": {
           "source": "registry"

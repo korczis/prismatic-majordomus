@@ -1127,6 +1127,140 @@ mod tests {
             .unwrap()
     }
 
+    /// A repository with a primary checkout and whatever linked worktrees a test asks for.
+    /// Under the temporary directory on purpose: `ephemeral_root_of` disables the temporary
+    /// roots for a repository that is itself inside one, so a worktree outside the container
+    /// is `Misplaced` rather than `Ephemeral`.
+    struct Repo {
+        _home: tempfile::TempDir,
+        primary: PathBuf,
+    }
+
+    impl Repo {
+        fn new() -> Self {
+            let home = tempfile::tempdir().expect("tempdir");
+            let primary = home.path().join("dev/repo");
+            std::fs::create_dir_all(&primary).expect("mkdir");
+            let r = Repo {
+                _home: home,
+                primary,
+            };
+            r.git(&["init", "-q", "-b", "master", "."]);
+            r.git(&["config", "user.email", "t@example.com"]);
+            r.git(&["config", "user.name", "t"]);
+            r.git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+            r
+        }
+
+        fn git(&self, args: &[&str]) {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&self.primary)
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        }
+
+        fn worktree(&self, branch: &str, at: &Path) {
+            if let Some(parent) = at.parent() {
+                std::fs::create_dir_all(parent).expect("mkdir");
+            }
+            self.git(&["worktree", "add", "-q", "-b", branch, &at.to_string_lossy()]);
+        }
+
+        fn service(&self) -> WorktreeService {
+            WorktreeService::open(&self.primary).expect("a service")
+        }
+    }
+
+    #[test]
+    fn a_worktree_resolves_by_branch_or_by_path_and_says_so_when_it_is_neither() {
+        let repo = Repo::new();
+        let svc = repo.service();
+        let home = svc.expected_path_of("feature/x").expect("a path");
+        repo.worktree("feature/x", &home);
+        let svc = repo.service();
+
+        // by branch
+        let by_branch = svc.resolve("feature/x").expect("resolved by branch");
+        assert_eq!(by_branch.branch.as_deref(), Some("feature/x"));
+        // by path, which is the same record
+        let by_path = svc
+            .resolve(&home.to_string_lossy())
+            .expect("resolved by path");
+        assert_eq!(by_path.path, by_branch.path);
+        // and a selector that is neither names itself in the refusal
+        let err = svc.resolve("feature/never").expect_err("no such worktree");
+        assert!(err.to_string().contains("feature/never"), "{err}");
+    }
+
+    #[test]
+    fn a_branch_whose_worktree_is_home_passes_the_guard_and_one_that_is_not_does_not() {
+        let repo = Repo::new();
+        let home = repo
+            .service()
+            .expected_path_of("feature/home")
+            .expect("path");
+        repo.worktree("feature/home", &home);
+
+        // the guard is asked from inside a worktree; open the service there
+        let inside = WorktreeService::open(&home).expect("a service inside the worktree");
+        let verdict = inside.guard().expect("a verdict");
+        assert!(verdict.ok, "{verdict:?}");
+        assert!(verdict.reason.is_none());
+        assert_eq!(verdict.branch.as_deref(), Some("feature/home"));
+
+        // and one that is misplaced fails it, with the reason and the destination
+        let away = repo.primary.parent().unwrap().join("elsewhere");
+        repo.worktree("feature/away", &away);
+        let outside = WorktreeService::open(&away).expect("a service inside the worktree");
+        let verdict = outside.guard().expect("a verdict");
+        assert!(!verdict.ok, "{verdict:?}");
+        assert!(verdict.reason.is_some(), "a refusal carries its reason");
+        assert!(verdict.expected_path.is_some(), "and where it belongs");
+    }
+
+    #[test]
+    fn the_expected_path_of_a_branch_is_under_the_container_and_a_bad_name_is_refused() {
+        let repo = Repo::new();
+        let svc = repo.service();
+        let container = svc.container().path.clone();
+
+        let path = svc.expected_path_of("feature/nested/deep").expect("a path");
+        assert!(path.starts_with(&container), "{path:?}");
+        assert!(path.ends_with("feature/nested/deep"), "{path:?}");
+
+        // a name that would climb out of the container is refused rather than resolved
+        for bad in ["../escape", "..", "feature/../../escape"] {
+            assert!(
+                svc.expected_path_of(bad).is_err(),
+                "{bad} resolved to a path"
+            );
+        }
+    }
+
+    #[test]
+    fn inspecting_a_branch_reports_where_it_belongs_whether_or_not_it_is_there() {
+        let repo = Repo::new();
+        let svc = repo.service();
+
+        // a branch with no worktree still has a canonical path
+        let absent = svc.inspect("feature/absent").expect("a report");
+        assert!(
+            absent.expected_path.contains("feature/absent"),
+            "{}",
+            absent.expected_path
+        );
+
+        let home = svc.expected_path_of("feature/there").expect("a path");
+        repo.worktree("feature/there", &home);
+        let present = repo.service().inspect("feature/there").expect("a report");
+        assert_eq!(present.expected_path, display(&home));
+    }
+
     #[test]
     fn the_declared_scratch_roots_name_the_temporary_directory_and_every_providers_own() {
         let primary = Path::new("/srv/repo");

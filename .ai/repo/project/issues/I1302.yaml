@@ -1,0 +1,37 @@
+id: I1302
+milestone: external-workspaces
+title: Identity, provenance and support level are typed fields, not prose
+slug: identity-and-provenance
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Define the record model every synced item carries: upstream identity, local identity, content hash, the transport that produced it, the acquisition mode, the support level and the tombstone, as a schema with a version, before any adapter writes a byte."
+why: "The pack this milestone came from is right about one thing above all: raw observation, normalised entity and derived knowledge are three different things, and a corpus that confuses them cannot be re-synced, re-checked or believed. A title is not an identity. A record that does not say how it was acquired cannot be told apart from a guess."
+current_state: "Nothing exists. The repository's own kinds compute identity generically from declared fields (index.rs identity_of) and that mechanism does not reach local content."
+desired_state: "One versioned schema describes a synced record: `upstream_id` as the vendor gave it, a local identity derived from vendor and upstream id and never from a title, a content hash over the normalised body, `transport` (official, browser, private_http), `acquisition` (push, stream, websocket, browser_observed, poll), `support` (official, browser_observed, private, derived), first-seen and last-seen stamps, and a tombstone that marks a record gone upstream rather than deleting it."
+scope:
+  - share/schemas
+  - docs
+non_scope:
+  - Any adapter or transport implementation
+  - Any vendor-specific field; ChatGPT's own shape is I1307
+  - Placing the schema file under share/schemas/ before something reads it. The schema-integrity doctrine refuses a schema that nothing applies, and nothing reads a workspace record until the syncer (I1306) or the reader capability (I1308) exists, so the file lands in the same change as its first reader rather than ahead of it.
+depends_on:
+  - I1301
+acceptance_criteria:
+  - A local identity is reproducible from vendor and upstream identity alone and never depends on a display title
+  - Every record states its transport, its acquisition mode and its support level as enumerated values
+  - A content hash distinguishes a changed record from a re-observed one
+  - A record gone upstream is tombstoned with a stamp, never removed silently
+  - The schema carries a version and an unknown version is refused rather than parsed
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - identity_reproducible
+  - provenance_typed
+  - tombstone_semantics
+  - schema_versioned
+risk: "Over-modelling. The enumerations must be the ones a consumer actually branches on; a taxonomy nobody reads is a cost with no reader."
+created_at: 2026-09-09
+updated_at: 2026-09-09

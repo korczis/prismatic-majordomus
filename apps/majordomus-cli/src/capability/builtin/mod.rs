@@ -38,16 +38,20 @@ pub(crate) mod deploy;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
+pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
 pub mod objects;
+pub mod obligations;
 pub(crate) mod peers;
 pub(crate) mod perf;
+pub mod plan;
 pub(crate) mod product;
 pub mod quality;
 pub mod release;
 pub mod repository;
 mod scope;
+pub mod trace;
 mod views;
 pub mod web;
 pub(crate) mod worktree;
@@ -77,16 +81,27 @@ pub use distribution::{
     ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
 pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
+pub use executions::{
+    CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
+    EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
-    resolve, AnswerView, GetInput, ListInput, ObjectList, Resolved, ResourceView, SearchHit,
-    SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
+    resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
+    ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
+    VerifyReport, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
+};
+pub use obligations::{
+    Closure, Evidence, Obligation, ObligationClosure, ObligationState, Vocabulary, CLOSURE_URI,
+    OBLIGATIONS_URI,
 };
 pub use peers::{AnnounceInput, PeerList};
+pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
 pub use commands::{CommandGraphReport, CommandIndex, CommandSummary};
@@ -108,9 +123,12 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        obligations,
         deploy,
+        executions,
         peers,
         perf,
+        plan,
         directories,
         artifacts,
         environment,
@@ -119,6 +137,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         why,
         web,
         worktree,
+        trace,
         product
     ]
 }

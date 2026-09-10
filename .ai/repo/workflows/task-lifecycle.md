@@ -42,3 +42,32 @@ Never author identity fields. `repository_id`, `branch`, `head`, `working_tree` 
 Escalate capability and effort only when the profile allows it and record that you did.
 Think as hard as the task needs and report as briefly as the profile says: execution
 depth is not output verbosity.
+
+## Reading a gate's answer
+
+Two failures cost most of a day on 2026-09-09, and both are about believing the wrong part
+of what a tool said.
+
+**A zero exit code is not a verdict.** `scripts/derive` exited 0 while printing an error
+that two decision records shared one identity and both had been dropped from the index.
+Everything derived afterwards was written without them. Derivations and their checks now
+run under `--strict`, so an error diagnostic ends the run — rule
+`project.diagnostics-decide-the-exit`. When you read a log, read the diagnostics, not only
+the last line.
+
+**A green history is not a green tree.** Master carried two defects that failed every branch
+merging it, and its own history looked clean, because its last *completed* validate run
+predated the commit that introduced them and every run since was queued. Before concluding
+that a failure on your branch is inherited, check when the newest completed run on the base
+actually finished, and if the answer is "there isn't one", run the gate locally. The full
+gate, not an approximation of it: `--integration` passed on the branch whose `--ci` was red.
+
+**Before adding a public command**, run `scripts/ci/command-furnished`. It reports in one
+second everything the command still needs — its `docs/CLI.md` section, its fixture, its
+`demo:`, its behavioural case and its negative case — instead of one missing piece per
+ten-minute derivation, which is what it cost the day it was written.
+
+**Values come from closed sets.** A use case's `target`, a rule's `exit_code`, a use case's
+`category`, a scenario's `setup`: each is a list somewhere in the repository, and each was
+guessed wrong at least once that day. Read the list. `majordomus usecase validate` and
+`adr check` will tell you, but they tell you one derivation later than the file does.

@@ -30,14 +30,10 @@ if [ -n "$share" ]; then
   MAJORDOMUS_SHARE="$share"; export MAJORDOMUS_SHARE
 fi
 
-# Is the executable missing, or older than any source, manifest or lock file?
+# Is the executable missing, or older than any source, manifest or lock file? Decided in
+# lib/rust_bin.sh, so that this script and the one `.envrc` calls cannot disagree about it.
 stale=0
-if [ ! -x "$bin" ]; then
-  stale=1
-elif [ -z "${MAJORDOMUS_BIN:-}" ]; then
-  newer="$(find "$crate/src" "$crate/Cargo.toml" "$crate/Cargo.lock" -type f -newer "$bin" 2>/dev/null | head -n 1)"
-  [ -n "$newer" ] && stale=1
-fi
+mj_rust_stale "$root" "$bin" && stale=1
 
 if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then

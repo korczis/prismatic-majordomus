@@ -100,6 +100,35 @@ pub fn ls_files(root: &Path, pathspec: &str) -> Result<Vec<String>> {
     ls_files_with(root, &[pathspec])
 }
 
+/// Tracked files under `root` matching any of several pathspecs, repository-relative, in
+/// the byte order the index keeps them in — one subprocess, one pass, each file once.
+///
+/// Asking per pathspec and concatenating would give neither: a file two pathspecs both
+/// select would appear twice, and the order would be the caller's rather than git's. A
+/// hash taken over the result depends on both, which is why this exists as its own call.
+///
+/// ```
+/// use majordomus_cli::git::ls_files_any;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// std::fs::create_dir(dir.path().join("lib")).unwrap();
+/// std::fs::write(dir.path().join("lib/b.sh"), "b").unwrap();
+/// std::fs::write(dir.path().join("a.md"), "a").unwrap();
+/// git(&["add", "-A"]);
+///
+/// // git's own index order, and each file once however many pathspecs select it
+/// let files = ls_files_any(dir.path(), &["a.md", "lib/**", "*.md"]).unwrap();
+/// assert_eq!(files, vec!["a.md".to_string(), "lib/b.sh".to_string()]);
+/// ```
+pub fn ls_files_any(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
+    ls_files_with(root, pathspecs)
+}
+
 fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     let out = Command::new("git")
         .arg("-C")

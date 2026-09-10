@@ -5,18 +5,18 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "0489a7cb2e60a195fc3ad7d9431684787c66c0e67f7ac4f8114b04eab93caa39",
+  "fingerprint": "706bd7b0cc9832d1226441d936270b6600bebaf321fb4c3ad68574f79aa3e41e",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 20,
-    "modules_covered": 15,
-    "commands": 27,
+    "modules": 24,
+    "modules_covered": 16,
+    "commands": 28,
     "commands_covered": 27,
-    "kinds": 24,
+    "kinds": 25,
     "kinds_covered": 22
   },
   "surfaces": [
@@ -30,7 +30,7 @@
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 12
+      "features": 13
     },
     {
       "id": "mcp",
@@ -42,7 +42,7 @@
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 13
+      "features": 14
     },
     {
       "id": "docs",
@@ -270,11 +270,11 @@
         },
         {
           "name": "command",
-          "objects": 28
+          "objects": 29
         },
         {
           "name": "claim",
-          "objects": 145
+          "objects": 147
         }
       ],
       "rule_refs": [
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 197,
+        "mcp_resources": 200,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 193,
+        "objects": 196,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -710,6 +710,14 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_search",
               "route": "GET /api/v1/search"
+            },
+            {
+              "id": "objects.verify",
+              "title": "Verify the index against the working tree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_verify_objects",
+              "route": "GET /api/v1/objects/verify"
             }
           ]
         },
@@ -1108,10 +1116,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 3,
-        "http_routes": 7,
+        "http_routes": 8,
         "cli_paths": 1,
         "commands": 0,
         "objects": 0,
@@ -2431,7 +2439,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 29
+          "objects": 33
         },
         {
           "name": "knowledge",
@@ -2439,7 +2447,7 @@
         },
         {
           "name": "document",
-          "objects": 206
+          "objects": 209
         }
       ],
       "rule_refs": [
@@ -2688,11 +2696,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 237,
+        "mcp_resources": 244,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 236,
+        "objects": 243,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2857,7 +2865,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 99
+          "objects": 108
         }
       ],
       "rule_refs": [
@@ -3178,11 +3186,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 100,
+        "mcp_resources": 109,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 99,
+        "objects": 108,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -4957,7 +4965,9 @@
         "work-tracking"
       ],
       "audiences": [],
-      "modules": [],
+      "modules": [
+        "trace"
+      ],
       "commands": [
         "plan"
       ],
@@ -5005,12 +5015,47 @@
       "source": ".ai/repo/features/planning.md",
       "surfaces": {
         "cli": true,
-        "api": false,
+        "api": true,
         "mcp": true,
-        "cockpit": false,
+        "cockpit": true,
         "docs": true
       },
-      "module_refs": [],
+      "module_refs": [
+        {
+          "id": "trace",
+          "title": "Traceability",
+          "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+          "capabilities": [
+            {
+              "id": "trace.commit",
+              "title": "What contract this commit served",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_trace_commit",
+              "route": "GET /api/v1/trace/commit"
+            },
+            {
+              "id": "trace.issue",
+              "title": "What realised this issue",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_trace_issue",
+              "route": "GET /api/v1/trace/issue"
+            },
+            {
+              "id": "trace.report",
+              "title": "The whole work graph above the branch",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_traceability",
+              "resource": "majordomus://traceability",
+              "route": "GET /api/v1/trace"
+            }
+          ]
+        }
+      ],
       "command_refs": [
         {
           "id": "plan",
@@ -5022,11 +5067,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 15
+          "objects": 17
         },
         {
           "name": "issue",
-          "objects": 184
+          "objects": 202
         }
       ],
       "rule_refs": [
@@ -5167,13 +5212,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 0,
-        "mcp_tools": 0,
-        "mcp_resources": 199,
-        "http_routes": 0,
+        "capabilities": 3,
+        "mcp_tools": 3,
+        "mcp_resources": 220,
+        "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 199,
+        "objects": 219,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5187,7 +5232,9 @@
           "guaranteed": 7,
           "rejected": 1
         },
-        "modules": {}
+        "modules": {
+          "behaviorally_verified": 1
+        }
       }
     },
     {
@@ -5334,7 +5381,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 26
+          "objects": 27
         },
         {
           "name": "scope",
@@ -5614,11 +5661,11 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 30,
+        "mcp_resources": 31,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 27,
+        "objects": 28,
         "rules": 6,
         "enforced_rules": 3,
         "docs": 2,
@@ -5712,7 +5759,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 40
+          "objects": 41
         },
         {
           "name": "application",
@@ -5824,11 +5871,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 55,
+        "mcp_resources": 56,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 55,
+        "objects": 56,
         "rules": 3,
         "enforced_rules": 2,
         "docs": 2,
@@ -7149,14 +7196,16 @@
         "status": "stable",
         "surfaces": {
           "cli": true,
-          "api": false,
+          "api": true,
           "mcp": true,
-          "cockpit": false,
+          "cockpit": true,
           "docs": true
         },
         "exposed": [
           "cli",
+          "api",
           "mcp",
+          "cockpit",
           "docs"
         ]
       },
@@ -7344,6 +7393,11 @@
         "features": []
       },
       {
+        "id": "executions",
+        "title": "Executions",
+        "features": []
+      },
+      {
         "id": "graph",
         "title": "Graphs",
         "features": [
@@ -7366,6 +7420,11 @@
         ]
       },
       {
+        "id": "obligations",
+        "title": "Obligations",
+        "features": []
+      },
+      {
         "id": "peers",
         "title": "Peers",
         "features": [
@@ -7378,6 +7437,11 @@
         "features": [
           "benchmarks"
         ]
+      },
+      {
+        "id": "plan",
+        "title": "The plan and its derivations",
+        "features": []
       },
       {
         "id": "product",
@@ -7402,6 +7466,13 @@
         "features": [
           "interfaces",
           "context"
+        ]
+      },
+      {
+        "id": "trace",
+        "title": "Traceability",
+        "features": [
+          "planning"
         ]
       },
       {
@@ -7497,6 +7568,11 @@
         "features": [
           "doctrine"
         ]
+      },
+      {
+        "id": "evidence",
+        "title": "evidence",
+        "features": []
       },
       {
         "id": "finish",
@@ -7637,7 +7713,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (29)",
+        "title": "adr (33)",
         "features": [
           "knowledge"
         ]
@@ -7665,21 +7741,21 @@
       },
       {
         "id": "claim",
-        "title": "claim (145)",
+        "title": "claim (147)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "command",
-        "title": "command (28)",
+        "title": "command (29)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "context",
-        "title": "context (26)",
+        "title": "context (27)",
         "features": [
           "context"
         ]
@@ -7705,7 +7781,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (184)",
+        "title": "issue (202)",
         "features": [
           "planning"
         ]
@@ -7719,7 +7795,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (15)",
+        "title": "milestone (17)",
         "features": [
           "planning"
         ]
@@ -7759,7 +7835,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (99)",
+        "title": "rule (108)",
         "features": [
           "doctrine"
         ]
@@ -7795,10 +7871,15 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (40)",
+        "title": "use-case (41)",
         "features": [
           "use-cases"
         ]
+      },
+      {
+        "id": "workspace",
+        "title": "workspace (1)",
+        "features": []
       }
     ]
   },
@@ -8526,49 +8607,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1105,
-    "builtin": 52,
-    "declarative": 1053,
-    "modules": 20,
-    "mcp_tools": 50,
-    "mcp_resources": 1073,
-    "http_routes": 52,
-    "cli_commands": 81,
-    "shell_commands": 27,
-    "kinds": 27,
-    "objects": 1053,
+    "capabilities": 1184,
+    "builtin": 73,
+    "declarative": 1111,
+    "modules": 24,
+    "mcp_tools": 71,
+    "mcp_resources": 1137,
+    "http_routes": 73,
+    "cli_commands": 88,
+    "shell_commands": 28,
+    "kinds": 28,
+    "objects": 1111,
     "by_kind": {
-      "adr": 29,
+      "adr": 33,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 145,
-      "command": 28,
-      "context": 26,
+      "claim": 147,
+      "command": 29,
+      "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 206,
+      "document": 209,
       "feature": 20,
-      "implementation": 44,
-      "issue": 184,
+      "implementation": 45,
+      "issue": 202,
       "knowledge": 1,
-      "milestone": 15,
+      "milestone": 17,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 99,
+      "rule": 108,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 119,
-      "use-case": 40
+      "test": 134,
+      "use-case": 41,
+      "workspace": 1
     },
     "providers": 6,
     "features": 19,
-    "web_surfaces": 8
+    "web_surfaces": 9
   },
   "valid": true
 }

@@ -182,6 +182,15 @@ pub struct ActiveTask {
     /// The paths it claims.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub scope: Vec<String>,
+    /// The obligations it owes before the outcome `completed` is available.
+    ///
+    /// Beside `scope` and not inside it, because the two are different promises: scope is
+    /// containment — where a worker may write — and this is delivery. A change can sit
+    /// entirely inside its scope and still be uncommitted on a laptop (ADR 0030).
+    /// [`super::obligations`] is what judges each of these against its evidence; here it
+    /// is reported as declared.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: Vec<String>,
     /// When it started.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub started_at: String,
@@ -292,7 +301,7 @@ fn section(path: &Path, want: &str) -> String {
 /// Compare a record's commit with this checkout's, the same way the shell tool does: by
 /// ancestry, not by equality of timestamps. `git` being unavailable yields `Unknown`, which
 /// is the honest answer and not `Exact`.
-fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Divergence {
+pub(crate) fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Divergence {
     let Some(ours) = ours else {
         return Divergence::Unknown;
     };
@@ -540,8 +549,13 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
 }
 
 /// The active task record. Read whole rather than through the scalar flattening, because
-/// `scope` is a list and a task without its scope is a task whose claim nobody can check.
-fn read_task(path: &Path) -> Option<ActiveTask> {
+/// `scope` and `requires` are lists, and a task without its scope is a task whose claim
+/// nobody can check.
+///
+/// Shared with [`super::obligations`], which expands `requires` against the evidence in the
+/// ledger. One reader for one file: a second parse of the same record is how two surfaces
+/// come to disagree about what the task said.
+pub(crate) fn read_task(path: &Path) -> Option<ActiveTask> {
     let text = std::fs::read_to_string(path).ok()?;
     let map = yaml::parse_mapping(&text).ok()?;
     let s = |k: &str| map.get(k).and_then(yaml::scalar_string).unwrap_or_default();
@@ -549,17 +563,21 @@ fn read_task(path: &Path) -> Option<ActiveTask> {
     if id.is_empty() {
         return None;
     }
-    let scope = map
-        .get("scope")
-        .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(yaml::scalar_string).collect())
-        .unwrap_or_default();
+    let list = |k: &str| -> Vec<String> {
+        map.get(k)
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(yaml::scalar_string).collect())
+            .unwrap_or_default()
+    };
+    let scope = list("scope");
+    let requires = list("requires");
     Some(ActiveTask {
         id,
         task: s("task"),
         profile: s("profile"),
         outcome: s("outcome"),
         scope,
+        requires,
         started_at: s("started_at"),
         head: s("head"),
     })
