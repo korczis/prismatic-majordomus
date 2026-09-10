@@ -83,9 +83,9 @@ impl SharedServer {
                             tracing::info!(peers = ?gone, "peer(s) expired: no message within the idle timeout");
                         }
                         if !lost
-                            && !LeaseFile::read(&path)
+                            && LeaseFile::read(&path)
                                 .document()
-                                .is_some_and(|d| d.token == token)
+                                .is_none_or(|d| d.token != token)
                         {
                             lost = true;
                             crate::lease::lost();

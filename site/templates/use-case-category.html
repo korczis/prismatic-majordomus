@@ -22,9 +22,9 @@
     {%- endif %}{%- endfor -%}
   </ul>
   {%- endif %}
-  {%- if c.applications | length > 0 %}
+  {%- if c.applications | default(value=[]) | length > 0 %}
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Applications these belong to</h2>
-  <ul class="mt-4 flex flex-wrap gap-2">{% for a in c.applications %}{% set aa = cat.applications[cat.ap_index[a]] %}<li><a href="{{ get_url(path='/applications/' ~ a ~ '/', trailing_slash=true) }}" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium">{{ aa.title }}</a></li>{% endfor %}</ul>
+  <ul class="mt-4 flex flex-wrap gap-2">{% for a in c.applications | default(value=[]) %}{% set aa = cat.applications[cat.ap_index[a]] %}<li><a href="{{ get_url(path='/applications/' ~ a ~ '/', trailing_slash=true) }}" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium">{{ aa.title }}</a></li>{% endfor %}</ul>
   {%- endif %}
   <p class="mt-10 text-sm"><a href="{{ get_url(path='/use-cases/', trailing_slash=true) }}" class="text-fg-brand underline">Every category</a> · <a href="{{ get_url(path='/use-cases/coverage/', trailing_slash=true) }}" class="text-fg-brand underline">coverage</a></p>
 </div>

@@ -155,7 +155,7 @@ fixture's declaration reach every stylesheet, the site's dataset and the invento
 a stale projection; and the capabilities answer the same fingerprint the sheets carry. The
 crate's own tests hold the validator's refusals, the renderer's shape — including that the
 dark block is a class after the root block — and the zero-registration property.
-`test/cases/111_design_contrast.sh` proves the readability floor the same way: the
+`test/cases/120_design_contrast.sh` proves the readability floor the same way: the
 declaration measures clean in both themes; a rule added to a primitive is measured with
 nothing registered anywhere, so the pair set is derived and not listed; and a rule that puts
 a colour on a ground it cannot be read on is a finding that names role, ground, theme and
