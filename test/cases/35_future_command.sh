@@ -14,11 +14,13 @@ fixture_repo "$C" AGENTS.md docs site/data/marketing.toml site/data/nav.toml sit
 
 # Each case is run against the copy, in a disposable repository of its own — the same shape
 # test/run.sh gives a case, so what runs here is what runs in CI.
-i=0
 run_case() {
-  i=$((i + 1))
-  local w="$T/case-$i"
-  mkdir -p "$w"
+  # a repository per stage, named by mktemp rather than by a counter: every call here is
+  # inside a command substitution, which is a subshell, so an incremented variable never
+  # reached the next call and all four stages ran in the first stage's repository. The
+  # second `majordomus init` then refused a directory the first had already written, and
+  # the failure it reported was that refusal rather than the surface under test.
+  local w; w="$(mktemp -d "$T/case.XXXXXX")"
   ( cd "$w" && git init -q . && git config user.email t@example.com && git config user.name t \
     && git commit -q --allow-empty -m init ) >/dev/null
   ( cd "$w" && ROOT="$C" MJ="$C/bin/majordomus" T="$w" bash "$C/test/cases/$1.sh" 2>&1 )
