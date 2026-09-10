@@ -93,12 +93,15 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
-    /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
-    /// release records, the decisions dated inside each release's window and the
-    /// conventional commits in its range (see [`crate::release`]).
+    /// `docs/generated/changelog.{json,yaml,md}`: the changelog of every published release,
+    /// composed from the layer's release records, the decisions dated inside each release's
+    /// window and the conventional commits in its range (see [`crate::release`]). Not the
+    /// unreleased section: that is `<last release>..HEAD`, which no committed file can
+    /// carry without going stale at the next commit, and which the served surfaces add at
+    /// request time.
     ///
     /// A generated document like any other, which is the point: `generate --check` is what
-    /// notices that the changelog has stopped describing the tree, so nobody has to
+    /// notices that the changelog has stopped describing the releases, so nobody has to
     /// remember to update it.
     Changelog,
     /// Everything derived from the distribution model (see `crate::distribution`): the
@@ -627,11 +630,16 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
     if targets.contains(&Target::Changelog) {
         // The changelog is composed from the layer's own release records, the decisions
-        // dated inside each release's window, and the repository's commits — the same value
-        // `release.changelog` answers with, so the reference and the API never disagree.
-        // The Markdown is the rendering a person reads; the JSON and YAML are the document
-        // every other reader gets, and all three are compared by `generate --check`.
-        let log = crate::release::compose(app.repository.root(), &app.context.index.objects);
+        // dated inside each release's window, and the repository's commits up to the newest
+        // release — the published half of what `release.changelog` answers with. The
+        // unreleased section is `<last release>..HEAD`, and a file inside a commit cannot
+        // describe the commit it is in; a committed artifact that tried made every commit
+        // stale by construction. The API, MCP and the Cockpit add that section at request
+        // time, where HEAD is a fact and not a promise. The Markdown is the rendering a
+        // person reads; the JSON and YAML are the document every other reader gets, and all
+        // three are compared by `generate --check`.
+        let log =
+            crate::release::compose_published(app.repository.root(), &app.context.index.objects);
         let value = serde_json::to_value(&log).unwrap_or(serde_json::Value::Null);
         out.extend(
             Document::new(
@@ -694,10 +702,11 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             .iter()
             .filter(|o| o.kind == crate::deploy::KIND)
         {
-            let deployment = crate::deploy::Deployment::parse(object)
-                .map_err(|refusal| Error::InvalidDeployment {
+            let deployment = crate::deploy::Deployment::parse(object).map_err(|refusal| {
+                Error::InvalidDeployment {
                     reason: refusal.to_string(),
-                })?;
+                }
+            })?;
             out.extend(crate::deploy::render::artifacts(
                 &deployment,
                 &object.provenance.path,

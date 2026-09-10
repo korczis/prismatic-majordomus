@@ -697,11 +697,22 @@ fn distinct_commits(traces: &[IssueTrace]) -> usize {
 /// holds it, never because a record said so.
 pub fn attribute(commits: &[CommitRef], traces: &[IssueTrace]) -> Vec<CommitAttribution> {
     let mut owners: BTreeMap<&str, BTreeSet<(&str, &str)>> = BTreeMap::new();
+    // A commit belongs to the issue whose branch carries it — and a merge commit belongs to
+    // the issue whose branch it merged, though no branch contains it. The merge commit is
+    // the one a reader is most likely to hold: it is what lands on the trunk and what a
+    // release note names. Leaving it unattributed answered "which outcome did this serve?"
+    // with silence for exactly the commit the question is usually asked about.
     for t in traces {
         for b in &t.branches {
             for c in &b.commits {
                 owners
                     .entry(c.id.as_str())
+                    .or_default()
+                    .insert((t.issue.as_str(), b.name.as_str()));
+            }
+            if let Some(m) = b.merge_commit.as_deref() {
+                owners
+                    .entry(m)
                     .or_default()
                     .insert((t.issue.as_str(), b.name.as_str()));
             }
@@ -803,7 +814,12 @@ mod tests {
 
     #[test]
     fn a_commit_no_issue_branch_holds_is_reported_not_omitted() {
-        let traces = vec![trace("I1305", Some("work-graph"), "feature/I1305-x", &["aaa"])];
+        let traces = vec![trace(
+            "I1305",
+            Some("work-graph"),
+            "feature/I1305-x",
+            &["aaa"],
+        )];
         let out = attribute(&[commit("aaa"), commit("zzz")], &traces);
         assert_eq!(out.len(), 2, "every examined commit is in the answer");
         assert_eq!(out[0].attribution, Attribution::Attributed);

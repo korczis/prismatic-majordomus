@@ -211,6 +211,24 @@ A handover records the branch and the worktree; a session resumed elsewhere deri
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.
 
+### The `.envrc` of a new path
+
+direnv approves an `.envrc` by path and content, so the repository's own `.envrc` at a
+path that did not exist a moment ago is a file direnv has never seen, and the first `cd`
+into a fresh worktree was answered with `direnv: error .envrc is blocked`. Measured on
+2026-09-09: 36 of the 37 worktrees that carried an `.envrc` were blocked, and the one
+approved was the primary checkout. `create`, `ensure` and every moved step of `migrate`
+therefore carry the primary checkout's approval to the new path — `direnv allow` on the
+worktree's `.envrc`, at the moment the path exists — and report what happened on an
+`envrc` line and in the `envrc` field of the JSON.
+
+Carried, not granted: the worktree's `.envrc` must be byte-for-byte the primary
+checkout's, and the primary checkout's must itself be approved, or nothing is approved and
+the report says which (`differs`, `not_approved_in_primary`). A branch with an `.envrc` of
+its own is a file the person has not read, and approving it for them is the one thing
+`direnv allow` exists to prevent. Without direnv on the PATH the outcome is
+`direnv_absent` and nothing is blocked, because nothing would load the file.
+
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
 nothing — it names what is merged and clean and leaves the act to a person, because a tool
@@ -292,6 +310,7 @@ says where to `cd`.
 | a missing directory | `worktree.missing` / `worktree.stale_registration` | `majordomus worktree repair` |
 | a locked worktree | `worktree.locked`, the step blocked | `git worktree unlock <path>`, then migrate |
 | the wrong branch in a worktree | `worktree.branch_already_checked_out` on create | migrate the worktree that holds it, or work there |
+| `direnv: error .envrc is blocked` in a worktree | `envrc   differs …` or `envrc   the primary checkout's is not approved …` on the create or migrate report | read the file, then `direnv allow` there; approve the primary checkout's first when that is what the report names. A worktree older than the report: `majordomus worktree ensure <branch>` carries the approval now |
 | the primary checkout on a feature branch | `worktree.primary_on_non_trunk`; the guard refuses | when clean, `git switch <trunk>`; then `worktree create <branch>` |
 | a scratch checkout of a session on a branch | `worktree.ephemeral`; the guard refuses | `git switch --detach` there and continue in the canonical worktree, or `migrate --include-ephemeral --only <branch>` |
 | a move that crossed devices | `worktree.cross_device` on the step, or a refusal | `migrate --allow-copy` |

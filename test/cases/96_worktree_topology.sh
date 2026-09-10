@@ -142,4 +142,61 @@ doctor_out="$(env -i PATH="$PATH" HOME="$HOME" MAJORDOMUS_BIN="$RB" sh -c "cd '$
 printf '%s\n' "$doctor_out" | grep -q 'FAIL wiring      worktree-guard-on-commit' \
   || { echo "    doctor does not report the missing guard line:"; printf '%s\n' "$doctor_out" | grep -i 'worktree\|wiring'; exit 1; }
 
-echo "    worktree topology: derived from git, guarded on commit, migrated with its work, wired and verified"
+# ---------------------------------------------------------------- 9. a new path starts approved for direnv
+#      direnv approves an .envrc by path and content, so the repository's own .envrc at a
+#      path that did not exist a moment ago is blocked until `direnv allow` runs there:
+#      36 of 37 worktrees on 2026-09-09. create, ensure and a moved migrate step carry the
+#      primary checkout's approval to the new path — and only that: an .envrc that is not
+#      the primary checkout's stays as direnv left it, and when the primary checkout's is
+#      not approved nothing is. A direnv of the case's own says whether the primary is
+#      approved and records every allow it is asked for, so the decision is what is proved.
+mkdir -p "$T/fakebin"
+cat > "$T/fakebin/direnv" <<H
+#!/bin/sh
+case "\$1" in
+  status) printf 'Loaded RC allowed 0\nFound RC allowed %s\n' "\${FAKE_DIRENV_ALLOWED:-0}" ;;
+  allow) printf '%s\n' "\$2" >> "$T/allowed.log" ;;
+  *) exit 2 ;;
+esac
+H
+chmod +x "$T/fakebin/direnv"
+# the .envrc must be tracked for a new worktree to carry it; section 8 left the fixture's
+# pre-commit hook running doctor, which has findings of its own in a fixture, so the hook
+# goes back to the guard alone (section 7's form) — the guard is what a commit here answers to
+cat > "$R/.githooks/pre-commit" <<H
+#!/bin/sh
+MAJORDOMUS_BIN="$RB" MAJORDOMUS_SHARE="$R/share" "$R/bin/majordomus-cli" worktree guard --quiet || exit \$?
+H
+printf 'PATH_add bin\n' > "$R/.envrc"; git -C "$R" add .envrc
+expect_exit 0 git -C "$R" commit -qm envrc
+mjd() { local cwd="$1"; shift; ( cd "$cwd" && PATH="$T/fakebin:$PATH" MAJORDOMUS_SHARE="$R/share" "$RB" "$@" ); }
+expect_exit 0 mjd "$R" worktree create feature/approved
+expect_grep "envrc   approved for direnv"
+grep -qx "$R-wt/feature/approved/.envrc" "$T/allowed.log" 2>/dev/null \
+  || { echo "    direnv allow was not asked for the new path:"; cat "$T/allowed.log" 2>/dev/null; exit 1; }
+# ensure carries it too, and the JSON says so for whoever reads the report
+expect_exit 0 mjd "$R" worktree ensure feature/approved --format json
+expect_grep '"outcome": *"approved"'
+# an .envrc that is not the primary checkout's is moved with its work and left blocked;
+# direnv is not asked, because approving what the person has not read is the one thing
+# `direnv allow` exists to prevent
+git -C "$R" worktree add -q -b fix/foreign "$W/foreign" >/dev/null
+printf 'eval "$(something else)"\n' > "$W/foreign/.envrc"
+expect_exit 0 mjd "$R" worktree migrate
+expect_grep "moved and verified"
+expect_grep "envrc   differs from the primary checkout's"
+grep -q "fix/foreign" "$T/allowed.log" && { echo "    direnv allow was asked for an .envrc that is not the primary checkout's"; exit 1; }
+# and when the primary checkout's own .envrc is not approved, nothing is approved anywhere
+rm -f "$T/allowed.log"
+export FAKE_DIRENV_ALLOWED=1
+expect_exit 0 mjd "$R" worktree create feature/unapproved
+unset FAKE_DIRENV_ALLOWED
+expect_grep "envrc   the primary checkout's is not approved"
+[ -e "$T/allowed.log" ] && { echo "    direnv allow was asked although the primary checkout is not approved:"; cat "$T/allowed.log"; exit 1; }
+# without direnv at all, nothing is blocked and the report says why nothing was done: a
+# PATH with git on it and nothing else
+mkdir -p "$T/gitonly"; ln -s "$(command -v git)" "$T/gitonly/git"
+expect_exit 0 env -i PATH="$T/gitonly" HOME="$HOME" MAJORDOMUS_SHARE="$R/share" /bin/sh -c "cd '$R' && '$RB' worktree ensure feature/approved"
+expect_grep "envrc   direnv is not installed"
+
+echo "    worktree topology: derived from git, guarded on commit, migrated with its work, approved for direnv at its new path, wired and verified"

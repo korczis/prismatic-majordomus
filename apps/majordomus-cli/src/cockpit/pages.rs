@@ -14,9 +14,7 @@ use crate::capability::builtin::{
     EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
     InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
 };
-use crate::capability::{
-    Capability, CapabilityKind, Context, Provenance,
-};
+use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;

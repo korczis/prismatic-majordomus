@@ -320,6 +320,121 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::RendersCapability("worktree.topology"),
         note: "prints the branches of the repository with the worktree each belongs in, derived from the same topology.",
     },
+    // ---------------------------------------------------------------- the command graph
+    // Three landings — the command graph (#117), the environment and executions (#142) and
+    // the release module — each added runnable commands without saying here why they were
+    // not capabilities, and the parity check found all twenty-one at once the day a CI run
+    // finished. Every entry below was read off the command's own dispatch; none is a guess.
+    LocalCommand {
+        command: "commands",
+        reason: LocalReason::Alias("commands list"),
+        note: "with nothing after it, lists the graph.",
+    },
+    LocalCommand {
+        command: "commands list",
+        reason: LocalReason::RendersCapability("commands.list"),
+        note: "prints the command graph as a table, one row per command with where it is projected.",
+    },
+    LocalCommand {
+        command: "commands show",
+        reason: LocalReason::RendersCapability("commands.get"),
+        note: "prints one command's node: its arguments, its origin, its projections.",
+    },
+    LocalCommand {
+        command: "commands explain",
+        reason: LocalReason::RendersCapability("commands.get"),
+        note: "prints the same node with the provenance of every fact beside it.",
+    },
+    LocalCommand {
+        command: "commands graph",
+        reason: LocalReason::RendersCapability("commands.graph"),
+        note: "prints the whole graph document, the value the capability answers.",
+    },
+    LocalCommand {
+        command: "commands bridge",
+        reason: LocalReason::WritesRepository,
+        note: "writes the workflow bridge the graph derives into .ai/local/cache/, which a read-only API never offers.",
+    },
+    // ---------------------------------------------------------------- completion
+    LocalCommand {
+        command: "completion",
+        reason: LocalReason::Alias("completion init"),
+        note: "with nothing after it, prints the integration for the current shell.",
+    },
+    LocalCommand {
+        command: "completion init",
+        reason: LocalReason::SessionLocal,
+        note: "prints the shell snippet that turns TAB into a query of this executable; which shell is a fact of the terminal that asked.",
+    },
+    LocalCommand {
+        command: "completion query",
+        reason: LocalReason::SessionLocal,
+        note: "answers the candidates for a partial command line the shell is holding, which no caller over a socket has.",
+    },
+    LocalCommand {
+        command: "completion install",
+        reason: LocalReason::WritesRepository,
+        note: "writes the integration into the person's shell rc file, backing up what was there; a deliberate act at a terminal.",
+    },
+    // ---------------------------------------------------------------- environment
+    LocalCommand {
+        command: "env",
+        reason: LocalReason::Alias("env status"),
+        note: "with nothing after it, reports the checkout.",
+    },
+    LocalCommand {
+        command: "env status",
+        reason: LocalReason::RendersCapability("environment.status"),
+        note: "prints what this checkout is, as a table.",
+    },
+    LocalCommand {
+        command: "env explain",
+        reason: LocalReason::RendersCapability("environment.explain"),
+        note: "prints the same facts with where each one was read from.",
+    },
+    LocalCommand {
+        command: "env banner",
+        reason: LocalReason::SessionLocal,
+        note: "prints the one-line banner direnv shows on entering this worktree; it is about the shell that just arrived.",
+    },
+    LocalCommand {
+        command: "env export",
+        reason: LocalReason::SessionLocal,
+        note: "prints the environment variables for the shell to evaluate, which is the shell's own state and nobody else's.",
+    },
+    // ---------------------------------------------------------------- executions
+    LocalCommand {
+        command: "executions",
+        reason: LocalReason::Alias("executions list"),
+        note: "with nothing after it, lists the executions.",
+    },
+    // ---------------------------------------------------------------- product
+    LocalCommand {
+        command: "product",
+        reason: LocalReason::Alias("product list"),
+        note: "with nothing after it, lists the features.",
+    },
+    // ---------------------------------------------------------------- release
+    LocalCommand {
+        command: "release",
+        reason: LocalReason::Alias("release changelog"),
+        note: "with nothing after it, prints the changelog.",
+    },
+    LocalCommand {
+        command: "release changelog",
+        reason: LocalReason::RendersCapability("release.changelog"),
+        note: "prints the changelog as Markdown, the same document the capability answers as data.",
+    },
+    LocalCommand {
+        command: "release version",
+        reason: LocalReason::RendersCapability("release.version"),
+        note: "prints the declared and the tool's version and whether they agree.",
+    },
+    LocalCommand {
+        command: "release bump",
+        reason: LocalReason::WritesRepository,
+        note: "raises the version in both places it is written; the one writer, and a deliberate act.",
+    },
 ];
 
 /// The entry for a command, by the words a person types after `majordomus`.

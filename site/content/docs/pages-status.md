@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 46
+weight = 47
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `473ccb7e4834`.
+Generated from canonical inputs `42e6f9ea4076`.
 
 ## Controlled budget
 
@@ -55,6 +55,7 @@ held to it.
 - `LICENSE`
 - `README.md`
 - `SECURITY.md`
+- `apps/majordomus-cli/src/web/tokens.css`
 - `assets/**`
 - `bin/**`
 - `docs/**`
@@ -63,8 +64,10 @@ held to it.
 - `lib/**`
 - `package-lock.json`
 - `package.json`
+- `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
+- `scripts/design-tokens`
 - `scripts/generate-site-data`
 - `scripts/github-sync`
 - `scripts/lib/**`
@@ -82,6 +85,7 @@ held to it.
 - `share/**`
 - `share/allow/**`
 - `share/cockpit/**`
+- `share/design/**`
 - `site/**`
 - `site/data/registry/**`
 - `test/**`
