@@ -404,6 +404,30 @@ ok tiles "every profile, claim, status, responsibility, command, doctrine, use c
 # 13d. every navigation target resolves
 for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g" | grep -E '^/' | sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
 ok nav "every navigation link on the homepage resolves"
+# 13e. and the other direction: every section the site publishes is reachable from the menu.
+#
+# The half that was missing. Check 13d proves nav -> page, so a menu entry can never point at
+# nothing; nothing proved page -> nav, so a whole section could be published and be reachable
+# only by typing its address. /changelog/ was exactly that: generated, deployed, correct, and
+# in no menu. A page nobody can browse to is a page that does not exist for a reader.
+#
+# A section is a top-level directory with its own index. Three kinds are legitimately absent
+# and are named rather than pattern-matched, because a silent exemption list is how this
+# check would rot: an asset directory carries no page, a redirect target is reached by being
+# redirected to, and the render fixture is a test surface that is not part of the site.
+nav_orphans=0
+nav_exempt=" images js render-test releases "
+for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | LC_ALL=C sort -u); do
+  nav_exempt="$nav_exempt$redirect "
+done
+for dir in "$PUB"/*/; do
+  section="$(basename "$dir")"
+  [ -f "$dir/index.html" ] || continue
+  case "$nav_exempt" in *" $section "*) continue ;; esac
+  grep -qE "href = \"/$section/?(\"|#)" "$SITE/data/nav.toml" \
+    || { bad nav "/$section/ is published and appears in no menu; a reader can only reach it by typing the address"; nav_orphans=1; }
+done
+[ "$nav_orphans" = 0 ] && ok nav "every published section is reachable from the navigation"
 # 13c. every claim mention on the homepage is a link to its page
 for id in $(jq -r '.claims[].id' "$SITE/data/generated/capabilities.json"); do
   claim="$(jq -r --arg i "$id" '.claims[] | select(.id==$i) | .claim' "$SITE/data/generated/capabilities.json")"

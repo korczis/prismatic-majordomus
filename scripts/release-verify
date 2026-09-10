@@ -16,6 +16,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 
 # Every failure is counted; the first few of each kind are printed and the rest are
 # summarised. A malformed archive fails once per entry, and an archive has thousands of
@@ -57,7 +60,7 @@ done
 [ -n "$archive" ] && [ -n "$target" ] && [ -n "$tag" ] || die "--archive, --target and --tag are required" 2
 [ -f "$archive" ] || die "no such archive: $archive"
 
-mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
 [ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
 names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
   || die "the distribution model does not publish '$target'" 10
