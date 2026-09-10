@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::registry::CapabilityRegistry;
 use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
@@ -108,7 +108,9 @@ pub fn module() -> ModuleDescriptor {
                         resource: None,
                     }),
                     http: get("/api/v1/release/version"),
-                    cli: None,
+                    cli: Some(CliExposure {
+                        path: vec!["release".into(), "version".into()],
+                    }),
                 },
                 tags: ["release", "version"],
                 handler: version,

@@ -9,14 +9,16 @@
 [Website](https://majordomus.dev) ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
+[Changelog](docs/generated/changelog.md) ·
 [What is guaranteed, advisory, planned, or refused](docs/SITE_CLAIMS.md) ·
 [Why it exists](docs/EXTRACTION_REPORT.md)
 
 Majordomus holds one canonical policy for how AI workers operate in a repository,
 generates the instruction file each tool reads from it, keeps task state outside every
 conversation, reports when two workers are about to collide, and refuses to call work
-finished until a contract is met. It runs entirely locally, in portable shell, and
-never invokes a model.
+finished until a contract is met. The task lifecycle runs locally in portable shell;
+the Rust executable exposes the repository through the CLI, MCP, HTTP and the Cockpit.
+Neither invokes a model.
 
 ```
 $ majordomus finish --outcome completed --verify-command "make test"
@@ -62,7 +64,7 @@ Better prompts do not fix any of this.
 | **Scope** | `start` takes the paths a task may touch; `check` and `finish` fail on files outside them; other worktrees' overlapping claims are reported |
 | **Profiles** | one bundle per task class, each setting capability class, reasoning effort, verbosity, presentation, context toggles, verification, and checkpoint interval independently |
 | **Handover** | append-only records with computed front matter and required sections, created atomically, never staged; `--resolve` finds the right one for this worktree and branch and labels how far git has moved since |
-| **Finish** | a typed outcome and a contract evaluated line by line; nothing written when any line fails |
+| **Finish** | a typed outcome and a contract evaluated line by line, including the task's declared obligations and whether their evidence still applies; nothing written when any line fails |
 | **Doctor** | proves the installation is real: policy parses, every declared enforcement is actually invoked by the hook it names without a swallowed exit code, every projection matches its own stamp, the always-loaded file is under budget |
 | **Watch** | reports drift between policy, projections, state, scope, and git, each finding with the command that reproduces it |
 | **Plan** | milestones are outcome specifications and issues are execution contracts; status, execution waves and the next ready issue are derived from the dependency graph, never stored |
@@ -116,7 +118,15 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `shasum`. Nothing else.
+A task can also declare what completion owes through `requires`. `majordomus evidence`
+records the command or artifact that satisfies an obligation; changing its tracked inputs
+invalidates that evidence. Commit, push, integration and Pages obligations are checked
+against the facts the tool can establish at the current head. `majordomus check` reports
+what remains unmet; a typed closure report is available through MCP, HTTP and the Cockpit.
+See [`docs/CLI.md`](docs/CLI.md#majordomus-evidence) and the
+[generated capability reference](docs/generated/capabilities.md).
+
+The shell lifecycle requires bash 3.2 or newer, git, and `sha256sum` or `shasum`.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
@@ -394,6 +404,12 @@ promise: a milestone whose dependencies are not accepted is blocked, and finishi
 issue inside it does not release it. [`docs/ROADMAP.md`](docs/ROADMAP.md) explains how the
 ordering, the gate and the claim linkage are derived.
 
+The plan is also readable through the executable's `plan` capabilities: the model,
+status, issues, waves, next ready issue, roadmap, validation and individual records share
+one typed representation across MCP, HTTP and the Cockpit. GitHub remains a projection of
+the canonical records; `scripts/ci/github-check` detects drift. The model and the boundary
+between local records and GitHub are documented in [`docs/PLANNING.md`](docs/PLANNING.md).
+
 ## Interfaces
 
 The Rust executable under [`apps/majordomus-cli/`](apps/majordomus-cli/) exposes the same
@@ -550,6 +566,12 @@ shared server's lifecycle and the client configurations:
 [`share/kinds.yaml`](share/kinds.yaml) and [`share/schemas/`](share/schemas/), and the shell
 tool's allow-lists under `share/allow/` are generated from those schemas.
 
+**Releases follow the repository.** `majordomus release` composes the changelog from release
+records, decisions and Git history; the [generated changelog](docs/generated/changelog.md)
+and the website render that result. `majordomus release version` reports version agreement
+and the change implied by commits, while `majordomus release bump --dry-run` previews the
+shared writer for the shell and Rust versions. See [`docs/RELEASE.md`](docs/RELEASE.md).
+
 ## Contributing
 
 Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and the generated [`AGENTS.md`](AGENTS.md).
@@ -564,7 +586,12 @@ The website is a projection of this repository rather than a second copy of it: 
 page is generated from `README.md`, `docs/`, the policy skeleton and `docs/CLAIMS.yaml`,
 and CI refuses to deploy a tree whose derived files are stale. Editing a generated file
 is never the fix. See
-[`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md).
+[`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md). After a source
+change, run `just derive` and `just derive-check`, and commit the regenerated projections
+with it. GitHub Pages publishes from `master` through the repository's Pages workflow;
+`scripts/site-deploy` uses the same publication path from a clean, pushed checkout.
+`scripts/pages verify --url https://korczis.github.io/prismatic-majordomus/ --commit <full-sha>`
+checks which source commit the public site serves.
 
 ## Origin and licence
 
