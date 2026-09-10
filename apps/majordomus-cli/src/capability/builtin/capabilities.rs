@@ -376,6 +376,7 @@ mod tests {
             scoped: Default::default(),
             distribution: None,
             providers: Default::default(),
+            share_dir: None,
         };
         let registry = Arc::new(
             CapabilityRegistry::builder()

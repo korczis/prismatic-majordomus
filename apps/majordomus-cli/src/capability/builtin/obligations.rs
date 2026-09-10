@@ -189,13 +189,17 @@ struct VocabularyFile {
     obligations: Vec<Obligation>,
 }
 
-/// Read the shipped vocabulary. The share directory is located the way every other reader
-/// locates it; a distribution that ships no vocabulary declares no tokens, which is not an
-/// error but is reported as such by the closure's findings when a task names one.
-fn vocabulary_at(root: &Path) -> Result<Vocabulary, String> {
-    let share = crate::share::Share::locate(None, root)
-        .map_err(|e| format!("the distribution's share directory was not found: {e}"))?;
-    let path = share.dir().join(VOCABULARY_FILE);
+/// Read the shipped vocabulary from the share directory this process located
+/// ([`crate::index::Index::share_dir`]), never from one located again here: a second
+/// locator does not see `--share`, and in a repository that carries no `share/` of its own
+/// it finds nothing while the process that started it found the distribution perfectly
+/// well. A process with no distribution ships no vocabulary, which is not an error but is
+/// reported as such by the closure's findings when a task names a token.
+fn vocabulary_in(share_dir: Option<&Path>) -> Result<Vocabulary, String> {
+    let share_dir = share_dir.ok_or_else(|| {
+        "this process located no distribution, so it ships no obligation vocabulary".to_string()
+    })?;
+    let path = share_dir.join(VOCABULARY_FILE);
     let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
     let file: VocabularyFile =
         yaml::parse_into(&text).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -686,8 +690,7 @@ fn judge(
 // ---------------------------------------------------------------- handlers
 
 fn obligations_vocabulary(ctx: &Context, _: Empty) -> Result<Vocabulary, CapabilityError> {
-    let root = PathBuf::from(&ctx.index.repository.root);
-    vocabulary_at(&root).map_err(CapabilityError::Internal)
+    vocabulary_in(ctx.index.share_dir.as_deref()).map_err(CapabilityError::Internal)
 }
 
 fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityError> {
@@ -706,7 +709,7 @@ fn obligations_closure(ctx: &Context, _: Empty) -> Result<Closure, CapabilityErr
     let mut findings = Vec::new();
     let task = continuity::read_task(&dir.join("current.yaml"));
 
-    let vocabulary = match vocabulary_at(&root) {
+    let vocabulary = match vocabulary_in(ctx.index.share_dir.as_deref()) {
         Ok(v) => v.obligations,
         Err(reason) => {
             findings.push(format!(
@@ -907,18 +910,19 @@ mod tests {
     /// The vocabulary is read from the file rather than held here, which is the whole
     /// point: a token added to `share/obligations.yaml` is answered by this module without
     /// a line changing in it.
+    ///
+    /// Reading is separated from locating, so the test hands the reader a directory and
+    /// needs neither a `kinds.yaml` to be found by nor a process-global environment
+    /// variable to be found through.
     #[test]
     fn the_vocabulary_is_read_from_the_file_and_not_held_here() {
         let dir = tempfile::tempdir().unwrap();
-        std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
         std::fs::write(
             dir.path().join(VOCABULARY_FILE),
             "# a comment the reader skips\nversion: 1\nobligations:\n  - id: tests\n    title: The cases were run\n    summary: They passed.\n    discharged_by: usecase impact\n    inputs: [\"lib/**\", \"share/**\"]\n    remote: false\n  - id: push\n    title: The commit reached the remote\n    summary: The branch head exists on the remote.\n    discharged_by: git\n    remote: true\n",
         )
         .unwrap();
-        std::env::set_var(crate::share::SHARE_ENV, dir.path());
-        let v = vocabulary_at(dir.path()).expect("the vocabulary parses");
-        std::env::remove_var(crate::share::SHARE_ENV);
+        let v = vocabulary_in(Some(dir.path())).expect("the vocabulary parses");
 
         assert_eq!(v.version, 1);
         assert_eq!(v.count, 2, "the count is measured, never written down");

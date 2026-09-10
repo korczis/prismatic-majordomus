@@ -124,6 +124,9 @@ impl App {
         let mut index = index;
         index.distribution = crate::distribution::Model::locate(&share)?;
         index.providers = share.providers()?;
+        // and where they came from, for the handlers that read the distribution's own
+        // data directly: this is the one location of the share in the process
+        index.share_dir = Some(share.dir().to_path_buf());
         let registry = CapabilityRegistry::builder()
             .with_modules(builtin::modules())
             .with_index(&index)

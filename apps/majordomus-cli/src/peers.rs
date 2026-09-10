@@ -362,7 +362,7 @@ impl PeerBoard {
     /// A peer that announced something is kept and marked departed rather than removed:
     /// what a session said it was working on is a fact about the repository, and it does
     /// not stop being true because a socket closed. A peer that never announced leaves
-    /// nothing behind. The oldest departed slot past [`RETAINED`] is dropped.
+    /// nothing behind. The oldest departed slot past `RETAINED` is dropped.
     ///
     /// ```
     /// use majordomus_cli::peers::{PeerBoard, Transport};
