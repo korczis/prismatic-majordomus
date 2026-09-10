@@ -47,6 +47,214 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// The command graph: every command of every program this repository ships, what each does, and the surfaces it is projected onto
+    Commands(CommandsArgs),
+    /// Candidate completions for a partly typed command line, and the shell adapter that asks for them
+    Completion(CompletionArgs),
+    /// The repository as a shell enters it: the activation a shell evaluates, the banner a person reads, and the state both are rendered from
+    Env(EnvArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands`.
+pub struct CommandsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the graph; none lists it.
+    pub command: Option<CommandsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only commands of this program
+    #[arg(long, value_enum, global = true)]
+    pub program: Option<ProgramFilter>,
+
+    /// Only commands carrying this tag
+    #[arg(long, global = true)]
+    pub tag: Option<String>,
+
+    /// Only commands that can run in this checkout
+    #[arg(long, global = true)]
+    pub available: bool,
+
+    /// Case-insensitive text over identities, names, summaries and tags
+    #[arg(long, short = 'q', global = true)]
+    pub query: Option<String>,
+}
+
+/// Which program's commands to narrow to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ProgramFilter {
+    /// The Rust executable's own command line.
+    Native,
+    /// The shell tool's task lifecycle.
+    Shell,
+    /// This repository's declared workflows.
+    Workflow,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus commands`.
+pub enum CommandsCommand {
+    /// Every command, one line each: identity, what it does, and where it is projected
+    List,
+    /// One command in full: its arguments, its execution, its effect, its availability and every surface name it answers to
+    Show {
+        /// The canonical identity, `native.bench.coverage`
+        #[arg(value_name = "COMMAND")]
+        id: String,
+    },
+    /// The whole graph as one document, schema-identified and deterministic
+    Graph,
+    /// Write the generated Just bridge, or say whether the committed one is current
+    Bridge {
+        /// Say whether the bridge is current and write nothing; exit 10 when it is stale
+        #[arg(long)]
+        check: bool,
+    },
+    /// Every finding of the graph's own build; exit 10 when any is fatal
+    Validate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion`.
+pub struct CompletionArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to do with completion.
+    pub command: CompletionCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus completion`.
+pub enum CompletionCommand {
+    /// The candidates for a partly typed command line, from the command graph
+    Query {
+        /// Which surface the line was typed at
+        #[arg(long, value_enum, default_value_t = SurfaceArg::Cli)]
+        surface: SurfaceArg,
+        /// The index in the words of the one the cursor is in; the default is the last
+        #[arg(long, value_name = "N")]
+        cursor: Option<usize>,
+        /// Output shape
+        #[arg(long, value_enum, default_value_t = CompletionFormat::Shell)]
+        format: CompletionFormat,
+        /// The words after the program's own name, as the shell split them
+        #[arg(value_name = "WORD", trailing_var_arg = true, allow_hyphen_values = true)]
+        words: Vec<String>,
+    },
+    /// The shell adapter: a generic function that knows no command and asks this executable for every candidate
+    Script {
+        /// Which shell to write the adapter for
+        #[arg(long, value_enum, default_value_t = ShellArg::Zsh)]
+        shell: ShellArg,
+    },
+    /// Build the value index the identifier arguments are completed from
+    Index {
+        /// Say whether the index is current and write nothing; exit 10 when it is stale
+        #[arg(long)]
+        check: bool,
+    },
+}
+
+/// Which surface a completion request came from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum SurfaceArg {
+    /// The native command line, `majordomus bench coverage`.
+    Cli,
+    /// The generated Just bridge, `just bench-coverage`.
+    Just,
+    /// The Cockpit's action names.
+    Cockpit,
+}
+
+/// How completion candidates are written.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum CompletionFormat {
+    /// One candidate per line, the value and its description separated by a tab.
+    Shell,
+    /// One JSON document, the whole answer.
+    Json,
+}
+
+/// The shells an adapter can be written for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ShellArg {
+    /// zsh, through `compdef` and `compadd`.
+    Zsh,
+    /// bash, through `complete` and `COMPREPLY`.
+    Bash,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus env`.
+pub struct EnvArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to render; none shows the status.
+    pub command: Option<EnvCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus env`.
+pub enum EnvCommand {
+    /// The activation payload a shell evaluates: exports, path additions and the files direnv should watch. Shell statements only
+    Activate {
+        /// Which shell the statements are written for
+        #[arg(long, value_enum, default_value_t = ActivationShell::Direnv)]
+        shell: ActivationShell,
+        /// Write the generated Just bridge when what it is projected from has changed
+        #[arg(long)]
+        materialise: bool,
+    },
+    /// What entering this repository found: the head, the commands, the server, the notes
+    Status,
+    /// The banner a person reads on entering the repository
+    Banner {
+        /// How much to say; `auto` is full once per session and silent afterwards
+        #[arg(long, value_enum, default_value_t = BannerModeArg::Auto)]
+        mode: BannerModeArg,
+        /// The terminal width to render for; the default is the terminal's own
+        #[arg(long, value_name = "N")]
+        width: Option<usize>,
+    },
+}
+
+/// Which shell an activation payload is written for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ActivationShell {
+    /// direnv's evaluation environment, with `PATH_add` and `watch_file`.
+    Direnv,
+    /// A plain POSIX shell: bash and zsh take the same statements.
+    Posix,
+}
+
+/// How much the banner says.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum BannerModeArg {
+    /// Full on the first entry of a session, compact when something changed, silent otherwise.
+    Auto,
+    /// The whole thing, every time.
+    Full,
+    /// One line and the entry commands.
+    Compact,
+    /// Nothing.
+    Off,
 }
 
 #[derive(Debug, Args)]

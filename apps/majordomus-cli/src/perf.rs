@@ -84,11 +84,13 @@ pub enum Phase {
     HandlerExecution,
     /// A cache lookup inside the executor, hit or miss.
     CacheLookup,
+    /// `command::CommandGraph::build`: composing the contributors into one graph.
+    CommandGraphBuild,
 }
 
 impl Phase {
     /// Every phase, in declaration order.
-    pub const ALL: [Phase; 8] = [
+    pub const ALL: [Phase; 9] = [
         Phase::RepositoryDiscovery,
         Phase::IndexBuild,
         Phase::RegistryBuild,
@@ -97,6 +99,7 @@ impl Phase {
         Phase::GraphBuild,
         Phase::HandlerExecution,
         Phase::CacheLookup,
+        Phase::CommandGraphBuild,
     ];
 
     /// The name as serialised.
@@ -110,6 +113,7 @@ impl Phase {
             Phase::GraphBuild => "graph_build",
             Phase::HandlerExecution => "handler_execution",
             Phase::CacheLookup => "cache_lookup",
+            Phase::CommandGraphBuild => "command_graph_build",
         }
     }
 }
@@ -163,6 +167,7 @@ impl Counters {
             cache_misses: AtomicU64::new(0),
             cache_evictions: AtomicU64::new(0),
             phases: [
+                PhaseCell::new(),
                 PhaseCell::new(),
                 PhaseCell::new(),
                 PhaseCell::new(),
