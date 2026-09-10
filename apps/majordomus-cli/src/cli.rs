@@ -1090,6 +1090,8 @@ pub enum GenerateTarget {
     Changelog,
     /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
     Deployment,
+    /// docs/generated/graph.json and its schema: the composed graph as data
+    Graph,
 }
 
 #[derive(Debug, Args)]
