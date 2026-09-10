@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
+use crate::capability::builtin::Checkouts;
+
 /// The exit code for a usage error, per the exit-code contract.
 pub const EXIT_USAGE: u8 = 2;
 
@@ -944,6 +946,7 @@ pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 ///
 /// ```
 /// use clap::Parser;
+/// use majordomus_cli::capability::builtin::Checkouts;
 /// use majordomus_cli::cli::{Cli, Command, ServeCommand, DEFAULT_IDLE_SECONDS};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure", "--idle", "5"]).unwrap();
@@ -957,10 +960,23 @@ pub const DEFAULT_IDLE_SECONDS: u64 = 900;
 /// let cli = Cli::try_parse_from(["majordomus", "serve"]).unwrap();
 /// let Command::Serve(args) = cli.command else { panic!("serve") };
 /// assert!(args.command.is_none() && args.idle == 0 && !args.fallback);
+///
+/// // `status` asks the capability's own question, and the flag is that input's field:
+/// // saying nothing asks about every checkout of the repository, as it always did
+/// let cli = Cli::try_parse_from(["majordomus", "serve", "status"]).unwrap();
+/// let Command::Serve(args) = cli.command else { panic!("serve") };
+/// assert!(matches!(args.command, Some(ServeCommand::Status { checkouts: Checkouts::Repository, .. })));
+/// let cli = Cli::try_parse_from(["majordomus", "serve", "status", "--checkouts", "this"]).unwrap();
+/// let Command::Serve(args) = cli.command else { panic!("serve") };
+/// assert!(matches!(args.command, Some(ServeCommand::Status { checkouts: Checkouts::This, .. })));
 /// ```
 pub enum ServeCommand {
     /// Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository
     Status {
+        /// Which checkouts to answer for: every checkout of the repository, or this one
+        /// alone — which reads no other checkout's lease and probes no other server
+        #[arg(long, value_enum, default_value_t = Checkouts::default())]
+        checkouts: Checkouts,
         /// Output shape
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,

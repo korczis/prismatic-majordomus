@@ -89,6 +89,18 @@ The decision is a pure function of the lease file, its age, one probe and this e
 version, tested branch by branch; the capability reads the files and the servers on every
 call and caches nothing, because the leases are written by other processes.
 
+**How wide the answer is, is the caller's to ask.** Listing every checkout costs a lease
+read and a probe each, and a machine with a hundred worktrees registered pays a hundred of
+both — which a caller that only wants to know about the checkout it is in should not. The
+input carries one field, `checkouts`: `repository`, every checkout git registers, and
+`this`, this one alone. `this` is cheap by construction rather than by filtering — git is
+never asked for its registry of work trees, so no other checkout is enumerated, no other
+lease is read and no other server is probed — and it spawns no process of its own either:
+whether the checkout is the primary comes from the stat the git identity already did, and
+its branch is read from its own HEAD. The default is `repository`, because that is the
+answer the capability gave before the field existed and it is a compatibility surface; the
+readers that only ever wanted this checkout ask for it by name.
+
 **Entry converges, and a server no client owns has a bounded life.** `serve ensure` reads
 the lease and probes the server it names, as the election does, and starts one as a
 process of its own when none answers — `serve --fallback --idle`, its log beside the lease
@@ -145,6 +157,10 @@ sessions that stopped pinging on every path.
 `server.status`, the `git_repository_id` and `linked_worktree` fields of the index route,
 `LeaseDocument` and its `version` field become compatibility surfaces. Every worktree
 carries its own server as before; what is new is that each one can name the others.
+
+`context` is the first reader to want the narrow question: it asks about the checkout it
+runs in and nothing else, and paying for every checkout of the repository is what made
+asking the server dearer than not asking it.
 
 `context`'s peers section and the `.just/serve.just` recipes still read the lease
 themselves; they are the readers ADR 0003's amendment left in shell, and they move to the
