@@ -618,7 +618,7 @@ mj_uc_coverage_rows() {
     mj_uc_status_of "$n_named" "$n_exec"; printf 'claim\t%s\t%s\t%s\t%s\t%s\n' "$cls" "$n_named" "$n_exec" "$n_exec" "$MJ_UC_ST"
   done
   if [ -f "$MJ_ROOT/docs/generated/registry.json" ]; then
-    grep -o '"tool": *"[a-z_]*"' "$MJ_ROOT/docs/generated/registry.json" | sed 's/.*"\([a-z_]*\)"$/\1/' | sort -u | while IFS= read -r cls; do
+    grep -o '"tool": *"[a-z_]*"' "$MJ_ROOT/docs/generated/registry.json" | sed 's/.*"\([a-z_]*\)"$/\1/' | LC_ALL=C sort -u | while IFS= read -r cls; do
       n_named=0
       i=0
       while [ "$i" -lt "$MJ_UC_N" ]; do
@@ -685,7 +685,7 @@ mj_uc_cmd_impact() {
   mj_uc_require
   [ -n "$base" ] || base="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
   [ -n "$base" ] || base="HEAD"
-  files="$( { mj_git diff --name-only "$base" 2>/dev/null; mj_git status --porcelain 2>/dev/null | cut -c4- | sed 's/^.* -> //'; } | sort -u )"
+  files="$( { mj_git diff --name-only "$base" 2>/dev/null; mj_git status --porcelain 2>/dev/null | cut -c4- | sed 's/^.* -> //'; } | LC_ALL=C sort -u )"
   mj_cmdreg_load || true
   for f in $files; do
     case "$f" in
@@ -704,7 +704,7 @@ mj_uc_cmd_impact() {
   if [ -f "$MJ_ROOT/docs/RESPONSIBILITIES.yaml" ]; then
     local rf; rf="$(mktemp "${TMPDIR:-/tmp}/mj.resp.XXXXXX")"; mj_yaml_flatten "$MJ_ROOT/docs/RESPONSIBILITIES.yaml" > "$rf" 2>/dev/null || true
     for f in $files; do
-      for c in $(awk -F= -v f="$f" '$0 ~ /^responsibilities\.[0-9]+\.(files\.[0-9]+|implementation)=/ && substr($0, index($0,"=")+1) == f { split($1,k,"."); print k[2] }' "$rf" | sort -u); do
+      for c in $(awk -F= -v f="$f" '$0 ~ /^responsibilities\.[0-9]+\.(files\.[0-9]+|implementation)=/ && substr($0, index($0,"=")+1) == f { split($1,k,"."); print k[2] }' "$rf" | LC_ALL=C sort -u); do
         r="$(mj_yget "$rf" "responsibilities.$c.command")"; [ -n "$r" ] && [ "$r" != none ] && cmds="$cmds $r"
       done
     done
@@ -720,12 +720,12 @@ mj_uc_cmd_impact() {
     [ "$claims_touched" = 1 ] && [ -n "$(mj_uc_v "$i" claims.0)" ] && ucs="$ucs $id"
     i=$((i+1))
   done
-  cmds="$(printf '%s\n' $cmds | sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | sort -u | tr '\n' ' ')"
+  cmds="$(printf '%s\n' $cmds | LC_ALL=C sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | LC_ALL=C sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | LC_ALL=C sort -u | tr '\n' ' ')"
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
   # behavioural cases that declare coverage of an affected command, and the rules' tests
   for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
   for r in $rules; do n="$(mj_doc_index "$r" 2>/dev/null)" && cases="$cases $(mj_doc_list "$n" tests | tr '\n' ' ')"; done
-  cases="$(printf '%s\n' $cases | sort -u | tr '\n' ' ')"; cases="${cases% }"
+  cases="$(printf '%s\n' $cases | LC_ALL=C sort -u | tr '\n' ' ')"; cases="${cases% }"
   local scen=""; for id in $ucs; do i="$(mj_uc_index "$id")" && mj_uc_has_scenario "$i" && scen="$scen $id"; done; scen="${scen# }"
   if [ "$json" = 1 ]; then
     printf '{"schema":"majordomus/use-case-impact/v1","base":"%s","files":%s,"commands":%s,"rules":%s,"use_cases":%s,"scenarios":%s,"cases":%s}\n' \

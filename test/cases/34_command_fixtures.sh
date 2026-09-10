@@ -31,7 +31,7 @@ for fx in "$FIX"/*.json; do
     echo "    $fxname.json has fewer than two scenarios; one scenario demonstrates nothing"; exit 1; }
 
   ids="$(jq -r '.scenarios[].id' "$fx")"
-  [ -z "$(printf '%s\n' "$ids" | sort | uniq -d)" ] || { echo "    $fxname.json has duplicate scenario ids"; exit 1; }
+  [ -z "$(printf '%s\n' "$ids" | LC_ALL=C sort | uniq -d)" ] || { echo "    $fxname.json has duplicate scenario ids"; exit 1; }
 
   for sid in $ids; do
     n=$((n + 1))

@@ -298,7 +298,7 @@ mj_git_touched() {
   local base="$1"
   { mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //'
     [ -n "$base" ] && [ "$base" != "NONE" ] && mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
-  } | sort -u | sed '/^$/d'
+  } | LC_ALL=C sort -u | sed '/^$/d'
 }
 
 # ---------------------------------------------------------------- misc
@@ -347,9 +347,9 @@ mj_timing_report() {
   {
     printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
     awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
-      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
+      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
     awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
-      | sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
+      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
   } >&2
   rm -f "$MJ_TIMING_FILE"
 }

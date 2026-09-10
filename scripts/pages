@@ -200,7 +200,7 @@ cmd_benchmark() {
   local out
   out="$(jq -Rn --arg samples "$n" --arg routes "$(find "$ROOT/$OUTPUT" -name index.html | wc -l | tr -d ' ')" \
     --arg platform "$(mj_pages_platform)" --rawfile rows "$tmp" '
-    def stats(a): (a | sort) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
+    def stats(a): (a | sort_by(.)) as $s | { min: $s[0], median: $s[(($s | length) / 2 | floor)],
                                         p90: $s[((($s | length) * 0.9) - 1 | floor | if . < 0 then 0 else . end)],
                                         max: $s[-1] };
     ($rows | split("\n") | map(select(length > 0)) | map(split("\t") | map(tonumber))) as $r
