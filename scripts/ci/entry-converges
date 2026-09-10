@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# entry-converges — the gate of project.entry-converges: the pieces that make entering this
+# repository converge on a ready shared server agree with each other.
+#
+# A CI runner enters no repository as an agent and starts no provider, so what a script can
+# decide is not "did entry converge" — that is behavioural, and test/cases/108 is where it is
+# proved. What this gate holds together is everything that would have to be quietly undone
+# first, each of which is a file comparison:
+#
+#   1. entry by a shell starts nothing and builds nothing. The file a shell evaluates on
+#      entry (.envrc) and the adapter it calls (bin/majordomus-env) may not run the tool's
+#      server subcommands, invoke a builder, or background a process. ADR 0003 refuses a
+#      process without a client and a shell is not one; project.envrc-is-an-adapter already
+#      forbids reading the repository there, and test/cases/100 holds that half — this is
+#      the half that rule's word list never covered.
+#   2. the switch is declared wherever a key of the policy must be. `session.ensure_server_on_start`
+#      in this repository's policy, in the skeleton a new repository is written from, in the
+#      allow list and in the schema: a key the schema does not know is refused at run time
+#      (project.unknown-keys-are-errors), and one the skeleton lacks exists only here.
+#   3. the start event is where entry converges, and it is wired where the policy says. The
+#      provider's start shim dispatches `capture session --event start`; the policy's
+#      enforcement list declares that shim, which is what makes `majordomus doctor` reconcile
+#      the wiring; and the start path asks the executable's `serve ensure` rather than
+#      starting or building a server itself.
+#   4. what a worker is told on entry has one author. The briefing composer takes the server
+#      line as an argument from the event that ensured it and forms no opinion of its own:
+#      two readings of one state are two answers waiting to disagree.
+#   5. a server nobody owns has a bounded life: the idle life is one constant, greater than
+#      zero, and the server `ensure` starts is given it.
+#
+# What this gate deliberately does not check: that the lease has one reader. That is
+# `project.the-lease-is-read-once` and `scripts/ci/lease-reader-check`, which decide it for
+# the whole repository; a second reading of it here would be the duplication both rules are
+# against. What remains this gate's is the half that rule cannot see — the briefing forming
+# no second opinion by asking the server over HTTP, which opens no file.
+#
+#   scripts/ci/entry-converges                 report every finding, exit 10 on any
+#   MJ_ROOT=<dir> scripts/ci/entry-converges   measure another tree (test/cases/118 does)
+#   scripts/ci/entry-converges --no-suite      the structural findings only
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+SUITE=1
+while [ $# -gt 0 ]; do case "$1" in
+  --no-suite) SUITE=0; shift ;;
+  *) echo "entry-converges: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+findings=0
+fail() { printf 'FAIL entry-converges  %s\n' "$*"; findings=$((findings+1)); }
+ok()   { printf 'OK   entry-converges  %s\n' "$*"; }
+
+# The text a shell would execute, with what it would not stripped: full-line comments go, and
+# so does every single-quoted string — a command name inside `printf '... run `just build` ...'`
+# is a message, and a command substitution inside single quotes is not a substitution. Double
+# quotes are kept, because `eval "$(...)"` is a command and reads like one.
+executable_text() { sed -e 's/^[[:space:]]*#.*$//' -e "s/'[^']*'//g"; }
+
+# ------------------------------------------------------------------ 1. entry starts nothing
+#
+# By shape rather than by naming today's lines: a builder or a background job at a command
+# position, and the tool's own server subcommands wherever the resolved executable is invoked.
+# `serve` and `mcp` are matched only after something that names the executable, so that the
+# lease path (which contains `mcp/`) is not read as a command.
+BUILDERS='(^|[|;&(){]|\$\()[[:space:]]*(cargo|just|make|npm|pnpm|yarn|nohup|setsid|docker)([[:space:]]|$)'
+STARTERS='(majordomus[a-z-]*|\$\{?(bin|BIN|mj|MJ)[A-Za-z_]*\}?)"?[[:space:]]+(serve|mcp)([[:space:]]|"|$)'
+BACKGROUND='&[[:space:]]*$'
+
+# One pass per pattern over the executable text, keeping the line numbers, then the original
+# line is quoted back from the file: a per-line loop here would spawn four processes per line
+# of every entry point, on a gate that runs in the structure job beside the cheap checks.
+ENTRY_HITS=0
+entry_hits() {   # file, stripped copy, pattern, what it means
+  local file="$1" stripped="$2" pat="$3" desc="$4" n
+  for n in $(grep -nE "$pat" "$stripped" | cut -d: -f1 || true); do
+    printf '    %s:%s %s: %s\n' "$file" "$n" "$desc" "$(sed -n "${n}p" "$file")"
+    ENTRY_HITS=$((ENTRY_HITS + 1))
+  done
+}
+entry_check() {
+  local file="$1" stripped
+  stripped="$(mktemp "${TMPDIR:-/tmp}/entry-converges.XXXXXX")"
+  executable_text < "$file" > "$stripped"
+  ENTRY_HITS=0
+  entry_hits "$file" "$stripped" "$BUILDERS"   'starts a build or a daemon'
+  entry_hits "$file" "$stripped" "$STARTERS"   'starts a server on entry'
+  entry_hits "$file" "$stripped" "$BACKGROUND" 'backgrounds a process'
+  rm -f "$stripped"
+  [ "$ENTRY_HITS" = 0 ]
+}
+
+for f in .envrc bin/majordomus-env; do
+  if [ ! -f "$f" ]; then fail "$f is missing; it is what a shell evaluates on entry"; continue; fi
+  if entry_check "$f"; then ok "$f starts nothing and builds nothing"
+  else fail "$f starts something on entry (the lines above); entry by a shell reports and does not serve"; fi
+done
+# The adapter names a stale executable rather than rebuilding it: the check above proves it
+# runs no builder, this proves it still looks.
+if grep -q 'mj_rust_stale' bin/majordomus-env 2>/dev/null; then ok "bin/majordomus-env names a stale executable rather than rebuilding it"
+else fail "bin/majordomus-env does not consult mj_rust_stale; a stale executable would go unnamed"; fi
+
+# ------------------------------------------------------------------ 2. the switch is declared
+SWITCH='ensure_server_on_start'
+while IFS='|' read -r file what; do
+  [ -n "$file" ] || continue
+  if [ -f "$file" ] && grep -q "$SWITCH" "$file"; then ok "$what declares session.$SWITCH"
+  else fail "$what ($file) does not declare session.$SWITCH"; fi
+done <<'SITES'
+.ai/repo/policy.yaml|this repository's policy
+share/skeleton/policy.yaml|the policy a new repository is written from
+share/allow/policy.txt|the policy allow list
+share/schemas/majordomus/policy/policy.v1.schema.json|the policy schema
+SITES
+
+# ------------------------------------------------------------------ 3. the start event is wired
+SHIM='.claude/hooks/majordomus-session-start'
+if [ -f "$SHIM" ]; then
+  if grep -Eq 'capture[[:space:]]+session' "$SHIM"; then ok "$SHIM dispatches 'capture session'"
+  else fail "$SHIM does not dispatch 'capture session'; the start event reaches nothing"; fi
+  if grep -Eq -- '--event[[:space:]]+start' "$SHIM"; then ok "$SHIM names the start event"
+  else fail "$SHIM does not name '--event start'"; fi
+else
+  fail "$SHIM is missing; the provider's start event is where entry converges"
+fi
+# The enforcement entry is what makes doctor reconcile that wiring on every commit: without it
+# the shim can be unwired and nothing says so.
+if grep -Eq 'wired_by:[[:space:]]*provider-hook:[a-z-]+:session' .ai/repo/policy.yaml 2>/dev/null; then
+  ok "the policy's enforcement list declares the session shim, so doctor reconciles the wiring"
+else
+  fail ".ai/repo/policy.yaml declares no enforcement entry wired by 'provider-hook:<provider>:session'"
+fi
+# The start path asks the executable rather than starting or building a server itself.
+CAPTURE='lib/capture.sh'
+if [ -f "$CAPTURE" ]; then
+  if grep -Eq 'serve[[:space:]]+ensure' "$CAPTURE"; then ok "the start path asks 'serve ensure' for the server"
+  else fail "$CAPTURE never runs 'serve ensure'; the start event converges on nothing"; fi
+  if grep -q "$SWITCH" "$CAPTURE"; then ok "the start path reads session.$SWITCH before ensuring"
+  else fail "$CAPTURE does not read session.$SWITCH; the switch would be declared and unread"; fi
+  if grep -q 'mj_rust_stale' "$CAPTURE"; then ok "the start path names a stale executable rather than rebuilding it"
+  else fail "$CAPTURE does not consult mj_rust_stale; a server could be started from stale code"; fi
+  if executable_text < "$CAPTURE" | grep -Eq "$BUILDERS"; then
+    fail "$CAPTURE runs a builder; nothing on entry may build the executable"
+  else ok "$CAPTURE runs no builder"; fi
+else
+  fail "$CAPTURE is missing; it carries the provider's start event"
+fi
+
+# ------------------------------------------------------------------ 4. one author for the briefing
+#
+# The briefing is handed where the server stands by the event that ensured it. That it does
+# not open the lease is `project.the-lease-is-read-once`'s to decide, for every file at once;
+# what is this rule's is the other way of forming a second opinion — asking the server itself,
+# which opens no file and so is invisible to that gate.
+DERIVE='lib/derive.sh'
+if [ -f "$DERIVE" ]; then
+  if grep -q 'api/v1/server' "$DERIVE"; then fail "$DERIVE asks the server for its own standing; a second opinion beside the one the start event was given, which is what the argument exists to avoid"
+  else ok "$DERIVE forms no second opinion of where the server stands"; fi
+else
+  fail "$DERIVE is missing; it composes the briefing"
+fi
+
+# ------------------------------------------------------------------ 5. a bounded life
+CLI='apps/majordomus-cli/src/cli.rs'
+if [ -f "$CLI" ]; then
+  idle="$(sed -n 's/^pub const DEFAULT_IDLE_SECONDS: u64 = \([0-9]*\);$/\1/p' "$CLI")"
+  if [ -z "$idle" ]; then fail "$CLI declares no DEFAULT_IDLE_SECONDS; a server nobody owns would live forever"
+  elif [ "$idle" -le 0 ]; then fail "DEFAULT_IDLE_SECONDS is $idle; a server ensure starts must end when no peer has been attached"
+  else ok "the idle life is one constant, DEFAULT_IDLE_SECONDS = $idle"; fi
+fi
+SERVE='apps/majordomus-cli/src/commands/serve.rs'
+if [ -f "$SERVE" ]; then
+  if grep -q -- '"--idle"' "$SERVE"; then ok "the server ensure starts is given its idle life"
+  else fail "$SERVE spawns a server without --idle; a server no client owns would outlive its clients"; fi
+fi
+
+# ------------------------------------------------------------------ the behavioural half
+if [ "$SUITE" = 1 ]; then
+  CASE='test/cases/108_entry_converges_on_a_server.sh'
+  if [ -f "$CASE" ]; then
+    if bash test/run.sh 108_entry_converges_on_a_server; then ok "$CASE passes"
+    else fail "$CASE fails"; fi
+  else fail "$CASE is missing; the convergence itself is proved there and nowhere else"; fi
+fi
+
+if [ "$findings" -gt 0 ]; then
+  echo "entry-converges: $findings finding(s); the rule is project.entry-converges" >&2
+  exit 10
+fi
+echo "entry-converges: entry starts nothing, the start event ensures where the policy says, the briefing has one author, and a server nobody owns ends"
