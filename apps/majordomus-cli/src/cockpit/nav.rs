@@ -5,7 +5,7 @@
 //! with no edit to the Cockpit.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
+//! Objects, Directories, Graphs, Continuity, Board, Worktrees, Health, Quality, Artifacts,
 //! Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -47,6 +47,9 @@ pub enum Area {
     Executions,
     /// What this checkout's lifecycle is holding.
     Continuity,
+    /// Who else is attached to this repository's shared server, what each announced, and
+    /// where this checkout's server stands.
+    Board,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
     /// The health report.
@@ -127,6 +130,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Continuity",
             href: "/cockpit/continuity",
             area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "board",
+            label: "Board",
+            href: "/cockpit/board",
+            area: Area::Board,
         },
         AreaInfo {
             id: "worktrees",
@@ -215,6 +224,9 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
             Area::Objects => Some(ctx.index.objects.len()),
             Area::Graphs => Some(graph::ids().len()),
             Area::Api => Some(summary.http_routes),
+            // how many sessions are attached *now*: a peer that has gone is kept on the
+            // board with what it announced, and is not one of the workers here
+            Area::Board => Some(ctx.peers.list().iter().filter(|p| p.attached).count()),
             _ => None,
         }
     };
