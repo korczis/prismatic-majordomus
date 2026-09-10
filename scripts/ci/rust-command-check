@@ -89,7 +89,7 @@ else
   [ "$v" -lt "$MIN_FLOOR" ] && add "-" "the coverage floor is ${v}%, below the ${MIN_FLOOR}% this rule calls high"
 fi
 
-current="$(printf '%s' "$findings" | grep -v '^$' | cut -f1 | sort -u || true)"
+current="$(printf '%s' "$findings" | grep -v '^$' | cut -f1 | LC_ALL=C sort -u || true)"
 
 if [ "$MODE" = write ]; then
   { echo "# Modules that do not yet satisfy project.rust-command-tested-in-file."
@@ -114,8 +114,8 @@ if [ "$MODE" = strict ]; then
   exit 10
 fi
 
-new="$(comm -23 <(printf '%s\n' "$current" | grep -v '^$' | sort -u) <(printf '%s\n' "$known" | grep -v '^$' | sort -u) || true)"
-gone="$(comm -13 <(printf '%s\n' "$current" | grep -v '^$' | sort -u) <(printf '%s\n' "$known" | grep -v '^$' | sort -u) || true)"
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$current" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
 
 [ -n "$gone" ] && { echo; echo "rust-command-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
 

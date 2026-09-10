@@ -223,9 +223,9 @@ printf '%s\n' "$LAST_OUT" | jq -e 'select(.level == "FAIL") | .category == "cont
 rm -f "$A/beta/twin.md"
 
 # ---------------------------------------------------------------- read-only, and the briefing
-before="$(find .ai -type f -exec shasum -a 256 {} \; | sort)"
+before="$(find .ai -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 "$MJ" context list >/dev/null; "$MJ" context resolve "$A" >/dev/null; "$MJ" context validate >/dev/null; "$MJ" context affected >/dev/null; "$MJ" context check-sync >/dev/null 2>&1 || true
-after="$(find .ai -type f -exec shasum -a 256 {} \; | sort)"
+after="$(find .ai -type f -exec shasum -a 256 {} \; | LC_ALL=C sort)"
 [ "$before" = "$after" ] || { echo "    a context subcommand wrote into .ai/"; exit 1; }
 git add -A >/dev/null; git commit -qm fixtures
 "$MJ" start "work on alpha" --scope "$A/alpha" >/dev/null

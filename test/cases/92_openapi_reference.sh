@@ -27,7 +27,7 @@ expect_exit 0 "$RB" generate openapi --out "$S/gen"
 DOC="$S/gen/docs/generated/openapi.json"
 
 # --- the tags are the modules: every tag an operation uses is declared with a description, no other
-jq -e '([.paths[][] | .tags[]] | unique) == ([.tags[].name] | sort)' "$DOC" >/dev/null \
+jq -e '([.paths[][] | .tags[]] | unique) == ([.tags[].name] | sort_by(.))' "$DOC" >/dev/null \
   || { echo "    the declared tags are not exactly the tags the operations use"; exit 1; }
 jq -e '[.tags[] | select((.description | length) == 0)] | length == 0' "$DOC" >/dev/null \
   || { echo "    a tag has no description"; exit 1; }
@@ -84,10 +84,10 @@ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion
 [ -f "$ROOT/site/data/generated/openapi.json" ] || { echo "    the site has no copy of the document"; exit 1; }
 [ "$(jq -r '.source' "$ROOT/site/data/generated/openapi.json")" = "docs/generated/openapi.json" ] \
   || { echo "    site/data/generated/openapi.json does not name docs/generated/openapi.json as its source"; exit 1; }
-cmp -s <(jq -c '[.paths[][] | .operationId] | sort' "$ROOT/docs/generated/openapi.json") \
-       <(jq -c '[.tags[].operations[].id] | sort' "$ROOT/site/data/generated/openapi.json") \
+cmp -s <(jq -c '[.paths[][] | .operationId] | sort_by(.)' "$ROOT/docs/generated/openapi.json") \
+       <(jq -c '[.tags[].operations[].id] | sort_by(.)' "$ROOT/site/data/generated/openapi.json") \
   || { echo "    the site's projection does not carry exactly the document's operations"; exit 1; }
-cmp -s <(jq -c '[.tags[].name] | sort' "$ROOT/docs/generated/openapi.json") <(jq -c '[.tags[].name] | sort' "$ROOT/site/data/generated/openapi.json") \
+cmp -s <(jq -c '[.tags[].name] | sort_by(.)' "$ROOT/docs/generated/openapi.json") <(jq -c '[.tags[].name] | sort_by(.)' "$ROOT/site/data/generated/openapi.json") \
   || { echo "    the site's projection does not carry exactly the document's tags"; exit 1; }
 base="$(sed -n 's/^base_url = "\(.*\)"$/\1/p' "$ROOT/site/config.toml")"
 [ "$(jq -r '.externalDocs.url' "$ROOT/docs/generated/openapi.json")" = "$base/docs/api/" ] \

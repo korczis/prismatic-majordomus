@@ -225,7 +225,7 @@ fixture_repo() {
   # fixture must produce it rather than inherit it, or a case would be checking this
   # repository's data instead of what the run under test wrote.
   for p in $(grep -rhoE 'load_data\(path="[^"]+"' "$ROOT/site/templates" 2>/dev/null \
-             | sed 's/.*path="//; s/"$//' | sort -u); do
+             | sed 's/.*path="//; s/"$//' | LC_ALL=C sort -u); do
     case "$p" in data/generated/*) continue ;; esac
     [ -f "$ROOT/site/$p" ] && [ ! -e "$dst/site/$p" ] || continue
     mkdir -p "$dst/site/$(dirname "$p")"
@@ -235,7 +235,7 @@ fixture_repo() {
   # them too, read from the matrix rather than listed here: a claim implemented outside the
   # trees copied above (the Rust executable under apps/) is otherwise "missing". After the
   # caller's trees, so that a tree copied whole is never pre-created and copied into itself.
-  for p in $(awk '/^    (source|implementation|test): /{print $2}' "$ROOT/docs/CLAIMS.yaml" | tr -d "'" | grep -v '^-$' | sort -u); do
+  for p in $(awk '/^    (source|implementation|test): /{print $2}' "$ROOT/docs/CLAIMS.yaml" | tr -d "'" | grep -v '^-$' | LC_ALL=C sort -u); do
     [ -f "$ROOT/$p" ] && [ ! -e "$dst/$p" ] || continue
     mkdir -p "$dst/$(dirname "$p")"
     cp "$ROOT/$p" "$dst/$p"

@@ -33,7 +33,7 @@ expect_grep '0 feature'
 # The references name only things a freshly initialised repository has: a capability module
 # of the executable, a kind of the layer and a workflow document `init` seeded. Nothing about
 # the feature's surfaces, counts or route is written; every one of those is derived below.
-before="$(git ls-files | sort | shasum -a 256)"
+before="$(git ls-files | LC_ALL=C sort | shasum -a 256)"
 mkdir -p .ai/repo/features
 cat > .ai/repo/features/a-probe-feature.md <<'MD'
 ---
@@ -63,7 +63,7 @@ Nothing the case does not say.
 MD
 git add .ai/repo/features/a-probe-feature.md >/dev/null
 # nothing but that one file was added: no registry, no navigation, no template, no code
-after="$(git ls-files | sort | shasum -a 256)"
+after="$(git ls-files | LC_ALL=C sort | shasum -a 256)"
 [ "$before" != "$after" ] || { echo "    the probe file was not added"; exit 1; }
 added="$(git diff --cached --name-only)"
 [ "$added" = ".ai/repo/features/a-probe-feature.md" ] \

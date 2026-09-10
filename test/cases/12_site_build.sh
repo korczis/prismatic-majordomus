@@ -66,9 +66,9 @@ expect_no_grep '<meta name="robots" content="noindex">' "$P/index.html"
 expect_grep "$(sed -n 's/^boundary = "\(.\{0,60\}\).*$/\1/p' "$ROOT/site/data/marketing.toml" | head -1)" "$P/index.html"
 expect_grep 'Install Majordomus' "$P/index.html"
 # every homepage tile is a link to a page that exists
-for href in $(grep -oE 'href="[^"]*/(features|profiles|guarantees|commands|why|doctrines)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
+for href in $(grep -oE 'href="[^"]*/(features|profiles|guarantees|commands|why|doctrines)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | LC_ALL=C sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/features/"' "$P/index.html"
-[ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
+[ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | LC_ALL=C sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
 # The recognition grid is the moments that declare themselves featured, counted from the
 # catalogue the executable derives. It used to be counted from site/content-src/why/*.md,
 # which stopped existing when a moment became an object of the layer (ADR 0018): the glob
@@ -77,7 +77,7 @@ expect_grep 'href="[^"]*/features/"' "$P/index.html"
 # empty — a check that cannot fail is worse than the one it replaced.
 n_why="$(jq '[.moments[] | select(.status == "stable" and .featured)] | length' "$ROOT/site/data/registry/why.json")"
 [ "$n_why" -gt 0 ] || { echo "    the catalogue features no stable moment; the homepage would link none"; exit 1; }
-n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')"
+n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
 [ "$n_linked" = "$n_why" ] || { echo "    the homepage links $n_linked why moment(s); $n_why declare themselves featured"; exit 1; }
 # the doctrine section is the dataset's own rule list: every rule it names has its page
 for r in $(jq -r '.rules[].id' "$ROOT/site/data/registry/product.json"); do

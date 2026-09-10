@@ -71,7 +71,7 @@ grep -q '^status: proposed$' "$adr2"
 for i in 1 2 3 4 5 6 7 8; do "$MJ" adr propose "Concurrent decision $i" >/dev/null 2>&1 & done
 wait
 [ "$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')" = 10 ]
-[ "$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | sort -u | wc -l | tr -d ' ')" = 10 ]
+[ "$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | LC_ALL=C sort -u | wc -l | tr -d ' ')" = 10 ]
 # and no lock was left behind
 [ ! -e .ai/repo/adrs/.id.lock ]
 

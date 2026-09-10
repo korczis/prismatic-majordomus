@@ -115,7 +115,7 @@ for g in json.load(sys.stdin)["graphs"]:
 import json,sys,urllib.parse
 for o in json.load(sys.stdin)["objects"]:
     print("/cockpit/object?uri=" + urllib.parse.quote(o["uri"], safe=""))'
-} | sort -u > "$ROUTES"
+} | LC_ALL=C sort -u > "$ROUTES"
 n="$(wc -l < "$ROUTES" | tr -d ' ')"
 [ "$n" -gt 10 ] || { bad routes "only $n route(s) derived; the server answered something unexpected"; exit 10; }
 

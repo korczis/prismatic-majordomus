@@ -82,7 +82,7 @@ sed -n 1p "$S/out2.txt" | jq -e '.result.instructions | contains("You are peer p
   || { echo "    the second client was not told about the first"; sed -n 1p "$S/out2.txt"; exit 1; }
 sed -n 2p "$S/out2.txt" | jq -e '.result.isError == false and .result.structuredContent.announcement.intent == "case 90 is running"' >/dev/null \
   || { echo "    the announcement was not recorded"; sed -n 2p "$S/out2.txt"; exit 1; }
-sed -n 3p "$S/out2.txt" | jq -e '.result.structuredContent.count == 2 and ([.result.structuredContent.peers[].client.name] | sort == ["case90-first","case90-second"])' >/dev/null \
+sed -n 3p "$S/out2.txt" | jq -e '.result.structuredContent.count == 2 and ([.result.structuredContent.peers[].client.name] | sort_by(.) == ["case90-first","case90-second"])' >/dev/null \
   || { echo "    the board does not list both clients"; sed -n 3p "$S/out2.txt"; exit 1; }
 # a claim inside a claim is answered when it is made, not discovered later: the first
 # client announced nothing, so the only holder here is this session's own earlier claim

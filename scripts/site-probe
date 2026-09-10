@@ -105,7 +105,7 @@ curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/" | grep -
 fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
 title_of() { dump_title "$1" 1400; }
 
-routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | sort)"
+routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | LC_ALL=C sort)"
 # SITE_PROBE_ONLY='/plan/ /guarantees/guaranteed/' narrows the sweep to named routes while a
 # layout fix is iterated on; CI never sets it, so the deploy still waits for every route.
 if [ -n "${SITE_PROBE_ONLY:-}" ]; then
@@ -140,7 +140,7 @@ if [ "$QUICK" = 1 ]; then
   # Sample one route per template, not one per section. Pages that share a template share
   # their layout, which is what makes a sample sound; section names are a proxy that stops
   # being true the day a section grows a second template, and stops silently.
-  MAP="$(find "$SITE/content" -name '*.md' | sort | xargs awk -f "$ROOT/scripts/lib/route-template.awk")"
+  MAP="$(find "$SITE/content" -name '*.md' | LC_ALL=C sort | xargs awk -f "$ROOT/scripts/lib/route-template.awk")"
   missing=""
   for r in $routes; do
     printf '%s\n' "$MAP" | cut -f1 | grep -qxF "$r" || missing="$missing $r"
@@ -160,7 +160,7 @@ if [ "$QUICK" = 1 ]; then
       if (sz > big[t]) { big[t] = sz; widest[t] = r } }
     END { for (i = 1; i <= n; i++) { print first[order[i]]
             if (widest[order[i]] != "" && widest[order[i]] != first[order[i]]) print widest[order[i]] } }')"
-  routes="$(printf '%s\n' "$SAMPLE" | sort -u)"
+  routes="$(printf '%s\n' "$SAMPLE" | LC_ALL=C sort -u)"
   echo "site-probe: --quick, one route per template plus each template's widest page ($(printf '%s\n' "$routes" | wc -l | tr -d ' ') of $(printf '%s\n' "$MAP" | wc -l | tr -d ' '))"
 fi
 # every route through the pool: "<n> <route>" per line, n in route order, so the findings
