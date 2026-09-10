@@ -26,6 +26,21 @@ use super::model::{
 };
 use super::version;
 
+/// The repository the links point into, as the crate manifest declares it.
+///
+/// Never a literal: `about::REPOSITORY` is `CARGO_PKG_REPOSITORY`, so a fork or a move
+/// carries every link with it and nothing here has to be told. A URL that is not a forge
+/// this understands yields no links at all rather than a guess — a wrong link is worse than
+/// no link, because a reader cannot tell it is wrong until they follow it.
+fn forge() -> Option<&'static str> {
+    let url = crate::about::REPOSITORY.trim_end_matches('/');
+    if url.starts_with("https://github.com/") && url.split('/').count() == 5 {
+        Some(url)
+    } else {
+        None
+    }
+}
+
 /// The kind the layer gives a published release.
 pub const RELEASE_KIND: &str = "release-record";
 /// The kind the layer gives a decision.
@@ -37,6 +52,7 @@ struct Record {
     tag: String,
     date: String,
     commit: String,
+    notes: Option<String>,
     artifacts: Vec<Artifact>,
 }
 
@@ -80,7 +96,7 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
     // Newest first, by the date the record carries: the order a changelog is read in.
     records.sort_by(|a, b| b.date.cmp(&a.date));
 
-    let decisions = decisions_of(objects);
+    let decisions = decisions_of(root, objects);
 
     let mut sections = Vec::new();
 
@@ -93,7 +109,7 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
         None => "HEAD".to_string(),
     };
     let unreleased_changes = if unreleased {
-        commits::in_range(root, &unreleased_range)
+        commits::in_range(root, &unreleased_range, objects)
     } else {
         Vec::new()
     };
@@ -106,7 +122,14 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
             date: None,
             commit: None,
             unreleased: true,
-            decisions: decisions_after(&decisions, newest.map(|r| r.date.as_str())),
+            // Nothing is published yet, so there are no notes; the range is what has landed
+            // since the last release, which is exactly what this section lists.
+            notes_url: None,
+            compare_url: forge()
+                .zip(newest)
+                .map(|(base, r)| format!("{base}/compare/{}...master", r.tag)),
+            tree_url: forge().map(|base| format!("{base}/tree/master")),
+            decisions: decisions_after(root, &decisions, newest.map(|r| r.commit.as_str())),
             groups: grouped(unreleased_changes),
             artifacts: Vec::new(),
         });
@@ -120,7 +143,7 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
             // nothing, which the diagnostics below make visible rather than silent.
             None => r.commit.clone(),
         };
-        let changes = commits::in_range(root, &range);
+        let changes = commits::in_range(root, &range, objects);
         if changes.is_empty() {
             diagnostics.push(format!(
                 "no commit was readable for {} ({}); the clone may not carry that history",
@@ -133,7 +156,23 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
             date: Some(r.date.clone()),
             commit: Some(r.commit.clone()),
             unreleased: false,
-            decisions: decisions_between(&decisions, previous.map(|p| p.date.as_str()), &r.date),
+            // The record names its own notes; the range and the tree are the forge's own
+            // addresses for facts the record already carries, so neither is authored.
+            notes_url: r
+                .notes
+                .clone()
+                .or_else(|| forge().map(|base| format!("{base}/releases/tag/{}", r.tag))),
+            compare_url: forge().map(|base| match previous {
+                Some(p) => format!("{base}/compare/{}...{}", p.tag, r.tag),
+                None => format!("{base}/commits/{}", r.tag),
+            }),
+            tree_url: forge().map(|base| format!("{base}/tree/{}", r.tag)),
+            decisions: decisions_between(
+                root,
+                &decisions,
+                previous.map(|p| p.commit.as_str()),
+                &r.commit,
+            ),
             groups: grouped(changes),
             artifacts: r.artifacts.clone(),
         });
@@ -144,6 +183,8 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
         current: version::declared(root).unwrap_or_else(|| "unknown".into()),
         sections,
         diagnostics,
+        // Filled by whoever answers with it: the composer does not know which surface asked.
+        produced_by: None,
     }
 }
 
@@ -151,7 +192,12 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
 ///
 /// Done here rather than in each renderer: the Markdown, the site and any other reader get
 /// the same order because they are given it, not because they each reimplemented it.
-fn grouped(changes: Vec<Change>) -> Vec<ChangeGroup> {
+fn grouped(mut changes: Vec<Change>) -> Vec<ChangeGroup> {
+    if let Some(base) = forge() {
+        for c in &mut changes {
+            c.url = Some(format!("{base}/commit/{}", c.commit));
+        }
+    }
     let mut kinds: Vec<_> = changes.iter().map(|c| c.kind).collect();
     kinds.sort_by_key(|k| k.rank());
     kinds.dedup();
@@ -209,12 +255,58 @@ fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> 
         tag,
         date,
         commit: commit.to_string(),
+        notes: metadata
+            .get("notes_url")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
         artifacts,
     })
 }
 
+/// When the file that states a decision was added, as git knows it.
+///
+/// The date in an ADR's front matter is when the decision was *made*, which is not the same
+/// question as which release carried it — and using it put two decisions written on 2026-09-09
+/// into a release published on 2026-09-08, because both ends were compared as calendar days.
+/// The commits half of this module already asks git; the decisions half asks git now too.
+fn added_at(root: &Path, path: &str) -> Option<String> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args([
+            "log",
+            "--diff-filter=A",
+            "--format=%H",
+            "--max-count=1",
+            "--",
+            path,
+        ])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let sha = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if sha.is_empty() {
+        None
+    } else {
+        Some(sha)
+    }
+}
+
+/// Whether `commit` is an ancestor of `of` — that is, whether it was already in that tree.
+fn is_in(root: &Path, commit: &str, of: &str) -> bool {
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["merge-base", "--is-ancestor", commit, of])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
 /// Every decision the layer holds, newest first.
-fn decisions_of(objects: &[Object]) -> Vec<Decision> {
+fn decisions_of(root: &Path, objects: &[Object]) -> Vec<Decision> {
     let mut out: Vec<Decision> = objects
         .iter()
         .filter(|o| o.kind == ADR_KIND)
@@ -243,6 +335,11 @@ fn decisions_of(objects: &[Object]) -> Vec<Decision> {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .to_string(),
+                url: forge().map(|base| format!("{base}/blob/master/{}", o.provenance.path)),
+                // Which release carried it is a question for git, not for the front matter:
+                // the date says when the decision was made, and two ADRs written the day
+                // after a release were claimed by it while this read that field instead.
+                added: added_at(root, &o.provenance.path),
                 id,
             })
         })
@@ -251,32 +348,35 @@ fn decisions_of(objects: &[Object]) -> Vec<Decision> {
     out
 }
 
-/// The decisions dated after `after`, for the unreleased section.
-///
-/// Dates are compared as the strings they are: both sources write ISO-8601, where
-/// lexicographic order is chronological order. A record's `published_at` carries a time and
-/// an ADR's `date` does not, so the comparison is made on the date half of each.
-fn decisions_after(decisions: &[Decision], after: Option<&str>) -> Vec<Decision> {
-    let after = after.map(day);
+/// The decisions not yet in any release: their file was added after the newest release's tree.
+fn decisions_after(root: &Path, decisions: &[Decision], newest: Option<&str>) -> Vec<Decision> {
     decisions
         .iter()
-        .filter(|d| match after {
-            Some(a) => day(&d.date) > a,
-            None => true,
+        .filter(|d| match (newest, d.added.as_deref()) {
+            // added, and not already in the last release's tree
+            (Some(rel), Some(added)) => !is_in(root, added, rel),
+            // nothing released yet, or git could not say when it was added: an unreleased
+            // section that omits a decision is worse than one that shows an early arrival
+            _ => true,
         })
         .cloned()
         .collect()
 }
 
-/// The decisions dated inside `(after, until]`.
-fn decisions_between(decisions: &[Decision], after: Option<&str>, until: &str) -> Vec<Decision> {
-    let until = day(until);
-    let after = after.map(day);
+/// The decisions this release carried: in its tree, and not in the one before it.
+fn decisions_between(
+    root: &Path,
+    decisions: &[Decision],
+    previous: Option<&str>,
+    release: &str,
+) -> Vec<Decision> {
     decisions
         .iter()
         .filter(|d| {
-            let d = day(&d.date);
-            d <= until && after.is_none_or(|a| d > a)
+            let Some(added) = d.added.as_deref() else {
+                return false;
+            };
+            is_in(root, added, release) && previous.is_none_or(|p| !is_in(root, added, p))
         })
         .cloned()
         .collect()
@@ -378,37 +478,117 @@ mod tests {
             title: "t".into(),
             status: "accepted".into(),
             date: date.into(),
+            url: None,
+            added: None,
+        }
+    }
+
+    fn git(root: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@t")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@t")
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A repository whose decisions arrive one file per commit, so that git can say when each
+    /// was added: the fact the two window functions read. Returns the commit of each arrival,
+    /// in order.
+    fn repo_with_decisions(ids: &[&str]) -> (tempfile::TempDir, Vec<String>) {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let root = dir.path();
+        git(root, &["init", "-q"]);
+        std::fs::create_dir_all(root.join(".ai/repo/decisions")).expect("the decisions dir");
+        let mut arrivals = Vec::new();
+        for id in ids {
+            std::fs::write(
+                root.join(format!(".ai/repo/decisions/{id}.md")),
+                "decided\n",
+            )
+            .expect("a decision file");
+            git(root, &["add", "-A"]);
+            git(root, &["commit", "-q", "-m", &format!("docs(adr): {id}")]);
+            arrivals.push(git(root, &["rev-parse", "HEAD"]));
+        }
+        (dir, arrivals)
+    }
+
+    /// An ADR object as the index would hold it, dated on the same day as every other one
+    /// here: the date is deliberately useless, so that only git's answer can pass the test.
+    fn adr_object(id: &str) -> Object {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("id".into(), id.into());
+        metadata.insert("status".into(), "accepted".into());
+        metadata.insert("date".into(), "2026-09-01".into());
+        Object {
+            kind: ADR_KIND.into(),
+            identity: id.into(),
+            uri: format!("majordomus://adr/{id}"),
+            title: Some("t".into()),
+            description: None,
+            metadata: serde_json::Value::Object(metadata),
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: format!(".ai/repo/decisions/{id}.md"),
+                directory: ".ai/repo/decisions".into(),
+                source_class: "decision".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
         }
     }
 
     #[test]
-    fn a_decision_belongs_to_the_release_whose_window_contains_its_date() {
-        let all = vec![
-            decision("adr-0001", "2026-09-01"),
-            decision("adr-0002", "2026-09-05"),
-            decision("adr-0003", "2026-09-09"),
-        ];
-        // (2026-09-03, 2026-09-06] — the second only.
-        let between = decisions_between(&all, Some("2026-09-03T10:00:00Z"), "2026-09-06T00:00:00Z");
+    fn a_decision_belongs_to_the_release_whose_tree_first_holds_it() {
+        let (dir, at) = repo_with_decisions(&["adr-0001", "adr-0002", "adr-0003"]);
+        let all = decisions_of(
+            dir.path(),
+            &[
+                adr_object("adr-0001"),
+                adr_object("adr-0002"),
+                adr_object("adr-0003"),
+            ],
+        );
+        assert!(
+            all.iter().all(|d| d.added.is_some()),
+            "git says when each file was added"
+        );
+        // (first tree, second tree] — the second only, whatever its front matter is dated.
+        let between = decisions_between(dir.path(), &all, Some(&at[0]), &at[1]);
         assert_eq!(between.len(), 1);
         assert_eq!(between[0].id, "adr-0002");
-        // The first release has no predecessor, so its window opens at the beginning.
-        let first = decisions_between(&all, None, "2026-09-03");
+        // The first release has no predecessor, so it carries everything its tree holds.
+        let first = decisions_between(dir.path(), &all, None, &at[0]);
         assert_eq!(first.len(), 1);
         assert_eq!(first[0].id, "adr-0001");
     }
 
     #[test]
-    fn the_unreleased_window_opens_after_the_last_release() {
-        let all = vec![
-            decision("adr-0001", "2026-09-01"),
-            decision("adr-0003", "2026-09-09"),
-        ];
-        let after = decisions_after(&all, Some("2026-09-05T00:00:00Z"));
+    fn the_unreleased_section_holds_what_no_released_tree_holds() {
+        let (dir, at) = repo_with_decisions(&["adr-0001", "adr-0003"]);
+        let all = decisions_of(
+            dir.path(),
+            &[adr_object("adr-0001"), adr_object("adr-0003")],
+        );
+        let after = decisions_after(dir.path(), &all, Some(&at[0]));
         assert_eq!(after.len(), 1);
         assert_eq!(after[0].id, "adr-0003");
         // No release at all: everything is unreleased.
-        assert_eq!(decisions_after(&all, None).len(), 2);
+        assert_eq!(decisions_after(dir.path(), &all, None).len(), 2);
     }
 
     /// A throwaway repository with `n` commits, the first of them tagged as a release the
@@ -564,6 +744,9 @@ mod tests {
                 date: None,
                 commit: None,
                 unreleased: true,
+                notes_url: None,
+                compare_url: None,
+                tree_url: None,
                 decisions: vec![decision("adr-0027", "2026-09-09")],
                 // Given in the order the commits arrived — a fix first — so that the
                 // grouping, not the input, is what decides the order the renderer shows.
@@ -574,6 +757,8 @@ mod tests {
                         subject: "the gate runs".into(),
                         breaking: false,
                         commit: "aaa1111".into(),
+                        url: None,
+                        references: Vec::new(),
                     },
                     Change {
                         kind: ChangeKind::Feat,
@@ -581,11 +766,14 @@ mod tests {
                         subject: "one graph".into(),
                         breaking: true,
                         commit: "bbb2222".into(),
+                        url: None,
+                        references: Vec::new(),
                     },
                 ]),
                 artifacts: Vec::new(),
             }],
             diagnostics: Vec::new(),
+            produced_by: None,
         };
         let md = render(&changelog);
         assert!(md.contains("## Unreleased"));

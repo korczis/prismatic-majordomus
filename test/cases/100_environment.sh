@@ -68,7 +68,10 @@ grep -q 'majordomus-env' "$ENVRC" || { echo "    the adapter does not call the t
 MISSING="$T/missing"; mkdir -p "$MISSING/bin" "$MISSING/lib"
 cp "$ROOT/bin/majordomus-env" "$MISSING/bin/"
 cp "$ROOT/lib/rust_bin.sh" "$MISSING/lib/"
-( cd "$MISSING" && MAJORDOMUS_BIN="" bin/majordomus-env status >"$T/missing.out" 2>"$T/missing.err" )
+# CARGO_TARGET_DIR empty as well as MAJORDOMUS_BIN: the adapter reads that variable, so a
+# suite run by somebody whose worktrees share one build directory would find a real
+# executable here and this would assert nothing. "No executable anywhere" is the case.
+( cd "$MISSING" && MAJORDOMUS_BIN="" CARGO_TARGET_DIR="" bin/majordomus-env status >"$T/missing.out" 2>"$T/missing.err" )
 code=$?
 [ "$code" = 0 ] || { echo "    the adapter exited $code where the executable is absent"; exit 1; }
 grep -q 'not built' "$T/missing.err" || {

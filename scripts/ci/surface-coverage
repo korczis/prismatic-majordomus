@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# surface-coverage — one mandatory gate proves every public surface is covered.
+#
+# The individual checks already exist: Rust tests exercise MCP, CLI, Swagger/OpenAPI, the
+# library boundary and the Cockpit; shell cases exercise the executable and generated site;
+# site and pages gates cover the static and published sites. This script makes that coverage
+# fail closed when a future change removes one piece from the gate model or from the tests.
+set -eu
+set -o pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+
+fail=0
+ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }
+bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fail=1; }
+
+need_file() {
+  label="$1"; file="$2"; pattern="$3"; message="$4"
+  if [ -f "$file" ] && grep -Eq "$pattern" "$file"; then
+    ok "$label" "$message"
+  else
+    bad "$label" "$message"
+  fi
+}
+
+need_case() {
+  label="$1"; case_name="$2"; message="$3"
+  if [ -f "test/cases/$case_name.sh" ]; then
+    ok "$label" "$message"
+  else
+    bad "$label" "$message"
+  fi
+}
+
+need_gate() {
+  label="$1"; gate_id="$2"; run_pattern="$3"; message="$4"
+  block="$(awk -v id="$gate_id" '
+    $0 ~ "^  - id: " id "$" { in_gate=1 }
+    in_gate && /^  - id: / && $0 !~ "^  - id: " id "$" { exit }
+    in_gate { print }
+  ' .ai/repo/ci/gates.yaml)"
+  if printf '%s\n' "$block" | grep -Eq "$run_pattern"; then
+    ok "$label" "$message"
+  else
+    bad "$label" "$message"
+  fi
+}
+
+need_gate shell-suite shell-suite 'MJ_TEST_JOBS=4 bash test/run\.sh' \
+  "behavioural cases are mandatory in the gate model"
+need_gate rust-check rust-check 'scripts/rust-check --ci' \
+  "Rust, CLI, MCP, HTTP/OpenAPI and library tests are mandatory in the gate model"
+need_gate cockpit cockpit-probe 'scripts/cockpit-probe' \
+  "Cockpit browser probing is mandatory in the gate model"
+need_gate site site-build 'scripts/site-build && scripts/site-check' \
+  "static site build and checks are mandatory in the gate model"
+need_gate pages pages-live 'scripts/ci/pages-check' \
+  "published GitHub Pages validation is mandatory in the gate model"
+
+need_file mcp apps/majordomus-cli/tests/metadata_contract.rs 'mcp --inspect|majordomus_get|mcp' \
+  "MCP metadata and tools are covered by Rust tests"
+need_file cli apps/majordomus-cli/tests/cli.rs 'Usage: majordomus|mcp --help|capabilities' \
+  "CLI behaviour is covered by Rust tests"
+need_file swagger apps/majordomus-cli/tests/hot_path.rs '/swagger|swagger-ui|/api/v1' \
+  "Swagger UI and HTTP routes are covered by Rust tests"
+need_file lib apps/majordomus-cli/tests/generated_documents.rs 'generate|registry|openapi|artifacts' \
+  "library-generated documents are covered by Rust tests"
+need_file cockpit apps/majordomus-cli/tests/cockpit.rs '/cockpit|Cockpit|capabilities' \
+  "Cockpit routes and projection behaviour are covered by Rust tests"
+need_file product apps/majordomus-cli/tests/product.rs 'surfaces|cockpit|swagger|mcp' \
+  "product surface discovery is covered by Rust tests"
+
+need_case site-build 11_site_derivation "site derivation is covered by a behavioural case"
+need_case site-build 12_site_build "site build is covered by a behavioural case"
+need_case pages 104_published_site "published-site validation is covered by a behavioural case"
+need_case plan 99_plan_capabilities "plan capabilities are covered by a behavioural case"
+need_case graph 98_traceability "traceability and graph integration are covered by a behavioural case"
+
+if [ "$fail" = 0 ]; then
+  echo "surface-coverage: MCP, CLI, Swagger/API, lib, Cockpit, site and deploy coverage are mandatory"
+else
+  echo "surface-coverage: required coverage is missing" >&2
+fi
+exit "$fail"

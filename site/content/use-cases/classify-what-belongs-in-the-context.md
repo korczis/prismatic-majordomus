@@ -1,7 +1,7 @@
 +++
 title = "Decide what belongs in the AI context, as data"
 description = "Read the repository’s declared scope policy, see which paths are in and out of the index, and let doctor and the knowledge index apply it rather than a hardcoded list."
-weight = 28
+weight = 29
 [extra]
 id = "classify-what-belongs-in-the-context"
 source = ".ai/repo/use-cases/classify-what-belongs-in-the-context.md"

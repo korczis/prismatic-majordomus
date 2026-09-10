@@ -19,11 +19,16 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 PROFILE="${MAJORDOMUS_BUILD_PROFILE:-debug}"
 export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
 else
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}" || exit 13
-  RB="$CRATE/target/$PROFILE/majordomus"
+  # cargo, not a composed path: this check runs in the pre-commit hook's neighbourhood and
+  # in CI, and a shared CARGO_TARGET_DIR would make it exit 127 rather than report staleness
+  RB="$(mj_cargo_target_dir "$CRATE" ask-cargo)/$PROFILE/majordomus"
 fi
 rc=0
 printf '==> derive-check: majordomus generate --check\n'

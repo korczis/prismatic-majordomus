@@ -1,11 +1,11 @@
 # The release as a projection, against the real executable in a disposable repository: the
-# changelog is composed from the layer's own release records, the decisions dated inside each
-# release's window and the commits in its range; the version is one fact written into the two
+# changelog is composed from the layer's own release records, the decisions whose file first
+# appears in each release's tree and the commits in its range; the version is one fact written into the two
 # sites that must state it by one writer; and every surface renders one value.
 #
 # The repository is built here rather than borrowed from the checkout, because every question
 # this case asks is a question about a history: which commits fall in which release's range,
-# which decision belongs to which window, and what the commits since the last release imply.
+# which decision belongs to which release, and what the commits since the last release imply.
 # A fixture whose history is real is the only one those answers can be checked against.
 #
 # The assertion the whole case exists for is the last but one: a release record added to the
@@ -91,7 +91,45 @@ Y
 chmod +x bin/majordomus
 git add -A >/dev/null && git commit -qm "chore(fixture): the releases section and the two version sites"
 
-FIRST="$(git rev-parse HEAD~1)"     # what v0.9.0 was published from
+# decision DDDD SLUG DATE
+decision() {
+  cat > ".ai/repo/adrs/$1-$2.md" <<Y
+---
+schema: adr/v1
+id: adr-$1
+kind: adr
+title: A decision dated $3
+status: accepted
+date: $3
+tags: [fixture]
+provenance:
+  origin: authored
+---
+
+# A decision dated $3
+
+## Context
+
+A decision the changelog must place by the tree that first holds its file, and by
+nothing else: the date below is when it was decided, not which release carried it.
+
+## Decision
+
+It is dated $3.
+
+## Consequences
+
+It appears in the section of the release whose tree first holds this file, and in no other.
+Y
+}
+# The decision the first release carries: its file is in v1.0.0's tree and not in v0.9.0's,
+# which is the only fact the changelog reads. Its date is deliberately inside the old date
+# window too, so a regression to date arithmetic would pass here and fail on the one below.
+decision 0001 the-first-release-carries 2026-01-15
+git add -A >/dev/null && git commit -qm "docs(adr): a decision the first release carries"
+
+
+FIRST="$(git rev-parse HEAD~2)"     # what v0.9.0 was published from
 SECOND="$(git rev-parse HEAD)"      # what v1.0.0 was published from
 
 # record VERSION TAG COMMIT PUBLISHED_AT
@@ -114,38 +152,7 @@ Y
 record 0.9.0 v0.9.0 "$FIRST" "2026-01-01T00:00:00Z"
 record 1.0.0 v1.0.0 "$SECOND" "2026-02-01T00:00:00Z"
 
-# decision DDDD SLUG DATE
-decision() {
-  cat > ".ai/repo/adrs/$1-$2.md" <<Y
----
-schema: adr/v1
-id: adr-$1
-kind: adr
-title: A decision dated $3
-status: accepted
-date: $3
-tags: [fixture]
-provenance:
-  origin: authored
----
-
-# A decision dated $3
-
-## Context
-
-A decision the changelog must place by its date and by nothing else.
-
-## Decision
-
-It is dated $3.
-
-## Consequences
-
-It appears in the section whose window contains that day, and in no other.
-Y
-}
-decision 0001 inside-the-first-window 2026-01-15   # inside (v0.9.0, v1.0.0]
-decision 0002 after-the-last-release 2026-03-01    # after v1.0.0: unreleased
+decision 0002 after-the-last-release 2026-03-01    # added after v1.0.0 was cut: unreleased
 
 git add -A >/dev/null && git commit -qm "docs(release): the records and the decisions the fixture reads"
 echo a > alpha.txt; git add -A >/dev/null; git commit -qm "feat(alpha): a capability nobody had before"
@@ -155,7 +162,7 @@ echo c > gamma.txt; git add -A >/dev/null; git commit -qm "a subject that follow
 # ---------------------------------------------------------------- the changelog is composed
 #
 # One section per record, newest first, with the unreleased work leading; each release's
-# decisions are the ones dated inside its window and each release's changes are the commits
+# decisions are the ones whose file first appears in its tree and each release's changes are the commits
 # in its range.
 expect_exit 0 "$RB" release
 expect_grep '^# Changelog'
@@ -174,12 +181,12 @@ sections="$(grep -c '"unreleased":' "$S/changelog.json" | tr -d ' ')"
   echo "    $records record(s) and one unreleased section should be $((records + 1)) sections; the changelog has $sections"
   exit 1; }
 
-# a decision belongs to the window that contains its day, and to no other
+# a decision belongs to the release whose tree first holds its file, and to no other
 "$RB" release changelog v1.0.0 > "$S/one.txt" 2>/dev/null
 grep -q 'adr-0001\|A decision dated 2026-01-15' "$S/one.txt" || {
-  echo "    the decision dated inside v1.0.0's window is not in its section:"; cat "$S/one.txt"; exit 1; }
+  echo "    the decision v1.0.0's tree first holds is not in its section:"; cat "$S/one.txt"; exit 1; }
 grep -q '2026-03-01' "$S/one.txt" && {
-  echo "    a decision dated after the release appears in it:"; cat "$S/one.txt"; exit 1; }
+  echo "    a decision added after the release appears in it:"; cat "$S/one.txt"; exit 1; }
 # and a version nothing carries is refused rather than answered emptily
 expect_exit 12 "$RB" release changelog v7.7.7
 expect_grep "no release section carries the version 'v7.7.7'"
@@ -220,18 +227,26 @@ for f in docs/generated/changelog.json docs/generated/changelog.yaml docs/genera
   expect_file "$f"
 done
 # the generated document, past the provenance header its encoding allows, is what the
-# command line renders — the same value, written twice, never composed twice
+# command line renders — the same value, written twice, never composed twice — minus the one
+# section no committed file may carry. The unreleased section is `<last release>..HEAD`, and
+# a file inside a commit cannot describe the commit it is in, so the committed form stops at
+# the newest release while the command line, asked at request time, leads with it.
 sed '1,/-->/d' docs/generated/changelog.md > "$S/generated.md"
-cmp -s "$S/generated.md" "$S/bare.md" || {
-  echo "    the generated changelog and the rendered one disagree:"
-  diff "$S/generated.md" "$S/bare.md" | head -10; exit 1; }
+awk '/^## Unreleased$/ { skip = 1; next } /^## / { skip = 0 } !skip' "$S/bare.md" > "$S/published.md"
+grep -q '^## Unreleased$' "$S/bare.md" || { echo "    the command line, asked at HEAD, renders no unreleased section"; exit 1; }
+grep -q '^## Unreleased$' "$S/generated.md" && { echo "    the committed changelog carries the unreleased section, which goes stale at the next commit"; exit 1; }
+cmp -s "$S/generated.md" "$S/published.md" || {
+  echo "    the generated changelog and the rendered one disagree past the unreleased section:"
+  diff "$S/generated.md" "$S/published.md" | head -10; exit 1; }
 
-# --- and it is drift-checked: current now, stale the moment the tree moves
+# --- and it is drift-checked: current now, and still current after a commit that publishes
+# nothing. That is what the committed form is for — a document that went stale at every
+# commit made every commit owe a derive — and what moves it is a release, proved below.
 expect_exit 0 "$RB" generate changelog --check
 expect_grep 'in sync'
 git add -A >/dev/null && git commit -qm "chore(generated): the changelog document"
-expect_exit 10 "$RB" generate changelog --check
-expect_grep 'changelog'
+expect_exit 0 "$RB" generate changelog --check
+expect_grep 'in sync'
 
 # ---------------------------------------------------------------- the version, and its writer
 #
@@ -317,6 +332,13 @@ git checkout -- "$MANIFEST" "$ENTRY"
 before_sections="$sections"
 record 1.1.0 v1.1.0 "$(git rev-parse HEAD)" "2026-04-01T00:00:00Z"
 git add -A >/dev/null && git commit -qm "docs(release): record v1.1.0"
+# a release is the one thing that moves the committed changelog: stale now, current once
+# regenerated, and the case leaves it current so that nothing below inherits the drift
+expect_exit 10 "$RB" generate changelog --check
+expect_grep 'changelog'
+expect_exit 0 "$RB" generate changelog
+git add -A >/dev/null && git commit -qm "chore(generated): the changelog follows the record"
+expect_exit 0 "$RB" generate changelog --check
 "$RB" release changelog --format json > "$S/changelog2.json" 2>/dev/null
 after_sections="$(grep -c '"unreleased":' "$S/changelog2.json" | tr -d ' ')"
 [ "$after_sections" = "$((before_sections + 1))" ] || {
@@ -342,6 +364,56 @@ expect_grep 'above the machine ceiling'
 "$RB" commands show executable.release.bump --format json > "$S/bump.json" 2>/dev/null
 grep -qi 'api/v1/release/bump' "$S/bump.json" && { echo "    the writer is projected onto HTTP"; exit 1; }
 grep -qi 'majordomus_release_bump' "$S/bump.json" && { echo "    the writer is projected as an MCP tool"; exit 1; }
+
+# ---------------------------------------------------------------- the links are derived, or absent
+#
+# Every address on a changelog entry comes from the crate manifest's own repository URL, so a
+# fork carries them and nothing is written twice. This fixture's repository is not a forge the
+# tool understands, which makes it the interesting case: an unknown host must yield NO links
+# rather than a guessed one, because a wrong link cannot be told from a right one until it is
+# followed.
+"$RB" release changelog --format json > "$S/links.json" 2>/dev/null
+invented="$(jq -r '[.sections[].groups[].changes[].url // empty] | map(select(startswith("https://github.com/") | not)) | .[0] // empty' "$S/links.json")"
+[ -z "$invented" ] || { echo "    a commit link was invented for an unknown forge: $invented"; exit 1; }
+notbad="$(jq -r '[.sections[].notes_url // empty] | map(select(startswith("http") | not)) | .[0] // empty' "$S/links.json")"
+[ -z "$notbad" ] || { echo "    a notes_url was rewritten into something that is not a URL: $notbad"; exit 1; }
+
+# --- a reference is resolved against the layer, never merely matched
+#
+# The commit below names an issue the layer has and one it does not. Only the first may
+# appear: an id that matches the shape and names nothing is not a link, because a reader
+# cannot tell a dead link from a live one until they follow it.
+# The issue is valid under the repository's own schema (majordomus.issue/v1), because the
+# index drops a record the schema refuses, and a dropped record resolves nothing — the
+# same silence pj_issue in test/lib.sh was written to avoid.
+mkdir -p .ai/repo/project/issues
+cat > .ai/repo/project/issues/I4242.yaml <<'Y'
+id: I4242
+milestone: M000
+title: An issue the changelog may link to
+slug: an-issue-the-changelog-may-link-to
+priority: p2
+profile: routine
+parallel_safe: true
+objective: "Exists so that a commit naming it produces a reference, and one naming I9999 does not."
+scope:
+  - src/I4242
+acceptance_criteria:
+  - A commit naming it carries a reference to it
+validation:
+  - "true"
+evidence_required:
+  - proof
+Y
+git add -A >/dev/null 2>&1
+git commit -qm "fix(link): resolves I4242 and mentions I9999, which the layer does not have"
+"$RB" release changelog --format json > "$S/refs.json" 2>/dev/null
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I4242")] | length == 1' "$S/refs.json" >/dev/null \
+  || { echo "    an issue the layer holds produced no reference"; exit 1; }
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I9999")] | length == 0' "$S/refs.json" >/dev/null \
+  || { echo "    an id that names nothing was carried as a reference"; exit 1; }
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I4242" and .title == "An issue the changelog may link to")] | length == 1' "$S/refs.json" >/dev/null \
+  || { echo "    the reference does not carry the title from the record it resolved to"; exit 1; }
 
 # ---------------------------------------------------------------- no secret reaches a projection
 #

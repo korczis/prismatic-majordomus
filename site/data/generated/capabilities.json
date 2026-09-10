@@ -1659,6 +1659,19 @@
       "test_case": "103_obligations"
     },
     {
+      "id": "obligation-establishment",
+      "claim": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it",
+      "source": "docs/CLI.md",
+      "implementation": "lib/evidence.sh",
+      "test": "test/cases/103_obligations.sh",
+      "status": "guaranteed",
+      "note": "share/obligations.yaml gives every token an established_by, and one of `none` obliges it to say in `unestablished` why nothing here can settle it. commit, push and target are settled from git without fetching, so a stale tracking ref can only say \"not yet\" and never \"yes\"; pages is settled by scripts/pages verify with --timeout 0, the single probe of the publication check the Pages workflow already runs, which now exits 12 rather than 10 when the site never answered — unreachable and unpublished are different findings. A fact established this way is taken at HEAD, which is mj_git_label's `exact`; the other three labels keep their meaning on the fallback path, and deploy and verify stay hand-recorded because a deployment is a fact about a machine this repository never contacts.",
+      "responsibility": "finish",
+      "source_route": "/docs/cli/",
+      "command": "evidence",
+      "test_case": "103_obligations"
+    },
+    {
       "id": "skill-check",
       "claim": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
       "source": "docs/CLI.md",
