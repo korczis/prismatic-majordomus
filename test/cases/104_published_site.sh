@@ -1,14 +1,22 @@
 # The published-site gate, against fixture repositories rather than against the network.
 #
-# `scripts/ci/pages-check` answers two questions, and the first is decidable offline: is the
-# commit gh-pages says it was built from an ancestor of the trunk? That is the half that
-# failed in production on 2026-09-09, when an unmerged branch was served for half an hour
-# with every tree-level gate green, so it is the half worth holding to a case.
+# `scripts/ci/pages-check` answers four questions, and two of them are decidable offline.
 #
-# The second half asks the live site and is not simulated here: a case that stood up an HTTP
-# server would be testing the fixture, and one that reached the real site would fail whenever
-# the network did. `--offline` is the seam the gate declares for exactly this, and the case
-# asserts that the seam says so rather than silently skipping.
+# Is the commit gh-pages says it was built from an ancestor of the trunk? That is the half
+# that failed in production on 2026-09-09, when an unmerged branch was served for half an
+# hour with every tree-level gate green.
+#
+# And has the trunk moved past it? That is the converse, and it was owned by nobody until
+# 2026-09-10, when twenty pull requests landed in an afternoon, the site sat hours behind
+# master, and this gate said `ok` every time it ran — because a publication that is on master
+# is on master however old it is. A one-way check is this repository's most repeated defect
+# class, so the direction that was missing is held to a case here beside the one that was not.
+#
+# The other two halves ask the network — the live site, and GitHub's own build of gh-pages —
+# and are not simulated: a case that stood up an HTTP server would be testing the fixture, and
+# one that reached the real site would fail whenever the network did. `--offline` is the seam
+# the gate declares for exactly this, and the case asserts that the seam says so rather than
+# silently skipping.
 #
 # Every fixture is a repository this case builds, so the assertions do not depend on the
 # checkout's own history.
@@ -51,6 +59,17 @@ fixture() {
   )
 }
 
+# Master moves past the publication, the way a merged pull request moves it.
+advance() {
+  (
+    cd "$1" || exit 1
+    git checkout -q master
+    : > moved.txt; git add moved.txt
+    git commit -q -m "something the site is built from"
+    git fetch -q origin 'refs/heads/*:refs/remotes/origin/*'
+  )
+}
+
 # --- a publication from the trunk is accepted
 fixture "$T/ok" merged
 if ( cd "$T/ok" && ./scripts/ci/pages-check --offline > "$T/ok.out" 2>&1 ); then rc=0; else rc=$?; fi
@@ -83,6 +102,37 @@ if ( cd "$T/mute" && git checkout -q gh-pages && git commit -q --allow-empty -m 
       && ./scripts/ci/pages-check --offline > "$T/mute.out" 2>&1 ); then rc=0; else rc=$?; fi
 [ "$rc" = 12 ] || { echo "    a deploy commit naming no source was accepted (exit $rc):"; cat "$T/mute.out"; exit 1; }
 grep -q "unauditable" "$T/mute.out" || { echo "    the refusal does not say why it cannot proceed:"; cat "$T/mute.out"; exit 1; }
+
+# --- a trunk that has moved past the publication, and the deploy never happened
+#
+# This is 2026-09-10 in a fixture: gh-pages still names the commit it named an hour ago while
+# master carries commits it does not. The window is the whole judgement — the same tree is a
+# deploy in flight when it is a minute old and a stale site when it is an hour old — so it is
+# asked both ways over one fixture rather than by waiting.
+fixture "$T/owed" merged
+advance "$T/owed"
+
+# inside the window: owed, young, and not a refusal
+if ( cd "$T/owed" && ./scripts/ci/pages-check --offline --owed-after 3600 > "$T/young.out" 2>&1 ); then rc=0; else rc=$?; fi
+[ "$rc" = 0 ] || { echo "    the gate refused a publication that is merely in flight (exit $rc):"; cat "$T/young.out"; exit 1; }
+grep -q "inside the .* deploy window" "$T/young.out" || {
+  echo "    the gate did not say a publication is owed and young:"; cat "$T/young.out"; exit 1; }
+
+# past the window: the site owes a publication, and that is the refusal that was missing
+if ( cd "$T/owed" && ./scripts/ci/pages-check --offline --owed-after 0 > "$T/owed.out" 2>&1 ); then rc=0; else rc=$?; fi
+[ "$rc" = 10 ] || { echo "    the gate accepted a site the trunk had moved past (exit $rc):"; cat "$T/owed.out"; exit 1; }
+grep -q "owes a publication" "$T/owed.out" || {
+  echo "    the refusal does not say the publication is owed:"; cat "$T/owed.out"; exit 1; }
+grep -q "cancelled by the next push" "$T/owed.out" || {
+  echo "    the refusal names no cause a reader could act on:"; cat "$T/owed.out"; exit 1; }
+
+# --- a check that could not be made is never reported as a check that passed
+#
+# The fixture has no publication model and no scripts/pages, so the trigger paths cannot be
+# read. The gate must say so: an absent measurement that prints `ok` is the disease this whole
+# file exists to treat.
+grep -q "^note  " "$T/owed.out" || {
+  echo "    the gate could not read the trigger paths and did not say so:"; cat "$T/owed.out"; exit 1; }
 
 # --- the gate carries no URL of its own
 #

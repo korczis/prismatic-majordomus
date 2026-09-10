@@ -42,9 +42,21 @@ diff -u derived.txt declared.txt > paths.diff 2>&1 || {
 grep -q 'workflow_dispatch' "$W" || { echo "    pages.yml cannot be dispatched by hand"; exit 1; }
 
 # 3. a stale deployment is cancelled: the site is a projection of the newest commit, so an
-#    older run finishing after a newer push would publish the older tree
-grep -q 'cancel-in-progress: true' "$W" || { echo "    pages.yml does not cancel superseded runs; an older commit could overwrite a newer one"; exit 1; }
+#    older run finishing after a newer push would publish the older tree. A push cancels; a
+#    dispatch does not, because a dispatch is the recovery path and the run it would cancel
+#    may be mid-push to gh-pages. Both halves are one expression, so both are asserted.
+grep -qE "^  cancel-in-progress: \\\$\{\{ github.event_name == 'push' \}\}$|^  cancel-in-progress: true$" "$W" \
+  || { echo "    pages.yml does not cancel superseded runs; an older commit could overwrite a newer one"; exit 1; }
+grep -q "cancel-in-progress: true" "$W" && {
+  echo "    pages.yml cancels a dispatched run too; the recovery deploy must not be killed by a push"; exit 1; }
 grep -qE '^  group: pages-' "$W" || { echo "    pages.yml has no pages concurrency group of its own"; exit 1; }
+
+# 3a. a cancelled run is not a failure, and `gh run list` cannot tell one that published from
+#     one that did not. The run must say which it was before it disappears.
+grep -q 'name: publication state' "$W" || {
+  echo "    pages.yml does not state whether it published; a cancelled run is then unreadable"; exit 1; }
+awk '/name: publication state/{f=1} f' "$W" | grep -q 'if: always()' || {
+  echo "    the publication state is not reported on a cancelled run, which is the only run that needs it"; exit 1; }
 
 # 4. minimal permissions, and only what the deploy needs
 awk '/^permissions:/{f=1; next} /^[a-z]/{f=0} f && /^  [a-z]/' "$W" | sed 's/^  //' | LC_ALL=C sort > perms.txt
