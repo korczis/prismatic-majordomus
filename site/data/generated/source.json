@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source_version": "0.5.0",
-  "source_hash": "242feed06db7ce93d90092d85969021dde33d244a034ff1f7b8707c281468be1",
+  "source_hash": "0de9bc725b9ef4a8af056e7aea0002ece34ac2dcb11e75a0a8b2b61580fdcb42",
   "generator_version": 1,
   "input_files": [
     "bin/majordomus",
@@ -192,6 +192,7 @@
     "docs/claims/mcp-client-autostart.md",
     "docs/claims/mcp-data-driven.md",
     "docs/claims/mcp-degraded-not-silent.md",
+    "docs/claims/mcp-lease-lost.md",
     "docs/claims/mcp-lease-resilience.md",
     "docs/claims/mcp-peers.md",
     "docs/claims/mcp-shared-server.md",
@@ -316,8 +317,16 @@
     "test/cases/111_session_per_provider.sh",
     "test/cases/111_unblock.sh",
     "test/cases/112_version_matches_surface.sh",
+    "test/cases/113_clean_owns_its_target.sh",
+    "test/cases/113_shared_server_survives_a_crash.sh",
+    "test/cases/114_two_worktrees_one_repository.sh",
+    "test/cases/115_server_state_drift.sh",
+    "test/cases/118_entry_converges_by_rule.sh",
     "test/cases/11_site_derivation.sh",
     "test/cases/120_design_contrast.sh",
+    "test/cases/121_liveness_doctrine.sh",
+    "test/cases/122_liveness_gate.sh",
+    "test/cases/123_case_bound.sh",
     "test/cases/12_site_build.sh",
     "test/cases/12b_site_data_transactional.sh",
     "test/cases/12c_graph_data.sh",
@@ -423,6 +432,7 @@
     "test/cases/97_pages_fast_path.sh",
     "test/cases/97_product_features.sh",
     "test/cases/97_site_probe_attribution.sh",
+    "test/cases/97_vendor_evidence.sh",
     "test/cases/98_cli_reference.sh",
     "test/cases/98_traceability.sh",
     "test/cases/98_why_catalogue.sh",
@@ -548,6 +558,7 @@
     ".ai/repo/project/milestones/M004.yaml",
     ".ai/repo/project/milestones/capability-graph.yaml",
     ".ai/repo/project/milestones/cost-per-accepted-outcome.yaml",
+    ".ai/repo/project/milestones/derived-data-integrity.yaml",
     ".ai/repo/project/milestones/execution-telemetry.yaml",
     ".ai/repo/project/milestones/external-workspaces.yaml",
     ".ai/repo/project/milestones/fly-deployment.yaml",
@@ -759,6 +770,7 @@
     ".ai/repo/project/issues/I1405.yaml",
     ".ai/repo/project/issues/I1406.yaml",
     ".ai/repo/project/issues/I1407.yaml",
-    ".ai/repo/project/issues/I1408.yaml"
+    ".ai/repo/project/issues/I1408.yaml",
+    ".ai/repo/project/issues/I1409.yaml"
   ]
 }
