@@ -27,6 +27,7 @@ use super::identity::ResolvedPath;
 use super::lock::WorktreeLock;
 use super::model::{DiagnosticCode, DirtyState, Severity, Standing, TopologyDiagnostic, SCHEMA};
 use super::service::{display, Detail, WorktreeService};
+use super::state;
 
 /// How a step moves its worktree.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -139,12 +140,18 @@ pub fn plan(service: &WorktreeService) -> Result<MigrationPlan> {
 }
 
 /// The plan, optionally counting ephemeral worktrees as steps.
+///
+/// The topology is read `Fast`: a step's uncommitted work is measured for the worktrees that
+/// become steps and for nothing else. A plan that asked every registered worktree for its
+/// `git status` would pay the whole fan-out to report the uncommitted work of the handful it
+/// is going to move — and the Cockpit's worktrees page, which asks for the topology and for
+/// this plan, paid it twice.
 pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<MigrationPlan> {
-    let topology = service.topology(Detail::Full)?;
+    let (judged, _) = service.judged_worktrees(Detail::Fast)?;
     let container = service.container().path.clone();
     let mut steps = Vec::new();
     let mut exceptions = Vec::new();
-    for w in &topology.worktrees {
+    for w in &judged {
         match w.standing {
             Standing::Ephemeral if !include_ephemeral => {
                 exceptions.extend(w.diagnostics.iter().cloned());
@@ -184,7 +191,8 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
                     } else {
                         MigrationAction::Move
                     },
-                    dirty: w.dirty.clone().unwrap_or_default(),
+                    // measured below, for the steps and for nothing else
+                    dirty: DirtyState::default(),
                     outcome: if blockers.is_empty() {
                         StepOutcome::Planned
                     } else {
@@ -212,6 +220,13 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
             Standing::Canonical => {}
         }
     }
+    // Now, and only now, what each step would carry: one `git status` per step, asked
+    // concurrently, rather than one per registered worktree.
+    let from: Vec<PathBuf> = steps.iter().map(|s| PathBuf::from(&s.from)).collect();
+    for (step, dirty) in steps.iter_mut().zip(state::dirty_states(&from)) {
+        step.dirty = dirty.unwrap_or_default();
+    }
+
     // The container's occupant moves first: every other destination is inside the
     // container, and while a worktree *is* the container those destinations would be
     // created inside that worktree. If it cannot move, nothing can.

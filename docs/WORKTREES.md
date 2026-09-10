@@ -321,9 +321,26 @@ says where to `cd`.
 `worktree status` and `worktree guard` read the registrations, the branches and one `git
 status` of the current worktree: a handful of subprocesses, no index build, no network, no
 scan. `topology` and `list` add one `git status` per existing worktree and nothing else.
-The migration hashes the content of every modified and untracked file of the worktrees it
-moves, which is the one place that cost is right. Nothing is cached across calls: the
-topology changes outside the process.
+
+That last one is the only cost that grows with the number of worktrees, and in a repository
+under fan-out development there are a hundred of them. The runs are independent — a
+different index, a different directory, no shared lock, and `GIT_OPTIONAL_LOCKS=0` so none
+of them writes — so they are made concurrently, as wide as the machine's parallelism and no
+wider: this process shares the machine with whoever else is working in it, and a fan-out of
+a hundred subprocesses would be a denial of service dressed as an optimisation. The
+operation a worktree is in the middle of is read from its `.git` pointer rather than from
+`git rev-parse`, which is one subprocess per worktree saved for a question the filesystem
+already answers.
+
+The migration plan is derived from the `Fast` topology and measures the uncommitted work of
+the worktrees it would move and of no others: a plan that asked every registered worktree
+would pay the whole fan-out to report a handful of numbers, and the Cockpit's worktrees
+page, which asks for the topology *and* for the plan, paid it twice. The migration itself
+hashes the content of every modified and untracked file of the worktrees it moves, which is
+the one place that cost is right.
+
+Nothing is cached across calls: the topology changes outside the process, and a cache over a
+fan-out hides it rather than fixing it.
 
 ## Where things are
 
