@@ -196,14 +196,30 @@ fn a_complete_release_agrees_with_the_model() {
 }
 
 #[test]
-fn a_release_missing_a_supported_target_is_not_a_release() {
+fn a_target_added_after_a_release_does_not_invalidate_it() {
+    // The trap this replaces: `findings` used to require an artifact for every target the
+    // model publishes *now*, so adding a platform made every published release incomplete
+    // and `generate --target distribution` refused the tree — a platform could not be added
+    // at all. Completeness is decided by scripts/release-record when the record is written.
     let model = real_model();
     let mut release = sample_release(&model, "v0.2.0", Channel::Stable);
     release.artifacts.pop();
+    assert_eq!(
+        release.findings(&model),
+        Vec::<String>::new(),
+        "a release that predates a target cannot carry it, and is not in breach for that"
+    );
+}
+
+#[test]
+fn a_release_artifact_for_a_target_the_model_does_not_declare_is_refused() {
+    let model = real_model();
+    let mut release = sample_release(&model, "v0.2.0", Channel::Stable);
+    release.artifacts[0].target = "sparc64-unknown-linux-gnu".into();
     assert!(release
         .findings(&model)
         .iter()
-        .any(|f| f.contains("a partial release is not a release")));
+        .any(|f| f.contains("the model does not declare")));
 }
 
 #[test]

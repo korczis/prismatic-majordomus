@@ -77,6 +77,7 @@ elif python3 -c 'import yaml' 2>/dev/null; then YAML_READER=python; fi
 for id in $(jq -r '.documents[] | select((.formats | index("json")) and (.formats | index("yaml"))) | .id' "$MAN"); do
   j="$ROOT/docs/generated/$id.json"; y="$ROOT/docs/generated/$id.yaml"
   expect_file "$j"; expect_file "$y"
+  pairs=$((pairs + 1))
   case "$YAML_READER" in
     ruby)
       ruby -ryaml -rjson -e '
@@ -92,6 +93,7 @@ if j != y: sys.exit("the YAML and the JSON of %s are different documents" % sys.
 ' "$j" "$y" "$id" || exit 1 ;;
   esac
 done
+[ "$pairs" -gt 0 ] || { echo "    no document is committed in two encodings; this check has stopped checking anything"; exit 1; }
 [ -n "$YAML_READER" ] || echo "    note: no YAML parser (ruby/psych or python3/PyYAML); the encodings were compared by declaration only"
 
 # --- every schema a document names is published and pins that document

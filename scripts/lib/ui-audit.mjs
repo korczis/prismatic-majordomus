@@ -73,13 +73,27 @@ export async function auditPage(page, origin, route, width) {
   // A page that never loads is a finding about that page, not the end of the run. An audit
   // that aborts on the first slow navigation reports nothing about the 1600 visits after
   // it, which is how a whole sweep is lost to one asset that hung.
+  // Once more before calling it unreachable. The first visits of a sweep race the server's
+  // own start: several workers arrive together, nothing is warm, and the heaviest index page
+  // can miss the deadline for a reason that says nothing about the page. That is what
+  // happened — the first four visits of a 2397-visit run timed out and every one after them
+  // passed — and a gate that reports the state of the machine rather than of the site is a
+  // gate people learn to ignore. A page that does not load twice is still a finding.
   let response;
-  try {
-    response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
-  } catch (error) {
+  let error;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      response = await page.goto(`${origin}${route}`, { waitUntil: 'load', timeout: 20000 });
+      error = undefined;
+      break;
+    } catch (e) {
+      error = e;
+    }
+  }
+  if (error) {
     findings.push({
       rule: 'page.unreachable',
-      detail: `the page did not load: ${String(error?.message ?? error).split('\n')[0]}`,
+      detail: `the page did not load, twice: ${String(error?.message ?? error).split('\n')[0]}`,
     });
     return { route, width, status: 0, findings, console_errors, failed_requests };
   }

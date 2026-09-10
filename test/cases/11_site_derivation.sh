@@ -20,7 +20,12 @@ sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low
 sed -i.bak 's/^title: Sessions are workers, not memory$/title: Sessions are CHANGED PRINCIPLE/' "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md"; rm -f "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md.bak"
 ( cd "$T" && ./scripts/rules-package write >/dev/null ) || { echo "    the rule package could not be re-pinned after the edit"; exit 1; }
 # 4. a policy value
-sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 42/' "$T/share/skeleton/policy.yaml"; rm -f "$T/share/skeleton/policy.yaml.bak"
+# A different value, and one the bootstraps still fit inside: `generate-site-data` now runs
+# the repository's use-case scenarios, and `keep-the-bootstrap-thin-and-within-budget` holds
+# the generated AGENTS.md and CLAUDE.md to this budget. A budget below their real length is
+# not a changed input — it is a false statement, and the scenario is right to refuse it.
+sed -i.bak -E 's/always_loaded_budget_lines: [0-9]+/always_loaded_budget_lines: 120/' "$T/share/skeleton/policy.yaml"; rm -f "$T/share/skeleton/policy.yaml.bak"
+grep -q 'always_loaded_budget_lines: 120' "$T/share/skeleton/policy.yaml" || { echo "    the budget mutation matched nothing"; exit 1; }
 # 5. a claim status
 python3 - "$T/docs/CLAIMS.yaml" <<'PY'
 import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  - id: init-refuses\n    claim: Installing into a repository that already has an installation is refused","  - id: init-refuses\n    claim: CHANGED CLAIM TEXT",1); open(p,'w').write(s)
