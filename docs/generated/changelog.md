@@ -44,7 +44,12 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **release**: the module asserts the two projections it documents (`98f6606ce`)
+- **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
+- **commands**: the module asserts the three projections it documents (`5609ab148`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
+- **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
+- **share**: a MAJORDOMUS_SHARE naming another worktree of this repository is refused (`fc9864ebc`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
@@ -112,6 +117,9 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the second master merge (`e94b760d1`)
+- **derive**: the projections follow the master merge (`5fe8f2ec8`)
+- **derive**: the projections follow the master merge (`b79363681`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
 - **derive**: the projections follow the two adopted sessions (`4066bdf4f`)
@@ -145,6 +153,10 @@ Current version: **0.4.0**
 - **derive**: the projections follow the two check corrections (`6cda9bcc2`)
 - **derive**: the use-case evidence re-recorded at normal speed (`3c5705d1e`)
 - **derive**: the projections follow the merge (`c85c2cb0b`)
+
+### Other
+
+- the interactive changelog and its derived links, before merging master (`b9745faf4`)
 
 
 ## v0.3.1 — 2026-09-08

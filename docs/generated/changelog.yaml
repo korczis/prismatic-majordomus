@@ -179,11 +179,41 @@ sections:
         rank: 1
         changes:
           - kind: fix
+            scope: release
+            subject: the module asserts the two projections it documents
+            breaking: false
+            commit: 98f6606ce
+            url: https://github.com/korczis/prismatic-majordomus/commit/98f6606ce
+          - kind: fix
+            scope: gates
+            subject: "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            breaking: false
+            commit: f6b73b05a
+            url: https://github.com/korczis/prismatic-majordomus/commit/f6b73b05a
+          - kind: fix
+            scope: commands
+            subject: the module asserts the three projections it documents
+            breaking: false
+            commit: 5609ab148
+            url: https://github.com/korczis/prismatic-majordomus/commit/5609ab148
+          - kind: fix
             scope: site
             subject: the changelog page reads the groups the document carries
             breaking: false
             commit: b551a3327
             url: https://github.com/korczis/prismatic-majordomus/commit/b551a3327
+          - kind: fix
+            scope: docs
+            subject: the semantics module documents a validation that is not an item
+            breaking: false
+            commit: ed649c769
+            url: https://github.com/korczis/prismatic-majordomus/commit/ed649c769
+          - kind: fix
+            scope: share
+            subject: a MAJORDOMUS_SHARE naming another worktree of this repository is refused
+            breaking: false
+            commit: fc9864ebc
+            url: https://github.com/korczis/prismatic-majordomus/commit/fc9864ebc
           - kind: fix
             scope: ui
             subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
@@ -541,6 +571,24 @@ sections:
         changes:
           - kind: chore
             scope: derive
+            subject: the projections follow the second master merge
+            breaking: false
+            commit: e94b760d1
+            url: https://github.com/korczis/prismatic-majordomus/commit/e94b760d1
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5fe8f2ec8
+            url: https://github.com/korczis/prismatic-majordomus/commit/5fe8f2ec8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: b79363681
+            url: https://github.com/korczis/prismatic-majordomus/commit/b79363681
+          - kind: chore
+            scope: derive
             subject: the projections follow the merge with master
             breaking: false
             commit: 44468dbc1
@@ -737,6 +785,15 @@ sections:
             breaking: false
             commit: c85c2cb0b
             url: https://github.com/korczis/prismatic-majordomus/commit/c85c2cb0b
+      - kind: other
+        heading: Other
+        rank: 8
+        changes:
+          - kind: other
+            subject: "the interactive changelog and its derived links, before merging master"
+            breaking: false
+            commit: b9745faf4
+            url: https://github.com/korczis/prismatic-majordomus/commit/b9745faf4
     artifacts: []
   - version: "0.3.1"
     tag: v0.3.1
