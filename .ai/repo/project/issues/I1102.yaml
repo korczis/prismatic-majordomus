@@ -19,7 +19,7 @@ depends_on:
   - I1101
 acceptance_criteria:
   - Each namespace declares what it holds, in typed and versioned form, generated from the canonical Rust types where generation is available
-  - `.ai/` is defined as portable semantic material that keeps its meaning without this tool and across providers, and `.majordomus/` as control-plane state that must never hold a second copy of it
+  - "`.ai/` is defined as portable semantic material that keeps its meaning without this tool and across providers, and `.majordomus/` as control-plane state that must never hold a second copy of it"
   - A check refuses an artifact placed in the namespace whose contract excludes it, and names both the path and the contract it violates
   - The skeleton a new repository receives is derived from the same declaration rather than being a parallel copy of it
 validation:

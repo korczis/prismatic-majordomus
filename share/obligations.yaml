@@ -59,7 +59,7 @@ obligations:
     inputs: ["docs/**", "README.md", ".ai/repo/**/README.md"]
     remote: false
     established_by: none
-    unestablished: `scripts/ci/reference-check` could settle it and does not yet; wiring it here means deciding what a check may spend, which is the same question `generated` below asks and neither has answered.
+    unestablished: "`scripts/ci/reference-check` could settle it and does not yet; wiring it here means deciding what a check may spend, which is the same question `generated` below asks and neither has answered."
 
   - id: generated
     title: The projections are current
@@ -68,7 +68,7 @@ obligations:
     inputs: ["share/**", ".ai/repo/**", "docs/CLAIMS.yaml"]
     remote: false
     established_by: none
-    unestablished: `majordomus generate --check` would settle it in about twelve seconds. Until a check may spend that on every run, the recorded line stands — a known gap, not a limit.
+    unestablished: "`majordomus generate --check` would settle it in about twelve seconds. Until a check may spend that on every run, the recorded line stands — a known gap, not a limit."
     note: Paired with `scripts/pages current`, which answers the same question for the site half against its own input hash.
 
   - id: rules
@@ -78,7 +78,7 @@ obligations:
     inputs: [".ai/repo/rules/**", "share/standard/**"]
     remote: false
     established_by: none
-    unestablished: `doctrine status` reports what the rules say, not whether the invariant this change introduced is among them; that comparison is a reader's.
+    unestablished: "`doctrine status` reports what the rules say, not whether the invariant this change introduced is among them; that comparison is a reader's."
 
   - id: commit
     title: The work is committed
