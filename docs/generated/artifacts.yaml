@@ -145,6 +145,15 @@ documents:
     source: share/distribution.yaml and the release records
     formats:
       - json
+  - id: graph
+    schema: majordomus/capability-graph/v1
+    source: the composed graph of the registry and the index
+    formats:
+      - json
+  - id: graph-schema
+    source: "the schema of the composed graph, generated from its types"
+    formats:
+      - json
   - id: install-guide
     source: "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)"
     formats:
@@ -486,34 +495,47 @@ artifacts:
     format: yaml
     schema: majordomus/changelog/v1
     source: "the layer's release records, the decisions dated in each release's window, and the commits in its range"
-    bytes: 437814
-    sha256: 903555decbde399697fcbcf5037ac6b3225cec26a6d010d3547d9686c2b21d7f
+    bytes: 437816
+    sha256: 88c1e45524dfd78b0382b768538f645d2cb3eb5dcf8c9ebb0ddc6d1a0021d66e
   - path: docs/generated/cli.json
     document: cli
     format: json
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 500594
-    sha256: 9276f3d0b8a06f6a3f6b367d503177351bdd2c5d2f284ada28322e2796228cd3
+    bytes: 500755
+    sha256: f5f2f20314553047db682e419f19072d516c098bf74633fba02b9ebb8d620537
   - path: docs/generated/cli.md
     document: cli
     format: markdown
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 210281
-    sha256: d90b4cf3cc0fe430c69f5e477a13eddf0ee89f06d9736c3f8086117a9a417b87
+    bytes: 210371
+    sha256: fcda4c3a669f6e7aadefb299ba800f555b0ab502322198ea8d9f0879bfcdbecf
   - path: docs/generated/cli.yaml
     document: cli
     format: yaml
     schema: majordomus/cli/v1
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
-    bytes: 389343
-    sha256: d06ba5c1658aafee82a20724627e6c225e0e6e3aa043f3897e5ba939b2785c7a
+    bytes: 389460
+    sha256: cc3ec78066d2b0f70ee3fc753ee986a6266b00bce7a184c186c25729e85632f2
   - path: docs/generated/distribution-matrix.json
     document: distribution-matrix
     format: json
     source: share/distribution.yaml and the release records
     bytes: 2672
     sha256: babb306155a4fc7cdd7d394967f72e13ced5b70f21cbebbbf42ce6fc63426a0e
+  - path: docs/generated/graph.json
+    document: graph
+    format: json
+    schema: majordomus/capability-graph/v1
+    source: the composed graph of the registry and the index
+    bytes: 1728499
+    sha256: 25756645d7f8c7e8dedf12c6845bdcfebe7858869b88b96112e825a4b8750f12
+  - path: docs/generated/graph.schema.json
+    document: graph-schema
+    format: json
+    source: "the schema of the composed graph, generated from its types"
+    bytes: 7618
+    sha256: 44e151bac91ab1f8566f5b898433127d7ad5c460e0bb095d95469aadeddd733f
   - path: docs/generated/modules/artifacts.md
     document: modules/artifacts
     format: markdown
@@ -1000,8 +1022,8 @@ artifacts:
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 2335171
-    sha256: 964f9e8cae625f7cae02f655d4b61c723712ebe475158d187bd3c596e96f0132
+    bytes: 2335332
+    sha256: cbacfc997ba6ac87a94c21d66ef028818cadd8c9c64cede1e37314f0e5cab69a
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json

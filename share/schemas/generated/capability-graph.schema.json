@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/capability-graph.schema.json",
+  "title": "Capability graph",
+  "description": "docs/generated/graph.json: the composed graph of the capability registry and every object of the `.ai/` index — one node per capability, object and projection, one edge per declared relation between them — as the Cockpit, the site and any reader outside this process see it. The generated shape of the node and edge types is published beside it as docs/generated/graph.schema.json; this file is the contract, the members a reader may rely on. Written by `majordomus generate graph`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "graph"],
+  "properties": {
+    "schema": { "const": "majordomus/capability-graph/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "graph": {
+      "type": "object",
+      "description": "The composed graph itself, as `majordomus graph composed` serves it.",
+      "required": ["id", "node_kinds", "edge_kinds", "nodes", "edges", "metadata"],
+      "properties": {
+        "id": { "const": "composed" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "source": {
+          "type": "string",
+          "description": "What the graph was derived from, repository-relative or named; never a path on the machine that generated it."
+        },
+        "node_kinds": {
+          "type": "object",
+          "description": "Every kind a node may carry, with what it means; a node's `kind` is one of these keys."
+        },
+        "edge_kinds": {
+          "type": "object",
+          "description": "Every kind an edge may carry, with what it means; an edge's `kind` is one of these keys."
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "kind", "label"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "kind": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "summary": { "type": "string" },
+              "status": { "type": "string" },
+              "route": {
+                "type": "string",
+                "description": "Where a reader opens this node, as a path of a served surface."
+              },
+              "source": {
+                "type": "string",
+                "description": "The file this node was read from, repository-relative."
+              }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source", "target", "kind"],
+            "properties": {
+              "source": { "type": "string", "minLength": 1 },
+              "target": { "type": "string", "minLength": 1 },
+              "kind": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["nodes", "edges"],
+          "properties": {
+            "nodes": { "type": "integer", "minimum": 0 },
+            "edges": { "type": "integer", "minimum": 0 },
+            "acyclic": { "type": "boolean" },
+            "truncated": {
+              "type": "boolean",
+              "description": "Whether a limit cut the graph short; a published artifact carries the whole graph, so this is false."
+            }
+          }
+        }
+      }
+    }
+  }
+}

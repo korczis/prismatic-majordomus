@@ -519,7 +519,7 @@ fn is_plain_scalar(s: &str) -> bool {
     ) {
         return false;
     }
-    if looks_numeric(s) {
+    if looks_numeric(s) || looks_temporal(s) {
         return false;
     }
     let first = s.as_bytes()[0];
@@ -551,6 +551,27 @@ fn is_plain_scalar(s: &str) -> bool {
     })
 }
 
+/// A date or a timestamp, in the shape a YAML 1.1 parser types as a value of its own.
+///
+/// The reader in this module treats every unquoted non-numeric scalar as a string, but
+/// the encodings are also read by parsers this repository does not own — Psych and
+/// PyYAML among them — and those turn a plain `2026-09-08T07:10:37Z` into a time, not
+/// into the string that was written. The JSON sibling of the same document has a string
+/// there, so leaving it plain makes the two encodings different documents. Quoting it is
+/// what keeps them one value rendered twice.
+///
+/// The test is the date prefix alone: everything a YAML 1.1 timestamp can be begins with
+/// `YYYY-MM-DD`, and nothing else this repository writes does.
+fn looks_temporal(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() >= 10
+        && b[..4].iter().all(u8::is_ascii_digit)
+        && b[4] == b'-'
+        && b[5..7].iter().all(u8::is_ascii_digit)
+        && b[7] == b'-'
+        && b[8..10].iter().all(u8::is_ascii_digit)
+}
+
 fn looks_numeric(s: &str) -> bool {
     let body = s.strip_prefix('-').unwrap_or(s);
     !body.is_empty()
@@ -573,6 +594,21 @@ fn quoted(s: &str) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn a_date_or_a_timestamp_is_quoted_so_a_foreign_parser_reads_a_string_back() {
+        // A YAML 1.1 parser types a plain `2026-09-08T07:10:37Z` as a time; the JSON
+        // sibling of the same document has a string there, and test case 52 compares the
+        // two with a parser this repository does not own.
+        let doc = json!({ "date": "2026-09-08T07:10:37Z", "day": "2026-09-08" });
+        assert_eq!(
+            render(&doc),
+            "date: \"2026-09-08T07:10:37Z\"\nday: \"2026-09-08\"\n"
+        );
+        assert_eq!(Value::Object(parse_mapping(&render(&doc)).unwrap()), doc);
+        // a string that merely starts with a year is still plain
+        assert!(is_plain_scalar("2026-releases"));
+    }
 
     #[test]
     fn unquoted_integers_and_decimals_are_numbers_and_everything_else_is_text() {
