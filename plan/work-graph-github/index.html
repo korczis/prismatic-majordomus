@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="1c73468b1437">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,9 +16,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0c34ed19ccf734aa3e1b">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
-<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
@@ -27,9 +27,30 @@
 <nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
   <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
-      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.4.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -42,9 +63,8 @@
         <span class="sr-only">Open main menu</span>
         <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
       </button>
-    </div>
-    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
-      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
         
         
         
@@ -187,7 +207,8 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">ACTIVE</span><span class="text-sm text-body">7 of 8 issues done</span></p>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active">ACTIVE</span>
+<span class="text-sm text-body">7 of 8 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
@@ -205,22 +226,22 @@
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/github-sync</li><li class="font-mono text-heading break-words">scripts/ci</li><li class="font-mono text-heading break-words">.ai/repo/ci/gates.yaml</li><li class="font-mono text-heading break-words">.ai/repo/project</li><li class="font-mono text-heading break-words">.ai/repo/rules/project</li><li class="font-mono text-heading break-words">.ai/repo/adrs</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src</li><li class="font-mono text-heading break-words">lib/plan.sh</li><li class="font-mono text-heading break-words">lib/project.sh</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">site</li><li class="font-mono text-heading break-words">test/cases</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/github-sync</li><li class="font-mono text-heading break-words">scripts/ci</li><li class="font-mono text-heading break-words">.ai/repo/ci/gates.yaml</li><li class="font-mono text-heading break-words">.ai/repo/project</li><li class="font-mono text-heading break-words">.ai/repo/rules/project</li><li class="font-mono text-heading break-words">.ai/repo/adrs</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src</li><li class="font-mono text-heading break-words">lib/plan.sh</li><li class="font-mono text-heading break-words">lib/project.sh</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">site</li><li class="font-mono text-heading break-words">test/cases</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>Replacing the canonical model, which is not the defect</li><li>Importing GitHub semantics into canonical records; GitHub stays a projection</li><li>Moving network calls into the tool itself, which test/cases/08_no_forbidden_constructs.sh forbids</li><li>A GraphQL client, or any provider abstraction beyond the one GitHub host this repository publishes to</li><li>Assignees, reactions, projects boards or discussions</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Replacing the canonical model, which is not the defect</li><li>Importing GitHub semantics into canonical records; GitHub stays a projection</li><li>Moving network calls into the tool itself, which test/cases/08_no_forbidden_constructs.sh forbids</li><li>A GraphQL client, or any provider abstraction beyond the one GitHub host this repository publishes to</li><li>Assignees, reactions, projects boards or discussions</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>A gate runs the drift check on every change that can move the model or the adapter, and a drift finding fails CI naming the record and the remedy</li><li>Identity is canonical data: renaming a title on GitHub moves the mapping with it and creates no duplicate record</li><li>Reconciliation is provable offline against a fixture remote, and a fixture is refused for any mutation</li><li>The reconciliation vocabulary distinguishes never-created, deleted-remotely, edited-remotely, canonically-moved and conflicting, and each state names what would change before anything changes</li><li>A pull request is related to the issue it realises by a derived edge, and the relation is traversable in both directions</li><li>The plan&#39;s derivations are readable through the capability surface, and adding one requires no edit to a transport registry</li><li>Every claim this milestone makes about GitHub is backed by a test that runs offline against a fixture</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>A gate runs the drift check on every change that can move the model or the adapter, and a drift finding fails CI naming the record and the remedy</li><li>Identity is canonical data: renaming a title on GitHub moves the mapping with it and creates no duplicate record</li><li>Reconciliation is provable offline against a fixture remote, and a fixture is refused for any mutation</li><li>The reconciliation vocabulary distinguishes never-created, deleted-remotely, edited-remotely, canonically-moved and conflicting, and each state names what would change before anything changes</li><li>A pull request is related to the issue it realises by a derived edge, and the relation is traversable in both directions</li><li>The plan&#39;s derivations are readable through the capability surface, and adding one requires no edit to a transport registry</li><li>Every claim this milestone makes about GitHub is backed by a test that runs offline against a fixture</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/github-sync --check</li><li class="font-mono text-heading break-words">scripts/ci/core-check</li><li class="font-mono text-heading break-words">bash test/run.sh</li><li class="font-mono text-heading break-words">cargo test --workspace --all-features</li><li class="font-mono text-heading break-words">majordomus generate --check</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/github-sync --check</li><li class="font-mono text-heading break-words">scripts/ci/core-check</li><li class="font-mono text-heading break-words">bash test/run.sh</li><li class="font-mono text-heading break-words">cargo test --workspace --all-features</li><li class="font-mono text-heading break-words">majordomus generate --check</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">drift_gated</li><li class="font-mono text-heading break-words">identity_stable</li><li class="font-mono text-heading break-words">offline_provable</li><li class="font-mono text-heading break-words">traceability_both_ways</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">drift_gated</li><li class="font-mono text-heading break-words">identity_stable</li><li class="font-mono text-heading break-words">offline_provable</li><li class="font-mono text-heading break-words">traceability_both_ways</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risks</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>The backfill is an outward-facing mutation: applying the projection creates roughly 180 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate.</li><li>Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work.</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>The backfill is an outward-facing mutation: applying the projection creates roughly 180 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate.</li><li>Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work.</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
@@ -230,56 +251,64 @@
       <tbody>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1401/" class="text-fg-brand hover:underline">I1401</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">0</td>
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">The identity of a projected record is what the record carries, not what its title says</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1402/" class="text-fg-brand hover:underline">I1402</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">1</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1401/" class="text-fg-brand hover:underline">I1401</a></td>
           <td class="px-4 py-2 text-heading">A finding says which of six states it found, and the state that could hide a person&#39;s edit is no longer one of them</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1403/" class="text-fg-brand hover:underline">I1403</a></td>
-          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1401/" class="text-fg-brand hover:underline">I1401</a>, <a href="https://majordomus.dev/plan/i1402/" class="text-fg-brand hover:underline">I1402</a>, <a href="https://majordomus.dev/plan/i1404/" class="text-fg-brand hover:underline">I1404</a></td>
           <td class="px-4 py-2 text-heading">Backfill the projection once, deliberately, and record what it created</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1404/" class="text-fg-brand hover:underline">I1404</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1402/" class="text-fg-brand hover:underline">I1402</a></td>
           <td class="px-4 py-2 text-heading">The drift check is a gate, so a projection that stops being applied cannot stay silent</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1405/" class="text-fg-brand hover:underline">I1405</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">1</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1401/" class="text-fg-brand hover:underline">I1401</a></td>
           <td class="px-4 py-2 text-heading">A pull request names the issue it realises, and the edge is derived rather than remembered</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1406/" class="text-fg-brand hover:underline">I1406</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">0</td>
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">The plan&#39;s derivations are capabilities, so every surface reads the readiness the terminal reads</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1407/" class="text-fg-brand hover:underline">I1407</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1404/" class="text-fg-brand hover:underline">I1404</a>, <a href="https://majordomus.dev/plan/i1405/" class="text-fg-brand hover:underline">I1405</a>, <a href="https://majordomus.dev/plan/i1406/" class="text-fg-brand hover:underline">I1406</a></td>
           <td class="px-4 py-2 text-heading">One issue travels the whole path and back, as an executable case</td>
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1408/" class="text-fg-brand hover:underline">I1408</a></td>
-          <td class="px-4 py-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--done">DONE</span>
+</td>
           <td class="px-4 py-2 font-mono text-xs text-body">3</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1404/" class="text-fg-brand hover:underline">I1404</a></td>
           <td class="px-4 py-2 text-heading">The documents stop claiming a projection nobody runs</td>
@@ -339,7 +368,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ee3fb44dfe49c814753720e99ab83067a6e63fca" class="font-mono underline">ee3fb44</a> · inputs <span class="font-mono">95575c6c7e0c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/08caf51aaf6cfac1130cb7fb2f0a7d8ab45c6729" class="font-mono underline">08caf51</a> · inputs <span class="font-mono">4fe657a09b10</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

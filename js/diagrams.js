@@ -26,7 +26,7 @@
   }
 
   function render() {
-    var dark = document.documentElement.classList.contains('dark');
+    var dark = document.documentElement.classList.contains(document.documentElement.dataset.themeClass);
     blocks.forEach(function (b) { b.removeAttribute('data-processed'); b.textContent = b.getAttribute('data-source'); });
     window.mermaid.initialize({
       startOnLoad: false,
@@ -39,13 +39,13 @@
       // moved whenever nobody remembered it existed. A token that does not resolve is
       // omitted rather than guessed, and Mermaid's own theme answers for it.
       themeVariables: vars({
-        primaryColor: '--mj-graph-surface',
-        primaryTextColor: '--mj-graph-text',
-        primaryBorderColor: '--mj-graph-line',
-        lineColor: '--mj-graph-muted',
-        secondaryColor: '--sunken',
-        tertiaryColor: '--sunken',
-        background: '--bg'
+        primaryColor: '--mj-raised',
+        primaryTextColor: '--mj-fg',
+        primaryBorderColor: '--mj-line',
+        lineColor: '--mj-muted',
+        secondaryColor: '--mj-sunken',
+        tertiaryColor: '--mj-sunken',
+        background: '--mj-bg'
       }, { fontSize: '14px' })
     });
     window.mermaid.run({ nodes: blocks }).catch(function () { /* leave the source visible */ });

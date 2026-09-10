@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="1c73468b1437">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,9 +16,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0c34ed19ccf734aa3e1b">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
-<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
@@ -27,9 +27,30 @@
 <nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
   <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
-      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.4.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -42,9 +63,8 @@
         <span class="sr-only">Open main menu</span>
         <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
       </button>
-    </div>
-    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
-      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
         
         
         
@@ -190,7 +210,7 @@
 <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
   </nav>
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/UI.md" class="font-mono underline">docs/UI.md</a> — the same Markdown GitHub shows.</p>
@@ -208,6 +228,12 @@ overwhelming majority of failures — one highlighting palette, one typography r
 idiom, one route mounted over a section of the site. Not one of them is a page's mistake.</p>
 <p>So the standard is executable, it runs over every page rather than a sample, and a finding
 is treated as a shared source until proven otherwise.</p>
+<p>The widths every page is audited at are the media queries the theme compiled <em>and</em> the
+widths <code>share/design/tokens.yaml</code> declares (<code>viewports</code>), unioned; the two browser probes
+(<code>scripts/site-probe</code>, <code>scripts/cockpit-probe</code>) measure at the declared widths alone and
+also assert the design contract — that the stylesheet a page loaded, the page itself and
+the executable carry one fingerprint. How the design itself is declared and projected is
+<a href="https://majordomus.dev/docs/design-system/"><code>DESIGN_SYSTEM.md</code></a>.</p>
 <h2 id="the-commands"><a class="zola-anchor" href="#the-commands" aria-label="Anchor link for: the-commands">The commands</a></h2>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Command</th><th>What it answers</th></tr></thead><tbody>
@@ -222,19 +248,49 @@ is treated as a shared source until proven otherwise.</p>
 the test surface. Exit codes follow the repository's convention: 0 clean, 10 findings, 12 a
 missing precondition, 13 a missing dependency.</p>
 <h2 id="what-is-discovered-and-what-that-buys"><a class="zola-anchor" href="#what-is-discovered-and-what-that-buys" aria-label="Anchor link for: what-is-discovered-and-what-that-buys">What is discovered, and what that buys</a></h2>
-<p><strong>The pages</strong> are the union of two sources: every <code>index.html</code> under the built site, and
-every <code>&lt;loc&gt;</code> of its sitemap. Neither alone is right — a page the sitemap omits is an orphan
-and still has to work, and a page the sitemap advertises has to exist. The sitemap's entries
-carry the published base URL, so the common prefix is inferred and stripped rather than
-configured.</p>
+<p><strong>The pages of a built surface</strong> are the union of two sources: every <code>index.html</code> under the
+built site, and every <code>&lt;loc&gt;</code> of its sitemap. Neither alone is right — a page the sitemap
+omits is an orphan and still has to work, and a page the sitemap advertises has to exist. The
+sitemap's entries carry the published base URL, so the common prefix is inferred and stripped
+rather than configured.</p>
+<p><strong>The pages of a surface the executable renders</strong> — the Cockpit, the server's home page, the
+Swagger shell — cannot come from a directory, because there is not one. They come from the
+surface itself: its own <code>&lt;a href&gt;</code> anchors, crawled from its mount and staying inside it. A
+page a reader can reach is a page something links to, so that closure <em>is</em> the page set, and
+a page linked from nowhere is out of the crawl's reach for the same reason it is out of a
+reader's. Reading anchors rather than every <code>href</code> is also why nothing needs a list of file
+extensions to tell a page from a stylesheet: the markup already made that distinction.</p>
+<p>Whether a surface has pages at all is the server's answer rather than a list here: a mount
+that returns a document to an <code>Accept: text/html</code> request is a page surface, and <code>/api/v1</code>,
+<code>/events</code> and <code>/mcp</code> are not — none of them had to be named to be left out.</p>
+<p>The crawl is bounded by what it learns rather than by a depth. A route is expanded while
+routes of its shape are still yielding routes nobody had seen, so a paginated listing is
+followed to its last page and a thousand leaf pages whose only links go back to the shell
+cost two fetches between them. Measured: <strong>2660 Cockpit routes derived in 108 requests</strong>, in
+about fourteen seconds, with no route named anywhere.</p>
+<p>That derivation lives in <code>scripts/lib/ui-routes.mjs</code> and it is the only one there is:
+<code>scripts/cockpit-probe</code> imports the same module, so the two browser instruments over this
+repository cannot disagree about what a Cockpit route is. What differs is what each asserts —
+the probe owns the shell, the security headers, the design fingerprint, the interactions and
+the claim that the browser layer is optional; the audit owns contrast, the accessibility
+engine, the landmarks, the components and the width sweep.</p>
 <p><strong>The widths</strong> are the <code>min-width</code> media queries the CSS build emitted, converted from <code>rem</code>
 where the theme used them, each contributing the boundary <em>and</em> the pixel below it, plus a
 reflow floor of 320 and a desktop width. A breakpoint added to the theme is audited the day
 it compiles.</p>
 <p><strong>The tiers</strong> are derived too. Every page is visited at the floor, a middle width and the
-desktop end; one page per section of the site — the first path segment — takes the full
-sweep across every boundary. Sections are where templates change, so the sweep buys
-structural coverage without anybody naming a page.</p>
+desktop end; one page per section takes the full sweep across every boundary. On a built
+surface a section is the first path segment, because that is where templates change; on a
+crawled surface it is the <em>family</em> — the shape a route shares with its siblings, <code>?</code>-keys
+when it has a query and the parent path when it does not. Both are where a renderer changes,
+so the sweep buys structural coverage without anybody naming a page.</p>
+<p><strong>The sample</strong> is derived as well, and only a crawled surface has one. Every route the
+surface advertises is visited, because each of those is its own page; of every family the
+audit takes four members spread across the sorted set, because a family is one renderer over
+many records and what varies is the record. Four is a budget spent on whatever members
+exist, not a list — a family with fewer members is visited whole, which is why no navigation
+entry is ever dropped. The Cockpit's 2660 routes come to 108 pages this way, and the report
+prints both numbers so that a sample can never be read as a total.</p>
 <p>Nothing in any of this is a list. <code>scripts/ui pages</code> prints its own provenance, and so does
 the generated report.</p>
 <h2 id="what-the-audit-checks"><a class="zola-anchor" href="#what-the-audit-checks" aria-label="Anchor link for: what-the-audit-checks">What the audit checks</a></h2>
@@ -260,11 +316,36 @@ the site.</li>
 answered in time. A page that does not is a finding about that page, never the end of the
 run.</li>
 </ul>
+<h3 id="a-subtree-that-is-not-ours-to-fix"><a class="zola-anchor" href="#a-subtree-that-is-not-ours-to-fix" aria-label="Anchor link for: a-subtree-that-is-not-ours-to-fix">A subtree that is not ours to fix</a></h3>
+<p>A page may carry a component tree this repository did not write and has decided not to
+restyle: pinned at a version, its markup and its stylesheet arriving together. The Swagger UI
+widget is the one such tree here, and ADR 0036 already recorded that decision.</p>
+<p>The <em>page</em> declares the boundary — <code>data-mj-foreign="swagger-ui-dist@5.17.14"</code> on the element
+that holds it — and the engine is told to skip it. Nothing in the audit knows what a widget is
+called. What is around it is measured as usual, which is how the Swagger shell's missing
+<code>&lt;main&gt;</code> and missing <code>&lt;h1&gt;</code> were found and fixed the day the audit first reached it.</p>
+<p>Every declaration is reported, once, under <strong>Not measured, and why</strong>, because "not measured"
+and "measured and clean" are different claims and a report that conflated them would be worth
+nothing. A subtree without the declaration is measured like anything else, so this cannot be
+used to quiet a finding — only to say, on the page, whose finding it is.</p>
+<h3 id="how-the-engine-gets-into-a-page-that-forbids-scripts"><a class="zola-anchor" href="#how-the-engine-gets-into-a-page-that-forbids-scripts" aria-label="Anchor link for: how-the-engine-gets-into-a-page-that-forbids-scripts">How the engine gets into a page that forbids scripts</a></h3>
+<p>The accessibility engine is evaluated through the debugging protocol, not appended as a
+<code>&lt;script&gt;</code> element. A <code>&lt;script&gt;</code> element is <em>in the document</em>, so the document's own Content
+Security Policy decides whether it may run — and the Cockpit's policy is <code>script-src 'self'</code>
+with a hash per script, exactly as it should be. The engine would be refused on every page of
+the strictest surface here, which is the surface whose accessibility was least measured; the
+first run over the Cockpit produced 507 <code>page.audit-failed</code> findings that were all one
+refusal. The debugger's evaluation is the instrument speaking rather than the page, so it
+runs without the policy being relaxed — which matters, because a page audited with its policy
+disabled is not the page.</p>
 <h2 id="what-it-costs"><a class="zola-anchor" href="#what-it-costs" aria-label="Anchor link for: what-it-costs">What it costs</a></h2>
-<p>The full audit is 723 pages and 2430 visits, and it drives a pool of browser tabs rather than
+<p>The full audit is 996 pages and 3483 visits, and it drives a pool of browser tabs rather than
 one: a visit is mostly waiting — for a navigation, for the accessibility engine inside the
 page — so a serial run leaves the machine idle for most of it. <code>MJ_UI_JOBS=N</code> sets the pool;
 the default follows the machine, between two and four.</p>
+<p>Reaching the served surfaces cost 117 pages and 516 visits — 91s at six jobs — on top of the
+878 the built documentation contributes. That is the price of the sampling: the Cockpit's
+2645 routes visited in full at three widths each would be eight thousand visits on their own.</p>
 <p>Measured on one laptop, same tree, same 2430 visits: <strong>873s at one job, 260s at four</strong>. The
 audit covers half again as many pages as it did when it read a single directory and finishes
 in less than a third of the time.</p>
@@ -275,9 +356,18 @@ is visible to it.</p>
 <p><strong>A built directory does not know where it is served from.</strong> The same documentation is
 generated once and mounted at <code>/docs</code> by the executable and at the root by the published
 site. So the audit does not name a directory: it reads <code>majordomus web list</code>, takes every
-static surface the executable <em>serves</em>, and visits each one's pages under the mount the
-topology gives it. That is why <code>/tests</code> and <code>/benchmarks</code> are audited too — they are surfaces
-like any other, and nothing had to be added to a list to include them.</p>
+surface the executable <em>serves</em>, and visits each one's pages under the mount the topology
+gives it. That is why <code>/tests</code> and <code>/benchmarks</code> are audited too — they are surfaces like any
+other, and nothing had to be added to a list to include them.</p>
+<p>It is also why <code>scripts/ui pages</code> now starts a server. Half the page set only exists while
+the executable is running, so "which pages will be audited" became a question only the server
+can answer; <code>--origin URL</code> points at one somebody else is running, and <code>--no-build</code> skips the
+build.</p>
+<p>That build is now two: the documentation, and the Cockpit's own assets. Half of those are
+deliberately not committed — two megabytes of drawing libraries, each loaded lazily by one
+page — and a checkout that has not built them serves graph pages that ask for a library that
+is not there. The audit read that as 35 console errors saying nothing about the Cockpit, so
+it builds what it measures. A page measured without its assets is a page no reader gets.</p>
 <p>It builds with <code>scripts/site-build --serve</code>, whose base URL is a path rather than an origin,
 so the pages resolve their assets wherever they are served. <code>--no-build</code> skips that, for a
 caller that has already built; <code>--origin URL</code> audits a server somebody else is running.</p>
@@ -321,6 +411,17 @@ where this belongs. The page carries every finding with the route, the width, th
 the element, the machine-readable <code>results.json</code> beside it, and the provenance of the target
 set. A run narrowed for local iteration says so on its own page, so a partial run can never
 be read as a clean audit.</p>
+<p>The results document's contract is <code>ui-audit/v1</code>, read by <code>majordomus web report ui</code>. It
+gained two fields when the audit reached the served surfaces, both additive and both on the
+page rather than only in the file:</p>
+<ul>
+<li><strong><code>surfaces[]</code></strong> — <code>id</code>, <code>mount</code>, <code>kind</code>, and for a crawled surface the <code>routes</code> it has,
+the <code>families</code> they fell into, how many were <code>sampled</code>, and whether the crawl was
+<code>truncated</code> by its budget. Rendered as <em>The surfaces this run measured</em>, so a sample can
+never be read as a total.</li>
+<li><strong><code>foreign[]</code></strong> — every subtree a page declared <code>data-mj-foreign</code>, once per declaration,
+with the element and the first route it was seen on. Rendered as <em>Not measured, and why</em>.</li>
+</ul>
 <h2 id="adding-a-page-a-width-or-an-invariant"><a class="zola-anchor" href="#adding-a-page-a-width-or-an-invariant" aria-label="Anchor link for: adding-a-page-a-width-or-an-invariant">Adding a page, a width, or an invariant</a></h2>
 <p>A page: add it. It is audited when it renders.</p>
 <p>A width: change the theme. It is visited when the CSS compiles.</p>
@@ -347,7 +448,7 @@ not this document's tables, because none of them enumerate rules.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ee3fb44dfe49c814753720e99ab83067a6e63fca" class="font-mono underline">ee3fb44</a> · inputs <span class="font-mono">95575c6c7e0c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/08caf51aaf6cfac1130cb7fb2f0a7d8ab45c6729" class="font-mono underline">08caf51</a> · inputs <span class="font-mono">4fe657a09b10</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

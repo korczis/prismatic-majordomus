@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="1c73468b1437">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repository entry: what is automatic, what is decorative, and where it breaks — Prismatic Majordomus</title>
+<meta name="description" content="forensic finding, 2026-09-10: what converges on its own when a person or an agent enters this repository — executable, shared server, episode, peer, continuation — and what does not; the root causes ranked, the matrix, the dependency graph, and the plan by stage">
+<link rel="canonical" href="https://majordomus.dev/docs/entry-audit/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Repository entry: what is automatic, what is decorative, and where it breaks — Prismatic Majordomus">
+<meta property="og:description" content="forensic finding, 2026-09-10: what converges on its own when a person or an agent enters this repository — executable, shared server, episode, peer, continuation — and what does not; the root causes ranked, the matrix, the dependency graph, and the plan by stage">
+<meta property="og:url" content="https://majordomus.dev/docs/entry-audit/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0c34ed19ccf734aa3e1b">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://majordomus.dev/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Repository entry: what is automatic, what is decorative, and where it breaks</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">forensic finding, 2026-09-10: what converges on its own when a person or an agent enters this repository — executable, shared server, episode, peer, continuation — and what does not; the root causes ranked, the matrix, the dependency graph, and the plan by stage</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/ENTRY_AUDIT.md" class="font-mono underline">docs/ENTRY_AUDIT.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>A forensic finding, measured on 2026-09-10 against <code>origin/master</code> at the merge of PR #147,
+in the primary checkout and in one linked worktree. It answers one question: when a person
+or an agent enters this repository, what converges on its own — a built executable, a
+running shared server, an attached session, a peer on the board, a loaded continuation —
+and what still waits for somebody to remember a command.</p>
+<p>The target it is measured against is the invariant a prompt pack put to this repository
+(the "automatic control plane" pack, <code>SPEC.md</code>): entering an enabled repository or starting
+a supported agent session converges, idempotently and within bounded time, to one healthy
+local server, discoverable surfaces, an attached session, peer presence and loaded
+continuity, without a manual start or join. Every finding below names the file and line it
+was read from and the command that shows it again. Nothing here is a count the repository
+can compute; where a number matters, the command that computes it is given instead.</p>
+<h2 id="vocabulary"><a class="zola-anchor" href="#vocabulary" aria-label="Anchor link for: vocabulary">Vocabulary</a></h2>
+<p>The pack speaks its own language. This repository already has words for most of it
+(<code>CONCEPTS.md</code>), and this document uses the repository's.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>the pack says</th><th>this repository says</th><th>where</th></tr></thead><tbody>
+<tr><td>control plane</td><td>the shared server and the local services</td><td>ADR 0003, <code>ENVIRONMENT.md</code></td></tr>
+<tr><td>runtime desired / observed state</td><td>the lease, and what <code>env</code> probes</td><td><code>apps/majordomus-cli/src/lease.rs</code>, <code>src/environment/services.rs</code></td></tr>
+<tr><td>service definition / endpoint descriptor</td><td>a web surface, discovered from its producer</td><td>ADR 0013, <code>src/web/discover.rs</code></td></tr>
+<tr><td>session identity</td><td>an episode (<code>session</code>) opened by the provider's event</td><td>ADR 0015, <code>lib/session.sh</code></td></tr>
+<tr><td>agent identity, peer presence</td><td>a peer on the board</td><td>ADR 0003, <code>src/peers.rs</code></td></tr>
+<tr><td>work claim</td><td>a scope: the task's, or the one a peer announced</td><td><code>CONCEPTS.md</code> (claim), <code>src/peers.rs</code></td></tr>
+<tr><td>handover descriptor</td><td>a handover, resolved by worktree and branch</td><td><code>CONTINUITY.md</code></td></tr>
+<tr><td>provider adapter</td><td>a lifecycle adapter in <code>lib/capture.sh</code> and the hook shims</td><td>ADR 0009, ADR 0015</td></tr>
+<tr><td>control-plane snapshot</td><td><code>RepositoryEnvironment</code> (services) + <code>health.report</code> + <code>peers.list</code> + <code>continuity.state</code></td><td>four capabilities today, one value nowhere</td></tr>
+</tbody></table>
+</div>
+<h2 id="the-path-from-entry-to-cooperation-as-it-is"><a class="zola-anchor" href="#the-path-from-entry-to-cooperation-as-it-is" aria-label="Anchor link for: the-path-from-entry-to-cooperation-as-it-is">The path from entry to cooperation, as it is</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>cd &lt;repo&gt;                       direnv → .envrc → bin/majordomus-env → `majordomus env export --banner --bridge`</span></span>
+<span class="giallo-l"><span>                                exports MAJORDOMUS_ROOT/SHARE/COMPLETION_BIN, and MAJORDOMUS_URL only if a lease exists</span></span>
+<span class="giallo-l"><span>                                one TCP connect to the lease&#39;s address, no HTTP, no version, no identity</span></span>
+<span class="giallo-l"><span>                                never builds, never starts anything                         .envrc:33, src/environment/shell.rs:116-130</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>agent starts                    Claude Code fires SessionStart → .claude/hooks/majordomus-session-start</span></span>
+<span class="giallo-l"><span>                                → `majordomus capture session --event start` → `session start --if-open keep`</span></span>
+<span class="giallo-l"><span>                                → briefing on stdout (episode, task, blockers, handover Next Action)</span></span>
+<span class="giallo-l"><span>                                no peer board, no server, no announce                       lib/capture.sh:797-816</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>MCP client attaches             .mcp.json → bin/majordomus-mcp → `majordomus mcp` → lease::elect</span></span>
+<span class="giallo-l"><span>                                first process serves (lease + loopback HTTP), later ones bridge</span></span>
+<span class="giallo-l"><span>                                the only thing that starts the server                       src/commands/mcp.rs:135, src/lease.rs:89</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>peer on the board               attach on initialize, named `p&lt;n&gt;`; announce is a tool call the model may or may not make</span></span>
+<span class="giallo-l"><span>                                in memory, gone with the process                             src/peers.rs:268, :315</span></span>
+<span class="giallo-l"><span>        ↓</span></span>
+<span class="giallo-l"><span>context loaded                  `majordomus context` when somebody runs it; the briefing carried the handover already</span></span></code></pre>
+<p>What is genuinely automatic today: the executable is built by the first launcher that needs
+it (<code>bin/majordomus-cli:36-56</code>); the first MCP client starts the server and every later one
+attaches (ADR 0003); the provider's start event opens the episode and hands the model the
+last handover's next action (ADR 0015, ADR 0017); a stale lease of every shape is taken over
+(<code>project.shared-server-resilience</code>); a replaced executable loses its lease
+(<code>tests/shared_units.rs:147</code>).</p>
+<p>What is not: nothing on entry ensures a server; a shell or a non-MCP agent never gets one;
+a linked worktree gets a server of its own and never sees the repository's; two sessions in
+one checkout share one episode; the board forgets everything on a restart and never expires
+anything; no surface shows the server's own state; the one command every worker is told to
+run first died on a silent peer.</p>
+<h2 id="root-causes-ranked"><a class="zola-anchor" href="#root-causes-ranked" aria-label="Anchor link for: root-causes-ranked">Root causes, ranked</a></h2>
+<p><strong>P0 — the invariant cannot hold while these stand</strong></p>
+<ol>
+<li>
+<p><strong>One server per checkout, not per repository.</strong> The lease lives at the checkout root
+(<code>src/lease.rs:63-65</code>), the root is the nearest <code>.ai/manifest.yaml</code>
+(<code>src/repository.rs:146-160</code>), every worktree has one, and the identity the probe
+compares is a digest of that root (<code>src/repository.rs:256-261</code>, <code>src/lease.rs:264</code>). So
+a linked worktree elects its own server on its own port with its own board, and
+<code>context</code>'s fallback to the primary's lease (<code>lib/context.sh:344-353</code>) reads a board that
+belongs to another checkout, whose peers carry no worktree field. ADR 0003, <code>CLAUDE.md</code>
+and <code>docs/MCP.md:50</code> all say "per repository". The pack's worktree scenario is not
+failing; it is unreachable.
+Reproduce: in a linked worktree while the primary serves,
+<code>bin/majordomus-cli env status --format json | jq '.services[0].availability'</code>.</p>
+</li>
+<li>
+<p><strong>Entry ensures nothing.</strong> <code>.envrc</code> watches the lease and evaluates one export
+(<code>.envrc:24</code>, <code>:33</code>); <code>bin/majordomus-env</code> never builds (<code>bin/majordomus-env:31-50</code>); the
+SessionStart shim opens an episode and touches no server (<code>lib/capture.sh:797-816</code>). The
+server exists only after an MCP client spawns <code>bin/majordomus-mcp</code>. A person's shell, a
+Codex or Gemini session without a lifecycle adapter, or a Claude session whose MCP
+handshake failed, all enter a repository that has no server and are told nothing that
+says so. <code>MAJORDOMUS_URL</code> is simply absent (<code>src/environment/shell.rs:116-130</code>).
+Reproduce: with no lease, <code>bin/majordomus-env export --shell direnv | grep -c URL</code>.</p>
+</li>
+<li>
+<p><strong>The episode is one per checkout, keyed on nothing the provider sent.</strong> <code>session start --if-open keep</code> returns the open episode whatever <code>--provider-session</code> says
+(<code>lib/session.sh:157-165</code>); the record has no provider field to write
+(<code>share/allow/session.txt</code>), so <code>continuity.state.provider</code> is declared and never
+produced (<code>src/capability/builtin/continuity.rs:157-159</code>, <code>:476</code>); an end event from any
+session closes the episode for all (<code>lib/capture.sh:860-884</code>). Seven concurrent sessions
+measured on 2026-09-09 had one record between them. The pack's "session registers
+automatically" is true for the first session and silently false for every other.
+Reproduce: pipe two SessionStart payloads with different <code>session_id</code> values through
+<code>.claude/hooks/majordomus-session-start</code> in a fixture, then <code>majordomus session</code>.</p>
+</li>
+<li>
+<p><strong>Presence is process memory with no expiry, and the reconnect nudge never arrives.</strong>
+The board dies with the server (<code>src/peers.rs:4-12</code>); in the ordinary <code>majordomus mcp</code>
+owner path nothing calls <code>reap()</code>, so a dead HTTP peer stays <code>attached: true</code> until the
+owner leaves (<code>src/shared.rs:27-71</code> has no reaper; <code>src/commands/serve.rs:71-75</code> is the
+only loop that does); announcements never expire (<code>src/peers.rs:127-135</code>); on a bridge
+failover the reinitialize response — the instructions that say "you have not announced
+anything" — is discarded (<code>src/mcp/bridge.rs:205-221</code>), so the exact incident
+<code>src/mcp/protocol.rs:331-343</code> cites is unfixed on the path it happened on. The journal
+under way on <code>feature/peer-board-survives-restart</code> (ADR 0034, allocated on the board,
+unpushed at the time of writing) answers the restart half and none of the rest.
+Since: the server's own reader reaps expired sessions on every path, and the bridge
+replays its client's last accepted announcement after a re-attach and carries it onto
+its own board after a takeover (stage 03, on this branch); expiry on announcements and
+the episode per provider session remain (stage 04).
+Reproduce: <code>curl -s "$MAJORDOMUS_URL/api/v1/peers" | jq '.peers[] | {id, attached, last_seen_seconds_ago}'</code>
+after a bridged client has been killed with <code>SIGKILL</code>.</p>
+</li>
+<li>
+<p><strong>The server's own state is on disk and on no surface, and "ready" has three
+definitions.</strong> The lease carries <code>pid</code>, <code>url</code>, <code>started_at</code> and the executable's
+identity (<code>src/lease.rs:281-291</code>) and no capability reads it (<code>grep -rn lease apps/majordomus-cli/src/capability/</code> is empty). <code>health.report</code> counts peers and says
+nothing else about the process (<code>src/capability/builtin/health.rs:416-420</code>). Readiness is
+decided independently by <code>Served::ready</code> (the producer's output exists,
+<code>src/http/surfaces.rs:152-159</code>), by <code>health.ready</code> (<code>capabilities &gt; 0</code>,
+<code>health.rs:480-486</code>) and by <code>env</code>'s bare TCP connect (<code>src/environment/probe.rs:74-89</code>);
+the lease probe uses a fourth question, <code>GET /</code> plus the identity digest
+(<code>src/lease.rs:257-268</code>), and none of them asks the version. There is no <code>status</code>,
+<code>ensure</code>, <code>stop</code> or <code>explain</code> for the server in the executable (<code>src/cli.rs:31-71</code>), and
+the shell tool's <code>doctor</code> does not know the lease exists (<code>grep -n mcp lib/doctor.sh</code>).
+Since: the lease is one type read once and <code>server.status</code> serves it, with <code>serve status</code>/<code>ensure</code>/<code>stop</code> on the executable (stage 02, 03); <code>health.report</code> carries a
+<code>server</code> check decided by that same reading, so the report names the address, the
+version and whether what answers is the code on disk, and a stale lease is a finding
+rather than a silence (stage 09, <code>apps/majordomus-cli/tests/health_server.rs</code>). The
+readiness answers are named rather than merged: four questions about four subjects, each
+pointed at its owner in <code>docs/MCP.md</code> ("Four readings of "ready"") and in the module
+doc where the four meet (<code>src/capability/builtin/health.rs</code>). The shell tool's <code>doctor</code>
+still does not know the lease exists.
+Reproduce: <code>bin/majordomus-cli --help | grep -c -E 'status|ensure|stop'</code>;
+<code>curl -s "$MAJORDOMUS_URL/api/v1/health" | jq '.checks[] | select(.id=="server")'</code>.</p>
+</li>
+</ol>
+<p><strong>P1 — the invariant holds only by luck or only for one session</strong></p>
+<ol start="6">
+<li>
+<p><strong><code>majordomus context</code> died with nothing said whenever the newest peer on the board had
+not announced.</strong> A bare <code>[ -n "$pscope" ] &amp;&amp;</code> was the last command of the listing loop
+(<code>lib/context.sh:398</code> before the fix); under <code>set -e</code> its status was the pipeline's, and
+the command exited 1 with nothing on either stream. The case that covers the section
+never put a silent peer last (<code>test/cases/106_context_peers.sh</code>). Fixed on
+<code>fix/context-survives-a-silent-peer</code>, case extended.
+Reproduce (before the fix): attach a second MCP client that announces nothing, then
+<code>majordomus context; echo $?</code>.</p>
+</li>
+<li>
+<p><strong>The bootstrap names commands that do not resolve.</strong> <code>.envrc:20</code> puts only <code>bin/</code> on
+the path, so <code>majordomus</code> is the shell tool; <code>AGENTS.md</code> and <code>CLAUDE.md</code> tell every
+worker to run <code>majordomus worktree</code>, <code>majordomus generate</code>, <code>majordomus mcp</code> and
+<code>docs/ENVIRONMENT.md:8</code> says <code>majordomus env</code>, and each exits 2 with a redirection to
+<code>bin/majordomus-cli</code> (<code>bin/majordomus:87-105</code>, <code>:133-143</code>). Both bootstraps are generated
+from <code>.ai/repo/policy.yaml</code>, so the fix is one template.
+Reproduce: <code>majordomus worktree; echo $?</code>.</p>
+</li>
+<li>
+<p><strong>The election has three races the lease cannot see.</strong> <code>take_over</code> removes the file
+unconditionally after a classification that is already old (<code>src/lease.rs:243-254</code>); a
+<code>superseded</code> takeover leaves the old process serving on its socket beside the new one
+(<code>src/lease.rs:227-229</code>, <code>src/http/server.rs:77-86</code>); a server whose lease was taken
+over still holds <code>HELD</code> and its signal handler unlinks the current server's lease on
+<code>SIGTERM</code> (<code>src/lease.rs:319</code>, <code>:383-397</code>, read, not reproduced); and the fifteen-second
+bind grace starts before <code>App::load</code>, so a cold start slower than that makes a waiting
+peer declare the winner abandoned (<code>src/commands/mcp.rs:169</code>, <code>src/lease.rs:130</code>). Two
+clients at once are tested (<code>tests/mcp_shared.rs:939</code>); three are not; the join timeout
+path has no test at all.
+Reproduce: <code>grep -n JOIN_TIMEOUT apps/majordomus-cli/tests/*.rs</code> (empty).</p>
+</li>
+<li>
+<p><strong>Two claim systems that never meet.</strong> A peer's announced scope lives on the board; a
+task's scope lives in <code>current.yaml</code> across worktrees; <code>check --overlap</code> reads only the
+latter (<code>lib/start.sh:84-97</code>), <code>peers.announce</code> writes only the former
+(<code>src/capability/builtin/peers.rs:117</code>); the one place they cross is the <code>context</code> peers
+section, which is advisory and self-disabling on six conditions
+(<code>lib/context.sh:348-370</code>) and cannot tell the reader from the peers. <code>CONCEPTS.md:16</code>
+defines "claim" as the first and <code>docs/MCP.md:109</code> uses it for the second.
+Reproduce: <code>majordomus check --overlap</code> while a peer has announced your scope.</p>
+</li>
+<li>
+<p><strong>The automatic path is not what the tests run.</strong> Case 90 invokes the launcher itself
+with <code>--http-port 0</code> and hand-written frames; no test lets a client read <code>.mcp.json</code>
+or binds the documented default port (<code>test/cases/90_mcp_shared_server.sh:31-60</code>);
+<code>.envrc</code> is checked as text (<code>test/cases/100_environment.sh:24-57</code>); the peers section
+is proved against a python stub (<code>106:38-53</code>); <code>scripts/cockpit-probe:49-84</code> measures
+whatever server a client already started; the claim <code>mcp-lease-resilience</code> names a case
+that proves one sentence of five (<code>docs/CLAIMS.yaml:896</code>, <code>90:107-114</code>); the use case
+<code>serve-the-layer-to-ai-clients</code> carries four MCP claims and its scenario starts no
+server; <code>project.shared-server-resilience</code> names CI jobs <code>test</code> and <code>pages</code> that
+<code>validate.yml</code> does not have. The crate-level suite is strong on crashes
+(<code>tests/mcp_shared.rs:645</code>, <code>:695</code>, <code>:734</code>, <code>:910</code>) and is skipped for a change that
+only selects <code>rust-integration</code> (<code>scripts/rust-check:52</code>).
+Reproduce: <code>grep -rn "8741" apps/majordomus-cli/tests test/cases</code>.</p>
+</li>
+<li>
+<p><strong>The Cockpit shows no peers, no sessions beyond this checkout, and hides two of its own
+areas.</strong> <code>peers.list</code> has no page, no nav entry, no area (<code>grep -n peer apps/majordomus-cli/src/cockpit/*.rs</code>); <code>continuity</code> is one worktree, one branch; the
+navigation returns fewer areas than its own doc comment declares, so <code>/cockpit/executions</code>
+and <code>/cockpit/quality</code> answer but cannot be reached and are outside the probe gate
+that crawls the navigation (<code>src/cockpit/nav.rs:7-11</code> against <code>:85-154</code>,
+<code>scripts/cockpit-probe:101-105</code>); the page list in <code>tests/cockpit.rs:14-45</code> and the
+route table in <code>docs/COCKPIT.md:41-60</code> are hand-kept and behind.
+Reproduce: <code>curl -s "$MAJORDOMUS_URL/cockpit" | grep -c '/cockpit/executions'</code>.</p>
+</li>
+<li>
+<p><strong>The live channel carries executions and nothing else.</strong> The envelope is typed and
+replayable (<code>src/execution/event.rs:31-47</code>, <code>src/http/events.rs:236-270</code>) and the only
+publishers are the execution store and the handler sink; a peer attaching, a lease
+changing hands or a health transition is a log line (<code>src/http/mcp.rs:153</code>, <code>:168</code>,
+<code>:187</code>). The Cockpit polls worktrees and activity (<code>share/cockpit/worktrees.js:4</code>,
+<code>activity.js:2</code>).
+Reproduce: <code>curl -s "$MAJORDOMUS_URL/api/v1/executions/protocol" | jq '.events[].type'</code>.</p>
+</li>
+</ol>
+<p><strong>P2 — drift and duplication that will bite the fix</strong></p>
+<ol start="13">
+<li>The lease is parsed by hand in four places with no <code>Lease</code> type: <code>src/lease.rs:204-240</code>,
+<code>:73-78</code>, <code>src/environment/services.rs:120-131</code>, <code>lib/context.sh:356</code> (<code>jq</code>),
+<code>.just/serve.just:19</code> (<code>sed</code>, which breaks the day the file is pretty-printed).</li>
+<li><code>docs/MCP.md:32</code> says nothing starts the server but a client; <code>serve</code> does
+(<code>src/commands/serve.rs:53-62</code>) and on a terminal runs forever with no client
+(<code>:70-76</code>). ADR 0003 says Swagger UI is at <code>/docs</code>; it is at <code>/swagger</code>
+(<code>src/http/swagger.rs:35</code>). The <code>superseded</code> takeover is documented in a code comment
+and a unit test and in no document. <code>docs/WEB.md:30-40</code> omits <code>/events</code> while claiming
+nothing in its table is typed twice. <code>docs/ENVIRONMENT.md:59</code> omits <code>--bridge</code> and
+<code>:74-75</code> names <code>.just/env.just</code>, which does not exist; <code>just env</code> exists only in the
+untracked generated bridge. <code>lib/capture.sh:709-711</code> says the start event writes
+nothing to stdout; <code>:784-796</code> says the opposite and is what runs.</li>
+<li>Facts written twice: the lease path in eight files; the default port in the claims
+pages and <code>docs/MCP.md</code>; the executable's path composition in <code>justfile:28-29</code> and
+<code>lib/rust_bin.sh:52-66</code>; the share directory in <code>justfile:32</code> and <code>lib/rust_bin.sh:105</code>;
+the provider name and its payload keys in two adapter tables (<code>lib/capture.sh:108</code>,
+<code>:137</code>) and four shims; the build profile default in five files. The list to keep is
+<code>docs/HARDCODING_LEDGER.yaml</code>; these rows are not in it.</li>
+<li><code>doctor</code> never stops on a finding (<code>lib/doctrine.sh:153-163</code>, <code>lib/common.sh:35</code>) and
+runs over its own budget (<code>MJ_TIMING=1 majordomus doctor</code>); the unpushed-branch warning is
+a bare <code>mj_warn</code> outside the doctrine registry (<code>lib/doctor.sh:349</code>).</li>
+<li>The workflow fingerprint does not cover the generated bridge
+(<code>src/environment/resolve.rs:596-615</code>), and <code>.envrc</code> does not watch the executable, so
+a build after entry changes nothing until the lease does.</li>
+</ol>
+<h2 id="the-audit-matrix"><a class="zola-anchor" href="#the-audit-matrix" aria-label="Anchor link for: the-audit-matrix">The audit matrix</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>capability</th><th>canonical source</th><th>starts / registers itself</th><th>CLI</th><th>HTTP</th><th>OpenAPI</th><th>MCP</th><th>Cockpit</th><th>docs</th><th>tests</th><th>status</th></tr></thead><tbody>
+<tr><td>executable present and current</td><td><code>lib/rust_bin.sh</code></td><td>built by the first launcher; never on entry</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><code>ENVIRONMENT.md</code></td><td>cases 33, 107</td><td>working, by design manual on <code>cd</code></td></tr>
+<tr><td>shared server</td><td><code>src/lease.rs</code>, <code>src/shared.rs</code></td><td>by the first MCP client only</td><td><code>mcp</code>, <code>serve</code></td><td><code>/</code></td><td>infrastructure</td><td>initialize instructions</td><td>—</td><td><code>MCP.md</code></td><td><code>tests/mcp_shared.rs</code>, case 90</td><td>partial: per checkout, no status/stop</td></tr>
+<tr><td>server state (pid, url, started, executable, version)</td><td>the lease file</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td><code>MCP.md:46</code></td><td><code>shared_units.rs:81</code></td><td>decorative: on disk only</td></tr>
+<tr><td>endpoint discovery</td><td><code>src/web/discover.rs</code> → <code>env</code> services</td><td>lease-file only</td><td><code>env status</code></td><td><code>/</code>, <code>/api/v1/environment</code>, <code>/api/v1/web/surfaces</code></td><td>yes</td><td>yes</td><td><code>/cockpit/api</code></td><td><code>WEB.md</code>, <code>ENVIRONMENT.md</code></td><td><code>tests/environment.rs</code>, case 100</td><td>working, with a TCP-connect probe</td></tr>
+<tr><td>health</td><td><code>src/capability/builtin/health.rs</code></td><td>—</td><td>—</td><td><code>/api/v1/health</code>, <code>/live</code>, <code>/ready</code></td><td>yes</td><td>yes</td><td><code>/cockpit/health</code></td><td><code>COCKPIT.md</code></td><td><code>tests/http_serve.rs</code></td><td>partial: three readiness definitions, no runtime facts</td></tr>
+<tr><td>episode (session)</td><td><code>lib/session.sh</code></td><td>by the provider's start event</td><td><code>session</code></td><td><code>/api/v1/continuity</code></td><td>yes</td><td>yes</td><td><code>/cockpit/continuity</code></td><td><code>CONTINUITY.md</code></td><td>cases 54, 55, 60-63</td><td>partial: singleton per checkout</td></tr>
+<tr><td>peer presence</td><td><code>src/peers.rs</code></td><td>attach on initialize; announce by hand</td><td>—</td><td><code>/api/v1/peers</code></td><td>yes</td><td><code>majordomus_peers</code></td><td>none</td><td><code>MCP.md</code></td><td><code>mcp_shared.rs:247</code>, case 106 (stub)</td><td>partial: memory, no expiry, no page</td></tr>
+<tr><td>claims</td><td>board announcements / task scope</td><td>announce by hand; <code>start --scope</code></td><td><code>check --overlap</code></td><td><code>/api/v1/peers/announce</code> (refused over HTTP)</td><td>yes</td><td><code>majordomus_announce</code></td><td>none</td><td><code>MCP.md</code>, <code>CONCEPTS.md</code></td><td><code>peers.rs</code> units, case 106</td><td>legacy-conflicting: two systems</td></tr>
+<tr><td>handover / checkpoint</td><td><code>lib/handover.sh</code>, <code>lib/checkpoint.sh</code></td><td>derived by end and compaction events</td><td><code>handover</code>, <code>checkpoint</code></td><td><code>/api/v1/continuity</code></td><td>yes</td><td>yes</td><td><code>/cockpit/continuity</code></td><td><code>CONTINUITY.md</code></td><td>cases 25, 54, <code>tests/continuity.rs</code></td><td>working</td></tr>
+<tr><td>context load</td><td><code>lib/context.sh</code>, <code>lib/derive.sh</code></td><td>briefing on start</td><td><code>context</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td><code>CONTINUITY.md</code></td><td>cases 23, 106</td><td>working after the fix; the board is not in the briefing</td></tr>
+<tr><td>live events</td><td><code>src/execution/event.rs</code>, <code>src/http/events.rs</code></td><td>—</td><td><code>executions events</code></td><td><code>/events</code></td><td>protocol document</td><td>yes</td><td>executions pages</td><td><code>EXECUTIONS.md</code></td><td><code>tests/executions.rs</code>, case 100</td><td>working, executions only</td></tr>
+<tr><td>provider adapter</td><td><code>lib/capture.sh</code> adapter tables, <code>.claude/hooks/*</code></td><td>installed by <code>capture install</code></td><td><code>capture</code></td><td>—</td><td>—</td><td>—</td><td>—</td><td><code>CONTINUITY.md</code></td><td>cases 29, 54</td><td>working for one provider; others <code>unsupported</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="dependency-graph"><a class="zola-anchor" href="#dependency-graph" aria-label="Anchor link for: dependency-graph">Dependency graph</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>A  identity: one repository, every server of it ─────┐</span></span>
+<span class="giallo-l"><span>   (the git repository named beside the checkout;    │</span></span>
+<span class="giallo-l"><span>    the servers of one listed from any of them)      │</span></span>
+<span class="giallo-l"><span>                                                     ▼</span></span>
+<span class="giallo-l"><span>B  the server&#39;s state as one typed value ──────►  C  ensure: entry converges</span></span>
+<span class="giallo-l"><span>   (lease read once by a Lease type; status,         (the start event and the MCP launcher</span></span>
+<span class="giallo-l"><span>    version, executable, peers, readiness on         call it; a shell is told, not served;</span></span>
+<span class="giallo-l"><span>    every surface)                                    bounded, idempotent, concurrency-safe)</span></span>
+<span class="giallo-l"><span>                                                     │</span></span>
+<span class="giallo-l"><span>D  episode keyed on the provider&#39;s session ◄─────────┤</span></span>
+<span class="giallo-l"><span>   (one record per session, ended by its owner)      │</span></span>
+<span class="giallo-l"><span>                                                     ▼</span></span>
+<span class="giallo-l"><span>E  presence: expiry, reaper, reconnect nudge,     F  events for peers, lease, health</span></span>
+<span class="giallo-l"><span>   claims with a lease (journal from ADR 0034)        on the existing typed channel</span></span>
+<span class="giallo-l"><span>                                                     │</span></span>
+<span class="giallo-l"><span>G  Cockpit: peers, sessions, server state ◄──────────┘</span></span>
+<span class="giallo-l"><span>H  gates: cold start through the configured path, storm, crash, two worktrees, two</span></span>
+<span class="giallo-l"><span>   providers, drift; rule + ADR; docs</span></span></code></pre>
+<p>A must land first: every later step that says "the repository" means the git repository,
+and today the code means the checkout. ADR 0035 takes A and B: the election stays per
+checkout, because a server serves the layer of the checkout it started in, and what was
+missing — that the servers of one repository can be told from the servers of two, and
+listed from any of them — is answered by the index route and <code>server.status</code>. B before C: <code>ensure</code> reports the state it converged
+to, so the state must have a type first. D is independent of A–C and blocks the pack's
+"session registers automatically" on its own. E depends on the journal branch or replaces
+it, and must not be built twice. F, G, H follow.</p>
+<h2 id="legacy-to-delete-or-merge-and-owners-to-preserve"><a class="zola-anchor" href="#legacy-to-delete-or-merge-and-owners-to-preserve" aria-label="Anchor link for: legacy-to-delete-or-merge-and-owners-to-preserve">Legacy to delete or merge, and owners to preserve</a></h2>
+<p>Delete or merge:</p>
+<ul>
+<li>the four hand parsers of the lease (item 13): done for the executable's three by
+<code>LeaseFile::read</code>; the two shell readers remain until stage 09;</li>
+<li><code>lib/context.sh</code>'s own lease reader and board fetch (<code>:344-370</code>), once the executable
+reports the board and the shell tool asks it — one reader, not two.</li>
+<li><code>.just/serve.just:12-20</code> (<code>mcp-status</code>, <code>open</code>) parsing the lease with <code>sed</code>; the recipes
+stay and call the status command.</li>
+<li>the four independent readiness answers (P0 item 5); one remains and the others call it.</li>
+<li>the <code>environment</code> services probe as a bare TCP connect, once a typed status exists.</li>
+<li>the announcements-only claim system or the task-scope-only one — not both; the task's
+scope is the durable, enforced form (<code>.ai/repo/features/coordination.md</code>), so the board
+should carry it rather than a second one.</li>
+</ul>
+<p>Preserve, and build on:</p>
+<ul>
+<li>the election by one atomic create and a lease of every shape taken over
+(<code>project.shared-server-resilience</code>), and its suites;</li>
+<li>the environment snapshot as the one value every surface renders
+(<code>project.envrc-is-an-adapter</code>); ensure is a consumer of it, not a rival;</li>
+<li>the provider drawing the episode boundary and the derived briefing (ADR 0015, ADR 0017);</li>
+<li>executions as the typed event channel (ADR 0033) — peers and the lease publish on it,
+they do not get a second socket;</li>
+<li>the capability registry as the only place a surface is declared (ADR 0002, ADR 0004).</li>
+</ul>
+<h2 id="refused-and-why"><a class="zola-anchor" href="#refused-and-why" aria-label="Anchor link for: refused-and-why">Refused, and why</a></h2>
+<ul>
+<li><strong>A server started on <code>cd</code>.</strong> <code>project.envrc-is-an-adapter</code> forbids the entry hook to start
+anything, and ADR 0003 refuses a daemon: there is no process without a client. A shell is
+not a client. Entry by a shell reports the state and names the command; entry by an agent
+(the provider's start event, the MCP launcher) converges, because a client is coming.</li>
+<li><strong>A PID-only health check.</strong> Already refused by <code>tests/shared_units.rs:142-146</code>; kept
+refused.</li>
+<li><strong>A second event socket for peers.</strong> One typed channel exists; a new scope on it is a
+protocol addition, not a new transport.</li>
+<li><strong>Ports in more than one place.</strong> <code>src/cli.rs:898</code> is the only declaration; the documents
+that restate it are projections to regenerate, not facts to keep.</li>
+</ul>
+<h2 id="the-plan-mapped-to-the-pack-s-stages"><a class="zola-anchor" href="#the-plan-mapped-to-the-pack-s-stages" aria-label="Anchor link for: the-plan-mapped-to-the-pack-s-stages">The plan, mapped to the pack's stages</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>stage</th><th>slice</th><th>branch</th><th>lands</th></tr></thead><tbody>
+<tr><td>01</td><td>this audit; the <code>context</code> fix</td><td><code>feature/entry-convergence</code>, <code>fix/context-survives-a-silent-peer</code></td><td>now</td></tr>
+<tr><td>02</td><td>ADR 0035: a checkout's server is one of the repository's (<code>git_repository_id</code> on the index route, every checkout's server listed by <code>server.status</code>); the lease read once by <code>LeaseDocument</code>; the server's standing — absent, starting, ready, outdated, stale — served like every other capability</td><td><code>feature/entry-convergence</code></td><td>with this document</td></tr>
+<tr><td>03</td><td><code>serve status</code> / <code>serve ensure</code> / <code>serve stop</code> on the executable; the start event calls ensure (<code>session.ensure_server_on_start</code>) and the briefing names the server; the idle life of a server no client owns; the election races (the lease kept alive while loading, conditional take-over, publish refused after a take-over, the lease released on loss); the reaper on every path; concurrent ensure at N≥3, a killed server, a stale lease, a taken port</td><td><code>feature/entry-convergence</code></td><td>with this document</td></tr>
+<tr><td>04</td><td>one episode per provider session; the board reaper on the owner path; expiry on announcements; the reinitialize response reaches the model; claims are the task's scope</td><td><code>feature/session-per-provider</code>, on top of ADR 0034's journal branch</td><td>parallel to 03</td></tr>
+<tr><td>05</td><td>peers, lease and health on the typed channel; a Cockpit area for peers and the server; the navigation derived from the areas it declares; page lists in tests and docs derived</td><td><code>feature/entry-surfaces</code></td><td>after 03, 04</td></tr>
+<tr><td>06</td><td>the Codex and Gemini lifecycle adapters (data in <code>share/providers.yaml</code>, not code)</td><td><code>feature/lifecycle-adapters</code></td><td>parallel</td></tr>
+<tr><td>07</td><td>rule <code>project.entry-converges</code> with a gate; <code>docs/ENTRY.md</code>; <code>HARDCODING_LEDGER.yaml</code> rows for item 15; the bootstrap template names the launcher</td><td><code>feature/entry-convergence</code></td><td>with 03</td></tr>
+<tr><td>08</td><td>cold start through <code>.mcp.json</code> on the default port as an exclusive case; storm; crash at the shell level; two worktrees, one server; two providers; drift injection into the board</td><td><code>feature/entry-gates</code></td><td>after 05</td></tr>
+<tr><td>09</td><td>delete the readers in <code>lib/context.sh</code> and <code>.just/serve.just</code>; <del>the three readiness answers</del> (named, not merged: <code>feature/health-names-the-server</code>, with the <code>server</code> check on <code>health.report</code>); the documents in item 14</td><td><code>feature/entry-convergence</code>, <code>feature/health-names-the-server</code></td><td>last</td></tr>
+</tbody></table>
+</div>
+<h2 id="what-this-audit-did-not-verify"><a class="zola-anchor" href="#what-this-audit-did-not-verify" aria-label="Anchor link for: what-this-audit-did-not-verify">What this audit did not verify</a></h2>
+<ul>
+<li>The signal-handler race (item 8, third clause) was read, not reproduced.</li>
+<li><code>feature/peer-board-survives-restart</code> was read from its worktree, uncommitted; what lands
+may differ.</li>
+<li>Entry timing was measured warm, on one machine, three runs; <code>bench</code> is the instrument for
+a claim.</li>
+</ul>
+</article></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://majordomus.dev/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/08caf51aaf6cfac1130cb7fb2f0a7d8ab45c6729" class="font-mono underline">08caf51</a> · inputs <span class="font-mono">4fe657a09b10</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>
