@@ -198,6 +198,14 @@ from a pre-commit hook and from CI.
 9. Environment probes: bash version, `git`, `jq` and `shellcheck` if present. Reported
    as `INFO`. Nothing in `doctor` needs a tool beyond bash, git, and a checksum command.
 
+The doctrine reconciliation `doctor` dispatches (`majordomus.doctrine-wiring-integrity`)
+reads the surface that proves each doctrine: the behavioural cases under `test/`,
+`docs/CLAIMS.yaml`, and the CI workflow that runs them. A release archive ships none of
+that, so from an installed release those sub-checks stand down and say so in one `INFO`
+line, while validator existence, dispatch and failure propagation — which read `lib/`,
+which every release does ship — still run. What stood down was reconciled against the
+source tree the release was built from, and `RELEASE.json` names that commit.
+
 ```
 $ majordomus doctor
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
@@ -1390,7 +1398,10 @@ majordomus doctrine show <id>    the full record for one doctrine, and the rule 
 **Behaviour:**
 - `status` prints how many doctrines are declared, how many block, how many are advisory,
   how many name a validator that does not exist, and how many name a test file that does
-  not exist. Every number is derived on the spot; none is stored.
+  not exist. Every number is derived on the spot; none is stored. A release archive ships
+  no `test/`, so from one the last number is reported as not shipped rather than as a
+  count, and does not decide the exit; `--json` carries it as `null` beside
+  `"proof_surface": false`.
 - `list` prints one line per doctrine.
 - `show <id>` prints the record, including which claims it backs, the tests that prove it,
   the rules it depends on, the rule file it lives in, and which file defines its

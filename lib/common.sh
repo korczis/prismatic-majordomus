@@ -98,6 +98,15 @@ else MJ_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; fi
 # together. Unset, it is the share directory beside this executable, which is what an
 # ordinary run wants and what makes the tool work from any checkout.
 MJ_SHARE_DIR="${MAJORDOMUS_SHARE:-$MJ_HOME/share}"
+
+# Whether this distribution carries the surface that proves its own doctrines: the
+# behavioural cases under test/, the claim register docs/CLAIMS.yaml, and the CI workflow
+# that runs them. A release archive ships bin, lib, libexec, share, LICENSE and
+# RELEASE.json, and none of that surface, so any reconciliation that reads it can only be
+# answered from a source tree. RELEASE.json is written by the packager and exists in no
+# checkout: the distribution states its own form here, rather than each caller inferring
+# it from a file that happens to be absent.
+mj_proves_itself() { [ ! -f "$MJ_HOME/RELEASE.json" ]; }
 MJ_SKELETON_DIR="$MJ_SHARE_DIR/skeleton"
 MJ_ALLOW_DIR="$MJ_SHARE_DIR/allow"
 MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"

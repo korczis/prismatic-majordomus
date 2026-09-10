@@ -549,6 +549,12 @@ mj_validate_doctrine_wiring() {
   propagating=" $(grep -lE 'MJ_FAILS.*exit|exit .*MJ_EX_CONTRACT|MJ_DOCTOR_MISSING' "$lib"/*.sh 2>/dev/null | paste -sd' ' -) "
   claims=" $(sed -n 's/^  - id: //p' "$root/docs/CLAIMS.yaml" 2>/dev/null | paste -sd' ' -) "
 
+  # Reconciled against a release, every doctrine would fail for the one reason that says
+  # nothing about the repository being supervised: the proof surface was never shipped.
+  # mj_proves_itself decides which form this distribution is.
+  local proving=1
+  mj_proves_itself || proving=0
+
   # 1. every declared doctrine resolves, end to end
   while mj_doc_row "$i"; do
     n=$((n+1)); id="$MJ_DR_ID"; val="$MJ_DR_VAL"; cls="$MJ_DR_CLASS"; fn="mj_validate_$val"
@@ -573,17 +579,19 @@ mj_validate_doctrine_wiring() {
         esac
       done
     fi
-    # the tests that prove it must exist
-    if [ -z "$MJ_DR_TEST" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $MJ_DR_FILE"; bad=1; fi
-    for t in ${MJ_DR_TESTS//,/ }; do
-      [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
-    done
-    # every claim it carries must be a real claim
-    for c in ${MJ_DR_CLAIMS//,/ }; do
-      case "$claims" in *" $c "*) ;; *)
-        mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1 ;;
-      esac
-    done
+    # the tests that prove it must exist, and every claim it carries must be a real claim —
+    # both read the proof surface, so both are the source tree's to answer
+    if [ "$proving" = 1 ]; then
+      if [ -z "$MJ_DR_TEST" ]; then mj_doctrine_fail doctrine "$id" "declares no test" "grep -n 'tests:' $MJ_DR_FILE"; bad=1; fi
+      for t in ${MJ_DR_TESTS//,/ }; do
+        [ -f "$root/$t" ] || { mj_doctrine_fail doctrine "$id" "test $t does not exist" "ls $t"; bad=1; }
+      done
+      for c in ${MJ_DR_CLAIMS//,/ }; do
+        case "$claims" in *" $c "*) ;; *)
+          mj_doctrine_fail doctrine "$id" "names claim '$c', which is not in docs/CLAIMS.yaml" "grep -n 'id: $c' docs/CLAIMS.yaml"; bad=1 ;;
+        esac
+      done
+    fi
     i=$((i+1))
   done
 
@@ -595,18 +603,27 @@ mj_validate_doctrine_wiring() {
   done
 
   # 3. CI must run the test runner, without swallowing it
-  local ci="$root/.github/workflows/validate.yml"
-  if [ ! -f "$ci" ]; then mj_doctrine_fail doctrine "ci" "no .github/workflows/validate.yml; nothing runs the doctrine tests on integration" "ls .github/workflows/"; bad=1
-  elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
-  elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
-    mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
-  fi
-  # and the runner must run every case, not a list that a new case can miss
-  if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then
-    mj_doctrine_fail doctrine "runner" "test/run.sh does not glob test/cases/; a new case would not run" "grep -n cases test/run.sh"; bad=1
+  if [ "$proving" = 1 ]; then
+    local ci="$root/.github/workflows/validate.yml"
+    if [ ! -f "$ci" ]; then mj_doctrine_fail doctrine "ci" "no .github/workflows/validate.yml; nothing runs the doctrine tests on integration" "ls .github/workflows/"; bad=1
+    elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
+      mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    fi
+    # and the runner must run every case, not a list that a new case can miss
+    if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then
+      mj_doctrine_fail doctrine "runner" "test/run.sh does not glob test/cases/; a new case would not run" "grep -n cases test/run.sh"; bad=1
+    fi
   fi
 
-  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch, propagation, test and CI resolve for every one"
+  if [ "$proving" = 1 ]; then
+    [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch, propagation, test and CI resolve for every one"
+  else
+    [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "validator, dispatch and propagation resolve for every one"
+    # Named, never silent: a check that stops running without saying so is the failure this
+    # command exists to catch.
+    mj_doctrine_skip doctrine "proof surface" "release $MJ_VERSION carries no test/, docs/CLAIMS.yaml or .github/, so the test, claim and CI reconciliation did not run here; it ran against the source tree this release was built from"
+  fi
   return 0
 }
 # watch's view of the same doctrine: every target against the stamp it carries.

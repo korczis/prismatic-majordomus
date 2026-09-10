@@ -234,23 +234,32 @@ H
   mj_require_installed
   mj_doctrine_load
   [ "$sub" = list ] && { mj_doctrine_list; return 0; }
-  local n bl ad un uc i defined
+  local n bl ad un uc i defined proving=1
   n="${#MJ_DOC_ROW[@]}"; bl=0; ad=0; un=0; uc=0; i=0
   defined=" $(mj_validators_defined) "
+  # A test file is counted only where the cases that prove a doctrine were shipped. From a
+  # release archive the answer is not zero and not the number of doctrines: it is unknown,
+  # and reporting it as either would be a number nobody can act on.
+  mj_proves_itself || proving=0
   while mj_doc_row "$i"; do
     case "$MJ_DR_CLASS" in blocking) bl=$((bl+1)) ;; advisory) ad=$((ad+1)) ;; esac
     case "$defined" in *" $MJ_DR_VAL "*) ;; *) un=$((un+1)) ;; esac
-    [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1))
+    [ "$proving" = 1 ] && { [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1)); }
     i=$((i+1))
   done
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s}\n' "$n" "$bl" "$ad" "$un" "$uc"
+    if [ "$proving" = 1 ]; then
+      printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s,"proof_surface":true}\n' "$n" "$bl" "$ad" "$un" "$uc"
+    else
+      printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":null,"proof_surface":false}\n' "$n" "$bl" "$ad" "$un"
+    fi
   else
     printf 'declared doctrines:   %s\n' "$n"
     printf 'blocking:             %s\n' "$bl"
     printf 'advisory:             %s\n' "$ad"
     printf 'missing validators:   %s\n' "$un"
-    printf 'without a test file:  %s\n' "$uc"
+    if [ "$proving" = 1 ]; then printf 'without a test file:  %s\n' "$uc"
+    else printf 'without a test file:  not shipped with this release; ask a source tree\n'; fi
     printf '\nthe registry is the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\n'
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"
