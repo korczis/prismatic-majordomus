@@ -224,28 +224,56 @@ impl Session {
     /// the server (carrying the client's session over) or attach to whoever did.
     fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Reply> {
         tracing::warn!("{cause}; electing again");
-        let client = match &self.backend {
-            Backend::Remote { bridge, .. } => lock(bridge).client().cloned(),
-            Backend::Local(_) | Backend::Alone(_) => None,
+        let (client, announcement) = match &self.backend {
+            Backend::Remote { bridge, .. } => {
+                let b = lock(bridge);
+                (b.client().cloned(), b.announcement().cloned())
+            }
+            Backend::Local(_) | Backend::Alone(_) => (None, None),
         };
         match lease::elect(&self.repo) {
-            Ok(Role::Server(lease)) => match Self::serve(&self.args, lease, client.clone()) {
-                Ok(backend) => {
-                    self.replace(backend);
-                    tracing::info!(
-                        "took over as the shared server; this session continues locally"
-                    );
-                    self.handle(message)
+            Ok(Role::Server(lease)) => {
+                match Self::serve(&self.args, lease, client.clone()) {
+                    Ok(backend) => {
+                        self.replace(backend);
+                        tracing::info!(
+                            "took over as the shared server; this session continues locally"
+                        );
+                        // what the client said it was working on, said again on the board it
+                        // now serves itself: the announcement outlives the server it was made to
+                        if let (Backend::Local(local), Some(a)) = (&self.backend, announcement) {
+                            let intent = a["intent"].as_str().unwrap_or_default().trim();
+                            let scope: Vec<String> = a["scope"]
+                                .as_array()
+                                .map(|s| {
+                                    s.iter()
+                                        .filter_map(|v| v.as_str())
+                                        .map(|v| v.trim().to_string())
+                                        .filter(|v| !v.is_empty())
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            if !intent.is_empty() {
+                                local.server.surface().context().peers.announce(
+                                    &local.peer,
+                                    intent,
+                                    scope,
+                                );
+                                tracing::info!("the client's announcement was carried onto this server's board");
+                            }
+                        }
+                        self.handle(message)
+                    }
+                    Err(e) => {
+                        tracing::error!("cannot take over as the shared server: {e}");
+                        self.settle_alone(
+                            message,
+                            client,
+                            &format!("{cause}; and taking over failed: {e}"),
+                        )
+                    }
                 }
-                Err(e) => {
-                    tracing::error!("cannot take over as the shared server: {e}");
-                    self.settle_alone(
-                        message,
-                        client,
-                        &format!("{cause}; and taking over failed: {e}"),
-                    )
-                }
-            },
+            }
             Ok(Role::Peer { url }) => {
                 let Backend::Remote { bridge, .. } = &self.backend else {
                     return unavailable(&message, &cause.to_string());

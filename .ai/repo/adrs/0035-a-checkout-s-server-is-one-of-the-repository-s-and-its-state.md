@@ -102,6 +102,11 @@ entering the repository is told and not served, because the entry hook may start
 when no peer has been attached for `--idle` seconds, which keeps ADR 0003's line — no
 process without a client — true in time rather than at every instant.
 
+**An announcement outlives the server it was made to.** The bridge keeps the arguments of
+its client's last accepted announcement and says them again after a re-attach, or carries
+them onto its own board after a takeover; the one place that sees both the announcement
+and the reconnection is the one that repeats it, and no worker is asked to remember.
+
 **The election keeps its promises under a slow start.** An owner keeps its lease young
 while the layer loads, so a cold start slower than the bind grace is never taken for an
 abandoned one; a take-over removes only the file it judged; an owner whose lease was taken

@@ -81,7 +81,7 @@ pub struct CommitRef {
     pub subject: String,
 }
 
-/// Parse one commit line of [`FORMAT`]. A line with fewer fields is not a commit.
+/// Parse one commit line of `FORMAT`. A line with fewer fields is not a commit.
 ///
 /// ```
 /// use majordomus_cli::worktree::parse_commit;

@@ -113,6 +113,10 @@ run first died on a silent peer.
    `src/mcp/protocol.rs:331-343` cites is unfixed on the path it happened on. The journal
    under way on `feature/peer-board-survives-restart` (ADR 0034, allocated on the board,
    unpushed at the time of writing) answers the restart half and none of the rest.
+   Since: the server's own reader reaps expired sessions on every path, and the bridge
+   replays its client's last accepted announcement after a re-attach and carries it onto
+   its own board after a takeover (stage 03, on this branch); expiry on announcements and
+   the episode per provider session remain (stage 04).
    Reproduce: `curl -s "$MAJORDOMUS_URL/api/v1/peers" | jq '.peers[] | {id, attached, last_seen_seconds_ago}'`
    after a bridged client has been killed with `SIGKILL`.
 

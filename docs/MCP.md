@@ -127,6 +127,15 @@ same way through the election; a shell entering the repository (`.envrc`) is tol
 served, because `project.envrc-is-an-adapter` forbids the entry hook to start anything and a
 shell is not a client.
 
+**An announcement outlives the server it was made to.** The bridge sees every frame its
+client sends, so it keeps the arguments of the last announcement the server accepted and
+says them again wherever the client lands next: after a re-attach, once the session is
+re-opened; after a takeover, onto the board of the server the bridge's own process has
+become. A worker that announced once is on the board of every server that serves it,
+without being asked to announce again; the instruction to announce again after a
+reconnect stays in the bootstrap for the one case a bridge cannot cover, a client whose own
+process is the server and restarts.
+
 **What the election now guards against.** An owner keeps its lease young while the layer
 loads (`Lease::keep_alive`), so a cold start slower than the bind grace is never taken for
 an abandoned one; a take-over removes only the file it judged, never one that arrived in the
