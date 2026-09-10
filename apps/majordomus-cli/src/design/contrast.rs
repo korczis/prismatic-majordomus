@@ -216,6 +216,20 @@ pub struct Measured {
     pub seen: String,
 }
 
+/// A measured pair is read theme by theme, text before border, then by the foreground token
+/// and the ground it sits on: the order the report's table and the site's contrast page
+/// both show.
+impl crate::order::Ordered for Measured {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.theme, &self.foreground, &self.ground).ranked(
+            match self.carries {
+                Carries::Text => 0,
+                Carries::NonText => 1,
+            },
+        )
+    }
+}
+
 /// Every pair the declaration and its consumers state, measured.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ContrastReport {
@@ -650,14 +664,7 @@ pub fn measure(design: &DesignSystem, sources: &[(String, String)]) -> ContrastR
             });
         }
     }
-    pairs.sort_by(|a, b| {
-        (&a.theme, a.carries, &a.foreground, &a.ground).cmp(&(
-            &b.theme,
-            b.carries,
-            &b.foreground,
-            &b.ground,
-        ))
-    });
+    crate::order::canonical(&mut pairs);
     let findings: Vec<String> = pairs
         .iter()
         .filter(|p| p.enforced && !p.passes)

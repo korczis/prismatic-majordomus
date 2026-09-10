@@ -473,6 +473,14 @@ pub struct ProductProvider {
     pub scratch_roots: Vec<String>,
 }
 
+/// A provider is presented by its id, which is the template's file stem and the name every
+/// surface calls it by.
+impl crate::order::Ordered for ProductProvider {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One bootstrap a provider renders.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderBootstrap {
@@ -1618,7 +1626,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
             }
         })
         .collect();
-    out.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut out);
     out
 }
 

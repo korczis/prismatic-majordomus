@@ -148,6 +148,10 @@ impl Index {
             }
         }
         dedupe(&mut objects, &mut diagnostics);
+        // Byte order of the URI, because `Index::get` binary-searches this vector and
+        // `fingerprint` hashes it in this order: a search and hashing invariant, not a
+        // presentation order. What a person is shown is `crate::order::canonical`, which
+        // `Object` implements.
         objects.sort_by(|a, b| a.uri.cmp(&b.uri));
         let state = if diagnostics.iter().any(|d| d.severity == Severity::Error) {
             State::Degraded

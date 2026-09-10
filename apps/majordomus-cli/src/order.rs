@@ -62,6 +62,14 @@ pub trait Ordered {
     fn order_key(&self) -> OrderKey<'_>;
 }
 
+/// A reference orders as the item it points at, so a projection can put a borrowed view of
+/// a collection in canonical order without cloning every item into a vector first.
+impl<T: Ordered + ?Sized> Ordered for &T {
+    fn order_key(&self) -> OrderKey<'_> {
+        (**self).order_key()
+    }
+}
+
 /// The four parts of the canonical order, most significant first. See the module
 /// documentation for what each part means and why the last one is not optional.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

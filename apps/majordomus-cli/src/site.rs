@@ -18,7 +18,7 @@ use serde::Serialize;
 use crate::bench::baseline::{self, Policy};
 use crate::bench::results::{CacheMode, Provenance as RunProvenance};
 use crate::bench::{BenchmarkProjection, Coverage, ResultDocument, SystemTarget, TargetKind};
-use crate::capability::registry::{ModuleSource, Summary};
+use crate::capability::registry::{ModuleInfo, ModuleSource, Summary};
 use crate::capability::{Capability, CapabilityKind, Context, Provenance, Stability};
 use crate::cli::CommandDoc;
 use crate::error::{Error, Result};
@@ -377,17 +377,25 @@ pub fn dataset(
 ) -> Result<SiteRegistry> {
     let registry = &ctx.registry;
     let index: &Index = &ctx.index;
-    let mut builtin: Vec<CapabilityView> = registry
+    // Every collection below is put in canonical order as the domain type it is, before
+    // anything is rendered from it: the order belongs to the capability, the module and
+    // the object, not to this dataset.
+    let mut declared: Vec<&Capability> = registry
         .iter()
         .filter(|c| matches!(c.provenance, Provenance::Builtin { .. }))
+        .collect();
+    crate::order::canonical(&mut declared);
+    let builtin: Vec<CapabilityView> = declared
+        .into_iter()
         .map(|c| CapabilityView {
             capability: c.clone(),
             source_path: c.provenance.source_path(),
         })
         .collect();
-    builtin.sort_by(|a, b| a.capability.id.as_str().cmp(b.capability.id.as_str()));
-    let mut modules: Vec<ModuleView> = registry
-        .modules()
+    let mut declared_modules: Vec<&ModuleInfo> = registry.modules().collect();
+    crate::order::canonical(&mut declared_modules);
+    let modules: Vec<ModuleView> = declared_modules
+        .into_iter()
         .map(|m| {
             let mine: Vec<&Capability> = registry
                 .iter()
@@ -413,11 +421,11 @@ pub fn dataset(
             }
         })
         .collect();
-    modules.sort_by(|a, b| a.id.cmp(&b.id));
 
-    let mut objects: Vec<ObjectView> = index
-        .objects
-        .iter()
+    let mut indexed: Vec<&crate::model::Object> = index.objects.iter().collect();
+    crate::order::canonical(&mut indexed);
+    let objects: Vec<ObjectView> = indexed
+        .into_iter()
         .map(|o| ObjectView {
             uri: o.uri.clone(),
             kind: o.kind.clone(),
@@ -431,7 +439,6 @@ pub fn dataset(
             tags: o.tags().into_iter().map(str::to_string).collect(),
         })
         .collect();
-    objects.sort_by(|a, b| a.uri.cmp(&b.uri));
     let by_kind: BTreeMap<String, usize> = index
         .kinds()
         .into_iter()
@@ -506,16 +513,17 @@ pub fn dataset(
     };
 
     let http = HttpView {
+        // The registry's own list, in the registry's own order: the same routes, in the
+        // same sequence, that the API index and the Cockpit's table show. Reading them
+        // here in registry (id) order was a second opinion about one collection.
         routes: registry
-            .iter()
-            .filter_map(|c| {
-                let h = c.exposure.http.as_ref()?;
-                Some(RouteView {
-                    method: h.method.as_str().to_string(),
-                    path: h.path.clone(),
-                    id: c.id.to_string(),
-                    kind: c.kind,
-                })
+            .http_routes()
+            .into_iter()
+            .map(|r| RouteView {
+                method: r.http.method.as_str().to_string(),
+                path: r.http.path.clone(),
+                id: r.capability.id.to_string(),
+                kind: r.capability.kind,
             })
             .collect(),
         infrastructure: openapi::infrastructure_routes(),

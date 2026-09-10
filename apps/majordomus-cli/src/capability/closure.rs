@@ -159,6 +159,14 @@ pub struct Row {
     pub source: String,
 }
 
+/// A row of the matrix is read by the capability's id: the same id the CLI table, the site
+/// page and the debt inventory all show.
+impl crate::order::Ordered for Row {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// The whole matrix, with the findings and the debt beside it: one value that answers
 /// "where does each capability appear, and is any claim unmet".
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
@@ -239,7 +247,7 @@ pub fn unbacked(registry: &CapabilityRegistry, tree: &CommandDoc) -> Vec<Unbacke
 pub fn matrix(registry: &CapabilityRegistry, tree: &CommandDoc) -> Matrix {
     let commands = index(tree);
     let mut rows: Vec<Row> = registry.iter().map(|c| row(c, &commands)).collect();
-    rows.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut rows);
     Matrix {
         rows,
         findings: findings(registry, tree),

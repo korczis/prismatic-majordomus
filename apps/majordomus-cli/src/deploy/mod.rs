@@ -466,6 +466,14 @@ pub struct Deployment {
     pub updated_at: Option<String>,
 }
 
+/// A deployment is presented by its id: what `majordomus deploy`, the site and the Cockpit
+/// each name it by.
+impl crate::order::Ordered for Deployment {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 // ---------------------------------------------------------------- reading and checking
 
 /// What the local checks need to know about the repository they are deciding against.

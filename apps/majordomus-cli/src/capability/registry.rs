@@ -58,6 +58,38 @@ pub struct ModuleInfo {
     pub capabilities: usize,
 }
 
+/// A module is presented by its id, which is the namespace every capability of it carries.
+impl crate::order::Ordered for ModuleInfo {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.id.as_str(), self.id.as_str())
+    }
+}
+
+/// One HTTP route the registry declares: the capability, and the exposure that mounts it.
+///
+/// It exists so that the collection *route* has a type, and therefore one order. The API
+/// index, the Cockpit's table and the site's route list all read [`CapabilityRegistry::http_routes`],
+/// and none of them holds an opinion of its own about the sequence.
+#[derive(Debug, Clone, Copy)]
+pub struct HttpRoute<'a> {
+    /// The capability the route answers with.
+    pub capability: &'a Capability,
+    /// The method and path it is mounted at.
+    pub http: &'a super::model::HttpExposure,
+}
+
+/// A route is read as a path first, then by the method mounted at it, and tied apart by the
+/// capability's id: what a reader scanning a table of routes looks for, in that order.
+impl crate::order::Ordered for HttpRoute<'_> {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(
+            &self.http.path,
+            self.http.method.as_str(),
+            self.capability.id.as_str(),
+        )
+    }
+}
+
 impl std::fmt::Debug for Entry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Entry")
@@ -732,6 +764,25 @@ impl CapabilityRegistry {
     /// Every module, by id: the composed ones, the derived ones, and one per declarative kind.
     pub fn modules(&self) -> impl Iterator<Item = &ModuleInfo> {
         self.modules.values()
+    }
+
+    /// Every capability with an HTTP exposure, in canonical route order.
+    ///
+    /// The one list of routes: the API index at the mount, the Cockpit's table and the
+    /// site's route view all read it, so a route cannot appear in one place above a route
+    /// it appears below in another.
+    pub fn http_routes(&self) -> Vec<HttpRoute<'_>> {
+        let mut out: Vec<HttpRoute<'_>> = self
+            .iter()
+            .filter_map(|c| {
+                c.exposure.http.as_ref().map(|http| HttpRoute {
+                    capability: c,
+                    http,
+                })
+            })
+            .collect();
+        crate::order::canonical(&mut out);
+        out
     }
 
     /// One module by id.
