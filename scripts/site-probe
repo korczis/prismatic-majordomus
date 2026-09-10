@@ -35,7 +35,10 @@ case "$JOBS" in ''|*[!0-9]*|0) echo "site-probe: SITE_PROBE_JOBS must be a posit
 # stylesheet carries, which is the contract test between the site and the declaration.
 DESIGN="$SITE/data/registry/design.json"
 [ -f "$DESIGN" ] || { echo "site-probe: $DESIGN missing; run majordomus generate design" >&2; exit 12; }
-WIDTHS="$(jq -r '.viewports | join(" ")' "$DESIGN")"
+# SITE_PROBE_WIDTHS narrows or moves the set while a layout fix is iterated on — a
+# Linux runner leaves 305 content pixels inside a 320 viewport, which a mac does not, so a
+# finding from CI is reproduced by naming its width. CI never sets it.
+WIDTHS="${SITE_PROBE_WIDTHS:-$(jq -r '.viewports | join(" ")' "$DESIGN")}"
 DESIGN_FP="$(jq -r '.design' "$DESIGN")"
 export SITE_PROBE_WIDTHS="$WIDTHS" SITE_PROBE_DESIGN="$DESIGN_FP"
 CHROME=""

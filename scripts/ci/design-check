@@ -39,6 +39,16 @@
 #       the canonical marks. A favicon cannot reach a custom property — a browser renders
 #       it outside any document — so its colours are in the file by necessity. Every other
 #       .svg is checked in question 6 against these.
+#   apps/majordomus-cli/src/design/*.rs
+#       the model that *implements* the declaration: it parses colours, resolves them,
+#       validates them and renders the projections. Its unit fixtures are declarations in
+#       miniature and its examples show what a value resolves to, so both are made of
+#       literals for the same reason the projections are — and one test deliberately adds a
+#       role to a fixture to prove a new token needs no registration, which is a read of a
+#       token the *canonical* declaration does not emit. This module renders nothing to
+#       anybody: it is the implementation, never a surface. What holds it honest is that
+#       every value it emits for a surface comes from share/design/tokens.yaml through
+#       `generate --check`, which compares bytes.
 #   share/cockpit/graph.js
 #       computes a hue per node kind from the number of kinds. That is a categorical scale
 #       over data, generated at run time; there is no literal palette to share.
@@ -67,6 +77,7 @@ tracked="$(git ls-files 2>/dev/null || true)"
 first_party() { # the files a person writes that can put something on a screen
   printf '%s\n' "$tracked" | grep -E '\.(css|html|rs|js|mjs|tera)$' | grep -vE \
     -e '^share/design/[^/]+\.css$' -e '^apps/majordomus-cli/src/web/tokens\.css$' \
+    -e '^apps/majordomus-cli/src/design/.*\.rs$' \
     -e '/vendor/' -e '^share/cockpit/cockpit\.css$' -e '^site/static/app\.css$' -e '^node_modules/' \
     -e '^share/cockpit/graph\.js$' \
     -e '^scripts/lib/ui-contrast\.mjs$' -e '^scripts/lib/ui\.test\.mjs$' -e '^scripts/lib/cockpit-probe\.mjs$' \
@@ -130,7 +141,7 @@ echo "== 5. every token a surface reads is a token the declaration emits"
 declared="$( { cat share/design/surface.css share/design/status.css apps/majordomus-cli/src/web/tokens.css 2>/dev/null || true; } \
   | grep -oE -- '--mj-[a-z0-9][a-z0-9-]*[[:space:]]*:' | sed 's/[[:space:]]*:$//' | LC_ALL=C sort -u)"
 [ -n "$declared" ] || fail "share/design/surface.css declares nothing: run majordomus generate design"
-for file in $(printf '%s\n' "$tracked" | grep -E '\.(js|mjs|css|rs|html|tera)$' | grep -vE '/vendor/|^node_modules/|^share/design/|^apps/majordomus-cli/src/web/tokens\.css$|^scripts/ci/design-check$'); do
+for file in $(printf '%s\n' "$tracked" | grep -E '\.(js|mjs|css|rs|html|tera)$' | grep -vE '/vendor/|^node_modules/|^share/design/|^apps/majordomus-cli/src/(web/tokens\.css|design/.*\.rs)$|^scripts/ci/design-check$'); do
   for token in $(grep -hoE -- '--mj-[a-z0-9][a-z0-9-]*' "$file" 2>/dev/null | LC_ALL=C sort -u); do
     # the three indirection properties are set per state by the generated status sheet and
     # read by the primitives with a fallback; `--mj-design` is the fingerprint every sheet
@@ -181,15 +192,14 @@ echo "== 8. the projections are current"
 # stale projection is named next to the source that moved; where none is, the delegation
 # is stated rather than the question dropped. Only this repository is asked: a fixture
 # handed in with --root is a tree of stylesheets, not a repository the generator can load.
-MJ="${MAJORDOMUS_BIN:-}"
+# Where the executable is, the way every other script here finds it: MAJORDOMUS_BIN, else
+# the crate's debug build. Naming a helper that does not exist would make this question
+# vanish in silence, which is the failure this whole gate is against.
 if [ "$ROOT" != "$HERE" ]; then
   MJ=""
   echo "OK   a fixture is not asked about projection drift; the executable's generate --check answers for the repository"
-elif [ -z "$MJ" ] && [ -f "$HERE/lib/rust_bin.sh" ]; then
-  # shellcheck source=../../lib/rust_bin.sh
-  . "$HERE/lib/rust_bin.sh"
-  candidate="$(mj_cargo_target_dir "$HERE/apps/majordomus-cli" 2>/dev/null || true)/debug/majordomus"
-  [ -x "$candidate" ] && MJ="$candidate"
+else
+  MJ="${MAJORDOMUS_BIN:-$HERE/apps/majordomus-cli/target/debug/majordomus}"
 fi
 if [ -n "$MJ" ] && [ -x "$MJ" ]; then
   if env -u MAJORDOMUS_SHARE "$MJ" generate design --check --repo "$ROOT" >/dev/null 2>&1; then

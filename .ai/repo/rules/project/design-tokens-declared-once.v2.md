@@ -97,9 +97,12 @@ regenerated, is visible on the page rather than in a diff nobody ran.
 
 **An exemption is a reason.** The generated projections are made of literals, because that
 is their job; third-party bytes and compiled artifacts are not written here; the canonical
-marks under `share/design/brand/` cannot reach a custom property; one script computes a
-categorical hue per node kind at run time; three measure or compute colour and paint
-nothing. Each is stated where the gate is written. A path added without a reason is the
+marks under `share/design/brand/` cannot reach a custom property; the model that
+*implements* the declaration — `crate::design` — parses, resolves and renders colour, so its
+unit fixtures are declarations in miniature and its examples say what a value resolves to,
+and it renders nothing to anybody (what holds it honest is that every value it emits for a
+surface is compared byte for byte by `generate --check`); one script computes a categorical
+hue per node kind at run time; three measure or compute colour and paint nothing. Each is stated where the gate is written. A path added without a reason is the
 defect this rule replaces, wearing a different hat.
 
 # Failure behaviour

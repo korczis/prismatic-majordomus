@@ -20,7 +20,7 @@ pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
 pub mod deploy;
-pub mod design;
+pub(crate) mod design;
 pub mod discovery;
 pub(crate) mod distribution;
 pub mod environment;

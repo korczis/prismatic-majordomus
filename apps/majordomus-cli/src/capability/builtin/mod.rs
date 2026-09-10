@@ -35,7 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
-pub mod design;
+pub(crate) mod design;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
@@ -69,10 +69,9 @@ pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CO
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
 };
-pub use design::{
-    DesignReport, ExplainTokenInput, ProjectionView, ThemeView, TokenList, TokenTallies,
-    TokensInput, DESIGN_URI,
-};
+// the Cockpit's Design page renders these two; everything else the module declares is
+// read as JSON through the executor, like every other capability's output
+pub(crate) use design::{DesignReport, TokenList};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,

@@ -122,7 +122,25 @@ git add -A >/dev/null 2>&1
 expect_exit 0 "$DC" --root "$T"
 rm -f site/theme.js
 
-# --- the documented exemptions hold: third-party bytes and compiled artifacts, the
+# --- the design model implements the declaration and is not a surface: its fixtures are
+# declarations in miniature and its examples say what a value resolves to, so both are made
+# of literals, and one test adds a role to a fixture to prove a new token needs no
+# registration — a read the canonical declaration does not answer. The same two lines
+# anywhere else are refused.
+mkdir -p apps/majordomus-cli/src/design
+printf 'const FIXTURE: &str = "bg: oklch(21%% 0.034 264.665)";\nfn t() { assert!(css.contains("--mj-overlay")); }\n' > apps/majordomus-cli/src/design/mod.rs
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+cp apps/majordomus-cli/src/design/mod.rs site/elsewhere.rs
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'site/elsewhere.rs'
+expect_grep 'reads --mj-overlay, which the declaration does not emit'
+rm -f site/elsewhere.rs
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+
+# --- the other documented exemptions hold: third-party bytes and compiled artifacts, the
 # categorical hue script, the colour arithmetic of the audit
 mkdir -p share/cockpit/vendor scripts/lib
 printf '.x{color:#abcdef}\n' > share/cockpit/vendor/lib.min.css

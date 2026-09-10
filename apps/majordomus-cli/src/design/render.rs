@@ -275,14 +275,9 @@ pub fn tokens_css(design: &DesignSystem) -> String {
 
 /// Whether a rendered stylesheet can be written: every declaration has a value and every
 /// line's quotes balance. The generator this replaces emitted both defects and the CSS
-/// parser dropped them in silence.
-///
-/// ```
-/// use majordomus_cli::design::render::well_formed;
-/// assert!(well_formed(":root { --a: 1; }").is_ok());
-/// assert!(well_formed("--a: ;").is_err());
-/// assert!(well_formed("--a: \"x;").is_err());
-/// ```
+/// parser dropped them in silence, so nothing downstream could notice.
+/// `a_declaration_with_no_value_or_an_unbalanced_quote_is_never_written` below is the
+/// example.
 pub fn well_formed(css: &str) -> Result<(), String> {
     for (i, line) in css.lines().enumerate() {
         if line.matches('"').count() % 2 == 1 {
@@ -508,6 +503,13 @@ mod tests {
 
     fn design() -> DesignSystem {
         DesignSystem::compiled().expect("compiled").clone()
+    }
+
+    #[test]
+    fn a_declaration_with_no_value_or_an_unbalanced_quote_is_never_written() {
+        assert!(well_formed(":root { --a: 1; }").is_ok());
+        assert!(well_formed("--a: ;").is_err());
+        assert!(well_formed("--a: \"x;").is_err());
     }
 
     #[test]

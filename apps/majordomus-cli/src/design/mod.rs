@@ -14,19 +14,10 @@
 //! Cockpit's inspector and `explain` answer from the declaration the stylesheets were
 //! projected from, and so that the crate still builds when packaged alone.
 //!
-//! ```
-//! use majordomus_cli::design::DesignSystem;
-//!
-//! let design = DesignSystem::compiled().expect("the compiled declaration is valid");
-//! // a role resolves to one palette entry per theme
-//! let fg = design.roles.get("fg").expect("the fg role");
-//! assert_eq!(design.palette_value(&fg.light), Some("oklch(21% 0.034 264.665)"));
-//! // a state word carries exactly one status
-//! assert_eq!(design.role_of_state("succeeded"), Some("ok"));
-//! assert_eq!(design.role_of_state("nothing-like-this"), None);
-//! // and the fingerprint is a function of the declaration alone
-//! assert_eq!(design.fingerprint().len(), 64);
-//! ```
+//! The model is the crate's own: nothing outside constructs a [`Role`] or a [`Token`], and
+//! what a client reads is the JSON the `design` capabilities answer with. Its examples are
+//! therefore unit tests rather than `///` examples — see `the_compiled_declaration_answers_
+//! for_every_surface` below, which is the example this header would otherwise carry.
 
 use std::borrow::Cow;
 use std::fmt;
@@ -386,12 +377,8 @@ pub enum TokenKind {
 }
 
 impl TokenKind {
-    /// The word as serialised.
-    ///
-    /// ```
-    /// use majordomus_cli::design::TokenKind;
-    /// assert_eq!(TokenKind::Status.as_str(), "status");
-    /// ```
+    /// The word as serialised: `role`, `status`, `state`, `type`, ... — the same word the
+    /// JSON carries, so a client filters on it without knowing this enum.
     pub fn as_str(self) -> &'static str {
         match self {
             TokenKind::Font => "font",
@@ -478,11 +465,9 @@ impl DesignSystem {
 
     /// Read and validate a declaration.
     ///
-    /// ```
-    /// use majordomus_cli::design::DesignSystem;
-    /// let err = DesignSystem::parse("schema: 1\n").unwrap_err();
-    /// assert!(err.contains("schema"), "{err}");
-    /// ```
+    /// A declaration that does not carry every section is refused by the field that is
+    /// missing; one that carries them all is refused by [`DesignSystem::validate`], which
+    /// names the key path and the reason. Either way nothing is projected.
     pub fn parse(text: &str) -> Result<DesignSystem, String> {
         let design: DesignSystem =
             yaml::parse_into(text).map_err(|e| format!("the declaration does not parse: {e}"))?;
@@ -954,17 +939,9 @@ impl DesignSystem {
     }
 
     /// One token by name — a role, a status, a state word, a type step, a palette entry —
-    /// or by the custom property it becomes.
-    ///
-    /// ```
-    /// use majordomus_cli::design::{DesignSystem, TokenKind};
-    /// let design = DesignSystem::compiled().unwrap();
-    /// let token = design.explain("--mj-ok").expect("the ok status");
-    /// assert_eq!(token.kind, TokenKind::Status);
-    /// assert!(token.states.iter().any(|w| w == "succeeded"));
-    /// assert_eq!(design.explain("succeeded").unwrap().role.as_deref(), Some("ok"));
-    /// assert!(design.explain("no-such-token").is_none());
-    /// ```
+    /// or by the custom property it becomes: `ok`, `succeeded` and `--mj-ok` all reach the
+    /// `ok` status, and a name nothing declares answers `None` rather than a guess.
+    /// `explain_answers_by_name_and_by_custom_property` below is the example.
     pub fn explain(&self, name: &str) -> Option<Token> {
         let wanted = name.trim();
         let bare = wanted
@@ -1252,6 +1229,22 @@ alias:
             d.explain("text-meta").is_some(),
             "a Tailwind utility name is answered too"
         );
+    }
+
+    /// What the module header would show as an example: the declaration this executable
+    /// carries answers the three questions every projection asks of it.
+    #[test]
+    fn the_compiled_declaration_answers_for_every_surface() {
+        let design = DesignSystem::compiled().expect("the compiled declaration is valid");
+        // a role names one palette entry per theme, and both resolve
+        let fg = design.roles.get("fg").expect("the fg role");
+        assert!(design.palette_value(&fg.light).is_some());
+        assert!(design.palette_value(&fg.dark).is_some());
+        // a state word carries exactly one status
+        assert_eq!(design.role_of_state("succeeded"), Some("ok"));
+        assert_eq!(design.role_of_state("nothing-like-this"), None);
+        // and the fingerprint is a function of the declaration alone
+        assert_eq!(design.fingerprint().len(), 64);
     }
 
     #[test]

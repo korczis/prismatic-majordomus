@@ -29,7 +29,8 @@ use crate::worktree::{
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
-    PER_PAGE, Window, alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono, nothing, pagination, pre, row, statistic, table, tag, text_cell, word_badge,
+    alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
+    nothing, pagination, pre, row, statistic, table, tag, text_cell, word_badge, Window, PER_PAGE,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and

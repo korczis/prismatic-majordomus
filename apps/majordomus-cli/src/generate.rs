@@ -381,6 +381,18 @@ impl Artifact {
     /// allows: `/* */` for a stylesheet or a script, `<!-- -->` for an SVG, `#` otherwise.
     /// A stylesheet cannot open with `#` and an image cannot open with a shell comment;
     /// [`violations`] asks for the same form by the same suffix.
+    ///
+    /// ```
+    /// use majordomus_cli::generate::Artifact;
+    ///
+    /// let css = Artifact::comment_text("a/b.css", "doc", "the source", "0.1.0", "body { }\n");
+    /// assert!(css.content.starts_with("/* GENERATED FILE"), "{}", css.content);
+    /// assert!(css.content.ends_with("body { }\n"));
+    ///
+    /// // the same body under a different suffix opens the way that suffix allows
+    /// let svg = Artifact::comment_text("a/b.svg", "doc", "the source", "0.1.0", "<svg/>\n");
+    /// assert!(svg.content.starts_with("<!-- GENERATED FILE"), "{}", svg.content);
+    /// ```
     pub fn comment_text(
         path: impl Into<String>,
         document: impl Into<String>,
@@ -891,7 +903,7 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
 /// directory, validated, and rendered by [`crate::design::render`]; a stylesheet that would
 /// be malformed is refused here rather than written, because the CSS parser would drop the
 /// defect in silence and every check downstream would stay green.
-pub fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
+pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
     use crate::design::{render, DesignSystem, DOCUMENT_SCHEMA, SHARE_PATH, SITE_SCHEMA, SOURCE};
 
     let path = app.share.dir().join(SHARE_PATH);
