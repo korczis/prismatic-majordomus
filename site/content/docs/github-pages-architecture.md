@@ -492,6 +492,42 @@ branch source is kept instead of the native Pages artifact flow, which would mak
 run the only way to publish. The procedure is `.ai/repo/skills/deploy-site/SKILL.md`. Pointing
 Pages at the branch is a one-time `scripts/site-deploy --configure-pages`.
 
+The site answers at its own domain, and one file keeps it there. `site/static/CNAME` names the
+host; the build copies it into `site/public` like any other static file and `scripts/site-deploy`
+publishes it with the rest. GitHub Pages reads that file on every deploy and unsets the custom
+domain the moment a published tree stops carrying it — which would take the advertised install
+command down with the site, so `scripts/site-check` refuses a build whose `CNAME` and `base_url`
+disagree. Those are the two places the host is written, and there is no third: `base_url` is what
+every generated link and every check resolves against, `CNAME` is what GitHub reads. The project
+address the site was published at before, under `korczis.github.io`, redirects here.
+
+### When a deploy does not happen
+
+Publication is two steps owned by two parties, and either can be missing while everything
+visible stays green. This repository pushes `gh-pages`; GitHub's own "pages build and
+deployment" turns that branch into the served site, and it has its own status, which can be
+`errored` for a branch that was pushed perfectly — it was, on 2026-09-10 at 17:35, and the
+site served the previous commit for 27 minutes with nothing red anywhere.
+
+The workflow's own conclusion does not answer the question either. `pages.yml` cancels a
+superseded run (`cancel-in-progress` for a push, never for a dispatch, which is the recovery
+path), and a cancelled run is not a failure: on 2026-09-09/10, fourteen of seventeen
+cancelled runs had already pushed `gh-pages` before they died, and no reader could tell them
+from the three that had not. So the run says which it was — an annotation and a line in its
+summary — and cancellation itself cannot strand the site, because a run is only ever
+cancelled by a newer run of the same workflow starting, and that chain ends in a run that
+publishes or in one that goes red.
+
+What *is* left stale is a run that was cancelled before publishing and whose successor then
+failed to build. Nothing in the deploy can report that, because by then there is no deploy.
+The reader is the `pages-live` gate (`scripts/ci/pages-check`), which runs on every full
+validation and asks four things: the published commit is on master, master has not moved past
+it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue observed on
+2026-09-10), the live site serves what `gh-pages` published, and GitHub's own build of that
+branch did not error. The trigger paths it uses to decide whether a publication is *owed* are
+`scripts/pages paths` — the same list that is the workflow's own `paths:` — so a commit that
+cannot change the site does not owe a deploy.
+
 ## Sync guarantee
 
 `scripts/derive-check` is the one read-only gate; it composes the generators' own checks
