@@ -23,7 +23,10 @@ MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
-PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
+# shellcheck source=lib/site-base.sh
+. "$ROOT/scripts/lib/site-base.sh"
+mj_site_base "$SITE/config.toml" || exit 12
+PREFIX="$MJ_SITE_PREFIX"
 pages="$(find "$PUB" -name '*.html')"
 # Every per-page assertion, measured once. The checks below read the rows rather than
 # re-reading the pages: one awk process for the site instead of eighteen per route.
@@ -137,8 +140,26 @@ ok route "$(printf '%s\n' "$pages" | wc -l | tr -d ' ') pages: viewport, descrip
 # value is a path. A meta description is prose, and a page that describes the reserved names
 # opens a sentence with `/docs`; that is not a link and cannot 404, so a value carrying a
 # space is left alone rather than reworded to get past a check meant for something else.
+#
+# Which assertion applies is a fact about the deployment, not a value to guard against being
+# empty. Under a mounted origin every root-absolute path must carry the mount or it 404s. At
+# an apex origin every root-absolute path is correct by construction and there is nothing to
+# assert there — but the check must not simply vanish, which is what `if [ -n "$PREFIX" ]`
+# did: it emitted neither ok nor bad and disappeared from a verdict that still looked
+# complete. Nor may it run unguarded, because at an empty prefix `prefix_paths` filters out
+# exactly the set its own first grep can produce, so it would report ok over nothing.
+#
+# The predicate with a real failure mode at an apex is a different one: no absolute URL in
+# the build points anywhere but this origin. That is what a stale build looks like — the
+# whole site published under the previous domain, every asset reachable only through a
+# redirect — and nothing held it when the site moved to majordomus.dev.
+#
+# Both branches state how much they looked at. A verdict that carries its own denominator is
+# self-refuting when the denominator is zero, which is the cheapest defence there is against
+# a check that passes because it examined nothing.
 prefix_paths() { grep -rhoE '(href|src)="/[^"]*"|content="/[^" ]*"' $pages | grep -vE "=\"$PREFIX(/|\")" | grep -vE '="/\)'; }
-if [ -n "$PREFIX" ]; then
+if [ "$MJ_SITE_MOUNTED" = 1 ]; then
+  n_rooted="$(grep -rhoE '(href|src)="/[^"]*"|content="/[^" ]*"' $pages | wc -l | tr -d ' ')"
   if prefix_paths | head -1 | grep -q .; then
     bad prefix "root-absolute path without $PREFIX: $(prefix_paths | head -1)"
   else ok prefix "every root-absolute path carries $PREFIX"; fi
@@ -162,10 +183,36 @@ if [ -f "$SITE/static/CNAME" ]; then
   else ok domain "the build carries CNAME $declared, the host base_url is published at"; fi
 fi
 # 6. internal links resolve to a generated file
-missing=0
-for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | LC_ALL=C sort -u); do
+#
+# This crawled `href="$PREFIX/…"` — root-absolute links carrying the mount. Zola does not emit
+# those: `get_url` resolves against base_url and writes the whole origin, so every internal
+# link in the build reads `href="https://majordomus.dev/why/"`. The pattern therefore matched
+# nothing, and the check reported "every internal link resolves" over an empty set.
+#
+# It had never worked. Measured on a two-page fixture whose homepage links to a route that
+# does not exist: zero matches at PREFIX='' and zero at PREFIX=/prismatic-majordomus, a
+# cheerful OK in both. So this is not damage from the move to an apex domain — the move
+# merely changed which of two ways it was vacuous. A check that has been green since it was
+# written is indistinguishable from one that works, which is why nobody looked.
+#
+# Both forms are collected now: the site's own absolute URLs reduced to a path, and any
+# root-absolute link that a hand-written page might still carry. The verdict names how many
+# links it resolved, so a future regression to zero says so instead of passing.
+internal_paths() {
+  grep -rhoE 'href="'"$MJ_SITE_BASE"'[^"#?]*' $pages | sed "s#^href=\"$MJ_SITE_BASE##"
+  [ -n "$PREFIX" ] && grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##"
+  return 0
+}
+missing=0; n_links=0
+for l in $(internal_paths | grep -v '^$' | LC_ALL=C sort -u); do
+  n_links=$((n_links + 1))
   t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
-done; [ "$missing" = 0 ] && ok link "every internal link resolves"
+done
+if [ "$n_links" = 0 ]; then
+  bad link "no internal link found in $(printf '%s\n' $pages | wc -l | tr -d ' ') page(s); this check examined nothing"
+elif [ "$missing" = 0 ]; then
+  ok link "all $n_links internal link(s) resolve"
+fi
 # 7. assets present
 for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
