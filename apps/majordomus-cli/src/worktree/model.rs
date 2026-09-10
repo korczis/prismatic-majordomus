@@ -141,6 +141,9 @@ pub enum DiagnosticCode {
     /// A move crossed devices and was made by copy, repair and verification.
     #[serde(rename = "worktree.cross_device")]
     CrossDevice,
+    /// direnv refuses the work tree's `.envrc` until `direnv allow` runs at its path.
+    #[serde(rename = "worktree.envrc_blocked")]
+    EnvrcBlocked,
 }
 
 impl DiagnosticCode {
@@ -170,6 +173,7 @@ impl DiagnosticCode {
             DiagnosticCode::TrunkUnknown => "worktree.trunk_unknown",
             DiagnosticCode::CaseCollision => "worktree.case_collision",
             DiagnosticCode::CrossDevice => "worktree.cross_device",
+            DiagnosticCode::EnvrcBlocked => "worktree.envrc_blocked",
         }
     }
 
@@ -193,6 +197,7 @@ impl DiagnosticCode {
         DiagnosticCode::TrunkUnknown,
         DiagnosticCode::CaseCollision,
         DiagnosticCode::CrossDevice,
+        DiagnosticCode::EnvrcBlocked,
     ];
 }
 
@@ -279,6 +284,45 @@ pub struct UpstreamState {
     pub gone: bool,
 }
 
+/// Whether direnv loads a work tree's `.envrc` on entry. direnv approves by path and
+/// content, so the repository's one tracked `.envrc` has a standing per work tree, and a
+/// tree that starts blocked is the recurring "direnv does not work again".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EnvrcStanding {
+    /// No `.envrc` here: nothing for direnv to load, nothing blocked.
+    None,
+    /// direnv loads it on entry.
+    Approved,
+    /// direnv refuses it until `direnv allow` runs at this path.
+    Blocked,
+    /// direnv is not on the PATH, or its status could not be read; nothing can say.
+    Unknown,
+}
+
+impl EnvrcStanding {
+    /// The word this standing is reported under.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EnvrcStanding::None => "none",
+            EnvrcStanding::Approved => "approved",
+            EnvrcStanding::Blocked => "blocked",
+            EnvrcStanding::Unknown => "unknown",
+        }
+    }
+}
+
+/// A work tree's `.envrc` under direnv: its standing, and whether the file is the primary
+/// checkout's — which decides the remedy, because the primary checkout's approval carries
+/// to an identical file and to nothing else.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct EnvrcState {
+    /// Whether direnv loads it.
+    pub standing: EnvrcStanding,
+    /// Byte-for-byte the primary checkout's `.envrc`.
+    pub same_as_primary: bool,
+}
+
 /// One work tree, as the topology sees it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorktreeState {
@@ -324,6 +368,10 @@ pub struct WorktreeState {
     /// issue id of `.ai/repo/project/issues/`, or beginning with it and a hyphen. Nothing
     /// is inferred from similarity.
     pub issue: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Its `.envrc` under direnv. Absent when it was not asked for: it costs one `direnv
+    /// status` per work tree that has an `.envrc`, and a topology check does not need it.
+    pub envrc: Option<EnvrcState>,
     /// What is wrong with this work tree, if anything.
     pub diagnostics: Vec<TopologyDiagnostic>,
 }
@@ -411,6 +459,8 @@ pub struct TopologyTallies {
     pub locked: usize,
     /// Work trees with uncommitted work, when it was asked for.
     pub dirty: usize,
+    /// Work trees whose `.envrc` direnv refuses, when it was asked for.
+    pub envrc_blocked: usize,
     /// Local branches.
     pub branches: usize,
     /// Local branches with no work tree.
