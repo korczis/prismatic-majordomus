@@ -24,7 +24,9 @@ cat > "$ROOT/test/cases/zz_${MARK}_hang.sh" <<INNER
 # majordomus-timeout: 3
 echo "hanging on purpose"
 sleep $NAP &
+child=\$!
 sleep $NAP
+wait "\$child"
 INNER
 cleanup() {
   rm -f "$ROOT/test/cases/zz_${MARK}_hang.sh" "$ROOT/test/cases/zz_${MARK}_quick.sh"
