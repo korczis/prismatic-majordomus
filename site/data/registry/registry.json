@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "f69337a348d95a2bf4b85368d1003082a496ff865b24419d2d20ad4d0e54bcb7",
+    "fingerprint": "137abca6aee31961d456e59a935992e9156013eb1fa081ae8370ef4fa9158ee1",
     "summary": {
       "total": 1194,
       "builtin": 74,
@@ -20452,14 +20452,38 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
-          "name": "Empty",
+          "name": "ServerStatusInput",
           "schema": {
             "type": "object",
             "additionalProperties": false,
-            "description": "No input.",
-            "title": "Empty"
+            "properties": {
+              "checkouts": {
+                "$ref": "#/$defs/Checkouts",
+                "description": "Which checkouts the answer covers. Absent means `repository`.",
+                "default": "repository"
+              }
+            },
+            "description": "What to ask of `server.status`: how wide the answer is.\n\nOne field, because the standing of a server is not something a caller filters — it is\nsomething a caller wants for one checkout or for all of them, and the difference is\nforty round trips on a machine with forty worktrees.\n\n```\nuse majordomus_cli::capability::builtin::server::{Checkouts, ServerStatusInput};\n// the field is optional on every surface, and its absence is the wide answer\nlet asked_nothing: ServerStatusInput = serde_json::from_str(\"{}\").unwrap();\nassert_eq!(asked_nothing.checkouts, Checkouts::Repository);\nlet narrow: ServerStatusInput = serde_json::from_str(r#\"{\"checkouts\":\"this\"}\"#).unwrap();\nassert_eq!(narrow.checkouts, Checkouts::This);\n```",
+            "title": "ServerStatusInput",
+            "$defs": {
+              "Checkouts": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "repository",
+                    "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+                  },
+                  {
+                    "type": "string",
+                    "const": "this",
+                    "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+                  }
+                ],
+                "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+              }
+            }
           }
         },
         "output": {
@@ -27049,7 +27073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2baac80d625fcdfd133e18594931c940302450100827a3fca8f6f96299cb69b6",
+    "fingerprint": "48efb26f37030f45cec5b79672d854b6a6e4e518469f396e985e230be0e8c6e1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -27644,7 +27668,7 @@
         "path": ".ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 10258,
+        "bytes": 11444,
         "tags": [
           "mcp",
           "architecture",
@@ -30383,7 +30407,7 @@
         "title": "Entering the repository",
         "path": "docs/ENTRY.md",
         "source_class": "document",
-        "bytes": 7966
+        "bytes": 8283
       },
       {
         "uri": "majordomus://document/docs/ENTRY_AUDIT.md",
@@ -30455,7 +30479,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 29614
+        "bytes": 30238
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -40017,6 +40041,29 @@
             "usage": "majordomus serve status [OPTIONS]",
             "about": "Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository",
             "args": [
+              {
+                "name": "checkouts",
+                "long": "checkouts",
+                "positional": false,
+                "help": "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and probes no other server",
+                "value_name": "CHECKOUTS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "repository",
+                    "help": "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask"
+                  },
+                  {
+                    "name": "this",
+                    "help": "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one"
+                  }
+                ],
+                "defaults": [
+                  "repository"
+                ]
+              },
               {
                 "name": "format",
                 "long": "format",
@@ -54021,10 +54068,10 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
-        "input": "Empty",
+        "input": "ServerStatusInput",
         "output": "ServerStatus"
       },
       {
@@ -57389,31 +57436,60 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
-        "key": "server.status|direct|default",
+        "key": "server.status|direct|repository",
         "kind": "capability",
         "transport": "direct",
         "id": "server.status",
         "module": "server",
-        "case": "default",
+        "case": "repository",
         "cached": false
       },
       {
-        "key": "server.status|mcp|default",
+        "key": "server.status|direct|this-checkout",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "server.status",
+        "module": "server",
+        "case": "this-checkout",
+        "cached": false
+      },
+      {
+        "key": "server.status|mcp|repository",
         "kind": "capability",
         "transport": "mcp",
         "id": "server.status",
         "module": "server",
-        "case": "default",
+        "case": "repository",
         "cached": false,
         "tool": "majordomus_server"
       },
       {
-        "key": "server.status|http|default",
+        "key": "server.status|mcp|this-checkout",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "server.status",
+        "module": "server",
+        "case": "this-checkout",
+        "cached": false,
+        "tool": "majordomus_server"
+      },
+      {
+        "key": "server.status|http|repository",
         "kind": "capability",
         "transport": "http",
         "id": "server.status",
         "module": "server",
-        "case": "default",
+        "case": "repository",
+        "cached": false,
+        "route": "GET /api/v1/server"
+      },
+      {
+        "key": "server.status|http|this-checkout",
+        "kind": "capability",
+        "transport": "http",
+        "id": "server.status",
+        "module": "server",
+        "case": "this-checkout",
         "cached": false,
         "route": "GET /api/v1/server"
       },
@@ -59273,21 +59349,21 @@
           "module": "server",
           "transport": "direct",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "server.status",
           "module": "server",
           "transport": "mcp",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "server.status",
           "module": "server",
           "transport": "http",
           "state": "covered",
-          "cases": 1
+          "cases": 2
         },
         {
           "subject": "trace.commit",

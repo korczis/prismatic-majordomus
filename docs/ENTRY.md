@@ -35,8 +35,10 @@ its server changes underneath it.
 ## The three commands
 
 ```text
-majordomus serve status [--format json]     where this checkout's server stands, and every
-                                            server of this repository
+majordomus serve status [--checkouts this|repository] [--format json]
+                                            where this checkout's server stands, and — unless
+                                            `--checkouts this` narrows it — every server of
+                                            this repository
 majordomus serve ensure [--idle S] [--wait S] [--port P]
                                             a ready server for this checkout, started if
                                             there must be one
@@ -109,6 +111,8 @@ them.
 
 ```text
 majordomus serve status --format json    the server, its lease and every checkout's
+majordomus serve status --checkouts this this checkout's server alone, without reading or
+                                         probing any other checkout
 majordomus env status                    the checkout: project, version control, toolchains,
                                          the layer, the workflows, the local services
 majordomus context                       what the next worker needs to know now

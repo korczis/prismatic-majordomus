@@ -20627,14 +20627,38 @@
       "module": "server",
       "kind": "query",
       "title": "The shared server, and every server of the repository",
-      "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+      "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
       "input": {
-        "name": "Empty",
+        "name": "ServerStatusInput",
         "schema": {
           "type": "object",
           "additionalProperties": false,
-          "description": "No input.",
-          "title": "Empty"
+          "properties": {
+            "checkouts": {
+              "$ref": "#/$defs/Checkouts",
+              "description": "Which checkouts the answer covers. Absent means `repository`.",
+              "default": "repository"
+            }
+          },
+          "description": "What to ask of `server.status`: how wide the answer is.\n\nOne field, because the standing of a server is not something a caller filters — it is\nsomething a caller wants for one checkout or for all of them, and the difference is\nforty round trips on a machine with forty worktrees.\n\n```\nuse majordomus_cli::capability::builtin::server::{Checkouts, ServerStatusInput};\n// the field is optional on every surface, and its absence is the wide answer\nlet asked_nothing: ServerStatusInput = serde_json::from_str(\"{}\").unwrap();\nassert_eq!(asked_nothing.checkouts, Checkouts::Repository);\nlet narrow: ServerStatusInput = serde_json::from_str(r#\"{\"checkouts\":\"this\"}\"#).unwrap();\nassert_eq!(narrow.checkouts, Checkouts::This);\n```",
+          "title": "ServerStatusInput",
+          "$defs": {
+            "Checkouts": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "repository",
+                  "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+                },
+                {
+                  "type": "string",
+                  "const": "this",
+                  "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+                }
+              ],
+              "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+            }
+          }
         }
       },
       "output": {

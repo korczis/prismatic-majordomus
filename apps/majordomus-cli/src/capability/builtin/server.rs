@@ -20,12 +20,29 @@
 //! ([`crate::repository::git_identity`]), so that a session in one worktree can see the
 //! servers — and through them the peers — of the others.
 //!
+//! # Two questions, two costs
+//!
+//! Listing every checkout costs a lease read and a probe per checkout, and a machine with
+//! forty worktrees registered pays forty of each. A caller that only wants to know about
+//! the checkout it is in says so — `checkouts: this` — and that answer reads one lease and
+//! probes one server; no other checkout is enumerated, read or probed. The default is
+//! `repository`, the whole list, because that is what every caller of this capability got
+//! before the field existed.
+//!
 //! Read on every call and never cached: the lease is written by other processes.
 //!
 //! ```
-//! use majordomus_cli::capability::builtin::server::{module, standing_of, ServerStanding};
+//! use majordomus_cli::capability::builtin::server::{
+//!     module, standing_of, Checkouts, ServerStanding, ServerStatusInput,
+//! };
 //! use majordomus_cli::lease::LeaseFile;
 //! use std::time::Duration;
+//!
+//! // asking nothing asks the wide question, as it always did
+//! assert_eq!(
+//!     serde_json::from_str::<ServerStatusInput>("{}").unwrap().checkouts,
+//!     Checkouts::Repository
+//! );
 //!
 //! // the module composes one capability, and its decision is a pure function
 //! let m = module();
@@ -36,12 +53,14 @@
 //! assert!(reason.is_none());
 //! ```
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use clap::ValueEnum;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
     CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
@@ -51,10 +70,82 @@ use crate::lease::{self, ExecutableIdentity, LeaseDocument, LeaseFile, BIND_GRAC
 use crate::repository::{self, GitIdentity, Repository};
 use crate::{capability, module};
 
-use super::{get, Empty};
+use super::get;
 
 /// The URI under which `server.status` is read as an MCP resource.
 pub const SERVER_URI: &str = "majordomus://server";
+
+/// Which checkouts a reading of the server status covers.
+///
+/// The two answers cost differently and that is the whole reason the choice exists: the
+/// repository's checkouts are read from git's registry of them and each one costs a lease
+/// read and a probe, while this checkout alone costs one of each and enumerates nothing.
+/// The word each variant serialises to is the word the query parameter, the tool input and
+/// the command-line flag all take.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::Checkouts;
+/// assert_eq!(serde_json::to_value(Checkouts::This).unwrap(), "this");
+/// assert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), "repository");
+/// assert_eq!(Checkouts::default(), Checkouts::Repository, "the wide answer is what a caller who says nothing has always got");
+/// ```
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, ValueEnum,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Checkouts {
+    /// Every checkout git registers for the repository, the primary first — a lease read
+    /// and a probe each. The default, because it is the answer this capability gave before
+    /// there was anything to ask.
+    #[default]
+    Repository,
+    /// This checkout alone. No other checkout is enumerated, no other lease is read and no
+    /// other server is probed; `servers` holds the one entry, and it is this one.
+    This,
+}
+
+/// What to ask of `server.status`: how wide the answer is.
+///
+/// One field, because the standing of a server is not something a caller filters — it is
+/// something a caller wants for one checkout or for all of them, and the difference is
+/// forty round trips on a machine with forty worktrees.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{Checkouts, ServerStatusInput};
+/// // the field is optional on every surface, and its absence is the wide answer
+/// let asked_nothing: ServerStatusInput = serde_json::from_str("{}").unwrap();
+/// assert_eq!(asked_nothing.checkouts, Checkouts::Repository);
+/// let narrow: ServerStatusInput = serde_json::from_str(r#"{"checkouts":"this"}"#).unwrap();
+/// assert_eq!(narrow.checkouts, Checkouts::This);
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ServerStatusInput {
+    /// Which checkouts the answer covers. Absent means `repository`.
+    #[serde(default)]
+    pub checkouts: Checkouts,
+}
+
+impl BenchmarkCases for ServerStatusInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // both questions are timed, because the difference between them is the point of
+        // the field; both appear as examples in the OpenAPI document
+        vec![
+            NamedCase::new(
+                "repository",
+                ServerStatusInput {
+                    checkouts: Checkouts::Repository,
+                },
+            ),
+            NamedCase::new(
+                "this-checkout",
+                ServerStatusInput {
+                    checkouts: Checkouts::This,
+                },
+            ),
+        ]
+    }
+}
 
 /// Where a checkout's server stands, decided from its lease, whether the server the lease
 /// names answers for that checkout, and whether what answers is this executable's code.
@@ -352,28 +443,51 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
     value["count"].as_u64().map(|n| n as usize)
 }
 
-fn server_status(ctx: &Context, _: Empty) -> Result<ServerStatus, CapabilityError> {
+/// The checkouts one reading covers: every checkout git registers for the repository, the
+/// primary first, or this one alone.
+///
+/// The narrow answer is the cheap one by construction rather than by filtering — git is
+/// not asked for its registry of work trees, so nothing downstream has another checkout's
+/// path to read a lease at or a server to probe. It spawns no process of its own either:
+/// `primary` comes from the one stat `git_identity` already did (a linked work tree has a
+/// `.git` file, the primary a directory) and the branch from that checkout's own HEAD, so
+/// the narrow entry says everything about this checkout that the wide list would have
+/// said, at the price of two file reads.
+fn checkouts_of(
+    root: &Path,
+    git: Option<&GitIdentity>,
+    which: Checkouts,
+) -> Vec<(PathBuf, Option<String>, bool)> {
+    let here = |primary: bool| vec![(root.to_path_buf(), repository::branch_at(root), primary)];
+    let Some(git) = git else {
+        // not a git repository: this checkout is the only one there is, and it is the
+        // primary of nothing
+        return here(true);
+    };
+    if which == Checkouts::This {
+        return here(!git.linked);
+    }
+    match crate::worktree::topology::read(root) {
+        Ok(records) => records
+            .into_iter()
+            .filter(|r| !r.bare)
+            .enumerate()
+            .map(|(i, r)| (r.path, r.branch, i == 0))
+            .collect(),
+        Err(_) => here(!git.linked),
+    }
+}
+
+fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
     let local_half = Repository::open(&root)
         .map(|r| r.local_path())
         .unwrap_or_else(|_| ".ai/local".to_string());
     let git = repository::git_identity(&root);
-    // every checkout git registers for the repository, the primary first; this one alone
-    // where git cannot be asked
-    let checkouts: Vec<(PathBuf, Option<String>)> = match &git {
-        Some(_) => match crate::worktree::topology::read(&root) {
-            Ok(records) => records
-                .into_iter()
-                .filter(|r| !r.bare)
-                .map(|r| (r.path, r.branch))
-                .collect(),
-            Err(_) => vec![(root.clone(), None)],
-        },
-        None => vec![(root.clone(), None)],
-    };
+    let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
     let mut servers = Vec::with_capacity(checkouts.len());
-    for (i, (path, branch)) in checkouts.into_iter().enumerate() {
+    for (path, branch, primary) in checkouts {
         let worktree = path.canonicalize().unwrap_or(path);
         let file = lease::lease_file(&worktree, &local_half);
         let read = LeaseFile::read(&file);
@@ -392,7 +506,7 @@ fn server_status(ctx: &Context, _: Empty) -> Result<ServerStatus, CapabilityErro
         };
         servers.push(ServerView {
             checkout_id: repository::identity(&worktree),
-            primary: i == 0,
+            primary,
             this_checkout: worktree == root,
             branch,
             standing,
@@ -439,8 +553,8 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
-                input: Empty,
+                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {

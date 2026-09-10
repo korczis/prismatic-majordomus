@@ -397,6 +397,29 @@
             "about": "Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository",
             "args": [
               {
+                "name": "checkouts",
+                "long": "checkouts",
+                "positional": false,
+                "help": "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and probes no other server",
+                "value_name": "CHECKOUTS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "repository",
+                    "help": "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask"
+                  },
+                  {
+                    "name": "this",
+                    "help": "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one"
+                  }
+                ],
+                "defaults": [
+                  "repository"
+                ]
+              },
+              {
                 "name": "format",
                 "long": "format",
                 "positional": false,

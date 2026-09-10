@@ -78,7 +78,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
-| `server.status` | server | query | — | covered | covered | covered | `default` |
+| `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

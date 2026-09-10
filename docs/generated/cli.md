@@ -216,6 +216,7 @@ majordomus serve status [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
+| `--checkouts` | `repository` \| `this` | `repository` | Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and probes no other server — `repository`: Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask; `this`: This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one |
 | `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
