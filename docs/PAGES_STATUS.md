@@ -5,7 +5,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `fcb39faee5b9`.
+Generated from canonical inputs `db3c530ea11d`.
 
 ## Controlled budget
 
@@ -42,10 +42,14 @@ held to it.
 - `LICENSE`
 - `README.md`
 - `SECURITY.md`
+- `apps/majordomus-cli/src/capability/builtin/design.rs`
+- `apps/majordomus-cli/src/cockpit/logo-mark.svg`
+- `apps/majordomus-cli/src/design/**`
 - `apps/majordomus-cli/src/web/tokens.css`
 - `assets/**`
 - `bin/**`
 - `docs/**`
+- `docs/DESIGN_SYSTEM.md`
 - `docs/generated/**`
 - `examples/**`
 - `lib/**`
@@ -54,12 +58,12 @@ held to it.
 - `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
-- `scripts/design-tokens`
 - `scripts/generate-site-data`
 - `scripts/github-sync`
 - `scripts/lib/**`
 - `scripts/lib/cockpit-probe.mjs`
 - `scripts/lib/ui-*.mjs`
+- `scripts/lib/ui-routes.mjs`
 - `scripts/pages`
 - `scripts/rules-package`
 - `scripts/site-basepath-check`
@@ -75,6 +79,7 @@ held to it.
 - `share/design/**`
 - `site/**`
 - `site/data/registry/**`
+- `site/data/registry/design.json`
 - `test/**`
 
 ## Measured

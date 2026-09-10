@@ -985,7 +985,15 @@ jq -n \
           | {id: $y.id, score: .}
         ] | map(select(.score > 0)) | sort_by(-.score, .id) | .[:5] | map(.id)
       ) as $rel
-      | . + {related_ids: $rel})) as $u3
+      # One shape for every use case. A record carries the lists it declared and nothing else,
+      # so a document that names no application, claim or responsibility used to reach the site
+      # missing those keys entirely — every reader here already writes `// []` around them, and
+      # the one that could not (a Tera filter, on the use-case section) failed the whole build.
+      # The shape is decided here, once, rather than defended at each of its readers.
+      | . + {related_ids: $rel,
+             actors: (.actors // []), applications: (.applications // []),
+             claims: (.claims // []), commands: (.commands // []),
+             doctrines: (.doctrines // []), responsibilities: (.responsibilities // [])})) as $u3
   | ($t.categories | sort_by(.order) | map(. as $c | . + {count: ([$u3[] | select(.category == $c.id and .status != "draft")] | length),
         use_cases: [$u3[] | select(.category == $c.id) | .id],
         maturity: ([$u3[] | select(.category == $c.id and .status != "draft")] | group_by(.maturity) | map({key: .[0].maturity, value: length}) | from_entries),

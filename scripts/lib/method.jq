@@ -65,7 +65,7 @@ def has_test: (.test // "") | (. != "" and . != "-");
         note: "An interface is a projection of the declaration; a projection that disagrees with it fails the build." },
       { axis: "Model", answers: "what actually executes the work",
         artifact: "chosen per run, outside the repository",
-        count: 0, unit: "declared anywhere in the layer", route: "/limitations/",
+        count: 0, unit: "named in the layer", route: "/limitations/",
         note: "Majordomus never invokes one. Continuity lives in the records, so the model can change mid-task without the work losing its state." }
   ] ) as $axes
 | {
