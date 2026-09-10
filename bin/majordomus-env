@@ -38,6 +38,13 @@ if [ ! -x "$bin" ]; then
   # person — the banner, `just`, the completion, the shared server — is a projection of
   # this one file, so they all disappear together and none of them says why.
   printf 'majordomus: the executable is not built, so the banner, the `just` bridge, the completion and the shared server are all unavailable; run `just build`\n' >&2
+  # One more line, and only when it is the line that answers the question actually being
+  # asked. A path outside this checkout was never this checkout's to rely on: it belongs to
+  # another one, and everything here disappeared the moment its owner reclaimed it. Without
+  # this the loss looks like a defect in the tree the person is standing in.
+  if mj_rust_outside "$root" "$bin"; then
+    printf 'majordomus: (it is %s, outside this checkout: a build directory another checkout owns can be removed by its owner at any time)\n' "$bin" >&2
+  fi
   exit 0
 fi
 

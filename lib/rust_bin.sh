@@ -116,3 +116,155 @@ mj_rust_share() {
     printf '%s\n' "$mj_rs_root/share"
   fi
 }
+
+# mj_rust_target_named_by <repository-root>
+#
+# What decided where cargo builds, in the words a person can act on. The answer matters
+# because the deciding thing is almost never the command that was typed: a variable exported
+# in a shell two hours ago, a symlink laid down to share one build directory between several
+# worktrees, or a config file, all silently move the build directory somewhere other than
+# under the checkout the caller is standing in.
+mj_rust_target_named_by() {
+  mj_tn_root="$1"
+  if [ -n "${CARGO_TARGET_DIR:-}" ]; then printf 'CARGO_TARGET_DIR\n'
+  elif [ -n "${CARGO_BUILD_TARGET_DIR:-}" ]; then printf 'CARGO_BUILD_TARGET_DIR\n'
+  elif [ -L "$mj_tn_root/apps/majordomus-cli/target" ]; then printf 'a symlink at apps/majordomus-cli/target\n'
+  else printf "build.target-dir in a .cargo/config.toml\n"; fi
+}
+
+# mj_rust_physical <path>
+#
+# The path with every symlink resolved, without realpath(1) or readlink -f: this file is
+# sourced on the shell-prompt path and macOS has neither. A directory only, which is all any
+# caller here asks about. Prints nothing and fails when the path is not a directory.
+mj_rust_physical() {
+  [ -d "$1" ] || return 1
+  ( unset CDPATH; cd -P -- "$1" >/dev/null 2>&1 && pwd -P ) || return 1
+}
+
+# mj_rust_owns <repository-root> <path>
+#
+# Is that directory inside that checkout, following symlinks on both sides? True (0) when it
+# is. A symlink under the checkout that points outside it is *not* owned: the bytes it names
+# are somebody else's, and this question is asked before deleting them.
+mj_rust_owns() {
+  mj_ow_root="$(mj_rust_physical "$1")" || return 1
+  mj_ow_path="$(mj_rust_physical "$2")" || return 1
+  case "$mj_ow_path/" in
+    "$mj_ow_root"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# mj_rust_outside <repository-root> <path-of-a-file>
+#
+# Is that file outside the checkout — a path this checkout does not own, and therefore one
+# whose owner may remove it at any moment? Physically while the directory it would sit in
+# still exists, and by the path itself when it does not, which is the usual case when the
+# whole build directory is what went missing.
+mj_rust_outside() {
+  mj_ou_dir="$(dirname "$2")"
+  if [ -d "$mj_ou_dir" ]; then
+    mj_rust_owns "$1" "$mj_ou_dir" && return 1
+    return 0
+  fi
+  case "$2" in "$1"/*) return 1 ;; *) return 0 ;; esac
+}
+
+# mj_rust_clean <repository-root>
+#
+# Remove the build directory this checkout builds into — and refuse when that directory is
+# not this checkout's to remove.
+#
+# `cargo clean --manifest-path X` does not clean X's target directory: it cleans
+# CARGO_TARGET_DIR whenever that is set, and the manifest then decides nothing at all. That
+# is not a quirk to route around, it is the whole defect: several worktrees of this
+# repository share one build directory by exactly that variable, so the one recipe a worker
+# runs to reclaim their own disk is the one that takes everybody else's executable with it —
+# while the confirmation prompt they answered named a path under their own checkout, and
+# while their own target/ survives untouched. What the borrowers then see is their binary
+# gone mid-run, which reads as a defect in whatever branch they were measuring.
+#
+# So: resolve where cargo would actually clean, refuse if that is outside this checkout, and
+# otherwise name the directory to cargo explicitly, so that what is removed and what was
+# announced are the same directory. Deliberately cleaning somebody else's is still possible;
+# it just cannot be done by accident, because it takes typing their path.
+mj_rust_clean() {
+  mj_rc_root="$1"
+  mj_rc_crate="$mj_rc_root/apps/majordomus-cli"
+  mj_rc_target="$(mj_cargo_target_dir "$mj_rc_crate" ask-cargo)"
+
+  if [ ! -d "$mj_rc_target" ]; then
+    printf 'majordomus: nothing to remove: %s does not exist\n' "$mj_rc_target" >&2
+    return 0
+  fi
+
+  if ! mj_rust_owns "$mj_rc_root" "$mj_rc_target"; then
+    mj_rc_real="$(mj_rust_physical "$mj_rc_target")"
+    mj_rc_named="$(mj_rust_target_named_by "$mj_rc_root")"
+    {
+      printf 'majordomus: refusing to clean: that build directory is not this checkout'"'"'s to remove.\n'
+      # both paths physical, so that a reader comparing them is comparing the same kind of
+      # thing: it is the boundary between them that the refusal is about
+      printf '  this checkout:  %s\n' "$(mj_rust_physical "$mj_rc_root")"
+      printf '  would remove:   %s\n' "$mj_rc_real"
+      printf '  named by:       %s\n' "$mj_rc_named"
+      printf '  Another checkout owns that directory and other workers may be building and running\n'
+      printf '  out of it right now; removing it makes their executable vanish mid-run, which reads\n'
+      printf '  to them as a defect in whatever branch they were measuring.\n'
+      # the way out depends on what put the build directory there, and only one of these is
+      # ever the right advice: telling somebody to unset a variable they never set is noise
+      case "$mj_rc_named" in
+        CARGO_*TARGET_DIR)
+          printf '  To clean your own:            env -u %s just clean\n' "$mj_rc_named" ;;
+        a\ symlink*)
+          printf '  To clean your own:            remove the symlink at %s/target first,\n' "$mj_rc_crate"
+          printf '                                so that this checkout builds its own again\n' ;;
+        *)
+          printf '  To clean your own:            unset build.target-dir, or clean where it points\n' ;;
+      esac
+      printf '  If you really mean that one:  cargo clean --manifest-path %s/Cargo.toml --target-dir %s\n' "$mj_rc_crate" "$mj_rc_real"
+    } >&2
+    return 12
+  fi
+
+  RUSTFLAGS='' cargo clean --manifest-path "$mj_rc_crate/Cargo.toml" --target-dir "$mj_rc_target"
+}
+
+# mj_rust_bin_missing <repository-root> <path> [<prefix>]
+#
+# What to say when the executable a caller was pointed at is not there. Every caller that
+# resolves one says it through this function, because the sentence is the expensive part: a
+# missing executable read as a failure of the code under test costs a debugging session and a
+# retracted result, and read as what it is costs a rebuild. On 2026-09-10 it was read the
+# first way twice, and a branch was believed broken both times.
+#
+# This is the sibling of the generation guard in `majordomus generate`, which refuses an
+# executable built from another revision of the crate (exit 15) and says `the tree is not
+# stale; this executable is, so nothing was written and nothing was judged`. Same shape, one
+# state earlier: there the executable is the wrong one, here there is none. Both say where
+# the fault is not, because that is the inference the reader gets wrong.
+#
+# The prefix is the caller's own (`majordomus-cli: `, or a test harness's four spaces); the
+# first line keeps the words `is not an executable`, which callers of the launcher match on.
+mj_rust_bin_missing() {
+  mj_bm_root="$1"
+  mj_bm_path="$2"
+  mj_bm_p="${3:-}"
+  mj_bm_outside=0
+  mj_rust_outside "$mj_bm_root" "$mj_bm_path" && mj_bm_outside=1
+  {
+    printf '%s%s is not an executable\n' "$mj_bm_p" "$mj_bm_path"
+    printf '%s  The tree is not broken; the executable it was pointed at is gone. Nothing ran,\n' "$mj_bm_p"
+    printf '%s  so nothing was measured and nothing was judged: this is a fact about this\n' "$mj_bm_p"
+    printf '%s  environment, not a result about the code.\n' "$mj_bm_p"
+    if [ -n "${MAJORDOMUS_BIN:-}" ]; then
+      printf '%s  MAJORDOMUS_BIN names it; whoever set that variable owns whether it still exists.\n' "$mj_bm_p"
+    fi
+    if [ "$mj_bm_outside" = 1 ]; then
+      printf '%s  It is outside this checkout (%s):\n' "$mj_bm_p" "$mj_bm_root"
+      printf '%s  a build directory this one does not own, which its owner may reclaim at any moment.\n' "$mj_bm_p"
+    fi
+    printf '%s  Build your own: cargo build --manifest-path %s/apps/majordomus-cli/Cargo.toml\n' "$mj_bm_p" "$mj_bm_root"
+  } >&2
+}
