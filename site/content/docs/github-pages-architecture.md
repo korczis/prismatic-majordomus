@@ -169,6 +169,34 @@ projection.
 </div>
 
 
+### The generator is an input, and it is not in the table
+
+Every row above classifies a *file*. The classification is incomplete in one way that has
+already cost this repository a near-miss: the derived files are a projection of the canonical
+sources **as read by one executable**, and that executable is not a file in the tree. Two
+builds of the same declared version can project different registries.
+
+So an executable borrowed from another worktree — through `MAJORDOMUS_BIN`, which is how a
+session avoids a ten-minute rebuild — is a third input, and an unsuitable one fails in the
+worst available direction: it reports the *tree* stale, printing a remedy that regenerates,
+and regenerating rewrites each document from a model the tree no longer holds. On 2026-09-10
+that removed about 9,700 lines from `docs/generated/changelog.json` and exited zero.
+
+Before deriving with an executable you did not just build:
+
+```sh
+env -u MAJORDOMUS_SHARE "$MAJORDOMUS_BIN" generate --check   # must say: in sync
+```
+
+and after any derivation, before committing:
+
+```sh
+git diff --stat -- docs/generated site/data                  # mass deletion is corruption
+```
+
+`project.a-tool-that-cannot-match-the-tree-refuses` is the rule; the guard that enforces it
+lives in the executable, so it holds for every caller rather than for one script.
+
 ## Where do I edit this?
 
 <div class="overflow-x-auto" tabindex="0">
