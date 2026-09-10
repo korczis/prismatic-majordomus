@@ -5991,6 +5991,7 @@
           "writes": [
             ".ai/local/prompts/",
             ".ai/local/session-contexts/",
+            ".ai/local/state/guard/",
             ".claude/hooks/majordomus-capture",
             ".claude/settings.json"
           ]
@@ -26292,6 +26293,29 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-guard-refuses-an-unready-episode@1",
+        "kind": "rule",
+        "label": "project.the-guard-refuses-an-unready-episode@1",
+        "summary": "An agent does not silently keep mutating a repository whose readiness cannot be established",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-guard-refuses-an-unready-episode%401",
+        "source": ".ai/repo/rules/project/the-guard-refuses-an-unready-episode.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.entry-converges@1",
+            "project.providers-are-data@1",
+            "project.shared-server-resilience@1"
+          ],
+          "tags": [
+            "entry",
+            "enforcement",
+            "mcp",
+            "providers"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "label": "project.the-lease-is-read-once@1",
@@ -28031,6 +28055,13 @@
         "label": "test/cases/123_case_bound.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F123_case_bound.sh",
         "source": "test/cases/123_case_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/124_the_guard_refuses_an_unready_episode.sh",
+        "kind": "test",
+        "label": "test/cases/124_the_guard_refuses_an_unready_episode.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F124_the_guard_refuses_an_unready_episode.sh",
+        "source": "test/cases/124_the_guard_refuses_an_unready_episode.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -43068,6 +43099,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.the-guard-refuses-an-unready-episode@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-guard-refuses-an-unready-episode@1",
+        "target": "majordomus://rule/project.entry-converges@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-guard-refuses-an-unready-episode@1",
+        "target": "majordomus://rule/project.providers-are-data@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-guard-refuses-an-unready-episode@1",
+        "target": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43544,6 +43595,11 @@
       },
       {
         "source": "majordomus://test/test/cases/123_case_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/124_the_guard_refuses_an_unready_episode.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47104,8 +47160,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1441,
-      "edges": 3253,
+      "nodes": 1443,
+      "edges": 3258,
       "acyclic": true,
       "truncated": false
     }

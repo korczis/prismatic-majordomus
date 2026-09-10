@@ -141,7 +141,10 @@ capture guard: refusing to mutate this repository: the shared server for this ch
 
 **What it never refuses.** An executable that is not built or is older than its sources, a
 payload that does not parse, a policy that does not load, a probe that does not answer:
-each is reported on standard error, where the model reads it, and each lets the tool run.
+each is reported on standard error, where the provider records it against the tool call,
+and each lets the tool run. Standard error is fed back to the model on a refusal and
+recorded in the transcript otherwise, so an undecidable state is visible without
+interrupting anyone.
 Refusing on a state the guard cannot decide would mean that a checkout nobody has built is
 a checkout nobody can edit, which is a worse failure than the one it prevents — and it is
 the same choice entry already makes when it names a missing executable rather than building

@@ -75,8 +75,11 @@ remedy and the switch named on standard error.
 
 **What it cannot decide it says out loud and lets through.** An executable that is not
 built or is older than its sources, a payload that does not parse, a policy that does not
-load, a probe that does not answer: each is reported on standard error, where the model
-that is about to run the tool reads it, and each exits 0. This is the boundary, and it is
+load, a probe that does not answer: each is reported on standard error, where the provider
+records it against the tool call, and each exits 0. It is reported and not fed back: the
+provider hands standard error to the model on a refusal and to the transcript otherwise,
+which is the right asymmetry — a state the guard could not read is a fact about this
+machine, and interrupting a worker with it would be the second failure. This is the boundary, and it is
 deliberate. Refusing on an undecidable state would mean that a checkout where nobody has
 run `just build` cannot be edited, which is a worse failure than the one the guard
 prevents, and it contradicts what entering this repository already does — it names a

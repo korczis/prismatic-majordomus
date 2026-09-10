@@ -1176,7 +1176,7 @@ mj_capture_guard() {
   # A terminal is not a provider: read nothing from one, or a person who typed this command
   # by hand waits at a blank line for a payload that was never going to come.
   local payload=""
-  [ -t 0 ] || IFS= read -r -d '' payload || true
+  [ -t 0 ] || IFS= read -r -d '' payload 2>/dev/null || true
 
   # ---- the remembered answer
   #

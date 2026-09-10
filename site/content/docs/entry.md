@@ -34,9 +34,15 @@ an MCP client attaches   the client configuration at the root starts the launche
 
 the worker announces     `majordomus_announce` puts one line of intent and the paths it
                          expects to touch on the board every other client can read.
+
+before each mutation     the provider's pre-tool event asks again whether this episode may
+                         mutate the repository: is the shared server serving this checkout,
+                         and is an episode open? A tool call it refuses is blocked and the
+                         reason is handed back to the model. It is off unless a key of the
+                         policy turns it on; the section below says what it does and how.
 ```
 
-Everything above happens without a command being typed, except the last, which is a
+Everything above happens without a command being typed, except the announcement, which is a
 request the bootstrap makes of the worker and the one a bridge repeats on its behalf when
 its server changes underneath it.
 
@@ -101,6 +107,70 @@ why the start event names it rather than starting one.
 off; the briefing then says so instead of naming a server. The rest of the episode is
 unchanged.
 
+## Asking again: the guard
+
+Entry asserts readiness once. An episode is hours long, and in those hours a server is
+killed by somebody reclaiming a port, dies with the terminal that started it, ends because
+no peer attached for its idle life, or goes `outdated` the moment its executable is rebuilt
+under it. None of that is visible to the worker: it keeps calling Edit and Write, and the
+one line that would have told it otherwise was printed at the start of the episode.
+
+The provider's pre-tool event asks again, before each mutation. It is the only one of the
+four provider events that may answer no.
+
+```text
+session.guard_before_mutation: false      the switch, in .ai/repo/policy.yaml
+.claude/hooks/majordomus-session-guard    the shim the provider runs
+majordomus capture guard --provider <p>   what the shim runs, payload on stdin
+```
+
+**It is off.** `session.guard_before_mutation` is `false` in this repository's policy and in
+the skeleton a new repository is written from, and a policy written before the key existed
+reads as false too. That is not a temporary state on the way to something: the hook is
+tracked, so it reaches every worktree of the repository at once, and a wrong determination
+in it blocks the sessions that would fix it. It is armed per repository, by somebody who has
+watched it run. To turn it on, set the key to `true` in `.ai/repo/policy.yaml` — the next
+tool call decides again, because the remembered answer is invalidated by the policy file
+being newer than it.
+
+**What it decides, in order.** A tool that does not mutate the repository is let through. A
+remembered answer that is still good is honoured. Otherwise `serve status --checkouts this`
+says where the server stands and the episode store says whether an episode is open for this
+provider session; a server that is not ready is given exactly one chance through the same
+`serve ensure` the start event runs. Only then is the tool call refused.
+
+**What a refusal looks like to the agent.** The tool does not run. The provider hands the
+model what the guard wrote on standard error, which names the standing, the remedy and the
+switch:
+
+```text
+capture guard: refusing to mutate this repository: the shared server for this checkout is
+'stale' and `serve ensure` did not fix it.
+  Nothing that reads this repository through the server — the peer board, the index, the
+  Cockpit — is answering, so a mutation made now is made blind.
+  Run: majordomus serve status --checkouts this   then: majordomus serve stop && majordomus serve ensure
+  The switch is session.guard_before_mutation in .ai/repo/policy.yaml.
+```
+
+**What it never refuses.** An executable that is not built or is older than its sources, a
+payload that does not parse, a policy that does not load, a probe that does not answer:
+each is reported on standard error, where the provider records it against the tool call,
+and each lets the tool run. Standard error is fed back to the model on a refusal and
+recorded in the transcript otherwise, so an undecidable state is visible without
+interrupting anyone.
+Refusing on a state the guard cannot decide would mean that a checkout nobody has built is
+a checkout nobody can edit, which is a worse failure than the one it prevents — and it is
+the same choice entry already makes when it names a missing executable rather than building
+one.
+
+**What it costs.** The guard runs in front of every Edit, Write and Bash, so the answer is
+remembered in the checkout's local state and read without resolving the layout, parsing the
+policy or starting a process. Measured on this repository on 2026-09-11, thirty runs each:
+81 ms for the remembered answer, against 50 ms for `majordomus version` — the floor of the
+shell tool — and 1.6 s for the reading it stands in front of. A `pass` is worth 60 seconds; an `off`
+does not age, because the switch is not a fact about a running server. A refusal is never
+remembered: between two edits a server can be started.
+
 ## When it does not converge
 
 <div class="overflow-x-auto" tabindex="0">
@@ -149,6 +219,19 @@ once by `scripts/ci/lease-reader-check`. What no script can
 decide — that entry actually converges — is `test/cases/108_entry_converges_on_a_server.sh`,
 which drives the provider's own shim; `test/cases/118_entry_converges_by_rule.sh` proves the
 gate by planting each thing the rule forbids and watching it refused.
+
+`project.the-guard-refuses-an-unready-episode` is the rule for asking again, and
+`scripts/ci/guard-refuses-unready` the gate: the pre-tool event is declared in the provider
+table with its shim, its matcher and the payload keys naming the tool; the wired
+configuration declares that event with a matcher covering the mutating tools and names the
+shim; the shim delegates to `capture guard` and passes on the refusal alone rather than
+handing the process over; `session.guard_before_mutation` is declared in the policy, the
+skeleton, the allow list and the schema together; and the decision reads `serve status`,
+asks `serve ensure` once, remembers its answer and names what it cannot decide.
+`test/cases/124_the_guard_refuses_an_unready_episode.sh` proves both directions — a ready
+episode passes, an unopened one is refused, a killed server is healed rather than refused,
+a malformed payload costs nobody a tool call, and with the switch off nothing is refused at
+all — and plants each thing the rule forbids in a fixture to watch the gate refuse it.
 
 ## Related
 
