@@ -1,0 +1,392 @@
+{
+  "axes": [
+    {
+      "answers": "with how much context, effort and ceremony",
+      "artifact": "one file per working mode under the layer",
+      "axis": "Profile",
+      "count": 4,
+      "note": "It declares a capability class and an effort, never a vendor or a model name.",
+      "route": "/profiles/",
+      "unit": "profiles"
+    },
+    {
+      "answers": "in what order, and what must exist before it may end",
+      "artifact": "a sequence a worker follows, seeded into every repository",
+      "axis": "Workflow",
+      "count": 4,
+      "note": "It names capabilities and phases, never the backend that answers them.",
+      "route": "/getting-started/",
+      "unit": "workflows"
+    },
+    {
+      "answers": "where the same capability can be reached",
+      "artifact": "not a file anyone writes: the exposure a capability declares once",
+      "axis": "Surface",
+      "count": 3,
+      "note": "An interface is a projection of the declaration; a projection that disagrees with it fails the build.",
+      "route": "/registry/capabilities/",
+      "unit": "interfaces"
+    },
+    {
+      "answers": "what actually executes the work",
+      "artifact": "chosen per run, outside the repository",
+      "axis": "Model",
+      "count": 0,
+      "note": "Majordomus never invokes one. Continuity lives in the records, so the model can change mid-task without the work losing its state.",
+      "route": "/limitations/",
+      "unit": "named in the layer"
+    }
+  ],
+  "diagrams": {
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>78 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>32 of 78</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>78 of 78</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>76 of 78</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>40 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>40 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+  },
+  "example": {
+    "claims": 5,
+    "class": "blocking",
+    "defined_in": "lib/doctor.sh",
+    "enforced_by": [
+      "doctor",
+      "watch"
+    ],
+    "exit_code": 10,
+    "principle": "Sessions are workers, not memory",
+    "route": "/doctrines/ai-layout-integrity/",
+    "slug": "ai-layout-integrity",
+    "source": "share/standard/majordomus/rules/ai-layout-integrity.v1.md",
+    "statement": "The repository's AI layer is real: the manifest declares a format this executable reads and names sections that exist, the local half is ignored by git with nothing under it tracked, and no project data remains under the pre-.ai path.",
+    "test": "test/cases/01_init.sh",
+    "title": "AI layer integrity",
+    "validator": "mj_validate_ai_layout"
+  },
+  "exposure": {
+    "by_module": [
+      {
+        "capabilities": 8,
+        "cli": 0,
+        "http": 8,
+        "mcp": 8,
+        "module": "plan"
+      },
+      {
+        "capabilities": 7,
+        "cli": 6,
+        "http": 7,
+        "mcp": 7,
+        "module": "executions"
+      },
+      {
+        "capabilities": 6,
+        "cli": 6,
+        "http": 6,
+        "mcp": 6,
+        "module": "why"
+      },
+      {
+        "capabilities": 5,
+        "cli": 5,
+        "http": 5,
+        "mcp": 5,
+        "module": "distribution"
+      },
+      {
+        "capabilities": 5,
+        "cli": 5,
+        "http": 5,
+        "mcp": 5,
+        "module": "product"
+      },
+      {
+        "capabilities": 4,
+        "cli": 0,
+        "http": 4,
+        "mcp": 4,
+        "module": "design"
+      },
+      {
+        "capabilities": 4,
+        "cli": 0,
+        "http": 4,
+        "mcp": 4,
+        "module": "objects"
+      },
+      {
+        "capabilities": 4,
+        "cli": 4,
+        "http": 4,
+        "mcp": 4,
+        "module": "worktree"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "capabilities"
+      },
+      {
+        "capabilities": 3,
+        "cli": 0,
+        "http": 3,
+        "mcp": 3,
+        "module": "commands"
+      },
+      {
+        "capabilities": 3,
+        "cli": 0,
+        "http": 3,
+        "mcp": 3,
+        "module": "deploy"
+      },
+      {
+        "capabilities": 3,
+        "cli": 0,
+        "http": 3,
+        "mcp": 1,
+        "module": "health"
+      },
+      {
+        "capabilities": 3,
+        "cli": 1,
+        "http": 3,
+        "mcp": 3,
+        "module": "repository"
+      },
+      {
+        "capabilities": 3,
+        "cli": 0,
+        "http": 3,
+        "mcp": 3,
+        "module": "trace"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
+        "module": "environment"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
+        "module": "graph"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
+        "module": "obligations"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
+        "module": "peers"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
+        "module": "release"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "artifacts"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "continuity"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "directories"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "perf"
+      },
+      {
+        "capabilities": 1,
+        "cli": 1,
+        "http": 1,
+        "mcp": 1,
+        "module": "quality"
+      },
+      {
+        "capabilities": 1,
+        "cli": 1,
+        "http": 1,
+        "mcp": 1,
+        "module": "server"
+      },
+      {
+        "capabilities": 1,
+        "cli": 0,
+        "http": 1,
+        "mcp": 1,
+        "module": "web"
+      }
+    ],
+    "capabilities": 78,
+    "combinations": [
+      {
+        "count": 44,
+        "surfaces": "http + mcp"
+      },
+      {
+        "count": 32,
+        "surfaces": "cli + http + mcp"
+      },
+      {
+        "count": 2,
+        "surfaces": "http"
+      }
+    ],
+    "modules": 26,
+    "surfaces": [
+      {
+        "count": 32,
+        "id": "cli",
+        "label": "Command line"
+      },
+      {
+        "count": 78,
+        "id": "http",
+        "label": "HTTP + OpenAPI"
+      },
+      {
+        "count": 76,
+        "id": "mcp",
+        "label": "MCP tools and resources"
+      }
+    ]
+  },
+  "governance": {
+    "advisory": 4,
+    "blocking": 36,
+    "commands": [
+      "check",
+      "doctor",
+      "finish",
+      "watch"
+    ],
+    "exit_codes": [
+      0,
+      10
+    ],
+    "principles_declared": 10,
+    "principles_enforced": 8,
+    "principles_without_rule": [
+      "Execution depth is not output verbosity",
+      "Parallel work requires isolation"
+    ],
+    "rules": 40,
+    "rules_without_principle": [
+      {
+        "route": "/doctrines/deployment-contract/",
+        "slug": "deployment-contract",
+        "title": "A deployment is described once, and every provider artifact is generated from it"
+      },
+      {
+        "route": "/doctrines/use-case-coverage/",
+        "slug": "use-case-coverage",
+        "title": "Use-case coverage"
+      },
+      {
+        "route": "/doctrines/obligation-closure/",
+        "slug": "obligation-closure",
+        "title": "Obligation closure"
+      }
+    ],
+    "rules_without_test": [],
+    "tests": 32,
+    "validators": 40
+  },
+  "layers": [
+    {
+      "artifact": "a principle in the portable rule package; technology-neutral, and checked by nothing",
+      "count": 10,
+      "level": "Doctrine",
+      "lifetime": "years",
+      "question": "What must remain true?",
+      "route": "/doctrines/",
+      "unit": "principles"
+    },
+    {
+      "artifact": "one policy file, projected into the instruction file of every worker that opens the repository",
+      "count": 3,
+      "level": "Policy",
+      "lifetime": "months to years",
+      "question": "How is the invariant applied here?",
+      "route": "/policy/",
+      "unit": "projections"
+    },
+    {
+      "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
+      "count": 40,
+      "level": "Rule",
+      "lifetime": "months",
+      "question": "What exactly must, or must not, be?",
+      "route": "/doctrines/",
+      "unit": "rules"
+    },
+    {
+      "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
+      "count": 40,
+      "level": "Enforcement",
+      "lifetime": "the implementation that answers it",
+      "question": "How does a machine decide it?",
+      "route": "/contract/",
+      "unit": "validators"
+    },
+    {
+      "artifact": "a finding naming the rule, the file, the reason and the exit code the command leaves with",
+      "count": 4,
+      "level": "Diagnostic",
+      "lifetime": "one run",
+      "question": "What broke, and what fixes it?",
+      "route": "/evidence/",
+      "unit": "reporting commands"
+    }
+  ],
+  "profile_fields": {
+    "capability_classes": [
+      "fast",
+      "standard",
+      "strong",
+      "strongest"
+    ],
+    "efforts": [
+      "high",
+      "low",
+      "medium"
+    ],
+    "output_contract": [
+      "blockers",
+      "changes",
+      "decisions",
+      "next_action",
+      "outcome",
+      "verification"
+    ]
+  },
+  "schema": 1,
+  "source": "share/standard/majordomus/, .ai/repo/policy.yaml, docs/generated/registry.json"
+}

@@ -1,0 +1,79 @@
+{% extends "page.html" %}
+{% block body %}
+{%- set m = load_data(path="data/generated/method.json") -%}
+<article class="format max-w-3xl break-words dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
+
+<section class="mt-12" aria-labelledby="axes">
+  <div class="mb-8 max-w-3xl">
+    <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">01 / the axes</p>
+    <h2 id="axes" class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Four questions, four declarations</h2>
+    <p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Each axis is declared once and read everywhere. None of them names another: a profile does not know which model will answer it, a workflow does not know which interface invoked it, and an interface does not know which profile the caller is running under.</p>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {%- for a in m.axes %}
+    <div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-6">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h3 class="text-xl font-semibold tracking-tight text-heading">{{ a.axis }}</h3>
+        <span class="min-w-0 text-end"><span class="font-mono text-2xl font-semibold text-heading">{{ a.count }}</span> <span class="font-mono text-xs text-body-subtle">{{ a.unit }}</span></span>
+      </div>
+      <p class="mt-2 font-mono text-xs uppercase tracking-wide text-body-subtle">answers: {{ a.answers }}</p>
+      <p class="mt-3 text-sm leading-relaxed text-body">{{ a.artifact | capitalize }}.</p>
+      {%- if a.note %}<p class="mt-2 text-sm leading-relaxed text-body">{{ a.note }}</p>{% endif %}
+      <a class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline" href="{{ get_url(path=a.route, trailing_slash=true) }}">See it →</a>
+    </div>
+    {%- endfor %}
+  </div>
+  {{ <diagram key="axes" /> }}
+</section>
+
+<section class="mt-16" aria-labelledby="notamodel">
+  <div class="mb-8 max-w-3xl">
+    <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">02 / the model is not the agent</p>
+    <h2 id="notamodel" class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">A profile declares requirements, never a vendor</h2>
+    <p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Writing <code class="font-mono">model: some-vendor-model</code> into a configuration file does not remove a lock-in; it gives it a directory. A profile here declares a capability class and an effort, and the run decides what satisfies them. No file of the layer names a model, and a check refuses one that starts to.</p>
+  </div>
+  <dl class="grid gap-4 sm:grid-cols-3">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">capability classes</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.capability_classes | join(sep=" · ") }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">effort levels</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.efforts | join(sep=" · ") }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">what a worker must return</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.output_contract | join(sep=" · ") }}</dd></div>
+  </dl>
+  <p class="mt-4 max-w-3xl text-sm text-body-subtle">Continuity is the point. The task, its decisions, its evidence and its handover are records in the repository, so the model answering a task may change mid-flight without the work losing its state — and so may the vendor.</p>
+</section>
+
+<section class="mt-16" aria-labelledby="surfaces">
+  <div class="mb-8 max-w-3xl">
+    <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">03 / the surface axis</p>
+    <h2 id="surfaces" class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.exposure.capabilities }} capabilities, {{ m.exposure.surfaces | length }} interfaces, one declaration</h2>
+    <p class="mt-3 text-base leading-relaxed text-body sm:text-lg">A surface is not a page someone builds. It is the exposure a capability declares, and the command line, the HTTP API with its OpenAPI document, and the MCP tools and resources are all read out of that one declaration. Nothing is registered anywhere a second time; a projection that disagrees with the registry fails the build.</p>
+  </div>
+  <dl class="grid gap-4 sm:grid-cols-3">
+    {%- for s in m.exposure.surfaces %}
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.label }}</dt>
+      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">{{ s.count }}</span> <span class="font-mono text-xs text-body-subtle">of {{ m.exposure.capabilities }}</span></dd>
+    </div>
+    {%- endfor %}
+  </dl>
+  <p class="mt-6 max-w-3xl text-body">The gaps are deliberate and visible, which is the difference between a derived matrix and a hand-kept one. {% for c in m.exposure.combinations %}{{ c.count }} reach <span class="font-mono text-heading">{{ c.surfaces }}</span>{% if not loop.last %}; {% endif %}{% endfor %}. Nobody has to remember to add a row.</p>
+  <div class="mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-start text-sm">
+      <thead class="border-b border-default bg-neutral-primary-soft font-mono text-xs uppercase tracking-wide text-body-subtle">
+        <tr><th scope="col" class="px-4 py-3 text-start">module</th><th scope="col" class="px-4 py-3 text-end">capabilities</th>{% for s in m.exposure.surfaces %}<th scope="col" class="px-4 py-3 text-end">{{ s.id }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody class="divide-y divide-default">
+        {%- for r in m.exposure.by_module %}
+        <tr>
+          <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">{{ r.module }}</th>
+          <td class="px-4 py-2.5 text-end font-mono text-body">{{ r.capabilities }}</td>
+          <td class="px-4 py-2.5 text-end font-mono {% if r.cli == r.capabilities %}text-heading{% elif r.cli == 0 %}text-body-subtle{% else %}text-fg-warning{% endif %}">{{ r.cli }}</td>
+          <td class="px-4 py-2.5 text-end font-mono {% if r.http == r.capabilities %}text-heading{% elif r.http == 0 %}text-body-subtle{% else %}text-fg-warning{% endif %}">{{ r.http }}</td>
+          <td class="px-4 py-2.5 text-end font-mono {% if r.mcp == r.capabilities %}text-heading{% elif r.mcp == 0 %}text-body-subtle{% else %}text-fg-warning{% endif %}">{{ r.mcp }}</td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="mt-4 text-sm text-body-subtle">{{ m.exposure.modules }} modules. Every row is a count over the registry the executable generates, never a mark someone typed. <a class="text-fg-brand underline" href="{{ get_url(path="/registry/capabilities/", trailing_slash=true) }}">Every capability, one page each</a>.</p>
+</section>
+{% endblock body %}
+{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
