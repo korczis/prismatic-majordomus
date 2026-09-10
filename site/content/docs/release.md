@@ -57,6 +57,7 @@ unreleased work leading:
    release record  ──►  version, tag, date, commit, artifacts
    adr objects     ──►  the decisions dated inside this release's window
    git log A..B    ──►  the changes, as conventional commits
+   issue·milestone ──►  the records those commits name, resolved against the layer
 ```
 
 The window of a release is the same interval said in the two vocabularies its two sources
@@ -117,6 +118,98 @@ them — what is new, what is fixed, what is faster, then the rest:
 A heading with no entries is absent; nothing is hidden. Merge commits are not read at all
 (`git log --no-merges`), because a merge's subject describes the integration and its
 contents are already in the range.
+
+### The order is in the document, not in each renderer
+
+A section does not carry a flat list of changes. It carries `groups` — one per kind that has
+any change at all, each with its `kind`, the `heading` it is shown under, the `rank` it sorts
+by, and its own `changes` — and the groups are already in rank order when the document is
+composed:
+
+```text
+  section.groups[]  →  { kind: "feat", heading: "Added",   rank: 0, changes: [...] }
+                       { kind: "fix",  heading: "Fixed",   rank: 1, changes: [...] }
+                       { kind: "docs", heading: "Documentation", rank: 4, changes: [...] }
+```
+
+That order used to exist in exactly one place a projection could not reach: `ChangeKind::rank()`,
+a Rust function the Markdown renderer called. The website cannot call a Rust function, so it
+grouped what it was given alphabetically instead, and the same changelog was read in two
+different orders depending on which surface showed it. The order is in the value now. Every
+renderer reads `heading` and `rank` rather than deciding either — `site/templates/changelog.html`
+neither groups nor sorts, and the Markdown renderer walks `groups` in the order it was handed
+them. A presentation order stated once and carried is the only kind that survives a projection.
+
+The ranks are the kinds' own and are not contiguous: a section with no refactors simply has no
+group of rank 3. A group's absence means nothing of that kind happened in the range, never that
+something was hidden.
+
+## Where a fact can be read
+
+Every address the changelog carries is derived from `about::REPOSITORY` — the crate manifest's
+own `repository`, which the compiler passes in as `CARGO_PKG_REPOSITORY`. None of them is a
+literal, so a fork or a move carries every link with it and nothing has to be told where the
+project now lives:
+
+```text
+  section  ──►  notes_url    the published release, from the record's own notes_url
+                compare_url  the range against the previous tag
+                tree_url     the tree at that tag
+  change   ──►  url          the commit
+  decision ──►  url          the ADR file that states the decision
+```
+
+`forge()` in `changelog.rs` recognises one shape — `https://github.com/<owner>/<repo>` — and
+returns nothing for anything else. When it returns nothing, **no links are produced at all**
+rather than links guessed from a pattern that might hold. A wrong link cannot be told from a
+right one until it is followed, so a reader with no link knows they have none and a reader with
+a plausible wrong one does not.
+
+Two of the section addresses are not simply the tag's. A record that names its own `notes_url`
+keeps it, because the published release is where the record says it is; the fallback is the
+tag's release page. The first release has no predecessor to compare against, so its
+`compare_url` is the forge's list of commits up to the tag rather than a range. The unreleased
+section compares the last tag against `master` and points at the tree there.
+
+`Decision.route` was removed under the same argument. It named `/decisions/<id>/`, and nothing
+publishes such a page: the honest destination for a decision is the ADR file in the repository,
+which is what `url` now carries. The Markdown rendering keeps the plain shape it always had —
+the addresses are in the value for the surfaces that can use them, and the site page renders
+every one of them.
+
+### The document names its own producer
+
+`produced_by` is the capability that answered — its id, the command line that renders it,
+the HTTP route, the MCP tool and the MCP resource — read off the registry entry by one
+function, `capability::builtin::release::produced_by`, which the handler that serves the
+document and the generator that commits it both call. So the committed
+`docs/generated/changelog.json` and the live answer name the same surfaces, and a reader who
+has one of them can find the others. A page that points at the same value elsewhere resolves
+those names against the datasets the registry generates (`executable.json`, `cli.json`)
+rather than typing a route: the site's changelog page does exactly that, because
+`site-check`'s `registry` and `cli` assertions refuse a template that names a capability or a
+command route by hand — and did, on the first draft of that page.
+
+## What a commit names, resolved
+
+A commit's subject and body are scanned together for the ids this repository's plan uses — an
+`I` and four digits for an issue, an `M` and three for a milestone — and every id found is then
+*looked up* in the layer. An id that matches the shape and names no object is dropped. What is
+carried is a reference with the kind, the id, and the title from the record it resolved to, so
+an entry reads as the issue it belongs to rather than as a code only its author can expand.
+
+The resolution half is what makes the inference safe. Matching alone would put a link on every
+string that looks like an id, including the ones nothing answers to, and that is the failure the
+links above are built to avoid. The scan reads the body as well as the subject because a commit
+that explains itself in its body is the one most worth linking, and a word that merely begins
+with the letter (`Interesting`, `M1`) is not an id.
+
+Counts of what that yields go stale; measure them instead:
+
+```text
+  majordomus release changelog --format json \
+    | jq '[.sections[].groups[].changes[].references[]?] | length'
+```
 
 ## The version: two statements, one writer
 
@@ -184,6 +277,14 @@ withholds it. The read half is two capabilities, and the command line renders th
 *executing* them rather than by calling the code underneath, so the terminal and the API
 cannot drift apart.
 
+Each read capability also declares its `cli` exposure — the path the clap tree really has,
+`release changelog` and `release version` — which is what lets the command graph join the
+command to the capability. Without it the join was missing in one direction only:
+`majordomus commands explain executable.release.changelog` reported that the command reached
+no machine surface, while the capability behind it was already an MCP tool and an HTTP route.
+The declaration must name a command the clap tree carries; one that names a command it does
+not is the `scope classify` defect, and the graph refuses it.
+
 The generated document is a generated artifact like any other — one value written as JSON
 for a program, YAML beside it and Markdown for a reader, each declaring its schema
 (`majordomus/changelog/v1`) and its source. That is the point of generating it at all:
@@ -224,10 +325,10 @@ after it: the check proves the work of one writer instead of the memory of one p
 
 | | |
 |---|---|
-| `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole |
+| `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole; and the resolution: an id the layer holds becomes a reference carrying that record's title, an id of the same shape that names nothing does not, a name mentioned twice is carried once, and a word that merely starts with the letter is not an id |
 | `apps/majordomus-cli/src/release/version.rs` | the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, and writing touches only the two lines that state the version |
-| `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the rendering groups by kind and marks what breaks |
-| `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, and every exit code above |
+| `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the groups reach the renderer in rank order whatever order the commits arrived in |
+| `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
 | `scripts/ci/release-check` | the two declarations of where the version is stated have not drifted, the two sites agree on every plan rather than only at publication, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
 | `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog still describes the tree |
 | `scripts/release-version --check` | the two writers agree — the same verdict `majordomus release version` gives, with the same exit code |

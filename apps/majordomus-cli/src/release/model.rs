@@ -37,6 +37,12 @@ pub enum ChangeKind {
     Chore,
     /// Continuous integration.
     Ci,
+    /// Formatting, with the behaviour unchanged.
+    Style,
+    /// The build system or its dependencies.
+    Build,
+    /// A change that undoes another.
+    Revert,
     /// A commit whose subject does not parse as a conventional commit.
     Other,
 }
@@ -53,6 +59,9 @@ impl ChangeKind {
             "test" => ChangeKind::Test,
             "chore" => ChangeKind::Chore,
             "ci" => ChangeKind::Ci,
+            "style" => ChangeKind::Style,
+            "build" => ChangeKind::Build,
+            "revert" => ChangeKind::Revert,
             _ => ChangeKind::Other,
         }
     }
@@ -71,6 +80,9 @@ impl ChangeKind {
             ChangeKind::Test => "Tests",
             ChangeKind::Ci => "Pipeline",
             ChangeKind::Chore => "Housekeeping",
+            ChangeKind::Style => "Formatting",
+            ChangeKind::Build => "Build",
+            ChangeKind::Revert => "Reverted",
             ChangeKind::Other => "Other",
         }
     }
@@ -86,9 +98,34 @@ impl ChangeKind {
             ChangeKind::Test => 5,
             ChangeKind::Ci => 6,
             ChangeKind::Chore => 7,
+            // A revert is what a reader most needs to see and least expects, so it sits with
+            // the fixes rather than at the bottom with the housekeeping.
+            ChangeKind::Revert => 2,
+            ChangeKind::Build => 6,
+            ChangeKind::Style => 7,
             ChangeKind::Other => 8,
         }
     }
+}
+
+/// A record of the layer that a commit names in its own text.
+///
+/// Inferred, never declared beside the commit: an issue id or a milestone id appearing in a
+/// subject or a body is a reference, and the layer already holds the object it refers to. A
+/// reference to something the layer does not have is not carried — a link to a record that
+/// does not exist is worse than no link, because the reader cannot tell until they follow it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ReleaseReference")]
+pub struct Reference {
+    /// `issue` or `milestone`.
+    pub kind: String,
+    /// `I1305`, `M000`.
+    pub id: String,
+    /// What it is, from the record itself.
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where it is published on this site, when it has a page.
+    pub route: Option<String>,
 }
 
 /// One change, from one commit.
@@ -106,6 +143,14 @@ pub struct Change {
     pub breaking: bool,
     /// The abbreviated commit.
     pub commit: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where that commit can be read, when the repository's own URL is known. Derived from
+    /// `about::REPOSITORY`, never written beside each entry.
+    pub url: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The records of the layer this commit names — issues, milestones — resolved against
+    /// what the layer actually holds.
+    pub references: Vec<Reference>,
 }
 
 /// One decision, as the layer's own ADR object states it.
@@ -120,6 +165,14 @@ pub struct Decision {
     pub status: String,
     /// The date the record carries.
     pub date: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where the decision itself can be read: the file in the repository. The site has no
+    /// per-ADR page, so this is the honest destination rather than an invented route.
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The commit that added the file, which is what decides the release it belongs to. The
+    /// front-matter date says when the decision was made; those are different questions.
+    pub added: Option<String>,
 }
 
 /// One published artifact, from the release record's own evidence.
@@ -170,6 +223,15 @@ pub struct ReleaseSection {
     pub commit: Option<String>,
     /// Whether this section is the work that has not been released.
     pub unreleased: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The release notes the record names — the published release itself.
+    pub notes_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Every commit between the previous release and this one, as the forge renders it.
+    pub compare_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The tree at this release.
+    pub tree_url: Option<String>,
     /// The decisions dated inside this release's window.
     pub decisions: Vec<Decision>,
     /// The changes, from the commits in this release's range, grouped by what they did and
@@ -178,6 +240,31 @@ pub struct ReleaseSection {
     pub groups: Vec<ChangeGroup>,
     /// What was published, when this section is a release.
     pub artifacts: Vec<Artifact>,
+}
+
+/// Which capability answered with this document, and where that capability is projected.
+///
+/// The document carries its own provenance so that a reader — a person on the site, a client
+/// over MCP — can find the same value elsewhere without anything having to enumerate the
+/// routes. A page that listed them would be declaring them a second time, which is the
+/// failure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ReleaseProducedBy")]
+pub struct ProducedBy {
+    /// The capability id.
+    pub capability: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The command line that renders it.
+    pub cli: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The HTTP route that answers with it.
+    pub http: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The MCP tool.
+    pub mcp_tool: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The MCP resource URI.
+    pub mcp_resource: Option<String>,
 }
 
 /// The whole changelog.
@@ -193,6 +280,9 @@ pub struct Changelog {
     /// What could not be read, said rather than hidden: a repository with no git history,
     /// a release record that names no commit, a tag that is not in this clone.
     pub diagnostics: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Which capability answered, and where else the same value can be had.
+    pub produced_by: Option<ProducedBy>,
 }
 
 /// What the version is, and what the commits since the last release imply it should become.

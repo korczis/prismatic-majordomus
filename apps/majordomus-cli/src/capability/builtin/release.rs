@@ -15,9 +15,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::release::{self, model::VersionReport, Changelog};
+use crate::capability::registry::CapabilityRegistry;
+use crate::release::{self, model::ProducedBy, model::VersionReport, Changelog};
 use crate::{capability, module};
 
 use super::{get, Empty};
@@ -68,7 +69,7 @@ pub fn module() -> ModuleDescriptor {
         stability: Stability::Implemented,
         capabilities: [
             capability! {
-                id: "release.changelog",
+                id: CHANGELOG_ID,
                 title: "The changelog",
                 description: "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
                 input: ChangelogInput,
@@ -80,7 +81,15 @@ pub fn module() -> ModuleDescriptor {
                         resource: Some(McpResource { uri: CHANGELOG_URI.into(), name: "changelog".into() }),
                     }),
                     http: get("/api/v1/changelog"),
-                    cli: None,
+                    // The command line reaches this capability, and saying so is what lets
+                    // the command graph join the two: without it `commands explain` reports
+                    // that `release changelog` reaches no machine surface, while the
+                    // capability behind it is an MCP tool and an HTTP route. The path must
+                    // be a command the clap tree really has — a declaration naming one it
+                    // does not is the `scope classify` defect, and the graph refuses it.
+                    cli: Some(CliExposure {
+                        path: vec!["release".into(), "changelog".into()],
+                    }),
                 },
                 tags: ["release", "changelog"],
                 handler: changelog,
@@ -98,7 +107,9 @@ pub fn module() -> ModuleDescriptor {
                         resource: None,
                     }),
                     http: get("/api/v1/release/version"),
-                    cli: None,
+                    cli: Some(CliExposure {
+                        path: vec!["release".into(), "version".into()],
+                    }),
                 },
                 tags: ["release", "version"],
                 handler: version,
@@ -107,9 +118,41 @@ pub fn module() -> ModuleDescriptor {
     }
 }
 
+/// The capability's own id. Beside its declaration, so the two cannot drift apart without
+/// the test below noticing; the document carries it so that no page has to enumerate where
+/// this value is served.
+pub const CHANGELOG_ID: &str = "release.changelog";
+
+/// Where else the changelog can be had, read off the registry entry that produces it.
+///
+/// One answer for every writer of the document: the handler that serves it and the generator
+/// that commits it both ask here, so the committed artifact and the live answer name the same
+/// surfaces. Nothing is spelled out — the command line, the route, the tool and the resource
+/// are the capability's own declaration, and a page that lists them resolves each against the
+/// datasets the registry generates rather than typing a route of its own. `None` only when the
+/// registry does not carry the capability at all, which the module's own test refuses.
+pub fn produced_by(registry: &CapabilityRegistry) -> Option<ProducedBy> {
+    registry.get(CHANGELOG_ID).map(|c| ProducedBy {
+        capability: c.id.to_string(),
+        cli: c
+            .exposure
+            .cli
+            .as_ref()
+            .map(|e| format!("majordomus {}", e.path.join(" "))),
+        http: c.exposure.http.as_ref().map(|h| h.path.clone()),
+        mcp_tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
+        mcp_resource: c
+            .exposure
+            .mcp
+            .as_ref()
+            .and_then(|m| m.resource.as_ref().map(|r| r.uri.clone())),
+    })
+}
+
 fn changelog(ctx: &Context, input: ChangelogInput) -> Result<Changelog, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
     let mut log = release::compose(root, &ctx.index.objects);
+    log.produced_by = produced_by(&ctx.registry);
     if let Some(wanted) = input.version.as_deref() {
         log.sections.retain(|s| {
             s.version == wanted
