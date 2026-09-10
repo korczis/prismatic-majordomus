@@ -187,6 +187,29 @@
         }
       }
     },
+    "knowledge": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The repository knowledge system: how strictly `majordomus knowledge check` holds a scan against the committed baseline, and whether a semantic provider may run.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["observe", "warn", "protect", "strict"],
+          "description": "observe and warn never fail; protect refuses debt the baseline does not tolerate; strict refuses any debt."
+        },
+        "semantic": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "The semantic layer, off by default. Nothing in a scan, a check or a projection calls a provider; `majordomus knowledge derive` does, and only when enabled.",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "allow_remote": { "type": "boolean", "description": "Whether a provider that sends text off the machine may be used; a remote provider is refused outright otherwise." },
+            "provider": { "type": "string", "description": "The provider id; `local` is the deterministic, offline one this executable ships." },
+            "max_request_bytes": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
     "benchmark": {
       "type": "object",
       "additionalProperties": false,

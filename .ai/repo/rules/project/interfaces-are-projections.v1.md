@@ -7,7 +7,7 @@ description: A capability is defined once, as a typed descriptor in Rust or as a
 statement: A capability is defined once and every external interface is derived from that definition; an interface that carries a definition of its own is a bug.
 status: active
 class: blocking
-depends_on: []
+depends_on: [project.canonicality@1]
 tags: [architecture, capabilities, rust]
 ---
 

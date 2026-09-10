@@ -50,6 +50,14 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// The repository knowledge system: what the repository knows about itself, held against a committed baseline — scan, status, list, show, search, explain, graph, impact, gaps, coverage, stale, conflicts, reconcile, validate, baseline, check, canonicality, derive, context
+    Knowledge(KnowledgeArgs),
+    /// The canonicality audit: every capability's one canonical source and the surfaces derived from it, every hand-kept mirror, orphan projection and undeclared generated file; the CI gate of the canonicality doctrine
+    Canonicality(CanonicalityArgs),
+    /// Why the knowledge model says what it says about one thing: a node, a capability, an object URI or a path — its provenance, evidence, claims, freshness, relations, conflicts, gaps and remedies
+    Explain(ExplainArgs),
+    /// A change set inspected before it is merged: what it touches in the knowledge, every capability it adds with the surfaces derived for it, and the debt it introduces
+    Change(ChangeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -378,6 +386,288 @@ impl ProfileArg {
             ProfileArg::Ci => "ci",
         }
     }
+}
+
+#[derive(Debug, Args)]
+/// `majordomus knowledge`. The output shape is global, so it reads the way a person writes
+/// it — `knowledge list --format json` — and is declared once.
+pub struct KnowledgeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<KnowledgeCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge`.
+pub enum KnowledgeCommand {
+    /// Adopt a brownfield repository: scan it, record every present fact and every present debt as the baseline, and print where it stands; refuses to overwrite a recorded baseline without --force
+    Bootstrap {
+        /// Record over a baseline that exists
+        #[arg(long)]
+        force: bool,
+    },
+    /// Scan the repository and print the whole model as one JSON document (`majordomus/knowledge/v1`); --public keeps only what may leave the repository
+    Scan {
+        /// Only the public projection
+        #[arg(long)]
+        public: bool,
+    },
+    /// Where the knowledge stands: nodes by kind, freshness and provenance, conflicts, gaps, coverage, the check and the canonicality verdict
+    Status,
+    /// List nodes, filtered; one page at a time
+    List {
+        /// Only this node kind (`component`, `document`, `rule`, `capability`, ...)
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+        /// Only this provenance: observed, declared, derived, curated
+        #[arg(long, value_name = "WORD")]
+        provenance: Option<String>,
+        /// Only this freshness: current, possibly_stale, stale, conflicted, unverified
+        #[arg(long, value_name = "WORD")]
+        freshness: Option<String>,
+        /// Only this ownership: external, majordomus, hybrid
+        #[arg(long, value_name = "WORD")]
+        ownership: Option<String>,
+        /// Only nodes this extractor produced
+        #[arg(long, value_name = "ID")]
+        extractor: Option<String>,
+        /// A substring of the id or the title
+        #[arg(long, value_name = "TEXT")]
+        query: Option<String>,
+        /// Only nodes whose freshness is debt
+        #[arg(long)]
+        debt: bool,
+        /// Skip this many
+        #[arg(long, default_value_t = 0)]
+        offset: usize,
+        /// At most this many; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// One node with its claims, evidence, relations, conflicts and gaps
+    Show {
+        /// A node id, a capability id, an object URI or a path
+        id: String,
+    },
+    /// Search ids, titles, summaries and claim values
+    Search {
+        /// What to look for
+        query: String,
+        /// At most this many hits; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// Why the model says what it says about one node: provenance, evidence, claims with freshness, relations, conflicts, gaps, remedies
+    Explain {
+        /// A node id, a capability id, an object URI or a path
+        id: String,
+    },
+    /// A slice of the knowledge graph: around a root, or every node of a kind
+    Graph {
+        /// Cut the slice around this node
+        #[arg(long, value_name = "ID")]
+        root: Option<String>,
+        /// Hops from the root; 2 when unset
+        #[arg(long, default_value_t = 0)]
+        depth: usize,
+        /// Without a root: only this kind
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+        /// At most this many nodes
+        #[arg(long, default_value_t = 0)]
+        limit: usize,
+    },
+    /// What a change set touches: the working tree against HEAD (or --base), two revisions (--base --to), or named paths
+    Impact {
+        /// The base revision; HEAD when unset
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+        /// Compare the base with this revision instead of the working tree
+        #[arg(long, value_name = "REV")]
+        to: Option<String>,
+        /// Changed paths, named outright
+        #[arg(value_name = "PATH")]
+        paths: Vec<String>,
+    },
+    /// Everything the repository could know and does not, with the remedy for each
+    Gaps {
+        /// Only this category: undocumented_component, unresolved_reference, unverified_knowledge, unexercised_capability, canonicality
+        #[arg(long, value_name = "WORD")]
+        category: Option<String>,
+    },
+    /// Coverage over deterministic denominators: numbers, and what is missing
+    Coverage,
+    /// Every node whose freshness is debt, with the reason: what a person should look at
+    Stale,
+    /// Every conflict: both sides, severity, basis, resolution, remedy
+    Conflicts {
+        /// Only open conflicts
+        #[arg(long)]
+        open_only: bool,
+    },
+    /// Accept one open conflict by id, with a reason: it stays reported, and stops counting as new debt
+    Accept {
+        /// The conflict id, as `knowledge conflicts` prints it (`<subject>#<predicate>`)
+        conflict: String,
+        /// Why both values stand
+        #[arg(long, value_name = "TEXT")]
+        reason: String,
+    },
+    /// Propose what to do about every conflict, stale claim, unresolved reference and gap; --accept records that curated claims were verified against their present evidence
+    Reconcile {
+        /// Record the verifications in the baseline (a deliberate act; the diff is in the commit)
+        #[arg(long)]
+        accept: bool,
+    },
+    /// Validate the model, the baseline and the exceptions against their contracts; exit 10 with each finding named
+    Validate,
+    /// The committed baseline: show it, record it, or migrate it to the current schema
+    Baseline {
+        #[command(subcommand)]
+        /// What to do with it; none shows it
+        command: Option<KnowledgeBaselineCommand>,
+    },
+    /// Hold the scan against the baseline: exit 0 when the mode passes, 10 with every new debt item named
+    Check {
+        /// Check in this mode instead of the policy's: observe, warn, protect, strict
+        #[arg(long, value_name = "WORD")]
+        mode: Option<String>,
+    },
+    /// The canonicality audit: every capability's canonical source and derived surfaces, every violation, the manual maintenance surface; exit 10 when a violation counts
+    Canonicality {
+        /// Only this capability's row
+        #[arg(long, value_name = "ID")]
+        capability: Option<String>,
+    },
+    /// Run the semantic provider the policy names over the model and cache what it derived; off unless the policy enables it, and nothing leaves the machine unless the policy allows it
+    Derive {
+        /// Only nodes of these kinds
+        #[arg(long = "kind", value_name = "KIND")]
+        kinds: Vec<String>,
+        /// Show what would be given to the provider and what withheld; run nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// How the model is made: every extractor with its vocabulary, the providers, the schema versions and migrations
+    Extractors,
+    /// What an agent should read before touching some paths, cut to a budget
+    Context {
+        /// The paths about to be touched; the whole repository when none
+        #[arg(value_name = "PATH")]
+        paths: Vec<String>,
+        /// The budget in bytes; 0 for the default
+        #[arg(long, default_value_t = 0)]
+        budget: usize,
+        /// Only public knowledge
+        #[arg(long)]
+        public: bool,
+    },
+    /// What a change set means for the knowledge: the paths that changed, what they touch, every capability the change adds with the surfaces derived for it, and the canonicality and freshness debt it introduces — the pull-request gate
+    Inspect {
+        /// The base revision; HEAD when unset (the working tree), or a branch to compare with
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+    },
+    /// Every node id, one per line, for a shell's completion
+    Ids {
+        /// Only this kind
+        #[arg(long, value_name = "KIND")]
+        kind: Option<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge baseline`.
+pub enum KnowledgeBaselineCommand {
+    /// The baseline as recorded: when, how much of what, and what the scan would change
+    Show,
+    /// Record the present scan as the baseline: every fact verified, every present debt tolerated; refuses to overwrite without --force
+    Record {
+        /// Record over a baseline that exists
+        #[arg(long)]
+        force: bool,
+    },
+    /// Rewrite the baseline in the current schema, naming each migration step; a current one is left alone
+    Migrate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus canonicality`.
+pub struct CanonicalityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `check`.
+    pub command: Option<CanonicalityCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus canonicality`.
+pub enum CanonicalityCommand {
+    /// The audit over every capability and the tree; exit 10 when a violation counts
+    Check,
+    /// One capability: its canonical source, every derived surface, every hand-written mention, its manual maintenance surface and its verdict
+    Explain {
+        /// The capability id
+        capability: String,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus change`.
+pub struct ChangeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `inspect`.
+    pub command: Option<ChangeCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus change`.
+pub enum ChangeCommand {
+    /// Inspect the working tree against HEAD, or against --base: the same answer as `knowledge inspect`
+    Inspect {
+        /// The base revision
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus explain`.
+pub struct ExplainArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// A node id, a capability id, an object URI or a path; `capability <id>` is accepted too
+    #[arg(value_name = "SUBJECT", num_args = 1..=2)]
+    pub subject: Vec<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
 }
 
 /// Output shape for commands that print to a person or a script. `mcp` speaks its own
@@ -1503,5 +1793,379 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/0/verdict", "/0/rule"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "knowledge",
+        examples: &[ExampleDoc {
+            id: "knowledge-default-status",
+            title: "Where the repository's knowledge stands",
+            description: "`knowledge` with nothing after it is `knowledge status`: one scan of the checkout, summarised — nodes by kind, freshness and provenance, open conflicts, gaps, coverage, the check against the baseline in the policy's mode, and the canonicality verdict.",
+            argv: &["knowledge"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nodes", "freshness", "check"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge status",
+        examples: &[ExampleDoc {
+            id: "knowledge-status-json",
+            title: "The status as one document",
+            description: "The same answer as JSON: what `majordomus_knowledge`, `GET /api/v1/knowledge` and the Cockpit's Knowledge page read.",
+            argv: &["knowledge", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/repository/name", "/freshness", "/check/verdict", "/canonicality/verdict", "/coverage/rows"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge bootstrap",
+        examples: &[ExampleDoc {
+            id: "knowledge-bootstrap",
+            title: "Adopt a repository that already has debt",
+            description: "The first run in a brownfield repository: scan it, verify every curated claim against its present evidence, tolerate every present debt by name, and write the baseline under the knowledge section. From then on `knowledge check` refuses new debt and the recorded debt may only shrink.",
+            argv: &["knowledge", "bootstrap"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["baseline", "recorded"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge scan",
+        examples: &[ExampleDoc {
+            id: "knowledge-scan-public",
+            title: "The whole model, public projection",
+            description: "Every extractor, evidence, node with claims, relation, conflict, gap and coverage row as one `majordomus/knowledge/v1` document, restricted to what may leave the repository. The site's knowledge dataset is this document.",
+            argv: &["knowledge", "scan", "--public"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/nodes", "/evidence", "/relations", "/fingerprint"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge list",
+        examples: &[ExampleDoc {
+            id: "knowledge-list-documents",
+            title: "Every document the repository carries",
+            description: "One line per node of one kind: id, freshness, provenance, and the reason when it is not current.",
+            argv: &["knowledge", "list", "--kind", "document"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["document:"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge show",
+        examples: &[ExampleDoc {
+            id: "knowledge-show-readme",
+            title: "One node, everything that bears on it",
+            description: "The README as the model holds it: its claims with provenance and freshness, the evidence with fingerprints, the relations in and out. A path, an object URI or a capability id resolve to their node too.",
+            argv: &["knowledge", "show", "README.md"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["README.md", "claims"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge search",
+        examples: &[ExampleDoc {
+            id: "knowledge-search",
+            title: "Find a node by a word",
+            description: "Ids and titles first, then summaries, then claim values; ranked and stable.",
+            argv: &["knowledge", "search", "readme"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["README"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge explain",
+        examples: &[ExampleDoc {
+            id: "knowledge-explain-readme",
+            title: "Why the model says what it says",
+            description: "How the node is known, what it rests on, every claim with its freshness and the reason, and what to do when something is wrong. The same answer `majordomus explain <subject>` prints.",
+            argv: &["knowledge", "explain", "document:README.md"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["document:README.md", "evidence"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge graph",
+        examples: &[ExampleDoc {
+            id: "knowledge-graph-around-readme",
+            title: "The neighbourhood of one node",
+            description: "The nodes within one hop of the README and the typed relations among them, as JSON a drawing reads.",
+            argv: &["knowledge", "graph", "--root", "document:README.md", "--depth", "1", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/nodes", "/edges"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge impact",
+        examples: &[ExampleDoc {
+            id: "knowledge-impact-readme",
+            title: "What a change to one file touches",
+            description: "The nodes whose evidence is the named path, the claims resting on it, and everything reached along propagating relations, nearest first.",
+            argv: &["knowledge", "impact", "README.md"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["README.md"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge gaps",
+        examples: &[ExampleDoc {
+            id: "knowledge-gaps",
+            title: "What the repository could know and does not",
+            description: "Every gap with its category, the reason and the remedy: a worklist, not a score.",
+            argv: &["knowledge", "gaps", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/gaps", "/tallies"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge coverage",
+        examples: &[ExampleDoc {
+            id: "knowledge-coverage",
+            title: "Coverage over deterministic denominators",
+            description: "One row per denominator — components documented, capabilities exercised, references resolved, curated records verified, artifacts derived, layer objects reached — with the numbers and what is missing.",
+            argv: &["knowledge", "coverage"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["components-documented", "references-resolved"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge stale",
+        examples: &[ExampleDoc {
+            id: "knowledge-stale",
+            title: "What a person should look at",
+            description: "Every node whose freshness is debt — stale, possibly stale, unverified, conflicted — with the reason. Empty when everything is current.",
+            argv: &["knowledge", "stale"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "knowledge conflicts",
+        examples: &[ExampleDoc {
+            id: "knowledge-conflicts",
+            title: "Where two sources disagree",
+            description: "Every conflict with both sides, their provenance and evidence, the severity and the remedy; none is resolved silently.",
+            argv: &["knowledge", "conflicts", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/conflicts", "/open"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge accept",
+        examples: &[ExampleDoc {
+            id: "knowledge-accept-unknown-conflict",
+            title: "Accepting a conflict names one that exists",
+            description: "A conflict is accepted by the id `knowledge conflicts` prints, with a reason that goes into the baseline; an id that is not an open conflict is refused with exit 12 and nothing is written.",
+            argv: &["knowledge", "accept", "component:none#version", "--reason", "both are right"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge reconcile",
+        examples: &[ExampleDoc {
+            id: "knowledge-reconcile-propose",
+            title: "What to do about every finding",
+            description: "Proposals with an owner: which a person edits (an external source is never rewritten), and which `--accept` applies by recording in the baseline that the curated claims were verified against their present evidence.",
+            argv: &["knowledge", "reconcile"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["proposal"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge validate",
+        examples: &[ExampleDoc {
+            id: "knowledge-validate",
+            title: "The model and its files against their contracts",
+            description: "Every diagnostic of the scan, the baseline's and the exceptions' schema and shape, and the migrations a file would need; exit 10 when a finding is an error.",
+            argv: &["knowledge", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["knowledge"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge baseline",
+        examples: &[ExampleDoc {
+            id: "knowledge-baseline-default-show",
+            title: "The baseline as recorded",
+            description: "`baseline` with nothing after it shows it: when it was recorded, how much of what it holds, and whether the present scan would change it.",
+            argv: &["knowledge", "baseline"],
+            setup: &[&["knowledge", "bootstrap"]],
+            expect: Expect::StdoutContains(&["recorded"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge baseline show",
+        examples: &[ExampleDoc {
+            id: "knowledge-baseline-show-json",
+            title: "The baseline as one document",
+            description: "The typed baseline: evidence fingerprints, verified claims, tolerated debt, accepted conflicts, tolerated canonicality violations.",
+            argv: &["knowledge", "baseline", "show", "--format", "json"],
+            setup: &[&["knowledge", "bootstrap"]],
+            expect: Expect::Json(&["/schema", "/nodes", "/verified", "/debt"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge baseline record",
+        examples: &[ExampleDoc {
+            id: "knowledge-baseline-record-force",
+            title: "Record the baseline again, deliberately",
+            description: "After debt was paid down or a conflict accepted: record the present state over the old one. The diff is in the commit, which is the review.",
+            argv: &["knowledge", "baseline", "record", "--force"],
+            setup: &[&["knowledge", "bootstrap"]],
+            expect: Expect::StdoutContains(&["recorded"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge baseline migrate",
+        examples: &[ExampleDoc {
+            id: "knowledge-baseline-migrate",
+            title: "Bring the baseline to the current schema",
+            description: "A baseline written by an older Majordomus is rewritten step by step, each step named; a current one is left alone and says so. A newer one is refused with the version that would read it.",
+            argv: &["knowledge", "baseline", "migrate"],
+            setup: &[&["knowledge", "bootstrap"]],
+            expect: Expect::StdoutContains(&["baseline"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge check",
+        examples: &[ExampleDoc {
+            id: "knowledge-check-after-bootstrap",
+            title: "The gate, right after adoption",
+            description: "With the present debt tolerated by the baseline, the check passes in protect mode: nothing new. A later change that adds a stale claim, an open conflict or a canonicality violation fails it with the item named; a change that pays debt down passes and says the baseline should be recorded again.",
+            argv: &["knowledge", "check"],
+            setup: &[&["knowledge", "bootstrap"]],
+            expect: Expect::StdoutContains(&["pass"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge canonicality",
+        examples: &[ExampleDoc {
+            id: "knowledge-canonicality-json",
+            title: "The canonicality audit as one document",
+            description: "Every capability with its canonical source, derived surfaces, hand-written mentions and manual maintenance surface; every violation with whether the baseline tolerates it or an exception covers it; the verdict.",
+            argv: &["knowledge", "canonicality", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/capabilities", "/violations", "/verdict", "/mms_centi"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge derive",
+        examples: &[ExampleDoc {
+            id: "knowledge-derive-refused-when-off",
+            title: "The semantic layer is off until the policy turns it on",
+            description: "Without `knowledge.semantic.enabled: true` in the policy the command refuses with exit 10 and says which switch to set. Nothing is read by a provider and nothing leaves the machine.",
+            argv: &["knowledge", "derive", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge extractors",
+        examples: &[ExampleDoc {
+            id: "knowledge-extractors",
+            title: "How the model is made",
+            description: "Every extractor with the kinds, relations and predicates it declares, the semantic providers this executable ships, and the schema versions it reads and writes.",
+            argv: &["knowledge", "extractors"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["git", "layer", "docs", "registry"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge context",
+        examples: &[ExampleDoc {
+            id: "knowledge-context-docs",
+            title: "What to read before touching a directory",
+            description: "The nodes whose sources are under the path and what they govern, describe and depend on, most governing first; the claims among them that are not current as caveats; cut to a budget. What an agent asks over MCP as `majordomus_knowledge_context`.",
+            argv: &["knowledge", "context", "docs", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/nodes", "/caveats", "/budget"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge inspect",
+        examples: &[ExampleDoc {
+            id: "knowledge-inspect-working-tree",
+            title: "What this change means, before it is merged",
+            description: "The paths that changed against HEAD, the nodes and claims they touch, every capability the change adds with the checklist of surfaces derived for it, and the freshness and canonicality debt the change introduces. What a pull request is inspected with.",
+            argv: &["knowledge", "inspect"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["change set"]),
+        }],
+    },
+    CommandExamples {
+        command: "change",
+        examples: &[ExampleDoc {
+            id: "change-default-inspect",
+            title: "The pull-request gate",
+            description: "`change` with nothing after it is `change inspect`: the working tree against HEAD, or `--base origin/master` for a branch, with what the change touches, what it adds and what debt it introduces.",
+            argv: &["change"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["change set"]),
+        }],
+    },
+    CommandExamples {
+        command: "change inspect",
+        examples: &[ExampleDoc {
+            id: "change-inspect-json",
+            title: "The inspection as one document",
+            description: "The same answer as JSON: the change set, the impact, the added capabilities with their surfaces, and the debt, for a gate that reads the verdict.",
+            argv: &["change", "inspect", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/impact", "/added_capabilities", "/verdict"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge ids",
+        examples: &[ExampleDoc {
+            id: "knowledge-ids",
+            title: "Every node id, for completion",
+            description: "One id per line, nothing else: what a shell completes `knowledge show` and `knowledge explain` with.",
+            argv: &["knowledge", "ids", "--kind", "document"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["document:README.md"]),
+        }],
+    },
+    CommandExamples {
+        command: "canonicality",
+        examples: &[ExampleDoc {
+            id: "canonicality-default-check",
+            title: "The canonicality gate",
+            description: "`canonicality` with nothing after it is `canonicality check`: the audit over every capability and the tree, the manual maintenance surface, and the verdict — exit 10 when a violation counts that neither the baseline tolerates nor an exception covers.",
+            argv: &["canonicality"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["MMS", "verdict"]),
+        }],
+    },
+    CommandExamples {
+        command: "canonicality check",
+        examples: &[ExampleDoc {
+            id: "canonicality-check-json",
+            title: "The audit as one document",
+            description: "The same audit as JSON, for a gate that reads the verdict and a page that lists the violations.",
+            argv: &["canonicality", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/capabilities", "/violations", "/exceptions"]),
+        }],
+    },
+    CommandExamples {
+        command: "canonicality explain",
+        examples: &[ExampleDoc {
+            id: "canonicality-explain-capability",
+            title: "One capability's canonical source and derived surfaces",
+            description: "The declaration file that is its one source of truth, every surface derived from it with a tick, every hand-written file that names it, the manual maintenance surface, and the verdict.",
+            argv: &["canonicality", "explain", "rks.status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["canonical source", "rks.status"]),
+        }],
+    },
+    CommandExamples {
+        command: "explain",
+        examples: &[ExampleDoc {
+            id: "explain-capability",
+            title: "Why, for one capability",
+            description: "`explain capability <id>` and `explain <subject>` are the knowledge model's explanation of one thing: how it is known, what it rests on, every claim with its freshness, what it relates to, and what to do. For a capability the canonical source and the derived surfaces are the first lines.",
+            argv: &["explain", "capability", "rks.status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["capability:rks.status", "canonical"]),
+        }],
     },
 ];

@@ -106,6 +106,45 @@
           "items": {
             "$ref": "#/$defs/Relation"
           }
+        },
+        "visibility": {
+          "description": "Who may see the record. `public` may leave the repository (the site's dataset, a remote semantic provider); `internal` stays with the checkout; `restricted` is never given to anything that leaves the machine and never listed in a public projection. Public when absent.",
+          "enum": [
+            "public",
+            "internal",
+            "restricted"
+          ]
+        },
+        "asserts": {
+          "description": "Statements this record makes about other nodes of the knowledge model, held against what the extractors observed: a statement that contradicts an observed value is a conflict the model reports, never a silent overwrite of either side.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Assertion"
+          }
+        }
+      }
+    },
+    "Assertion": {
+      "description": "One statement about another node: the node (`component:majordomus-cli`), the predicate (`version`, `owner`, `license`) and the value the record asserts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "predicate",
+        "value"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]*:.+$"
+        },
+        "predicate": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },

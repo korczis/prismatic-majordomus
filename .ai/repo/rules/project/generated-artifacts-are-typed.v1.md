@@ -7,7 +7,7 @@ description: Every file the generator writes declares the document it projects, 
 statement: A generated artifact declares the document it projects, its encoding, the schema its content satisfies and its source, carries a provenance header in the form its encoding allows, and appears in the generated manifest; a structured document is written in every encoding it is committed in, from one value.
 status: active
 class: blocking
-depends_on: [project.derived-files-regenerated@1, project.interfaces-are-projections@1]
+depends_on: [project.canonicality@1, project.derived-files-regenerated@1, project.interfaces-are-projections@1]
 tags: [derived, generation, schema]
 ---
 

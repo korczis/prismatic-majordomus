@@ -45,6 +45,8 @@ tags:
     description: "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+  - name: rks
+    description: "What the repository knows about itself: typed nodes with claims, evidence and relations, read off the tree by deterministic extractors and held against a committed baseline for freshness, conflicts, coverage and canonicality. One scan per process, shared; every capability here is a slice of it. Nothing here writes: the baseline is recorded and a reconciliation accepted from the command line."
   - name: web
     description: "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication."
   - name: why
@@ -125,6 +127,69 @@ paths:
         resource:
           uri: majordomus://artifacts
           name: artifacts
+  "/api/v1/canonicality":
+    get:
+      operationId: rks.canonicality
+      summary: The canonicality audit
+      description: "Every query and command with its one canonical source, the surfaces derived from it, the hand-written files that name it and the manual maintenance surface that follows; every orphan projection, undeclared generated file, missing artifact, suspected mirror and expired exception; the typed exceptions with their status; the verdict."
+      tags:
+        - rks
+      parameters:
+        - name: capability
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only this capability's row, with every violation still listed."
+          examples:
+            one:
+              value: rks.status
+      responses:
+        "200":
+          description: "The canonicality audit: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CanonicalityAudit"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.canonicality
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_canonicality
+      x-majordomus-cli: knowledge canonicality
   "/api/v1/capabilities":
     get:
       operationId: capabilities.list
@@ -807,6 +872,8 @@ paths:
               value: adrs
             composed:
               value: composed
+            knowledge:
+              value: knowledge
             layer:
               value: layer
             registry:
@@ -971,6 +1038,1178 @@ paths:
         resource:
           uri: majordomus://health
           name: health
+  "/api/v1/knowledge":
+    get:
+      operationId: rks.status
+      summary: The knowledge status
+      description: "One scan, summarised: the repository and the reference it is judged against, nodes by kind, freshness and provenance, open conflicts, gaps by category, every coverage row, the check against the baseline in the policy's mode, the canonicality audit's verdict and the manual maintenance surface, and which extractors ran."
+      tags:
+        - rks
+      parameters: []
+      responses:
+        "200":
+          description: "The knowledge status: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeStatusReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.status
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge
+        resource:
+          uri: majordomus://knowledge
+          name: knowledge
+      x-majordomus-cli: knowledge status
+  "/api/v1/knowledge/check":
+    get:
+      operationId: rks.check
+      summary: The check against the baseline
+      description: "New debt the baseline does not tolerate, debt it tolerates, and debt it tolerates that is gone; the verdict in the policy's mode or the one given: observe and warn never fail, protect fails on new debt, strict fails on any. What `majordomus knowledge check` and the CI gate print."
+      tags:
+        - rks
+      parameters:
+        - name: mode
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeMode"
+              - type: "null"
+          description: "The mode to check in; the policy's when unset."
+          examples:
+            observe:
+              value: observe
+      responses:
+        "200":
+          description: "The check against the baseline: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeCheckReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.check
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_check
+      x-majordomus-cli: knowledge check
+  "/api/v1/knowledge/conflicts":
+    get:
+      operationId: rks.conflicts
+      summary: The conflicts
+      description: "Every subject with two values for one functional predicate from two sources: both sides with their provenance and evidence, the severity, the basis, whether a person accepted it, and the remedy."
+      tags:
+        - rks
+      parameters:
+        - name: open_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Only open conflicts.
+          examples:
+            all:
+              value: false
+      responses:
+        "200":
+          description: "The conflicts: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeConflictsReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.conflicts
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_conflicts
+      x-majordomus-cli: knowledge conflicts
+  "/api/v1/knowledge/context":
+    get:
+      operationId: rks.context
+      summary: The context for some paths
+      description: "What an agent should read before touching some paths: the nodes whose sources are under them and what those govern, describe and depend on one hop out, most governing first; the claims among them that are not current, as caveats; the open conflicts and the gaps; cut to a budget, and to public knowledge only when asked."
+      tags:
+        - rks
+      parameters:
+        - name: paths
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            default: []
+          description: The paths about to be touched; the whole repository when empty.
+          examples:
+            docs:
+              value:
+                - docs
+            public:
+              value: []
+        - name: budget
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: "The budget in bytes of rendered JSON; the default when `0`."
+          examples:
+            docs:
+              value: 0
+            public:
+              value: 4000
+        - name: public_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Only public knowledge: what may leave the machine."
+          examples:
+            docs:
+              value: false
+            public:
+              value: true
+      responses:
+        "200":
+          description: "The context for some paths: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeContextBundle"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.context
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_context
+      x-majordomus-cli: knowledge context
+  "/api/v1/knowledge/coverage":
+    get:
+      operationId: rks.coverage
+      summary: Coverage
+      description: "Over denominators the executable defines deterministically — components, capabilities, references, curated records, generated artifacts, layer objects — how many are covered and which are missing. Numbers, never percentages."
+      tags:
+        - rks
+      parameters: []
+      responses:
+        "200":
+          description: "Coverage: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeCoverageReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.coverage
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_coverage
+      x-majordomus-cli: knowledge coverage
+  "/api/v1/knowledge/explain":
+    get:
+      operationId: rks.explain
+      summary: Why the model says what it says
+      description: "One node explained: how it is known (observed, declared, curated, derived), what evidence it rests on with fingerprints, every claim with its freshness and the reason, what it relates to, the conflicts it is party to, the gaps about it, and what to do. For a capability, the same answer names its canonical source and every derived surface."
+      tags:
+        - rks
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The node id (`component:majordomus-cli`, `rule:project.alpha@1`), a capability id\n(`objects.get`), or an object URI (`majordomus://rule/project.alpha@1`)."
+          examples:
+            readme:
+              value: document:README.md
+      responses:
+        "200":
+          description: "Why the model says what it says: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeExplanation"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_explain
+      x-majordomus-cli: knowledge explain
+  "/api/v1/knowledge/extractors":
+    get:
+      operationId: rks.extractors
+      summary: How the model is made
+      description: "Every extractor with the kinds, relations and predicates it declares; the node kind vocabulary with who owns each kind; the semantic providers this executable ships and whether each is remote; the schema versions read and written and the migrations known."
+      tags:
+        - rks
+      parameters: []
+      responses:
+        "200":
+          description: "How the model is made: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeExtractorsReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.extractors
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_extractors
+      x-majordomus-cli: knowledge extractors
+  "/api/v1/knowledge/gaps":
+    get:
+      operationId: rks.gaps
+      summary: The gaps
+      description: "Everything the repository could know and does not: undocumented components, unresolved references, unverified curated knowledge, unexercised capabilities, canonicality violations — each with the reason and the remedy, optionally one category."
+      tags:
+        - rks
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeGapCategory"
+              - type: "null"
+          description: Only gaps of this category.
+          examples:
+            unresolved:
+              value: unresolved_reference
+      responses:
+        "200":
+          description: "The gaps: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeGapsReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.gaps
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_gaps
+      x-majordomus-cli: knowledge gaps
+  "/api/v1/knowledge/graph":
+    get:
+      operationId: rks.graph
+      summary: A slice of the knowledge graph
+      description: "Nodes and typed relations: around one root to a depth, or every node of one kind, capped. Each node carries its freshness so that a drawing can colour what is stale."
+      tags:
+        - rks
+      parameters:
+        - name: root
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Cut the slice around this node.
+          examples:
+            around-readme:
+              value: document:README.md
+        - name: depth
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: "How many hops from the root; `2` when unset."
+          examples:
+            around-readme:
+              value: 1
+            components:
+              value: 0
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Without a root: only nodes of this kind."
+          examples:
+            components:
+              value: component
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: "At most this many nodes; the executable's cap applies."
+          examples:
+            around-readme:
+              value: 0
+            components:
+              value: 0
+      responses:
+        "200":
+          description: "A slice of the knowledge graph: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeGraphSlice"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.graph
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_graph
+      x-majordomus-cli: knowledge graph
+  "/api/v1/knowledge/impact":
+    get:
+      operationId: rks.impact
+      summary: What a change set touches
+      description: "The working tree against a base, two revisions, or named paths: the entries that changed where an extractor can tell, the nodes whose evidence changed, the claims resting on it, the nodes reached along propagating relations with the hop count, which extractors a scan would re-run, and the changed paths nothing in the model knows about."
+      tags:
+        - rks
+      parameters:
+        - name: base
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The base to compare with; `HEAD` when unset."
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Compare `base` with this revision instead of with the working tree."
+        - name: paths
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+            default: []
+          description: Name the changed paths outright instead of asking git.
+          examples:
+            readme:
+              value:
+                - README.md
+            working-tree:
+              value: []
+      responses:
+        "200":
+          description: "What a change set touches: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeImpactReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.impact
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_impact
+      x-majordomus-cli: knowledge impact
+  "/api/v1/knowledge/inspect":
+    get:
+      operationId: rks.inspect
+      summary: Inspect a change set
+      description: "What a change set means for the knowledge before it is merged: the paths that changed against a base, the nodes and claims they touch, every capability the change adds with the checklist of surfaces derived for it, and the debt it introduces — freshness the baseline does not tolerate and canonicality violations that count. The pull-request gate."
+      tags:
+        - rks
+      parameters:
+        - name: base
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The base to compare the working tree with; `HEAD` when unset."
+      responses:
+        "200":
+          description: "Inspect a change set: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeInspection"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.inspect
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_change_inspect
+      x-majordomus-cli: knowledge inspect
+  "/api/v1/knowledge/model":
+    get:
+      operationId: rks.model
+      summary: The whole model
+      description: "The knowledge model as one document, `majordomus/knowledge/v1`: every extractor, evidence, node with claims, relation, conflict, gap and coverage row, with the fingerprint. Optionally the public projection only, which is what leaves the repository."
+      tags:
+        - rks
+      parameters:
+        - name: public
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Only the public projection: what may leave the repository."
+          examples:
+            public:
+              value: true
+            whole:
+              value: false
+      responses:
+        "200":
+          description: "The whole model: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeModel"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.model
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_model
+        resource:
+          uri: majordomus://knowledge/model
+          name: knowledge-model
+      x-majordomus-cli: knowledge scan
+  "/api/v1/knowledge/node":
+    get:
+      operationId: rks.get
+      summary: One knowledge node
+      description: "One node with everything that bears on it: its claims with their provenance, evidence, verification and freshness; its evidence resolved with fingerprints; the relations in and out; the conflicts it is the subject of; the gaps about it. The id may be a node id, a capability id, an object URI or a path."
+      tags:
+        - rks
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The node id (`component:majordomus-cli`, `rule:project.alpha@1`), a capability id\n(`objects.get`), or an object URI (`majordomus://rule/project.alpha@1`)."
+          examples:
+            readme:
+              value: document:README.md
+      responses:
+        "200":
+          description: "One knowledge node: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeNodeView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.get
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_get
+      x-majordomus-cli: knowledge show
+  "/api/v1/knowledge/nodes":
+    get:
+      operationId: rks.list
+      summary: List knowledge nodes
+      description: "The nodes a filter matches — by kind, provenance, freshness, ownership, visibility, extractor, or a substring of id or title; optionally only debt — one page at a time, each with its freshness and the reason it is not current."
+      tags:
+        - rks
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+          description: One node kind.
+          examples:
+            documents:
+              value: document
+        - name: provenance
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeProvenance"
+              - type: "null"
+          description: One provenance.
+        - name: freshness
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeFreshness"
+              - type: "null"
+          description: One freshness.
+        - name: ownership
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeOwnership"
+              - type: "null"
+          description: One ownership.
+        - name: visibility
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/KnowledgeVisibility"
+              - type: "null"
+          description: One visibility.
+        - name: extractor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: One extractor.
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A substring of the id or the title, case-insensitive."
+        - name: debt
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Only nodes whose freshness is debt.
+          examples:
+            all:
+              value: false
+            debt:
+              value: true
+            documents:
+              value: false
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: Skip this many matches.
+          examples:
+            all:
+              value: 0
+            debt:
+              value: 0
+            documents:
+              value: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: "Answer at most this many; `0` means the default."
+          examples:
+            all:
+              value: 0
+            debt:
+              value: 0
+            documents:
+              value: 20
+      responses:
+        "200":
+          description: "List knowledge nodes: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgePage"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.list
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_list
+      x-majordomus-cli: knowledge list
+  "/api/v1/knowledge/proposals":
+    get:
+      operationId: rks.proposals
+      summary: The reconciliation proposals
+      description: "What to do about every open conflict, stale or unverified claim, unresolved reference and gap, as proposals with an owner: which a person edits, and which `majordomus knowledge reconcile --accept` applies by recording a verification in the baseline."
+      tags:
+        - rks
+      parameters: []
+      responses:
+        "200":
+          description: "The reconciliation proposals: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeReconciliation"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.proposals
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_proposals
+      x-majordomus-cli: knowledge reconcile
+  "/api/v1/knowledge/search":
+    get:
+      operationId: rks.search
+      summary: Search the knowledge
+      description: "Ids and titles first, then summaries, then claim values; ranked by where the query matched and then by id, so that two runs agree."
+      tags:
+        - rks
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "What to look for, case-insensitive."
+          examples:
+            readme:
+              value: readme
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+            default: 0
+          description: "At most this many hits; `0` for the default."
+          examples:
+            readme:
+              value: 10
+      responses:
+        "200":
+          description: "Search the knowledge: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/KnowledgeSearchResult"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: rks.search
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::knowledge
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_knowledge_search
+      x-majordomus-cli: knowledge search
   "/api/v1/live":
     get:
       operationId: health.live
@@ -2980,6 +4219,230 @@ components:
       required:
         - schema
       description: "A JSON Schema with, when the type has one, a stable component name (the type's title)."
+    CanonicalityAudit:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`majordomus/canonicality-audit/v1`."
+        date:
+          type: string
+          description: "The day the audit ran, for the exceptions."
+        capabilities:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalityCapabilityCanonicality"
+          description: Every capability.
+        violations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalityViolation"
+          description: Every violation.
+        exceptions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalityExceptionStatus"
+          description: "The exceptions, with status."
+        mms_centi:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "The mean manual maintenance surface over the capabilities, times 100 (so that the\nnumber is an integer and the ideal is 100)."
+        canonical:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The number of capabilities whose MMS is one.
+        verdict:
+          type: string
+          description: "`pass` when no violation counts, `fail` otherwise."
+        summary:
+          type: string
+          description: One line.
+      required:
+        - schema
+        - date
+        - capabilities
+        - violations
+        - exceptions
+        - mms_centi
+        - canonical
+        - verdict
+        - summary
+      description: The audit.
+    CanonicalityCapabilityCanonicality:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The capability id.
+        canonical_source:
+          type: string
+          description: "The file it is declared in: the one canonical source."
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalitySurface"
+          description: The surfaces it is projected on.
+        mentions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalityMention"
+          description: "The hand-written files that name it, apart from its declaration."
+        mms:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "The manual maintenance surface: one for the declaration plus one per hand-written\nfile naming it."
+        verdict:
+          type: string
+          description: "`pass` when MMS is one, `review` otherwise."
+      required:
+        - id
+        - canonical_source
+        - surfaces
+        - mentions
+        - mms
+        - verdict
+      description: The canonicality of one capability.
+    CanonicalityExceptionStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The violation id it excepts.
+        reason:
+          type: string
+          description: Why the violation stands for now.
+        owner:
+          type: string
+          description: Who answers for it.
+        expires:
+          type: string
+          description: "The day it expires, `YYYY-MM-DD`; after it, the violation counts again."
+        validation:
+          type: string
+          description: How to tell the exception is no longer needed.
+        status:
+          type: string
+          description: "`active`, `expired` or `unused` (no violation carries its id)."
+      required:
+        - id
+        - reason
+        - owner
+        - expires
+        - validation
+        - status
+      description: An exception with its status.
+    CanonicalityMention:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The file.
+        line:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The line.
+        text:
+          type: string
+          description: "The line's text, trimmed."
+      required:
+        - path
+        - line
+        - text
+      description: "Where a capability's id appears by hand."
+    CanonicalitySummary:
+      type: object
+      properties:
+        verdict:
+          type: string
+          description: "`pass` or `fail`."
+        capabilities:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Capabilities audited.
+        canonical:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Capabilities with a manual maintenance surface of one.
+        mms_centi:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Mean manual maintenance surface, times 100."
+        violations:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Violations found.
+        counting:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Violations neither tolerated nor excepted.
+      required:
+        - verdict
+        - capabilities
+        - canonical
+        - mms_centi
+        - violations
+        - counting
+      description: "The canonicality audit, summarised."
+    CanonicalitySurface:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "`mcp`, `http`, `cli`, `openapi`, `docs`, `cockpit`, `benchmark`, `site`."
+        detail:
+          type: string
+          description: What it is on that surface.
+        derived:
+          type: boolean
+          description: "Derived from the canonical source by the executable: always true here, listed so\nthat a reader sees the derivation rather than takes it on faith."
+      required:
+        - name
+        - detail
+        - derived
+      description: One surface a capability is projected on.
+    CanonicalityViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The id, stable across runs: `<class>:<subject>`."
+        class:
+          type: string
+          description: "`orphan_projection`, `undeclared_generated`, `missing_artifact`, `suspected_mirror`\nor `expired_exception`."
+        subject:
+          type: string
+          description: What it is about.
+        reason:
+          type: string
+          description: Why it is a violation.
+        remedy:
+          type: string
+          description: What to do.
+        tolerated:
+          type: boolean
+          description: The baseline tolerates it.
+        excepted_by:
+          type:
+            - string
+            - "null"
+          description: "An active exception covers it, by id."
+      required:
+        - id
+        - class
+        - subject
+        - reason
+        - remedy
+        - tolerated
+      description: One violation the audit found.
     Capability:
       type: object
       properties:
@@ -3264,6 +4727,19 @@ components:
           description: Patterns matched against the file name alone.
           default: []
       description: "One category of `out`: pathspecs and file-name patterns."
+    ChangedPath:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Repository-relative, forward slashes."
+        status:
+          type: string
+          description: "`added`, `modified`, `deleted`, `renamed`, `copied` or `untracked`."
+      required:
+        - path
+        - status
+      description: "One path a change set touches, and how."
     Channel:
       oneOf:
         - type: string
@@ -4837,6 +6313,1903 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    KnowledgeAddedCapability:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The capability id.
+        declared_in:
+          type: string
+          description: "The file it is declared in: its canonical source."
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalitySurface"
+          description: "Every surface derived from the declaration, ticked."
+        mms:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Its manual maintenance surface.
+        mentions:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Hand-written files that already name it.
+      required:
+        - id
+        - declared_in
+        - surfaces
+        - mms
+        - mentions
+      description: "A capability the change set adds, with the surfaces derived for it."
+    KnowledgeAffected:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The node.
+        kind:
+          type: string
+          description: Its kind.
+        title:
+          type: string
+          description: Its title.
+        depth:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "`0` for a node whose own evidence changed; the hop count otherwise."
+        via:
+          type: string
+          description: The evidence id or the relation that carried the impact.
+        reason:
+          type: string
+          description: "One line: why."
+      required:
+        - id
+        - kind
+        - title
+        - depth
+        - via
+        - reason
+      description: A node the change set reaches.
+    KnowledgeBaselineSummary:
+      type: object
+      properties:
+        recorded:
+          type: boolean
+          description: Whether one was recorded.
+        recorded_at:
+          type:
+            - string
+            - "null"
+          description: "The commit it was recorded at, when it says."
+        path:
+          type: string
+          description: "Where it is, repository-relative."
+        nodes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Nodes recorded.
+        verified:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Verified claims.
+        debt:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Tolerated debt.
+        accepted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Accepted conflicts.
+        canonicality:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Tolerated canonicality violations.
+      required:
+        - recorded
+        - path
+        - nodes
+        - verified
+        - debt
+        - accepted
+        - canonicality
+      description: "The baseline, summarised."
+    KnowledgeChangedEntry:
+      type: object
+      properties:
+        path:
+          type: string
+          description: The file.
+        member:
+          type: string
+          description: The entry within it.
+        status:
+          type: string
+          description: "`added`, `modified` or `deleted`."
+      required:
+        - path
+        - member
+        - status
+      description: One entry of a structured file that changed.
+    KnowledgeCheckReport:
+      type: object
+      properties:
+        mode:
+          "$ref": "#/components/schemas/KnowledgeMode"
+          description: The mode the check ran in.
+        baseline_recorded:
+          type: boolean
+          description: Whether a baseline was recorded at all.
+        recorded_at:
+          type:
+            - string
+            - "null"
+          description: "The commit the baseline was recorded at, when it says."
+        new_debt:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeDebtItem"
+          description: "Debt the baseline does not tolerate: what fails the check in protect mode."
+        tolerated:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeDebtItem"
+          description: "Debt the baseline tolerates, still present."
+        resolved:
+          type: array
+          items:
+            type: string
+          description: "Debt the baseline tolerates that is gone: the baseline should be recorded again\nso that it cannot come back."
+        verdict:
+          type: string
+          description: "The verdict: `pass` or `fail`."
+        summary:
+          type: string
+          description: One line a person reads.
+      required:
+        - mode
+        - baseline_recorded
+        - new_debt
+        - tolerated
+        - resolved
+        - verdict
+        - summary
+      description: What the check found.
+    KnowledgeClaim:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity: `<subject>#<predicate>` with a discriminator when several claims\nshare both."
+        subject:
+          type: string
+          description: The node the claim is about.
+        predicate:
+          type: string
+          description: "The predicate, from the vocabulary an extractor declared."
+        value:
+          description: "The value: a string, a number, a boolean, a list."
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: How the claim came to be known.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: The evidence ids that support it.
+        confidence:
+          "$ref": "#/components/schemas/KnowledgeConfidence"
+          description: How strongly.
+        verification:
+          "$ref": "#/components/schemas/KnowledgeVerification"
+          description: How it is verified again.
+        state:
+          "$ref": "#/components/schemas/KnowledgeClaimState"
+          description: Where it stands.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: Where it stands against the baseline; filled by the freshness pass.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why it stands there, when the reason is worth a line."
+      required:
+        - id
+        - subject
+        - predicate
+        - value
+        - provenance
+        - confidence
+        - verification
+        - state
+        - freshness
+      description: "One proposition: a subject, a predicate and a value, with what supports it."
+    KnowledgeClaimLine:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The claim id.
+        predicate:
+          type: string
+          description: The predicate.
+        value:
+          description: The value.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: The provenance.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: The freshness.
+        state:
+          type: string
+          description: The state.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: The evidence ids.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when it is not current."
+      required:
+        - id
+        - predicate
+        - value
+        - provenance
+        - freshness
+        - state
+        - evidence
+      description: One claim as an explanation states it.
+    KnowledgeClaimState:
+      oneOf:
+        - type: string
+          const: asserted
+          description: "Asserted, and nothing contradicts it."
+        - type: string
+          const: conflicted
+          description: Another claim about the same subject and predicate carries a different value.
+        - type: string
+          const: unverified
+          description: "Its evidence does not resolve, or it has none."
+      description: Where a claim stands.
+    KnowledgeConfidence:
+      type: object
+      properties:
+        level:
+          "$ref": "#/components/schemas/KnowledgeConfidenceLevel"
+          description: "The level, which follows from the basis."
+        basis:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConfidenceBasis"
+          description: "Why, in the order the reasons were established."
+      required:
+        - level
+        - basis
+      description: The confidence of a claim or a node.
+    KnowledgeConfidenceBasis:
+      oneOf:
+        - type: string
+          const: deterministic_extraction
+          description: A deterministic extractor read it from the source itself.
+        - type: string
+          const: structured_declaration
+          description: A structured declaration states it and the declaration validates against its schema.
+        - type: string
+          const: human_curation
+          description: A person wrote it as curated knowledge.
+        - type: string
+          const: corroborated
+          description: Two independent sources agree.
+        - type: string
+          const: single_source
+          description: One source only.
+        - type: string
+          const: reference_unresolved
+          description: The evidence it names does not resolve to anything this repository holds.
+        - type: string
+          const: semantic_inference
+          description: A semantic provider inferred it.
+      description: Why a confidence level is what it is.
+    KnowledgeConfidenceLevel:
+      oneOf:
+        - type: string
+          const: high
+          description: "Deterministically extracted, or corroborated by independent sources."
+        - type: string
+          const: medium
+          description: "One structured declaration or one curated statement, resolvable, uncontradicted."
+        - type: string
+          const: low
+          description: "An inference, or a statement whose evidence does not resolve."
+      description: "How strongly the evidence supports a statement. Never a number a model produced: the\nlevel follows from the basis, and the basis is a fact about the evidence."
+    KnowledgeConflict:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity: `<subject>#<predicate>`."
+        subject:
+          type: string
+          description: The node both claims are about.
+        predicate:
+          type: string
+          description: The predicate they disagree on.
+        sides:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflictSide"
+          description: "The sides, strongest provenance first."
+        severity:
+          "$ref": "#/components/schemas/KnowledgeConflictSeverity"
+          description: How serious.
+        basis:
+          type: string
+          description: Why the severity is what it is.
+        resolution:
+          "$ref": "#/components/schemas/KnowledgeResolution"
+          description: Where it stands.
+        remedy:
+          type: string
+          description: What a person does about it.
+      required:
+        - id
+        - subject
+        - predicate
+        - sides
+        - severity
+        - basis
+        - resolution
+        - remedy
+      description: "Two claims about one subject and one functional predicate carrying different values.\nNeither side is chosen."
+    KnowledgeConflictSeverity:
+      oneOf:
+        - type: string
+          const: high
+          description: "An observed fact contradicts a declaration: the declaration is wrong or the code moved."
+        - type: string
+          const: medium
+          description: Two declarations disagree.
+        - type: string
+          const: low
+          description: A derived statement disagrees with something stronger.
+      description: How serious a conflict is.
+    KnowledgeConflictSide:
+      type: object
+      properties:
+        claim:
+          type: string
+          description: The claim id.
+        value:
+          description: Its value.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: Its provenance.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: The evidence ids behind it.
+      required:
+        - claim
+        - value
+        - provenance
+      description: One side of a conflict.
+    KnowledgeConflictsReport:
+      type: object
+      properties:
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflict"
+          description: "The conflicts, by id."
+        open:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Open ones, over the whole model."
+        accepted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Accepted ones.
+      required:
+        - conflicts
+        - open
+        - accepted
+      description: "The answer of `knowledge.conflicts`."
+    KnowledgeContextBundle:
+      type: object
+      properties:
+        paths:
+          type: array
+          items:
+            type: string
+          description: The paths asked about.
+        budget:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The budget in bytes of rendered JSON the bundle was cut to.
+        public_only:
+          type: boolean
+          description: Only public knowledge was included.
+        nodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeSummary"
+          description: "The nodes, most governing first."
+        caveats:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeClaimLine"
+          description: "The claims of those nodes that are not current: what the agent must not trust."
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflict"
+          description: Open conflicts among them.
+        gaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGap"
+          description: Gaps about them.
+        omitted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many nodes the budget left out.
+      required:
+        - paths
+        - budget
+        - public_only
+        - nodes
+        - caveats
+        - conflicts
+        - gaps
+        - omitted
+      description: "What an agent should read before touching some paths: the nodes whose sources are\nunder them, what those relate to one hop out, the open conflicts and the gaps among\nthem — ordered so that the governing things come first, and cut to a budget."
+    KnowledgeCoverage:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeCoverageRow"
+          description: "The rows, in a stable order."
+      required:
+        - rows
+      description: Every coverage row.
+    KnowledgeCoverageReport:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeCoverageRow"
+          description: The rows.
+      required:
+        - rows
+      description: "The answer of `knowledge.coverage`."
+    KnowledgeCoverageRow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Stable identity.
+        title:
+          type: string
+          description: What is counted.
+        denominator:
+          type: string
+          description: What defines the denominator.
+        discovered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many were discovered.
+        covered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many are covered.
+        missing:
+          type: array
+          items:
+            type: string
+          description: The node ids that are not.
+      required:
+        - id
+        - title
+        - denominator
+        - discovered
+        - covered
+      description: "One coverage row: a denominator this executable can define deterministically, and how\nmuch of it is covered. No percentage is computed; the numbers are the answer."
+    KnowledgeDebtItem:
+      type: object
+      properties:
+        class:
+          type: string
+          description: "What kind of debt: `freshness`, `conflict` or `canonicality`."
+        id:
+          type: string
+          description: "The node, conflict or violation id."
+        state:
+          type: string
+          description: The state it is in.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, as the scan said."
+      required:
+        - class
+        - id
+        - state
+      description: One item of debt the check found.
+    KnowledgeEvidence:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity: `file:<path>`, `entry:<path>#<member>`, `object:<uri>`,\n`commit:<sha>`, `capability:<id>`, `artifact:<path>`."
+        kind:
+          "$ref": "#/components/schemas/KnowledgeEvidenceKind"
+          description: What kind of thing it is.
+        locator:
+          "$ref": "#/components/schemas/KnowledgeLocator"
+          description: Where it is.
+        fingerprint:
+          "$ref": "#/components/schemas/KnowledgeFingerprint"
+          description: Its fingerprint at the moment it was read.
+        extractor:
+          type: string
+          description: The extractor that read it.
+        visibility:
+          "$ref": "#/components/schemas/KnowledgeVisibility"
+          description: Who may see it.
+        remote_processing:
+          type: boolean
+          description: Whether its content may be sent to a remote provider at all.
+      required:
+        - id
+        - kind
+        - locator
+        - fingerprint
+        - extractor
+        - visibility
+        - remote_processing
+      description: "One piece of evidence: something that was read, fingerprinted, and can be read again."
+    KnowledgeEvidenceKind:
+      oneOf:
+        - type: string
+          const: file
+          description: "A tracked file, whole."
+        - type: string
+          const: object
+          description: "One object of the layer's index, with its parsed metadata."
+        - type: string
+          const: manifest_entry
+          description: "One entry of a manifest or a configuration file: a dependency, a member, a section."
+        - type: string
+          const: commit
+          description: A git revision.
+        - type: string
+          const: capability
+          description: "A capability of this executable's registry."
+        - type: string
+          const: artifact
+          description: A generated artifact of the generation plan.
+      description: What kind of thing a piece of evidence is.
+    KnowledgeEvidenceLine:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The evidence id.
+        kind:
+          type: string
+          description: Its kind.
+        path:
+          type:
+            - string
+            - "null"
+          description: "The path, when it has one."
+        fingerprint:
+          type: string
+          description: "The fingerprint, shortened."
+        extractor:
+          type: string
+          description: The extractor that read it.
+        remote_processing:
+          type: boolean
+          description: Whether it may leave the machine.
+      required:
+        - id
+        - kind
+        - fingerprint
+        - extractor
+        - remote_processing
+      description: "One line of an explanation's evidence chain."
+    KnowledgeExplanation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The node.
+        kind:
+          type: string
+          description: Its kind.
+        title:
+          type: string
+          description: Its title.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: How it is known.
+        ownership:
+          "$ref": "#/components/schemas/KnowledgeOwnership"
+          description: Who owns its source.
+        visibility:
+          "$ref": "#/components/schemas/KnowledgeVisibility"
+          description: Who may see it.
+        extractor:
+          type: string
+          description: Which extractor produced it.
+        source:
+          type:
+            - string
+            - "null"
+          description: Where it came from.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: Its freshness.
+        freshness_reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when it is not current."
+        confidence:
+          type: string
+          description: "The confidence, in words."
+        why:
+          type: array
+          items:
+            type: string
+          description: "The explanation, one sentence per line."
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeEvidenceLine"
+          description: The evidence chain.
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeClaimLine"
+          description: Every claim.
+        relates_to:
+          type: array
+          items:
+            type: string
+          description: "What it relates to, as `kind -> target`."
+        related_from:
+          type: array
+          items:
+            type: string
+          description: "What relates to it, as `source -> kind`."
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflict"
+          description: Conflicts it is party to.
+        gaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGap"
+          description: Gaps about it.
+        remedies:
+          type: array
+          items:
+            type: string
+          description: "What to do, when something is wrong."
+      required:
+        - id
+        - kind
+        - title
+        - provenance
+        - ownership
+        - visibility
+        - extractor
+        - freshness
+        - confidence
+        - why
+        - evidence
+        - claims
+        - relates_to
+        - related_from
+        - conflicts
+        - gaps
+        - remedies
+      description: Why the model says what it says about one node.
+    KnowledgeExtractorInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The stable identity, `[a-z][a-z0-9_-]*`."
+        version:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The version; a change to what it emits is a new version.
+        title:
+          type: string
+          description: The short name.
+        description:
+          type: string
+          description: One paragraph.
+        deterministic:
+          type: boolean
+          description: True when the same tree always yields the same result; false for a semantic one.
+        reads_sensitive:
+          type: boolean
+          description: True when it reads content that may hold secrets.
+        kinds:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeKindInfo"
+          description: The kinds it emits.
+        relations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeRelationInfo"
+          description: The relation kinds it emits.
+        predicates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgePredicateInfo"
+          description: The predicates it emits.
+      required:
+        - id
+        - version
+        - title
+        - description
+        - deterministic
+        - reads_sensitive
+        - kinds
+        - relations
+        - predicates
+      description: "What an extractor is, declared once beside its behaviour."
+    KnowledgeExtractorsReport:
+      type: object
+      properties:
+        extractors:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeExtractorInfo"
+          description: "Every extractor, in the order they run."
+        kinds:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeKindOwner"
+          description: "Every node kind, with the extractor that declares it."
+        relations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeRelationInfo"
+          description: Every relation kind.
+        predicates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgePredicateInfo"
+          description: Every predicate.
+        providers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeProviderInfo"
+          description: The semantic providers this executable ships.
+        schemas:
+          type: array
+          items: true
+          description: "The schema versions this executable reads and writes, and the migrations it knows."
+      required:
+        - extractors
+        - kinds
+        - relations
+        - predicates
+        - providers
+        - schemas
+      description: "The answer of `knowledge.extractors`: how the model is made."
+    KnowledgeFingerprint:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          description: "The algorithm; `sha256` today."
+        value:
+          type: string
+          description: The hex digest.
+        granularity:
+          "$ref": "#/components/schemas/KnowledgeGranularity"
+          description: How much of the source it covers.
+      required:
+        - algorithm
+        - value
+        - granularity
+      description: A content fingerprint.
+    KnowledgeFreshness:
+      oneOf:
+        - type: string
+          const: current
+          description: Every piece of evidence the knowledge rests on is what it was verified against.
+        - type: string
+          const: possibly_stale
+          description: Something the knowledge depends on moved; the knowledge itself was not touched.
+        - type: string
+          const: stale
+          description: Evidence the knowledge rests on directly changed since it was verified.
+        - type: string
+          const: conflicted
+          description: "Other evidence contradicts it, and nobody has resolved which side holds."
+        - type: string
+          const: unverified
+          description: "Nothing verifies it: no evidence, evidence that does not resolve, or no baseline."
+      description: "Whether knowledge may still be trusted, decided against its evidence and never by its\nage. An old decision can be current; yesterday's note can already be contradicted."
+    KnowledgeGap:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity: `<category>:<subject>`."
+        category:
+          "$ref": "#/components/schemas/KnowledgeGapCategory"
+          description: The category.
+        subject:
+          type: string
+          description: The node or evidence it concerns.
+        reason:
+          type: string
+          description: Why it is a gap.
+        remedy:
+          type: string
+          description: What closes it.
+      required:
+        - id
+        - category
+        - subject
+        - reason
+        - remedy
+      description: "Something the repository should know and does not, with what to do about it."
+    KnowledgeGapCategory:
+      oneOf:
+        - type: string
+          const: undocumented_component
+          description: A component the repository has and no document describes.
+        - type: string
+          const: unresolved_reference
+          description: "A declaration names a file, a test or an object that does not exist."
+        - type: string
+          const: unverified_knowledge
+          description: Knowledge nothing verifies.
+        - type: string
+          const: unexercised_capability
+          description: "A capability no use case, claim or decision names."
+        - type: string
+          const: canonicality
+          description: "A generated artifact whose source cannot be found, or a mirror of a canonical source."
+      description: What kind of gap a gap is.
+    KnowledgeGapsReport:
+      type: object
+      properties:
+        gaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGap"
+          description: "The gaps, by id."
+        tallies:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many of each category, over the whole model."
+      required:
+        - gaps
+        - tallies
+      description: "The answer of `knowledge.gaps`."
+    KnowledgeGranularity:
+      oneOf:
+        - type: string
+          const: revision
+          description: The whole revision.
+        - type: string
+          const: file
+          description: The whole file.
+        - type: string
+          const: entry
+          description: One entry of a structured file.
+        - type: string
+          const: object
+          description: "One object's parsed metadata, independent of its prose."
+      description: "How much of a source a fingerprint covers. Stated rather than implied: file-level\nevidence cannot pretend to entry-level precision."
+    KnowledgeGraphEdge:
+      type: object
+      properties:
+        source:
+          type: string
+          description: The source.
+        target:
+          type: string
+          description: The target.
+        kind:
+          type: string
+          description: The kind.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: The provenance.
+      required:
+        - source
+        - target
+        - kind
+        - provenance
+      description: An edge of a graph slice.
+    KnowledgeGraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id.
+        kind:
+          type: string
+          description: The kind.
+        title:
+          type: string
+          description: The title.
+        label:
+          type: string
+          description: "The short label a renderer draws: the local part of the id."
+        route:
+          type:
+            - string
+            - "null"
+          description: Where the Cockpit shows the node.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: The freshness.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: The provenance.
+        depth:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Distance from the root, when the slice has one."
+      required:
+        - id
+        - kind
+        - title
+        - label
+        - freshness
+        - provenance
+        - depth
+      description: A node of a graph slice.
+    KnowledgeGraphSlice:
+      type: object
+      properties:
+        root:
+          type:
+            - string
+            - "null"
+          description: "The root, when the slice was cut around one."
+        nodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGraphNode"
+          description: The nodes.
+        edges:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGraphEdge"
+          description: The edges among them.
+        omitted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many nodes the cut left out.
+      required:
+        - nodes
+        - edges
+        - omitted
+      description: A slice of the knowledge graph.
+    KnowledgeHit:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The node.
+        kind:
+          type: string
+          description: Its kind.
+        title:
+          type: string
+          description: Its title.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: Its freshness.
+        matched:
+          type: string
+          description: "Where the query matched: `id`, `title`, `summary`, `claim`."
+        excerpt:
+          type: string
+          description: "The matching text, shortened."
+        score:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Higher is better; deterministic.
+      required:
+        - id
+        - kind
+        - title
+        - freshness
+        - matched
+        - excerpt
+        - score
+      description: One search hit.
+    KnowledgeImpactReport:
+      type: object
+      properties:
+        change_set:
+          type: string
+          description: "What the change set is: `working-tree`, `revisions` or `paths`."
+        base:
+          type:
+            - string
+            - "null"
+          description: "The base the working tree or the revision was compared with, when there is one."
+        changed:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ChangedPath"
+          description: The paths that changed.
+        entries:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeChangedEntry"
+          description: "The entries that changed, where an extractor could tell."
+        direct:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeAffected"
+          description: Nodes whose own evidence changed.
+        transitive:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeAffected"
+          description: "Nodes reached along propagating relations, nearest first."
+        claims:
+          type: array
+          items:
+            type: string
+          description: "The claims resting on changed evidence, by id."
+        extractors:
+          type: array
+          items:
+            type: string
+          description: "Extractors whose evidence the change set touches: what a scan re-reads."
+        unmodelled:
+          type: array
+          items:
+            type: string
+          description: "Paths no evidence rests on: a change nothing in the model knows about."
+      required:
+        - change_set
+        - changed
+        - entries
+        - direct
+        - transitive
+        - claims
+        - extractors
+        - unmodelled
+      description: The impact of a change set.
+    KnowledgeInspection:
+      type: object
+      properties:
+        base:
+          type: string
+          description: The base the change set was cut against.
+        impact:
+          "$ref": "#/components/schemas/KnowledgeImpactReport"
+          description: The impact of the change set on the model.
+        added_capabilities:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeAddedCapability"
+          description: Every capability the change set adds.
+        new_debt:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeDebtItem"
+          description: "Debt the baseline does not tolerate: what the change must fix or record."
+        violations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanonicalityViolation"
+          description: Canonicality violations that count.
+        mode:
+          "$ref": "#/components/schemas/KnowledgeMode"
+          description: "The check's mode."
+        verdict:
+          type: string
+          description: "`pass` or `fail`."
+        summary:
+          type: string
+          description: One line.
+      required:
+        - base
+        - impact
+        - added_capabilities
+        - new_debt
+        - violations
+        - mode
+        - verdict
+        - summary
+      description: The inspection.
+    KnowledgeKindInfo:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The kind.
+        meaning:
+          type: string
+          description: What a node of this kind is.
+      required:
+        - kind
+        - meaning
+      description: "One kind an extractor emits, with what it means."
+    KnowledgeKindOwner:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The kind.
+        meaning:
+          type: string
+          description: What a node of this kind is.
+        extractor:
+          type: string
+          description: The extractor.
+      required:
+        - kind
+        - meaning
+        - extractor
+      description: A node kind and who declares it.
+    KnowledgeLocator:
+      type: object
+      properties:
+        path:
+          type:
+            - string
+            - "null"
+          description: "The repository-relative path, when the evidence is in a file."
+        uri:
+          type:
+            - string
+            - "null"
+          description: "The `majordomus://` URI, when the evidence is an object of the layer."
+        member:
+          type:
+            - string
+            - "null"
+          description: "The member inside the file, when the evidence is one entry of it\n(`dependencies.serde`, `claims.3`)."
+        id:
+          type:
+            - string
+            - "null"
+          description: "The canonical id, when the evidence is a capability or an artifact."
+      description: "Where a piece of evidence is found. Repository-relative, never a machine path."
+    KnowledgeMode:
+      oneOf:
+        - type: string
+          const: observe
+          description: Report everything; never fail.
+        - type: string
+          const: warn
+          description: Report new debt as warnings; never fail.
+        - type: string
+          const: protect
+          description: Refuse new debt; tolerate what the baseline records.
+        - type: string
+          const: strict
+          description: Refuse any debt at all.
+      description: How strictly the check holds a scan against the baseline.
+    KnowledgeModel:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "[`SCHEMA`]."
+        repository:
+          "$ref": "#/components/schemas/KnowledgeRepositoryIdentity"
+          description: The repository it is about.
+        reference:
+          "$ref": "#/components/schemas/KnowledgeReferenceInfo"
+          description: The reference freshness was decided against.
+        extractors:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeExtractorInfo"
+          description: "Every extractor that ran, with its vocabulary."
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeEvidence"
+          description: "Every piece of evidence, by id."
+        nodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeNode"
+          description: "Every node, by id, claims inside."
+        relations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeRelation"
+          description: "Every relation, sorted."
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflict"
+          description: "Every conflict, by id."
+        gaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGap"
+          description: "Every gap, by id."
+        coverage:
+          "$ref": "#/components/schemas/KnowledgeCoverage"
+          description: Coverage where a denominator is defined.
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: What could not be read or did not validate.
+        fingerprint:
+          type: string
+          description: "A hash of every node, claim, evidence fingerprint and relation, freshness excluded:\nthe same tree yields the same fingerprint."
+      required:
+        - schema
+        - repository
+        - reference
+        - extractors
+        - evidence
+        - nodes
+        - relations
+        - conflicts
+        - gaps
+        - coverage
+        - fingerprint
+      description: "The whole model: what the repository knows, with the evidence behind it."
+    KnowledgeNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable identity, `<kind>:<local>`: `component:majordomus-cli`, `document:docs/CLI.md`,\n`decision:adr-0021`, `capability:objects.get`. Survives a retitle."
+        kind:
+          type: string
+          description: "The kind, from the vocabulary an extractor declared."
+        title:
+          type: string
+          description: The short name a listing shows.
+        summary:
+          type:
+            - string
+            - "null"
+          description: "One line about it, when the source holds one."
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: How the node came to be known.
+        ownership:
+          "$ref": "#/components/schemas/KnowledgeOwnership"
+          description: Who owns its source.
+        visibility:
+          "$ref": "#/components/schemas/KnowledgeVisibility"
+          description: Who may see it.
+        confidence:
+          "$ref": "#/components/schemas/KnowledgeConfidence"
+          description: How strongly the evidence supports it.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: The evidence ids the node itself rests on.
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeClaim"
+          description: The claims made about it.
+        source:
+          type:
+            - string
+            - "null"
+          description: "The repository-relative source, when one file owns the node."
+        extractor:
+          type: string
+          description: The extractor that emitted it.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: Where it stands against the baseline; filled by the freshness pass.
+        freshness_reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when the reason is worth a line."
+        route:
+          type:
+            - string
+            - "null"
+          description: "The Cockpit route of the underlying object, when it has one."
+      required:
+        - id
+        - kind
+        - title
+        - provenance
+        - ownership
+        - visibility
+        - confidence
+        - extractor
+        - freshness
+      description: "One node of the knowledge graph: a thing the repository holds, has, decides or does."
+    KnowledgeNodeView:
+      type: object
+      properties:
+        node:
+          "$ref": "#/components/schemas/KnowledgeNode"
+          description: The node.
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeEvidence"
+          description: "Its evidence, resolved."
+        outgoing:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeRelation"
+          description: Relations leaving it.
+        incoming:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeRelation"
+          description: Relations entering it.
+        conflicts:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeConflict"
+          description: Conflicts it is the subject of.
+        gaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeGap"
+          description: Gaps about it.
+      required:
+        - node
+        - evidence
+        - outgoing
+        - incoming
+        - conflicts
+        - gaps
+      description: One node with everything that bears on it.
+    KnowledgeOwnership:
+      oneOf:
+        - type: string
+          const: external
+          description: "A person or another tool owns the source; Majordomus reports and proposes, never\nrewrites."
+        - type: string
+          const: majordomus
+          description: Majordomus generates the source and may regenerate or re-accept it.
+        - type: string
+          const: hybrid
+          description: "A file with a machine-owned part and a human-owned part; only the machine-owned\npart is ever updated automatically."
+      description: "Who may change the source a piece of knowledge came from, which decides what\nreconciliation may do with it."
+    KnowledgePage:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeSummary"
+          description: The nodes on the page.
+        total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many matched in all.
+        offset:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The offset of the page.
+        limit:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The page size asked for.
+      required:
+        - nodes
+        - total
+        - offset
+        - limit
+      description: A page of a listing.
+    KnowledgePredicateInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The predicate.
+        meaning:
+          type: string
+          description: What a claim of it says.
+        functional:
+          type: boolean
+          description: "True when one subject has exactly one value: two different values are a conflict."
+      required:
+        - name
+        - meaning
+        - functional
+      description: "One predicate an extractor emits, with what it means and how claims of it behave."
+    KnowledgeProposal:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Stable across runs: `<class>:<subject>`."
+        class:
+          type: string
+          description: "`resolve_conflict`, `reverify`, `fix_reference`, `document`, `exercise`,\n`derive` or `review`."
+        subject:
+          type: string
+          description: The node or claim it is about.
+        action:
+          type: string
+          description: "What to do, one sentence."
+        owner:
+          "$ref": "#/components/schemas/KnowledgeOwnership"
+          description: "Who owns the source: `external` means a person edits it."
+        applies_by:
+          type: string
+          description: "`accept` applies it on `--accept`; `edit` needs a person."
+      required:
+        - id
+        - class
+        - subject
+        - action
+        - owner
+        - applies_by
+      description: One proposal.
+    KnowledgeProvenance:
+      oneOf:
+        - type: string
+          const: observed
+          description: "Read off the repository or git by a deterministic extractor: a file exists, a\nmanifest names a package, HEAD is a commit. The evidence is the source itself."
+        - type: string
+          const: declared
+          description: "Stated by a structured declaration a person wrote about the repository: front\nmatter, a claims matrix, a deployment object. True because somebody said so."
+        - type: string
+          const: derived
+          description: "Concluded from other knowledge by a rule this executable applies, or by a semantic\nprovider. Never mistaken for an observation."
+        - type: string
+          const: curated
+          description: "Written deliberately by a person as knowledge, under the curated kind of the layer."
+      description: "How a statement came to be known. The four classes are the whole vocabulary; a fifth\nwould be a class nobody can decide from evidence."
+    KnowledgeProviderInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id.
+        model:
+          type: string
+          description: The model it uses.
+        remote:
+          type: boolean
+          description: Whether it sends text off the machine.
+        operations:
+          type: array
+          items:
+            type: string
+          description: The operations.
+      required:
+        - id
+        - model
+        - remote
+        - operations
+      description: "A semantic provider, described."
+    KnowledgeReconciliation:
+      type: object
+      properties:
+        proposals:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeProposal"
+          description: "Every proposal, by class then subject."
+        acceptable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many are applied by `--accept`."
+        accepted:
+          type: array
+          items:
+            type: string
+          description: "The claims accepted, when `--accept` ran."
+        baseline_written:
+          type: boolean
+          description: Whether the baseline was written.
+      required:
+        - proposals
+        - acceptable
+        - accepted
+        - baseline_written
+      description: "What reconciliation found and, on accept, did."
+    KnowledgeReferenceInfo:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: "`baseline` when a tracked baseline exists, `none` otherwise."
+        revision:
+          type:
+            - string
+            - "null"
+          description: "The revision the baseline was taken at, when there is one."
+        mode:
+          type: string
+          description: The enforcement mode in force.
+        path:
+          type:
+            - string
+            - "null"
+          description: "Where the baseline is, repository-relative, when there is one."
+      required:
+        - kind
+        - mode
+      description: Which reference freshness was decided against.
+    KnowledgeRelation:
+      type: object
+      properties:
+        source:
+          type: string
+          description: The node the relation leaves.
+        target:
+          type: string
+          description: The node it enters.
+        kind:
+          type: string
+          description: "The kind, from the vocabulary an extractor declared."
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: How the relation came to be known.
+        evidence:
+          type: array
+          items:
+            type: string
+          description: The evidence ids that state it.
+      required:
+        - source
+        - target
+        - kind
+        - provenance
+      description: "One typed, directed relation between two nodes."
+    KnowledgeRelationInfo:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: The relation kind.
+        meaning:
+          type: string
+          description: What an edge of this kind asserts.
+        propagates:
+          type: boolean
+          description: True when a change at the target may make the source possibly stale.
+      required:
+        - kind
+        - meaning
+        - propagates
+      description: "One relation kind an extractor emits, with what it asserts."
+    KnowledgeRepositoryIdentity:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The repository's name: the last component of its root."
+        id:
+          type: string
+          description: "A digest of the root, so two processes can tell they mean one repository."
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch, when git could say."
+        head:
+          type:
+            - string
+            - "null"
+          description: "The commit, when git could say."
+        working_tree:
+          type: string
+          description: "`clean`, `dirty` or `unknown`."
+      required:
+        - name
+        - id
+        - working_tree
+      description: "The repository the model is about, as git identifies it. No machine path: the model is\nserved and cached locally, but a projection of it may be published."
+    KnowledgeResolution:
+      oneOf:
+        - type: string
+          const: open
+          description: Nobody has decided which side holds.
+        - type: string
+          const: accepted
+          description: The baseline accepts it as known debt.
+      description: Where a conflict stands.
+    KnowledgeSearchResult:
+      type: object
+      properties:
+        query:
+          type: string
+          description: The query.
+        hits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KnowledgeHit"
+          description: "The hits, best first."
+      required:
+        - query
+        - hits
+      description: "The answer of `knowledge.search`."
+    KnowledgeSemanticSummary:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether the policy enables it.
+        provider:
+          type: string
+          description: The provider the policy names.
+        allow_remote:
+          type: boolean
+          description: Whether a remote provider is allowed.
+        derived_claims:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Derived claims in the model.
+      required:
+        - enabled
+        - provider
+        - allow_remote
+        - derived_claims
+      description: "The semantic layer, summarised."
+    KnowledgeStatusReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`majordomus/knowledge/v1`."
+        repository:
+          "$ref": "#/components/schemas/KnowledgeRepositoryIdentity"
+          description: The repository scanned.
+        reference:
+          "$ref": "#/components/schemas/KnowledgeReferenceInfo"
+          description: What freshness is judged against.
+        fingerprint:
+          type: string
+          description: "The model's fingerprint: content, not freshness."
+        mode:
+          "$ref": "#/components/schemas/KnowledgeMode"
+          description: "The check's mode."
+        baseline:
+          "$ref": "#/components/schemas/KnowledgeBaselineSummary"
+          description: The baseline.
+        nodes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Nodes.
+        claims:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Claims.
+        evidence:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Evidence.
+        relations:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Relations.
+        kinds:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: Nodes by kind.
+        freshness:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: Nodes by freshness.
+        provenance:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: Nodes by provenance.
+        conflicts_open:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Open conflicts.
+        conflicts_accepted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Accepted conflicts.
+        gaps:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: Gaps by category.
+        coverage:
+          "$ref": "#/components/schemas/KnowledgeCoverage"
+          description: The coverage rows.
+        check:
+          "$ref": "#/components/schemas/KnowledgeCheckReport"
+          description: "The check against the baseline, in the policy's mode."
+        canonicality:
+          "$ref": "#/components/schemas/CanonicalitySummary"
+          description: "The canonicality audit, summarised."
+        semantic:
+          "$ref": "#/components/schemas/KnowledgeSemanticSummary"
+          description: The semantic layer.
+        extractors:
+          type: array
+          items:
+            type: string
+          description: "The extractors that ran, by id."
+        diagnostics:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Diagnostics the scan raised.
+        findings:
+          type: array
+          items:
+            type: string
+          description: "The diagnostics, one line each."
+        summary:
+          type: string
+          description: One line.
+      required:
+        - schema
+        - repository
+        - reference
+        - fingerprint
+        - mode
+        - baseline
+        - nodes
+        - claims
+        - evidence
+        - relations
+        - kinds
+        - freshness
+        - provenance
+        - conflicts_open
+        - conflicts_accepted
+        - gaps
+        - coverage
+        - check
+        - canonicality
+        - semantic
+        - extractors
+        - diagnostics
+        - findings
+        - summary
+      description: "The status of the knowledge system: everything a person or a page asks first."
+    KnowledgeSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id.
+        kind:
+          type: string
+          description: The kind.
+        title:
+          type: string
+          description: The title.
+        provenance:
+          "$ref": "#/components/schemas/KnowledgeProvenance"
+          description: The provenance.
+        ownership:
+          "$ref": "#/components/schemas/KnowledgeOwnership"
+          description: The ownership.
+        freshness:
+          "$ref": "#/components/schemas/KnowledgeFreshness"
+          description: The freshness.
+        freshness_reason:
+          type:
+            - string
+            - "null"
+          description: "Why it is not current, when it is not."
+        claims:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many claims it carries.
+        source:
+          type:
+            - string
+            - "null"
+          description: "The source path, when it has one."
+        route:
+          type:
+            - string
+            - "null"
+          description: "The Cockpit route, when it has one."
+      required:
+        - id
+        - kind
+        - title
+        - provenance
+        - ownership
+        - freshness
+        - claims
+      description: One node as a listing shows it.
+    KnowledgeVerification:
+      oneOf:
+        - type: string
+          const: existence
+          description: The claim holds while the thing it names exists; re-checked live on every read.
+        - type: string
+          const: content
+          description: "The claim was made against the content of its evidence; it holds while that\ncontent's fingerprint is the one it was verified against."
+      description: How a claim is verified again later.
+    KnowledgeVisibility:
+      oneOf:
+        - type: string
+          const: public
+          description: May be published on a public surface such as GitHub Pages.
+        - type: string
+          const: internal
+          description: Served to whoever can reach the loopback server; never published.
+        - type: string
+          const: restricted
+          description: "Never leaves this machine: not published, not sent to a remote provider."
+      description: "Who may see a piece of knowledge, and therefore where it may be projected."
     Libc:
       oneOf:
         - type: string

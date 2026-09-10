@@ -7,7 +7,7 @@ description: An executable capability of the Rust executable is declared once wi
 statement: Add or change an external operation of the Rust executable only by changing its canonical capability or module declaration and regenerating the projections; never by editing a transport registry, an OpenAPI or Swagger definition, a benchmark inventory or a documentation table, and any repeated semantic definition across projections is a design defect unless protocol-specific information cannot be derived safely.
 status: active
 class: blocking
-depends_on: []
+depends_on: [project.canonicality@1]
 tags: [rust, architecture, capabilities]
 ---
 

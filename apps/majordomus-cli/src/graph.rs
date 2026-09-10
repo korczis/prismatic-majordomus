@@ -358,6 +358,7 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("use-cases", use_cases_graph),
     ("why", why_graph),
     ("composed", composed_graph),
+    ("knowledge", knowledge_graph),
 ];
 
 /// The ids of every graph, in the order they are listed.
@@ -2167,4 +2168,187 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert!(found[0].correction.contains("MCP tool"));
     }
+}
+
+// ---------------------------------------------------------------- the relations, read by another consumer
+
+/// What one declared reference of the layer resolved to, for a consumer other than the
+/// graph: the knowledge model reads the same table the composed graph and the check read,
+/// so that a reference means one thing everywhere.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ResolvedTarget {
+    /// An object of the index, by URI.
+    Object(String),
+    /// Something outside the layer: a file, a test, a command, a claim the index does not
+    /// hold; `path` when the reference names a repository path.
+    External {
+        /// The kind the reference names.
+        kind: String,
+        /// The name as written.
+        name: String,
+        /// The repository-relative path, when the reference is one.
+        path: Option<String>,
+    },
+    /// Nothing, with the correction.
+    Missing(String),
+}
+
+/// One declared reference of one object, resolved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedRelation {
+    /// The URI of the object that declared it.
+    pub source: String,
+    /// The front matter key it was declared under.
+    pub field: String,
+    /// The reference as written.
+    pub reference: String,
+    /// The edge kind the reference asserts.
+    pub edge: String,
+    /// True when the edge runs from the target to the source.
+    pub inverted: bool,
+    /// What it resolved to.
+    pub target: ResolvedTarget,
+}
+
+
+/// The knowledge model as a graph: every node the extractors produced, with its freshness
+/// as its status, and every typed relation among them. Derived from a scan of the
+/// checkout held against the committed baseline — the same scan every `rks.*`
+/// capability reads — so the graph, the listing and the check agree.
+fn knowledge_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    let mut b = Builder::new(
+        "knowledge",
+        "The knowledge graph",
+        "Every node of the repository knowledge model — components, documents, decisions, rules, capabilities, generated artifacts, curated records — and every typed relation among them, each node carrying whether it still holds.",
+        "a scan of the checkout by the knowledge extractors, held against .ai/repo/knowledge/baseline.yaml",
+    )
+    .edge_kind("references", "the source links to or names the target")
+    .edge_kind("depends_on", "the source depends on the target")
+    .edge_kind("derived_from", "the source is generated or verified from the target")
+    .edge_kind("composes", "the module composes the capability")
+    .edge_kind("declared_in", "the capability is declared in that file")
+    .edge_kind("describes", "the document is about the target")
+    .edge_kind("documents", "the curated record documents the target");
+    let root = std::path::Path::new(&index.repository.root);
+    let Ok(repository) = crate::repository::Repository::open(root) else {
+        return b.finish();
+    };
+    let tracked = match &index.repository.git {
+        crate::git::GitState::Available(_) => crate::git::ls_files_all(root).unwrap_or_default(),
+        crate::git::GitState::Unavailable { .. } => Vec::new(),
+    };
+    let section = repository
+        .section_path("knowledge")
+        .unwrap_or_else(|| format!("{}/knowledge", repository.repo_path()));
+    let inputs = crate::knowledge::Inputs {
+        root,
+        index,
+        registry,
+        local: repository.local_path(),
+        section,
+        tracked: std::sync::Arc::new(tracked),
+        policy: crate::knowledge::baseline::KnowledgePolicy::load(&repository),
+    };
+    let baseline = inputs.baseline().unwrap_or_default();
+    let model = crate::knowledge::scan(&inputs, &baseline);
+    for (kind, (_, info)) in model.kind_vocabulary() {
+        b = b.node_kind(kind, &info.meaning);
+    }
+    for (kind, info) in model.relation_kinds() {
+        b = b.edge_kind(kind, &info.meaning);
+    }
+    // the layer's own objects and the things the repository is made of first, then
+    // what merely got named: a graph cut at the cap keeps the nodes a reader came for
+    let rank = |kind: &str| match kind {
+        "file" | "directory" => 2,
+        "artifact" | "dependency" | "test" | "implementation" => 1,
+        _ => 0,
+    };
+    let mut nodes: Vec<&crate::knowledge::model::Node> = model.nodes.iter().collect();
+    nodes.sort_by(|a, c| rank(&a.kind).cmp(&rank(&c.kind)).then(a.id.cmp(&c.id)));
+    for n in nodes {
+        let added = b.node(Node {
+            id: n.id.clone(),
+            kind: n.kind.clone(),
+            label: n.id.split_once(':').map(|(_, l)| l.to_string()).unwrap_or_else(|| n.id.clone()),
+            summary: n.summary.clone().or_else(|| Some(n.title.clone())),
+            route: Some(format!(
+                "/cockpit/knowledge/node?id={}",
+                crate::http::router::percent_encode(&n.id)
+            )),
+            source: n.source.clone(),
+            status: Some(n.freshness.as_str().to_string()),
+            external: false,
+            facts: BTreeMap::new(),
+        });
+        if !added {
+            break;
+        }
+    }
+    for r in &model.relations {
+        if b.has(&r.source) && b.has(&r.target) {
+            b.edge(&r.source, &r.target, &r.kind);
+        }
+    }
+    b.finish()
+}
+
+/// Every edge kind the relation table can assert, with the front matter fields that declare
+/// it, for a consumer that needs the vocabulary and not the edges: `(edge, meaning)`.
+pub fn relation_edges() -> Vec<(&'static str, String)> {
+    let mut by_edge: BTreeMap<&'static str, BTreeSet<&'static str>> = BTreeMap::new();
+    for rel in RELATIONS {
+        by_edge.entry(rel.edge).or_default().insert(rel.field);
+    }
+    by_edge
+        .into_iter()
+        .map(|(edge, fields)| {
+            let fields: Vec<&str> = fields.into_iter().collect();
+            (edge, format!("declared under `{}`", fields.join("`, `")))
+        })
+        .collect()
+}
+
+/// Every declared reference of every object, resolved through [`RELATIONS`]: the same
+/// table the composition draws from and the check reads. Sorted by source, field and
+/// reference, so two runs agree.
+pub fn resolved_relations(registry: &CapabilityRegistry, objects: &[Object]) -> Vec<ResolvedRelation> {
+    let resolver = Resolver::new(registry, objects);
+    let mut out = Vec::new();
+    for o in objects {
+        for rel in RELATIONS {
+            if !rel.kinds.is_empty() && !rel.kinds.contains(&o.kind.as_str()) {
+                continue;
+            }
+            for reference in metadata_strings(&o.metadata, rel.field) {
+                if is_absence(&reference) {
+                    continue;
+                }
+                let target = match resolver.resolve(rel, &reference) {
+                    Outcome::Node(id) => ResolvedTarget::Object(id),
+                    Outcome::External(node) => ResolvedTarget::External {
+                        kind: node.kind.clone(),
+                        name: node.label.clone(),
+                        path: node.source.clone(),
+                    },
+                    Outcome::Missing(correction) => ResolvedTarget::Missing(correction),
+                };
+                out.push(ResolvedRelation {
+                    source: o.uri.clone(),
+                    field: rel.field.to_string(),
+                    reference,
+                    edge: rel.edge.to_string(),
+                    inverted: rel.inverted,
+                    target,
+                });
+            }
+        }
+    }
+    out.sort_by(|a, b| {
+        a.source
+            .cmp(&b.source)
+            .then(a.field.cmp(&b.field))
+            .then(a.reference.cmp(&b.reference))
+    });
+    out
 }

@@ -60,6 +60,34 @@ message Header {
   Provenance provenance = 12;
 
   repeated Relation relations = 13;
+
+  // Who may see the record. `public` may leave the repository (the site's dataset, a
+  // remote semantic provider); `internal` stays with the checkout; `restricted` is
+  // never given to anything that leaves the machine and never listed in a public
+  // projection. Public when absent.
+  Visibility visibility = 14;
+
+  // Statements this record makes about other nodes of the knowledge model, held against
+  // what the extractors observed: a statement that contradicts an observed value is a
+  // conflict the model reports, never a silent overwrite of either side.
+  repeated Assertion asserts = 15;
+}
+
+enum Visibility {
+  VISIBILITY_UNSPECIFIED = 0;
+  VISIBILITY_PUBLIC = 1 [(majordomus.value) = "public"];
+  VISIBILITY_INTERNAL = 2 [(majordomus.value) = "internal"];
+  VISIBILITY_RESTRICTED = 3 [(majordomus.value) = "restricted"];
+}
+
+// One statement about another node: the node (`component:majordomus-cli`), the
+// predicate (`version`, `owner`, `license`) and the value the record asserts.
+message Assertion {
+  option (majordomus.closed) = true;
+
+  string subject = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9_-]*:.+$"];
+  string predicate = 2 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9_]*$"];
+  string value = 3 [(majordomus.required) = true, (majordomus.min_length) = 1];
 }
 
 // fact: something true of this repository now. convention: how it is done here.

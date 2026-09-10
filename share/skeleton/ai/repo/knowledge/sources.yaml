@@ -94,6 +94,18 @@ sources:
     pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
     required: false
 
+  - id: knowledge_baseline
+    kind: knowledge-baseline
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/baseline.yaml'
+    required: false
+
+  - id: knowledge_exceptions
+    kind: knowledge-exceptions
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/exceptions.yaml'
+    required: false
+
   - id: use_case
     kind: use-case
     discovery: vcs

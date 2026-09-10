@@ -201,6 +201,24 @@ kinds:
       field: schema
       supported: [knowledge/v1]
 
+  # The knowledge system's own files, beside the curated records: the baseline
+  # `majordomus knowledge bootstrap` records and the typed canonicality exceptions.
+  knowledge-baseline:
+    format: yaml
+    schema: majordomus.knowledge-baseline/v1
+    identity: []
+    schema_version:
+      field: schema
+      supported: [majordomus/knowledge-baseline/v1]
+
+  knowledge-exceptions:
+    format: yaml
+    schema: majordomus.knowledge-exceptions/v1
+    identity: []
+    schema_version:
+      field: schema
+      supported: [majordomus/knowledge-exceptions/v1]
+
   use-case:
     format: markdown
     front_matter: required

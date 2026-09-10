@@ -36,6 +36,10 @@ pub enum Area {
     Health,
     /// What the generator writes.
     Artifacts,
+    /// The repository knowledge system: what the repository knows about itself.
+    Knowledge,
+    /// System integrity: the canonicality audit.
+    Integrity,
     /// The HTTP and MCP surfaces.
     Api,
     /// A page that belongs to no area (search results, an error).
@@ -131,6 +135,8 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 here,
             ),
             item("Health", "/cockpit/health", Area::Health, None, here),
+            item("Knowledge", "/cockpit/knowledge", Area::Knowledge, None, here),
+            item("Integrity", "/cockpit/integrity", Area::Integrity, None, here),
             item(
                 "Artifacts",
                 "/cockpit/artifacts",

@@ -6,6 +6,7 @@
 //! benchmark target and generated document follows from the descriptor.
 
 pub mod artifacts;
+pub mod knowledge;
 pub mod capabilities;
 pub mod continuity;
 pub mod deploy;
@@ -78,6 +79,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        knowledge,
         distribution,
         why,
         web,

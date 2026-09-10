@@ -59,6 +59,11 @@ step "bench coverage --check";       cargo run --quiet -- bench coverage --check
 # --artifacts, so it is a check on the declarations rather than on whether a producer has
 # run in this checkout; the serving path requires the artifact at the moment it serves.
 step "web validate";                 cargo run --quiet -- web validate
+# the repository's knowledge held against its committed baseline, and the canonicality
+# audit over the manifest, the registry and the tree: new debt is refused, recorded debt
+# may only shrink (docs/KNOWLEDGE.md, docs/CANONICALITY.md)
+step "knowledge check";              cargo run --quiet -- knowledge check
+step "canonicality check";           cargo run --quiet -- canonicality check
 if [ "$MODE" = ci ]; then
   # a conservative measurement through the real transports, compared with this platform's
   # baseline under .ai/repo/benchmarks/rust/ when one is committed

@@ -123,6 +123,48 @@ generate: build
 generate-check: build
     "{{rust_bin}}" generate --check
 
+# ---------------------------------------------------------------- knowledge (Rust executable)
+
+# Where the repository's knowledge stands: nodes by kind, freshness and provenance, conflicts, gaps, coverage, the check against the baseline and the canonicality verdict.
+[group('knowledge')]
+knowledge *args: build
+    "{{rust_bin}}" knowledge {{args}}
+
+# Adopt the present state: scan, verify every curated claim against its evidence, tolerate every present debt by name, write .ai/repo/knowledge/baseline.yaml. Refuses to overwrite; `knowledge baseline record --force` records over it.
+[group('knowledge')]
+knowledge-bootstrap: build
+    "{{rust_bin}}" knowledge bootstrap
+
+# The gate: exit 10 with every debt item the baseline does not tolerate named. What CI runs.
+[group('knowledge')]
+knowledge-check: build
+    "{{rust_bin}}" knowledge check
+
+# Every node whose freshness is debt, with the reason: what a person should look at.
+[group('knowledge')]
+knowledge-stale: build
+    "{{rust_bin}}" knowledge stale
+
+# The canonicality audit: every capability's one source and derived surfaces, every hand-kept mirror and orphan projection, the manual maintenance surface; exit 10 when a violation counts.
+[group('knowledge')]
+canonicality *args: build
+    "{{rust_bin}}" canonicality {{args}}
+
+# What a change set means before it is merged: what it touches, what it adds, what debt it introduces. `just change-inspect --base origin/master` for a branch.
+[group('knowledge')]
+change-inspect *args: build
+    "{{rust_bin}}" change inspect {{args}}
+
+# Why the model says what it says about one thing: `just explain capability rks.status`, `just explain docs/CLI.md`.
+[group('knowledge')]
+explain *args: build
+    "{{rust_bin}}" explain {{args}}
+
+# A brownfield repository built in a temporary directory — a component, documentation that links to it, a curated record that contradicts the manifest, a link to nowhere — walked through bootstrap, a change, stale, conflicts, check and reconcile. Nothing is written here.
+[group('knowledge')]
+knowledge-demo: build
+    MAJORDOMUS_BIN="{{rust_bin}}" scripts/knowledge-demo
+
 # ---------------------------------------------------------------- benchmarks (Rust executable)
 
 # Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations). `just bench-run objects.search --transport mcp --profile full` narrows it.

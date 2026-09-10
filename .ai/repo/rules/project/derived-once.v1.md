@@ -7,7 +7,7 @@ description: Anything derivable solely from unchanged canonical repository state
 statement: Compute canonical truth once per state version, project it once where possible, execute only what is request-specific, and prove it with the work counters rather than with a clock.
 status: active
 class: advisory
-depends_on: [project.derived-files-regenerated@1]
+depends_on: [project.canonicality@1, project.derived-files-regenerated@1]
 tags: [performance, doctrine]
 ---
 

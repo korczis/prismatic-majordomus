@@ -25,6 +25,7 @@ pub mod assets;
 pub mod html;
 pub mod nav;
 pub mod pages;
+pub mod knowledge;
 pub mod view;
 
 use std::sync::Arc;
@@ -169,6 +170,20 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/knowledge" => knowledge::overview(&self.ctx),
+            "/cockpit/knowledge/nodes" => knowledge::nodes(&self.ctx, query),
+            "/cockpit/knowledge/node" => match query.iter().find(|(k, _)| k == "id") {
+                Some((_, id)) => knowledge::node(&self.ctx, id),
+                None => knowledge::nodes(&self.ctx, query),
+            },
+            "/cockpit/knowledge/graph" => knowledge::graph(&self.ctx, query),
+            "/cockpit/knowledge/impact" => knowledge::impact(&self.ctx, query),
+            "/cockpit/knowledge/coverage" => knowledge::coverage(&self.ctx),
+            "/cockpit/knowledge/gaps" => knowledge::gaps(&self.ctx, query),
+            "/cockpit/knowledge/conflicts" => knowledge::conflicts(&self.ctx),
+            "/cockpit/knowledge/sources" => knowledge::sources(&self.ctx),
+            "/cockpit/knowledge/diagnostics" => knowledge::diagnostics(&self.ctx),
+            "/cockpit/integrity" => knowledge::integrity(&self.ctx),
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
@@ -178,6 +193,8 @@ impl Cockpit {
                     pages::capability(&self.ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
                     pages::graph(&self.ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/integrity/") {
+                    knowledge::integrity_capability(&self.ctx, &percent_decode(id))
                 } else {
                     pages::not_found(other)
                 }

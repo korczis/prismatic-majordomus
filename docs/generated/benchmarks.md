@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 37 | 37 | 0 | 0 |
-| http | 37 | 37 | 0 | 0 |
-| mcp | 35 | 35 | 0 | 0 |
+| direct | 54 | 54 | 0 | 0 |
+| http | 54 | 54 | 0 | 0 |
+| mcp | 52 | 52 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 122 | 122 | 0 | 0 |
+| total | 173 | 173 | 0 | 0 |
 
 ## Capabilities
 
@@ -31,7 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
-| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed`, `knowledge` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
@@ -45,6 +45,23 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `rks.canonicality` | rks | query | process, 32 entries, 5s | covered | covered | covered | `all`, `one` |
+| `rks.check` | rks | query | process, 32 entries, 5s | covered | covered | covered | `policy-mode`, `observe` |
+| `rks.conflicts` | rks | query | process, 32 entries, 5s | covered | covered | covered | `all` |
+| `rks.context` | rks | query | process, 32 entries, 5s | covered | covered | covered | `docs`, `public` |
+| `rks.coverage` | rks | query | process, 32 entries, 5s | covered | covered | covered | `default` |
+| `rks.explain` | rks | query | process, 32 entries, 5s | covered | covered | covered | `readme` |
+| `rks.extractors` | rks | query | process, 32 entries, 5s | covered | covered | covered | `default` |
+| `rks.gaps` | rks | query | process, 32 entries, 5s | covered | covered | covered | `all`, `unresolved` |
+| `rks.get` | rks | query | process, 32 entries, 5s | covered | covered | covered | `readme` |
+| `rks.graph` | rks | query | process, 32 entries, 5s | covered | covered | covered | `components`, `around-readme` |
+| `rks.impact` | rks | query | process, 32 entries, 5s | covered | covered | covered | `working-tree`, `readme` |
+| `rks.inspect` | rks | query | process, 32 entries, 5s | covered | covered | covered | `working-tree` |
+| `rks.list` | rks | query | process, 32 entries, 5s | covered | covered | covered | `all`, `documents`, `debt` |
+| `rks.model` | rks | query | process, 32 entries, 5s | covered | covered | covered | `whole`, `public` |
+| `rks.proposals` | rks | query | process, 32 entries, 5s | covered | covered | covered | `default` |
+| `rks.search` | rks | query | process, 32 entries, 5s | covered | covered | covered | `readme` |
+| `rks.status` | rks | query | process, 32 entries, 5s | covered | covered | covered | `default` |
 | `web.surfaces` | web | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `why.areas` | why | query | process, 4 entries | covered | covered | covered | `default` |
 | `why.audiences` | why | query | process, 4 entries | covered | covered | covered | `default` |

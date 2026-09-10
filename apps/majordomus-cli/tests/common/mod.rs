@@ -90,6 +90,24 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: curated
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
+    required: false
+
+  - id: knowledge_baseline
+    kind: knowledge-baseline
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/baseline.yaml'
+    required: false
+
+  - id: knowledge_exceptions
+    kind: knowledge-exceptions
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/exceptions.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -455,6 +473,32 @@ true
         f.write("README.md", "# Fixture\n\nRead AGENTS.md.\n");
         f.write("docs/CLI.md", "# CLI specification\n\nEvery command.\n");
         f.commit("install");
+        f
+    }
+
+    /// A brownfield repository: the complete fixture plus a component the knowledge
+    /// system reads off a manifest, documentation that links to it and to nowhere, a
+    /// curated record that contradicts the manifest, and one that must never leave the
+    /// machine. Deterministic; what `scripts/knowledge-demo` builds for a person.
+    pub fn brownfield() -> Self {
+        let f = Self::new();
+        f.write(
+            "apps/alpha/Cargo.toml",
+            "[package]\nname = \"alpha\"\nversion = \"1.2.3\"\nedition = \"2021\"\nlicense = \"MIT\"\n\n[dependencies]\nserde = \"1\"\n",
+        );
+        f.write(
+            "docs/ALPHA.md",
+            "# The alpha component\n\nThe crate lives under [apps/alpha](../apps/alpha/) and ships as one binary.\nIts operating notes are in [the runbook](runbooks/alpha.md), which nobody wrote.\n",
+        );
+        f.write(
+            ".ai/repo/knowledge/curated/alpha-version.md",
+            "---\nschema: knowledge/v1\nid: alpha-version\nkind: knowledge\nclass: fact\ntitle: alpha is at version 2.0.0\ndescription: The version the release notes were written against.\nstatus: verified\nepistemics: observed\ndate: 2026-01-01\nprovenance:\n  origin: authored\n  derived_from:\n    - file:apps/alpha/Cargo.toml\nasserts:\n  - subject: component:alpha\n    predicate: version\n    value: '2.0.0'\n---\n\n# alpha is at 2.0.0\n\nRead off the manifest when the notes were written.\n",
+        );
+        f.write(
+            ".ai/repo/knowledge/curated/alpha-secret.md",
+            "---\nschema: knowledge/v1\nid: alpha-secret\nkind: knowledge\nclass: constraint\ntitle: alpha talks to a partner system nobody outside may know about\ndescription: A constraint that stays with the checkout.\nstatus: candidate\nepistemics: decided\ndate: 2026-01-01\nvisibility: restricted\nprovenance:\n  origin: authored\n---\n\n# Restricted\n\nPARTNER-ZETA is the counterparty; the contract forbids naming it in public.\n",
+        );
+        f.commit("brownfield");
         f
     }
 

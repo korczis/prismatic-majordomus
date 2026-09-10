@@ -50,7 +50,7 @@ pub struct Page {
 }
 
 impl Page {
-    fn new(area: Area, title: impl Into<String>, main: El) -> Self {
+    pub(crate) fn new(area: Area, title: impl Into<String>, main: El) -> Self {
         Page {
             area,
             title: title.into(),
@@ -61,22 +61,22 @@ impl Page {
             scripts: Vec::new(),
         }
     }
-    fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub(crate) fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
-    fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
+    pub(crate) fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
         self.breadcrumbs = trail
             .into_iter()
             .map(|(l, h)| (l.to_string(), h.map(str::to_string)))
             .collect();
         self
     }
-    fn script(mut self, name: &'static str) -> Self {
+    pub(crate) fn script(mut self, name: &'static str) -> Self {
         self.scripts.push(name);
         self
     }
-    fn status(mut self, status: u16) -> Self {
+    pub(crate) fn status(mut self, status: u16) -> Self {
         self.status = status;
         self
     }
@@ -93,13 +93,13 @@ fn word<T: serde::Serialize>(value: &T) -> String {
 }
 
 /// Ask the executor for a capability's output, typed.
-fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
+pub(crate) fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
 /// A page that says what went wrong instead of showing a blank one.
-fn failed(area: Area, title: &str, reason: String) -> Page {
+pub(crate) fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
         area,
         title,
@@ -312,7 +312,7 @@ fn health_badge(status: HealthStatus) -> El {
 /// and a cleared filter all are. Paging must never drop a filter and filtering must
 /// never keep a page number, so both go through here rather than through a format
 /// string at each call site.
-fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)]) -> String {
+pub(crate) fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)]) -> String {
     let overridden = |key: &str| set.iter().any(|(k, _)| *k == key);
     let pairs: Vec<(String, String)> = query
         .iter()
@@ -335,7 +335,7 @@ fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)
 }
 
 /// The page a listing was asked for. Anything that is not a page number is page one.
-fn asked_page(query: &[(String, String)]) -> usize {
+pub(crate) fn asked_page(query: &[(String, String)]) -> usize {
     query
         .iter()
         .find(|(k, _)| k == "page")

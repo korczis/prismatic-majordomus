@@ -21,6 +21,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
+| `rks` | Repository knowledge | implemented | 17 | [`modules/rks.md`](modules/rks.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
 | `worktree` | Worktree topology | behaviorally_verified | 4 | [`modules/worktree.md`](modules/worktree.md) |
@@ -55,6 +56,23 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | `majordomus scope classify` | — | required |
+| `rks.canonicality` | `rks` | query | implemented | `majordomus_canonicality` | — | `GET /api/v1/canonicality` | `majordomus knowledge canonicality` | process, 32 entries, 5s | required |
+| `rks.check` | `rks` | query | implemented | `majordomus_knowledge_check` | — | `GET /api/v1/knowledge/check` | `majordomus knowledge check` | process, 32 entries, 5s | required |
+| `rks.conflicts` | `rks` | query | implemented | `majordomus_knowledge_conflicts` | — | `GET /api/v1/knowledge/conflicts` | `majordomus knowledge conflicts` | process, 32 entries, 5s | required |
+| `rks.context` | `rks` | query | implemented | `majordomus_knowledge_context` | — | `GET /api/v1/knowledge/context` | `majordomus knowledge context` | process, 32 entries, 5s | required |
+| `rks.coverage` | `rks` | query | implemented | `majordomus_knowledge_coverage` | — | `GET /api/v1/knowledge/coverage` | `majordomus knowledge coverage` | process, 32 entries, 5s | required |
+| `rks.explain` | `rks` | query | implemented | `majordomus_knowledge_explain` | — | `GET /api/v1/knowledge/explain` | `majordomus knowledge explain` | process, 32 entries, 5s | required |
+| `rks.extractors` | `rks` | query | implemented | `majordomus_knowledge_extractors` | — | `GET /api/v1/knowledge/extractors` | `majordomus knowledge extractors` | process, 32 entries, 5s | required |
+| `rks.gaps` | `rks` | query | implemented | `majordomus_knowledge_gaps` | — | `GET /api/v1/knowledge/gaps` | `majordomus knowledge gaps` | process, 32 entries, 5s | required |
+| `rks.get` | `rks` | query | implemented | `majordomus_knowledge_get` | — | `GET /api/v1/knowledge/node` | `majordomus knowledge show` | process, 32 entries, 5s | required |
+| `rks.graph` | `rks` | query | implemented | `majordomus_knowledge_graph` | — | `GET /api/v1/knowledge/graph` | `majordomus knowledge graph` | process, 32 entries, 5s | required |
+| `rks.impact` | `rks` | query | implemented | `majordomus_knowledge_impact` | — | `GET /api/v1/knowledge/impact` | `majordomus knowledge impact` | process, 32 entries, 5s | required |
+| `rks.inspect` | `rks` | query | implemented | `majordomus_change_inspect` | — | `GET /api/v1/knowledge/inspect` | `majordomus knowledge inspect` | process, 32 entries, 5s | required |
+| `rks.list` | `rks` | query | implemented | `majordomus_knowledge_list` | — | `GET /api/v1/knowledge/nodes` | `majordomus knowledge list` | process, 32 entries, 5s | required |
+| `rks.model` | `rks` | query | implemented | `majordomus_knowledge_model` | `majordomus://knowledge/model` | `GET /api/v1/knowledge/model` | `majordomus knowledge scan` | process, 32 entries, 5s | required |
+| `rks.proposals` | `rks` | query | implemented | `majordomus_knowledge_proposals` | — | `GET /api/v1/knowledge/proposals` | `majordomus knowledge reconcile` | process, 32 entries, 5s | required |
+| `rks.search` | `rks` | query | implemented | `majordomus_knowledge_search` | — | `GET /api/v1/knowledge/search` | `majordomus knowledge search` | process, 32 entries, 5s | required |
+| `rks.status` | `rks` | query | implemented | `majordomus_knowledge` | `majordomus://knowledge` | `GET /api/v1/knowledge` | `majordomus knowledge status` | process, 32 entries, 5s | required |
 | `web.surfaces` | `web` | query | behaviorally_verified | `majordomus_web_surfaces` | `majordomus://web` | `GET /api/v1/web/surfaces` | — | process, 2 entries, 5s | required |
 | `why.areas` | `why` | query | behaviorally_verified | `majordomus_why_areas` | `majordomus://why/areas` | `GET /api/v1/why/areas` | `majordomus why areas` | process, 4 entries | required |
 | `why.audiences` | `why` | query | behaviorally_verified | `majordomus_why_audiences` | `majordomus://why/audiences` | `GET /api/v1/why/audiences` | `majordomus why audiences` | process, 4 entries | required |

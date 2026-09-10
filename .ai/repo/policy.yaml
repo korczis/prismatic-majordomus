@@ -47,6 +47,20 @@ session:
   checkpoint_on_compact: true
   handover_on_end: true
 
+# The repository knowledge system (`majordomus knowledge`): the scan of the checkout —
+# every component, document, decision, rule, capability and generated artifact as typed
+# knowledge with evidence — is held against the committed baseline under
+# .ai/repo/knowledge/baseline.yaml. `protect` refuses debt the baseline does not tolerate
+# and lets the recorded debt only shrink; `observe` and `warn` never fail; `strict` refuses
+# any debt. The semantic layer is off: no provider runs unless this says so, and none that
+# sends text off the machine unless `allow_remote` says so too.
+knowledge:
+  mode: protect
+  semantic:
+    enabled: false
+    allow_remote: false
+    provider: local
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets

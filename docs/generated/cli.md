@@ -70,13 +70,47 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
+| [`majordomus knowledge`](#majordomus-knowledge) | `/docs/cli/knowledge/` | The repository knowledge system: what the repository knows about itself, held against a committed baseline — scan, status, list, show, search, explain, graph, impact, gaps, coverage, stale, conflicts, reconcile, validate, baseline, check, canonicality, derive, context |
+| [`majordomus knowledge bootstrap`](#majordomus-knowledge-bootstrap) | `/docs/cli/knowledge/bootstrap/` | Adopt a brownfield repository: scan it, record every present fact and every present debt as the baseline, and print where it stands; refuses to overwrite a recorded baseline without --force |
+| [`majordomus knowledge scan`](#majordomus-knowledge-scan) | `/docs/cli/knowledge/scan/` | Scan the repository and print the whole model as one JSON document (`majordomus/knowledge/v1`); --public keeps only what may leave the repository |
+| [`majordomus knowledge status`](#majordomus-knowledge-status) | `/docs/cli/knowledge/status/` | Where the knowledge stands: nodes by kind, freshness and provenance, conflicts, gaps, coverage, the check and the canonicality verdict |
+| [`majordomus knowledge list`](#majordomus-knowledge-list) | `/docs/cli/knowledge/list/` | List nodes, filtered; one page at a time |
+| [`majordomus knowledge show`](#majordomus-knowledge-show) | `/docs/cli/knowledge/show/` | One node with its claims, evidence, relations, conflicts and gaps |
+| [`majordomus knowledge search`](#majordomus-knowledge-search) | `/docs/cli/knowledge/search/` | Search ids, titles, summaries and claim values |
+| [`majordomus knowledge explain`](#majordomus-knowledge-explain) | `/docs/cli/knowledge/explain/` | Why the model says what it says about one node: provenance, evidence, claims with freshness, relations, conflicts, gaps, remedies |
+| [`majordomus knowledge graph`](#majordomus-knowledge-graph) | `/docs/cli/knowledge/graph/` | A slice of the knowledge graph: around a root, or every node of a kind |
+| [`majordomus knowledge impact`](#majordomus-knowledge-impact) | `/docs/cli/knowledge/impact/` | What a change set touches: the working tree against HEAD (or --base), two revisions (--base --to), or named paths |
+| [`majordomus knowledge gaps`](#majordomus-knowledge-gaps) | `/docs/cli/knowledge/gaps/` | Everything the repository could know and does not, with the remedy for each |
+| [`majordomus knowledge coverage`](#majordomus-knowledge-coverage) | `/docs/cli/knowledge/coverage/` | Coverage over deterministic denominators: numbers, and what is missing |
+| [`majordomus knowledge stale`](#majordomus-knowledge-stale) | `/docs/cli/knowledge/stale/` | Every node whose freshness is debt, with the reason: what a person should look at |
+| [`majordomus knowledge conflicts`](#majordomus-knowledge-conflicts) | `/docs/cli/knowledge/conflicts/` | Every conflict: both sides, severity, basis, resolution, remedy |
+| [`majordomus knowledge accept`](#majordomus-knowledge-accept) | `/docs/cli/knowledge/accept/` | Accept one open conflict by id, with a reason: it stays reported, and stops counting as new debt |
+| [`majordomus knowledge reconcile`](#majordomus-knowledge-reconcile) | `/docs/cli/knowledge/reconcile/` | Propose what to do about every conflict, stale claim, unresolved reference and gap; --accept records that curated claims were verified against their present evidence |
+| [`majordomus knowledge validate`](#majordomus-knowledge-validate) | `/docs/cli/knowledge/validate/` | Validate the model, the baseline and the exceptions against their contracts; exit 10 with each finding named |
+| [`majordomus knowledge baseline`](#majordomus-knowledge-baseline) | `/docs/cli/knowledge/baseline/` | The committed baseline: show it, record it, or migrate it to the current schema |
+| [`majordomus knowledge baseline show`](#majordomus-knowledge-baseline-show) | `/docs/cli/knowledge/baseline/show/` | The baseline as recorded: when, how much of what, and what the scan would change |
+| [`majordomus knowledge baseline record`](#majordomus-knowledge-baseline-record) | `/docs/cli/knowledge/baseline/record/` | Record the present scan as the baseline: every fact verified, every present debt tolerated; refuses to overwrite without --force |
+| [`majordomus knowledge baseline migrate`](#majordomus-knowledge-baseline-migrate) | `/docs/cli/knowledge/baseline/migrate/` | Rewrite the baseline in the current schema, naming each migration step; a current one is left alone |
+| [`majordomus knowledge check`](#majordomus-knowledge-check) | `/docs/cli/knowledge/check/` | Hold the scan against the baseline: exit 0 when the mode passes, 10 with every new debt item named |
+| [`majordomus knowledge canonicality`](#majordomus-knowledge-canonicality) | `/docs/cli/knowledge/canonicality/` | The canonicality audit: every capability's canonical source and derived surfaces, every violation, the manual maintenance surface; exit 10 when a violation counts |
+| [`majordomus knowledge derive`](#majordomus-knowledge-derive) | `/docs/cli/knowledge/derive/` | Run the semantic provider the policy names over the model and cache what it derived; off unless the policy enables it, and nothing leaves the machine unless the policy allows it |
+| [`majordomus knowledge extractors`](#majordomus-knowledge-extractors) | `/docs/cli/knowledge/extractors/` | How the model is made: every extractor with its vocabulary, the providers, the schema versions and migrations |
+| [`majordomus knowledge context`](#majordomus-knowledge-context) | `/docs/cli/knowledge/context/` | What an agent should read before touching some paths, cut to a budget |
+| [`majordomus knowledge inspect`](#majordomus-knowledge-inspect) | `/docs/cli/knowledge/inspect/` | What a change set means for the knowledge: the paths that changed, what they touch, every capability the change adds with the surfaces derived for it, and the canonicality and freshness debt it introduces — the pull-request gate |
+| [`majordomus knowledge ids`](#majordomus-knowledge-ids) | `/docs/cli/knowledge/ids/` | Every node id, one per line, for a shell's completion |
+| [`majordomus canonicality`](#majordomus-canonicality) | `/docs/cli/canonicality/` | The canonicality audit: every capability's one canonical source and the surfaces derived from it, every hand-kept mirror, orphan projection and undeclared generated file; the CI gate of the canonicality doctrine |
+| [`majordomus canonicality check`](#majordomus-canonicality-check) | `/docs/cli/canonicality/check/` | The audit over every capability and the tree; exit 10 when a violation counts |
+| [`majordomus canonicality explain`](#majordomus-canonicality-explain) | `/docs/cli/canonicality/explain/` | One capability: its canonical source, every derived surface, every hand-written mention, its manual maintenance surface and its verdict |
+| [`majordomus explain`](#majordomus-explain) | `/docs/cli/explain/` | Why the knowledge model says what it says about one thing: a node, a capability, an object URI or a path — its provenance, evidence, claims, freshness, relations, conflicts, gaps and remedies |
+| [`majordomus change`](#majordomus-change) | `/docs/cli/change/` | A change set inspected before it is merged: what it touches in the knowledge, every capability it adds with the surfaces derived for it, and the debt it introduces |
+| [`majordomus change inspect`](#majordomus-change-inspect) | `/docs/cli/change/inspect/` | Inspect the working tree against HEAD, or against --base: the same answer as `knowledge inspect` |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus canonicality`](#majordomus-canonicality), [`majordomus explain`](#majordomus-explain), [`majordomus change`](#majordomus-change).
 
 ```text
 majordomus <COMMAND>
@@ -1780,4 +1814,975 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-knowledge"></a>
+## `majordomus knowledge`
+
+The repository knowledge system: what the repository knows about itself, held against a committed baseline — scan, status, list, show, search, explain, graph, impact, gaps, coverage, stale, conflicts, reconcile, validate, baseline, check, canonicality, derive, context
+
+Subcommands: [`majordomus knowledge bootstrap`](#majordomus-knowledge-bootstrap), [`majordomus knowledge scan`](#majordomus-knowledge-scan), [`majordomus knowledge status`](#majordomus-knowledge-status), [`majordomus knowledge list`](#majordomus-knowledge-list), [`majordomus knowledge show`](#majordomus-knowledge-show), [`majordomus knowledge search`](#majordomus-knowledge-search), [`majordomus knowledge explain`](#majordomus-knowledge-explain), [`majordomus knowledge graph`](#majordomus-knowledge-graph), [`majordomus knowledge impact`](#majordomus-knowledge-impact), [`majordomus knowledge gaps`](#majordomus-knowledge-gaps), [`majordomus knowledge coverage`](#majordomus-knowledge-coverage), [`majordomus knowledge stale`](#majordomus-knowledge-stale), [`majordomus knowledge conflicts`](#majordomus-knowledge-conflicts), [`majordomus knowledge accept`](#majordomus-knowledge-accept), [`majordomus knowledge reconcile`](#majordomus-knowledge-reconcile), [`majordomus knowledge validate`](#majordomus-knowledge-validate), [`majordomus knowledge baseline`](#majordomus-knowledge-baseline), [`majordomus knowledge check`](#majordomus-knowledge-check), [`majordomus knowledge canonicality`](#majordomus-knowledge-canonicality), [`majordomus knowledge derive`](#majordomus-knowledge-derive), [`majordomus knowledge extractors`](#majordomus-knowledge-extractors), [`majordomus knowledge context`](#majordomus-knowledge-context), [`majordomus knowledge inspect`](#majordomus-knowledge-inspect), [`majordomus knowledge ids`](#majordomus-knowledge-ids).
+
+```text
+majordomus knowledge [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where the repository's knowledge stands** — `knowledge` with nothing after it is `knowledge status`: one scan of the checkout, summarised — nodes by kind, freshness and provenance, open conflicts, gaps, coverage, the check against the baseline in the policy's mode, and the canonicality verdict.
+
+  ```console
+  $ majordomus knowledge
+  ```
+
+  Verified: exits 0; prints nodes, freshness, check.
+
+<a id="majordomus-knowledge-bootstrap"></a>
+## `majordomus knowledge bootstrap`
+
+Adopt a brownfield repository: scan it, record every present fact and every present debt as the baseline, and print where it stands; refuses to overwrite a recorded baseline without --force
+
+```text
+majordomus knowledge bootstrap [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--force` | flag | — | Record over a baseline that exists |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Adopt a repository that already has debt** — The first run in a brownfield repository: scan it, verify every curated claim against its present evidence, tolerate every present debt by name, and write the baseline under the knowledge section. From then on `knowledge check` refuses new debt and the recorded debt may only shrink.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  ```
+
+  Verified: exits 0; prints baseline, recorded.
+
+<a id="majordomus-knowledge-scan"></a>
+## `majordomus knowledge scan`
+
+Scan the repository and print the whole model as one JSON document (`majordomus/knowledge/v1`); --public keeps only what may leave the repository
+
+```text
+majordomus knowledge scan [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--public` | flag | — | Only the public projection |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The whole model, public projection** — Every extractor, evidence, node with claims, relation, conflict, gap and coverage row as one `majordomus/knowledge/v1` document, restricted to what may leave the repository. The site's knowledge dataset is this document.
+
+  ```console
+  $ majordomus knowledge scan --public
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /schema, /nodes, /evidence, /relations, /fingerprint.
+
+<a id="majordomus-knowledge-status"></a>
+## `majordomus knowledge status`
+
+Where the knowledge stands: nodes by kind, freshness and provenance, conflicts, gaps, coverage, the check and the canonicality verdict
+
+```text
+majordomus knowledge status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The status as one document** — The same answer as JSON: what `majordomus_knowledge`, `GET /api/v1/knowledge` and the Cockpit's Knowledge page read.
+
+  ```console
+  $ majordomus knowledge status --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /repository/name, /freshness, /check/verdict, /canonicality/verdict, /coverage/rows.
+
+<a id="majordomus-knowledge-list"></a>
+## `majordomus knowledge list`
+
+List nodes, filtered; one page at a time
+
+```text
+majordomus knowledge list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--kind` | `<KIND>` | — | Only this node kind (`component`, `document`, `rule`, `capability`, ...) |
+| `--provenance` | `<WORD>` | — | Only this provenance: observed, declared, derived, curated |
+| `--freshness` | `<WORD>` | — | Only this freshness: current, possibly_stale, stale, conflicted, unverified |
+| `--ownership` | `<WORD>` | — | Only this ownership: external, majordomus, hybrid |
+| `--extractor` | `<ID>` | — | Only nodes this extractor produced |
+| `--query` | `<TEXT>` | — | A substring of the id or the title |
+| `--debt` | flag | — | Only nodes whose freshness is debt |
+| `--offset` | `<OFFSET>` | `0` | Skip this many |
+| `--limit` | `<LIMIT>` | `0` | At most this many; 0 for the default |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every document the repository carries** — One line per node of one kind: id, freshness, provenance, and the reason when it is not current.
+
+  ```console
+  $ majordomus knowledge list --kind document
+  ```
+
+  Verified: exits 0; prints document:.
+
+<a id="majordomus-knowledge-show"></a>
+## `majordomus knowledge show`
+
+One node with its claims, evidence, relations, conflicts and gaps
+
+```text
+majordomus knowledge show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | A node id, a capability id, an object URI or a path |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One node, everything that bears on it** — The README as the model holds it: its claims with provenance and freshness, the evidence with fingerprints, the relations in and out. A path, an object URI or a capability id resolve to their node too.
+
+  ```console
+  $ majordomus knowledge show README.md
+  ```
+
+  Verified: exits 0; prints README.md, claims.
+
+<a id="majordomus-knowledge-search"></a>
+## `majordomus knowledge search`
+
+Search ids, titles, summaries and claim values
+
+```text
+majordomus knowledge search [OPTIONS] <QUERY>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<QUERY>` | `<QUERY>` | required | What to look for |
+| `--limit` | `<LIMIT>` | `0` | At most this many hits; 0 for the default |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Find a node by a word** — Ids and titles first, then summaries, then claim values; ranked and stable.
+
+  ```console
+  $ majordomus knowledge search readme
+  ```
+
+  Verified: exits 0; prints README.
+
+<a id="majordomus-knowledge-explain"></a>
+## `majordomus knowledge explain`
+
+Why the model says what it says about one node: provenance, evidence, claims with freshness, relations, conflicts, gaps, remedies
+
+```text
+majordomus knowledge explain [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | A node id, a capability id, an object URI or a path |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Why the model says what it says** — How the node is known, what it rests on, every claim with its freshness and the reason, and what to do when something is wrong. The same answer `majordomus explain <subject>` prints.
+
+  ```console
+  $ majordomus knowledge explain document:README.md
+  ```
+
+  Verified: exits 0; prints document:README.md, evidence.
+
+<a id="majordomus-knowledge-graph"></a>
+## `majordomus knowledge graph`
+
+A slice of the knowledge graph: around a root, or every node of a kind
+
+```text
+majordomus knowledge graph [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--root` | `<ID>` | — | Cut the slice around this node |
+| `--depth` | `<DEPTH>` | `0` | Hops from the root; 2 when unset |
+| `--kind` | `<KIND>` | — | Without a root: only this kind |
+| `--limit` | `<LIMIT>` | `0` | At most this many nodes |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The neighbourhood of one node** — The nodes within one hop of the README and the typed relations among them, as JSON a drawing reads.
+
+  ```console
+  $ majordomus knowledge graph --root document:README.md --depth 1 --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /nodes, /edges.
+
+<a id="majordomus-knowledge-impact"></a>
+## `majordomus knowledge impact`
+
+What a change set touches: the working tree against HEAD (or --base), two revisions (--base --to), or named paths
+
+```text
+majordomus knowledge impact [OPTIONS] [PATH]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<REV>` | — | The base revision; HEAD when unset |
+| `--to` | `<REV>` | — | Compare the base with this revision instead of the working tree |
+| `<PATH>` | `<PATH>` | — | Changed paths, named outright |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a change to one file touches** — The nodes whose evidence is the named path, the claims resting on it, and everything reached along propagating relations, nearest first.
+
+  ```console
+  $ majordomus knowledge impact README.md
+  ```
+
+  Verified: exits 0; prints README.md.
+
+<a id="majordomus-knowledge-gaps"></a>
+## `majordomus knowledge gaps`
+
+Everything the repository could know and does not, with the remedy for each
+
+```text
+majordomus knowledge gaps [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--category` | `<WORD>` | — | Only this category: undocumented_component, unresolved_reference, unverified_knowledge, unexercised_capability, canonicality |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the repository could know and does not** — Every gap with its category, the reason and the remedy: a worklist, not a score.
+
+  ```console
+  $ majordomus knowledge gaps --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /gaps, /tallies.
+
+<a id="majordomus-knowledge-coverage"></a>
+## `majordomus knowledge coverage`
+
+Coverage over deterministic denominators: numbers, and what is missing
+
+```text
+majordomus knowledge coverage [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Coverage over deterministic denominators** — One row per denominator — components documented, capabilities exercised, references resolved, curated records verified, artifacts derived, layer objects reached — with the numbers and what is missing.
+
+  ```console
+  $ majordomus knowledge coverage
+  ```
+
+  Verified: exits 0; prints components-documented, references-resolved.
+
+<a id="majordomus-knowledge-stale"></a>
+## `majordomus knowledge stale`
+
+Every node whose freshness is debt, with the reason: what a person should look at
+
+```text
+majordomus knowledge stale [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a person should look at** — Every node whose freshness is debt — stale, possibly stale, unverified, conflicted — with the reason. Empty when everything is current.
+
+  ```console
+  $ majordomus knowledge stale
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-knowledge-conflicts"></a>
+## `majordomus knowledge conflicts`
+
+Every conflict: both sides, severity, basis, resolution, remedy
+
+```text
+majordomus knowledge conflicts [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--open-only` | flag | — | Only open conflicts |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where two sources disagree** — Every conflict with both sides, their provenance and evidence, the severity and the remedy; none is resolved silently.
+
+  ```console
+  $ majordomus knowledge conflicts --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /conflicts, /open.
+
+<a id="majordomus-knowledge-accept"></a>
+## `majordomus knowledge accept`
+
+Accept one open conflict by id, with a reason: it stays reported, and stops counting as new debt
+
+```text
+majordomus knowledge accept [OPTIONS] <CONFLICT>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<CONFLICT>` | `<CONFLICT>` | required | The conflict id, as `knowledge conflicts` prints it (`<subject>#<predicate>`) |
+| `--reason` | `<TEXT>` | required | Why both values stand |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Accepting a conflict names one that exists** — A conflict is accepted by the id `knowledge conflicts` prints, with a reason that goes into the baseline; an id that is not an open conflict is refused with exit 12 and nothing is written.
+
+  ```console
+  $ majordomus knowledge accept 'component:none#version' --reason 'both are right'
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-knowledge-reconcile"></a>
+## `majordomus knowledge reconcile`
+
+Propose what to do about every conflict, stale claim, unresolved reference and gap; --accept records that curated claims were verified against their present evidence
+
+```text
+majordomus knowledge reconcile [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--accept` | flag | — | Record the verifications in the baseline (a deliberate act; the diff is in the commit) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What to do about every finding** — Proposals with an owner: which a person edits (an external source is never rewritten), and which `--accept` applies by recording in the baseline that the curated claims were verified against their present evidence.
+
+  ```console
+  $ majordomus knowledge reconcile
+  ```
+
+  Verified: exits 0; prints proposal.
+
+<a id="majordomus-knowledge-validate"></a>
+## `majordomus knowledge validate`
+
+Validate the model, the baseline and the exceptions against their contracts; exit 10 with each finding named
+
+```text
+majordomus knowledge validate [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The model and its files against their contracts** — Every diagnostic of the scan, the baseline's and the exceptions' schema and shape, and the migrations a file would need; exit 10 when a finding is an error.
+
+  ```console
+  $ majordomus knowledge validate
+  ```
+
+  Verified: exits 0; prints knowledge.
+
+<a id="majordomus-knowledge-baseline"></a>
+## `majordomus knowledge baseline`
+
+The committed baseline: show it, record it, or migrate it to the current schema
+
+Subcommands: [`majordomus knowledge baseline show`](#majordomus-knowledge-baseline-show), [`majordomus knowledge baseline record`](#majordomus-knowledge-baseline-record), [`majordomus knowledge baseline migrate`](#majordomus-knowledge-baseline-migrate).
+
+```text
+majordomus knowledge baseline [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The baseline as recorded** — `baseline` with nothing after it shows it: when it was recorded, how much of what it holds, and whether the present scan would change it.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  $ majordomus knowledge baseline
+  ```
+
+  Verified: exits 0; prints recorded.
+
+<a id="majordomus-knowledge-baseline-show"></a>
+## `majordomus knowledge baseline show`
+
+The baseline as recorded: when, how much of what, and what the scan would change
+
+```text
+majordomus knowledge baseline show [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The baseline as one document** — The typed baseline: evidence fingerprints, verified claims, tolerated debt, accepted conflicts, tolerated canonicality violations.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  $ majordomus knowledge baseline show --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /schema, /nodes, /verified, /debt.
+
+<a id="majordomus-knowledge-baseline-record"></a>
+## `majordomus knowledge baseline record`
+
+Record the present scan as the baseline: every fact verified, every present debt tolerated; refuses to overwrite without --force
+
+```text
+majordomus knowledge baseline record [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--force` | flag | — | Record over a baseline that exists |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Record the baseline again, deliberately** — After debt was paid down or a conflict accepted: record the present state over the old one. The diff is in the commit, which is the review.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  $ majordomus knowledge baseline record --force
+  ```
+
+  Verified: exits 0; prints recorded.
+
+<a id="majordomus-knowledge-baseline-migrate"></a>
+## `majordomus knowledge baseline migrate`
+
+Rewrite the baseline in the current schema, naming each migration step; a current one is left alone
+
+```text
+majordomus knowledge baseline migrate [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Bring the baseline to the current schema** — A baseline written by an older Majordomus is rewritten step by step, each step named; a current one is left alone and says so. A newer one is refused with the version that would read it.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  $ majordomus knowledge baseline migrate
+  ```
+
+  Verified: exits 0; prints baseline.
+
+<a id="majordomus-knowledge-check"></a>
+## `majordomus knowledge check`
+
+Hold the scan against the baseline: exit 0 when the mode passes, 10 with every new debt item named
+
+```text
+majordomus knowledge check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--mode` | `<WORD>` | — | Check in this mode instead of the policy's: observe, warn, protect, strict |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The gate, right after adoption** — With the present debt tolerated by the baseline, the check passes in protect mode: nothing new. A later change that adds a stale claim, an open conflict or a canonicality violation fails it with the item named; a change that pays debt down passes and says the baseline should be recorded again.
+
+  ```console
+  $ majordomus knowledge bootstrap
+  $ majordomus knowledge check
+  ```
+
+  Verified: exits 0; prints pass.
+
+<a id="majordomus-knowledge-canonicality"></a>
+## `majordomus knowledge canonicality`
+
+The canonicality audit: every capability's canonical source and derived surfaces, every violation, the manual maintenance surface; exit 10 when a violation counts
+
+```text
+majordomus knowledge canonicality [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--capability` | `<ID>` | — | Only this capability's row |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The canonicality audit as one document** — Every capability with its canonical source, derived surfaces, hand-written mentions and manual maintenance surface; every violation with whether the baseline tolerates it or an exception covers it; the verdict.
+
+  ```console
+  $ majordomus knowledge canonicality --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /capabilities, /violations, /verdict, /mms_centi.
+
+<a id="majordomus-knowledge-derive"></a>
+## `majordomus knowledge derive`
+
+Run the semantic provider the policy names over the model and cache what it derived; off unless the policy enables it, and nothing leaves the machine unless the policy allows it
+
+```text
+majordomus knowledge derive [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--kind` | `<KIND>` | — | Only nodes of these kinds |
+| `--dry-run` | flag | — | Show what would be given to the provider and what withheld; run nothing |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The semantic layer is off until the policy turns it on** — Without `knowledge.semantic.enabled: true` in the policy the command refuses with exit 10 and says which switch to set. Nothing is read by a provider and nothing leaves the machine.
+
+  ```console
+  $ majordomus knowledge derive --dry-run
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-knowledge-extractors"></a>
+## `majordomus knowledge extractors`
+
+How the model is made: every extractor with its vocabulary, the providers, the schema versions and migrations
+
+```text
+majordomus knowledge extractors [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **How the model is made** — Every extractor with the kinds, relations and predicates it declares, the semantic providers this executable ships, and the schema versions it reads and writes.
+
+  ```console
+  $ majordomus knowledge extractors
+  ```
+
+  Verified: exits 0; prints git, layer, docs, registry.
+
+<a id="majordomus-knowledge-context"></a>
+## `majordomus knowledge context`
+
+What an agent should read before touching some paths, cut to a budget
+
+```text
+majordomus knowledge context [OPTIONS] [PATH]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<PATH>` | `<PATH>` | — | The paths about to be touched; the whole repository when none |
+| `--budget` | `<BUDGET>` | `0` | The budget in bytes; 0 for the default |
+| `--public` | flag | — | Only public knowledge |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What to read before touching a directory** — The nodes whose sources are under the path and what they govern, describe and depend on, most governing first; the claims among them that are not current as caveats; cut to a budget. What an agent asks over MCP as `majordomus_knowledge_context`.
+
+  ```console
+  $ majordomus knowledge context docs --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /nodes, /caveats, /budget.
+
+<a id="majordomus-knowledge-inspect"></a>
+## `majordomus knowledge inspect`
+
+What a change set means for the knowledge: the paths that changed, what they touch, every capability the change adds with the surfaces derived for it, and the canonicality and freshness debt it introduces — the pull-request gate
+
+```text
+majordomus knowledge inspect [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<REV>` | — | The base revision; HEAD when unset (the working tree), or a branch to compare with |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What this change means, before it is merged** — The paths that changed against HEAD, the nodes and claims they touch, every capability the change adds with the checklist of surfaces derived for it, and the freshness and canonicality debt the change introduces. What a pull request is inspected with.
+
+  ```console
+  $ majordomus knowledge inspect
+  ```
+
+  Verified: exits 0; prints change set.
+
+<a id="majordomus-knowledge-ids"></a>
+## `majordomus knowledge ids`
+
+Every node id, one per line, for a shell's completion
+
+```text
+majordomus knowledge ids [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--kind` | `<KIND>` | — | Only this kind |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every node id, for completion** — One id per line, nothing else: what a shell completes `knowledge show` and `knowledge explain` with.
+
+  ```console
+  $ majordomus knowledge ids --kind document
+  ```
+
+  Verified: exits 0; prints document:README.md.
+
+<a id="majordomus-canonicality"></a>
+## `majordomus canonicality`
+
+The canonicality audit: every capability's one canonical source and the surfaces derived from it, every hand-kept mirror, orphan projection and undeclared generated file; the CI gate of the canonicality doctrine
+
+Subcommands: [`majordomus canonicality check`](#majordomus-canonicality-check), [`majordomus canonicality explain`](#majordomus-canonicality-explain).
+
+```text
+majordomus canonicality [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The canonicality gate** — `canonicality` with nothing after it is `canonicality check`: the audit over every capability and the tree, the manual maintenance surface, and the verdict — exit 10 when a violation counts that neither the baseline tolerates nor an exception covers.
+
+  ```console
+  $ majordomus canonicality
+  ```
+
+  Verified: exits 0; prints MMS, verdict.
+
+<a id="majordomus-canonicality-check"></a>
+## `majordomus canonicality check`
+
+The audit over every capability and the tree; exit 10 when a violation counts
+
+```text
+majordomus canonicality check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The audit as one document** — The same audit as JSON, for a gate that reads the verdict and a page that lists the violations.
+
+  ```console
+  $ majordomus canonicality check --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /verdict, /capabilities, /violations, /exceptions.
+
+<a id="majordomus-canonicality-explain"></a>
+## `majordomus canonicality explain`
+
+One capability: its canonical source, every derived surface, every hand-written mention, its manual maintenance surface and its verdict
+
+```text
+majordomus canonicality explain [OPTIONS] <CAPABILITY>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<CAPABILITY>` | `<CAPABILITY>` | required | The capability id |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One capability's canonical source and derived surfaces** — The declaration file that is its one source of truth, every surface derived from it with a tick, every hand-written file that names it, the manual maintenance surface, and the verdict.
+
+  ```console
+  $ majordomus canonicality explain rks.status
+  ```
+
+  Verified: exits 0; prints canonical source, rks.status.
+
+<a id="majordomus-explain"></a>
+## `majordomus explain`
+
+Why the knowledge model says what it says about one thing: a node, a capability, an object URI or a path — its provenance, evidence, claims, freshness, relations, conflicts, gaps and remedies
+
+```text
+majordomus explain [OPTIONS] [SUBJECT]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `<SUBJECT>` | `<SUBJECT>` | — | A node id, a capability id, an object URI or a path; `capability <id>` is accepted too |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Why, for one capability** — `explain capability <id>` and `explain <subject>` are the knowledge model's explanation of one thing: how it is known, what it rests on, every claim with its freshness, what it relates to, and what to do. For a capability the canonical source and the derived surfaces are the first lines.
+
+  ```console
+  $ majordomus explain capability rks.status
+  ```
+
+  Verified: exits 0; prints capability:rks.status, canonical.
+
+<a id="majordomus-change"></a>
+## `majordomus change`
+
+A change set inspected before it is merged: what it touches in the knowledge, every capability it adds with the surfaces derived for it, and the debt it introduces
+
+Subcommands: [`majordomus change inspect`](#majordomus-change-inspect).
+
+```text
+majordomus change [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The pull-request gate** — `change` with nothing after it is `change inspect`: the working tree against HEAD, or `--base origin/master` for a branch, with what the change touches, what it adds and what debt it introduces.
+
+  ```console
+  $ majordomus change
+  ```
+
+  Verified: exits 0; prints change set.
+
+<a id="majordomus-change-inspect"></a>
+## `majordomus change inspect`
+
+Inspect the working tree against HEAD, or against --base: the same answer as `knowledge inspect`
+
+```text
+majordomus change inspect [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<REV>` | — | The base revision |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The inspection as one document** — The same answer as JSON: the change set, the impact, the added capabilities with their surfaces, and the debt, for a gate that reads the verdict.
+
+  ```console
+  $ majordomus change inspect --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /impact, /added_capabilities, /verdict.
 
