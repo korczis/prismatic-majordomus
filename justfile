@@ -19,7 +19,14 @@ root      := justfile_directory()
 crate     := root / "apps/majordomus-cli"
 manifest  := crate / "Cargo.toml"
 profile   := env("MAJORDOMUS_BUILD_PROFILE", "debug")
-rust_bin  := crate / "target" / profile / "majordomus"
+# Cargo does not necessarily build into <crate>/target: CARGO_TARGET_DIR is how several
+# worktrees of this repository share one build directory rather than each carrying its own
+# multi-gigabyte copy, and a composed path then names an executable that is not there.
+# The variable is read rather than `cargo metadata` asked, because every variable here is
+# evaluated on every `just` invocation — including the bare `just` that only lists the
+# recipes, which cannot spend a process on what an unset variable has already answered.
+target_dir := env("CARGO_TARGET_DIR", crate / "target")
+rust_bin  := target_dir / profile / "majordomus"
 shell_bin := root / "bin/majordomus"
 
 export MAJORDOMUS_SHARE := root / "share"

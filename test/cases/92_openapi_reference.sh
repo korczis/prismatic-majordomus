@@ -16,7 +16,9 @@ command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+# where cargo just put it: CARGO_TARGET_DIR is how worktrees share one build
+# directory, and the composed path then names a file that was never written
+RB="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 "$MJ" init >/dev/null

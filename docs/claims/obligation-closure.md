@@ -9,7 +9,9 @@ implementation, tests, docs, generated, rules, commit, push, target, pages, depl
 
 `majordomus evidence --covers <token>` records that one of them has been discharged, naming
 the command or artifact that produced it — narrative is not evidence — and the hash of the
-tracked files the obligation names. `check` and `finish` evaluate every declared obligation
+tracked files the obligation names. Four tokens are never recorded: `commit`, `push`,
+`target` and `pages` name facts the tool establishes for itself, and
+[obligation-establishment](obligation-establishment.md) is that half of the story. `check` and `finish` evaluate every declared obligation
 on every run through the doctrine `majordomus.obligation-closure`. An obligation with no
 evidence fails. An obligation whose recorded input hash no longer matches the tree fails,
 with both hashes named. An obligation whose fact is remote — a push, an integration, a
@@ -65,9 +67,9 @@ the ability for that record to survive the change it was supposed to describe. I
 run anything itself, and it does not invent obligations — a task that declares none behaves
 exactly as it did before, which is what every task in this repository does today.
 
-The remote tokens depend on facts a laptop cannot establish alone; their evidence names a
-commit and a time, and the honest report for work that has not reached the trunk is that the
-obligation is not discharged.
+Of the remote tokens, `deploy` and `verify` still depend on facts a laptop cannot establish
+alone; their evidence names a commit and a time, and the honest report for work that has not
+reached the trunk is that the obligation is not discharged.
 
 ## Why it exists
 

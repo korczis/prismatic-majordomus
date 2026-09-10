@@ -20,6 +20,14 @@
 #                  a token whose fact is remote (a push, a publication, a deployment):
 #                  those are bound to a commit, not to a tree
 #   remote         true when the fact cannot be established from the working tree alone
+#   established_by what settles the fact without asking a worker: `git` for a fact git
+#                  already holds, a command for one a command already answers, `none` for
+#                  one nothing here can settle. A token that names something is decided
+#                  live, at HEAD, and its recorded evidence is never consulted — neither to
+#                  discharge it nor to rescue it
+#   unestablished  why nothing here can settle it, on every token whose established_by is
+#                  `none`. An honest gap beats a check that always passes, and this is where
+#                  the gap is written down rather than left for a reader to infer
 #   summary        what a worker is being asked to have done
 version: 1
 
@@ -30,6 +38,8 @@ obligations:
     discharged_by: none
     inputs: ["*"]
     remote: false
+    established_by: none
+    unestablished: Whether the promised work is the work is a judgement, not a fact; the scope and note lines of the contract hold it, and nothing here should pretend to decide it.
     note: Held by the scope and note lines of the contract; listed so that a report can say it rather than leave a hole.
 
   - id: tests
@@ -38,6 +48,8 @@ obligations:
     discharged_by: usecase impact
     inputs: ["lib/**", "bin/majordomus", "share/**", "apps/majordomus-cli/src/**", "test/cases/**"]
     remote: false
+    established_by: none
+    unestablished: Running the cases is the worker's act. A validator that ran them would be the suite, and `check` would cost what `test/run.sh` costs on every invocation.
     note: This is the discharge for project.use-case-evidence, whose Required behaviour has named this obligation since it was written and has never had a validator.
 
   - id: docs
@@ -46,6 +58,8 @@ obligations:
     discharged_by: scripts/ci/reference-check
     inputs: ["docs/**", "README.md", ".ai/repo/**/README.md"]
     remote: false
+    established_by: none
+    unestablished: `scripts/ci/reference-check` could settle it and does not yet; wiring it here means deciding what a check may spend, which is the same question `generated` below asks and neither has answered.
 
   - id: generated
     title: The projections are current
@@ -53,6 +67,8 @@ obligations:
     discharged_by: majordomus generate --check
     inputs: ["share/**", ".ai/repo/**", "docs/CLAIMS.yaml"]
     remote: false
+    established_by: none
+    unestablished: `majordomus generate --check` would settle it in about twelve seconds. Until a check may spend that on every run, the recorded line stands — a known gap, not a limit.
     note: Paired with `scripts/pages current`, which answers the same question for the site half against its own input hash.
 
   - id: rules
@@ -61,24 +77,29 @@ obligations:
     discharged_by: majordomus doctrine status
     inputs: [".ai/repo/rules/**", "share/standard/**"]
     remote: false
+    established_by: none
+    unestablished: `doctrine status` reports what the rules say, not whether the invariant this change introduced is among them; that comparison is a reader's.
 
   - id: commit
     title: The work is committed
     summary: The task's changes are in the branch's history, not in the working tree.
     discharged_by: git
     remote: false
+    established_by: git
 
   - id: push
     title: The commit reached the remote
     summary: The branch's head exists on the remote it tracks.
     discharged_by: git
     remote: true
+    established_by: git
 
   - id: target
     title: The trunk contains the work
     summary: The repository's default branch reaches the commit.
     discharged_by: git
     remote: true
+    established_by: git
     note: A feature branch that is clean and pushed is not integrated. This token is what stops a report calling it so.
 
   - id: pages
@@ -86,16 +107,21 @@ obligations:
     summary: The site published to GitHub Pages names the commit the task produced.
     discharged_by: scripts/pages verify
     remote: true
+    established_by: scripts/pages verify
 
   - id: deploy
     title: The application is running the expected revision
     summary: The environment the change targets is serving the revision the task produced.
     discharged_by: majordomus deployment
     remote: true
+    established_by: none
+    unestablished: A deployment is a fact about a machine this repository never contacts. `majordomus deployment` reads the declared object and says so itself — no capability there reaches the provider, deliberately — and the object it reads is declared rather than running, so there is no host to ask. A person who deployed records what they saw, and the token stays honest about being hand-held.
 
   - id: verify
     title: The deployed result was looked at
     summary: A live check against the deployed thing succeeded after it was deployed.
     discharged_by: scripts/pages verify
     remote: true
+    established_by: none
+    unestablished: The site half of this question is `pages`, which is established above; declaring both would be one fact counted twice. The application half is a request to a deployed host, which needs the same thing `deploy` needs and does not have.
     note: Separate from `tests` on purpose. A test proves the implementation under controlled conditions; verification proves the thing in the place it was sent to.
