@@ -3995,10 +3995,22 @@ paths:
     get:
       operationId: server.status
       summary: "The shared server, and every server of the repository"
-      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
       tags:
         - server
-      parameters: []
+      parameters:
+        - name: checkouts
+          in: query
+          required: false
+          schema:
+            "$ref": "#/components/schemas/Checkouts"
+            default: repository
+          description: "Which checkouts the answer covers. Absent means `repository`."
+          examples:
+            repository:
+              value: repository
+            this-checkout:
+              value: this
       responses:
         "200":
           description: "The shared server, and every server of the repository: the result."
@@ -6115,6 +6127,15 @@ components:
           const: unknown
           description: The check could not be made here; it says nothing either way.
       description: "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
+    Checkouts:
+      oneOf:
+        - type: string
+          const: repository
+          description: "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+        - type: string
+          const: this
+          description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+      description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
     ClaimRef:
       type: object
       properties:

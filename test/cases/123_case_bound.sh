@@ -25,6 +25,7 @@ cat > "$ROOT/test/cases/zz_${MARK}_hang.sh" <<INNER
 echo "hanging on purpose"
 sleep $NAP &  # liveness-check: intentional - the child whose reaping this case proves
 sleep $NAP
+wait "\$child"
 INNER
 cleanup() {
   rm -f "$ROOT/test/cases/zz_${MARK}_hang.sh" "$ROOT/test/cases/zz_${MARK}_quick.sh"
