@@ -31,7 +31,7 @@ and the runtime is where that answer is computed.
 
 Two executables serve this repository, and the line between them is not a layering.
 
-`bin/majordomus` is a shell tool, 13,873 lines under `lib/`. Its own help groups its
+`bin/majordomus` is a shell tool implemented under `lib/`. Its own help groups its
 commands as TASK, CONTEXT, MEMORY, RULES, PLAN and SYSTEM: `start`, `check`, `finish`,
 `session`, `checkpoint`, `evidence`, `handover`, `decision`, `question`, `plan`, `adr`,
 `usecase`. That list is the development lifecycle, and `lib/` is the only writer of what it
@@ -43,24 +43,26 @@ reference. Its help states the split in the negative: *"The task lifecycle (init
 check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this
 executable does not implement those commands."*
 
-Six measurements make the consequence exact.
+These are the measurements that make the consequence exact. Each states what is true,
+not how many; the command that reproduces the tally is in
+[How this was measured](#how-this-was-measured).
 
-| Measurement | Value |
+| Measurement | What it shows |
 |---|---|
-| Capabilities in the registry | 1236 — 78 built in, 1158 declarative objects of the layer |
-| Built-in capabilities that can **mutate** anything | **3**: `executions.start`, `executions.cancel`, `peers.announce` |
-| Commands in the command graph | 163 — 95 `executable`, 40 `workflow`, 28 `tool` |
-| Tool-origin commands reaching **any** machine surface | **0** — all 28 carry a `projections.withheld` reason |
-| Depth of the tool half of the command graph | 1 (all 28 nodes); the executable half reaches depth 3 |
-| Durable executions | none — `executions list` answers *"an execution lives in the process that accepted it"* |
-| Exposure of the 78 built-in capabilities | HTTP **78**, MCP **76** (`health.live` and `health.ready` absent), CLI **32** — **46 canonical operations have no command line at all**, `objects.get`, `repository.info`, every `plan.*` and `graph.*`, and `health.report` among them |
+| the registry | built-in operations, plus one resource per object of the layer; `capabilities list` prints both tallies in its `summary` |
+| built-in capabilities that can **mutate** anything | only `executions.start`, `executions.cancel` and `peers.announce`. Every other capability of the runtime is a query or a resource |
+| the command graph | three origins — `executable`, `workflow` and `tool` |
+| tool-origin commands reaching **any** machine surface | none. Every one of them carries a `projections.withheld` reason |
+| the shape of the tool half of the graph | every tool node is a group at the first level, so `majordomus plan done <id>` is not a node at all; the executable half nests to its subcommands |
+| durable executions | none — `executions list` answers *"an execution lives in the process that accepted it"* |
+| exposure of the built-in capabilities | every one reaches HTTP; all but `health.live` and `health.ready` reach MCP; **fewer than half reach the command line** — `objects.get`, `repository.info`, every `plan.*` and `graph.*`, and `health.report` have no CLI projection |
 
-The withheld reasons, as the graph gives them: 21 commands are withheld as *"asks the
-person something; a request/response surface would hang"*, 3 as *"effect
-RepositoryMutation is above the machine ceiling LocalMutation"*, and 4 as *"no capability
-declares this command line, so no machine surface has a typed input schema to execute
-from"*. Across the whole graph, 132 of 163 commands are withheld from every machine
-surface, 51 of them for that last reason.
+The graph gives four withheld reasons: *"asks the person something; a request/response
+surface would hang"*, *"effect RepositoryMutation is above the machine ceiling
+LocalMutation"*, *"no capability declares this command line, so no machine surface has a
+typed input schema to execute from"*, and *"groups other commands; nothing to execute"*.
+Most of the graph is withheld from every machine surface, and the commonest reason is the
+third.
 
 So the runtime, today, cannot change a single development object, and none of the
 lifecycle is reachable from the Cockpit, MCP or HTTP.
@@ -84,7 +86,7 @@ worker extending any stage converges on the name in the middle column.
 | Issue / Milestone | `issue`, `milestone` — **the plan** | `plan` capability module | 8 read-only capabilities; the write half is `lib/plan.sh` |
 | Development task | **`task`** — the existing active task. *No new noun.* | a `task` capability module | `lib/start.sh`, `check.sh`, `finish.sh`; readable only through `continuity.state` |
 | Compiled context | **`context`** — the context builder and its freeze | a `context` capability module | `lib/context.sh`, `lib/context_docs.sh`; the Rust half is `directories.list`, which reports *contracts*, not compiled context |
-| Development session | **`session`** — the existing episode | a `session` capability module | `lib/session.sh`; closed records are readable as 12 `session` resources, the open one through `continuity.state` |
+| Development session | **`session`** — the existing episode | a `session` capability module | `lib/session.sh`; closed records are readable as `session` resources, the open one through `continuity.state` |
 | Workflow execution | **`execution`** (the plane) over a **`command`** of the graph | `executions` module | exists, and holds 2 of the 3 mutating capabilities; keeps nothing across a process |
 | Agent / peer activity | **`peer`**, and `Actor` inside an execution | `peers` module | exists, in-memory; `peers.announce` is the third mutating capability |
 | Capabilities | **`capability`** | `capabilities` module | exists and is canonical |
@@ -118,7 +120,7 @@ command graph, not a third scheduler.
 ```
 
 **The layer owns storage.** Every development object is a typed file of `.ai/`. Its kind is
-declared in `share/kinds.yaml` (28 declarative kinds appear in the registry projection), its
+declared in `share/kinds.yaml`, whose declarative kinds the registry projection lists, its
 contract in `share/schemas/majordomus/<kind>/<kind>.v1.schema.json`, and its location in
 `.ai/repo/knowledge/sources.yaml` as a `:(glob)` pathspec. Three files agree or the object
 has no type and no authority.
@@ -160,7 +162,7 @@ No new datastore. Every decision below is the storage the repository already has
 | Actor / peer state | the in-memory board (`src/peers.rs`) | neither | a peer *is* a connection; its durable trace is the ledger envelope's `by` and the session record's `worker` |
 | Completion evidence | `evidence[]` inside the issue or milestone it discharges | tracked | evidence that lives away from the obligation it discharges is evidence nobody joins |
 | Obligation vocabulary | `share/obligations.yaml` | shipped | a contract, so it stays literal |
-| Artifacts | `docs/generated/**`, `site/data/**` via `generate::Target` (15 targets) | tracked | one writer, transactional, `--check`able |
+| Artifacts | `docs/generated/**`, `site/data/**` via `generate::Target` | tracked | one writer, transactional, `--check`able |
 
 **The two event tiers, named.** A durable state change is a ledger event whose name is
 registered in `share/events.yaml`. The typed execution stream is the live view of a runtime
@@ -192,7 +194,7 @@ same call over MCP, HTTP, the CLI and the Cockpit is one code path.
 surface ──typed input──▶ capability ──▶ object in .ai/**  ──▶ ledger event ──▶ /events
 ```
 
-*Actual flow today.* For 15 of the lifecycle's mutating commands, the surface is a terminal
+*Actual flow today.* For the lifecycle's mutating commands, the surface is a terminal
 and the capability does not exist: `bin/majordomus` dispatches into `lib/<name>.sh`, which
 writes the object and appends the ledger line itself. That is the debt this document
 records, ratcheted in `.ai/repo/development-semantics-baseline.txt`.
@@ -283,8 +285,8 @@ ADR 0040, not an architecture.
 
 | Concept | Canonical owner today | Storage | Schema / type | Discovery | Consumers | Mutation path | Events | Tests | Docs | Drift / duplication |
 |---|---|---|---|---|---|---|---|---|---|---|
-| issue | read `src/plan.rs`; **write `lib/plan.sh`** | `.ai/repo/project/issues/*.yaml` | `majordomus.issue/v1` | `sources.yaml` class `issue` | `plan.*` (8 queries), 203 resources, site, GitHub projection | `lib/plan.sh:514-515` only | `plan_start`, `plan_verify`, `plan_evidence`, `plan_done` | `test/cases/*`, `tests/` | [`PLANNING.md`](PLANNING.md) | **write half unreachable from every machine surface** |
-| milestone | as issue | `.ai/repo/project/milestones/*.yaml` | `majordomus.milestone/v1` | class `milestone` | `plan.model`, `plan.roadmap`, 18 resources | `lib/plan.sh` | as issue | as issue | [`ROADMAP.md`](ROADMAP.md) | as issue |
+| issue | read `src/plan.rs`; **write `lib/plan.sh`** | `.ai/repo/project/issues/*.yaml` | `majordomus.issue/v1` | `sources.yaml` class `issue` | `plan.*` queries, one resource per issue, the site, the GitHub projection | `lib/plan.sh:514-515` only | `plan_start`, `plan_verify`, `plan_evidence`, `plan_done` | `test/cases/*`, `tests/` | [`PLANNING.md`](PLANNING.md) | **write half unreachable from every machine surface** |
+| milestone | as issue | `.ai/repo/project/milestones/*.yaml` | `majordomus.milestone/v1` | class `milestone` | `plan.model`, `plan.roadmap`, one resource each | `lib/plan.sh` | as issue | as issue | [`ROADMAP.md`](ROADMAP.md) | as issue |
 | task (active) | `lib/start.sh`, `check.sh`, `finish.sh` | `.ai/local/state/current.yaml` | `majordomus.current/v1` | not indexed (local) | `continuity.state`, `obligations.closure`, `scope` | `lib/` only | `task.started`, `task.checkpoint`, `task.evidence`, `task.finished` | `test/cases/32_refusal_lifecycle.sh` | [`CONTINUITY.md`](CONTINUITY.md) | no capability; a refused `finish` writes no event at all |
 | session (closed) | `lib/session.sh` | `.ai/repo/sessions/*.md` | `session/v1` | class `session` | 12 resources, `objects.*`, site | `lib/session.sh` | `session.closed` | `test/cases/*` | [`CONTINUITY.md`](CONTINUITY.md) | no Rust module; write unreachable |
 | session (open) | `lib/session.sh` | `.ai/local/state/session-current.yaml`, `sessions-open/` | `majordomus.session-record/v1` | not indexed | `continuity.state` | `lib/session.sh` | `session.started` | ” | ” | ” |
@@ -295,7 +297,7 @@ ADR 0040, not an architecture.
 | question | `lib/question.sh` | `.ai/local/state/open-questions.md` | — | not indexed | `continuity.state` counts blockers only | `lib/` only | `question.opened`, `question.resolved` | ” | [`CONTINUITY.md`](CONTINUITY.md) | no capability |
 | evidence | `lib/evidence.sh` | `evidence[]` in the plan object | inside `issue`/`milestone` schema | via the object | `plan.*`, `obligations.closure` | `lib/evidence.sh`, `lib/plan.sh` | `task.evidence`, `plan_evidence` | ” | [`PLANNING.md`](PLANNING.md) | no capability |
 | obligation / closure | `capability/builtin/obligations.rs` (read) + `lib/finish.sh` (decide) | `share/obligations.yaml` + local state | shipped vocabulary | registry | `obligations.*`, `finish` | `lib/finish.sh` | `task.finished` | `test/cases/32` | [`CONTINUITY.md`](CONTINUITY.md) | **the read and the decision are two implementations of one contract** |
-| ADR | `lib/adr.sh` | `.ai/repo/adrs/????-*.md` | `adr/v1` | class `adr` | 38 resources, `graph.get?id=adrs`, `release.changelog` | `lib/adr.sh` | `adr.proposed` | `test/cases/99_adr.sh` | [`DOCTRINE.md`](DOCTRINE.md) | no capability; number allocation is unguarded — `0039` is claimed twice across branches today |
+| ADR | `lib/adr.sh` | `.ai/repo/adrs/????-*.md` | `adr/v1` | class `adr` | one resource each, `graph.get?id=adrs`, `release.changelog` | `lib/adr.sh` | `adr.proposed` | `test/cases/99_adr.sh` | [`DOCTRINE.md`](DOCTRINE.md) | no capability; number allocation is unguarded — `0039` is claimed twice across branches today |
 
 ### The runtime
 
@@ -303,47 +305,47 @@ ADR 0040, not an architecture.
 |---|---|---|---|---|---|---|---|---|---|---|
 | capability | `src/capability/` | composed at process start | `CanonicalSchema` per capability | `compose_modules!` | every surface | source only | — | `tests/projections.rs` | [`CAPABILITIES.md`](CAPABILITIES.md) | canonical; the model |
 | command | three declarations composed: `cli.rs`, `share/commands.yaml`, the `justfile` | tracked | `command/v1` for the shell half | `commands.graph` | CLI, workflow bridge, completion, docs | source only | — | `test/cases/34_command_fixtures.sh` | [`COMMANDS.md`](COMMANDS.md) | **the tool half is depth 1: `plan done` is not a node** |
-| execution | `src/execution/` | **in-process only** | typed input per capability | registry | `executions.*`, `/events`, Cockpit | `executions.start`, `.cancel` | 15 stream messages | `tests/` | [`EXECUTIONS.md`](EXECUTIONS.md) | **nothing durable; the 15 messages are in no ledger vocabulary** |
-| event (durable) | `share/events.yaml` + `mj_ledger_append` | `.ai/local/state/ledger.jsonl` | 20 registered names | registry walk | `history`, `continuity.state`, `obligations` | `lib/` only | itself | `test/cases/*` | [`SCHEMAS.md`](SCHEMAS.md) | **disjoint from the execution stream in both directions** |
+| execution | `src/execution/` | **in-process only** | typed input per capability | registry | `executions.*`, `/events`, Cockpit | `executions.start`, `.cancel` | the stream's typed messages | `tests/` | [`EXECUTIONS.md`](EXECUTIONS.md) | **nothing durable; the 15 messages are in no ledger vocabulary** |
+| event (durable) | `share/events.yaml` + `mj_ledger_append` | `.ai/local/state/ledger.jsonl` | a registered vocabulary | registry walk | `history`, `continuity.state`, `obligations` | `lib/` only | itself | `test/cases/*` | [`SCHEMAS.md`](SCHEMAS.md) | **disjoint from the execution stream in both directions** |
 | peer / actor | `src/peers.rs`, `execution/model.rs::Actor` | in-memory | typed | — | `peers.*`, Cockpit, `check --overlap` | `peers.announce` | — | `tests/` | AGENTS.md | an announcement belongs to a connection and is lost on reconnect |
-| worktree | `src/worktree/` (14 files) | derived from git; lock under `<git-common-dir>/majordomus/locks/` | typed topology | `git worktree list --porcelain` | `worktree.*`, the pre-commit guard, Cockpit | `worktree create/migrate/repair` | — | `tests/`, `test/cases/*` | [`WORKTREES.md`](WORKTREES.md) | two legacy layouts still recognised, deliberately |
+| worktree | `src/worktree/` | derived from git; lock under `<git-common-dir>/majordomus/locks/` | typed topology | `git worktree list --porcelain` | `worktree.*`, the pre-commit guard, Cockpit | `worktree create/migrate/repair` | — | `tests/`, `test/cases/*` | [`WORKTREES.md`](WORKTREES.md) | two legacy layouts still recognised, deliberately |
 | context (compiled) | `lib/context.sh`, `lib/context_docs.sh` | assembled per call | budgeted assembly | `.ai/**/README.md`, kind `context` | a worker, the briefing | — (read-only) | — | `test/cases/*` | [`CONTEXT.md`](CONTEXT.md) | **the Rust half (`directories.list`) reports contracts, not compiled context**; `DYNAMICITY.md` already marks the provider table a *target* |
-| repository / index | `src/repository.rs`, `src/index.rs` | `.ai/manifest.yaml` + the trees it names | `manifest/v1` | manifest, then `sources.yaml` | everything | — | — | `tests/` | [`SCHEMAS.md`](SCHEMAS.md) | 4 on-disk sections (`benchmarks`, `ci`, `providers`, `workspaces`) are in no manifest section, plus 6 loose baseline files |
+| repository / index | `src/repository.rs`, `src/index.rs` | `.ai/manifest.yaml` + the trees it names | `manifest/v1` | manifest, then `sources.yaml` | everything | — | — | `tests/` | [`SCHEMAS.md`](SCHEMAS.md) | `benchmarks`, `ci`, `providers` and `workspaces` are on disk but in no manifest section, alongside several loose baseline files |
 | shared server / lease | `src/lease.rs`, `src/shared.rs` | `.ai/local/state/mcp/server.json` | `LeaseDocument` | — | every attached client | `serve`, `mcp` | — | `test/cases/108` | [`ENTRY.md`](ENTRY.md), ADR 0035 | one server per *checkout*, not per repository |
 
 ### Governance and surfaces
 
 | Concept | Canonical owner | Storage | Consumers | Mutation path | Docs | Drift |
 |---|---|---|---|---|---|---|
-| rule / doctrine | `.ai/repo/rules/{project,vendor}/` | tracked Markdown, identity `id`+`version` | `check`, `finish`, `doctor`, `watch`, site, 120 resources | `lib/rules.sh` (vendor update) | [`DOCTRINE.md`](DOCTRINE.md) | 120 effective rules — 51 vendored, 69 project; 92 blocking, 28 advisory; 40 tool-enforced and **0 of the 69 project rules is tool-enforced**, which is the doctrine, not a defect: a project rule gets a CI gate |
+| rule / doctrine | `.ai/repo/rules/{project,vendor}/` | tracked Markdown, identity `id`+`version` | `check`, `finish`, `doctor`, `watch`, the site, one resource each | `lib/rules.sh` (vendor update) | [`DOCTRINE.md`](DOCTRINE.md) | the effective set is the vendored baseline plus this repository's own, each `blocking` or `advisory`; every tool-enforced rule is vendored and **no project rule is tool-enforced** — the doctrine, not a defect: a project rule gets a CI gate. `majordomus rules list --json` prints the split |
 | policy / profile | `.ai/repo/policy.yaml`, `profiles/*.yaml` | tracked | provider projections, `finish`, context | hand-edited + `update` | `.ai/README.md` | — |
-| skill | `.ai/repo/skills/<id>/SKILL.md` | tracked | 3 resources, `lib/skills.sh` | `lib/skills.sh` | `.ai/repo/skills/README.md` | no Rust module; only skill→skill edges in `graph.rs` |
+| skill | `.ai/repo/skills/<id>/SKILL.md` | tracked | one resource each, `lib/skills.sh` | `lib/skills.sh` | `.ai/repo/skills/README.md` | no Rust module; only skill→skill edges in `graph.rs` |
 | knowledge | `.ai/repo/knowledge/` | tracked | `objects.*` | `lib/knowledge.sh` | — | **compiler is shell-only, no capability** |
-| use case | `.ai/repo/use-cases/*.md` | tracked | 43 resources, coverage gate, site | `lib/usecase.sh` | [`USE_CASES.md`](USE_CASES.md) | `lib/usecase.sh` is a **second writer of `docs/generated/`** |
+| use case | `.ai/repo/use-cases/*.md` | tracked | one resource each, the coverage gate, the site | `lib/usecase.sh` | [`USE_CASES.md`](USE_CASES.md) | `lib/usecase.sh` is a **second writer of `docs/generated/`** |
 | artifact | `generate::Target` (15 targets) | `docs/generated/**`, `site/data/**` | site, docs, `artifacts.list` | `majordomus generate` | [`DYNAMICITY.md`](DYNAMICITY.md) | **two writers**: `src/generate.rs` and a shell set including `lib/usecase.sh`, `bin/majordomus`, `scripts/derive`, `scripts/generate-site-data` |
 | Cockpit | `src/cockpit/` | none | a person | — | [`COCKPIT.md`](COCKPIT.md) | **clean** — one layer reference, a display label at `pages.rs:1787` |
-| quality / gates | `.ai/repo/ci/gates.yaml` | tracked | `validate.yml`, `just gate` | hand-edited + `ci-plan --check` | [`CI.md`](CI.md) | 36 gates, 3 on demand; 152 shell cases and 40 Rust test files |
+| quality / gates | `.ai/repo/ci/gates.yaml` | tracked | `validate.yml`, `just gate` | hand-edited + `ci-plan --check` | [`CI.md`](CI.md) | `ci-plan --check` prints the gate and class tallies; the cases live in `test/cases/` and `apps/majordomus-cli/tests/` |
 
 ## Gaps against the target pipeline
 
 Ranked by what blocks a development surface most.
 
-1. **No mutating development capability exists.** 3 of 78 built-in capabilities mutate, all
-   in the execution and peer planes. Every issue transition, session lifecycle event,
+1. **No mutating development capability exists.** Only the execution and peer planes
+   declare a capability of kind `command`. Every issue transition, session lifecycle event,
    checkpoint, handover, evidence attachment and completion decision is unreachable from
    MCP, HTTP and the Cockpit. *Closing it:* a `kind: command` capability per transition,
    ratcheted off `.ai/repo/development-semantics-baseline.txt`.
-2. **The command graph does not see the lifecycle's subcommands.** All 28 tool nodes are
-   depth 1; `majordomus plan done <id>` is not a node. So the exposure policy has nothing to
+2. **The command graph does not see the lifecycle's subcommands.** Every tool node is a
+   group at the first level; `majordomus plan done <id>` is not a node. So the exposure policy has nothing to
    judge and the completion engine nothing to offer. *Closing it:* declare the shell
    subcommands in `share/commands.yaml`, or make each one a capability and let the graph
    derive it.
-3. **21 lifecycle commands are interactive.** The graph withholds them as *"asks the person
+3. **Most lifecycle commands are interactive.** The graph withholds them as *"asks the person
    something; a request/response surface would hang"*. Interactivity is not a property a
    surface can work around. *Closing it:* `project.commands-run-non-interactively@1`,
    currently advisory.
-4. **Two disjoint event models.** 20 durable ledger names, 15 live stream messages, no
-   bridge. A Cockpit cannot show one activity feed. *Closing it:* a mutating development
+4. **Two disjoint event models.** A durable ledger vocabulary and a live stream
+   vocabulary, with no bridge between them. A Cockpit cannot show one activity feed. *Closing it:* a mutating development
    capability appends a registered ledger event and publishes the same change to the
    stream; neither tier holds a durable fact the other cannot see.
 5. **Completion is decided in two places.** `obligations.closure` reads the contract;
@@ -357,9 +359,9 @@ Ranked by what blocks a development surface most.
 8. **Two writers of `docs/generated/`.** `src/generate.rs` plus a shell set. Existing debt,
    already in `HARDCODING_LEDGER.yaml` territory, and it will bite any new generated
    development artifact.
-9. **The CLI is the least complete consumer, not the most.** 46 of the 78 built-in
-   capabilities have no CLI projection — `objects.get`, `repository.info`, every `plan.*`
-   and `graph.*`, `health.report`. So a person at a terminal reaches *less* of the canonical
+9. **The CLI is the least complete consumer, not the most.** Fewer than half the built-in
+   capabilities have a CLI projection — `objects.get`, `repository.info`, every `plan.*`
+   and `graph.*` and `health.report` have none. So a person at a terminal reaches *less* of the canonical
    runtime than an MCP client does, which inverts the usual assumption that the CLI is the
    reference surface and the others catch up. *Closing it:* the exposure policy decides this
    from effect and interactivity; a query withheld from the CLI is either a policy decision
@@ -372,8 +374,8 @@ Ranked by what blocks a development surface most.
 ## Enforcement
 
 The rule is `project.development-semantics-are-canonical@1`, `class: blocking`. Per this
-repository's own doctrine — and consistent with all 69 project rules carrying no
-`x-majordomus` block — it is enforced by a CI gate rather than a `lib/` validator.
+repository's own doctrine — and consistent with every project rule, none of which carries
+an `x-majordomus` block — it is enforced by a CI gate rather than a `lib/` validator.
 
 `scripts/development-semantics-check` is the gate, wired as `development-semantics` in the
 `structure` job of `.ai/repo/ci/gates.yaml`. It reads tracked files only and needs no build.
@@ -386,10 +388,10 @@ It decides two things:
   inside `apps/majordomus-cli/src/cockpit/**` or `share/cockpit/**`, excluding a generator's
   own provenance header.
 
-It reports 16 findings today, all in `.ai/repo/development-semantics-baseline.txt`: 15
-unbacked mutating commands (`adr`, `checkpoint`, `decision`, `evidence`, `finish`,
-`handover`, `init`, `migrate`, `plan`, `question`, `rules`, `session`, `start`, `update`,
-`usecase`) and the one Cockpit display label. A finding not in the baseline fails; a
+Every finding it reports today is in `.ai/repo/development-semantics-baseline.txt`: the
+unbacked mutating commands — `adr`, `checkpoint`, `decision`, `evidence`, `finish`,
+`handover`, `init`, `migrate`, `plan`, `question`, `rules`, `session`, `start`, `update`
+and `usecase` — and the one Cockpit display label. A finding not in the baseline fails; a
 baseline line matching nothing also fails, so the ratchet tightens instead of rotting.
 
 Two things the gate does **not** decide, so that its silence is not read as a pass:
@@ -411,7 +413,7 @@ Two things the gate does **not** decide, so that its silence is not read as a pa
 bin/majordomus --help
 bin/majordomus-cli --help
 
-# 1236 capabilities, 78 builtin, 3 of kind command, the module and kind breakdown
+# what the registry holds, which capabilities can mutate, and the module/kind breakdown
 bin/majordomus-cli capabilities list --format json > caps.json
 jq -r '{count, summary}' caps.json
 jq -r '.capabilities[] | select(.provenance.source=="builtin")
@@ -419,7 +421,7 @@ jq -r '.capabilities[] | select(.provenance.source=="builtin")
 jq -r '.capabilities | group_by(.module)
         | map("\(.[0].module)\t\(length)") | .[]' caps.json
 
-# 163 commands, three origins, every withheld reason, and the depth per origin
+# the commands, their origins, every withheld reason, and the depth per origin
 bin/majordomus-cli commands graph --format json > cg.json
 jq -r '.commands|group_by(.origin)|map("\(.[0].origin)\t\(length)")|.[]' cg.json
 jq -r '[.commands[].projections.withheld|select(.)]
@@ -428,17 +430,17 @@ jq -r '.commands|group_by(.origin)
         | map({o:.[0].origin,
                d:(map(.path|length)|group_by(.)|map({d:.[0],n:length}))})|.[]' cg.json
 
-# executions keep nothing across a process; the 15 stream messages
+# executions keep nothing across a process; the stream's message vocabulary
 bin/majordomus-cli executions list
 bin/majordomus-cli executions protocol
 
-# 120 effective rules, the class split, and 0 of 69 project rules tool-enforced
+# the effective rules, the class split, and which of them the tool enforces
 bin/majordomus rules list --json
 
-# the 20 durable ledger event names
+# the durable ledger event names
 grep -oE '^\s+- id: [a-z._]+' share/events.yaml
 
-# 15 generation targets
+# the generation targets
 bin/majordomus-cli generate --help
 
 # the web surfaces and their mounts
