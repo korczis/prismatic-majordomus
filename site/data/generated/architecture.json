@@ -790,6 +790,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/evidence/live",
+      "kind": "artifact",
+      "label": "local/evidence/live",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/watch.sh",
       "kind": "module",
       "label": "watch",
@@ -1373,6 +1383,11 @@
     },
     {
       "source": "lib/usecase.sh",
+      "target": "lib/evidence.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
       "target": "lib/rules.sh",
       "kind": "sources"
     },
@@ -1884,6 +1899,11 @@
     {
       "source": "lib/start.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": ".ai/local/evidence/live",
       "kind": "writes"
     },
     {

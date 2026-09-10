@@ -467,6 +467,28 @@ dependency order and `scripts/derive-check` composes both checks
 edited. What is generated is not written down here — `docs/generated/artifacts.md` is that
 list, and it is generated.
 
+**A derivation refuses an executable of another generation.** Every artifact is a
+projection of the model compiled into the executable that writes it, so a binary built from
+another revision of the crate rewrites all of them from a model the tree does not have —
+silently, because nothing in the bytes says which executable produced them. A version
+string does not separate the two: on 2026-09-10 a binary calling itself the same version,
+passed in through `MAJORDOMUS_BIN`, reported eleven artifacts stale on a pristine
+`origin/master` and rewriting them removed 16,625 lines at exit 0. So `generate` asks, of a
+repository that declares this crate, three questions in turn and proceeds on the first one
+answered: the **version** must agree, because it is stamped into every provenance header;
+the **generation** — the digest `generation::crate_generation` takes over
+`apps/majordomus-cli/{Cargo.toml,Cargo.lock,build.rs,src}`, compiled in by `build.rs` — may
+equal the tree's, which means this executable was built from these sources; or the
+**model** it projects may equal the builtin half of the registry the tree committed at
+`docs/generated/registry.json` — the declarative kinds there are the repository's content,
+not the executable's model — which is what keeps a correctly-matching prebuilt
+`MAJORDOMUS_BIN` working without a rebuild. Otherwise it refuses with `REFUSED` (15) and
+writes nothing. Nothing is asked at all of a repository that does not declare this crate: a
+released binary generating a foreign repository is what a released binary is for. The verdict is deliberately not
+`CONTRACT_UNMET` (10): that is what a genuinely stale artifact reports, and its remedy —
+run the generator — is exactly what destroys the tree when the *executable* is the thing
+out of date. `scripts/derive` and `scripts/derive-check` propagate the two apart.
+
 **Every artifact is typed.** It declares the *document* it projects, the *encoding* it is
 written in (`json`, `yaml`, `markdown`, `text`, matching its own suffix), the *schema* its
 content satisfies when the document has a contract, and the *source* it was derived from.
@@ -515,6 +537,7 @@ Cockpit's Artifacts page and the site's `/registry/artifacts/` all show.
 | `schema_violation … class: "fatal" is not one of …` | a value fails a constraint | fix the value |
 | `kind 'x' is declared by both share/kinds.yaml and .ai/repo/knowledge/kinds.yaml` | a repository redefines a distributed kind | rename the repository's kind |
 | `generated artifact(s) stale: docs/generated/openapi.json (differs)` | a committed projection no longer matches the registry | run `majordomus generate` and commit |
+| `this executable is not of this tree's generation` | the executable was built from another revision of the crate and projects another model | rebuild it, or run `scripts/derive` with `MAJORDOMUS_BIN` unset — **not** `majordomus generate`, which is what rewrites the artifacts from the wrong model |
 | `capability 'x.y' (builtin …) is composed in module 'z' but its namespace is 'x'` | a `capability!` block sits in the wrong module's list | move it to the module its id names, or rename the id |
 | `module 'x' is composed twice` | two `module!` share an id, or a builtin module's id is a declarative kind | rename one |
 | `invalid cache policy: a process cache with max_entries 0 keeps nothing`, `… a command changes state and is never cached` | the descriptor's cache policy contradicts itself or the kind | fix the policy on the descriptor |

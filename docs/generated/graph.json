@@ -1602,6 +1602,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/lib/ui-routes.mjs",
+        "kind": "file",
+        "label": "ui-routes.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/ui-routes.mjs",
+        "external": true
+      },
+      {
         "id": "file:scripts/lib/ui-static.mjs",
         "kind": "file",
         "label": "ui-static.mjs",
@@ -1759,6 +1767,14 @@
         "label": "knowledge-sources.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/knowledge-sources.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/obligations.yaml",
+        "kind": "file",
+        "label": "obligations.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/obligations.yaml",
         "external": true
       },
       {
@@ -2472,6 +2488,7 @@
             "rule:project.web-surface-topology",
             "file:scripts/ui",
             "file:scripts/lib/ui-discover.mjs",
+            "file:scripts/lib/ui-routes.mjs",
             "file:scripts/lib/ui-audit.mjs",
             "file:scripts/lib/ui-static.mjs",
             "file:scripts/lib/ui-contrast.mjs",
@@ -2840,6 +2857,35 @@
           ],
           "tags": [
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0038",
+        "kind": "adr",
+        "label": "adr-0038",
+        "summary": "A scenario declares where it runs, and an obligation is a step",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0038",
+        "source": ".ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "file:.ai/repo/adrs/0002-canonical-capability-registry.md",
+            "file:.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md",
+            "file:.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
+            "rule:project.no-new-nouns",
+            "rule:project.optional-complexity",
+            "file:lib/usecase.sh",
+            "file:lib/evidence.sh",
+            "file:share/commands.yaml",
+            "file:share/obligations.yaml",
+            "file:.ai/repo/workflows/task-lifecycle.md"
+          ],
+          "tags": [
+            "architecture",
+            "agents",
+            "governance"
           ]
         }
       },
@@ -25950,6 +25996,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-version-is-measured@1",
+        "kind": "rule",
+        "label": "project.the-version-is-measured@1",
+        "summary": "The version is measured against the public surface, not claimed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-version-is-measured%401",
+        "source": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.land-and-publish@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "contract",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.ui-conformance@1",
         "kind": "rule",
         "label": "project.ui-conformance@1",
@@ -27440,6 +27508,13 @@
         "label": "test/cases/111_unblock.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_unblock.sh",
         "source": "test/cases/111_unblock.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/112_version_matches_surface.sh",
+        "kind": "test",
+        "label": "test/cases/112_version_matches_surface.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F112_version_matches_surface.sh",
+        "source": "test/cases/112_version_matches_surface.sh"
       },
       {
         "id": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -29100,6 +29175,35 @@
           "summary": "Regenerate AGENTS.md, CLAUDE.md and the other provider files from one policy and prove they are stamped, point at the layer, stay under the line budget and resolve every reference.",
           "target": "guaranteed",
           "weight": 42
+        }
+      },
+      {
+        "id": "majordomus://use-case/know-whether-this-work-is-finished",
+        "kind": "use-case",
+        "label": "know-whether-this-work-is-finished",
+        "summary": "Know whether the work in this checkout is finished",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fknow-whether-this-work-is-finished",
+        "source": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "agent",
+            "maintainer"
+          ],
+          "category": "completion",
+          "commands": [
+            "check",
+            "watch"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.obligation-closure",
+            "majordomus.scope-integrity",
+            "majordomus.state-consistency"
+          ],
+          "summary": "Ask the repository you are standing in, and be told what is still owed by name.",
+          "target": "advisory",
+          "weight": 7
         }
       },
       {
@@ -31884,6 +31988,11 @@
       },
       {
         "source": "majordomus://adr/adr-0022",
+        "target": "file:scripts/lib/ui-routes.mjs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0022",
         "target": "file:scripts/lib/ui-static.mjs",
         "kind": "put_in_force"
       },
@@ -32430,6 +32539,61 @@
       {
         "source": "majordomus://adr/adr-0037",
         "target": "majordomus://test/test/cases/94_ci_plan.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "file:share/obligations.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://adr/adr-0002",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://adr/adr-0030",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://adr/adr-0033",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://command/watch",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://document/.ai/repo/workflows/task-lifecycle.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://implementation/lib/evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://implementation/lib/usecase.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0038",
+        "target": "majordomus://rule/project.optional-complexity@1",
         "kind": "put_in_force"
       },
       {
@@ -42193,6 +42357,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-version-is-measured@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.ui-conformance@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42579,6 +42758,11 @@
       },
       {
         "source": "majordomus://test/test/cases/111_unblock.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/112_version_matches_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -44413,6 +44597,36 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "command:check",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "command:watch",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "majordomus://rule/majordomus.obligation-closure@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "majordomus://rule/majordomus.scope-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/know-whether-this-work-is-finished",
+        "target": "majordomus://rule/majordomus.state-consistency@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/know-which-tool-is-running",
         "target": "command:version",
         "kind": "runs"
@@ -46109,8 +46323,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1410,
-      "edges": 3178,
+      "nodes": 1416,
+      "edges": 3200,
       "acyclic": true,
       "truncated": false
     }

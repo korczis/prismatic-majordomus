@@ -760,7 +760,7 @@
         "resume-in-the-right-worktree",
         "checkpoint-long-work",
         "carry-a-blocker-across-a-handover",
-        "prove-what-a-task-owed-before-calling-it-done"
+        "know-whether-this-work-is-finished"
       ]
     },
     {
@@ -1217,6 +1217,40 @@
         "serve-the-layer-to-ai-clients",
         "classify-what-belongs-in-the-context",
         "find-an-object-without-reading-everything"
+      ]
+    },
+    {
+      "id": "know-whether-this-work-is-finished",
+      "kind": "use-case",
+      "title": "Know whether the work in this checkout is finished",
+      "summary": "Ask the repository you are standing in, and be told what is still owed by name.",
+      "category": "completion",
+      "status": "active",
+      "target": "advisory",
+      "weight": 7,
+      "actors": [
+        "agent",
+        "maintainer"
+      ],
+      "difficulty": "basic",
+      "commands": [
+        "check",
+        "watch"
+      ],
+      "doctrines": [
+        "majordomus.obligation-closure",
+        "majordomus.scope-integrity",
+        "majordomus.state-consistency"
+      ],
+      "path": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
+      "maturity": "described",
+      "evidence": null,
+      "related_ids": [
+        "resume-in-the-right-worktree",
+        "run-several-workers-at-once",
+        "prove-what-a-task-owed-before-calling-it-done",
+        "say-what-reached-the-remote-and-what-did-not",
+        "checkpoint-long-work"
       ]
     },
     {
@@ -2754,9 +2788,9 @@
       "related_ids": [
         "say-what-reached-the-remote-and-what-did-not",
         "carry-a-blocker-across-a-handover",
+        "know-whether-this-work-is-finished",
         "run-several-workers-at-once",
-        "accept-or-refuse-finished-work",
-        "block-acceptance-on-an-open-question"
+        "accept-or-refuse-finished-work"
       ]
     },
     {
@@ -2871,10 +2905,10 @@
       },
       "related_ids": [
         "prove-what-a-task-owed-before-calling-it-done",
+        "know-whether-this-work-is-finished",
         "accept-or-refuse-finished-work",
         "block-acceptance-on-an-open-question",
-        "carry-a-blocker-across-a-handover",
-        "run-several-workers-at-once"
+        "carry-a-blocker-across-a-handover"
       ]
     },
     {
@@ -5037,7 +5071,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "doctor-draft                           pass  1 step(s)\nusecase run: 1 scenario(s), 0 failed, 0 described only; evidence under .ai/local/evidence/use-cases/",
+            "output": "doctor-draft                           pass  1 step(s)\nusecase run: 1 scenario(s), 0 failed, 0 unmet, 0 not run; evidence under .ai/local/evidence/use-cases/",
             "assertions": [
               {
                 "kind": "exit",
@@ -7560,16 +7594,17 @@
       "title": "Completion and quality gates",
       "summary": "Deciding whether work is finished, with a contract every line of which passes or fails.",
       "order": 50,
-      "count": 5,
+      "count": 6,
       "use_cases": [
         "accept-or-refuse-finished-work",
         "block-acceptance-on-an-open-question",
         "complete-an-issue-only-with-its-evidence",
+        "know-whether-this-work-is-finished",
         "prove-what-a-task-owed-before-calling-it-done",
         "say-what-reached-the-remote-and-what-did-not"
       ],
       "maturity": {
-        "described": 5
+        "described": 6
       },
       "applications": [
         "ci-gated-project",
@@ -7733,7 +7768,7 @@
       {
         "class": "command",
         "id": "watch",
-        "use_cases": 4,
+        "use_cases": 5,
         "executable": 4,
         "evidence": 4,
         "status": "covered",
@@ -7778,7 +7813,7 @@
       {
         "class": "command",
         "id": "check",
-        "use_cases": 13,
+        "use_cases": 14,
         "executable": 10,
         "evidence": 10,
         "status": "covered",
@@ -9447,12 +9482,12 @@
     "gaps_required": 0
   },
   "counts": {
-    "use_cases": 42,
+    "use_cases": 43,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "described": 42
+      "described": 43
     }
   },
   "uc_index": {
@@ -9464,40 +9499,41 @@
     "accept-or-refuse-finished-work": 5,
     "find-out-what-drifted": 6,
     "see-what-the-repository-holds-without-reading-it": 7,
-    "serve-the-layer-to-ai-clients": 8,
-    "work-on-a-branch-in-its-canonical-worktree": 9,
-    "prove-performance-with-benchmarks": 10,
-    "extend-what-the-executable-serves": 11,
-    "say-what-the-tool-is-for": 12,
-    "checkpoint-long-work": 13,
-    "read-only-the-context-that-fits": 14,
-    "carry-a-blocker-across-a-handover": 15,
-    "resume-in-the-right-worktree": 16,
-    "prove-what-a-task-owed-before-calling-it-done": 17,
-    "say-what-reached-the-remote-and-what-did-not": 18,
-    "trust-the-policy-before-reading-it": 19,
-    "keep-the-bootstrap-thin-and-within-budget": 20,
-    "gate-ci-on-the-tool-itself": 21,
-    "block-acceptance-on-an-open-question": 22,
-    "complete-an-issue-only-with-its-evidence": 23,
-    "document-every-directory-of-the-layer": 24,
-    "trace-a-change-to-the-context-it-affects": 25,
-    "read-back-what-happened": 26,
-    "deliver-issues-in-waves": 27,
-    "classify-what-belongs-in-the-context": 28,
-    "find-an-object-without-reading-everything": 29,
-    "add-a-use-case-and-prove-it": 30,
-    "capture-the-prompts-that-started-the-work": 31,
-    "follow-a-skill-the-repository-defines": 32,
-    "keep-decisions-out-of-the-transcript": 33,
-    "know-which-tool-is-running": 34,
-    "let-the-provider-draw-the-episode-boundary": 35,
-    "migrate-from-the-old-layout": 36,
-    "open-and-close-a-session": 37,
-    "plan-the-work-as-data": 38,
-    "read-the-rules-the-tool-applies": 39,
-    "record-a-decision-before-it-is-forgotten": 40,
-    "resume-from-a-prompt-asset": 41
+    "know-whether-this-work-is-finished": 8,
+    "serve-the-layer-to-ai-clients": 9,
+    "work-on-a-branch-in-its-canonical-worktree": 10,
+    "prove-performance-with-benchmarks": 11,
+    "extend-what-the-executable-serves": 12,
+    "say-what-the-tool-is-for": 13,
+    "checkpoint-long-work": 14,
+    "read-only-the-context-that-fits": 15,
+    "carry-a-blocker-across-a-handover": 16,
+    "resume-in-the-right-worktree": 17,
+    "prove-what-a-task-owed-before-calling-it-done": 18,
+    "say-what-reached-the-remote-and-what-did-not": 19,
+    "trust-the-policy-before-reading-it": 20,
+    "keep-the-bootstrap-thin-and-within-budget": 21,
+    "gate-ci-on-the-tool-itself": 22,
+    "block-acceptance-on-an-open-question": 23,
+    "complete-an-issue-only-with-its-evidence": 24,
+    "document-every-directory-of-the-layer": 25,
+    "trace-a-change-to-the-context-it-affects": 26,
+    "read-back-what-happened": 27,
+    "deliver-issues-in-waves": 28,
+    "classify-what-belongs-in-the-context": 29,
+    "find-an-object-without-reading-everything": 30,
+    "add-a-use-case-and-prove-it": 31,
+    "capture-the-prompts-that-started-the-work": 32,
+    "follow-a-skill-the-repository-defines": 33,
+    "keep-decisions-out-of-the-transcript": 34,
+    "know-which-tool-is-running": 35,
+    "let-the-provider-draw-the-episode-boundary": 36,
+    "migrate-from-the-old-layout": 37,
+    "open-and-close-a-session": 38,
+    "plan-the-work-as-data": 39,
+    "read-the-rules-the-tool-applies": 40,
+    "record-a-decision-before-it-is-forgotten": 41,
+    "resume-from-a-prompt-asset": 42
   },
   "ap_index": {
     "repository-with-authored-governance": 0,
