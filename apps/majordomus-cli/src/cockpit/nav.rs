@@ -23,7 +23,7 @@
 //! under no heading, which the canonical order puts last, and the product model reports it.
 
 use crate::capability::registry::ModuleSource;
-use crate::capability::Context;
+use crate::capability::{Availability, Context};
 use crate::graph;
 use crate::http::router::percent_encode;
 
@@ -178,6 +178,10 @@ pub struct Item {
     pub count: Option<usize>,
     /// Whether this is the page being shown.
     pub current: bool,
+    /// Whether the environment rendering this navigation can answer the page. An entry
+    /// that is false is named and not linked; it is never silently dropped, because a
+    /// reader who cannot see a surface exists cannot ask for it.
+    pub available: bool,
 }
 
 /// A heading and its entries.
@@ -202,9 +206,8 @@ impl Navigation {
     }
 }
 
-/// Build the navigation for a request: the areas, then the catalogues derived from the
-/// registry, the index and the graph derivations. `here` is the request path, so the
-/// current entry can be marked without a page saying which it is.
+/// Build the navigation for a request served by a running process. `here` is the request
+/// path, so the current entry can be marked without a page saying which it is.
 pub fn build(ctx: &Context, here: &str) -> Navigation {
     let summary = ctx.registry.summary();
     // the counts are facts of this context, decided per area: how many things are behind
@@ -250,6 +253,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                     .map(|a| a.title.clone()),
                 count: Some(m.capabilities),
                 current: false,
+                available: env.offers(Availability::Runtime),
             })
             .collect(),
     };
@@ -268,6 +272,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 group: None,
                 count: Some(count),
                 current: false,
+                available: env.offers(Availability::Runtime),
             })
             .collect(),
     };
@@ -283,6 +288,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 group: None,
                 count: None,
                 current: here == format!("/cockpit/graphs/{id}"),
+                available: env.offers(Availability::Runtime),
             })
             .collect(),
     };
@@ -450,5 +456,105 @@ mod tests {
         let labels: Vec<&str> = kinds.items.iter().map(|i| i.label.as_str()).collect();
         let expected: Vec<&str> = ctx.index.kinds().into_keys().collect();
         assert_eq!(labels, expected);
+    }
+    #[test]
+    fn the_areas_are_the_page_table_and_not_a_list_in_build() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        let areas = nav
+            .sections()
+            .iter()
+            .find(|s| s.title == "Cockpit")
+            .expect("the areas section");
+        let offered: Vec<&str> = PAGES.iter().filter_map(|p| p.label).collect();
+        let shown: Vec<&str> = areas.items.iter().map(|i| i.label.as_str()).collect();
+        assert_eq!(shown, offered);
+        let hrefs: Vec<&str> = areas.items.iter().map(|i| i.href.as_str()).collect();
+        let paths: Vec<&str> = PAGES
+            .iter()
+            .filter(|p| p.label.is_some())
+            .map(|p| p.path)
+            .collect();
+        assert_eq!(hrefs, paths);
+    }
+
+    /// The table and the dispatch are two readings of one set. This is the case that keeps
+    /// them one: every page declared here is a path the Cockpit owns and answers with a
+    /// page of the area it claims, so a page served and unnamed, or named and unserved,
+    /// fails here rather than existing quietly.
+    #[test]
+    fn every_declared_page_is_a_page_the_cockpit_actually_serves() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let cockpit = crate::cockpit::Cockpit::new(ctx.clone(), "test", None);
+        for page in PAGES {
+            assert!(
+                crate::cockpit::Cockpit::owns(page.path),
+                "{} is declared and the Cockpit does not own it",
+                page.path
+            );
+            let req = crate::http::router::Request::parse_target("GET", page.path, vec![]);
+            let rendered = cockpit.route(&req);
+            assert_ne!(
+                rendered.status, 404,
+                "{} is declared and answers 404",
+                page.path
+            );
+            assert_eq!(
+                rendered.area, page.area,
+                "{} answers with an area the table does not claim",
+                page.path
+            );
+        }
+    }
+
+    #[test]
+    fn the_order_is_the_same_on_every_build() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let once = build(&ctx, "/cockpit");
+        let twice = build(&ctx, "/cockpit");
+        let flatten = |n: &Navigation| -> Vec<(String, String)> {
+            n.sections()
+                .iter()
+                .flat_map(|s| {
+                    s.items
+                        .iter()
+                        .map(|i| (s.title.clone(), i.href.clone()))
+                        .collect::<Vec<_>>()
+                })
+                .collect()
+        };
+        assert_eq!(flatten(&once), flatten(&twice));
+        assert!(!flatten(&once).is_empty());
+    }
+
+    #[test]
+    fn a_published_build_names_what_it_cannot_answer_and_does_not_link_it() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let served = build_in(&ctx, "/cockpit", Environment::Served);
+        let published = build_in(&ctx, "/cockpit", Environment::Published);
+
+        let labels = |n: &Navigation| -> Vec<String> {
+            n.sections()
+                .iter()
+                .flat_map(|s| s.items.iter().map(|i| i.label.clone()))
+                .collect()
+        };
+        // the same entries in both: a surface is named either way
+        assert_eq!(labels(&served), labels(&published));
+
+        assert!(served
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .all(|i| i.available));
+        assert!(published
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .all(|i| !i.available));
     }
 }
