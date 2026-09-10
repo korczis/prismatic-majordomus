@@ -187,6 +187,19 @@ impl Object {
     }
 }
 
+/// An object is shown grouped by its kind, ordered inside the group by identity, and tied
+/// apart by the URI that is unique across the index.
+///
+/// The index stores its objects in byte order of the URI because [`crate::index::Index::get`]
+/// binary-searches that vector: a search invariant, not a presentation order. Every surface
+/// that shows objects to a person asks for this one instead, which is why `case-9` precedes
+/// `case-107` on a page and does not in the vector.
+impl crate::order::Ordered for Object {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.kind, &self.identity, &self.uri)
+    }
+}
+
 /// Build the canonical URI for a kind and identity.
 pub fn uri_for(kind: &str, identity: &str) -> String {
     format!("majordomus://{kind}/{identity}")

@@ -92,6 +92,45 @@ expect_exit 10 env MJ_ROOT="$F" "$GATE"
 expect_grep 'unpinned shell sorts rose from 0 to 1'
 expect_grep 'LC_ALL=C sort'
 
+# --- the ratchet counts what ships: a sort in a `#[cfg(test)]` module orders a fixture,
+# not a collection any surface renders, and asking a test that asserts an order to adopt the
+# canonical order is how a gate teaches people to switch it off
+F="$(fixture 9)"
+cat >> "$F/apps/majordomus-cli/src/thing.rs" <<'RS'
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn ids_are_distinct() {
+        let mut ids = vec![2u8, 1];
+        ids.sort();
+        assert_eq!(ids, [1, 2]);
+    }
+}
+RS
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_grep 'sort sites in the crate outside order.rs: 1, at the baseline'
+
+# --- and neither a doc example nor a file that only the tests compile is counted
+F="$(fixture 10)"
+cat >> "$F/apps/majordomus-cli/src/thing.rs" <<'RS'
+/// ```
+/// let mut v = vec![2u8, 1];
+/// v.sort();
+/// ```
+pub fn documented() {}
+
+#[cfg(test)]
+mod fixtures;
+RS
+printf 'fn helper(v: &mut Vec<u8>) { v.sort_unstable(); }\n' > "$F/apps/majordomus-cli/src/fixtures.rs"
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_grep 'sort sites in the crate outside order.rs: 1, at the baseline'
+
+# --- and the sites it does count can be listed, so the number is auditable
+F="$(fixture 11)"
+expect_exit 0 env MJ_ROOT="$F" "$GATE" --sites
+expect_grep 'apps/majordomus-cli/src/thing.rs:1'
+
 # --- a tree with no baseline cannot be judged, and says so rather than passing
 F="$T/tree8"; mkdir -p "$F/apps/majordomus-cli/src" "$F/.ai/repo"
 expect_exit 12 env MJ_ROOT="$F" "$GATE"

@@ -53,5 +53,5 @@ pub use model::{
     McpExposure, McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
 };
 pub use module::ModuleDescriptor;
-pub use registry::{CapabilityRegistry, Entry, RegistryError};
+pub use registry::{CapabilityRegistry, Entry, HttpRoute, RegistryError};
 pub use schema::CanonicalSchema;

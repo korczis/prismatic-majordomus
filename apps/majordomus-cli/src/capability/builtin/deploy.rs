@@ -35,6 +35,14 @@ pub struct DeploymentView {
     pub deployment: Deployment,
 }
 
+/// A view of a deployment orders as the deployment it carries: the file it was read from
+/// is provenance, not identity.
+impl crate::order::Ordered for DeploymentView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        self.deployment.order_key()
+    }
+}
+
 /// Every deployment the layer declares.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DeploymentList {
@@ -80,7 +88,7 @@ fn views(ctx: &Context) -> (Vec<DeploymentView>, Vec<Refusal>) {
             Err(refusal) => bad.push(refusal),
         }
     }
-    out.sort_by(|a, b| a.deployment.id.cmp(&b.deployment.id));
+    crate::order::canonical(&mut out);
     (out, bad)
 }
 

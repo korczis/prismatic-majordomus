@@ -89,6 +89,8 @@ pub fn crate_generation(crate_dir: &Path) -> Option<String> {
     if files.is_empty() {
         return None;
     }
+    // A hash input, not a list: the same files hashed in a different sequence are a
+    // different generation, so this order is the fingerprint's and nobody reads it.
     files.sort();
     let mut hasher = Sha256::new();
     for (rel, path) in &files {
