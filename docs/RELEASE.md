@@ -50,9 +50,46 @@ takes the strongest signal 0.x has rather than demanding 1.0.0 for a single remo
 the major reaches 1 the shift ends and the implied bump is the required one.
 
 **A removal is named whatever the verdict is.** Below 1.0.0 it does not refuse the release,
-and it still belongs in the release record and the changelog as a breaking change: a caller
-who held what is gone otherwise finds out by breaking. The rule is
-`project.the-version-is-measured`; the gate is `version-surface`.
+and it is still stated as a breaking change: a caller who held what is gone otherwise finds
+out by breaking. The rule is `project.the-version-is-measured`; the gate is `version-surface`.
+
+### Where a removal is written down
+
+Neither of the two documents that would hold it is authored, so the answer is not "write it
+in one of them".
+
+The **release record** cannot hold it at all today. `release/v1`
+(`share/schemas/majordomus/release/release.v1.schema.json`) is `additionalProperties: false`
+and declares no field for a breaking change, and a record is written by the release workflow
+from the artifacts it published and by nobody else
+([`.ai/repo/releases/README.md`](../.ai/repo/releases/README.md)) — so an unreleased version
+has no record for anything to be written into. The smallest field that would close this is a
+proposal, not a change made here: a schema change does not belong inside a documentation
+change.
+
+The **changelog** can, through the one authored input it has. Nothing in it is written by
+hand, and the only authored text it reads *about a change* is the commit message.
+`release/commits.rs` marks a change breaking on `type(scope)!:` or a `BREAKING CHANGE:`
+trailer in the body, and `release/changelog.rs` renders such a change with a leading
+`**BREAKING**`. So a removal is named in the **subject** of a commit inside the release that
+carries it — the subject, because that is the text a reader of the changelog sees; the
+trailer marks it and is not rendered.
+
+Two consequences follow from `compose_published`, and both are intended:
+
+- `majordomus release changelog` states it immediately, under `## Unreleased`;
+- `docs/generated/changelog.*` does not, and will not until the version ships. The committed
+  artifact carries only published releases, because a file inside a commit cannot describe
+  the commit it is in. When the pipeline writes the record for that version, the section's
+  changes are the commits in `<previous>..<this>` — the marked one among them — and the
+  published changelog states the removal with nobody writing it there.
+
+The consequence worth naming is that the mark has to be on a commit *inside* the release,
+and cannot be added to a commit that has already landed. A removal noticed after the fact is
+therefore stated by a later commit in the same window saying what left. That is what
+`v0.3.1..0.4.0` needed: the atom `command scope classify` left the surface in
+`427b73248d9`, whose subject marked nothing, and it is named by the commit that carries this
+section.
 
 ## The gap it closes
 
