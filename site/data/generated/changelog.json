@@ -8,6 +8,24 @@
       "decisions": [
         {
           "date": "2026-09-09",
+          "id": "adr-0032",
+          "status": "proposed",
+          "title": "An external workspace is not a provider: the term, the dependency posture, and where synced content lives"
+        },
+        {
+          "date": "2026-09-09",
+          "id": "adr-0031",
+          "status": "accepted",
+          "title": "The design is one declaration and every surface is a projection of it"
+        },
+        {
+          "date": "2026-09-09",
+          "id": "adr-0030",
+          "status": "proposed",
+          "title": "A task owes obligations, and the evidence that discharges them goes stale"
+        },
+        {
+          "date": "2026-09-09",
           "id": "adr-0029",
           "status": "proposed",
           "title": "The changelog is a projection of what the repository already records, and the version has one writer rather than one source"
@@ -36,6 +54,83 @@
           "changes": [
             {
               "breaking": false,
+              "commit": "dc14dd0d3",
+              "kind": "feat",
+              "scope": "obligations",
+              "subject": "what a task owes, and whether its evidence still describes this tree, over every surface"
+            },
+            {
+              "breaking": false,
+              "commit": "824223cb5",
+              "kind": "feat",
+              "scope": "rules",
+              "subject": "an empty result and a failed command must not look alike"
+            },
+            {
+              "breaking": false,
+              "commit": "1e96e91b7",
+              "kind": "feat",
+              "scope": "ci",
+              "subject": "three failures of one session, turned into checks"
+            },
+            {
+              "breaking": false,
+              "commit": "67d6298c2",
+              "kind": "feat",
+              "scope": "plan",
+              "subject": "one issue walks the whole chain and back, and a remote close still does not complete it"
+            },
+            {
+              "breaking": false,
+              "commit": "8ad5bb6a7",
+              "kind": "feat",
+              "scope": "context",
+              "subject": "the board reaches the worker who never asked for it"
+            },
+            {
+              "breaking": false,
+              "commit": "e41faa62d",
+              "kind": "feat",
+              "scope": "plan",
+              "subject": "the plan's derivations are capabilities, so a server can answer what to work on next"
+            },
+            {
+              "breaking": false,
+              "commit": "1487d729e",
+              "kind": "feat",
+              "scope": "peers",
+              "subject": "a session is told it has not announced, and doctor names the work that exists on one disk"
+            },
+            {
+              "breaking": false,
+              "commit": "3831e151c",
+              "kind": "feat",
+              "scope": "trace",
+              "subject": "an issue leads to the commits and pull requests that realised it, and back, without either being written down"
+            },
+            {
+              "breaking": false,
+              "commit": "2b3b9fffa",
+              "kind": "feat",
+              "scope": "design",
+              "subject": "one declaration for the design, and every surface projects it"
+            },
+            {
+              "breaking": false,
+              "commit": "cf1ee94ca",
+              "kind": "feat",
+              "scope": "closure",
+              "subject": "a task owes obligations, and the evidence that discharges them goes stale"
+            },
+            {
+              "breaking": false,
+              "commit": "6aeec67b1",
+              "kind": "feat",
+              "scope": "peers",
+              "subject": "an announcement outlives the connection that made it, and a claim is answered rather than merely recorded"
+            },
+            {
+              "breaking": false,
               "commit": "fbc1da919",
               "kind": "feat",
               "scope": "ci",
@@ -57,6 +152,13 @@
             },
             {
               "breaking": false,
+              "commit": "597ebe4e5",
+              "kind": "feat",
+              "scope": "ci",
+              "subject": "the GitHub projection has a gate, so it cannot rot green again"
+            },
+            {
+              "breaking": false,
               "commit": "7af039a4a",
               "kind": "feat",
               "scope": "skills",
@@ -64,10 +166,24 @@
             },
             {
               "breaking": false,
+              "commit": "209a82c30",
+              "kind": "feat",
+              "scope": "plan",
+              "subject": "the projection to GitHub becomes a gated, identified, traversable milestone"
+            },
+            {
+              "breaking": false,
               "commit": "2a7af4272",
               "kind": "feat",
               "scope": "completion",
               "subject": "the shell integration installs itself, and takes itself out again"
+            },
+            {
+              "breaking": false,
+              "commit": "f9bbc636a",
+              "kind": "feat",
+              "scope": "workspace",
+              "subject": "a workspace is a kind, and only its content is local"
             },
             {
               "breaking": false,
@@ -148,6 +264,13 @@
             },
             {
               "breaking": false,
+              "commit": "65dded963",
+              "kind": "feat",
+              "scope": "execution",
+              "subject": "an execution is a watched capability call, not a second registry"
+            },
+            {
+              "breaking": false,
               "commit": "427b73248",
               "kind": "feat",
               "scope": "commands",
@@ -176,6 +299,13 @@
             },
             {
               "breaking": false,
+              "commit": "ade9050e6",
+              "kind": "feat",
+              "scope": "web",
+              "subject": "every projection route carries its availability, and the served-only ones are checked"
+            },
+            {
+              "breaking": false,
               "commit": "d648e974c",
               "kind": "feat",
               "scope": "env",
@@ -194,6 +324,13 @@
               "kind": "feat",
               "scope": "env",
               "subject": "one typed snapshot of what a checkout is"
+            },
+            {
+              "breaking": false,
+              "commit": "674b89907",
+              "kind": "feat",
+              "scope": "generate",
+              "subject": "the composed graph is an artifact of the one plan, with a schema and nothing private"
             }
           ],
           "heading": "Added",
@@ -204,10 +341,94 @@
           "changes": [
             {
               "breaking": false,
+              "commit": "7af40d230",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "the probe reads 426 from the WebSocket route as a surface answering"
+            },
+            {
+              "breaking": false,
+              "commit": "6c979b376",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "master is green again on the three causes nobody owned"
+            },
+            {
+              "breaking": false,
+              "commit": "709407a1d",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "two checks meet new content and stop reading it as an inventory"
+            },
+            {
+              "breaking": false,
+              "commit": "b3ffee4e9",
+              "kind": "fix",
+              "scope": "worktree",
+              "subject": "a new path starts approved for direnv"
+            },
+            {
+              "breaking": false,
+              "commit": "83775c7ab",
+              "kind": "fix",
+              "scope": "scope",
+              "subject": "a task that merged the trunk has not touched what the trunk touched"
+            },
+            {
+              "breaking": false,
+              "commit": "d7f492294",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "the gate model parses again, and the gate a merge dropped is declared again"
+            },
+            {
+              "breaking": false,
+              "commit": "9fcd06f8f",
+              "kind": "fix",
+              "scope": "site-check",
+              "subject": "a route is named on the API page whatever it is styled with"
+            },
+            {
+              "breaking": false,
+              "commit": "53b21b4bb",
+              "kind": "fix",
+              "scope": "runtime",
+              "subject": "a stale runtime says so, on the lease and on the way in"
+            },
+            {
+              "breaking": false,
+              "commit": "b90e0dd47",
+              "kind": "fix",
+              "scope": "tooling",
+              "subject": "two failures of this session become refusals with tests"
+            },
+            {
+              "breaking": false,
               "commit": "98f6606ce",
               "kind": "fix",
               "scope": "release",
               "subject": "the module asserts the two projections it documents"
+            },
+            {
+              "breaking": false,
+              "commit": "f6b73b05a",
+              "kind": "fix",
+              "scope": "gates",
+              "subject": "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            },
+            {
+              "breaking": false,
+              "commit": "1cbb36869",
+              "kind": "fix",
+              "scope": "design,adr",
+              "subject": "the three failures this session hit, each with the gate that would have caught it"
+            },
+            {
+              "breaking": false,
+              "commit": "efe5afdb4",
+              "kind": "fix",
+              "scope": "traceability",
+              "subject": "an open pull request keeps the columns after its empty ones"
             },
             {
               "breaking": false,
@@ -225,10 +446,59 @@
             },
             {
               "breaking": false,
+              "commit": "0ad022303",
+              "kind": "fix",
+              "scope": "doctrine",
+              "subject": "the schema check reads the schemas, instead of reporting a clean bill of health over an empty set"
+            },
+            {
+              "breaking": false,
               "commit": "ed649c769",
               "kind": "fix",
               "scope": "docs",
               "subject": "the semantics module documents a validation that is not an item"
+            },
+            {
+              "breaking": false,
+              "commit": "fc9864ebc",
+              "kind": "fix",
+              "scope": "share",
+              "subject": "a MAJORDOMUS_SHARE naming another worktree of this repository is refused"
+            },
+            {
+              "breaking": false,
+              "commit": "59aa3769c",
+              "kind": "fix",
+              "scope": "derive",
+              "subject": "every stage names itself as it begins and reports what it cost"
+            },
+            {
+              "breaking": false,
+              "commit": "5bd2f77bc",
+              "kind": "fix",
+              "scope": "ci",
+              "subject": "ci-plan tells a bare path list which spelling it wanted"
+            },
+            {
+              "breaking": false,
+              "commit": "59f5c8b75",
+              "kind": "fix",
+              "scope": "cli",
+              "subject": "an unknown command that the Rust executable provides says so and names the launcher"
+            },
+            {
+              "breaking": false,
+              "commit": "21f7ad848",
+              "kind": "fix",
+              "scope": "github-sync",
+              "subject": "the protection against overwriting a person's edit was blind when the plan had moved"
+            },
+            {
+              "breaking": false,
+              "commit": "3db47f7d6",
+              "kind": "fix",
+              "scope": "github-sync",
+              "subject": "a projected record carries its own identity, so a rename cannot orphan it"
             },
             {
               "breaking": false,
@@ -299,6 +569,13 @@
               "kind": "fix",
               "scope": "rust",
               "subject": "the test build compiles again on master, and clippy 1.98 is satisfied"
+            },
+            {
+              "breaking": false,
+              "commit": "52bfbe7f0",
+              "kind": "fix",
+              "scope": "merge",
+              "subject": "the test-only index literal gains the field master added"
             },
             {
               "breaking": false,
@@ -470,6 +747,20 @@
             },
             {
               "breaking": false,
+              "commit": "efc6a085b",
+              "kind": "fix",
+              "scope": "worktree",
+              "subject": "the container test names no home directory"
+            },
+            {
+              "breaking": false,
+              "commit": "de52b8497",
+              "kind": "fix",
+              "scope": "test",
+              "subject": "the duplicate plan test and the unformatted tests a merge left behind"
+            },
+            {
+              "breaking": false,
               "commit": "a10f0af08",
               "kind": "fix",
               "scope": "cli",
@@ -517,6 +808,48 @@
         },
         {
           "changes": [
+            {
+              "breaking": false,
+              "commit": "e6571df53",
+              "kind": "docs",
+              "scope": "bootstrap",
+              "subject": "every worker is told it is not alone, and told to push before it is"
+            },
+            {
+              "breaking": false,
+              "commit": "012fed644",
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "I1301 is done, and I1302 may not land its schema alone"
+            },
+            {
+              "breaking": false,
+              "commit": "990bd0588",
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the projection claim splits in two, and only one of the halves was ever true"
+            },
+            {
+              "breaking": false,
+              "commit": "54c5f45ee",
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the external-workspaces milestone and its ten issues"
+            },
+            {
+              "breaking": false,
+              "commit": "7f75414bf",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the audit withdraws two thirds of ADR 0025"
+            },
+            {
+              "breaking": false,
+              "commit": "a845624ad",
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "an external workspace is not a provider"
+            },
             {
               "breaking": false,
               "commit": "cc6540f2e",
@@ -589,6 +922,13 @@
           "changes": [
             {
               "breaking": false,
+              "commit": "3d9c929a5",
+              "kind": "test",
+              "scope": "workspace",
+              "subject": "the declaration is proved to carry no credential"
+            },
+            {
+              "breaking": false,
               "commit": "f6af28819",
               "kind": "test",
               "scope": "order",
@@ -600,6 +940,19 @@
               "kind": "test",
               "scope": "gate",
               "subject": "case 56's first export is a repository too, so CI asks the same gate as a laptop"
+            },
+            {
+              "breaking": false,
+              "commit": "000e40d67",
+              "kind": "test",
+              "scope": "env",
+              "subject": "the two tests the adapter rule names, written"
+            },
+            {
+              "breaking": false,
+              "commit": "010541612",
+              "kind": "test",
+              "subject": "the recipe set is asked of just --dump, not of one file's text"
             },
             {
               "breaking": false,
@@ -631,10 +984,24 @@
             },
             {
               "breaking": false,
+              "commit": "9badf2448",
+              "kind": "test",
+              "scope": "execution",
+              "subject": "the terminal's rendering is asserted, and a surface count is derived"
+            },
+            {
+              "breaking": false,
               "commit": "f37da5681",
               "kind": "test",
               "scope": "commands",
               "subject": "the generated completion, loaded into a real zsh"
+            },
+            {
+              "breaking": false,
+              "commit": "e4ef4cba4",
+              "kind": "test",
+              "scope": "worktree",
+              "subject": "the migration's classification, its guard, and a dirty move"
             }
           ],
           "heading": "Tests",
@@ -643,6 +1010,237 @@
         },
         {
           "changes": [
+            {
+              "breaking": false,
+              "commit": "04599afd2",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "ea5592a9e",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "789e95ab8",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "c1a3e7930",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge of #142"
+            },
+            {
+              "breaking": false,
+              "commit": "08348b0c1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "7c3e9f9ac",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge of #128"
+            },
+            {
+              "breaking": false,
+              "commit": "c4b6d0715",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "f36420c30",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow master once more"
+            },
+            {
+              "breaking": false,
+              "commit": "8c53e2b11",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "a4f9780b0",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "16cc159c7",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "0df29dbcf",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge, generated by a binary that knows every module"
+            },
+            {
+              "breaking": false,
+              "commit": "98f3dfbda",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow eight branches and current master"
+            },
+            {
+              "breaking": false,
+              "commit": "e15b311e7",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow six branches folded together"
+            },
+            {
+              "breaking": false,
+              "commit": "c114a92f3",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "341451cb7",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "91b4e8be6",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "3a2aeab52",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "f2b018f26",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge"
+            },
+            {
+              "breaking": false,
+              "commit": "501ea2d41",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the two merges, and the baseline records lib/doctor.sh"
+            },
+            {
+              "breaking": false,
+              "commit": "11fc8bf2b",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge of origin/master"
+            },
+            {
+              "breaking": false,
+              "commit": "8ddb6496d",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge, and the baseline records three scripts that arrived with it"
+            },
+            {
+              "breaking": false,
+              "commit": "cdc859654",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the final master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "5e6d324c1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "0d45da189",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "50f276bc3",
+              "kind": "chore",
+              "scope": "adr,test",
+              "subject": "renumber to the identities the board actually left free"
+            },
+            {
+              "breaking": false,
+              "commit": "21a1203cc",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "e94b760d1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the second master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "5fe8f2ec8",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "b79363681",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "f1c1b6556",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge, with the ADR renumbered to 0030"
+            },
+            {
+              "breaking": false,
+              "commit": "e4c40b814",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge of the base branch"
+            },
+            {
+              "breaking": false,
+              "commit": "691fab7db",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the entry-point fixes"
+            },
             {
               "breaking": false,
               "commit": "44468dbc1",
@@ -698,6 +1296,13 @@
               "kind": "chore",
               "scope": "derive",
               "subject": "the projections follow the merge with master"
+            },
+            {
+              "breaking": false,
+              "commit": "a3a267e8e",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow ADR 0025"
             },
             {
               "breaking": false,
@@ -827,6 +1432,13 @@
             },
             {
               "breaking": false,
+              "commit": "9ee7c2952",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge"
+            },
+            {
+              "breaking": false,
               "commit": "bebf76f03",
               "kind": "chore",
               "scope": "derive",
@@ -869,15 +1481,90 @@
             },
             {
               "breaking": false,
+              "commit": "99ead0772",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow"
+            },
+            {
+              "breaking": false,
               "commit": "c85c2cb0b",
               "kind": "chore",
               "scope": "derive",
               "subject": "the projections follow the merge"
+            },
+            {
+              "breaking": false,
+              "commit": "8bafa2854",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master"
+            },
+            {
+              "breaking": false,
+              "commit": "e25278a71",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master"
+            },
+            {
+              "breaking": false,
+              "commit": "2365af0cf",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master"
+            },
+            {
+              "breaking": false,
+              "commit": "27662495a",
+              "kind": "chore",
+              "scope": "plan",
+              "subject": "I1005 done, with the evidence the contract asked for"
             }
           ],
           "heading": "Housekeeping",
           "kind": "chore",
           "rank": 7
+        },
+        {
+          "changes": [
+            {
+              "breaking": false,
+              "commit": "6b5c2eb45",
+              "kind": "other",
+              "subject": "Merge origin/master into feature/github-work-graph"
+            },
+            {
+              "breaking": false,
+              "commit": "d52f43334",
+              "kind": "other",
+              "subject": "Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone"
+            },
+            {
+              "breaking": false,
+              "commit": "034f334bf",
+              "kind": "other",
+              "scope": "feature/graph-model",
+              "subject": "uncommitted work found in the worktree at the topology migration, committed as it was"
+            },
+            {
+              "breaking": false,
+              "commit": "6579f1978",
+              "kind": "other",
+              "scope": "feature/deployment-core",
+              "subject": "uncommitted work found in the worktree at the topology migration, committed as it was"
+            },
+            {
+              "breaking": false,
+              "commit": "1410a0c79",
+              "kind": "other",
+              "scope": "chore/derive-master",
+              "subject": "uncommitted work found in the worktree at the topology migration, committed as it was"
+            }
+          ],
+          "heading": "Other",
+          "kind": "other",
+          "rank": 8
         }
       ],
       "unreleased": true,
@@ -919,6 +1606,12 @@
       "commit": "45f921efb5f82c517f13467b0bf9903256349470",
       "date": "2026-09-08T07:10:37Z",
       "decisions": [
+        {
+          "date": "2026-09-08",
+          "id": "adr-0033",
+          "status": "accepted",
+          "title": "An execution is a watched capability call, not a second registry"
+        },
         {
           "date": "2026-09-08",
           "id": "adr-0028",
