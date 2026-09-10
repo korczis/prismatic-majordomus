@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Generate the Fly configuration from the canonical object — application, region, port, resources, autostart and autostop, health check, concurrency — and declare the cheap cost profile as data that a reader and a check can both see."
 why: "fly.toml at the repository root is excellent for a developer and unacceptable as a second source of truth. Generating it keeps the ergonomics and removes the drift; declaring the cost profile makes an expensive change deliberate and visible in review."
-current_state: "No fly.toml exists. No region, resource envelope or cost profile is stated anywhere."
+current_state: "fly.toml exists at the repository root, generated from .ai/repo/deployments/majordomus.yaml by majordomus generate deployment, and carries the header that says so. The statement this field used to carry -- that no fly.toml exists and no region or resource envelope is stated anywhere -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10."
 desired_state: "fly.toml is generated, marked as generated with its source and regeneration command, validated by the provider's own validator, and every value in it traces to the canonical object."
 scope:
   - fly.toml
@@ -37,4 +37,4 @@ evidence_required:
   - fly_config_validate
 risk: "The high-availability profile invites a second configuration file. It must be a derived override of the same base or documented prose, never a parallel file to maintain."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10

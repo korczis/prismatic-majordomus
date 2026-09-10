@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Make the exposure of backend-only surfaces — the API console, live status, runtime reads — follow from availability metadata, and prove both projections behave correctly."
 why: "The published site has no server. A link to a runtime console on it is a broken promise, and the usual fix is a check on the page's own address, which is a rule hidden where nobody will find it."
-current_state: "The Swagger shell and the API are served by the running process. The published site has no way to know that."
+current_state: "The availability metadata this issue asks for exists: web::Availability is ServedOnly, PublishedOnly or Both, ProjectionRoute::linkable() answers from it alone, and a doctest asserts the Swagger console is not linkable. The Cockpit renders an unavailable surface as unavailable (cockpit/pages.rs) and the running-server side is exercised by test/cases/89_web_surface.sh and apps/majordomus-cli/tests/projections.rs. What is still missing is the half this issue exists for: nothing asserts over the built static tree that it carries no active link to a runtime-only surface -- scripts/site-check does not ask the question, and the site source happens to contain no such link rather than being prevented from gaining one. This issue has been ACTIVE since 2026-09-06 and nothing advanced it on 2026-09-10. Measured on master 6042f4286, 2026-09-10."
 desired_state: "Exposure follows from availability metadata alone, and there is a test for each projection that keeps it that way."
 scope:
   - apps/majordomus-cli/src/http/swagger.rs
@@ -29,5 +29,5 @@ evidence_required:
   - both_projections_tested
 risk: "This is the check that quietly rots, because a broken link on a published page fails nothing. The test for it has to run on every build."
 created_at: 2026-09-06
-updated_at: 2026-09-06T17:35:07Z
+updated_at: 2026-09-10
 started_at: 2026-09-06T17:35:07Z
