@@ -14144,11 +14144,11 @@
             "--dry-run"
           ],
           "command": "majordomus release bump --dry-run",
-          "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.",
-          "expectation": "exits 0",
+          "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes the crate manifest and the shell tool and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. Those two files are this repository's own. In a tree that declares no version — a supervised repository such as the one this example runs in — it refuses with exit 12 rather than invent one, and `--dry-run` refuses the same way, because a preview of a write that cannot happen is not a preview.",
+          "expectation": "exits 12",
           "id": "release-bump-dry-run",
           "setup": [],
-          "title": "Raising it, in both places, once"
+          "title": "Raising it, in both places, once — or refusing to"
         }
       ],
       "executable": true,

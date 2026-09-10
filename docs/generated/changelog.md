@@ -163,6 +163,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`ea5592a9e`)
 - **derive**: the projections follow the master merge (`789e95ab8`)
 - **derive**: the projections follow the merge of #142 (`c1a3e7930`)
 - **derive**: the projections follow the master merge (`08348b0c1`)

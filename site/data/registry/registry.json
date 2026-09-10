@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "cd504aef862cb15c07358f694fec7e86ccd2b4a98b2c03a317036c0b3fb6af96",
+    "fingerprint": "cfb0e1ba25a859369b31a072fa3f75e6baa6ca580e819989bf9b128dce33d2b5",
     "summary": {
       "total": 1183,
       "builtin": 73,
@@ -26385,7 +26385,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7249322c270cb4ff6e61099e9b18dfa49d43fe49b235db865e347a03a7f4b359",
+    "fingerprint": "601862c37d0b5c76a91abbdfd571d2b09460538cdbe0c4865d2d2ca914ca4327",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -51128,8 +51128,8 @@
             "examples": [
               {
                 "id": "release-bump-dry-run",
-                "title": "Raising it, in both places, once",
-                "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.",
+                "title": "Raising it, in both places, once — or refusing to",
+                "description": "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes the crate manifest and the shell tool and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. Those two files are this repository's own. In a tree that declares no version — a supervised repository such as the one this example runs in — it refuses with exit 12 rather than invent one, and `--dry-run` refuses the same way, because a preview of a write that cannot happen is not a preview.",
                 "argv": [
                   "release",
                   "bump",
@@ -51137,7 +51137,7 @@
                 ],
                 "command": "majordomus release bump --dry-run",
                 "setup": [],
-                "expectation": "exits 0"
+                "expectation": "exits 12"
               }
             ],
             "subcommands": []

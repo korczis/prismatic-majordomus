@@ -2662,13 +2662,13 @@ majordomus release bump [OPTIONS]
 
 Examples:
 
-- **Raising it, in both places, once** — The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.
+- **Raising it, in both places, once — or refusing to** — The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes the crate manifest and the shell tool and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person. Those two files are this repository's own. In a tree that declares no version — a supervised repository such as the one this example runs in — it refuses with exit 12 rather than invent one, and `--dry-run` refuses the same way, because a preview of a write that cannot happen is not a preview.
 
   ```console
   $ majordomus release bump --dry-run
   ```
 
-  Verified: exits 0.
+  Verified: exits 12.
 
 <a id="majordomus-quality"></a>
 ## `majordomus quality`
