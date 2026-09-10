@@ -142,6 +142,24 @@ if [ -n "$PREFIX" ]; then
   if prefix_paths | head -1 | grep -q .; then
     bad prefix "root-absolute path without $PREFIX: $(prefix_paths | head -1)"
   else ok prefix "every root-absolute path carries $PREFIX"; fi
+else
+  # The site is published at the origin root, so there is no deployment prefix for a
+  # root-absolute path to carry. Said rather than skipped: a check that disappears from the
+  # output when its subject changes shape is indistinguishable from one that passed.
+  ok prefix "published at the origin root: no prefix to carry (the /docs mount: site-basepath-check)"
+fi
+# 5b. the custom domain: the published site keeps its host only while the deployed tree carries
+# CNAME — GitHub Pages unsets the domain on a deploy that has none, and every advertised address,
+# the installer's included, dies with it. The host is not written here; it is the one in base_url.
+if [ -f "$SITE/static/CNAME" ]; then
+  host="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://##; s#/.*##')"
+  declared="$(tr -d ' \t\r\n' < "$SITE/static/CNAME")"
+  built=""
+  if [ -f "$PUB/CNAME" ]; then built="$(tr -d ' \t\r\n' < "$PUB/CNAME")"; fi
+  if [ -z "$built" ]; then bad domain "site/static/CNAME is not in the build output; a deploy would unset $declared"
+  elif [ "$built" != "$declared" ]; then bad domain "the build serves CNAME $built; site/static/CNAME declares $declared"
+  elif [ -n "$host" ] && [ "$declared" != "$host" ]; then bad domain "CNAME is $declared; base_url is served from $host"
+  else ok domain "the build carries CNAME $declared, the host base_url is published at"; fi
 fi
 # 6. internal links resolve to a generated file
 missing=0
