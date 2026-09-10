@@ -1,7 +1,7 @@
 +++
 title = "The repository environment"
 description = "the repository environment: one typed snapshot of what a checkout is — project, layer, version control, toolchains, workflows, provider projections, local services — with a provenance entry for every value; the full and the fast resolution, the cache under `.ai/local/`, and the direnv adapter that renders it without reading the repository itself"
-weight = 42
+weight = 43
 [extra]
 source = "docs/ENVIRONMENT.md"
 +++
