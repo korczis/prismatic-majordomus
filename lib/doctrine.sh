@@ -233,23 +233,35 @@ H
   mj_require_installed
   mj_doctrine_load
   [ "$sub" = list ] && { mj_doctrine_list; return 0; }
-  local n bl ad un uc i defined
+  local n bl ad un uc i defined packaged
   n="${#MJ_DOC_ROW[@]}"; bl=0; ad=0; un=0; uc=0; i=0
   defined=" $(mj_validators_defined) "
+  # A rule's test case is the vendor's evidence and lives in the vendor's source tree; the
+  # release archive ships bin/ lib/ libexec/ share/ and a RELEASE.json stamp, and none of
+  # test/. Counting the shipped rules as "without a test file" made every adopting
+  # repository fail this command over files it was never given — the same defect
+  # mj_validate_doctrine_wiring carried, and the reasoning is written out there.
+  packaged=0; [ -f "$MJ_HOME/RELEASE.json" ] && packaged=1
   while mj_doc_row "$i"; do
     case "$MJ_DR_CLASS" in blocking) bl=$((bl+1)) ;; advisory) ad=$((ad+1)) ;; esac
     case "$defined" in *" $MJ_DR_VAL "*) ;; *) un=$((un+1)) ;; esac
-    [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1))
+    [ "$packaged" = 1 ] || [ -f "$MJ_HOME/$MJ_DR_TEST" ] || uc=$((uc+1))
     i=$((i+1))
   done
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s}\n' "$n" "$bl" "$ad" "$un" "$uc"
+    printf '{"declared":%s,"blocking":%s,"advisory":%s,"unwired":%s,"untested":%s,"evidence_readable":%s}\n' \
+      "$n" "$bl" "$ad" "$un" "$uc" "$([ "$packaged" = 1 ] && printf false || printf true)"
   else
     printf 'declared doctrines:   %s\n' "$n"
     printf 'blocking:             %s\n' "$bl"
     printf 'advisory:             %s\n' "$ad"
     printf 'missing validators:   %s\n' "$un"
-    printf 'without a test file:  %s\n' "$uc"
+    if [ "$packaged" = 1 ]; then
+      printf 'without a test file:  not readable here — a packaged distribution carries no test/;\n'
+      printf '                      the cases are verified in the package'"'"'s own source tree\n'
+    else
+      printf 'without a test file:  %s\n' "$uc"
+    fi
     printf '\nthe registry is the effective rule set: majordomus rules list\nwiring is verified by: majordomus doctor\n'
   fi
   [ "$un" = 0 ] && [ "$uc" = 0 ] && exit "$MJ_EX_OK" || exit "$MJ_EX_CONTRACT"

@@ -1,12 +1,19 @@
 +++
 title = "First run in a foreign repository"
-description = "forensic finding: what `doctor` reports in a repository that is not this one, why 109 of its findings cannot be satisfied there, and the decision that needs making"
+description = "forensic finding, closed: what `doctor` reported in a repository that is not this one, why the findings tracked the tool's own distribution rather than the adopting repository, and the release stamp that now scopes them"
 weight = 26
 [extra]
 source = "docs/ADOPTION_FIRST_RUN.md"
 +++
 
 {% raw %}
+
+> **Closed.** Re-measured against `master` at `6042f4286` (v0.5.0) the count was **112**,
+> not 109: the finding was live and had grown with the rule package. It is now **1**, and
+> that one is the adopting repository's own. Section 8 records what was decided, what the
+> mechanism actually was — section 3 names it wrongly, and the difference matters — and how
+> to re-run the measurement. `docs/ADOPTION.md` no longer promises zero; it states what a
+> first run reports.
 
 Majordomus reads healthy from inside its own checkout and broken from outside it. This
 document records the measurement, because the difference is 109 failures and nothing in
@@ -44,12 +51,14 @@ tells them apart.
 ## 1. The contract this falsifies
 
 `docs/ADOPTION.md` does not merely suggest a first run. It prescribes four commands and
-then states an outcome:
+then states an outcome. At the time of this finding it read:
 
 > Add the two hook lines `init` printed. Run `doctor` again; it should report zero
 > failures.
 
-That is a promise with a number in it, which is what makes it testable.
+That is a promise with a number in it, which is what makes it testable. It no longer says
+that: the sentence was removed in favour of a measured description of the second run, which
+is section 8's other half.
 
 ## 2. What actually happens
 
@@ -177,4 +186,96 @@ chmod +x .git/hooks/pre-commit .git/hooks/pre-push
 "$T/.local/bin/majordomus" doctor; echo "exit $?"     # 109 failures, exit 10
 rm -rf "$T"
 ```
+
+Two cautions for anyone re-running it. `export HOME="$T"` is needed by the installer and
+breaks a version-manager shim on the way — an `asdf`-managed `python3` stops resolving, and
+`doctor` then reports all 41 schemas as unparseable, which is the harness and not the tool.
+And a `MAJORDOMUS_SHARE` inherited from a Majordomus checkout points the installed tool at
+that checkout's `share/`; a newcomer has no such variable, so run every command under
+`env -u MAJORDOMUS_SHARE`.
+
+## 8. Resolution
+
+Re-measured on `master` at `6042f4286` (v0.5.0), following `ADOPTION.md` literally into a
+throwaway `git init` repository holding a README, one source file and one commit:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| | failures | exit | of which the repository's own |
+|---|---|---|---|
+| before | 112 | 10 | 1 |
+| after | 1 | 10 | 1 |
+| after, and the one finding fixed | 0 | 0 | — |
+
+</div>
+
+
+The third row is the point: zero was always reachable, and 111 findings stood between the
+adopter and it. Fixing the survivor took one sentence in the repository's `README.md`.
+
+The 112 decompose as section 2 describes, one larger in each of the first two rows because
+the package now ships more rules: 69 claims, 40 test paths, the runner, the CI workflow,
+and one `bootstrap` finding that is genuinely the adopter's — the repository's `README.md`
+does not name the `AGENTS.md` that `update` just wrote. That one survives, deliberately: it
+is true, it is the adopter's, and one line closes it.
+
+### The mechanism, corrected
+
+Section 3 says the fields are "checked in whatever repository it runs in". That is not what
+happens, and the difference is the whole fix. `mj_validate_doctrine_wiring` resolves them
+against `MJ_HOME` — the *tool distribution* — never against `MJ_ROOT`. `lib/common.sh` is
+explicit about the two roots and has been all along.
+
+The experiment that settles it: run a Majordomus **checkout's** `bin/majordomus doctor`
+against the same foreign repository, changing nothing else. 110 becomes 3. The findings
+never described the adopting repository; they described whichever tree the tool was run
+from, and `scripts/release-package` deliberately ships `bin/ lib/ libexec/ share/ LICENSE`
+and a `RELEASE.json` stamp — no `test/`, no `docs/CLAIMS.yaml`, no `.github/`. So the
+evidence is unreadable in every installed copy by construction, and an adopting repository
+merely happened to be where the resulting noise was read.
+
+This is why "make the check resolve against the repository instead" would have fixed
+nothing, and why the count was identical whatever the adopter's repository contained.
+
+### What was decided
+
+The reading in section 6 is **accepted**, with the discriminator sharpened. A vendored
+rule's `tests` and `claims` are the vendor's evidence and are verified where the vendor's
+source is, but the tool decides that from the `RELEASE.json` stamp `release-package` writes
+and `release-verify` refuses an archive without — never from whether the evidence files
+happen to be present.
+
+That is precisely the caution section 6 raises. "Skip when the path does not resolve" is
+the same diff and a check that can never fail anywhere, including here, and a package could
+then ship rotted evidence with nothing to say so. `test/cases/97_vendor_evidence.sh` is
+what distinguishes the two: it asserts that an unstamped tree still reads the evidence and
+still fails over a missing test path, that a stamped one does not, and that stamping the
+same tree is what flips it.
+
+Section 5's CI finding is settled by the same rule rather than separately: it is the
+vendor's workflow, verified in the vendor's source and asked of nobody else.
+
+The skip is announced, not silent — `INFO doctrine vendor evidence`, naming the release —
+because a reader has to be able to tell it from evidence that was checked and passed. It
+follows a precedent already in `doctor`: `INFO command coverage — this installation
+carries no test suite to measure`.
+
+`majordomus doctrine status` carried the same defect one command along, counting the same
+unreadable test files and exiting 10 in every adopting repository. It is fixed the same
+way, and reports `not readable here` rather than a misleading zero.
+
+**Still open, and deliberately not done here.** Two wording questions, neither of which the
+promise depends on:
+
+- whether the package should carry those fields under a name that says whose evidence they
+  are — a rename with a migration, not a defect;
+- whether `doctrine-wiring-integrity.v1`'s statement should say where each clause is
+  verified. It reads "…is proved by a test that CI runs", which is true of the vendor's
+  rule set and is now checked in the vendor's source. Editing it re-hashes the rule in
+  `share/standard/majordomus/manifest.yaml` and re-vendors the copy under
+  `.ai/repo/rules/vendor/`, which is more churn than a clarification is worth while the
+  behaviour and both documents already say it plainly.
+
+The two hook findings section 6 mentions no longer arise: the four documented commands
+leave the hooks wired and both checks green.
 {% endraw %}
