@@ -985,7 +985,15 @@ jq -n \
           | {id: $y.id, score: .}
         ] | map(select(.score > 0)) | sort_by(-.score, .id) | .[:5] | map(.id)
       ) as $rel
-      | . + {related_ids: $rel})) as $u3
+      # One shape for every use case. A record carries the lists it declared and nothing else,
+      # so a document that names no application, claim or responsibility used to reach the site
+      # missing those keys entirely — every reader here already writes `// []` around them, and
+      # the one that could not (a Tera filter, on the use-case section) failed the whole build.
+      # The shape is decided here, once, rather than defended at each of its readers.
+      | . + {related_ids: $rel,
+             actors: (.actors // []), applications: (.applications // []),
+             claims: (.claims // []), commands: (.commands // []),
+             doctrines: (.doctrines // []), responsibilities: (.responsibilities // [])})) as $u3
   | ($t.categories | sort_by(.order) | map(. as $c | . + {count: ([$u3[] | select(.category == $c.id and .status != "draft")] | length),
         use_cases: [$u3[] | select(.category == $c.id) | .id],
         maturity: ([$u3[] | select(.category == $c.id and .status != "draft")] | group_by(.maturity) | map({key: .[0].maturity, value: length}) | from_entries),
@@ -1013,6 +1021,9 @@ LIFECYCLE_MMD="$(printf 'stateDiagram-v2\n    [*] --> active: start\n    active 
 PIPELINE_MMD="$(printf 'flowchart LR\n    subgraph canonical\n        A[share/skeleton]\n        B[docs + README]\n        C[docs/CLAIMS.yaml]\n    end\n    G[scripts/generate-site-data]\n    D[(site/data/generated)]\n    Z[Zola]\n    F[Tailwind + Flowbite + Alpine]\n    P[GitHub Pages]\n    A --> G\n    B --> G\n    C --> G\n    G --> D --> Z --> F --> P\n')"
 PROJECTION_MMD="$(printf 'flowchart TD\n    P[.ai/repo/policy.yaml]\n    U[majordomus update]\n    P --> U\n'; i=0; while :; do t="$(jq -r ".projections[$i].target // empty" "$OUT/policy.json")"; [ -n "$t" ] || break; pr="$(jq -r ".projections[$i].provider" "$OUT/policy.json")"; printf '    U --> T%s["%s<br/><small>%s</small>"]\n' "$i" "$t" "$pr"; i=$((i+1)); done; printf '    T0 -.->|stamp| D[majordomus doctor]\n')"
 SUPERVISION_MMD="$(printf 'flowchart TD\n    H[Human / Organisation]\n    M[Majordomus<br/><small>policy · state · verification</small>]\n    W1[Claude Code]\n    W2[Codex]\n    W3[Gemini · Cursor · local]\n    V[Verified, accepted outcomes]\n    H --> M\n    M --> W1\n    M --> W2\n    M --> W3\n    W1 --> V\n    W2 --> V\n    W3 --> V\n')"
+# The workflows a fresh install is seeded with; every surface that counts them counts this set.
+WORKFLOW_N="$(find "$ROOT/share/skeleton/ai/repo/workflows" -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')"
+[ "$WORKFLOW_N" -gt 0 ] || { echo "generate-site-data: share/skeleton/ai/repo/workflows holds no workflow (the method page counts them)" >&2; exit 10; }
 jq -n --arg l "$LIFECYCLE_MMD" --arg p "$PIPELINE_MMD" --arg j "$PROJECTION_MMD" --arg s "$SUPERVISION_MMD" \
   '{schema:1, diagrams: {lifecycle: {title: "Task lifecycle", source: "lib/finish.sh outcome vocabulary", mermaid: $l},
                           pipeline: {title: "How this site is derived", source: "generate-site-data inputs", mermaid: $p},
@@ -1613,6 +1624,32 @@ done
 jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
    --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
   || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
+# ---------------------------------------------------------------- method.json, governance-graph.json
+# The governance method as a dataset: the layers an invariant descends through with what this
+# repository holds at each of them, one worked chain from a principle to an exit code, the four
+# axes work is described on, and the exposure of every capability over every interface. The
+# graph beside it is the same chain as nodes and edges. Both are joins over the rule package,
+# the policy, the profiles and the registry; neither restates a fact any of them owns.
+GEN_T0="$(mj_phase_begin "gen:method.json_governance_graph")"
+jq -S --slurpfile d "$OUT/doctrines.json" --slurpfile l "$OUT/lifecycle.json" \
+   --slurpfile pol "$OUT/policy.json" --slurpfile prof "$OUT/profiles.json" \
+   --argjson workflows "$WORKFLOW_N" -f "$ROOT/scripts/lib/method.jq" "$REG" > "$OUT/method.json" \
+  || { echo "generate-site-data: projecting the governance method failed" >&2; exit 13; }
+jq -S -f "$ROOT/scripts/lib/governance-graph.jq" "$OUT/doctrines.json" > "$OUT/governance-graph.json" \
+  || { echo "generate-site-data: projecting the governance graph failed" >&2; exit 13; }
+# A rule reaches the reader through its own page, so every route the graph carries must be one
+# the site builds. A dangling edge would be a chain drawn over a node that is not there.
+jq -e '([.nodes[].id] | INDEX(.)) as $ids | [.edges[] | select(($ids[.source] == null) or ($ids[.target] == null))] | length == 0' \
+  "$OUT/governance-graph.json" >/dev/null || { echo "generate-site-data: the governance graph has an edge with no node" >&2; exit 10; }
+[ "$(jq '[.nodes[] | select(.kind == "rule")] | length' "$OUT/governance-graph.json")" = "$(jq '.doctrines | length' "$OUT/doctrines.json")" ] \
+  || { echo "generate-site-data: the governance graph lost a rule" >&2; exit 10; }
+# The two diagrams of the method travel inside method.json, derived from the same fields the
+# tables render, and are merged into the site's diagram set here so that the page loads one
+# runtime and one source of Mermaid. Nothing draws them a second time.
+jq_inplace "$OUT/diagrams.json" --slurpfile m "$OUT/method.json" \
+  '.diagrams += {governance: {title: "One invariant, all the way down", source: "the standard rule package and its wiring", mermaid: $m[0].diagrams.governance},
+                 axes: {title: "Four axes, deliberately not one", source: "profiles, workflows and the capability registry", mermaid: $m[0].diagrams.axes}}'
+mj_phase_end "gen:method.json_governance_graph" "$GEN_T0"
 # the routes: one section with the executable's pages, one subsection per entity class
 rm -rf "$CONTENT_ROOT/registry"
 mk_section registry "Registry" "What the Rust executable compiled the repository into: every capability, every object of the layer, the kinds it reads, and the fingerprint that names this exact state." registry.html page.html 26
