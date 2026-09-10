@@ -2522,7 +2522,7 @@ the repository does not have is an invalid input, not an empty answer.</td>
           <a href="#op-peers-announce" class="font-mono text-xs text-body-subtle hover:underline">peers.announce</a>
         </div>
         <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Announce what this peer is working on</h3>
-        <p class="mt-1 break-words text-sm text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</p>
+        <p class="mt-1 break-words text-sm text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with &#39;claim&#39; and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer&#39;s one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent&#39;s session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</p>
         <ul class="mt-3 flex flex-wrap gap-2 text-xs">
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">command</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
@@ -4600,6 +4600,18 @@ nobody — but a fact worth carrying into the audit line and the UI.</div><ul cl
                 <td class="px-3 py-2 font-mono text-body">no</td>
                 <td class="px-3 py-2 text-body">Repository-relative paths the peer expects to touch. Informational: other peers
 read it to avoid a collision; nothing here enforces it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">claim</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Which of this peer's claims this is, when the peer holds more than one.</p>
+<p>One MCP session is not always one piece of work — a client that fans work out to
+subagents shares its session with all of them — and without a name every
+announcement replaces the last, so the board ends up describing whichever worker
+spoke most recently and the rest of the scope silently stops being claimed. Name a
+claim and it stands beside the others; announce under that name again and it is
+updated. Leave it out and this is the peer's one unnamed claim, which is what a
+single session announcing about itself wants.</td>
               </tr></tbody>
           </table>
         </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a></p></article><article id="schema-Announced" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -4642,25 +4654,59 @@ read it to avoid a collision; nothing here enforces it.</td>
 went away is kept and listed with <code>attached: false</code>: what it said it was working on
 outlives the connection that said it, because the work does.</td>
               </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">claims</td>
+                <td class="px-3 py-2 font-mono text-body">array of Announcement <span class="text-body-subtle">→</span> <a href="#schema-Announcement" class="text-fg-brand underline">Announcement</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
+that has announced nothing.</p>
+<p>One connection may be doing several things at once — a session that fans work out to
+subagents shares its MCP session with all of them — and before this field the board
+could hold only the last thing said, so each announcement silently erased the one
+before it and the other peers stopped seeing the rest of the scope.</td>
+              </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">announcement</td>
                 <td class="px-3 py-2 font-mono text-body">Announcement | null <span class="text-body-subtle">→</span> <a href="#schema-Announcement" class="text-fg-brand underline">Announcement</a></td>
                 <td class="px-3 py-2 font-mono text-body">no</td>
-                <td class="px-3 py-2 text-body">Its announcement, when it made one.</td>
+                <td class="px-3 py-2 text-body">The most recently made of [<code>Peer::claims</code>], for a reader that wants one line rather
+than all of them. Derived from <code>claims</code> and never a second account of it: a peer
+holding one claim reports the same thing in both, which is what every peer that does
+not name its claims reports.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">overlaps</td>
                 <td class="px-3 py-2 font-mono text-body">array of Overlap <span class="text-body-subtle">→</span> <a href="#schema-Overlap" class="text-fg-brand underline">Overlap</a></td>
                 <td class="px-3 py-2 font-mono text-body">no</td>
                 <td class="px-3 py-2 text-body">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">released</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Paths the claim this one replaced had, and this one does not.</p>
+<p>Announcing under a name a peer already used replaces that claim, which is what an
+update is. When the replacement is narrower, the peer has just stopped claiming
+ground it held a moment ago, and the other peers stop being warned off it. That is
+occasionally what was meant and is otherwise a mistake nobody would ever see, so it
+is said here, at the moment it happens, rather than left to be discovered in a
+collision later. Empty is the ordinary case.</td>
               </tr></tbody>
           </table>
         </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a></p></article><article id="schema-Announcement" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Announcement</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a peer said it is working on.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One claim a peer has made: what it is working on, and where.</p>
+<p>A peer may hold several. The <code>name</code> is what tells them apart and what makes announcing
+again an update rather than a second claim: announce under the same name and the claim
+is replaced, announce under a new one and the peer now holds both. A peer that never
+names anything holds exactly one claim, the unnamed one, which is what a single session
+announcing about itself has always had.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
           <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
             <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
             <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">What this claim is called, when the peer named it. Absent for a peer's unnamed claim.</td>
+              </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">intent</td>
                 <td class="px-3 py-2 font-mono text-body">string</td>
                 <td class="px-3 py-2 font-mono text-body">yes</td>
@@ -11473,10 +11519,23 @@ signal than one with a live session, and the reader is told which it is.</td>
 went away is kept and listed with <code>attached: false</code>: what it said it was working on
 outlives the connection that said it, because the work does.</td>
               </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">claims</td>
+                <td class="px-3 py-2 font-mono text-body">array of Announcement <span class="text-body-subtle">→</span> <a href="#schema-Announcement" class="text-fg-brand underline">Announcement</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
+that has announced nothing.</p>
+<p>One connection may be doing several things at once — a session that fans work out to
+subagents shares its MCP session with all of them — and before this field the board
+could hold only the last thing said, so each announcement silently erased the one
+before it and the other peers stopped seeing the rest of the scope.</td>
+              </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">announcement</td>
                 <td class="px-3 py-2 font-mono text-body">Announcement | null <span class="text-body-subtle">→</span> <a href="#schema-Announcement" class="text-fg-brand underline">Announcement</a></td>
                 <td class="px-3 py-2 font-mono text-body">no</td>
-                <td class="px-3 py-2 text-body">Its announcement, when it made one.</td>
+                <td class="px-3 py-2 text-body">The most recently made of [<code>Peer::claims</code>], for a reader that wants one line rather
+than all of them. Derived from <code>claims</code> and never a second account of it: a peer
+holding one claim reports the same thing in both, which is what every peer that does
+not name its claims reports.</td>
               </tr></tbody>
           </table>
         </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-PeerList" class="font-mono text-fg-brand underline">PeerList</a></p></article><article id="schema-PeerId" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -16048,7 +16107,7 @@ is inferred from similarity.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ecf5a7b7e7d4949f5cf16aa55cbb1df635797c2c" class="font-mono underline">ecf5a7b</a> · inputs <span class="font-mono">3f673d2e0fce</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/83cd83ee6aaed5a1ee0ab24b7fee18fc0517ac1f" class="font-mono underline">83cd83e</a> · inputs <span class="font-mono">e34a05c65864</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

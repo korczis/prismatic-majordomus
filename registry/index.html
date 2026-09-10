@@ -235,8 +235,8 @@
 <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
   <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
   <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-    <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">5b44d7d3e8e79a757b2823c7a0586e5f1e18ccf6f7b3f6228ecb9fbd471a5c5d</dd>
-    <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">e986d70b3c355e69d83aff016e014cb9c20761e062c3a2bb7ea64510e04c1466</dd>
+    <dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">638e76a792a930a624d4903760815b26bc5c5aec3df31144a3d404fbeec11af7</dd>
+    <dt class="text-body-subtle">index fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">92c9a7f780992ba83a48efe3d2f419c720c82d0ac7a80e6f2e0976c9a9741d48</dd>
     <dt class="text-body-subtle">generator</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0 · dataset majordomus-site-registry/v2</dd>
     <dt class="text-body-subtle">layer</dt><dd class="font-mono text-heading">ai-repository/v1 · index ok</dd>
     <dt class="text-body-subtle">routes from</dt><dd class="min-w-0 break-all font-mono text-heading">docs/generated/registry.json · majordomus/capability-registry/v1</dd>
@@ -650,7 +650,7 @@
     <td class="px-3 py-2 font-mono text-xs">required</td>
     <td class="px-3 py-2 font-mono text-xs">process</td>
   </tr><tr class="align-top">
-    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/peers-announce/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">peers.announce</a><p class="mt-1 max-w-md break-words text-xs text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</p></td>
+    <td class="px-3 py-2"><a href="https://majordomus.dev/registry/capabilities/peers-announce/" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">peers.announce</a><p class="mt-1 max-w-md break-words text-xs text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with &#39;claim&#39; and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer&#39;s one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent&#39;s session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</p></td>
     <td class="px-3 py-2 font-mono text-xs">command</td>
     <td class="px-3 py-2 font-mono text-xs">majordomus_announce</td>
     <td class="px-3 py-2 font-mono text-xs">POST /api/v1/peers/announce</td>
@@ -2348,7 +2348,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ecf5a7b7e7d4949f5cf16aa55cbb1df635797c2c" class="font-mono underline">ecf5a7b</a> · inputs <span class="font-mono">3f673d2e0fce</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/83cd83ee6aaed5a1ee0ab24b7fee18fc0517ac1f" class="font-mono underline">83cd83e</a> · inputs <span class="font-mono">e34a05c65864</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

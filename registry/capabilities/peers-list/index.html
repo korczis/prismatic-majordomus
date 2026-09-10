@@ -302,7 +302,7 @@ something and then went away is still here, with `attached: false`.</td>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;Announcement&quot;: {
-      &quot;description&quot;: &quot;What a peer said it is working on.&quot;,
+      &quot;description&quot;: &quot;One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.&quot;,
       &quot;properties&quot;: {
         &quot;at&quot;: {
           &quot;description&quot;: &quot;When it was announced, RFC 3339, UTC.&quot;,
@@ -311,6 +311,13 @@ something and then went away is still here, with `attached: false`.</td>
         &quot;intent&quot;: {
           &quot;description&quot;: &quot;One line: the task or intent, in the peer&#39;s words.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;What this claim is called, when the peer named it. Absent for a peer&#39;s unnamed claim.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
         },
         &quot;scope&quot;: {
           &quot;description&quot;: &quot;Repository-relative paths the peer expects to touch; informational, never enforced here.&quot;,
@@ -413,11 +420,18 @@ something and then went away is still here, with `attached: false`.</td>
               &quot;type&quot;: &quot;null&quot;
             }
           ],
-          &quot;description&quot;: &quot;Its announcement, when it made one.&quot;
+          &quot;description&quot;: &quot;The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.&quot;
         },
         &quot;attached&quot;: {
           &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Announcement&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
         &quot;client&quot;: {
           &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
@@ -542,7 +556,7 @@ something and then went away is still here, with `attached: false`.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">PeerList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">5b44d7d3e8e79a757b2823c7a0586e5f1e18ccf6f7b3f6228ecb9fbd471a5c5d</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">638e76a792a930a624d4903760815b26bc5c5aec3df31144a3d404fbeec11af7</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -578,7 +592,7 @@ something and then went away is still here, with `attached: false`.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ecf5a7b7e7d4949f5cf16aa55cbb1df635797c2c" class="font-mono underline">ecf5a7b</a> · inputs <span class="font-mono">3f673d2e0fce</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/83cd83ee6aaed5a1ee0ab24b7fee18fc0517ac1f" class="font-mono underline">83cd83e</a> · inputs <span class="font-mono">e34a05c65864</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
