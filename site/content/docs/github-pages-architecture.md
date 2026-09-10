@@ -512,12 +512,42 @@ brew install zola           # or the release binary; CI pins 0.23.4
 just derive                 # every committed derived artifact, in order (scripts/derive)
 just derive-check           # is every committed derived artifact current? writes nothing
 just test                   # the shell suite, the Rust gates, derive-check
-scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
+scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/
+scripts/site-serve --tailscale     # the same, at this machine's tailnet address
+scripts/site-serve --host <addr>   # the same, at an address another device can reach
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs
 scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)
 SITE_PROBE_JOBS=4 scripts/site-probe   # as CI runs it: four routes at a time
 ```
+
+### Previewing from another device
+
+`zola serve` makes two independent decisions about addresses, and getting one right does not
+help: it **binds** one interface (`--interface`, 127.0.0.1 by default) and it **advertises**
+one base URL (`--base-url`), which it writes into every link of every page and into the
+address the livereload socket connects back to. Bound to loopback, the port answers nothing
+from outside this machine — a Tailscale peer or a phone on the LAN gets a refused connection
+even though the server is running. Advertised as loopback, a remote browser loads the first
+page and then sends every navigation and every reload to its own 127.0.0.1.
+
+`scripts/site-serve` therefore takes one option that sets both, and defaults to neither:
+
+```
+scripts/site-serve                      # 127.0.0.1 bound and advertised — the default
+scripts/site-serve --tailscale          # this machine's tailnet IPv4, bound on 0.0.0.0
+scripts/site-serve --host 192.168.1.20  # any address a browser elsewhere can reach
+scripts/site-serve --interface 127.0.0.1 --host majordomus.test   # split, when a proxy sits in front
+scripts/site-serve --port 8080
+```
+
+`SITE_SERVE_HOST`, `SITE_SERVE_INTERFACE` and `SITE_SERVE_PORT` set the same three values, and
+`just site-serve` passes its arguments through. The tailnet address is read from the Tailscale
+CLI, or — since the macOS app does not put one on `PATH` — from the CGNAT address Tailscale
+puts on a `utun` interface. Nothing here changes the production `base_url` in
+`site/config.toml`; the preview's base URL is a build-time override and never committed.
+Binding 0.0.0.0 exposes an unreviewed build to everything that can route to this host, which
+is why it is opt-in and the default stayed on loopback.
 
 The one workflow after a change to anything canonical — a Rust declaration, a document, a
 claim, a command's semantics — is: `just derive`, review the diff of the derived files (it

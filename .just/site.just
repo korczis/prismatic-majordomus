@@ -36,10 +36,10 @@ site-check:
 site-probe *args:
     SITE_PROBE_JOBS="${SITE_PROBE_JOBS:-4}" scripts/site-probe {{args}}
 
-# Serve the website locally in watch mode.
+# Serve the website locally in watch mode: `just site-serve`, or `just site-serve --tailscale` (or `--host <addr>`) to reach the preview from another device — one option binds every interface *and* advertises that address, because Zola bakes the base URL into every link and into livereload.
 [group('site')]
-site-serve:
-    scripts/site-serve
+site-serve *args:
+    scripts/site-serve {{args}}
 
 # The publication fast path, exactly as .github/workflows/pages.yml runs it: prove the committed derived data current by its input hash, render it, check the output. `just pages build`, `pages check`, `pages paths`, `pages budget`, `pages current`, `pages verify`.
 [group('site')]
