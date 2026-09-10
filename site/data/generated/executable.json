@@ -545,6 +545,23 @@
       "tool": "majordomus_graphs"
     },
     {
+      "api_anchor": "/docs/api/#op-health-coverage",
+      "claims": [],
+      "cli": null,
+      "id": "health.coverage",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": "majordomus://coverage",
+      "route": "/registry/capabilities/health-coverage/",
+      "slug": "health-coverage",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "What backs every capability",
+      "tool": "majordomus_coverage"
+    },
+    {
       "api_anchor": "/docs/api/#op-health-live",
       "claims": [],
       "cli": null,
@@ -1618,7 +1635,7 @@
     ]
   },
   "counts": {
-    "capabilities": 78,
+    "capabilities": 79,
     "claims": 35,
     "modules": 26
   },
@@ -1907,6 +1924,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "health.coverage",
+          "route": "/registry/capabilities/health-coverage/",
+          "slug": "health-coverage"
+        },
         {
           "id": "health.live",
           "route": "/registry/capabilities/health-live/",

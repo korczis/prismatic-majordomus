@@ -33,25 +33,25 @@ evidence_required:
   - safe_metadata
 risk: "One artifact for everything grows until it is downloaded on every page load. Its size is measured and budgeted with the other assets."
 created_at: 2026-09-06
-updated_at: 2026-09-06T18:07:50Z
-started_at: 2026-09-06T17:35:38Z
-completed_at: 2026-09-06T18:07:50Z
+updated_at: 2026-09-06T22:45:12Z
+started_at: 2026-09-06T22:44:58Z
+completed_at: 2026-09-06T22:45:12Z
 evidence:
   - covers: artifact_generated
     type: test
-    command: "majordomus generate && majordomus generate --check"
-    result: "docs/generated/graph.json and docs/generated/graph.schema.json are written by the existing target set and the check reports in sync; the artifact is 1,104,403 bytes pretty-printed (821,696 compact) over 901 nodes, 2,100 edges and 25 node kinds, and regeneration is byte-identical, asserted by tests/generate_check.rs"
-    commit: 674b89907775564be0e5882765ff6ab1c661a234
-    recorded_at: 2026-09-06T18:07:37Z
+    command: "majordomus generate && majordomus generate --check && cargo test --test generate_check"
+    result: "docs/generated/graph.json and docs/generated/graph.schema.json are written by the graph target of the one plan, indexed by the manifest like every other artifact, and the check reports in sync; over this repository the artifact is 1,365,305 bytes pretty-printed over 1,104 nodes, 2,449 edges and 31 node kinds, and regeneration is byte-identical, asserted by tests/generate_check.rs"
+    commit: 924dbbbd461d7ed74f898f5d7224b24a4cb135be
+    recorded_at: 2026-09-06T22:45:03Z
   - covers: schema_present
     type: test
     command: "cargo test --lib generate::tests::the_schema_of_the_graph_comes_from_the_types_that_define_it"
-    result: "the schema is generated from the Rust types through CanonicalSchema::of::<Graph>(), names the struct fields id, nodes, edges, node_kinds, edge_kinds and metadata, carries its provenance as a field because JSON has no comment, and is 7,407 bytes"
-    commit: 674b89907775564be0e5882765ff6ab1c661a234
-    recorded_at: 2026-09-06T18:07:40Z
+    result: "the schema is generated from the Rust types through CanonicalSchema::of::<Graph>(), names the struct fields id, nodes, edges, node_kinds, edge_kinds and metadata, carries its provenance as a field because JSON has no comment, and is 7,618 bytes over this repository"
+    commit: 924dbbbd461d7ed74f898f5d7224b24a4cb135be
+    recorded_at: 2026-09-06T22:45:06Z
   - covers: safe_metadata
     type: test
     command: "cargo test --lib generate::tests::a_published_artifact_is_refused_when_it_carries_a_machine_path_or_a_credential"
     result: "generation refuses rather than writes when the rendered document carries a machine-absolute path, a PEM block, an authorization header or a token shape; each marker is proved to be caught, and a graph of repository-relative sources passes"
-    commit: 674b89907775564be0e5882765ff6ab1c661a234
-    recorded_at: 2026-09-06T18:07:45Z
+    commit: 924dbbbd461d7ed74f898f5d7224b24a4cb135be
+    recorded_at: 2026-09-06T22:45:09Z

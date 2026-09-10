@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "a19d00b8ddd2cd81356c8998655817cb353eae2022e9090d67db994db32aa21a",
+  "fingerprint": "04cde17d1480de871bc83c123ae09a146b3c397ad986473fffa800f55f0b0d7e",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -2825,6 +2825,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
             {
+              "id": "health.coverage",
+              "title": "What backs every capability",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_coverage",
+              "resource": "majordomus://coverage",
+              "route": "GET /api/v1/coverage"
+            },
+            {
               "id": "health.live",
               "title": "Liveness",
               "kind": "query",
@@ -3204,10 +3213,10 @@
         "use-cases"
       ],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 1,
-        "mcp_resources": 116,
-        "http_routes": 3,
+        "capabilities": 4,
+        "mcp_tools": 2,
+        "mcp_resources": 117,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 5,
         "objects": 115,
@@ -4107,6 +4116,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
           "capabilities": [
             {
+              "id": "health.coverage",
+              "title": "What backs every capability",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_coverage",
+              "resource": "majordomus://coverage",
+              "route": "GET /api/v1/coverage"
+            },
+            {
               "id": "health.live",
               "title": "Liveness",
               "kind": "query",
@@ -4303,10 +4321,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 1,
-        "mcp_resources": 1,
-        "http_routes": 3,
+        "capabilities": 4,
+        "mcp_tools": 2,
+        "mcp_resources": 2,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 0,
         "objects": 0,
@@ -8650,17 +8668,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1216,
-    "builtin": 78,
-    "declarative": 1138,
+    "capabilities": 1220,
+    "builtin": 79,
+    "declarative": 1141,
     "modules": 26,
-    "mcp_tools": 76,
-    "mcp_resources": 1166,
-    "http_routes": 78,
+    "mcp_tools": 77,
+    "mcp_resources": 1170,
+    "http_routes": 79,
     "cli_commands": 91,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1138,
+    "objects": 1141,
     "by_kind": {
       "adr": 37,
       "application": 5,
@@ -8687,7 +8705,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 143,
+      "test": 146,
       "use-case": 43,
       "workspace": 1
     },

@@ -455,13 +455,14 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": false,
-      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--profile <name>] [--owner <who>]",
+      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
       "demo": "start-scope",
-      "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused.",
+      "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused. --requires records what the task owes, from the vocabulary in share/obligations.yaml; a token it does not declare is refused here rather than at the moment a worker tries to discharge it.",
       "reads": [
         ".ai/repo/policy.yaml",
         ".ai/repo/profiles/",
         ".ai/local/state/current.yaml",
+        "share/obligations.yaml",
         "git worktree list"
       ],
       "writes": [

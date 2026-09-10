@@ -29,4 +29,19 @@ evidence_required:
   - no_false_green
 risk: "A matrix that is mostly empty on the first run will be read as an indictment rather than a baseline. It is a starting measurement, and saying so is part of shipping it."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-06T17:16:00Z
+started_at: 2026-09-06T16:40:34Z
+completed_at: 2026-09-06T17:16:00Z
+evidence:
+  - covers: coverage_matrix
+    type: test
+    command: "GET /api/v1/coverage against the built executable serving this repository"
+    result: "795 capabilities: 795 exposed, 17 benchmarked, 3 documented, 3 tested, 0 enforced; every filled cell names the artifact and the object that named it, for example objects.get is documented by docs/MCP.md and tested by test/cases/72_rust_mcp.sh, both via docs/CLAIMS.yaml. A baseline measurement, not a verdict."
+    commit: fc080baeb76c51de9997c54acb7672db6da69509
+    recorded_at: 2026-09-06T17:15:51Z
+  - covers: no_false_green
+    type: test
+    command: "cargo test --lib health (apps/majordomus-cli)"
+    result: "six unit tests over synthetic layers: a cell names the artifact it was resolved from, a file nothing names carries nothing, a directory contract covers the files under it, the policy is data so a resource is never asked to prove it runs, a declaration claiming a behavioural test owes an artifact naming one, and every ancestor of a path is a way the layer could name it. Over this repository fourteen gaps are reported, each naming the capability, the dimension and the file nothing names."
+    commit: fc080baeb76c51de9997c54acb7672db6da69509
+    recorded_at: 2026-09-06T17:15:55Z
