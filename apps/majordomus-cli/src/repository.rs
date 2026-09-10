@@ -344,6 +344,49 @@ pub fn git_identity(root: &Path) -> Option<GitIdentity> {
     })
 }
 
+/// The branch the checkout at `root` has checked out, read from its `HEAD` file instead of
+/// asked of a subprocess. `None` when HEAD is detached, when the file cannot be read, or
+/// when `root` is not a checkout at all — the same three silences `git symbolic-ref -q
+/// --short HEAD` answers with, at the cost of at most two small reads.
+///
+/// It exists because a `git` subprocess is not free: on a loaded machine one costs tens of
+/// milliseconds, which is more than the whole rest of a narrow `server.status` reading.
+/// The linked-work-tree case is why it is not a single read — a linked checkout's `.git` is
+/// a file naming the per-work-tree git directory, and HEAD lives there.
+///
+/// ```
+/// use majordomus_cli::repository::branch_at;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let root = dir.path().join("repo");
+/// std::fs::create_dir_all(&root).unwrap();
+/// let git = |args: &[&str]| assert!(
+///     Command::new("git").arg("-C").arg(&root).args(args).status().unwrap().success()
+/// );
+/// git(&["init", "-q", "-b", "trunk", "."]);
+/// assert_eq!(branch_at(&root).as_deref(), Some("trunk"), "the same name git would print");
+/// assert!(branch_at(dir.path()).is_none(), "a plain directory has no branch");
+/// ```
+pub fn branch_at(root: &Path) -> Option<String> {
+    let dot_git = root.join(".git");
+    let git_dir = if dot_git.is_dir() {
+        dot_git
+    } else {
+        // a linked work tree: `.git` is a file naming the git directory git keeps for it
+        let text = std::fs::read_to_string(&dot_git).ok()?;
+        let named = PathBuf::from(text.trim().strip_prefix("gitdir:")?.trim());
+        if named.is_absolute() {
+            named
+        } else {
+            root.join(named)
+        }
+    };
+    let head = std::fs::read_to_string(git_dir.join("HEAD")).ok()?;
+    let name = head.trim().strip_prefix("ref:")?.trim();
+    Some(name.strip_prefix("refs/heads/").unwrap_or(name).to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

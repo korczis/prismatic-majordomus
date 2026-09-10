@@ -33,7 +33,7 @@ use serde::Serialize;
 use serde_json::{json, Value};
 
 use crate::app::App;
-use crate::capability::builtin::server::{standing_of, ServerStanding};
+use crate::capability::builtin::server::{standing_of, Checkouts, ServerStanding};
 use crate::cli::{OutputFormat, ServeArgs, ServeCommand};
 use crate::deploy::{Deployment, Listen, KIND};
 use crate::error::{Error, Result};
@@ -53,7 +53,7 @@ pub fn run(args: ServeArgs) -> Result<u8> {
     let repo = Repository::discover(&start)?;
     match &args.command {
         None => serve(&args, &repo),
-        Some(ServeCommand::Status { format }) => status(&args, *format),
+        Some(ServeCommand::Status { checkouts, format }) => status(&args, *checkouts, *format),
         Some(ServeCommand::Ensure {
             port,
             idle,
@@ -143,24 +143,29 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
 /// `serve status`: the projection of `server.status`, asked of the running server when
 /// there is one — so that the answer carries the lease that process holds — and answered
 /// locally otherwise.
-fn status(args: &ServeArgs, format: OutputFormat) -> Result<u8> {
+///
+/// The flag is the capability's input field and nothing else: it is serialised into the
+/// same JSON whether the question travels over the loopback socket or is executed here, so
+/// `--checkouts this` costs one lease read and one probe on either path.
+fn status(args: &ServeArgs, checkouts: Checkouts, format: OutputFormat) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let ctx = &app.context;
     let id = cli_capability(ctx, &["serve", "status"])?;
+    let input = json!({ "checkouts": checkouts });
     let answer = match lease::serving(&app.repository) {
-        Some(url) => ask_server(ctx, &url, id, &json!({}))?,
-        None => ctx.execute(id, json!({})).map_err(map)?,
+        Some(url) => ask_server(ctx, &url, id, &input)?,
+        None => ctx.execute(id, input).map_err(map)?,
     };
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     match format {
         OutputFormat::Json => writeln!(out, "{}", pretty(&answer)).map_err(Error::Transport)?,
-        OutputFormat::Text => render_status(&mut out, &answer)?,
+        OutputFormat::Text => render_status(&mut out, &answer, checkouts)?,
     }
     Ok(0)
 }
 
-fn render_status(out: &mut impl Write, s: &Value) -> Result<()> {
+fn render_status(out: &mut impl Write, s: &Value, checkouts: Checkouts) -> Result<()> {
     let w = |out: &mut dyn Write, line: String| -> Result<()> {
         writeln!(out, "{line}").map_err(Error::Transport)
     };
@@ -207,7 +212,16 @@ fn render_status(out: &mut impl Write, s: &Value) -> Result<()> {
             "repository not a git repository: this checkout alone".into(),
         )?,
     }
-    w(out, "servers:".into())?;
+    w(
+        out,
+        match checkouts {
+            Checkouts::Repository => "servers:".into(),
+            Checkouts::This => {
+                "servers: (this checkout alone; --checkouts repository lists every checkout)"
+                    .to_string()
+            }
+        },
+    )?;
     for v in s["servers"].as_array().into_iter().flatten() {
         let mut line = format!(
             "  {:<9} {}",
