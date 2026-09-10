@@ -1493,7 +1493,44 @@
         "The backfill is an outward-facing mutation: applying the projection creates roughly 180 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate.",
         "Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work."
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "covers": "drift_gated",
+          "type": "ci",
+          "command": "scripts/ci/github-check",
+          "result": "gate github-projection wired in .ai/repo/ci/gates.yaml and selected by the layer and shell path classes; refuses behind, edited, conflict, unmanaged, state and milestone outright and ratchets missing and adopt against .ai/repo/ci/github-drift-baseline.txt; exits 12 rather than 0 when it cannot reach the remote; proved able to fail by test/cases/97_github_gate.sh",
+          "artifact": "",
+          "commit": "6b5c2eb4511ec13becb1f6b1bf19b76c7c808692",
+          "recorded_at": "2026-09-09T22:20:53Z"
+        },
+        {
+          "covers": "identity_stable",
+          "type": "test",
+          "command": "bash test/run.sh 45_github_projection",
+          "result": "a record is resolved by the majordomus:record marker it carries in its own generated region; a fully rewritten remote title neither loses it nor duplicates it; an issue with no marker is adopted by title once and reported as adopt; a canonical-looking title does not capture a record carrying another identity; no GitHub value is written into a canonical record",
+          "artifact": "",
+          "commit": "6b5c2eb4511ec13becb1f6b1bf19b76c7c808692",
+          "recorded_at": "2026-09-09T22:20:58Z"
+        },
+        {
+          "covers": "offline_provable",
+          "type": "test",
+          "command": "MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check",
+          "result": "reconciliation, the gate and the pull-request join all run against fixture remotes with no network and no token; a fixture is refused for --apply with exit 15",
+          "artifact": "",
+          "commit": "6b5c2eb4511ec13becb1f6b1bf19b76c7c808692",
+          "recorded_at": "2026-09-09T22:21:03Z"
+        },
+        {
+          "covers": "traceability_both_ways",
+          "type": "test",
+          "command": "bash test/run.sh 99_work_graph_chain",
+          "result": "one issue carried outcome to accepted completion and walked back from both the work commit and the merge commit to the issue and milestone they served; unattributed work is reported rather than dropped; completion is refused while required evidence is missing even though the remote has the issue closed",
+          "artifact": "",
+          "commit": "6b5c2eb4511ec13becb1f6b1bf19b76c7c808692",
+          "recorded_at": "2026-09-09T22:21:10Z"
+        }
+      ],
       "issues": [
         "I1401",
         "I1402",
