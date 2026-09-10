@@ -28,14 +28,16 @@
 //!     .announce(&id, "landing the quality gate", vec!["apps/majordomus-cli".into()])
 //!     .expect("the peer is attached");
 //! assert_eq!(
-//!     announced.announcement.as_ref().map(|a| a.intent.as_str()),
+//!     announced.peer.announcement.as_ref().map(|a| a.intent.as_str()),
 //!     Some("landing the quality gate")
 //! );
 //! assert_eq!(board.list().len(), 1);
 //!
-//! // and a session that ends leaves the board, because the board is about now
+//! // a session that ends is no longer counted; what it announced stays readable, so the
+//! // next worker can still see the claim and avoid it
 //! board.detach(&id);
-//! assert!(board.list().is_empty());
+//! assert_eq!(board.len(), 0);
+//! assert!(!board.list()[0].attached);
 //! ```
 
 use std::collections::BTreeMap;

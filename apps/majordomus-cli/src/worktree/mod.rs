@@ -73,6 +73,6 @@ pub use path::{container_root, detached_label, expected_path, BranchName, CONTAI
 pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
 pub use trace::{
-    Attribution, BranchTrace, CommitAttribution, CommitRef, Integration, IssueTrace, TraceReport,
-    TraceTallies, Tracer,
+    first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
+    CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
 };
