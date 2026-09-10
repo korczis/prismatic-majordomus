@@ -6726,11 +6726,11 @@
             "15"
           ],
           "json": false,
+          "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused.",
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
             ".ai/local/state/current.yaml",
-            "share/obligations.yaml",
             "git worktree list"
           ],
           "requires_installed": true,
@@ -6738,7 +6738,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--profile <name>] [--owner <who>]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
@@ -20126,45 +20126,6 @@
         }
       },
       {
-        "id": "majordomus://issue/I1409",
-        "kind": "issue",
-        "label": "I1409",
-        "summary": "Derived data stops hashing inputs it cannot control",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1409",
-        "source": ".ai/repo/project/issues/I1409.yaml",
-        "facts": {
-          "acceptance_criteria": [
-            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
-            "test/cases/56_derived_current_gate.sh passes in a fixture whose object database does not contain the commit under test",
-            "The staleness check runs on the path a server-side merge takes, or the record says which decision was taken instead and why",
-            "No document claims a guard that a merge created by GitHub cannot reach"
-          ],
-          "created_at": "2026-09-10",
-          "evidence_required": [
-            "derivation_survives_an_unrelated_merge",
-            "fixture_without_history_evaluates"
-          ],
-          "milestone": "derived-data-integrity",
-          "objective": "Make a committed derivation describe something it can be a projection of, and put the staleness refusal where merges actually happen.",
-          "parallel_safe": false,
-          "priority": "p1",
-          "profile": "implementation",
-          "scope": [
-            "scripts",
-            "apps/majordomus-cli/src/release",
-            ".ai/repo/ci",
-            "test/cases"
-          ],
-          "slug": "derived-data-owns-its-inputs",
-          "updated_at": "2026-09-10",
-          "validation": [
-            "scripts/derive-check",
-            "scripts/pages current",
-            "test/run.sh 56_derived_current_gate"
-          ]
-        }
-      },
-      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -20584,43 +20545,6 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
-          ]
-        }
-      },
-      {
-        "id": "majordomus://milestone/derived-data-integrity",
-        "kind": "milestone",
-        "label": "derived-data-integrity",
-        "summary": "A committed derivation describes something it can be a projection of",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fderived-data-integrity",
-        "source": ".ai/repo/project/milestones/derived-data-integrity.yaml",
-        "facts": {
-          "acceptance_criteria": [
-            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
-            "A fixture whose object database does not contain the commit under test can evaluate every derived artifact",
-            "The staleness refusal runs on the path a server-side merge takes, or the record names the decision taken instead",
-            "No document claims a guard that a merge created by GitHub cannot reach"
-          ],
-          "created_at": "2026-09-10",
-          "evidence_required": [
-            "derivation_survives_an_unrelated_merge",
-            "fixture_without_history_evaluates"
-          ],
-          "order": 95,
-          "priority": "p1",
-          "scope": [
-            "scripts",
-            "apps/majordomus-cli/src/release",
-            ".ai/repo/ci",
-            "test/cases",
-            "docs/CI.md"
-          ],
-          "slug": "derived-data-integrity",
-          "updated_at": "2026-09-10",
-          "validation": [
-            "scripts/derive-check",
-            "scripts/pages current",
-            "test/run.sh 56_derived_current_gate"
           ]
         }
       },
@@ -27252,6 +27176,139 @@
           "start_head": "ebec65fd12ffe59a48119c5ac03cc0512160044d",
           "start_working_tree": "dirty",
           "started_at": "2026-09-08T19:33:41Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260909152316-024f",
+        "kind": "session",
+        "label": "s-20260909152316-024f",
+        "summary": "Session s-20260909152316-024f on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260909152316-024f",
+        "source": ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/workflows/task-lifecycle.md",
+            ".ai/repo/rules/project/a-return-code-is-not-the-diagnostic-channel.v1.md"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-09T21:41:35Z",
+          "commits": [
+            "a3c7102",
+            "5314bd6",
+            "6815b9b",
+            "8f1dfb9",
+            "7779fe7",
+            "aa64215",
+            "c6bbce3",
+            "d648e97",
+            "a81fe06",
+            "b405705",
+            "a10f0af",
+            "97f4cad",
+            "c85c2cb",
+            "04b3d8b",
+            "bd989ee",
+            "3c5705d",
+            "f2606c9",
+            "427b732",
+            "f37da56",
+            "8e7faed",
+            "fe4958a",
+            "94b0c22",
+            "db8b6f2",
+            "578ff65",
+            "2c077cf",
+            "0f25df6",
+            "95ca55b",
+            "973e0d8",
+            "c217f23",
+            "99623c0",
+            "a1b0d26",
+            "1576abb",
+            "6b21a9e",
+            "82ec364",
+            "e5933f4",
+            "fd51973",
+            "3f0fee7",
+            "09d410b",
+            "93977cc",
+            "bb3dd0f",
+            "946bc36",
+            "d7df74e",
+            "28304f3",
+            "2a2b62c",
+            "1c36ca9",
+            "26743da",
+            "ff2d64e",
+            "1ea8da1",
+            "2a7af42",
+            "ae22962",
+            "2d32846",
+            "e764881",
+            "993a40a",
+            "6b1e7c0",
+            "a13f409",
+            "810456f",
+            "5d720d0",
+            "f6af288",
+            "8918daa",
+            "143a857",
+            "d5d9577",
+            "5dfa33c",
+            "7af039a",
+            "6d19fc7",
+            "b8f06e5",
+            "60bc499",
+            "4916745",
+            "9b0769b",
+            "ee9e79b",
+            "3c4d26e",
+            "1015d8f",
+            "4066bdf",
+            "82583eb",
+            "4457512",
+            "4734bf8",
+            "a1a014c",
+            "c72d294",
+            "03e3f25",
+            "957a6ff",
+            "44468db",
+            "1529143",
+            "8a4b1fe",
+            "493f154",
+            "ae8f528",
+            "3f0322b",
+            "ed649c7",
+            "fbc1da9",
+            "2f04eff",
+            "b551a33",
+            "4cca357",
+            "5609ab1",
+            "e66d7d7",
+            "98f6606",
+            "06b3c3c"
+          ],
+          "created_at": "2026-09-09T21:41:35Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06b3c3cf092dbc2cfd86b84ca2f36329d32b6aa0",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260909152316-024f",
+          "start_head": "867f3a9f82ca97ad880ccbc4366a92b5ede0e953",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-09T15:23:16Z",
           "task_id": "t-20260905034523-a9f1",
           "tasks": [],
           "working_tree": "dirty",
@@ -41109,16 +41166,6 @@
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I1409",
-        "target": "kind:issue",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://issue/I1409",
-        "target": "majordomus://milestone/derived-data-integrity",
-        "kind": "belongs_to"
-      },
-      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -41167,11 +41214,6 @@
         "source": "majordomus://milestone/cost-per-accepted-outcome",
         "target": "majordomus://milestone/execution-telemetry",
         "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://milestone/derived-data-integrity",
-        "target": "kind:milestone",
-        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/execution-telemetry",
@@ -42750,6 +42792,11 @@
       },
       {
         "source": "majordomus://session/s-20260908193341-cdf1",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260909152316-024f",
         "target": "kind:session",
         "kind": "is_a"
       },
@@ -46535,8 +46582,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1422,
-      "edges": 3211,
+      "nodes": 1421,
+      "edges": 3209,
       "acyclic": true,
       "truncated": false
     }
