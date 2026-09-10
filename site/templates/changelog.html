@@ -159,7 +159,11 @@
     {%- set group_anchor = (s.version | slugify) ~ "-" ~ g.kind -%}
     <div id="{{ group_anchor }}" x-show="!hidden.includes('{{ g.kind }}')"
          class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft">
-      <a href="#{{ group_anchor }}" class="absolute left-4 top-3 font-mono text-xs leading-5 text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      {#- 24 × 24 CSS pixels, which is the target size WCAG 2.5.8 asks of a control that has
+          no neighbour to borrow spacing from. Inside the summary it inherited the whole
+          header row's target; standing on its own it needs one of its own, so the glyph sits
+          centred in a box of that size rather than being the box. -#}
+      <a href="#{{ group_anchor }}" class="absolute left-2 top-2.5 inline-flex h-6 w-6 items-center justify-center font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
       <details :open="open"{% if s.unreleased %} open{% endif %}>
         <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
           <span class="font-medium">{{ g.heading }}</span>
