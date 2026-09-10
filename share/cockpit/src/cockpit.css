@@ -172,6 +172,13 @@
     @apply shrink-0 font-mono text-meta;
     color: var(--mj-muted);
   }
+  /* The count takes the ground it sits on. `muted` is a foreground for the page's own
+     ground, and the current entry's ground is the accent's soft one — where the
+     declaration already names the foreground that reads on it. Measured: the audit found
+     this pair below 4.5:1 on 71 routes, which is every page with a sidebar. */
+  .mj-nav-link--current > .mj-nav-count {
+    color: var(--mj-accent-strong);
+  }
   /* A catalogue too long to sit open folds. The marker is the summary's own, turned to
      face the way the section will move. */
   .mj-nav-section--foldable > .mj-nav-summary {
@@ -270,8 +277,11 @@
     @apply font-mono text-small;
     color: var(--mj-muted);
   }
+  /* Wrapping is what a pager owes a narrow viewport: twenty-four page links do not fit in
+     320 CSS pixels, and a row that cannot wrap makes the whole document scroll sideways
+     (WCAG 2.1 reflow). The rounding below is by first and last child, so it survives. */
   .mj-pagination-list {
-    @apply inline-flex items-center -space-x-px;
+    @apply inline-flex flex-wrap items-center justify-center -space-x-px;
   }
   .mj-page-link {
     @apply flex h-8 items-center justify-center px-3 text-small leading-tight no-underline;
