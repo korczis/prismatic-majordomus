@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 43
+weight = 44
 [extra]
 source = "docs/MCP.md"
 +++
@@ -96,6 +96,13 @@ where this checkout's own server stands measured against what this executable wo
 </div>
 
 
+The list is what a caller gets by asking nothing, and it costs a lease read and a probe per
+checkout — on a machine with a hundred worktrees registered, a hundred of each. A caller
+that only wants to know about the checkout it is in says so — `checkouts=this` on the query
+string, in the tool's input, or `--checkouts this` on the command line — and that reading
+enumerates no other checkout, reads no other lease and probes no other server. The default
+is the whole list, because that is the answer this capability gave before the field existed.
+
 The lease itself is one type, read once (`lease::LeaseDocument`, `lease::LeaseFile::read`):
 the election, the read-only `serving`, the environment snapshot and the status all parse it
 through the same reading, and it carries the server's `version` beside the executable it
@@ -169,7 +176,8 @@ third cannot tell a live server from a socket somebody else holds. The check del
 ### Ensuring a server, and stopping it
 
 ```text
-majordomus serve status [--format json]     where this checkout's server stands, and every server of the repository
+majordomus serve status [--checkouts this|repository] [--format json]
+                                            where this checkout's server stands, and every server of the repository
 majordomus serve ensure [--idle S] [--wait S] [--port P]
                                             a ready server for this checkout, started if it must be
 majordomus serve stop [--wait S]            end the server this checkout's lease names

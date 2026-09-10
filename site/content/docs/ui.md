@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 45
+weight = 46
 [extra]
 source = "docs/UI.md"
 +++
