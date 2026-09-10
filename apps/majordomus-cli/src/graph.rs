@@ -1198,6 +1198,27 @@ const RELATIONS: &[Relation] = &[
         target: Target::Path,
         inverted: false,
     },
+    // the chain docs/CLAIMS.yaml already declares, and the reason the `implementation` and
+    // `test` source classes exist at all: a claim names the document that defines it, the
+    // file that implements it and the case that proves it, and a dash where nothing does
+    Relation {
+        kinds: &["claim"],
+        field: "source",
+        edge: "defined_in",
+        target: Target::Path,
+    },
+    Relation {
+        kinds: &["claim"],
+        field: "implementation",
+        edge: "implemented_by",
+        target: Target::Path,
+    },
+    Relation {
+        kinds: &["claim"],
+        field: "test",
+        edge: "proved_by",
+        target: Target::Path,
+    },
     Relation {
         kinds: &["claim"],
         field: "implementation",
@@ -1329,6 +1350,9 @@ pub fn unresolved_relations(registry: &CapabilityRegistry, objects: &[Object]) -
 
 /// What a reference resolved to.
 enum Outcome {
+    /// The layer wrote the reference down and said there is nothing at the other end: a
+    /// dash in a claim's implementation or test. Neither an edge nor a finding.
+    Nothing,
     /// A node of the graph, by id.
     Node(String),
     /// Something outside the layer, drawn as an external node.
@@ -1431,6 +1455,7 @@ impl<'a> Resolver<'a> {
                 None => Outcome::External(external_node(fallback, reference, None)),
             },
             Target::Name(kind) => Outcome::External(external_node(kind, reference, None)),
+            Target::Path if reference == "-" || reference.is_empty() => Outcome::Nothing,
             Target::Path => match self.by_path.get(reference) {
                 Some(o) => Outcome::Node(o.uri.clone()),
                 None => Outcome::External(external_node("file", reference, Some(reference))),
