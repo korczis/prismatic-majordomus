@@ -811,10 +811,12 @@ mj_capture_session_start() {
   . "$MJ_LIB_DIR/derive.sh"
   mj_load_policy || return 0
   # The server, before the briefing: an agent is arriving, which is the one moment a server
-  # nobody has started yet is owed one, and the briefing says where it stands.
-  MJ_BRIEFING_SERVER="$(mj_capture_ensure_server "$provider")"
+  # nobody has started yet is owed one, and the briefing says where it stands. It travels as
+  # an argument rather than as a variable the briefing reaches for: two files sharing a name
+  # is a data flow no reader — and no shellcheck — can follow.
+  local server; server="$(mj_capture_ensure_server "$provider")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
-  mj_derive_briefing 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  mj_derive_briefing "$server" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   return 0
 }
 
