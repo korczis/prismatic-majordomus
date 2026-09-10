@@ -194,7 +194,17 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
+      # the whole history: `generate --check` runs here, and the changelog is composed from
+      # the release records, the decisions and `git log <previous>..<this>` — history is one
+      # of its canonical sources (project.release-is-a-projection). A default checkout is one
+      # commit deep, so every release record named a commit the clone did not have,
+      # `merge-base --is-ancestor` said `fatal: Not a valid commit name 45f921ef…` once per
+      # decision, every range yielded nothing, and the composer wrote the honest degraded
+      # document it is required to write. The gate then reported the committed artifact stale
+      # for a reason no branch had caused. A check reads its inputs; this job now fetches them.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
