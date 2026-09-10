@@ -7,11 +7,17 @@
 # sitting: it opens, it may cross several tasks, and it closes. Neither contains the other,
 # which is why they are two records rather than one field.
 #
-# The open session lives in state/session-current.yaml and holds only what is true at the
-# open. Nothing appends to it while it is open — not checkpoint, not decision, not plan.
-# What the episode produced is derived from the ledger when it closes, because the ledger
-# already holds those facts and a second mutable account of them is the thing this record
-# exists to avoid being.
+# An open session lives in state/sessions-open/<provider session>.yaml and holds only what is
+# true at the open. Nothing appends to it while it is open — not checkpoint, not decision,
+# not plan. What the episode produced is derived from the ledger when it closes, because the
+# ledger already holds those facts and a second mutable account of them is the thing this
+# record exists to avoid being.
+#
+# One episode per provider session, not one per checkout: two windows of the same provider
+# open on one worktree are two workers, and folding them into one record stamps one worker's
+# ledger lines with the other's id and lets either one's end event close both. state/
+# session-current.yaml is the pointer to the episode of this checkout, and lib/common.sh —
+# `mj_session_here_file` — is where the whole resolution is written down.
 
 # shellcheck source=project.sh
 . "$MJ_LIB_DIR/project.sh"
@@ -19,8 +25,72 @@
 # shellcheck source=session_context.sh
 . "$MJ_LIB_DIR/session_context.sh"
 
-mj_session_file() { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
+# This process's open episode: the one MJ_SESSION_KEY names, else the one the provider
+# session in the environment names when it is open here, else the one the pointer names.
+mj_session_file() { mj_session_here_file; }
 mj_session_dir()  { printf '%s' "$MJ_STATE_DIR/sessions"; }
+
+# Every episode open in this checkout, as "<key>|<path>", in name order.
+mj_session_open_list() {
+  local d f
+  d="$(mj_session_open_dir)"
+  [ -d "$d" ] || return 0
+  for f in "$d"/*.yaml; do
+    [ -f "$f" ] || continue
+    printf '%s|%s\n' "$(basename "$f" .yaml)" "$f"
+  done
+  return 0
+}
+
+# The episodes open here that are not the one being reported. Two windows on one checkout
+# is now a supported state rather than a collision, so it is a state the tool says out loud:
+# a worker that cannot see the other episode cannot know that the pointer it resolved
+# through is a guess between two.
+mj_session_others_lines() {
+  local mine="$1" line key f sid n=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    key="${line%%|*}"; f="${line#*|}"
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    [ -n "$sid" ] && [ "$sid" != "$mine" ] || continue
+    [ "$n" = 0 ] && printf 'Also open:  '
+    [ "$n" = 0 ] || printf '            '
+    printf '%s (%s)\n' "$sid" "$key"
+    n=$((n + 1))
+  done <<EOF
+$(mj_session_open_list)
+EOF
+  return 0
+}
+mj_session_others_json() {
+  local mine="$1" line key f sid first=1
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    key="${line%%|*}"; f="${line#*|}"
+    sid="$(sed -n 's/^session_id: //p' "$f" | head -n 1)"
+    [ -n "$sid" ] && [ "$sid" != "$mine" ] || continue
+    [ "$first" = 1 ] || printf ','
+    first=0
+    printf '{"session_id":"%s","key":"%s"}' "$(mj_json_esc "$sid")" "$(mj_json_esc "$key")"
+  done <<EOF
+$(mj_session_open_list)
+EOF
+  return 0
+}
+
+# Aim the pointer at one episode. Relative, so a state directory that is copied or moved
+# still resolves; a symlink and not a copy, because two accounts of one open episode is the
+# drift the session record exists to avoid. A filesystem that cannot make one gets a copy
+# and a warning, because losing the episode would be the worse failure.
+mj_session_point_at() {
+  local target="$1" p
+  p="$(mj_session_pointer)"
+  rm -f "$p"
+  ln -s "sessions-open/$(basename "$target")" "$p" 2>/dev/null && return 0
+  cp "$target" "$p" 2>/dev/null || return 0
+  mj_err "warning: $(mj_rel "$p") is a copy, not a link; this filesystem has no symlinks"
+  return 0
+}
 # Where a closed record is written and read from: the layer's tracked sessions section when
 # the manifest names one, and the checkout-local store when it does not. A closed episode is
 # a shared object of the layer (ADR 0014); the open one never is.
@@ -101,12 +171,16 @@ usage: majordomus session <subcommand> [options]
   start [--owner <who>] [--worker <id>]   open an execution episode in this worktree
   status [--json]                         the open session, or absence          (read-only)
   close [--outcome closed|interrupted]    close it into an immutable record; summary on stdin
+         [--provider-session <id>]        close the episode that provider session opened
   list [--all] [--json]                   closed episodes, newest first            (read-only)
   show <session-id> [--json]              one closed record, whole                 (read-only)
   latest [--path] [--json]                the newest that resolves here            (read-only)
   context [<session-id>]                  the working context of an episode        (read-only)
 
-  One open session per worktree. start refuses (15) while one is open.
+  One open session per provider session, not one per worktree: a second window of the same
+  provider gets an episode of its own, and start refuses (15) only while YOUR episode is
+  open. --provider-session names it; without one you are the hand-opened episode, of which
+  there is at most one. state/session-current.yaml points at the episode of this checkout.
   A session is not a task: it claims no paths, gates no acceptance, and is optional.
 
   close derives what the episode produced from the ledger. Nothing writes into an open
@@ -132,10 +206,12 @@ mj_session_start() {
     --owner=*) owner="${1#--owner=}"; shift ;;
     --worker) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--worker needs a value"; worker="$2"; shift 2 ;;
     --worker=*) worker="${1#--worker=}"; shift ;;
-    # What an already-open episode means. A person opening one by hand is told that one is
-    # open, because that is a mistake worth stopping. A provider hook is not making that
-    # mistake: it fires on a resume and on a compaction as well as on a first start, and
-    # the honest answer to "the episode is already open" is to keep it.
+    # What an already-open episode means — for THIS provider session, which is the whole
+    # point. A person opening one by hand is told that one is open, because that is a
+    # mistake worth stopping. A provider hook is not making that mistake: its start event
+    # fires again on a resume and on a compaction, and the honest answer to "your episode
+    # is already open" is to keep it. A *different* provider session is neither case: it is
+    # another worker, and it gets an episode of its own.
     --if-open) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--if-open needs a value"; if_open="$2"; shift 2 ;;
     --if-open=*) if_open="${1#--if-open=}"; shift ;;
     # Who delivered the event. Only something running inside a provider's own hook can
@@ -152,6 +228,10 @@ mj_session_start() {
   case "$if_open" in refuse|keep) ;;
     *) mj_die "$MJ_EX_USAGE" "session start: --if-open must be refuse or keep" ;;
   esac
+  # The episode this open is about, from here to the end of the command: the one the
+  # provider session names, or the hand-opened one. Everything below — the already-open
+  # test, the file written, the ledger stamp — resolves through it.
+  [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
 
   local rc=0; mj_load_session || rc=$?
   case "$rc" in
@@ -163,23 +243,34 @@ mj_session_start() {
        else
          mj_die "$MJ_EX_REFUSED" "session $(mj_ses session_id) is open here since $(mj_ses started_at); run majordomus session close first"
        fi ;;
-    2) mj_die "$MJ_EX_CONTRACT" "session-current.yaml does not parse; move it aside or repair it (run: majordomus doctor)" ;;
+    2) mj_die "$MJ_EX_CONTRACT" "$(mj_rel "$(mj_session_file)") does not parse; move it aside or repair it (run: majordomus doctor)" ;;
   esac
 
+  # Where this episode lives: the file named by the provider session that is opening it, or
+  # `hand.yaml` when nobody named one. Not `mj_session_file`, which answers the reading
+  # question — "which open episode is this process's" — and falls through to the pointer.
+  # An episode is written where its own name puts it, and the pointer is then aimed at it.
   local id now f tmp
   id="s-$(mj_now_compact | tr -d 'TZ')-$(mj_rand16 | cut -c1-4)"
-  now="$(mj_now)"; f="$(mj_session_file)"; tmp="$f.mj-tmp"
-  mkdir -p "$MJ_STATE_DIR"
+  now="$(mj_now)"; f="$(mj_session_key_file "${MJ_SESSION_KEY:-}")"; tmp="$f.mj-tmp"
+  mkdir -p "$MJ_STATE_DIR" "$(mj_session_open_dir)"
   {
     printf 'session_id: %s\nstarted_at: %s\nowner: "%s"\n' "$id" "$now" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
     # Absent stays absent. A worker identity nobody supplied is not inferred, because an
     # inferred one is indistinguishable from a recorded one the moment it is written down.
     [ -n "$worker" ] && printf 'worker: "%s"\n' "$(printf '%s' "$worker" | sed 's/"/\\"/g')"
+    # Who the episode belongs to. Only something running inside a provider's own hook can
+    # supply these, and until now they reached the working context and stopped there — so
+    # `continuity.state` declared a provider it could never report. The record that decides
+    # which episode is whose is the record that has to carry the identity it decides by.
+    [ -n "$provider" ] && printf 'provider: "%s"\n' "$(printf '%s' "$provider" | sed 's/"/\\"/g')"
+    [ -n "$psession" ] && printf 'provider_session: "%s"\n' "$(printf '%s' "$psession" | sed 's/"/\\"/g')"
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nstart_head: %s\nstart_working_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
   } > "$tmp"
   chmod 600 "$tmp" 2>/dev/null || true
   mv "$tmp" "$f"
+  mj_session_point_at "$f"
   mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}"
 
   # The working context is written after the episode exists, and its failure never costs
@@ -201,14 +292,18 @@ mj_session_status() {
 
   local rc=0; mj_load_session || rc=$?
   if [ "$rc" = 2 ]; then
-    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"open":null,"error":"session-current.yaml does not parse"}\n'
-    else mj_fail session "session-current.yaml" "does not parse" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"; fi
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"open":null,"error":"%s does not parse"}\n' "$(mj_json_esc "$(mj_rel "$(mj_session_file)")")"
+    else mj_fail session "$(mj_rel "$(mj_session_file)")" "does not parse" "cat $(mj_rel "$(mj_session_file)")"; fi
     exit "$MJ_EX_CONTRACT"
   fi
   if [ "$rc" = 1 ]; then
     # Absence is an answer, not a failure — the same rule the handover resolver follows.
-    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"open":null}\n'
-    else printf 'No open session in this worktree.\nnext: majordomus session start\n'; fi
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"open":null,"others":[%s]}\n' "$(mj_session_others_json "")"
+    else
+      printf 'No open session in this worktree.\n'
+      mj_session_others_lines ""
+      printf 'next: majordomus session start\n'
+    fi
     return 0
   fi
 
@@ -217,19 +312,26 @@ mj_session_status() {
   label="$(mj_git_label "$(mj_ses start_head)" "$(mj_ses branch)")"
   age="$(mj_age_human "$(mj_age_minutes "$started" || true)")"
   if [ "$MJ_JSON" = 1 ]; then
-    printf '{"schema":1,"open":{"session_id":"%s","started_at":"%s","owner":"%s","worker":"%s","worktree":"%s","branch":"%s","start_head":"%s","start_working_tree":"%s","foreign":%s,"label":"%s"}}\n' \
+    printf '{"schema":1,"open":{"session_id":"%s","started_at":"%s","owner":"%s","worker":"%s","provider":"%s","provider_session":"%s","worktree":"%s","branch":"%s","start_head":"%s","start_working_tree":"%s","foreign":%s,"label":"%s"},"others":[%s]}\n' \
       "$id" "$started" "$(mj_json_esc "$(mj_ses owner)")" "$(mj_json_esc "$(mj_ses worker)")" \
+      "$(mj_json_esc "$(mj_ses provider)")" "$(mj_json_esc "$(mj_ses provider_session)")" \
       "$(mj_json_esc "$(mj_ses worktree)")" "$(mj_json_esc "$(mj_ses branch)")" \
       "$(mj_ses start_head)" "$(mj_ses start_working_tree)" \
-      "$(mj_session_is_foreign && printf true || printf false)" "$label"
+      "$(mj_session_is_foreign && printf true || printf false)" "$label" \
+      "$(mj_session_others_json "$id")"
     return 0
   fi
   printf 'Session:    %s\n' "$id"
   printf 'Opened:     %s (%s)\n' "$started" "$age"
   printf 'Owner:      %s\n' "$(mj_ses owner)"
   [ -n "$(mj_ses worker)" ] && printf 'Worker:     %s\n' "$(mj_ses worker)"
+  # Whose episode this is. An episode with no provider was opened by hand and says nothing
+  # here, because a blank line claiming a provider is worse than no line.
+  [ -n "$(mj_ses provider)" ] && printf 'Provider:   %s%s\n' "$(mj_ses provider)" \
+    "$([ -n "$(mj_ses provider_session)" ] && printf ' (session %s)' "$(mj_ses provider_session)")"
   printf 'Branch:     %s\n' "$(mj_ses branch)"
   printf 'Start head: %s (%s)\n' "$(mj_ses start_head | cut -c1-7)" "$label"
+  mj_session_others_lines "$id"
   if mj_session_is_foreign; then
     mj_info session "$id" "belongs to $(mj_ses worktree), not this checkout; nothing here is about it" "cat $(mj_rel "$MJ_STATE_DIR")/session-current.yaml"
   fi
@@ -258,6 +360,11 @@ mj_session_close() {
     # somebody leaving the room.
     --if-none) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--if-none needs a value"; if_none="$2"; shift 2 ;;
     --if-none=*) if_none="${1#--if-none=}"; shift ;;
+    # Which episode. A provider's end event names its own and closes that or nothing; it
+    # never falls through to the pointer, which in a checkout with two windows open would
+    # be the other worker's episode.
+    --provider-session) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--provider-session needs a value"; MJ_SESSION_KEY="$2"; shift 2 ;;
+    --provider-session=*) MJ_SESSION_KEY="${1#--provider-session=}"; shift ;;
     --help|-h) mj_session_usage; return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "session close: unknown option $1" ;;
   esac; done
@@ -276,7 +383,7 @@ mj_session_close() {
   case "$rc" in
     1) [ "$if_none" = ignore ] && return 0
        mj_die "$MJ_EX_MISSING" "no open session in this worktree (run: majordomus session start)" ;;
-    2) mj_die "$MJ_EX_CONTRACT" "session-current.yaml does not parse; move it aside or repair it (run: majordomus doctor)" ;;
+    2) mj_die "$MJ_EX_CONTRACT" "$(mj_rel "$(mj_session_file)") does not parse; move it aside or repair it (run: majordomus doctor)" ;;
   esac
   mj_session_is_foreign && mj_die "$MJ_EX_REFUSED" \
     "the open record here belongs to $(mj_ses worktree); close it there, not in this checkout"
@@ -332,7 +439,38 @@ mj_session_close() {
   # session's stamp like every other event of the episode.
   mj_ledger_append session.closed \
     "\"outcome\":\"$outcome\",\"session_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
-  rm -f "$(mj_session_file)"
+
+  # This episode's own file goes, and the pointer goes with it only when it named this
+  # episode: closing one window must leave the other window's episode exactly where it was.
+  # The two paths can be the same file — a record written before this store existed, or one
+  # a person put at the pointer by hand — so both are removed and neither is required.
+  local here ptr repoint=0 line
+  here="$(mj_session_file)"; ptr="$(mj_session_pointer)"
+  if [ -f "$ptr" ] && [ "$(sed -n 's/^session_id: //p' "$ptr" | head -n 1)" = "$sid" ]; then repoint=1; fi
+  # By identity and not by the path this process resolved through: a keyless close resolves
+  # through the pointer, and removing the pointer would leave the episode itself in the
+  # store, open for ever and refusing every later open of the same key.
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    [ "$(sed -n 's/^session_id: //p' "${line#*|}" | head -n 1)" = "$sid" ] && rm -f "${line#*|}"
+  done <<EOF
+$(mj_session_open_list)
+EOF
+  rm -f "$here"
+  [ "$repoint" = 1 ] && rm -f "$ptr"
+  # A pointer left aiming at nothing is the same fact as no pointer, and it is this close
+  # that made it one; it is removed here rather than left for a reader to trip over.
+  if [ -L "$ptr" ] && [ ! -e "$ptr" ]; then rm -f "$ptr"; repoint=1; fi
+  # A pointer this close freed is aimed at the one episode still open here, when there is
+  # exactly one. A person whose hand-opened episode outlives a provider's must not be told
+  # there is none; with two still open there is nothing to choose between them, and a guess
+  # would be worse than the absence `session status` reports instead.
+  if [ "$repoint" = 1 ]; then
+    local rest n
+    rest="$(mj_session_open_list)"
+    n="$(printf '%s' "$rest" | grep -c . 2>/dev/null || true)"
+    [ "$n" = 1 ] && mj_session_point_at "${rest#*|}"
+  fi
   # The working context of the episode learns how it ended. It is appended to, never
   # rewritten, so nothing the worker typed into it between the two events is lost.
   mj_session_context_close "$sid" "$outcome" "${final#"$MJ_ROOT/"}" >/dev/null
@@ -587,7 +725,7 @@ mj_session_context_cmd() {
 
   if [ -z "$sid" ]; then
     local rc=0; mj_load_session || rc=$?
-    [ "$rc" = 2 ] && mj_die "$MJ_EX_CONTRACT" "session-current.yaml does not parse; move it aside or repair it (run: majordomus doctor)"
+    [ "$rc" = 2 ] && mj_die "$MJ_EX_CONTRACT" "$(mj_rel "$(mj_session_file)") does not parse; move it aside or repair it (run: majordomus doctor)"
     if [ "$rc" = 1 ]; then
       if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":null,"context":null}\n'
       else printf 'No open session in this worktree.\nnext: majordomus session start\n'; fi

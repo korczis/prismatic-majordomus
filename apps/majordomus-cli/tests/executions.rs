@@ -18,9 +18,18 @@ use serde_json::{json, Value};
 struct Live {
     stream: TcpStream,
     buffer: Vec<u8>,
+    ready: Value,
 }
 
 impl Live {
+    /// Open the channel and return once the server has said `stream.ready`.
+    ///
+    /// The handshake is not the subscription. The server answers `101` from the request
+    /// thread and subscribes to the store on the connection's own thread, so a client that
+    /// holds only the `101` is following nothing yet, and an execution started in that
+    /// window publishes `execution.created` to an unscoped channel that will never see it.
+    /// `stream.ready` is the frame the protocol defines for exactly this — written after
+    /// the subscription exists — so a client that has read it is promised what follows.
     fn open(address: &str, target: &str) -> Live {
         let mut stream = TcpStream::connect(address).expect("connect");
         stream
@@ -43,10 +52,23 @@ impl Live {
             head.contains("Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo="),
             "the accept value RFC 6455 specifies for this key: {head}"
         );
-        Live {
+        let mut live = Live {
             stream,
             buffer: Vec::new(),
-        }
+            ready: Value::Null,
+        };
+        let ready = live.next().expect("the first frame of every connection");
+        assert_eq!(
+            ready["type"], "stream.ready",
+            "the protocol says the first frame is the one that says the subscription exists"
+        );
+        live.ready = ready;
+        live
+    }
+
+    /// The `stream.ready` frame this connection opened with.
+    fn ready(&self) -> &Value {
+        &self.ready
     }
 
     /// The next text frame, as JSON. `None` when the connection ended or nothing arrived.
@@ -153,12 +175,20 @@ fn an_execution_is_started_over_http_and_streamed_over_the_socket() {
         .any(|t| t == "execution.completed"));
 
     let mut live = Live::open(&s.address, channel);
+    assert_eq!(live.ready()["data"]["protocol_version"], "1");
+    assert_eq!(
+        live.ready()["data"]["scope"],
+        "all",
+        "the unscoped channel follows every execution of this process"
+    );
+
     let started = start(
         &s,
         "executions.demonstrate",
         json!({ "steps": 2, "delay_ms": 20 }),
     );
     let id = started["id"].as_str().expect("an id").to_string();
+    // the answer is the execution as accepted, whatever a worker has already made of it
     assert_eq!(started["state"], "queued");
     assert_eq!(
         started["links"]["cockpit"],
@@ -167,7 +197,7 @@ fn an_execution_is_started_over_http_and_streamed_over_the_socket() {
 
     let frames = live.until(&["execution.completed"]);
     let seen = types(&frames);
-    assert_eq!(seen.first().map(String::as_str), Some("stream.ready"));
+    assert_eq!(seen.first().map(String::as_str), Some("execution.created"));
     for required in [
         "execution.created",
         "execution.started",
@@ -187,13 +217,18 @@ fn an_execution_is_started_over_http_and_streamed_over_the_socket() {
         .iter()
         .filter_map(|f| f["sequence"].as_u64())
         .collect();
+    assert_eq!(
+        sequences.first().copied(),
+        Some(1),
+        "a channel opened before the execution existed saw it from its first event: {sequences:?}"
+    );
     assert!(
         sequences.windows(2).all(|w| w[1] == w[0] + 1),
         "{sequences:?}"
     );
     assert!(frames
         .iter()
-        .all(|f| f["schema_version"].as_str() == Some("1") || f["type"] == "stream.ready"));
+        .all(|f| f["schema_version"].as_str() == Some("1")));
 
     // the snapshot and the last event agree, and the snapshot carries what it produced
     let (status, snapshot) = s.get(&format!("/api/v1/executions/get?id={id}"));
@@ -247,6 +282,67 @@ fn an_execution_is_started_over_http_and_streamed_over_the_socket() {
         page.contains("data-mj-socket"),
         "the page carries the live channel it would follow"
     );
+}
+
+/// The answer to `start` is the execution as accepted, and its first two events are the
+/// two acceptance produces — however fast the work that follows is.
+///
+/// `docs/EXECUTIONS.md`: "The state in that first answer is `queued`, which is what it is:
+/// this server answers `200` with the truth rather than `202` with a promise." It was read
+/// out of the store after the work had become dispatchable, so a worker that got there
+/// first made the answer `running` and its `execution.started` made the state machine
+/// refuse the `execution.queued` event that came after it. Every start here is a chance to
+/// lose that race, and the assertions are on the answer alone: nothing is timed.
+/// Several clients start work at once, which is what makes the window wide enough to lose.
+#[test]
+fn the_answer_to_start_is_the_execution_as_accepted() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let ids: Vec<String> = std::thread::scope(|scope| {
+        let clients: Vec<_> = (0..8)
+            .map(|_| {
+                scope.spawn(|| {
+                    (0..8)
+                        .map(|_| {
+                            let started = start(
+                                &s,
+                                "executions.demonstrate",
+                                json!({ "steps": 1, "delay_ms": 0 }),
+                            );
+                            assert_eq!(started["state"], "queued", "{started}");
+                            assert_eq!(
+                                started["last_sequence"], 2,
+                                "created and queued, and nothing a worker did: {started}"
+                            );
+                            started["id"].as_str().expect("an id").to_string()
+                        })
+                        .collect::<Vec<String>>()
+                })
+            })
+            .collect();
+        clients
+            .into_iter()
+            .flat_map(|c| c.join().expect("a client thread"))
+            .collect()
+    });
+
+    // and the stream each of them carries begins the same way: acceptance, then the work
+    for id in ids {
+        let (status, history) = s.get(&format!("/api/v1/executions/events?id={id}"));
+        assert_eq!(status, 200);
+        let first: Vec<&str> = history["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .take(2)
+            .filter_map(|e| e["type"].as_str())
+            .collect();
+        assert_eq!(
+            first,
+            ["execution.created", "execution.queued"],
+            "the queued event is published before anything may start the work"
+        );
+    }
 }
 
 /// Scenario B: a failure is streamed, rendered and readable, with no Rust internals in it.
@@ -357,10 +453,8 @@ fn a_reconnection_asks_for_the_gap_by_cursor_and_gets_exactly_it() {
         &s.address,
         &format!("/events?execution={id}&after={cursor}"),
     );
+    assert_eq!(second.ready()["data"]["scope"], "executions");
     let rest = second.until(&["execution.completed"]);
-    let ready = rest.first().expect("a ready frame");
-    assert_eq!(ready["type"], "stream.ready");
-    assert_eq!(ready["data"]["scope"], "executions");
     let sequences: Vec<u64> = rest.iter().filter_map(|f| f["sequence"].as_u64()).collect();
     assert!(
         sequences.iter().all(|n| *n > cursor),

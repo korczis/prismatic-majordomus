@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # derive-check — is every committed derived artifact what its canonical sources produce?
-# Writes nothing. Exit 0 when everything is current, 10 with every stale artifact named.
+# Writes nothing. Exit 0 when everything is current, 10 with every stale artifact named, and
+# 15 when the executable refuses the tree because it is not of its generation — a verdict
+# about the tool, not about the tree, and deliberately not the same code.
 # Composes the generators' own checks, in the order scripts/derive runs the generators, and
 # runs both before exiting so that one report names everything that is stale:
 #
@@ -23,6 +25,9 @@ export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
 # shellcheck source=../lib/rust_bin.sh
 . "$ROOT/lib/rust_bin.sh"
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
+  # named, for the same reason scripts/derive names it: a check run with a borrowed binary
+  # is indistinguishable in a log from one that built its own
+  printf '==> derive-check: MAJORDOMUS_BIN=%s (not building)\n' "$RB" >&2
 else
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}" || exit 13
@@ -34,7 +39,21 @@ rc=0
 printf '==> derive-check: majordomus generate --check\n'
 # --strict for the same reason derive uses it: a check that reads a degraded index
 # would compare the committed projections against a tree that has lost documents.
-"$RB" generate --repo "$ROOT" --check --strict || rc=10
+#
+# The executable's own exit code, not a flattened 10. Exit 15 is a refusal: this executable
+# is not of the tree's generation and declined to judge it. That is not a stale tree, and
+# the two must not end at the same verdict — the remedy for a stale tree is `scripts/derive`,
+# and running it with the executable that just refused is what removed 16,625 lines from a
+# pristine origin/master on 2026-09-10. So a refusal ends the check here: an executable that
+# cannot judge these artifacts cannot judge the site's either.
+grc=0
+"$RB" generate --repo "$ROOT" --check --strict || grc=$?
+if [ "$grc" = 15 ]; then
+  printf '==> derive-check: refused; the executable is not of this tree'"'"'s generation, so nothing was judged.\n' >&2
+  printf '==> derive-check: the tree is not stale — rebuild the executable, or unset MAJORDOMUS_BIN and run scripts/derive, which builds it.\n' >&2
+  exit 15
+fi
+if [ "$grc" != 0 ]; then rc=10; fi
 printf '==> derive-check: scripts/generate-site-data --check\n'
 "$ROOT/scripts/generate-site-data" --check || rc=10
 if [ "$rc" = 0 ]; then printf '==> derive-check: every derived artifact is current\n'

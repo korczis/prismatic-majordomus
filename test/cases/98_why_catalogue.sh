@@ -61,7 +61,7 @@ expect_exit 0 "$RB" why list
 expect_grep '0 of 0 moment'
 
 # ---------------------------------------------------------------- add exactly one file
-before="$(git ls-files | sort | shasum -a 256)"
+before="$(git ls-files | LC_ALL=C sort | shasum -a 256)"
 cat > .ai/repo/why/moments/a-probe-moment.md <<'MD'
 ---
 schema: moment/v1
@@ -113,7 +113,7 @@ Nothing the case does not say.
 MD
 git add .ai/repo/why/moments/a-probe-moment.md >/dev/null
 # nothing but that one file was added: no registry, no navigation, no template, no code
-after="$(git ls-files | sort | shasum -a 256)"
+after="$(git ls-files | LC_ALL=C sort | shasum -a 256)"
 [ "$before" != "$after" ] || { echo "    the probe file was not added"; exit 1; }
 added="$(git diff --cached --name-only)"
 [ "$added" = ".ai/repo/why/moments/a-probe-moment.md" ] \

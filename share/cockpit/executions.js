@@ -203,7 +203,7 @@ function appendLog(log, frame) {
   time.className = 'mj-log-time';
   time.textContent = frame.timestamp;
   const stream = document.createElement('span');
-  stream.className = 'mj-log-stream mj-log-stream--' + (frame.data.stream || 'handler');
+  stream.className = 'mj-log-stream mj-status--' + (frame.data.stream || 'handler');
   stream.textContent = frame.data.stream || 'handler';
   const text = document.createElement('span');
   text.className = 'mj-log-text';
@@ -296,7 +296,7 @@ function connectionIndicator(root) {
       state === LIVE ? 'Live' : state === RECONNECTING ? 'Reconnecting' : 'Not connected';
     holder.textContent = '';
     const mark = document.createElement('span');
-    mark.className = 'mj-connection-mark mj-connection-mark--' + state;
+    mark.className = 'mj-connection-mark mj-status--' + state;
     mark.setAttribute('aria-hidden', 'true');
     mark.textContent = shape;
     holder.appendChild(mark);

@@ -115,6 +115,14 @@ pub enum Target {
     /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
     /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
     Deployment,
+    /// `docs/generated/graph.json`: the composed graph as data, and
+    /// `docs/generated/graph.schema.json`: its schema, generated from the types.
+    Graph,
+    /// Every projection of the design system (see [`crate::design::render`]): the
+    /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
+    /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
+    /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.
+    Design,
 }
 
 impl Target {
@@ -130,8 +138,10 @@ impl Target {
         Target::Providers,
         Target::Site,
         Target::Web,
+        Target::Design,
         Target::Changelog,
         Target::Distribution,
+        Target::Graph,
         Target::Deployment,
         Target::Manifest,
     ];
@@ -166,6 +176,8 @@ impl Target {
             Target::Distribution => "distribution",
             Target::Manifest => "manifest",
             Target::Deployment => "deployment",
+            Target::Graph => "graph",
+            Target::Design => "design",
         }
     }
 }
@@ -239,6 +251,23 @@ pub fn comment_banner(source: &str, version: &str) -> String {
         .iter()
         .map(|l| format!("# {l}\n"))
         .collect()
+}
+
+/// The comment form a line-oriented text artifact opens its banner with, by suffix. A
+/// stylesheet or a script cannot start with `#`; an SVG is XML.
+///
+/// ```
+/// use majordomus_cli::generate::text_comment_opening;
+/// assert_eq!(text_comment_opening("share/design/theme.css"), "/*");
+/// assert_eq!(text_comment_opening("share/cockpit/favicon.svg"), "<!--");
+/// assert_eq!(text_comment_opening("share/allow/policy.txt"), "#");
+/// ```
+pub fn text_comment_opening(path: &str) -> &'static str {
+    match Path::new(path).extension().and_then(|e| e.to_str()) {
+        Some("css") | Some("js") | Some("mjs") => "/*",
+        Some("svg") | Some("html") | Some("xml") => "<!--",
+        _ => "#",
+    }
 }
 
 /// The one line a JSON artifact carries under `generated`.
@@ -350,6 +379,47 @@ impl Artifact {
             schema: None,
             source,
             content: openapi::render(&stamped),
+        }
+    }
+
+    /// A line-oriented text artifact whose banner takes the comment form its suffix
+    /// allows: `/* */` for a stylesheet or a script, `<!-- -->` for an SVG, `#` otherwise.
+    /// A stylesheet cannot open with `#` and an image cannot open with a shell comment;
+    /// [`violations`] asks for the same form by the same suffix.
+    ///
+    /// ```
+    /// use majordomus_cli::generate::Artifact;
+    ///
+    /// let css = Artifact::comment_text("a/b.css", "doc", "the source", "0.1.0", "body { }\n");
+    /// assert!(css.content.starts_with("/* GENERATED FILE"), "{}", css.content);
+    /// assert!(css.content.ends_with("body { }\n"));
+    ///
+    /// // the same body under a different suffix opens the way that suffix allows
+    /// let svg = Artifact::comment_text("a/b.svg", "doc", "the source", "0.1.0", "<svg/>\n");
+    /// assert!(svg.content.starts_with("<!-- GENERATED FILE"), "{}", svg.content);
+    /// ```
+    pub fn comment_text(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        body: &str,
+    ) -> Artifact {
+        let path = path.into();
+        let source = source.into();
+        let [a, b, c] = banner_lines(&source, version);
+        let banner = match text_comment_opening(&path) {
+            "/*" => format!("/* {a}\n   {b}\n   {c} */\n"),
+            "<!--" => format!("<!-- {a}\n     {b}\n     {c} -->\n"),
+            _ => comment_banner(&source, version),
+        };
+        Artifact {
+            path,
+            document: document.into(),
+            format: ArtifactFormat::Text,
+            schema: None,
+            content: banner + body,
+            source,
         }
     }
 
@@ -556,6 +626,8 @@ pub fn artifacts(
             | Target::Changelog
             | Target::Distribution
             | Target::Deployment
+            | Target::Graph
+            | Target::Design
             | Target::Manifest => {}
         }
     }
@@ -698,6 +770,17 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     if targets.contains(&Target::Distribution) {
         out.extend(distribution_artifacts(app)?);
     }
+    // The design is the tool's own and is projected into the tool's own tree — the share
+    // directory, the crate, the site. Where the share is not inside this repository, or the
+    // crate is not here, there is nothing of this repository's to project.
+    let crate_is_here = app
+        .repository
+        .root()
+        .join("apps/majordomus-cli/Cargo.toml")
+        .is_file();
+    if share_is_here && crate_is_here && targets.contains(&Target::Design) {
+        out.extend(design_artifacts(app)?);
+    }
     if targets.contains(&Target::Deployment) {
         for object in app
             .context
@@ -826,6 +909,125 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
 }
 
 /// A file of the tool's data directory, read as text.
+/// Every projection of the design system. The declaration is read from the tool's data
+/// directory, validated, and rendered by [`crate::design::render`]; a stylesheet that would
+/// be malformed is refused here rather than written, because the CSS parser would drop the
+/// defect in silence and every check downstream would stay green.
+pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::design::{render, DesignSystem, DOCUMENT_SCHEMA, SHARE_PATH, SITE_SCHEMA, SOURCE};
+
+    let path = app.share.dir().join(SHARE_PATH);
+    let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let design = DesignSystem::parse(&text).map_err(|reason| Error::InvalidDesign {
+        path: SOURCE.to_string(),
+        reason,
+    })?;
+    let version = crate::VERSION;
+    let source = render::SOURCE_LINE;
+    let mut out = Vec::new();
+
+    for (path, document, body) in [
+        (
+            render::THEME_CSS,
+            "design-theme",
+            render::theme_css(&design),
+        ),
+        (
+            render::SURFACE_CSS,
+            "design-surface",
+            render::surface_css(&design),
+        ),
+        (
+            render::STATUS_CSS,
+            "design-status",
+            render::status_css(&design),
+        ),
+        (
+            render::TOKENS_CSS,
+            "design-tokens",
+            render::tokens_css(&design),
+        ),
+    ] {
+        render::well_formed(&body).map_err(|reason| Error::InvalidDesign {
+            path: path.to_string(),
+            reason,
+        })?;
+        out.push(Artifact::comment_text(
+            path, document, source, version, &body,
+        ));
+    }
+
+    // the declaration itself, compiled into the crate so the executable answers from the
+    // design its stylesheets were projected from
+    out.push(Artifact::verbatim(
+        render::COMPILED_YAML,
+        "design-declaration",
+        ArtifactFormat::Yaml,
+        None,
+        source,
+        comment_banner(source, version) + &text,
+    ));
+
+    // the brand: one canonical file per mark under share/design/brand, and every copy a
+    // surface serves written from it, so no copy is edited on its own
+    let brand = |relative: &str| -> Result<String> {
+        let p = app.share.dir().join("design").join(relative);
+        std::fs::read_to_string(&p).map_err(|e| Error::io(&p, e))
+    };
+    let mark = brand(&design.identity.mark)?;
+    let logo = brand(&design.identity.logo)?;
+    let mark_source = format!("share/design/{}, the canonical mark", design.identity.mark);
+    let logo_source = format!("share/design/{}, the canonical logo", design.identity.logo);
+    for path in [
+        render::COMPILED_MARK,
+        "share/cockpit/favicon.svg",
+        "site/static/favicon.svg",
+        "site/static/images/logo-mark.svg",
+    ] {
+        out.push(Artifact::comment_text(
+            path,
+            "design-mark",
+            mark_source.clone(),
+            version,
+            &mark,
+        ));
+    }
+    out.push(Artifact::comment_text(
+        "site/static/images/logo.svg",
+        "design-logo",
+        logo_source,
+        version,
+        &logo,
+    ));
+
+    // the site's dataset and the reference documents
+    out.push(Artifact::verbatim(
+        render::SITE_JSON,
+        "site-design",
+        ArtifactFormat::Json,
+        Some(SITE_SCHEMA.to_string()),
+        source,
+        openapi::render(&render::site_document(&design, version)),
+    ));
+    out.extend(
+        Document::new(
+            render::DOCUMENT,
+            DOCUMENT_SCHEMA,
+            source,
+            render::document(&design),
+        )
+        .artifacts(version),
+    );
+    out.push(Artifact::markdown(
+        format!("{OUT_DIR}/{}.md", render::DOCUMENT),
+        render::DOCUMENT,
+        source,
+        version,
+        &render::reference_markdown(&design),
+    ));
+    Ok(out)
+}
+
 fn read_share(share: &Share, relative: &str) -> Result<String> {
     let path = share.dir().join(relative);
     std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
@@ -881,6 +1083,24 @@ pub fn context_artifacts(
             &providers_markdown(&value),
         ));
         out.extend(Document::new("providers", PROVIDERS_SCHEMA, source, value).artifacts(version));
+    }
+    if targets.contains(&Target::Graph) {
+        out.push(Artifact::verbatim(
+            format!("{OUT_DIR}/graph.json"),
+            "graph",
+            ArtifactFormat::Json,
+            Some(GRAPH_SCHEMA.to_string()),
+            "the composed graph of the registry and the index",
+            graph_document(ctx, version)?,
+        ));
+        out.push(Artifact::verbatim(
+            format!("{OUT_DIR}/graph.schema.json"),
+            "graph-schema",
+            ArtifactFormat::Json,
+            None,
+            "the schema of the composed graph, generated from its types",
+            graph_schema_document(version),
+        ));
     }
     Ok(out)
 }
@@ -1016,6 +1236,103 @@ pub fn web_topology(ctx: &Context) -> Value {
             .collect::<serde_json::Map<String, Value>>(),
         "surfaces": surfaces,
     })
+}
+
+/// The schema of `graph.json`.
+pub const GRAPH_SCHEMA: &str = "majordomus/capability-graph/v1";
+
+/// Text that must never reach a published artifact: a path belonging to the machine that
+/// generated it, and the shapes credentials are written in. The list is short on purpose —
+/// every entry is something no derivation of this repository can legitimately produce, so
+/// a hit is a defect rather than a judgement call.
+const FORBIDDEN: &[(&str, &str)] = &[
+    (
+        "/Users/",
+        "an absolute path on the machine that generated this",
+    ),
+    (
+        "/home/",
+        "an absolute path on the machine that generated this",
+    ),
+    (
+        "/root/",
+        "an absolute path on the machine that generated this",
+    ),
+    ("-----BEGIN ", "a PEM block"),
+    ("Authorization:", "an authorization header"),
+    ("Bearer ", "a bearer token"),
+    ("AKIA", "an access key id"),
+    ("ghp_", "a personal access token"),
+    ("github_pat_", "a personal access token"),
+];
+
+/// The first forbidden marker in `content`, with what it is, or `None` when the content is
+/// safe to publish.
+///
+/// The example joins the marker and a name at run time: this file is committed, and a
+/// committed file that named a home directory would fail the very gate the marker exists
+/// to keep the artifacts through.
+///
+/// ```
+/// use majordomus_cli::generate::forbidden_in;
+/// assert!(forbidden_in("nodes are repository-relative").is_none());
+/// let machine_path = format!("source: {}someone/dev", "/Users/");
+/// assert_eq!(forbidden_in(&machine_path).map(|(m, _)| m), Some("/Users/"));
+/// ```
+pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
+    FORBIDDEN
+        .iter()
+        .find(|(marker, _)| content.contains(marker))
+        .map(|(marker, what)| (*marker, *what))
+}
+
+/// The composed graph as a published artifact: the graph itself, and the provenance JSON
+/// cannot carry as a comment recorded as fields of the document.
+///
+/// Refuses rather than writes when the rendered document carries anything from
+/// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
+/// leak that regenerates.
+pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
+        Error::Http {
+            reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
+        },
+    )?;
+    let doc = serde_json::json!({
+        "schema": GRAPH_SCHEMA,
+        "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
+        "generator": format!("majordomus-cli {version}"),
+        "graph": graph,
+    });
+    let rendered = openapi::render(&doc);
+    if let Some((marker, what)) = forbidden_in(&rendered) {
+        return Err(Error::Http {
+            reason: format!(
+                "the composed graph carries {what} (`{marker}`) and would publish it; \
+                 a node's source is repository-relative, so find the derivation that put an \
+                 absolute path or a secret on a node before regenerating"
+            ),
+        });
+    }
+    Ok(rendered)
+}
+
+/// The schema of the composed graph, generated from the types that define it rather than
+/// written beside them.
+pub fn graph_schema_document(version: &str) -> String {
+    let schema = crate::capability::schema::CanonicalSchema::of::<crate::graph::Graph>();
+    // a JSON Schema's own members are fixed by its specification, so the provenance rides
+    // in the extension the manifest validator reads beside `generated`
+    let doc = serde_json::json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": GRAPH_SCHEMA,
+        "description": format!("{HEADER}; source: the Rust types of majordomus_cli::graph; regenerate with `majordomus generate`; generator majordomus-cli {version}"),
+        "x-majordomus-generated": json_banner("the Rust types of majordomus_cli::graph"),
+        "x-majordomus-generator": format!("majordomus-cli {version}"),
+        "definitions": { "Graph": schema.schema },
+        "$ref": "#/definitions/Graph",
+    });
+    openapi::render(&doc)
 }
 
 /// The builtin registry as data: modules, descriptors with their schemas, and the
@@ -1772,7 +2089,8 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
         // carries it as members and is checked below
         let opening = match a.format {
             ArtifactFormat::Markdown if !stamped_elsewhere => Some(format!("<!-- {HEADER}")),
-            ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
+            ArtifactFormat::Yaml => Some(format!("# {HEADER}")),
+            ArtifactFormat::Text => Some(format!("{} {HEADER}", text_comment_opening(&a.path))),
             _ => None,
         };
         if opening.is_some_and(|o| !opens_with_banner(&a.content, &o)) {
@@ -2485,6 +2803,68 @@ mod tests {
                 .iter()
                 .any(|v| v.reason.contains("does not list")),
             "{manifest_only:?}"
+        );
+    }
+
+    #[test]
+    fn the_graph_is_a_target_of_the_one_plan_and_not_a_script_of_its_own() {
+        assert!(Target::ALL.contains(&Target::Graph));
+    }
+
+    #[test]
+    fn a_published_artifact_is_refused_when_it_carries_a_machine_path_or_a_credential() {
+        // every marker is something no derivation of this repository can legitimately
+        // produce, so a hit is a defect rather than a judgement call; the home directory
+        // is joined at run time because this file is committed and the gate reads it too
+        for (content, marker) in [
+            (
+                format!("\"source\": \"{}someone/dev/x\"", "/Users/"),
+                "/Users/",
+            ),
+            ("\"source\": \"/home/someone/x\"".to_string(), "/home/"),
+            ("-----BEGIN PRIVATE KEY-----".to_string(), "-----BEGIN "),
+            ("Authorization: Bearer abc".to_string(), "Authorization:"),
+            ("AKIAIOSFODNN7EXAMPLE".to_string(), "AKIA"),
+            ("ghp_0123456789".to_string(), "ghp_"),
+        ] {
+            assert_eq!(
+                forbidden_in(&content).map(|(m, _)| m),
+                Some(marker),
+                "{content}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_graph_of_repository_relative_sources_is_publishable() {
+        let safe = r#"{"nodes":[{"id":"majordomus://rule/a","source":".ai/repo/rules/a.md"}]}"#;
+        assert!(forbidden_in(safe).is_none());
+    }
+
+    #[test]
+    fn the_schema_of_the_graph_comes_from_the_types_that_define_it() {
+        let doc = graph_schema_document("test");
+        let parsed: Value = serde_json::from_str(&doc).expect("the schema is JSON");
+        assert_eq!(parsed["$id"], Value::String(GRAPH_SCHEMA.into()));
+        // the shape is schemars' rendering of `graph::Graph`, not a hand-written copy:
+        // the fields it names are the struct's own
+        let graph = &parsed["definitions"]["Graph"]["properties"];
+        for field in [
+            "id",
+            "nodes",
+            "edges",
+            "node_kinds",
+            "edge_kinds",
+            "metadata",
+        ] {
+            assert!(graph.get(field).is_some(), "the schema names `{field}`");
+        }
+        assert!(
+            parsed["description"]
+                .as_str()
+                .unwrap_or_default()
+                .contains(HEADER),
+            "JSON carries its provenance as a field, having no comment to carry it in"
         );
     }
 }

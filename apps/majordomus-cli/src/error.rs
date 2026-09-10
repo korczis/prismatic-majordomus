@@ -225,6 +225,16 @@ pub enum Error {
         /// What is wrong, and what to do about it.
         reason: String,
     },
+    /// The design declaration, or a projection rendered from it, is inconsistent: a role
+    /// naming no palette entry, a state word filed under two meanings, a value the CSS
+    /// parser would drop in silence. Nothing is written.
+    #[error("design {path}: {reason}")]
+    InvalidDesign {
+        /// The declaration, or the projection that could not be rendered.
+        path: String,
+        /// What is wrong.
+        reason: String,
+    },
     /// A Rust source file of the crate under inspection cannot be read or parsed, so the
     /// quality inventory would be built over less than the whole crate. Reported rather
     /// than skipped: a partial inventory that looked clean would be the one result this
@@ -266,6 +276,7 @@ impl Error {
             | Error::InvalidDeployment { .. }
             | Error::InvalidDistribution { .. }
             | Error::InvalidRelease { .. }
+            | Error::InvalidDesign { .. }
             | Error::InvalidSource { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. }

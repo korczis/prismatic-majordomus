@@ -195,6 +195,14 @@ if start_http "$S/public"; then
   expect_exit 0 "$MJ" check
   expect_grep 'OK   obligation  pages — exact: the published site serves'
 
+  # A caller names the commit however it has it, and the shortest way to have it is to read
+  # it off a gh-pages subject. The probe answers about the same commit either way; it used
+  # to poll the whole timeout and then report that beaee8654 is not beaee8654.
+  expect_exit 0 scripts/pages verify --commit "$(git rev-parse --short HEAD)" --timeout 0
+  # and a prefix too short to name a commit is a usage error rather than a pass that matches
+  # every commit there has ever been
+  expect_exit 2 scripts/pages verify --commit b --timeout 0
+
   # the site serves an older commit: unpublished, and said in those words
   printf '{"commit":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}\n' > "$S/public/build.json"
   expect_exit 10 "$MJ" finish --outcome completed --note "done"

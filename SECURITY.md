@@ -10,7 +10,15 @@ repository rather than in a public issue. Expect an acknowledgement within a wee
 These are design commitments for v0.1. A test in `test/cases/` will back each one before
 it is described as real.
 
-- **Local only.** No network calls of any kind. No telemetry. No update checks.
+- **Local only.** No telemetry. No update checks. Nothing leaves the machine. There is
+  one request, and it is declared rather than tolerated: `majordomus context` reads the
+  peer board of the shared MCP server this repository itself started, from the loopback URL
+  that server wrote into its own lease file, so that a worker is told who else is holding
+  their paths. It is bounded (`--max-time`), it is optional — no lease, no `curl`, no
+  answer, or a lease naming anything but loopback, and the section is simply not written —
+  and it sends nothing but the request. `test/cases/08_no_forbidden_constructs.sh` refuses
+  every other network client in `bin/`, `lib/` and `share/`, and refuses this one if it
+  stops being that single bounded call.
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

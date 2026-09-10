@@ -9,9 +9,31 @@
 //!
 //! Every check delegates: the index's own diagnostics say whether the layer read cleanly,
 //! the benchmark projection's coverage says whether every executable capability is timed,
-//! and `generate --check` — the same comparison the command runs — says whether the
-//! committed projections are stale. A check that computed its own verdict would be a
-//! second opinion, and two opinions drift.
+//! `generate --check` — the same comparison the command runs — says whether the committed
+//! projections are stale, and [`crate::capability::builtin::server::standing_at`] — the
+//! reading `server.status` answers from — says where the shared server of this checkout
+//! stands. A check that computed its own verdict would be a second opinion, and two
+//! opinions drift.
+//!
+//! # Four readings of "ready", and why none of them is this one
+//!
+//! This crate answers "ready" four times, about four different subjects. The full table,
+//! with what asks each one, is in `docs/MCP.md`; in short:
+//!
+//! - [`crate::http::Served::ready`] — is a *surface's* producer's output on disk? Per
+//!   surface, and what the home page renders as `not built`.
+//! - [`Readiness`] (`health.ready`, `GET /api/v1/ready`) — can *this process* answer a
+//!   request? Local initialisation only, never a dependency: a readiness probe that
+//!   contacts another service fails a deployment for something that is not this process.
+//! - [`crate::environment::ServiceAvailability`] — does *anything* accept a connection at
+//!   the address the lease published? One bounded TCP connect, no DNS, because it runs on
+//!   a shell prompt.
+//! - [`crate::capability::builtin::server::ServerStanding`] — is what answers at that
+//!   address *current*: this checkout's server, from the file on disk, at this version?
+//!
+//! The `server` check below is the fourth, and it is the only one of them that a health
+//! report should carry: the first is per surface, the second is the report's own caller,
+//! and the third cannot tell a live server from a socket somebody else holds.
 
 use std::collections::BTreeMap;
 
@@ -29,6 +51,7 @@ use crate::index::State;
 use crate::model::Severity;
 use crate::{capability, module};
 
+use super::server::{self, ServerStanding};
 use super::{get, Empty};
 
 /// The URI under which `system.health` is read as an MCP resource.
@@ -408,6 +431,65 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         },
     );
 
+    // --- the shared server of this checkout
+    //
+    // Not a second opinion and not a second reading: `server::standing_at` is what answers
+    // `GET /api/v1/server`, and this reports what it says. It costs one small file and,
+    // when the lease names an address, one probe bounded by `lease::PROBE_TIMEOUT`; the
+    // five-second cache on `health.report` is as fresh as a file other processes write can
+    // usefully be, and `server.status` is the uncached answer for a caller that needs one.
+    let checkout = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    let local_half = server::local_half(&checkout);
+    let lease_path = crate::lease::lease_file(&checkout, &local_half);
+    let (standing, reason, lease) = server::standing_at(&checkout, &local_half);
+    let detail = match lease.document() {
+        Some(doc) => format!(
+            "{}: {}, version {}, pid {}, since {}",
+            standing.as_str(),
+            doc.url.as_deref().unwrap_or("no address published yet"),
+            doc.version.as_deref().unwrap_or("unstated"),
+            doc.pid,
+            doc.started_at
+        ),
+        None if standing == ServerStanding::Absent => format!(
+            "absent: no lease at {}, so nothing serves this checkout",
+            lease_path.display()
+        ),
+        None => format!(
+            "{}: the lease at {} holds no document",
+            standing.as_str(),
+            lease_path.display()
+        ),
+    };
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "server".into(),
+            title: "The shared server".into(),
+            status: match standing {
+                // A checkout nobody serves is not an unhealthy one: nothing is running and
+                // nothing claims to be. A lease still binding resolves itself within the
+                // bind grace, and is reported as stale by this same engine when it does
+                // not. Neither is a fault of what this process serves.
+                ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
+                    HealthStatus::Ok
+                }
+                // A server answering from code this tree no longer has says yesterday's
+                // truth in today's words, and a lease naming one that answers for nobody
+                // sends the next reader at a dead address. Both are somebody's to clear;
+                // neither stops this process from serving, so neither is a failure.
+                ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
+            },
+            detail,
+            decided_by:
+                "the decision `server.status` makes, from this checkout's lease and one probe of the server it names"
+                    .into(),
+            evidence: vec!["majordomus serve status".into()],
+            findings: reason.into_iter().collect(),
+        },
+    );
+
     // --- the peers attached to this process
     let peers = ctx.peers.list();
     record(
@@ -443,13 +525,13 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "health",
         title: "Health",
-        description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
                 id: "health.report",
                 title: "Health of this process",
-                description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+                description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
                 input: Empty,
                 output: Health,
                 stability: Stability::BehaviorallyVerified,

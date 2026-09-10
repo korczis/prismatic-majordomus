@@ -47,7 +47,7 @@ mj_cmdreg_ids() {
 }
 # the commands the binary actually dispatches, read from the dispatch table
 mj_dispatched() {
-  grep -oE '^  [a-z|]+\)$' "$MJ_BIN_DIR/majordomus" | tr -d ' )' | tr '|' '\n' | sort -u
+  grep -oE '^  [a-z|]+\)$' "$MJ_BIN_DIR/majordomus" | tr -d ' )' | tr '|' '\n' | LC_ALL=C sort -u
 }
 
 # ---------------------------------------------------------------- command_surface_complete
@@ -62,7 +62,7 @@ mj_validate_command_surface() {
   local ids public dispatched c bad=0 dupes
   ids="$(mj_cmdreg_ids)"; public="$(mj_cmdreg_public)"; dispatched="$(mj_dispatched)"
 
-  dupes="$(printf '%s\n' "$ids" | sort | uniq -d)"
+  dupes="$(printf '%s\n' "$ids" | LC_ALL=C sort | uniq -d)"
   if [ -n "$dupes" ]; then
     mj_doctrine_fail command "registry" "duplicate command id(s): $(printf '%s' "$dupes" | tr '\n' ' ')" "grep -n 'id:' share/commands.yaml"
     bad=1
@@ -125,7 +125,7 @@ mj_validate_command_coverage() {
     esac
   done
   # a header naming a command that does not exist is a broken reference, not documentation
-  for c in $(printf '%s\n' $behaviour $negative | sort -u); do
+  for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
     grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }

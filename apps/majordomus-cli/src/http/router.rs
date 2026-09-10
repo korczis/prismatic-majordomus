@@ -315,6 +315,9 @@ pub struct Router {
     /// The resolved surfaces and their handlers, and the context narrowed to them. Built
     /// on first use, because the builder learns what this process offers after `new`.
     served: Arc<std::sync::OnceLock<Result<Resolution, String>>>,
+    /// Which git repository the served checkout belongs to, asked once: the index route
+    /// answers it on every probe, and a probe must not cost a subprocess.
+    git: Arc<std::sync::OnceLock<Option<crate::repository::GitIdentity>>>,
 }
 
 /// What one router serves: the bound surfaces, and the context every capability call is
@@ -335,6 +338,7 @@ impl Router {
             mcp: None,
             cockpit: None,
             served: Arc::new(std::sync::OnceLock::new()),
+            git: Arc::new(std::sync::OnceLock::new()),
         }
     }
 
@@ -598,6 +602,9 @@ impl Router {
                 })
             })
             .collect();
+        let git = self.git.get_or_init(|| {
+            crate::repository::git_identity(std::path::Path::new(&self.ctx.index.repository.root))
+        });
         json_response(
             200,
             &json!({
@@ -616,6 +623,11 @@ impl Router {
                 "repository_id": crate::repository::identity(
                     std::path::Path::new(&self.ctx.index.repository.root),
                 ),
+                // and which git repository that checkout belongs to: one value for every
+                // worktree of it, so that a reader can tell two servers of one repository
+                // from the servers of two (crate::repository::git_identity)
+                "git_repository_id": git.as_ref().map(|g| g.id.clone()),
+                "linked_worktree": git.as_ref().is_some_and(|g| g.linked),
                 "surfaces": surfaces,
             }),
         )

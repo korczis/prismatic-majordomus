@@ -3,9 +3,11 @@
 {#- build.json is written by scripts/site-build and ignored by git; a plain `zola serve` has none, so it is optional and the two places that show the commit fall back. -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
 {%- set m = load_data(path="data/marketing.toml") -%}
+{#- the design contract, generated from share/design/tokens.yaml: the theme class and storage key the toggle honours, the pre-paint statement, the fingerprint the probes compare with the stylesheet's. -#}
+{%- set design = load_data(path="data/registry/design.json") -%}
 {%- set page_url = current_url or config.base_url -%}
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-theme-key="{{ design.theme.storage_key }}" data-theme-class="{{ design.theme.class }}" data-design="{{ design.design }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,13 +24,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{{ get_url(path="images/social-card.png") }}">
 <link rel="icon" href="{{ get_url(path="images/logo-mark.svg") }}" type="image/svg+xml">
-<link rel="stylesheet" href="{{ get_url(path="app.css") }}">
+<link rel="stylesheet" href="{{ get_url(path="app.css", cachebust=true) }}">
 <link rel="stylesheet" href="{{ get_url(path="giallo-light.css") }}">
 <link rel="stylesheet" href="{{ get_url(path="giallo-dark.css") }}">
-{#- Theme before paint: flowbite.com/docs/customize/dark-mode/ reads localStorage 'color-theme', falls back to prefers-color-scheme. -#}
-<script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script>
-{#- The one custom CSS rule on the site: Alpine's documented x-cloak requirement (alpinejs.dev/directives/cloak). -#}
-<style>[x-cloak]{display:none!important}</style>
+{#- Theme before paint: the one statement the design declaration generates for every surface (the Cockpit ships the same bytes). -#}
+<script>{{ design.theme.bootstrap | safe }}</script>
 </head>
 <body class="min-h-screen bg-neutral-primary text-body antialiased">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>

@@ -59,7 +59,7 @@ echo "modified" > "$W/outside/README.md"
 echo "staged" > "$W/outside/staged.txt"; git -C "$W/outside" add staged.txt
 echo "untracked" > "$W/outside/untracked.txt"
 head_before="$(git -C "$W/outside" rev-parse HEAD)"
-status_before="$(git -C "$W/outside" status --porcelain | sort)"
+status_before="$(git -C "$W/outside" status --porcelain | LC_ALL=C sort)"
 expect_exit 10 mj "$R" worktree validate
 expect_grep "worktree.path_mismatch"
 expect_grep "$R-wt/fix/legacy"
@@ -83,7 +83,7 @@ expect_grep "moved and verified"
 [ -d "$R-wt/fix/legacy" ] || { echo "    the worktree was not moved"; exit 1; }
 [ -e "$W/outside" ] && { echo "    the old path survived"; exit 1; }
 [ "$(git -C "$R-wt/fix/legacy" rev-parse HEAD)" = "$head_before" ] || { echo "    HEAD changed"; exit 1; }
-[ "$(git -C "$R-wt/fix/legacy" status --porcelain | sort)" = "$status_before" ] || { echo "    the dirty state changed"; git -C "$R-wt/fix/legacy" status --porcelain; exit 1; }
+[ "$(git -C "$R-wt/fix/legacy" status --porcelain | LC_ALL=C sort)" = "$status_before" ] || { echo "    the dirty state changed"; git -C "$R-wt/fix/legacy" status --porcelain; exit 1; }
 [ "$(cat "$R-wt/fix/legacy/untracked.txt")" = untracked ] || { echo "    untracked work was lost"; exit 1; }
 [ "$(cat "$R-wt/fix/legacy/README.md")" = modified ] || { echo "    the modification was lost"; exit 1; }
 expect_exit 0 mj "$R" worktree validate

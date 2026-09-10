@@ -49,7 +49,14 @@ RUN_T0="$(now)"; STAGE_T0=0; STAGE=""
 step()     { STAGE="$1"; STAGE_T0="$(now)"; printf '==> derive: %s ...\n' "$1" >&2; }
 step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))" >&2; }
 
+# Which executable is about to rewrite every committed artifact, said out loud. A derivation
+# run with a borrowed binary looks exactly like one that built its own, and on 2026-09-10 a
+# borrowed one of an older generation removed 16,625 lines from a pristine origin/master
+# without a word. The executable refuses that now (`majordomus generate` compares its
+# generation against the tree's), but a run that names what it is using is a run whose log
+# answers "which binary?" without anyone having to guess.
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
+  printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
   step "building the Rust executable ($PROFILE)"
@@ -65,7 +72,23 @@ step "stage A: majordomus generate (code-only projections)"
 # --strict: an error diagnostic must not pass for success. A duplicate identity excludes
 # every claimant and the index goes on without them, so without this a derivation writes
 # projections from a tree that has silently lost documents, and says nothing.
-"$RB" generate --repo "$ROOT" --strict >/dev/null
+#
+# Exit 15 is the executable refusing the tree: it is not of this tree's generation and
+# would have rewritten every artifact from a model the tree does not have. Nothing was
+# written. The refusal is repeated here because a `set -e` abort in the middle of a
+# multi-stage script reads as a crash, and the remedy is the opposite of the reflex.
+# `rc=0; cmd || rc=$?` and not `if ! cmd`: after `!` inverts a pipeline, `$?` inside the
+# branch is the inverted status — 0 — and the script would exit 0 on a refusal.
+rc=0
+"$RB" generate --repo "$ROOT" --strict >/dev/null || rc=$?
+if [ "$rc" != 0 ]; then
+  # a full `if` and not `[ ... ] && printf`: under `set -e` the failing test would end the
+  # script with status 1 before the `exit` below could carry the real code out
+  if [ "$rc" = 15 ]; then
+    printf '==> derive: refused before anything was written; the executable, not the tree, is out of date\n' >&2
+  fi
+  exit "$rc"
+fi
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
 "$ROOT/scripts/generate-site-data"

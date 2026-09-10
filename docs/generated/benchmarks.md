@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.4.0 -->
+     Generator: majordomus-cli 0.5.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 73 | 70 | 0 | 3 |
-| http | 73 | 70 | 0 | 3 |
-| mcp | 71 | 68 | 0 | 3 |
+| direct | 78 | 75 | 0 | 3 |
+| http | 78 | 75 | 0 | 3 |
+| mcp | 76 | 73 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 230 | 221 | 0 | 9 |
+| total | 245 | 236 | 0 | 9 |
 
 ## Capabilities
 
@@ -30,6 +30,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `design.contrast` | design | query | — | covered | covered | covered | `default` |
+| `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
+| `design.system` | design | query | — | covered | covered | covered | `default` |
+| `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
@@ -78,6 +82,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `server.status` | server | query | — | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

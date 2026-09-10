@@ -141,7 +141,13 @@ pub struct Record {
     pub next_action: String,
 }
 
-/// The open episode of this worktree, when there is one.
+/// The open episode this checkout points at, when there is one.
+///
+/// One execution episode belongs to one provider session, and several can be open in one
+/// checkout at once — two windows of the same provider are two workers. What is read here
+/// is `state/session-current.yaml`, the pointer to the episode of this checkout; a worker
+/// that knows its own provider session resolves its own episode instead, which is what
+/// `mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct OpenSession {
     /// The episode's id.
@@ -157,6 +163,11 @@ pub struct OpenSession {
     /// The provider whose event opened it, when one did.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub provider: String,
+    /// That provider's own session identity — the string the prompt archive stamps on the
+    /// same worker's records, and the name this episode is keyed by. Empty for an episode
+    /// opened by hand, which is the one episode no provider session owns.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub provider_session: String,
     /// The branch it opened on.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub branch: String,
@@ -263,7 +274,8 @@ fn front(path: &Path) -> Option<BTreeMap<String, String>> {
 
 /// A whole YAML document, for the two records of the local half that are not Markdown.
 ///
-/// `session-current.yaml` and `current.yaml` carry no `---` fences — they are the state
+/// `session-current.yaml` (a symlink into `state/sessions-open/`) and `current.yaml` carry
+/// no `---` fences — they are the state
 /// itself rather than a document about it — so reading them with the front-matter splitter
 /// finds nothing and reports an absent episode in a checkout that has one. Two shapes, two
 /// readers, and the difference stated here rather than discovered.
@@ -474,6 +486,7 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
                 owner: f.get("owner").cloned().unwrap_or_default(),
                 worker: f.get("worker").cloned().unwrap_or_default(),
                 provider: f.get("provider").cloned().unwrap_or_default(),
+                provider_session: f.get("provider_session").cloned().unwrap_or_default(),
                 branch: f.get("branch").cloned().unwrap_or_default(),
                 start_head: f.get("start_head").cloned().unwrap_or_default(),
                 foreign,

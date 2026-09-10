@@ -134,7 +134,15 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # being a place anything is kept, and it is by far the most common way state is lost while
 # work is still in progress. The provider announces it before it happens, which is the only
 # moment at which anything can be written about a context that is about to be discarded.
-MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact'
+#
+# Field 13 is the one column read outside a hook. An episode belongs to the provider session
+# that opened it, so a command a worker runs inside that session has to be able to say which
+# open episode is its own — and only the provider can tell it, by exporting its session
+# identity into the environment the worker's commands run in. The variable is declared here,
+# beside the payload keys, because a provider is one thing and a second table naming the
+# same providers elsewhere is how two lists come to disagree. A provider that exports
+# nothing writes `-`, and its workers resolve through the pointer as everything did before.
+MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
 # The events an adapter line describes: the kind this tool calls it, the column holding the
 # provider's own name for it, and the column holding the shim. Adding a fourth event is a
@@ -153,6 +161,9 @@ mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1"
 mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
 mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
 mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2)"; }
+# The environment variables in which some provider names the session a command is running
+# inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
+mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
 
 mj_capture_adapter()   { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_capture_providers() { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk '{ print $1 }'; }
@@ -760,6 +771,15 @@ mj_capture_session() {
     return 0
   fi
 
+  # From here on this process is that provider session and no other. Everything the event
+  # does — opening, closing, the checkpoint a compaction derives, the ledger line each of
+  # them appends — resolves to that episode strictly: it is found or it is absent, and the
+  # pointer is never consulted. An end event that fell through to the pointer would close
+  # whichever episode was opened last in this checkout, which is the defect this whole
+  # change is about.
+  # shellcheck disable=SC2034  # read by mj_session_here_file in lib/common.sh
+  [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
+
   case "$event" in
     start)   mj_capture_session_start   "$provider" "$psession" "$source" ;;
     end)     mj_capture_session_end     "$provider" "$psession" "$reason" ;;
@@ -810,9 +830,43 @@ mj_capture_session_start() {
   # shellcheck source=derive.sh
   . "$MJ_LIB_DIR/derive.sh"
   mj_load_policy || return 0
+  # The server, before the briefing: an agent is arriving, which is the one moment a server
+  # nobody has started yet is owed one, and the briefing says where it stands. It travels as
+  # an argument rather than as a variable the briefing reaches for: two files sharing a name
+  # is a data flow no reader — and no shellcheck — can follow.
+  local server; server="$(mj_capture_ensure_server "$provider")"
   [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
-  mj_derive_briefing 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
+  mj_derive_briefing "$server" 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   return 0
+}
+
+# Make sure the repository's shared server serves this checkout, on the start event, and
+# answer one line for the briefing: where it stands. Best-effort and never load-bearing —
+# nothing here decides the event — and never a build: an executable that is not there, or
+# is older than its sources, is named, not compiled, because a hook is not the place to
+# start a compiler and a server from stale code would answer with yesterday's tree. The
+# executable's own `serve ensure` does the rest: it starts a server as a process of its own
+# when none answers, waits until it is ready, and starts nothing when one already is.
+mj_capture_ensure_server() {
+  local provider="$1" bin share line
+  [ "$(mj_pol session.ensure_server_on_start)" = false ] && { printf 'not ensured: session.ensure_server_on_start is false\n'; return 0; }
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  if [ ! -x "$bin" ]; then
+    mj_session_context_log "$provider start event: the executable is not built; no server ensured"
+    printf 'not ensured: the executable is not built (run `just build`)\n'; return 0
+  fi
+  if mj_rust_stale "$MJ_ROOT" "$bin"; then
+    mj_session_context_log "$provider start event: the executable is older than its sources; no server ensured"
+    printf 'not ensured: the executable is older than its sources (run `just build`)\n'; return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || { printf 'not ensured: %s is not writable\n' "$MJ_STATE_DIR/mcp"; return 0; }
+  line="$("$bin" serve ensure --repo "$MJ_ROOT" 2>>"$MJ_STATE_DIR/mcp/ensure.log")" \
+    || mj_session_context_log "$provider start event: the server did not converge: $line"
+  printf '%s\n' "${line:-not ensured: serve ensure said nothing}"
 }
 
 # A compaction discards the conversation and keeps working. Nothing about the episode ends,
@@ -873,7 +927,14 @@ mj_capture_session_end() {
       && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
       || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
   fi
-  out="$( (mj_session_close --if-none ignore --outcome "$outcome" < /dev/null) 2>&1 )" || {
+  # The episode this provider session opened, named rather than resolved: an end event
+  # closes its own or nothing. Before this, an end event closed whatever was open in the
+  # checkout, so the second window to be shut ended the first window's episode — and the
+  # first window went on writing ledger lines into an episode that had already been closed
+  # and published.
+  set -- --if-none ignore --outcome "$outcome"
+  [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
+  out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {
     mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
     return 0; }

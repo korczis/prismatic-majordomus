@@ -188,6 +188,74 @@
       "tool": "majordomus_deployments"
     },
     {
+      "api_anchor": "/docs/api/#op-design-contrast",
+      "claims": [],
+      "cli": null,
+      "id": "design.contrast",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-contrast/",
+      "slug": "design-contrast",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "Whether the declared colours can be read",
+      "tool": "majordomus_design_contrast"
+    },
+    {
+      "api_anchor": "/docs/api/#op-design-explain",
+      "claims": [],
+      "cli": null,
+      "id": "design.explain",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-explain/",
+      "slug": "design-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "What a design token means",
+      "tool": "majordomus_design_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-design-system",
+      "claims": [],
+      "cli": null,
+      "id": "design.system",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": "majordomus://design",
+      "route": "/registry/capabilities/design-system/",
+      "slug": "design-system",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "The design system",
+      "tool": "majordomus_design"
+    },
+    {
+      "api_anchor": "/docs/api/#op-design-tokens",
+      "claims": [],
+      "cli": null,
+      "id": "design.tokens",
+      "kind": "query",
+      "module": "design",
+      "module_route": "/registry/modules/design/",
+      "resource": null,
+      "route": "/registry/capabilities/design-tokens/",
+      "slug": "design-tokens",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "tests": [],
+      "title": "The design tokens",
+      "tool": "majordomus_design_tokens"
+    },
+    {
       "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
@@ -1044,6 +1112,23 @@
       "tool": "majordomus_scope_classify"
     },
     {
+      "api_anchor": "/docs/api/#op-server-status",
+      "claims": [],
+      "cli": "majordomus serve status",
+      "id": "server.status",
+      "kind": "query",
+      "module": "server",
+      "module_route": "/registry/modules/server/",
+      "resource": "majordomus://server",
+      "route": "/registry/capabilities/server-status/",
+      "slug": "server-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/server.rs",
+      "tests": [],
+      "title": "The shared server, and every server of the repository",
+      "tool": "majordomus_server"
+    },
+    {
       "api_anchor": "/docs/api/#op-trace-commit",
       "claims": [],
       "cli": null,
@@ -1533,11 +1618,11 @@
     ]
   },
   "counts": {
-    "capabilities": 73,
+    "capabilities": 78,
     "claims": 35,
-    "modules": 24
+    "modules": 26
   },
-  "generator": "majordomus-cli 0.4.0",
+  "generator": "majordomus-cli 0.5.0",
   "modules": [
     {
       "capabilities": [
@@ -1648,6 +1733,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
       "title": "Deployment"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "design.contrast",
+          "route": "/registry/capabilities/design-contrast/",
+          "slug": "design-contrast"
+        },
+        {
+          "id": "design.explain",
+          "route": "/registry/capabilities/design-explain/",
+          "slug": "design-explain"
+        },
+        {
+          "id": "design.system",
+          "route": "/registry/capabilities/design-system/",
+          "slug": "design-system"
+        },
+        {
+          "id": "design.tokens",
+          "route": "/registry/capabilities/design-tokens/",
+          "slug": "design-tokens"
+        }
+      ],
+      "claims": [],
+      "id": "design",
+      "route": "/registry/modules/design/",
+      "slug": "design",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
+      "title": "Design system"
     },
     {
       "capabilities": [
@@ -2061,6 +2177,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "server.status",
+          "route": "/registry/capabilities/server-status/",
+          "slug": "server-status"
+        }
+      ],
+      "claims": [],
+      "id": "server",
+      "route": "/registry/modules/server/",
+      "slug": "server",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/server.rs",
+      "title": "Server"
     },
     {
       "capabilities": [

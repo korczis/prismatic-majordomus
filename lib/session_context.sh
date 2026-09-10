@@ -51,7 +51,7 @@ mj_session_context_dir() {
 mj_session_context_path() {
   local dir; dir="$(mj_session_context_dir)"
   [ -d "$dir" ] || return 0
-  find "$dir" -maxdepth 1 -name "*--$1.md" 2>/dev/null | sort | tail -n 1
+  find "$dir" -maxdepth 1 -name "*--$1.md" 2>/dev/null | LC_ALL=C sort | tail -n 1
 }
 
 # ---------------------------------------------------------------- open

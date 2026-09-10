@@ -35,8 +35,8 @@ awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -q 'workflow_run' \
 awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -A1 '^  push:' | grep -q "branches: \[$("$ROOT/bin/majordomus" --repo "$ROOT" version >/dev/null 2>&1; sed -n 's/^  branch: //p' "$MODEL")\]" \
   || { echo "    pages.yml does not push-trigger on the branch the model names"; exit 1; }
 # the paths block is exactly what the model derives from the gate model; neither is written twice
-awk '/^    paths:$/{f=1; next} /^  [a-z_]+:/{f=0} f && /^      - /' "$W" | sed 's/^      - //' | sort > declared.txt
-"$P" paths | sort > derived.txt
+awk '/^    paths:$/{f=1; next} /^  [a-z_]+:/{f=0} f && /^      - /' "$W" | sed 's/^      - //' | LC_ALL=C sort > declared.txt
+"$P" paths | LC_ALL=C sort > derived.txt
 diff -u derived.txt declared.txt > paths.diff 2>&1 || {
   echo "    pages.yml's paths: differ from 'scripts/pages paths'; regenerate the block"; cat paths.diff; exit 1; }
 grep -q 'workflow_dispatch' "$W" || { echo "    pages.yml cannot be dispatched by hand"; exit 1; }
@@ -47,7 +47,7 @@ grep -q 'cancel-in-progress: true' "$W" || { echo "    pages.yml does not cancel
 grep -qE '^  group: pages-' "$W" || { echo "    pages.yml has no pages concurrency group of its own"; exit 1; }
 
 # 4. minimal permissions, and only what the deploy needs
-awk '/^permissions:/{f=1; next} /^[a-z]/{f=0} f && /^  [a-z]/' "$W" | sed 's/^  //' | sort > perms.txt
+awk '/^permissions:/{f=1; next} /^[a-z]/{f=0} f && /^  [a-z]/' "$W" | sed 's/^  //' | LC_ALL=C sort > perms.txt
 [ "$(cat perms.txt)" = "contents: write" ] || { echo "    pages.yml asks for more than the gh-pages push needs:"; cat perms.txt; exit 1; }
 
 # 5. the heavy gates are not on the publication path, and are still somewhere. Only what the

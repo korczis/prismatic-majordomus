@@ -91,7 +91,7 @@ mj_handover_resolve() {
 mj_record_list() {
   local dir="$1" kind="$2" f fm flat n=0
   [ -d "$dir" ] || { printf 'no %s records\n' "$kind"; return 0; }
-  for f in $(ls -1 "$dir"/*.md 2>/dev/null | sort -r); do
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | LC_ALL=C sort -r); do
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.lf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.lg.XXXXXX")"
     if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       printf '%s  %-24s %-18s %s\n' "$(mj_yget "$flat" created_at)" "$(mj_yget "$flat" task_id)" \

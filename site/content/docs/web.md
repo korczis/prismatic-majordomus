@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 38
+weight = 40
 [extra]
 source = "docs/WEB.md"
 +++
@@ -101,6 +101,17 @@ meet — and the validator checks mount ownership per world for exactly that rea
 **`feature` describes the effective binary.** A process that answers no MCP has no MCP
 surface, so the home page cannot link to one and the startup log cannot name one. The
 narrowing is a filter over the resolved value, never a second discovery.
+
+## What every surface is rendered with
+
+Whatever a surface is — the published site, the Cockpit, a report the executable renders,
+the Swagger shell — it is rendered with one design: the roles, status vocabulary, type
+scale, theme contract and brand declared once in `share/design/tokens.yaml` and projected
+by `majordomus generate design` into the sheets each surface loads. A served page carries
+the declaration's fingerprint (`--mj-design` in its stylesheet, `data-design` on the page)
+and the executable answers the same fingerprint from `GET /api/v1/design`, so a stale bundle
+is visible on the page. The pipeline, the extension flow and the gates are
+[`DESIGN_SYSTEM.md`](@/docs/design-system.md).
 
 ## Adding a surface
 

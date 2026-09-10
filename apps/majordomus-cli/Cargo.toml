@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -46,6 +46,11 @@ libc = "0.2"
 # from one the crate exports; `span-locations` is what lets a finding name a line.
 syn = { version = "2", default-features = false, features = ["full", "parsing", "clone-impls", "printing", "proc-macro"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
+
+[build-dependencies]
+# sha2: build.rs takes the generation — the digest of the crate sources this build read —
+# with the same definition the crate uses at run time (src/generation.rs, included there).
+sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"

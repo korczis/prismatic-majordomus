@@ -70,7 +70,7 @@ mj_search_emit() { # kind path line text
 mj_search_records() {
   local kind="$1" dir="$2" term="$3" want="$4" limit="$5" f hit n=0
   [ -d "$dir" ] || return 0
-  for f in $(ls -1 "$dir"/*.md 2>/dev/null | sort -r); do
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | LC_ALL=C sort -r); do
     [ "$n" -ge "$limit" ] && break
     if [ -n "$want" ]; then grep -qx "task_id: $want" "$f" || continue; fi
     while IFS= read -r hit; do
@@ -98,7 +98,7 @@ mj_search_lines() {
 mj_search_dir() {
   local kind="$1" dir="$2" term="$3" limit="$4" f hit n=0
   [ -d "$dir" ] || return 0
-  for f in $(ls -1 "$dir"/*.md 2>/dev/null | sort); do
+  for f in $(ls -1 "$dir"/*.md 2>/dev/null | LC_ALL=C sort); do
     [ "$n" -ge "$limit" ] && break
     while IFS= read -r hit; do
       [ "$n" -ge "$limit" ] && break

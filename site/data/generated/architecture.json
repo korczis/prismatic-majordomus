@@ -120,6 +120,26 @@
       "external": false
     },
     {
+      "id": "lib/rust_bin.sh",
+      "kind": "module",
+      "label": "rust_bin",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/mcp/ensure.log",
+      "kind": "artifact",
+      "label": "local/state/mcp/ensure.log",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/checkpoint.sh",
       "kind": "module",
       "label": "checkpoint",
@@ -280,6 +300,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/sessions-open",
+      "kind": "artifact",
+      "label": "local/state/sessions-open",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -333,16 +363,6 @@
       "id": ".ai/local/state/handovers",
       "kind": "artifact",
       "label": "local/state/handovers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/mcp/server.json",
-      "kind": "artifact",
-      "label": "local/state/mcp/server.json",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -710,16 +730,6 @@
       "external": false
     },
     {
-      "id": "lib/rust_bin.sh",
-      "kind": "module",
-      "label": "rust_bin",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/search.sh",
       "kind": "module",
       "label": "search",
@@ -808,11 +818,6 @@
     },
     {
       "source": "lib/common.sh",
-      "target": ".ai/local/state/session-current.yaml",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/common.sh",
       "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
@@ -829,11 +834,6 @@
     {
       "source": "lib/context.sh",
       "target": ".ai/local/state/ledger.jsonl",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/context.sh",
-      "target": ".ai/local/state/mcp/server.json",
       "kind": "reads"
     },
     {
@@ -1123,6 +1123,11 @@
     },
     {
       "source": "lib/capture.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
       "target": "lib/session.sh",
       "kind": "sources"
     },
@@ -1172,6 +1177,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/common.sh",
+      "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/context.sh",
       "target": "lib/context_docs.sh",
       "kind": "sources"
@@ -1194,6 +1204,11 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1439,6 +1454,16 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {
@@ -1758,7 +1783,17 @@
     },
     {
       "source": "lib/session.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
       "target": ".ai/local/state/sessions",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {
@@ -1795,6 +1830,11 @@
       "source": "lib/watch.sh",
       "target": ".ai/local/state/ledger.jsonl",
       "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/mcp/ensure.log",
+      "kind": "writes"
     },
     {
       "source": "lib/check.sh",
@@ -1849,11 +1889,6 @@
     {
       "source": "lib/project.sh",
       "target": ".ai/repo/project/milestones",
-      "kind": "writes"
-    },
-    {
-      "source": "lib/session.sh",
-      "target": ".ai/local/state/session-current.yaml",
       "kind": "writes"
     },
     {

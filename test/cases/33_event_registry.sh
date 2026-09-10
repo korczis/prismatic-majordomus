@@ -23,7 +23,7 @@ grep -qx 'version=1' "$FLAT" || { echo "    event registry version must be 1"; e
 unk="$(mj_yaml_unknown_keys "$FLAT" "$ROOT/share/allow/events.txt" || true)"
 [ -z "$unk" ] || { echo "    unknown key(s) in share/events.yaml: $(printf '%s' "$unk" | tr '\n' ' ')"; exit 1; }
 
-registered="$(sed -n 's/^events\.[0-9]*\.id=//p' "$FLAT" | sort)"
+registered="$(sed -n 's/^events\.[0-9]*\.id=//p' "$FLAT" | LC_ALL=C sort)"
 [ -n "$registered" ] || { echo "    the registry declares no events"; exit 1; }
 dupes="$(printf '%s\n' "$registered" | uniq -d)"
 [ -z "$dupes" ] || { echo "    duplicate event id(s): $dupes"; exit 1; }
@@ -31,7 +31,7 @@ dupes="$(printf '%s\n' "$registered" | uniq -d)"
 # 1. every name the source writes is registered, and every registered name is written by
 #    something. An event nothing writes is a phantom — docs/SCHEMAS.md documented a
 #    `bootstrap` event for months that no code has ever emitted.
-written="$(grep -rhoE 'mj_ledger_append [a-z][a-z._]*' "$ROOT/lib" | awk '{print $2}' | grep -v '^event$' | sort -u)"
+written="$(grep -rhoE 'mj_ledger_append [a-z][a-z._]*' "$ROOT/lib" | awk '{print $2}' | grep -v '^event$' | LC_ALL=C sort -u)"
 [ -n "$written" ] || { echo "    could not find any mj_ledger_append call site"; exit 1; }
 for e in $written; do
   printf '%s\n' "$registered" | grep -Fxq "$e" || {
@@ -62,7 +62,7 @@ done
 # 3. every registered event has a human rendering, and the renderer names no event the
 #    registry does not. This is the one place a per-event branch is allowed to exist —
 #    rendering is presentation — so it is reconciled rather than removed.
-rendered="$(grep -oE 'e == "[a-z][a-z._]*"' "$ROOT/lib/history.sh" | sed 's/.*"\(.*\)"/\1/' | sort -u)"
+rendered="$(grep -oE 'e == "[a-z][a-z._]*"' "$ROOT/lib/history.sh" | sed 's/.*"\(.*\)"/\1/' | LC_ALL=C sort -u)"
 for e in $rendered; do
   printf '%s\n' "$registered" | grep -Fxq "$e" || {
     echo "    lib/history.sh renders '$e', which is not a registered event"; exit 1; }
@@ -77,7 +77,7 @@ done
 # a dot too (children.require_contract), so the rows are read from that section alone rather
 # than from every row in the file that happens to look like one.
 events_table() { awk '/^\| event \| extra fields \|$/ { t = 1; next } t && !/^\|/ { exit } t' "$ROOT/docs/SCHEMAS.md"; }
-for e in $(events_table | grep -oE '^\| `[a-z][a-z._]*` \|' | sed 's/^| `//; s/` |$//' | sort -u); do
+for e in $(events_table | grep -oE '^\| `[a-z][a-z._]*` \|' | sed 's/^| `//; s/` |$//' | LC_ALL=C sort -u); do
   printf '%s\n' "$registered" | grep -Fxq "$e" || {
     echo "    docs/SCHEMAS.md documents the event '$e', which is not registered"; exit 1; }
 done

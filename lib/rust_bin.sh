@@ -73,9 +73,19 @@ mj_rust_bin() {
 # because a checkout where the two disagree is a checkout where entering the repository
 # reports one thing and running a command does another.
 #
-# An explicit MAJORDOMUS_BIN is never judged stale: whoever named a particular executable
-# owns whether it is current, and it need not sit beside sources at all. Neither is a tree
-# without the crate — an installed release has no sources to be older than.
+# An explicit MAJORDOMUS_BIN is never judged stale *here*: whoever named a particular
+# executable owns whether it is current, and it need not sit beside sources at all. Neither
+# is a tree without the crate — an installed release has no sources to be older than.
+#
+# That trust is about mtime, and it stops there. It does not extend to whether the named
+# executable is of this tree's *generation*, because it cannot: a binary built minutes ago
+# from an older revision of the crate is newer than every source and still carries another
+# model. On 2026-09-10 exactly that binary, handed over through MAJORDOMUS_BIN, rewrote a
+# pristine origin/master and removed 16,625 lines without a diagnostic. The executable
+# decides that question itself — `majordomus generate` compares the generation compiled
+# into it against the crate of the repository it is asked to derive and refuses with exit
+# 15 — so every caller of this file inherits the guard and no shell script has to carry a
+# second, drifting copy of it.
 #
 # Why this matters beyond a rebuild: every surface of this repository — the banner, the
 # workflow bridge, the completion, the shared MCP server — is a projection of this one
