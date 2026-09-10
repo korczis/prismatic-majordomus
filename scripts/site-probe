@@ -274,10 +274,23 @@ BASE="http://127.0.0.1:$PORT$PREFIX"
 ( cd "$SITE" && zola build --force --base-url "$BASE" --output-dir "$WORK/out" >/dev/null 2>&1 ) || { echo "site-probe: zola build for the probe origin failed" >&2; exit 12; }
 [ -f "$WORK/out/index.html" ] || { echo "site-probe: probe build produced no index.html in $WORK/out" >&2; exit 12; }
 for a in app.css giallo-light.css giallo-dark.css js images; do [ -e "$PUB/$a" ] && cp -R "$PUB/$a" "$WORK/out/" 2>/dev/null || true; done
-mkdir -p "$WORK/srv" "$WORK/res"; ln -s "$WORK/out" "$WORK/srv$PREFIX"
+# Mount the build where the production prefix puts it. `ln -s A B` writes *into* B when B
+# already exists as a directory, so with an empty prefix — which is what a base_url with no
+# path gives, and majordomus.dev has none — `ln -s "$WORK/out" "$WORK/srv"` created
+# $WORK/srv/out and served an empty root. So $WORK/srv is created only when there is a
+# prefix to create it for; without one the symlink *is* the server root.
+mkdir -p "$WORK/res"
+if [ -n "$PREFIX" ]; then mkdir -p "$WORK/srv"; ln -s "$WORK/out" "$WORK/srv$PREFIX"
+else ln -s "$WORK/out" "$WORK/srv"; fi
 ( cd "$WORK/srv" && exec python3 -m http.server "$PORT" >/dev/null 2>&1 ) & SRV=$!
 for _ in 1 2 3 4 5 6 7 8 9 10; do curl -s -o /dev/null "http://127.0.0.1:$PORT$PREFIX/" && break; sleep 0.5; done
-curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/" | grep -q 200 || { echo "site-probe: local server did not serve $PREFIX/" >&2; exit 12; }
+# The guard asks for the *file*, never the directory. `python3 -m http.server` renders a
+# directory listing for a directory with no index.html and answers it 200, so a root that
+# holds no site at all satisfied a request for "/" — while the mount above was wrong every
+# route 404'd and the overflow line still reported OK. A check that passes on a directory
+# listing is a check measuring nothing.
+code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/index.html")"
+[ "$code" = 200 ] || { echo "site-probe: local server did not serve $PREFIX/index.html (answered $code); the build is not mounted where the base_url prefix puts it" >&2; exit 12; }
 
 fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
 title_of() { dump_title "$1" 1400; }
