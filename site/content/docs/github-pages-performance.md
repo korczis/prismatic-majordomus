@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance"
 description = "how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain"
-weight = 46
+weight = 47
 [extra]
 source = "docs/GITHUB_PAGES_PERFORMANCE.md"
 +++

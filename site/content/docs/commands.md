@@ -1,7 +1,7 @@
 +++
 title = "The command graph"
 description = "the command graph: the three declarations it composes, stable identities, the effect model and the exposure policy derived from it, the generated workflow bridge and its compatibility aliases, the one completion engine every surface asks, repository entry, and what adding a command costs (nothing)"
-weight = 29
+weight = 30
 [extra]
 source = "docs/COMMANDS.md"
 +++

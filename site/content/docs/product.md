@@ -1,7 +1,7 @@
 +++
 title = "Product"
 description = "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused"
-weight = 33
+weight = 34
 [extra]
 source = "docs/PRODUCT.md"
 +++
