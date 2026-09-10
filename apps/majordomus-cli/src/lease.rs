@@ -45,6 +45,11 @@ pub struct Lease {
     token: String,
     root: PathBuf,
     released: bool,
+    /// When this process took the lease, RFC 3339. Fixed here rather than at publish
+    /// time because it is the identity of this server's generation: the peer board's
+    /// journal stamps every announcement with it, and the next server tells the previous
+    /// generation's announcements apart from its own by this value.
+    started_at: String,
 }
 
 /// What the election decided for this process.
@@ -113,6 +118,7 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                     token,
                     root,
                     released: false,
+                    started_at: crate::peers::rfc3339(SystemTime::now()),
                 };
                 let text = lease.document(None).to_string();
                 file.write_all(text.as_bytes())
@@ -278,6 +284,12 @@ impl Lease {
         &self.root
     }
 
+    /// When this process took the lease, RFC 3339: the identity of this server's
+    /// generation, the same value the lease file carries as `started_at`.
+    pub fn started_at(&self) -> &str {
+        &self.started_at
+    }
+
     fn document(&self, url: Option<&str>) -> Value {
         json!({
             "schema": SCHEMA,
@@ -285,7 +297,7 @@ impl Lease {
             "token": self.token,
             "root": self.root,
             "url": url,
-            "started_at": crate::peers::rfc3339(SystemTime::now()),
+            "started_at": self.started_at,
             "executable": executable_identity(),
         })
     }
