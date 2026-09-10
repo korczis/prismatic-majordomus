@@ -229,6 +229,88 @@ a scarce runner does not hold up the next commit's evidence. Deployments are the
 `pages.yml` cancels a superseded deployment, because the site is a projection of the newest
 commit and finishing an older one would publish an older tree.
 
+## Where a gate cannot reach
+
+A gate that never fires is worse than one that fails, because the verdict still reads
+complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
+about, and each of them cost a real outage or a real afternoon.
+
+**The staleness catch cannot run on the path most merges take** — the driver resolving to
+ours is a design decision working correctly, and the defect is that the only thing checking
+its result runs in a `pre-commit` hook, while no hook of any kind runs for a merge the server
+creates. `.gitattributes` sends
+derived artifacts to `scripts/merge-derived`, which resolves them to *ours* and exits clean.
+That is deliberate: a derived file carries a fingerprint of the tree it was generated from,
+so after a merge neither side's value is right and the answer comes from running the
+generator, not from a conflict marker. The design leans on `scripts/pages current` in
+`.githooks/pre-commit` to refuse the stale result one command later — and **a `pre-commit`
+hook cannot run for a merge the server creates.** Merging a pull request on GitHub produces a
+commit with `committer=GitHub`, and no client-side hook exists on that path. It is not a
+bypass; it is the action this repository tells people to take. With no branch protection
+(`gh api repos/<owner>/<repo>/branches/master/protection` answers *404 Branch not protected*)
+nothing server-side compensates, and the `site` gate that does check currency is advisory and
+reports after the merge. So the first thing in the pipeline that can actually refuse is the
+Pages build, and it refuses by failing publication rather than by failing a pull request. The
+symptom is always "the site is stale" and never "the branch is red".
+
+The vivid form: a stale recording rides through a merge untouched, so two consecutive master
+merges can carry the *same* `source_hash` — nothing regenerated between them. A guard whose
+coverage is inverse to its usage is worse than a missing one, because nobody notices it is
+absent.
+
+The condition above was observed on 2026-09-10 and then repaired, and the gap it illustrates
+is structural rather than a description of how the trunk stands today — so do not test this
+by looking at the trunk and concluding the finding expired. The commits carry their own
+evidence permanently: `git show <commit>:site/data/generated/source.json` beside
+`scripts/pages fingerprint` on that tree, and `git log -1 --format=%cn` for who committed the
+merge.
+
+**A check whose input goes empty can vanish instead of failing.** `scripts/site-check`
+derives `PREFIX` by stripping scheme and host from `base_url`. At an apex domain the path
+component is empty, and the block that uses it is guarded by `if [ -n "$PREFIX" ]` with no
+`else` — so it emits neither `ok` nor `bad`. The verdict still reads complete. Note that
+simply removing the guard is wrong: the filter it protects would then match everything its
+own first stage can emit and print a green `ok` over an empty set. What an empty prefix needs
+is a *different* predicate, not the same one ungated.
+
+The tool has vocabulary for this and the doctrine gates use it: `mj_doctrine_skip` prints the
+check, says it did not run, and gives the reason — see the blocker and scope gates in
+`lib/check.sh`. A gate with only `ok` and `bad` makes silence the path of least resistance
+every time an author meets a case they cannot decide.
+
+**Two queries worth running against any new gate.** The first is this document's; the second
+came out of the apex case above:
+
+- for every field a validator reads out of a state record, can something write it?
+- for every value a check derives, is empty distinguishable from absent?
+
+The first has a mechanical form — `grep` the readers and the writers — and it found that a
+task's `requires` had five readers and no writer at all, so `check` reported "the task
+declares no obligations" truthfully and forever. In each case the rule existed, the validator
+ran, and its answer was *true about the half it could see*.
+
+**One correction for whoever proposes the obvious repair.** The natural fix for stale derived
+data is to let the Pages build re-derive rather than refuse. It does not work, and the reason
+must be stated precisely or it is refutable in one command. The **input fingerprint is
+deterministic** — `scripts/pages fingerprint` three times on one tree gives one value. What is
+machine-dependent is the **generated content**: `%h` abbreviates against the local object
+store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling
+worktree root. A build that re-derived could therefore publish a third answer matching neither
+side. State it as content-dependence, never as fingerprint non-determinism.
+
+One thing the generation guard is not: the digest it compares is taken over `Cargo.toml`,
+`Cargo.lock`, `build.rs` and `src` only, with `benches/` and `tests/` deliberately outside
+it — which is why a branch that changes no Rust may legitimately use a binary built in
+another worktree.
+
+**A note about the plan.** `majordomus plan validate` refuses an issue that names no
+milestone. So an area of standing work with no milestone is not merely unfiled — the work in
+it cannot be recorded in the plan at all, which is how a repository can land a great deal of
+change against a plan that never moves. If a gate finds something worth an issue and no
+milestone fits, the milestone is the missing part; do not park the issue under the
+least-wrong parent, because status here is derived from the graph and a false parent
+propagates into the roadmap and the waves.
+
 ## Platforms
 
 Linux is the blocking path for everything that does not depend on the platform: lints,
