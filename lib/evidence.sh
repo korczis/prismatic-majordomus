@@ -122,6 +122,7 @@ mj_obligation_evidence() {
 # state of one checkout and the ledger is what already survives it.
 mj_evidence() {
   local covers="" etype="manual" ecmd="" eart="" eres="" json=0 task ih
+  local gate="" gexit=""
   # a bare `evidence` is a question, not a mistake: it prints what it needs, as every
   # other command here does, and exits 2
   [ $# -gt 0 ] || { mj_evidence_usage >&2; return "$MJ_EX_USAGE"; }
@@ -129,6 +130,10 @@ mj_evidence() {
     case "$1" in
       --covers) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--covers needs a token"; covers="$2"; shift 2 ;;
       --covers=*) covers="${1#--covers=}"; shift ;;
+      --gate) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--gate needs a gate id"; gate="$2"; shift 2 ;;
+      --gate=*) gate="${1#--gate=}"; shift ;;
+      --exit) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--exit needs the exit status the gate reported"; gexit="$2"; shift 2 ;;
+      --exit=*) gexit="${1#--exit=}"; shift ;;
       --type) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--type needs a value"; etype="$2"; shift 2 ;;
       --type=*) etype="${1#--type=}"; shift ;;
       --command) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--command needs a command"; ecmd="$2"; shift 2 ;;
@@ -143,6 +148,19 @@ mj_evidence() {
     esac
   done
   mj_require_installed
+  # A gate run and an obligation are both evidence, and both are recorded by this verb; what
+  # differs is what the record is about. The two are never one invocation: a gate is a fact
+  # about the validation pipeline and an obligation is a promise a task made, and a line
+  # claiming to be both would be readable as neither.
+  if [ -n "$gate" ]; then
+    [ -z "$covers" ] || mj_die "$MJ_EX_USAGE" "evidence records a gate or an obligation, not both; drop --covers or --gate"
+    [ -n "$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --gate needs --exit <status>; a gate that reported nothing is not evidence"
+    # shellcheck source=gates.sh
+    . "$MJ_LIB_DIR/gates.sh"
+    mj_gate_record "$gate" "$gexit" "$ecmd" "$eres" "$json"
+    return 0
+  fi
+  [ -z "$gexit" ] || mj_die "$MJ_EX_USAGE" "--exit is the exit status of a gate; it needs --gate <id>"
   mj_obligations_load
   [ -n "$covers" ] || mj_die "$MJ_EX_USAGE" "evidence needs --covers <token>; one of: $(mj_obligation_ids | tr '\n' ' ')"
   mj_obligation_known "$covers" || mj_die "$MJ_EX_USAGE" \
@@ -179,6 +197,7 @@ mj_evidence() {
 mj_evidence_usage() {
   cat <<USAGE
 usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
+       majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
 
   Record that one obligation the active task declared has been discharged. The evidence is
   a ledger line carrying the hash of the files the obligation names, so that changing any
@@ -189,6 +208,12 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   --command   the command that produced it — narrative is not evidence
   --artifact  a reference the evidence points at, such as a published URL
   --result    what it said, when a command's output is the point
+  --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported, instead of
+              an obligation. The line carries the hash of the files that select that gate, so
+              a run stops discharging it the moment one of them changes. `majordomus check`
+              reports every gate the task's change set selects; a gate that has never
+              reported is `queued` and never `pass`.
+  --exit      the gate's exit status; 0 is a pass and anything else refuses `completed`
 
   Some obligations are not recorded at all. A token whose established_by in
   share/obligations.yaml is not \`none\` — commit, push, target, pages — is settled live at
