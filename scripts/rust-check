@@ -23,6 +23,9 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 MODE=all; ARTIFACT=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -85,7 +88,10 @@ if [ -n "$ARTIFACT" ]; then
   # to know it is the one it expects: the commit, the target, the toolchain, the lock file.
   step "artifact $ARTIFACT"
   mkdir -p "$ARTIFACT"
-  cp "$CRATE/target/debug/majordomus" "$ARTIFACT/majordomus"
+  # every gate above ran through `cargo run`, which needed no path; this one copies the
+  # file, so it must ask cargo where the file is — a script that has already spent minutes
+  # building can afford the process, and a shared CARGO_TARGET_DIR is not under the crate
+  cp "$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus" "$ARTIFACT/majordomus"
   host="$(rustc -vV | sed -n 's/^host: //p')"
   if command -v shasum >/dev/null 2>&1; then lock="$(shasum -a 256 "$CRATE/Cargo.lock" | cut -d' ' -f1)"
   else lock="$(sha256sum "$CRATE/Cargo.lock" | cut -d' ' -f1)"; fi
