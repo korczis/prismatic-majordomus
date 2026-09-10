@@ -534,7 +534,10 @@ true
             &rule("project.alpha", 1, "Alpha"),
         );
         f.write(".ai/repo/project/project.yaml", PROJECT);
-        f.write(".ai/repo/project/milestones/fixture-milestone.yaml", MILESTONE);
+        f.write(
+            ".ai/repo/project/milestones/fixture-milestone.yaml",
+            MILESTONE,
+        );
         f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
         f.write(
