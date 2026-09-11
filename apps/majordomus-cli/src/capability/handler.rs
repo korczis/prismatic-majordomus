@@ -359,6 +359,42 @@ impl Executable {
         self.capability.execution = self.capability.execution.stoppable();
         self
     }
+
+    /// Declare that this handler writes the repository's own tracked files.
+    ///
+    /// The second thing a kind cannot decide, and for the same reason: two commands are the
+    /// same kind whether one announces a peer into this process's memory and the other
+    /// stamps a field into a record a commit will carry. The difference is the whole of what
+    /// a caller needs before saying yes, and every projection reads it from here — the
+    /// Cockpit's confirmation, and the exposure ceiling that decides which surfaces may
+    /// reach it at all.
+    ///
+    /// Declaring it is the handler author's obligation, not an optimisation. A handler that
+    /// writes a tracked file without saying so is projected as though it did not, onto
+    /// surfaces whose ceiling exists to exclude exactly that.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Effect, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In {}
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", In {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn write(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+    /// let e = capability! {
+    ///     id: "demo.write", kind: CapabilityKind::Command, title: "Write", description: "Writes.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: write,
+    /// }.writes_repository();
+    /// assert_eq!(e.capability.execution.effect, Effect::RepositoryMutation);
+    /// ```
+    pub fn writes_repository(mut self) -> Self {
+        self.capability.execution = self.capability.execution.writes_repository();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is
