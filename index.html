@@ -211,7 +211,7 @@
     <div class="flex min-w-0 flex-col">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">Intent-driven development</p>
       <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">Stop telling AI what files to edit.<span class="mt-2 block text-fg-brand"> Tell it what must become true.</span></h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">Majordomus is a control plane for intent-driven development: describe the desired state of the system, the constraints that must stay true and the evidence completion requires, and let the repository — not the prompt — carry them. It is the doctrine the tool is built around, and the page below keeps the two halves apart: what it enforces today, and what the model still asks for.</p>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">Majordomus is a control plane built on a doctrine: the desired state of the system, the constraints that must stay true and the evidence completion requires belong to the repository, not to a prompt. What follows keeps the two halves apart and marks each one — the part that is enforced here today, and the part that is still only the argument.</p>
       <p class="mt-7 flex flex-col gap-1 font-mono text-sm uppercase tracking-widest text-body-subtle"><span>Not merely implemented.</span><span>Not merely tested.</span><span>Not merely merged.</span><span class="mt-2 text-2xl font-bold normal-case tracking-tight text-fg-brand-strong sm:text-3xl">Satisfied.</span>
       </p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -929,7 +929,7 @@
   claim                  automatic peer cooperation
   observed               manual registration required
   confidence             high</code></pre></div>
-        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding, and the only invented console output on this page. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
+        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
       </div>
     </div>
   </div>
@@ -957,7 +957,7 @@
   <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">10 / done</p>
   <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Completion means intent satisfaction</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Code written, tests green, PR merged: all useful, none of them proof of the outcome. A merged pull request whose intent remains false is unfinished work, and the git server is not an oracle.</p></div>
 
-    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">Real output from the repository&#39;s own README, not a mockup. One line per check, each naming what it proved; a failing line carries the command that reproduces it, and nothing is written until every line passes.</p>
+    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">The contract as the repository&#39;s own README works it through — an illustration, not a capture. One line per check, each naming what it proved; a failing line carries the command that reproduces it, and nothing is written until every line passes.</p>
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start">
       <div class="min-w-0">
         <ol class="divide-y divide-default rounded-base border border-default bg-neutral-primary">
@@ -985,8 +985,8 @@ finish: refused, 1 unmet</code></pre></div>
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     
 <div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">11 / a control loop</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">An agent does not get to declare success because its patch applied</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">The same stages, closed: context observes, the plan computes the difference, execution acts, verification measures, and the result is compared against the intent rather than against the diff — replanning until it is satisfied. That is a control system rather than an assistant. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, which is the comparator in that loop.</p></div>
+  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">11 / a control loop — mostly not built</p>
+  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">An agent does not get to declare success because its patch applied</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists.</p></div>
 
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
       <div class="min-w-0 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0">
@@ -2016,7 +2016,7 @@ PROOF            ▼
       </div>
       <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5 sm:p-6">
         <h3 class="text-lg font-semibold tracking-tight text-heading">Not built: everything the word intent names</h3>
-        <p class="mt-3 text-base leading-relaxed text-heading">There is no intent object, no intent registry and no intent id. Nothing captures a desired outcome or an acceptance criterion, derives a plan from one, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink.</p>
+        <p class="mt-3 text-base leading-relaxed text-heading">There is no intent object, no intent registry and no intent id. An issue here already records its objective, its desired state, its acceptance criteria and the evidence it requires — what is missing is anything above the issue that those roll up to, and any evaluation of those criteria when work is declared done. Nothing derives a plan from a desired outcome, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink.</p>
         <p class="mt-4 text-sm text-heading">No wave of the roadmap is this work yet. <a href="https://majordomus.dev/roadmap/" class="font-medium text-fg-brand underline">What is scheduled, wave by wave &rarr;</a></p>
       </div>
     </div>
@@ -2027,15 +2027,15 @@ PROOF            ▼
     <h2 class="mt-2 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-fg-brand-strong sm:text-4xl lg:text-5xl">Implementation is subordinate to intent</h2>
     <p class="mt-5 max-w-3xl text-base leading-relaxed text-heading sm:text-lg">A change is not complete because code was written, tests passed, a pull request merged or a deployment succeeded. It is complete when all of this holds.</p>
     <ul class="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">the originating intent is known</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">relevant context has been considered</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">applicable governance holds</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">the required implementation exists</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">affected surfaces are synchronized</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">acceptance criteria pass</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">claims match implementation</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">runtime behaviour is verified where it applies</span></li>
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">evidence enough to demonstrate the outcome exists</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">1</span><span class="min-w-0">the originating intent is known</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">2</span><span class="min-w-0">relevant context has been considered</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">3</span><span class="min-w-0">applicable governance holds</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">4</span><span class="min-w-0">the required implementation exists</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">5</span><span class="min-w-0">affected surfaces are synchronized</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">6</span><span class="min-w-0">acceptance criteria pass</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">7</span><span class="min-w-0">claims match implementation</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">8</span><span class="min-w-0">runtime behaviour is verified where it applies</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">9</span><span class="min-w-0">evidence enough to demonstrate the outcome exists</span></li>
     </ul>
   </div>
 </section><section class="bg-neutral-primary">
@@ -2072,7 +2072,7 @@ PROOF            ▼
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/46fd96bd2d88da1e11592f0269471b7bed5630f8" class="font-mono underline">46fd96b</a> · inputs <span class="font-mono">2a3431e8bfa8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/87b9ac659de2b141ed9a0a99ddf1167faf3b1e81" class="font-mono underline">87b9ac6</a> · inputs <span class="font-mono">2a3431e8bfa8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
