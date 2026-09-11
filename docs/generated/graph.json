@@ -1692,6 +1692,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/rust-coverage",
+        "kind": "file",
+        "label": "rust-coverage",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/rust-coverage",
+        "external": true
+      },
+      {
         "id": "file:scripts/site-deploy",
         "kind": "file",
         "label": "site-deploy",
@@ -5367,12 +5375,12 @@
         "id": "majordomus://claim/rust-coverage-floor",
         "kind": "claim",
         "label": "rust-coverage-floor",
-        "summary": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "summary": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Frust-coverage-floor",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "implementation": ".github/workflows/validate.yml",
+          "implementation": "scripts/rust-coverage",
           "responsibility": "none",
           "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
           "test": "test/cases/77_rust_evidence.sh"
@@ -9095,7 +9103,7 @@
         "id": "majordomus://document/docs/claims/rust-coverage-floor.md",
         "kind": "document",
         "label": "docs/claims/rust-coverage-floor.md",
-        "summary": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "summary": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Frust-coverage-floor.md",
         "source": "docs/claims/rust-coverage-floor.md"
       },
@@ -28221,6 +28229,41 @@
         "source": "test/cases/21_decision_question.sh"
       },
       {
+        "id": "majordomus://test/test/cases/220_exactly_once_close.sh",
+        "kind": "test",
+        "label": "test/cases/220_exactly_once_close.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F220_exactly_once_close.sh",
+        "source": "test/cases/220_exactly_once_close.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/221_the_lifecycle_under_concurrency.sh",
+        "kind": "test",
+        "label": "test/cases/221_the_lifecycle_under_concurrency.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F221_the_lifecycle_under_concurrency.sh",
+        "source": "test/cases/221_the_lifecycle_under_concurrency.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/222_an_episode_nobody_ended.sh",
+        "kind": "test",
+        "label": "test/cases/222_an_episode_nobody_ended.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F222_an_episode_nobody_ended.sh",
+        "source": "test/cases/222_an_episode_nobody_ended.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "kind": "test",
+        "label": "test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F223_an_unsupported_schema_is_a_finding.sh",
+        "source": "test/cases/223_an_unsupported_schema_is_a_finding.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/224_continuity_crosses_machines.sh",
+        "kind": "test",
+        "label": "test/cases/224_continuity_crosses_machines.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F224_continuity_crosses_machines.sh",
+        "source": "test/cases/224_continuity_crosses_machines.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/22_history.sh",
         "kind": "test",
         "label": "test/cases/22_history.sh",
@@ -35758,7 +35801,7 @@
       },
       {
         "source": "majordomus://claim/rust-coverage-floor",
-        "target": "file:.github/workflows/validate.yml",
+        "target": "file:scripts/rust-coverage",
         "kind": "implemented_by"
       },
       {
@@ -43822,6 +43865,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/220_exactly_once_close.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/221_the_lifecycle_under_concurrency.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/222_an_episode_nobody_ended.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/224_continuity_crosses_machines.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/22_history.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47328,8 +47396,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1457,
+      "edges": 3281,
       "acyclic": true,
       "truncated": false
     }

@@ -82,12 +82,39 @@ EOF
 # still resolves; a symlink and not a copy, because two accounts of one open episode is the
 # drift the session record exists to avoid. A filesystem that cannot make one gets a copy
 # and a warning, because losing the episode would be the worse failure.
+#
+# Every write goes to a private name and is moved onto the pointer, and the reason is a
+# measured corruption rather than tidiness. This used to `rm -f` the pointer and then create
+# it, which is two operations with a window between them:
+#
+#   worker A   rm -f pointer                                 ln -s -> sessions-open/a.yaml
+#   worker B                rm -f pointer   ln -s ... FAILS (A got there first)
+#   worker B                                                 cp b.yaml pointer
+#
+# and that last `cp` follows the symlink A has just created, so B's episode record is
+# written *over A's episode file*. Measured on 2026-09-11 against master: ten concurrent
+# `session start`s in one checkout left ten open episodes carrying seven to nine distinct
+# session ids, reproducibly, every round. The episodes that lost their identity went on
+# stamping ledger lines with the winner's id, and a close of either key would publish one
+# record claiming to be both — which is the exact fault `111_session_per_provider` was
+# written to end, arriving through the pointer instead of through the store.
+#
+# `mv` is rename(2): it replaces the pointer atomically, it never follows the destination,
+# and there is no moment in which the pointer does not exist. The temp name carries the pid
+# so two workers never contend for it.
 mj_session_point_at() {
-  local target="$1" p
+  local target="$1" p tmp
   p="$(mj_session_pointer)"
-  rm -f "$p"
-  ln -s "sessions-open/$(basename "$target")" "$p" 2>/dev/null && return 0
-  cp "$target" "$p" 2>/dev/null || return 0
+  tmp="$p.mj-aim.$$"
+  rm -f "$tmp"
+  if ln -s "sessions-open/$(basename "$target")" "$tmp" 2>/dev/null && mv -f "$tmp" "$p" 2>/dev/null; then
+    return 0
+  fi
+  rm -f "$tmp"
+  # No symlinks on this filesystem. The copy goes to the private name too and is moved into
+  # place for the same reason: a copy written straight onto the pointer is the write that
+  # followed somebody else's link.
+  cp "$target" "$tmp" 2>/dev/null && mv -f "$tmp" "$p" 2>/dev/null || { rm -f "$tmp"; return 0; }
   mj_err "warning: $(mj_rel "$p") is a copy, not a link; this filesystem has no symlinks"
   return 0
 }
@@ -443,8 +470,23 @@ mj_session_close() {
   # close of the same episode adds nothing a reader could use. It is not an error either —
   # the second end event is the provider's normal behaviour, not a worker's mistake — so
   # this keeps what exists, says so, and still tears down the open record below.
+  #
+  # Under a lock, because the guard is a check followed by a write and those are not one
+  # operation. Two end events arriving together both grepped an empty store, both published,
+  # and one episode had two canonical records: measured on 2026-09-11 against master, two
+  # concurrent closes of one episode produced two records in two of three trials. The lock
+  # is per episode and lives in the local half, which is the scope of the thing it protects:
+  # an episode belongs to one checkout, and two checkouts closing must never wait on each
+  # other. `mj_lock_take` never refuses — a bounded wait that expires proceeds with the
+  # grep alone, which is where this was before, so the worst case is what master already had.
   local existing
-  existing="$(grep -rl "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  mj_lock_take "$MJ_STATE_DIR/locks/session-close.$sid" || true
+  # --exclude: mj_publish_record stages into `.tmp.XXXXXX` inside the store before it hard-
+  # links the final name, and a process that dies between the two leaves that file behind
+  # (which is what `majordomus recover orphans` is for). Without this, a close would name a
+  # temp file as the episode's record — the ledger event, the context close and this
+  # command's own output would all point at a path that is about to be removed.
+  existing="$(grep -rl --exclude='.tmp.*' "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
   if [ -n "$existing" ]; then
     # The episode's record is the one that already exists, and every reader downstream —
     # the ledger event, the context close, this command's own output — must name it, not
@@ -455,9 +497,12 @@ mj_session_close() {
       "$sid" "$(mj_rel "$existing")" >&2
   else
     final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
-      || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
+      || { rm -f "$rec" "$win"; mj_lock_release; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
     rm -f "$rec" "$win"
   fi
+  # The record exists; everything after this is teardown, and holding the lock across it
+  # would serialise two closes that are no longer racing for the same thing.
+  mj_lock_release
 
   # Appended before the open record is removed, so the closing event carries this
   # session's stamp like every other event of the episode.
@@ -658,18 +703,43 @@ mj_session_keys() {
   done | LC_ALL=C sort -r
 }
 
-# Read one record's front matter into MJ_SREC_* . Returns 1 when it does not parse.
+# Read one record's front matter into MJ_SREC_* .
+# 0 read · 1 does not parse · 2 parsed, but carries a schema version this executable does not read.
 MJ_SREC_ID=""; MJ_SREC_CREATED=""; MJ_SREC_STARTED=""; MJ_SREC_OUTCOME=""
-MJ_SREC_HEAD=""; MJ_SREC_BRANCH=""; MJ_SREC_WORKER=""; MJ_SREC_REPO=""
+MJ_SREC_HEAD=""; MJ_SREC_BRANCH=""; MJ_SREC_WORKER=""; MJ_SREC_REPO=""; MJ_SREC_SCHEMA=""
+# The one version of the shared session record this executable reads. Declared once, here,
+# because `doctor` and this reader disagreeing about it is how a store comes to be reported
+# healthy by one surface and refused by the other.
+MJ_SESSION_SCHEMA="session/v1"
+# What a record said about its version, for a message: the value, or the fact that there was
+# none. `${x:+a}${x:-b}` does not express this — when x is set the second expansion is x, not
+# b — and the first draft of these messages read "schema 'session/v2'session/v2".
+mj_session_schema_said() {
+  if [ -n "${1:-}" ]; then printf "schema '%s'" "$1"; else printf 'no schema'; fi
+}
 mj_session_read() {
   local f="$1" fm flat rc=0
   fm="$(mktemp "${TMPDIR:-/tmp}/mj.srf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.srg.XXXXXX")"
+  MJ_SREC_SCHEMA=""
   if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
+    MJ_SREC_SCHEMA="$(mj_yget "$flat" schema)"
     MJ_SREC_ID="$(mj_yget "$flat" session_id)"; MJ_SREC_CREATED="$(mj_yget "$flat" created_at)"
     MJ_SREC_STARTED="$(mj_yget "$flat" started_at)"; MJ_SREC_OUTCOME="$(mj_yget "$flat" outcome)"
     MJ_SREC_HEAD="$(mj_yget "$flat" head)"; MJ_SREC_BRANCH="$(mj_yget "$flat" branch)"
     MJ_SREC_WORKER="$(mj_yget "$flat" worker)"
     MJ_SREC_REPO="$(mj_yget "$flat" repository_id)"
+    # A version this executable does not read is not a record it may report. It parsed, so
+    # `rc=1` would be a lie and a silent `continue` in the caller would be worse than either:
+    # a record written by a newer Majordomus was listed here as an ordinary closed episode,
+    # with its outcome and its branch, and nothing anywhere said that the fields had been
+    # read under a contract that no longer describes them. A silent accept of an unknown
+    # version is the same defect as a silent skip, pointing the other way.
+    # An absent version is refused for the same reason and not a softer one. The contract
+    # `doctor` enforces has `schema` as a field every record carries, so a record without it
+    # is not an older record this reader is being generous to — it is a record whose contract
+    # nobody stated, and reading its fields as though they were this version's is the guess
+    # the rest of this file exists not to make.
+    [ "$MJ_SREC_SCHEMA" = "$MJ_SESSION_SCHEMA" ] || rc=2
   else rc=1; fi
   rm -f "$fm" "$flat"
   return $rc
@@ -683,14 +753,22 @@ mj_session_list() {
     *) mj_die "$MJ_EX_USAGE" "session list: unknown option $a" ;;
   esac; done
 
-  local key f n=0 first=1 label mine
+  local key f n=0 first=1 label mine rc skipped=0
   # A shared record names the repository by its remote, a local one by its git directory:
   # this is the same repository under either name (ADR 0014).
   mine="$(mj_repository_id)"
   [ "$MJ_JSON" = 1 ] && printf '{"schema":1,"sessions":['
   for key in $(mj_session_keys); do
     f="${key#*|}"; f="${f#*|}"
-    mj_session_read "$f" || continue
+    rc=0; mj_session_read "$f" || rc=$?
+    case "$rc" in
+      1) continue ;;
+      # Said out loud, on stderr, and skipped. Not on stdout: every caller of `--json`
+      # redirects that into a file, and a diagnostic written there is a diagnostic nobody
+      # sees inside a document nobody can parse.
+      2) mj_err "warning: skipped ${f#"$MJ_ROOT/"}: $(mj_session_schema_said "$MJ_SREC_SCHEMA"), and this executable reads $MJ_SESSION_SCHEMA (run: majordomus doctor)"
+         skipped=$((skipped + 1)); continue ;;
+    esac
     # Same rule as every other record: this repository, this worktree and branch, then this
     # branch. --all lifts it and says so, because a record from elsewhere is worth seeing
     # when you asked for everything and is never worth being handed silently.
@@ -711,6 +789,9 @@ mj_session_list() {
   done
   if [ "$MJ_JSON" = 1 ]; then printf ']}\n'; return 0; fi
   [ "$n" = 0 ] && printf 'No closed sessions for this worktree and branch.\n'
+  # An empty listing that is empty because every record was refused is a different answer
+  # from an empty listing, and a reader who is not told cannot tell them apart.
+  [ "$skipped" -gt 0 ] && printf '%s record(s) were skipped: this executable reads %s (run: majordomus doctor)\n' "$skipped" "$MJ_SESSION_SCHEMA"
   return 0
 }
 
@@ -777,13 +858,20 @@ mj_session_show() {
   esac; done
   [ -n "$want" ] || mj_die "$MJ_EX_USAGE" "session show needs a session id (see: majordomus session list)"
 
-  local key f hit=""
+  local key f hit="" unreadable="" rc
   for key in $(mj_session_keys); do
     f="${key#*|}"; f="${f#*|}"
-    mj_session_read "$f" || continue
+    rc=0; mj_session_read "$f" || rc=$?
+    # A record this version cannot read is remembered rather than passed over. Skipping it
+    # makes `session show <id>` answer "no closed session" about a record that is sitting in
+    # the store under exactly that id — which sends the reader to look for a record that is
+    # there, instead of telling them the one thing they need to know about it.
+    [ "$rc" = 2 ] && { grep -q "^session_id: $want\$" "$f" 2>/dev/null && unreadable="$f"; continue; }
+    [ "$rc" = 0 ] || continue
     [ "$MJ_SREC_ID" = "$want" ] || continue
     hit="$f"; break
   done
+  [ -n "$hit" ] || [ -z "$unreadable" ] || mj_session_show_file "$unreadable" ""
   [ -n "$hit" ] || mj_die "$MJ_EX_MISSING" "no closed session '$want' (see: majordomus session list)"
   mj_session_read "$hit" >/dev/null 2>&1 || true
   mj_session_show_file "$hit" ""
@@ -791,8 +879,14 @@ mj_session_show() {
 
 # Print one record whole, headed by the facts a reader needs before believing any of it.
 mj_session_show_file() {
-  local f="$1" match="$2" label
-  mj_session_read "$f" || mj_die "$MJ_EX_CONTRACT" "session record does not parse: ${f#"$MJ_ROOT/"}"
+  local f="$1" match="$2" label rc=0
+  mj_session_read "$f" || rc=$?
+  # Two different refusals, and a reader who is told the wrong one looks in the wrong place:
+  # a record that does not parse is damaged here, a record carrying a version this executable
+  # does not read is intact and was written by something newer.
+  [ "$rc" = 2 ] && mj_die "$MJ_EX_CONTRACT" \
+    "${f#"$MJ_ROOT/"} carries $(mj_session_schema_said "$MJ_SREC_SCHEMA"), and this executable reads $MJ_SESSION_SCHEMA (run: majordomus doctor)"
+  [ "$rc" = 0 ] || mj_die "$MJ_EX_CONTRACT" "session record does not parse: ${f#"$MJ_ROOT/"}"
   label="$(mj_git_label "$MJ_SREC_HEAD" "$MJ_SREC_BRANCH")"
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":1,"session":{"session_id":"%s","started_at":"%s","closed_at":"%s","outcome":"%s","branch":"%s","label":"%s","match":"%s","path":"%s"}}\n' \

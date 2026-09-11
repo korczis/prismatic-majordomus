@@ -4,9 +4,11 @@
 # doctests, rustdoc with warnings denied, the benchmarks compiling, the registry's own
 # validation, the committed projections in sync, the benchmark coverage complete, the web
 # topology valid (one owner per path, every native surface answerable), the crate's own
-# public API quality report clean against its baseline, and line
-# coverage above the threshold in scripts/rust-coverage-threshold when cargo-llvm-cov is
-# installed. One script, so that CI and a person run the same gates in the same order.
+# public API quality report clean against its baseline, and coverage above two thresholds —
+# scripts/rust-coverage-threshold over the crate and scripts/session-coverage-threshold over
+# the canonical session/continuity domain — when cargo-llvm-cov is installed, measured over
+# the code that is under test rather than over the code plus the tests. One script, so that
+# CI and a person run the same gates in the same order.
 #
 #   scripts/rust-check                  every gate (coverage when cargo-llvm-cov is installed)
 #   scripts/rust-check --ci             every gate but coverage (its own CI job), plus the
@@ -76,11 +78,19 @@ if [ "$MODE" = ci ]; then
 fi
 if [ "$MODE" = all ]; then
   threshold="$(cat "$ROOT/scripts/rust-coverage-threshold")"
+  domain="$(cat "$ROOT/scripts/session-coverage-threshold")"
   if cargo llvm-cov --version >/dev/null 2>&1; then
-    step "cargo llvm-cov --fail-under-lines $threshold"
-    cargo llvm-cov --all-targets --summary-only --fail-under-lines "$threshold"
+    # Not `cargo llvm-cov --summary-only --fail-under-lines` directly: that measures the
+    # crate *and its tests*, because --all-targets instruments tests/ and benches/ and
+    # because this crate keeps its unit tests inline in src/*.rs where no filename regex can
+    # reach them. A threshold over that mixture moves whenever a test is added or deleted.
+    # scripts/rust-coverage runs the same suite and subtracts the test code from both sides
+    # of the fraction, and holds the session/continuity domain to its own threshold beside
+    # the crate-wide floor.
+    step "scripts/rust-coverage (crate $threshold%, session domain $domain%)"
+    "$ROOT/scripts/rust-coverage"
   else
-    printf '==> coverage: cargo-llvm-cov not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview); CI enforces %s%%\n' "$threshold"
+    printf '==> coverage: cargo-llvm-cov not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview); CI enforces %s%% over the crate and %s%% over the session/continuity domain\n' "$threshold" "$domain"
   fi
 fi
 if [ -n "$ARTIFACT" ]; then
