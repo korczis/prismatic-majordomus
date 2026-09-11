@@ -193,6 +193,49 @@ mj_rules_load() {
 mj_rule()       { mj_yget "$MJ_RULES_FLAT" "rules.$1.$2"; }
 mj_rule_list()  { mj_ylist "$MJ_RULES_FLAT" "rules.$1.$2"; }
 mj_rule_count() { awk 'index($0, "rules.") == 1 && $0 ~ /^rules\.[0-9]+\.id=/ { n++ } END { printf "%s", n + 0 }' "$MJ_RULES_FLAT"; }
+# The tally every verdict about the rule set owes its reader. `mj_rule_count` answers "how
+# many rules", and a surface that reports a number over the *enforced* subset while saying
+# "every one" invites the reader to hear it as a statement about all of them — which is how
+# a repository convinces itself it is covered when most of its rules are prose nothing runs.
+# So the four numbers are produced together, by one pass, and printed as one line:
+#
+#   <total> <enforced> <blocking> <blocking-with-no-validator>
+#
+# enforced means the rule carries an x-majordomus block, so doctrine.sh has a validator to
+# dispatch. A blocking rule without one is a promise the tool cannot keep by itself; it may
+# still be held by a CI gate or a reviewer, but nothing here can see that, and a count that
+# does not separate the two cannot be read.
+mj_rule_tally() {
+  awk '
+    index($0, "rules.") != 1 { next }
+    { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3) next
+      i = p[2]; f = substr(k, length("rules." i ".") + 1)
+      if (f == "id") { n++; seen[i] = 1 }
+      else if (f == "class") cls[i] = v
+      else if (f == "enforced") enf[i] = v }
+    END {
+      for (i in seen) {
+        if (enf[i] == 1) e++
+        if (cls[i] == "blocking") { b++; if (enf[i] != 1) bu++ }
+      }
+      printf "%s %s %s %s", n + 0, e + 0, b + 0, bu + 0
+    }' "$MJ_RULES_FLAT"
+}
+# The blocking rules with no validator, one id per line, in registry order — the list
+# behind the fourth number above, so a reader can act on it rather than only fear it.
+mj_rules_blocking_unenforced() {
+  awk '
+    index($0, "rules.") != 1 { next }
+    { eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") < 3) next
+      i = p[2]; f = substr(k, length("rules." i ".") + 1)
+      if (f == "id") { id[i] = v; if (!(i in ord)) { ord[i] = ++n; byord[n] = i } }
+      else if (f == "class") cls[i] = v
+      else if (f == "enforced") enf[i] = v }
+    END { for (j = 1; j <= n; j++) { i = byord[j]; if (cls[i] == "blocking" && enf[i] != 1) print id[i] } }
+  ' "$MJ_RULES_FLAT"
+}
 mj_rule_index() {
   awk -v id="$1" 'index($0, "rules.") == 1 && $0 ~ /^rules\.[0-9]+\.id=/ && substr($0, index($0, "=") + 1) == id { split($0, p, "."); printf "%s", p[2]; f = 1; exit } END { exit !f }' "$MJ_RULES_FLAT"
 }

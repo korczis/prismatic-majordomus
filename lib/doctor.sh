@@ -554,8 +554,30 @@ mj_validate_rule_package() {
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
-  n="$(mj_rule_count)"
-  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override"
+  # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
+  # order" is true and is read as covering the whole set, while the doctrine check below
+  # examines only the subset carrying a validator — so the two numbers are printed beside
+  # each other here, and neither can be mistaken for the other.
+  local tally total enforced blocking blocking_unenforced
+  tally="$(mj_rule_tally)"
+  total="${tally%% *}"; tally="${tally#* }"
+  enforced="${tally%% *}"; tally="${tally#* }"
+  blocking="${tally%% *}"; blocking_unenforced="${tally#* }"
+  n="$total"
+  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override — $enforced carry a validator, $((n - enforced)) are normative text this tool does not check"
+  # The number the doctrine check cannot report, because those rules are not in its
+  # registry at all: a rule declared blocking with no x-majordomus block. Nothing in this
+  # tool runs for it. It may still be held by a CI gate, a behavioural case or a reviewer,
+  # and scripts/ci/enforcement-check is what decides that; what is certain from here is
+  # only that the dispatcher will never stop a command on its behalf. Reported rather than
+  # failed, because the honest count is large and predates the report; the gate ratchets it.
+  if [ "$blocking_unenforced" -gt 0 ]; then
+    mj_info rules "blocking without a validator" \
+      "$blocking_unenforced of $blocking blocking rule(s) carry no x-majordomus block, so no validator runs for them and the doctrine verdict below says nothing about them" \
+      "majordomus rules list | grep -v 'enforced by'"
+  else
+    mj_doctrine_ok rules "blocking" "all $blocking blocking rule(s) carry a validator"
+  fi
   return 0
 }
 
@@ -678,7 +700,17 @@ mj_validate_doctrine_wiring() {
       "cat $root/RELEASE.json"
   fi
 
-  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one' || printf 'validator, dispatch, propagation, test and CI resolve for every one')"
+  # State the denominator, always. This line used to read "41 doctrines — validator,
+  # dispatch, propagation, test and CI resolve for every one", beside another line in the
+  # same run reporting 122 rules. "Every one" meant every one of 41 and said nothing about
+  # the other 81, and no reader could tell that from the sentence. The subset is now named
+  # in the subject, and the remainder is named in the detail, so the verdict cannot be
+  # read as covering rules it never looked at.
+  local reg_total reg_rest
+  reg_total="$(mj_rule_count)"
+  reg_rest=$((reg_total - n))
+  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n of $reg_total rule(s) carry a validator" \
+    "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one of the %s' "$n" || printf 'validator, dispatch, propagation, test and CI resolve for every one of the %s' "$n")$([ "$reg_rest" -gt 0 ] && printf '; the remaining %s declare no validator and this check does not examine them' "$reg_rest")"
   return 0
 }
 # watch's view of the same doctrine: every target against the stamp it carries.
