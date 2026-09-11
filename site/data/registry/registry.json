@@ -6,26 +6,26 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "3dcc3df0627f80462e7fbd9186d293a70acf4e9b7f1e7f9ad10a0b49ec8d369a",
+    "fingerprint": "75ce695172242336be279517afb5d3b614fe0ebb7091bf2eb5ff4a011b53788f",
     "summary": {
-      "total": 1237,
-      "builtin": 78,
-      "declarative": 1159,
+      "total": 1245,
+      "builtin": 80,
+      "declarative": 1165,
       "by_kind": {
         "command": 3,
-        "query": 75,
-        "resource": 1159
+        "query": 77,
+        "resource": 1165
       },
       "by_stability": {
-        "behaviorally_verified": 73,
-        "implemented": 1164
+        "behaviorally_verified": 75,
+        "implemented": 1170
       },
-      "mcp_tools": 76,
-      "mcp_resources": 1187,
-      "http_routes": 78,
-      "cli_commands": 32,
-      "modules": 54,
-      "benchmark_required": 75,
+      "mcp_tools": 78,
+      "mcp_resources": 1193,
+      "http_routes": 80,
+      "cli_commands": 34,
+      "modules": 55,
+      "benchmark_required": 77,
       "benchmark_waived": 3,
       "cached": 24
     },
@@ -6582,6 +6582,1446 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
+      },
+      {
+        "id": "devtask.issue",
+        "module": "devtask",
+        "kind": "query",
+        "title": "One issue as an executable development task",
+        "description": "Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: \"\"` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.",
+        "input": {
+          "name": "DevTaskInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue id, as the canonical model spells it (`I0901`). An id the model does not\ndeclare is answered with `declared: false` and every canonical field `unknown`,\nnever refused and never answered with empty strings that read as authored."
+              },
+              "git": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Consult git for the branches and commits that realised it. Default: yes. Set it to\nfalse for a deterministic answer that depends on the records alone — which is what a\ngenerated document or a comparison across machines wants."
+              }
+            },
+            "required": [
+              "issue"
+            ],
+            "description": "Which issue to read as a development task.",
+            "title": "DevTaskInput"
+          }
+        },
+        "output": {
+          "name": "DevTask",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue id, as asked for."
+              },
+              "declared": {
+                "type": "boolean",
+                "description": "Whether the canonical model declares it. False is answered rather than refused, with\nevery canonical field `unknown`: a typo that read as \"nothing has been authored\" is\nthe one answer this must never give."
+              },
+              "record": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Repository-relative path of the canonical record, when there is one."
+              },
+              "declaration": {
+                "$ref": "#/$defs/DevTaskDeclaration",
+                "description": "What a person authored."
+              },
+              "position": {
+                "$ref": "#/$defs/DevTaskPosition",
+                "description": "Where the plan graph puts it."
+              },
+              "execution": {
+                "$ref": "#/$defs/DevTaskExecution",
+                "description": "What happened locally."
+              },
+              "synchronisation": {
+                "$ref": "#/$defs/DevTaskSynchronisation",
+                "description": "Where the external projection stands."
+              },
+              "readiness": {
+                "$ref": "#/$defs/ReadinessVerdict",
+                "description": "Whether it can be worked on, and what is in the way."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DevTaskDiagnostic"
+                },
+                "description": "Everything wrong with its records."
+              },
+              "attestation": {
+                "$ref": "#/$defs/AttestationTally",
+                "description": "How much of the answer was authored and how much a machine worked out."
+              }
+            },
+            "required": [
+              "issue",
+              "declared",
+              "declaration",
+              "position",
+              "execution",
+              "synchronisation",
+              "readiness",
+              "diagnostics",
+              "attestation"
+            ],
+            "description": "One issue as an executable development task: what was authored, where it sits, what has\nhappened to it, where its external projection stands, and whether a worker may start it.",
+            "title": "DevTask",
+            "$defs": {
+              "DevTaskDeclaration": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "One line naming the outcome."
+                  },
+                  "objective": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "What the issue is for."
+                  },
+                  "why": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Why it is worth doing."
+                  },
+                  "current_state": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Where the repository stands before it."
+                  },
+                  "desired_state": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Where the repository stands once it is real."
+                  },
+                  "completion": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "What the author says about how far it got. Authored prose, never a status: the\nstatus is derived, and this is the one field where a person may disagree with it."
+                  },
+                  "milestone": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The milestone it belongs to."
+                  },
+                  "priority": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The execution profile it is worked under."
+                  },
+                  "parallel_safe": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "owner": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Who owns it."
+                  },
+                  "risk": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "What could go wrong."
+                  },
+                  "slug": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The slug."
+                  },
+                  "cancelled": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "Whether it was withdrawn."
+                  },
+                  "created_at": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "When the record was created."
+                  },
+                  "updated_at": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "When it last moved."
+                  },
+                  "started_at": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "When execution began."
+                  },
+                  "verified_at": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "When implementation was declared finished."
+                  },
+                  "completed_at": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "When completion was recorded."
+                  },
+                  "scope": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The paths it may touch."
+                  },
+                  "non_scope": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The paths it deliberately does not touch."
+                  },
+                  "depends_on": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The issues it declares a dependency on, exactly as declared — including one that\ndoes not exist, which is a diagnostic and not a silent omission."
+                  },
+                  "acceptance_criteria": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "What must be true before it is finished."
+                  },
+                  "validation": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The commands that check it."
+                  },
+                  "evidence_required": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The evidence tokens it requires before it may be complete."
+                  },
+                  "evidence_present": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The evidence tokens it actually carries."
+                  },
+                  "evidence_commits": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The commits the record's own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n[`DevTaskExecution::commits`] and are derived."
+                  }
+                },
+                "required": [
+                  "title",
+                  "objective",
+                  "why",
+                  "current_state",
+                  "desired_state",
+                  "completion",
+                  "milestone",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "owner",
+                  "risk",
+                  "slug",
+                  "cancelled",
+                  "created_at",
+                  "updated_at",
+                  "started_at",
+                  "verified_at",
+                  "completed_at",
+                  "scope",
+                  "non_scope",
+                  "depends_on",
+                  "acceptance_criteria",
+                  "validation",
+                  "evidence_required",
+                  "evidence_present",
+                  "evidence_commits"
+                ],
+                "description": "What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]\nor [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it\ndoes not exist."
+              },
+              "AttestedText": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The value, absent exactly when the provenance is `unknown`."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where it came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check it: a repository-relative path with the key it\nwas read from, a capability id, or a command. Never a machine path."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence: always for\n`unknown` and for `inferred`, and omitted otherwise."
+                  }
+                },
+                "required": [
+                  "provenance",
+                  "source"
+                ],
+                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
+              },
+              "FieldProvenance": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "explicit",
+                    "description": "A person authored it, in the canonical record, under this key. The strongest thing\nthat can be said about a value, and the only one that survives a rewrite of every\nderivation in this repository."
+                  },
+                  {
+                    "type": "string",
+                    "const": "derived",
+                    "description": "A machine worked it out from records or from git, by a rule that cannot be wrong\nabout a repository it can read: an issue's dependents are the issues that name it.\nRe-derived on every call and stored nowhere."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inferred",
+                    "description": "A machine worked it out by a rule that *can* be wrong, because the relation it reads\nwas never declared: a session belongs to an issue because its branch name contains\nthe issue's id. Useful, and never to be mistaken for a declaration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not available. Either the record does not carry the key, or the fact lives outside\nwhat this process may read — a live GitHub state, for one — and the field says which\nin its `reason`. An unknown field never carries a value."
+                  }
+                ],
+                "description": "Where a value came from, and therefore how much weight a reader may put on it.\n\nThe four words are not degrees of confidence, they are four different relations to the\nrepository, and the distinction that matters most is the first from the last two: a\nperson wrote it, or a machine worked it out.\n\n```\nuse majordomus_cli::devtask::{AttestedText, FieldProvenance};\n\n// a value the record itself carried\nlet title = AttestedText::explicit(\"Ship it\", \".ai/repo/project/issues/I0001.yaml#title\");\nassert_eq!(title.provenance, FieldProvenance::Explicit);\n\n// a key the record does not have is unknown, and unknown carries no value\nlet missing = AttestedText::unknown(\n    \".ai/repo/project/issues/I0001.yaml#objective\",\n    \"the record declares no `objective`\",\n);\nassert_eq!(missing.provenance, FieldProvenance::Unknown);\nassert!(missing.value.is_none());\n```"
+              },
+              "AttestedList": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The items, in the order the record or the derivation produced them. Empty for an\nauthored empty list and for an unknown field alike; `provenance` tells them apart."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where they came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check them."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence."
+                  }
+                },
+                "required": [
+                  "values",
+                  "provenance",
+                  "source"
+                ],
+                "description": "A list with its provenance. The distinction a bare `Vec` cannot make is the one that\nmatters here: `depends_on: []` in the record is an authored empty list, and a record with\nno `depends_on` key is unknown. Both are empty; only one is a statement."
+              },
+              "DevTaskPosition": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The canonical status, from the one derivation of it."
+                  },
+                  "wave": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "The execution wave: one past the longest path to it. Unknown when a cycle prevents\nit from ever having one."
+                  },
+                  "blocked_by": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The dependencies that are not `DONE`, plus the milestone gate when it applies."
+                  },
+                  "dependents": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The issues that wait on this one."
+                  },
+                  "transitive_dependents": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "Every issue that waits on it, directly or through another. The measure of what\nfinishing it unblocks."
+                  },
+                  "milestone_status": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The status of the milestone it belongs to."
+                  },
+                  "milestone_rank": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "The milestone's layer in the milestone graph."
+                  },
+                  "milestone_blocked_by": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The outcomes that milestone still waits on."
+                  },
+                  "evidence_have": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "How many evidence tokens it carries."
+                  },
+                  "evidence_need": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "How many it needs."
+                  }
+                },
+                "required": [
+                  "status",
+                  "wave",
+                  "blocked_by",
+                  "dependents",
+                  "transitive_dependents",
+                  "milestone_status",
+                  "milestone_rank",
+                  "milestone_blocked_by",
+                  "evidence_have",
+                  "evidence_need"
+                ],
+                "description": "Where the task sits in the plan graph. Every field is derived; nothing here is authored,\nand nothing here is stored anywhere."
+              },
+              "AttestedCount": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The number, absent exactly when the provenance is `unknown`."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where it came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check it."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence."
+                  }
+                },
+                "required": [
+                  "provenance",
+                  "source"
+                ],
+                "description": "A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
+              },
+              "DevTaskExecution": {
+                "type": "object",
+                "properties": {
+                  "git_consulted": {
+                    "type": "boolean",
+                    "description": "Whether git was consulted at all. False makes every git-derived field below\n`unknown` rather than empty, which is the difference between \"nothing realised this\"\nand \"nobody looked\"."
+                  },
+                  "branches": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The branches whose name carries this issue's id, local first."
+                  },
+                  "merged_branches": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "Of those, the ones that reached the trunk."
+                  },
+                  "commits": {
+                    "$ref": "#/$defs/AttestedCount",
+                    "description": "How many distinct commits those branches hold that the trunk did not."
+                  },
+                  "trunk": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The trunk every branch was measured against."
+                  },
+                  "commits_complete": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "True when every branch's commits could be derived. False when one reached the trunk\nwithout a merge commit of its own, so part of the work cannot be told from the\ntrunk's — reported rather than counted as zero."
+                  },
+                  "sessions": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode's ledger events, not authored and not guessed."
+                  },
+                  "sessions_by_branch": {
+                    "$ref": "#/$defs/AttestedList",
+                    "description": "The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one."
+                  }
+                },
+                "required": [
+                  "git_consulted",
+                  "branches",
+                  "merged_branches",
+                  "commits",
+                  "trunk",
+                  "commits_complete",
+                  "sessions",
+                  "sessions_by_branch"
+                ],
+                "description": "Local execution state: what actually happened in this checkout's git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which."
+              },
+              "DevTaskSynchronisation": {
+                "type": "object",
+                "properties": {
+                  "adapter": {
+                    "type": "string",
+                    "description": "The adapter that owns the projection. The one thing that can answer the live state."
+                  },
+                  "repository": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The repository the projection targets, from `project.yaml`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The reconciliation state of the external record. Always `unknown` from here: it is a\nnetwork fact, and this executable makes none. The reason names the command."
+                  },
+                  "external_id": {
+                    "$ref": "#/$defs/AttestedText",
+                    "description": "The external record's own identifier — a GitHub number — which GitHub assigns and\nnothing local records. Always `unknown`, for the same reason."
+                  },
+                  "reconcile_with": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The commands that answer the external half."
+                  },
+                  "writable": {
+                    "type": "boolean",
+                    "description": "Whether this executable may write any of it. Always false; stated as a field so that\na client need not know the rule to respect it."
+                  }
+                },
+                "required": [
+                  "adapter",
+                  "repository",
+                  "state",
+                  "external_id",
+                  "reconcile_with",
+                  "writable"
+                ],
+                "description": "The external projection. Nothing here is ever written by this executable, and the fields\nthat only the adapter can answer say so rather than reading as empty."
+              },
+              "ReadinessVerdict": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/TaskReadiness",
+                    "description": "Where the task stands, as work."
+                  },
+                  "canonical_status": {
+                    "type": "string",
+                    "description": "The canonical status it refines, so the two can never be read apart."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why it is in that state, in one line."
+                  },
+                  "startable": {
+                    "type": "boolean",
+                    "description": "May a worker pick it up right now?"
+                  },
+                  "terminal": {
+                    "type": "boolean",
+                    "description": "Is there nothing further to do?"
+                  },
+                  "blockers": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Blocker"
+                    },
+                    "description": "Everything standing in the way, each with what to do about it."
+                  }
+                },
+                "required": [
+                  "state",
+                  "canonical_status",
+                  "reason",
+                  "startable",
+                  "terminal",
+                  "blockers"
+                ],
+                "description": "The readiness verdict, with everything it was derived from beside it."
+              },
+              "TaskReadiness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "Nothing holds it back and nobody has started it. Canonical `READY`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "At least one issue it depends on is not `DONE`. Canonical `BLOCKED`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting",
+                    "description": "Every issue dependency is satisfied; the milestone gate holds it. Canonical\n`BLOCKED`, and a distinct situation because it is resolved in another milestone."
+                  },
+                  {
+                    "type": "string",
+                    "const": "in_progress",
+                    "description": "Execution began: the record carries `started_at`. Canonical `ACTIVE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "review",
+                    "description": "Implementation is declared finished and completion has not been recorded: the record\ncarries `verified_at`. Canonical `VERIFY`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "completion_blocked",
+                    "description": "Completion *was* recorded and the evidence the record itself requires is not all\nthere, so the plan refuses to call it `DONE`. Canonical `VERIFY`, and the case the\n`evidence_missing` finding is about."
+                  },
+                  {
+                    "type": "string",
+                    "const": "complete",
+                    "description": "Finished on its own terms: not cancelled, completion recorded, every required\nevidence token present. Canonical `DONE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "Withdrawn. Canonical `CANCELLED`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "The canonical model does not declare this id. Not a status: the absence of a record."
+                  }
+                ],
+                "description": "Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \"READY\");\nassert_eq!(TaskReadiness::Waiting.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Blocked.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Review.canonical(), \"VERIFY\");\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \"VERIFY\");\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```"
+              },
+              "Blocker": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/BlockerKind",
+                    "description": "What kind of thing it is."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The thing: an issue id, a milestone id, an evidence token."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What is wrong, in one line a person can act on."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "subject",
+                  "detail"
+                ],
+                "description": "One thing standing between a task and being startable, with what to do about it."
+              },
+              "BlockerKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "issue",
+                    "description": "An issue this one depends on that is not `DONE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "milestone",
+                    "description": "The milestone gate: an outcome this one's milestone requires is not `DONE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "evidence",
+                    "description": "A required evidence token the record does not carry, with completion recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reference",
+                    "description": "A dependency that resolves to nothing: the model has no such issue."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cycle",
+                    "description": "A dependency cycle this task is in or downstream of, so it can never become ready."
+                  }
+                ],
+                "description": "What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`."
+              },
+              "DevTaskDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`, as the plan's own finding levels."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  },
+                  "reproduce": {
+                    "type": "string",
+                    "description": "The one command that shows it again."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "message",
+                  "reproduce"
+                ],
+                "description": "One thing wrong with this task's records, in the shape `project.finding-carries-reproduce`\nasks for."
+              },
+              "AttestationTally": {
+                "type": "object",
+                "properties": {
+                  "explicit": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Fields a person authored in the canonical record."
+                  },
+                  "derived": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Fields worked out by a rule that cannot be wrong about a readable repository."
+                  },
+                  "inferred": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Fields worked out by a rule that can be wrong."
+                  },
+                  "unknown": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Fields not available at all."
+                  }
+                },
+                "required": [
+                  "explicit",
+                  "derived",
+                  "inferred",
+                  "unknown"
+                ],
+                "description": "How much of one answer was authored, and how much a machine worked out.\n\nNot decoration: it is the measurement that makes the provenance discipline checkable\nfrom outside. A task whose declaration is mostly `unknown` is a placeholder however\ncomplete its derived half looks, and this is the number that says so."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::devtask"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_devtask"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/devtask/issue"
+          },
+          "cli": {
+            "path": [
+              "devtask",
+              "issue"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "devtask",
+          "plan",
+          "issue",
+          "provenance",
+          "readiness",
+          "git"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
+      },
+      {
+        "id": "devtask.milestone",
+        "module": "devtask",
+        "kind": "query",
+        "title": "One milestone as an executable dependency graph",
+        "description": "Every issue of the milestone as a node with its readiness, its wave and what waits on it; every dependency edge with at least one end inside, the crossing ones marked; the issues partitioned into ready, blocked, waiting, active, review, completion-blocked, complete and cancelled; the critical blockers ordered by how much unfinished work each holds back; the startable work partitioned into subsets that may genuinely run at the same time — same wave, each parallel-safe, no two sharing a scope path — with each serialisation naming the path that caused it; every dependency cycle as its strongly connected component; and every finding about the milestone or its issues. A pure function of the canonical records: no git, no clock, no network, every list in canonical order, so two runs on two machines produce the same bytes. A work surface reading this derives nothing itself.",
+        "input": {
+          "name": "DevMilestoneInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "milestone": {
+                "type": "string",
+                "description": "The milestone id, as the canonical model spells it. An id the model does not declare\nis answered with an empty graph and every field `unknown`, not refused."
+              }
+            },
+            "required": [
+              "milestone"
+            ],
+            "description": "Which milestone to read as a dependency graph.",
+            "title": "DevMilestoneInput"
+          }
+        },
+        "output": {
+          "name": "MilestoneGraph",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "milestone": {
+                "type": "string",
+                "description": "The milestone id, as asked for."
+              },
+              "declared": {
+                "type": "boolean",
+                "description": "Whether the canonical model declares it. False is answered, not refused."
+              },
+              "record": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Repository-relative path of the canonical record, when there is one."
+              },
+              "title": {
+                "$ref": "#/$defs/AttestedText",
+                "description": "One line naming the outcome, as authored."
+              },
+              "outcome": {
+                "$ref": "#/$defs/AttestedText",
+                "description": "What is true once it is real, as authored."
+              },
+              "status": {
+                "$ref": "#/$defs/AttestedText",
+                "description": "The derived milestone status."
+              },
+              "rank": {
+                "$ref": "#/$defs/AttestedCount",
+                "description": "Its layer in the milestone graph: what orders the roadmap."
+              },
+              "depends_on": {
+                "$ref": "#/$defs/AttestedList",
+                "description": "The milestones it requires, as authored."
+              },
+              "blocked_by": {
+                "$ref": "#/$defs/AttestedList",
+                "description": "Those of them that are not `DONE`. Non-empty means every issue here is held back\nwhatever its own dependencies say."
+              },
+              "dependents": {
+                "$ref": "#/$defs/AttestedList",
+                "description": "The milestones that require it."
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MilestoneNode"
+                },
+                "description": "Every issue of the milestone, in canonical order."
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MilestoneEdge"
+                },
+                "description": "Every dependency edge with at least one end in this milestone, sorted."
+              },
+              "ready": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues a worker may pick up now."
+              },
+              "blocked": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues waiting on a peer."
+              },
+              "waiting": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues waiting only on the milestone gate."
+              },
+              "active": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues somebody has started."
+              },
+              "review": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues awaiting confirmation."
+              },
+              "completion_blocked": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues declared complete whose evidence does not back that up."
+              },
+              "complete": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues finished on their own terms."
+              },
+              "cancelled": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues withdrawn."
+              },
+              "critical_blockers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CriticalBlocker"
+                },
+                "description": "What to unblock first, most downstream work first."
+              },
+              "parallelizable": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ParallelSet"
+                },
+                "description": "The startable work partitioned into subsets that may run at the same time."
+              },
+              "cycles": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "description": "Every dependency cycle with an issue of this milestone in it, each as its strongly\nconnected component in canonical order."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DevTaskDiagnostic"
+                },
+                "description": "Everything wrong with the records of this milestone or of its issues."
+              },
+              "counts": {
+                "$ref": "#/$defs/MilestoneCounts",
+                "description": "The issues counted by readiness."
+              }
+            },
+            "required": [
+              "milestone",
+              "declared",
+              "title",
+              "outcome",
+              "status",
+              "rank",
+              "depends_on",
+              "blocked_by",
+              "dependents",
+              "nodes",
+              "edges",
+              "ready",
+              "blocked",
+              "waiting",
+              "active",
+              "review",
+              "completion_blocked",
+              "complete",
+              "cancelled",
+              "critical_blockers",
+              "parallelizable",
+              "cycles",
+              "diagnostics",
+              "counts"
+            ],
+            "description": "One milestone as an executable dependency graph.",
+            "title": "MilestoneGraph",
+            "$defs": {
+              "AttestedText": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The value, absent exactly when the provenance is `unknown`."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where it came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check it: a repository-relative path with the key it\nwas read from, a capability id, or a command. Never a machine path."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence: always for\n`unknown` and for `inferred`, and omitted otherwise."
+                  }
+                },
+                "required": [
+                  "provenance",
+                  "source"
+                ],
+                "description": "One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \"unknown, and here is the value\", which is the defect\nthis whole module exists to prevent."
+              },
+              "FieldProvenance": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "explicit",
+                    "description": "A person authored it, in the canonical record, under this key. The strongest thing\nthat can be said about a value, and the only one that survives a rewrite of every\nderivation in this repository."
+                  },
+                  {
+                    "type": "string",
+                    "const": "derived",
+                    "description": "A machine worked it out from records or from git, by a rule that cannot be wrong\nabout a repository it can read: an issue's dependents are the issues that name it.\nRe-derived on every call and stored nowhere."
+                  },
+                  {
+                    "type": "string",
+                    "const": "inferred",
+                    "description": "A machine worked it out by a rule that *can* be wrong, because the relation it reads\nwas never declared: a session belongs to an issue because its branch name contains\nthe issue's id. Useful, and never to be mistaken for a declaration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "Not available. Either the record does not carry the key, or the fact lives outside\nwhat this process may read — a live GitHub state, for one — and the field says which\nin its `reason`. An unknown field never carries a value."
+                  }
+                ],
+                "description": "Where a value came from, and therefore how much weight a reader may put on it.\n\nThe four words are not degrees of confidence, they are four different relations to the\nrepository, and the distinction that matters most is the first from the last two: a\nperson wrote it, or a machine worked it out.\n\n```\nuse majordomus_cli::devtask::{AttestedText, FieldProvenance};\n\n// a value the record itself carried\nlet title = AttestedText::explicit(\"Ship it\", \".ai/repo/project/issues/I0001.yaml#title\");\nassert_eq!(title.provenance, FieldProvenance::Explicit);\n\n// a key the record does not have is unknown, and unknown carries no value\nlet missing = AttestedText::unknown(\n    \".ai/repo/project/issues/I0001.yaml#objective\",\n    \"the record declares no `objective`\",\n);\nassert_eq!(missing.provenance, FieldProvenance::Unknown);\nassert!(missing.value.is_none());\n```"
+              },
+              "AttestedCount": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The number, absent exactly when the provenance is `unknown`."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where it came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check it."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence."
+                  }
+                },
+                "required": [
+                  "provenance",
+                  "source"
+                ],
+                "description": "A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back."
+              },
+              "AttestedList": {
+                "type": "object",
+                "properties": {
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The items, in the order the record or the derivation produced them. Empty for an\nauthored empty list and for an unknown field alike; `provenance` tells them apart."
+                  },
+                  "provenance": {
+                    "$ref": "#/$defs/FieldProvenance",
+                    "description": "Where they came from."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The one place a reader goes to check them."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the provenance is what it is, when that is worth a sentence."
+                  }
+                },
+                "required": [
+                  "values",
+                  "provenance",
+                  "source"
+                ],
+                "description": "A list with its provenance. The distinction a bare `Vec` cannot make is the one that\nmatters here: `depends_on: []` in the record is an authored empty list, and a record with\nno `depends_on` key is unknown. Both are empty; only one is a statement."
+              },
+              "MilestoneNode": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "readiness": {
+                    "$ref": "#/$defs/TaskReadiness",
+                    "description": "Where it stands as work."
+                  },
+                  "canonical_status": {
+                    "type": "string",
+                    "description": "The canonical status it refines."
+                  },
+                  "wave": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave, absent when a cycle prevents it from having one."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What is not `DONE` yet, plus the milestone gate when it applies."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that wait on it directly."
+                  },
+                  "transitive_dependents": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many issues wait on it directly or through another."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "title",
+                  "readiness",
+                  "canonical_status",
+                  "priority",
+                  "parallel_safe",
+                  "blocked_by",
+                  "dependents",
+                  "transitive_dependents",
+                  "scope"
+                ],
+                "description": "One issue of a milestone, as a node of its graph."
+              },
+              "TaskReadiness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "Nothing holds it back and nobody has started it. Canonical `READY`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "At least one issue it depends on is not `DONE`. Canonical `BLOCKED`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "waiting",
+                    "description": "Every issue dependency is satisfied; the milestone gate holds it. Canonical\n`BLOCKED`, and a distinct situation because it is resolved in another milestone."
+                  },
+                  {
+                    "type": "string",
+                    "const": "in_progress",
+                    "description": "Execution began: the record carries `started_at`. Canonical `ACTIVE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "review",
+                    "description": "Implementation is declared finished and completion has not been recorded: the record\ncarries `verified_at`. Canonical `VERIFY`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "completion_blocked",
+                    "description": "Completion *was* recorded and the evidence the record itself requires is not all\nthere, so the plan refuses to call it `DONE`. Canonical `VERIFY`, and the case the\n`evidence_missing` finding is about."
+                  },
+                  {
+                    "type": "string",
+                    "const": "complete",
+                    "description": "Finished on its own terms: not cancelled, completion recorded, every required\nevidence token present. Canonical `DONE`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "Withdrawn. Canonical `CANCELLED`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "The canonical model does not declare this id. Not a status: the absence of a record."
+                  }
+                ],
+                "description": "Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \"READY\");\nassert_eq!(TaskReadiness::Waiting.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Blocked.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Review.canonical(), \"VERIFY\");\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \"VERIFY\");\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```"
+              },
+              "MilestoneEdge": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "The issue that must be real first."
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "The issue that waits for it."
+                  },
+                  "external": {
+                    "type": "boolean",
+                    "description": "True when one end is outside this milestone. Such an edge is why a milestone can be\nentirely blocked with nothing wrong inside it, so it is marked rather than dropped."
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "external"
+                ],
+                "description": "One dependency edge of the milestone's graph, `from` before `to`."
+              },
+              "CriticalBlocker": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue."
+                  },
+                  "readiness": {
+                    "$ref": "#/$defs/TaskReadiness",
+                    "description": "Where it stands, which is what says whether unblocking it is work or a decision."
+                  },
+                  "blocks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The unfinished issues that wait on it, directly or through another, in canonical\norder."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many that is. The number the list is ordered by."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "readiness",
+                  "blocks",
+                  "weight"
+                ],
+                "description": "One unfinished issue that holds back downstream work, and how much."
+              },
+              "ParallelSet": {
+                "type": "object",
+                "properties": {
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The wave every issue in it belongs to."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues, in canonical order."
+                  },
+                  "serialised": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ScopeConflict"
+                    },
+                    "description": "Why the set is not larger: the candidates of the same wave that had to be serialised\nagainst something already in it."
+                  }
+                },
+                "required": [
+                  "wave",
+                  "issues",
+                  "serialised"
+                ],
+                "description": "One subset of the startable work that may genuinely run at the same time."
+              },
+              "ScopeConflict": {
+                "type": "object",
+                "properties": {
+                  "held": {
+                    "type": "string",
+                    "description": "The issue already in the set."
+                  },
+                  "excluded": {
+                    "type": "string",
+                    "description": "The issue that could not join it."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The scope path they share, as one of them declares it."
+                  }
+                },
+                "required": [
+                  "held",
+                  "excluded",
+                  "path"
+                ],
+                "description": "Two issues of one wave that cannot run together, and the path that stops them."
+              },
+              "DevTaskDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`, as the plan's own finding levels."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  },
+                  "reproduce": {
+                    "type": "string",
+                    "description": "The one command that shows it again."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "message",
+                  "reproduce"
+                ],
+                "description": "One thing wrong with this task's records, in the shape `project.finding-carries-reproduce`\nasks for."
+              },
+              "MilestoneCounts": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Every issue naming this milestone."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Total less cancelled: the denominator a progress figure uses."
+                  },
+                  "by_readiness": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint32",
+                      "minimum": 0
+                    },
+                    "description": "One entry per readiness state that has at least one issue, keyed by its word."
+                  }
+                },
+                "required": [
+                  "total",
+                  "required",
+                  "by_readiness"
+                ],
+                "description": "One milestone's issues counted by readiness, plus the two denominators."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::devtask"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_devtask_milestone"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/devtask/milestone"
+          },
+          "cli": {
+            "path": [
+              "devtask",
+              "milestone"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "devtask",
+          "plan",
+          "milestone",
+          "graph",
+          "readiness",
+          "provenance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
       },
       {
         "id": "directories.list",
@@ -14204,7 +15644,7 @@
         "module": "peers",
         "kind": "command",
         "title": "Announce what this peer is working on",
-        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
         "input": {
           "name": "AnnounceInput",
           "schema": {
@@ -14222,6 +15662,13 @@
                 },
                 "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
                 "default": []
+              },
+              "claim": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
               }
             },
             "required": [
@@ -14262,6 +15709,13 @@
                 "type": "boolean",
                 "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
               },
+              "claims": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Announcement"
+                },
+                "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+              },
               "announcement": {
                 "anyOf": [
                   {
@@ -14271,7 +15725,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Its announcement, when it made one."
+                "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
               },
               "overlaps": {
                 "type": "array",
@@ -14279,6 +15733,13 @@
                   "$ref": "#/$defs/Overlap"
                 },
                 "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case."
+              },
+              "released": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case."
               }
             },
             "required": [
@@ -14339,6 +15800,13 @@
               "Announcement": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                  },
                   "intent": {
                     "type": "string",
                     "description": "One line: the task or intent, in the peer's words."
@@ -14360,7 +15828,7 @@
                   "scope",
                   "at"
                 ],
-                "description": "What a peer said it is working on."
+                "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
               },
               "Overlap": {
                 "type": "object",
@@ -14539,6 +16007,13 @@
                     "type": "boolean",
                     "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
                   },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Announcement"
+                    },
+                    "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+                  },
                   "announcement": {
                     "anyOf": [
                       {
@@ -14548,7 +16023,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Its announcement, when it made one."
+                    "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
                   }
                 },
                 "required": [
@@ -14604,6 +16079,13 @@
               "Announcement": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                  },
                   "intent": {
                     "type": "string",
                     "description": "One line: the task or intent, in the peer's words."
@@ -14625,7 +16107,7 @@
                   "scope",
                   "at"
                 ],
-                "description": "What a peer said it is working on."
+                "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
               },
               "Overlap": {
                 "type": "object",
@@ -27602,7 +29084,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 38,
+        "capabilities": 39,
         "capability_ids": []
       },
       {
@@ -27743,6 +29225,19 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
       },
       {
+        "id": "devtask",
+        "title": "Executable development scopes",
+        "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "devtask.issue",
+          "devtask.milestone"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
@@ -27783,7 +29278,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 214,
+        "capabilities": 216,
         "capability_ids": []
       },
       {
@@ -28056,7 +29551,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 120,
+        "capabilities": 121,
         "capability_ids": []
       },
       {
@@ -28108,7 +29603,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 153,
+        "capabilities": 155,
         "capability_ids": []
       },
       {
@@ -28188,7 +29683,7 @@
     ]
   },
   "index": {
-    "fingerprint": "271185a6c237e15548b7c3c224b6c421b35c3cceb4075dcd4adf7417125788e5",
+    "fingerprint": "2952a40c211b4582d65a0e89dad7f38e57af13e719f223641270e1f1f8b158ad",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -28211,7 +29706,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 38,
+      "adr": 39,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -28220,7 +29715,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 214,
+      "document": 216,
       "feature": 20,
       "implementation": 45,
       "issue": 203,
@@ -28231,12 +29726,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 120,
+      "rule": 121,
       "scope": 1,
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 153,
+      "test": 155,
       "use-case": 43,
       "workspace": 1
     },
@@ -28853,6 +30348,24 @@
           "agents",
           "governance",
           "process"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "identity": "adr-0040",
+        "title": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "description": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "path": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 13697,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "cockpit",
+          "runtime",
+          "governance"
         ]
       },
       {
@@ -30662,7 +32175,7 @@
         "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/bench",
@@ -30672,7 +32185,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/capture",
@@ -30682,7 +32195,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/check",
@@ -30692,7 +32205,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -30702,7 +32215,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/context",
@@ -30712,7 +32225,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/decision",
@@ -30722,7 +32235,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/doctor",
@@ -30732,7 +32245,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -30742,7 +32255,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/evidence",
@@ -30752,7 +32265,7 @@
         "description": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/finish",
@@ -30762,7 +32275,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/handover",
@@ -30772,7 +32285,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/help",
@@ -30782,7 +32295,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/history",
@@ -30792,7 +32305,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/init",
@@ -30802,7 +32315,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -30812,7 +32325,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/migrate",
@@ -30822,7 +32335,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/plan",
@@ -30832,7 +32345,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/prompt",
@@ -30842,7 +32355,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/question",
@@ -30852,7 +32365,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/rules",
@@ -30862,7 +32375,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/search",
@@ -30872,7 +32385,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/session",
@@ -30882,7 +32395,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/skills",
@@ -30892,7 +32405,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/start",
@@ -30902,7 +32415,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/update",
@@ -30912,7 +32425,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/usecase",
@@ -30922,7 +32435,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/version",
@@ -30932,7 +32445,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/watch",
@@ -30942,7 +32455,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -31501,6 +33014,15 @@
         "bytes": 26342
       },
       {
+        "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "identity": "docs/COCKPIT_IDE_AUDIT.md",
+        "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "path": "docs/COCKPIT_IDE_AUDIT.md",
+        "source_class": "document",
+        "bytes": 41230
+      },
+      {
         "uri": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "identity": "docs/COMMANDS.md",
@@ -31553,6 +33075,15 @@
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
         "bytes": 14471
+      },
+      {
+        "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "identity": "docs/DEVELOPMENT_RUNTIME.md",
+        "title": "The development runtime",
+        "path": "docs/DEVELOPMENT_RUNTIME.md",
+        "source_class": "document",
+        "bytes": 37136
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -31741,7 +33272,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 14674
+        "bytes": 15577
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -31768,7 +33299,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 67394
+        "bytes": 68129
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -33594,7 +35125,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 38936
+        "bytes": 39748
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -34628,7 +36159,7 @@
         "path": ".ai/repo/project/issues/I0823.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2964
+        "bytes": 2966
       },
       {
         "uri": "majordomus://issue/I0824",
@@ -35563,7 +37094,7 @@
         "path": ".ai/repo/project/issues/I1102.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2176
+        "bytes": 2178
       },
       {
         "uri": "majordomus://issue/I1103",
@@ -36150,7 +37681,7 @@
         "path": ".ai/repo/project/milestones/M003.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 6523
+        "bytes": 6525
       },
       {
         "uri": "majordomus://milestone/M004",
@@ -36194,7 +37725,7 @@
         "path": ".ai/repo/project/milestones/derived-data-integrity.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 4740
+        "bytes": 4742
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -36282,7 +37813,7 @@
         "path": ".ai/repo/project/milestones/two-folder-integration.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 5910
+        "bytes": 5912
       },
       {
         "uri": "majordomus://milestone/web-sign-in",
@@ -38044,6 +39575,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "identity": "project.development-semantics-are-canonical@1",
+        "title": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "description": "A semantic of the development lifecycle — the plan, tasks, sessions, context, executions, peers, evidence, obligations and completion — is declared once as a capability of the Rust executable's registry, and the Cockpit, the CLI, the HTTP API, OpenAPI and MCP request it rather than deciding it; a surface that computes a status, decides a transition or writes a development object itself is a second implementation and a defect.",
+        "path": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 8035,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "cockpit",
+          "runtime"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "identity": "project.diagnostics-decide-the-exit@1",
@@ -39099,7 +40647,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/completion",
@@ -39110,7 +40658,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/continuity",
@@ -39121,7 +40669,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/drift",
@@ -39132,7 +40680,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/extension",
@@ -39143,7 +40691,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/knowledge",
@@ -39154,7 +40702,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/mcp",
@@ -39165,7 +40713,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/performance",
@@ -39176,7 +40724,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/policy",
@@ -39187,7 +40735,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/workers",
@@ -39198,7 +40746,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://test/test/cases/00_yaml_flatten.sh",
@@ -39519,6 +41067,22 @@
         "path": "test/cases/125_rule_proof.sh",
         "source_class": "case",
         "bytes": 6781
+      },
+      {
+        "uri": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "identity": "test/cases/128_the_subset_is_a_subset.sh",
+        "path": "test/cases/128_the_subset_is_a_subset.sh",
+        "source_class": "case",
+        "bytes": 2841
+      },
+      {
+        "uri": "majordomus://test/test/cases/129_executable_issues.sh",
+        "kind": "test",
+        "identity": "test/cases/129_executable_issues.sh",
+        "path": "test/cases/129_executable_issues.sh",
+        "source_class": "case",
+        "bytes": 14149
       },
       {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
@@ -40918,7 +42482,7 @@
       "identity": [
         "id"
       ],
-      "objects": 38
+      "objects": 39
     },
     {
       "name": "application",
@@ -41004,7 +42568,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 214
+      "objects": 216
     },
     {
       "name": "feature",
@@ -41118,7 +42682,7 @@
         "id",
         "version"
       ],
-      "objects": 120
+      "objects": 121
     },
     {
       "name": "scope",
@@ -41173,7 +42737,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 153
+      "objects": 155
     },
     {
       "name": "use-case",
@@ -46902,6 +48466,412 @@
                 "command": "majordomus why validate",
                 "setup": [],
                 "expectation": "exits 0; prints moment(s), valid"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "devtask"
+        ],
+        "route": "/docs/cli/devtask/",
+        "executable": false,
+        "usage": "majordomus devtask [OPTIONS] <COMMAND>",
+        "about": "One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "devtask",
+              "issue"
+            ],
+            "route": "/docs/cli/devtask/issue/",
+            "executable": true,
+            "usage": "majordomus devtask issue [OPTIONS] <ID>",
+            "about": "One issue as an executable development task, every field carrying where it came from",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "The issue id, as the canonical model spells it. An id the model does not declare is answered, not refused",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "no_git",
+                "long": "no-git",
+                "positional": false,
+                "help": "Answer from the canonical records alone, without consulting git — a deterministic answer that is the same on every machine",
+                "value_name": "NO_GIT",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "devtask-issue",
+                "title": "One issue as work to be done, not as metadata",
+                "description": "Identity, intent, status, milestone, dependencies, blockers, branches, commits, sessions and readiness in one answer, composed from the derivations that already own each half — the plan for the graph, `trace` for git, the canonical record for everything a person wrote. Nothing is manufactured: a key the record does not carry is `unknown` with the reason, never an empty string that reads as authored.",
+                "argv": [
+                  "devtask",
+                  "issue",
+                  "I0001"
+                ],
+                "command": "majordomus devtask issue I0001",
+                "setup": [],
+                "expectation": "exits 0; prints readiness, explicit"
+              },
+              {
+                "id": "devtask-issue-json",
+                "title": "The same, as the shape the API and MCP answer with",
+                "description": "One domain model behind every projection: this document is what `GET /api/v1/devtask/issue` returns and what the `majordomus_devtask` tool answers, with the four groups kept apart by the type — what a person authored, what the plan derives, what happened locally, and where the external projection stands — and a provenance on every field.",
+                "argv": [
+                  "devtask",
+                  "issue",
+                  "I0001",
+                  "--no-git",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus devtask issue I0001 --no-git --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /declaration/title/provenance, /position/status/provenance, /readiness/state, /attestation/explicit"
+              },
+              {
+                "id": "devtask-issue-undeclared",
+                "title": "An id the model does not declare is answered, not refused",
+                "description": "A typo that read as \"nothing has been authored\" is the one answer a work surface must never give, so an unknown id answers with `declared: false`, the readiness `undeclared`, and every canonical field `unknown` with the reason on it.",
+                "argv": [
+                  "devtask",
+                  "issue",
+                  "I9999",
+                  "--no-git"
+                ],
+                "command": "majordomus devtask issue I9999 --no-git",
+                "setup": [],
+                "expectation": "exits 0; prints undeclared"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "devtask",
+              "milestone"
+            ],
+            "route": "/docs/cli/devtask/milestone/",
+            "executable": true,
+            "usage": "majordomus devtask milestone [OPTIONS] <ID>",
+            "about": "One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "The milestone id, as the canonical model spells it",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "devtask-milestone",
+                "title": "What to work on next in one outcome, and what to unblock first",
+                "description": "The issues partitioned by readiness, the critical blockers ordered by how much unfinished work each holds back, and the startable work partitioned into subsets that may genuinely run at the same time. A pure function of the canonical records — no git, no clock, no network — so two runs on two machines produce the same bytes and a reader derives nothing itself.",
+                "argv": [
+                  "devtask",
+                  "milestone",
+                  "foundation"
+                ],
+                "command": "majordomus devtask milestone foundation",
+                "setup": [],
+                "expectation": "exits 0; prints READINESS"
+              },
+              {
+                "id": "devtask-milestone-json",
+                "title": "The graph, as the shape the API and MCP answer with",
+                "description": "Every partition the plan implies and no surface should recompute: `ready`, `blocked`, `waiting`, `active`, `review`, `completion_blocked`, `complete`, `cancelled`, plus `critical_blockers`, `parallelizable` with the scope path behind each serialisation, and `cycles` as strongly connected components.",
+                "argv": [
+                  "devtask",
+                  "milestone",
+                  "foundation",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus devtask milestone foundation --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /counts/total, /ready, /critical_blockers, /parallelizable"
               }
             ],
             "subcommands": []
@@ -55219,6 +57189,26 @@
         "output": "TokenList"
       },
       {
+        "name": "majordomus_devtask",
+        "id": "devtask.issue",
+        "title": "One issue as an executable development task",
+        "description": "Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: \"\"` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.",
+        "kind": "query",
+        "read_only": true,
+        "input": "DevTaskInput",
+        "output": "DevTask"
+      },
+      {
+        "name": "majordomus_devtask_milestone",
+        "id": "devtask.milestone",
+        "title": "One milestone as an executable dependency graph",
+        "description": "Every issue of the milestone as a node with its readiness, its wave and what waits on it; every dependency edge with at least one end inside, the crossing ones marked; the issues partitioned into ready, blocked, waiting, active, review, completion-blocked, complete and cancelled; the critical blockers ordered by how much unfinished work each holds back; the startable work partitioned into subsets that may genuinely run at the same time — same wave, each parallel-safe, no two sharing a scope path — with each serialisation naming the path that caused it; every dependency cycle as its strongly connected component; and every finding about the milestone or its issues. A pure function of the canonical records: no git, no clock, no network, every list in canonical order, so two runs on two machines produce the same bytes. A work surface reading this derives nothing itself.",
+        "kind": "query",
+        "read_only": true,
+        "input": "DevMilestoneInput",
+        "output": "MilestoneGraph"
+      },
+      {
         "name": "majordomus_directories",
         "id": "directories.list",
         "title": "The layer's directory contracts",
@@ -55462,7 +57452,7 @@
         "name": "majordomus_announce",
         "id": "peers.announce",
         "title": "Announce what this peer is working on",
-        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
         "kind": "command",
         "read_only": false,
         "input": "AnnounceInput",
@@ -56119,6 +58109,18 @@
         "method": "GET",
         "path": "/api/v1/design/tokens",
         "id": "design.tokens",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/devtask/issue",
+        "id": "devtask.issue",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/devtask/milestone",
+        "id": "devtask.milestone",
         "kind": "query"
       },
       {
@@ -57185,6 +59187,93 @@
         "case": "roles",
         "cached": false,
         "route": "GET /api/v1/design/tokens"
+      },
+      {
+        "key": "devtask.issue|direct|records-only",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "records-only",
+        "cached": false
+      },
+      {
+        "key": "devtask.issue|direct|with-git",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "with-git",
+        "cached": false
+      },
+      {
+        "key": "devtask.issue|mcp|records-only",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "records-only",
+        "cached": false,
+        "tool": "majordomus_devtask"
+      },
+      {
+        "key": "devtask.issue|mcp|with-git",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "with-git",
+        "cached": false,
+        "tool": "majordomus_devtask"
+      },
+      {
+        "key": "devtask.issue|http|records-only",
+        "kind": "capability",
+        "transport": "http",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "records-only",
+        "cached": false,
+        "route": "GET /api/v1/devtask/issue"
+      },
+      {
+        "key": "devtask.issue|http|with-git",
+        "kind": "capability",
+        "transport": "http",
+        "id": "devtask.issue",
+        "module": "devtask",
+        "case": "with-git",
+        "cached": false,
+        "route": "GET /api/v1/devtask/issue"
+      },
+      {
+        "key": "devtask.milestone|direct|first-milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "devtask.milestone",
+        "module": "devtask",
+        "case": "first-milestone",
+        "cached": false
+      },
+      {
+        "key": "devtask.milestone|mcp|first-milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "devtask.milestone",
+        "module": "devtask",
+        "case": "first-milestone",
+        "cached": false,
+        "tool": "majordomus_devtask_milestone"
+      },
+      {
+        "key": "devtask.milestone|http|first-milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "devtask.milestone",
+        "module": "devtask",
+        "case": "first-milestone",
+        "cached": false,
+        "route": "GET /api/v1/devtask/milestone"
       },
       {
         "key": "directories.list|direct|whole-tree",
@@ -60245,6 +62334,48 @@
           "cases": 2
         },
         {
+          "subject": "devtask.issue",
+          "module": "devtask",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "devtask.issue",
+          "module": "devtask",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "devtask.issue",
+          "module": "devtask",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "devtask.milestone",
+          "module": "devtask",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "devtask.milestone",
+          "module": "devtask",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "devtask.milestone",
+          "module": "devtask",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "directories.list",
           "module": "directories",
           "transport": "direct",
@@ -61656,20 +63787,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 78,
-          "covered": 75,
+          "required": 80,
+          "covered": 77,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 78,
-          "covered": 75,
+          "required": 80,
+          "covered": 77,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 76,
-          "covered": 73,
+          "required": 78,
+          "covered": 75,
           "missing": 0,
           "waived": 3
         },
@@ -61680,8 +63811,8 @@
           "waived": 0
         },
         "total": {
-          "required": 245,
-          "covered": 236,
+          "required": 251,
+          "covered": 242,
           "missing": 0,
           "waived": 9
         }
