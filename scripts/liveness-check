@@ -89,11 +89,26 @@ scan() {
   # a few lines down -- after a case/esac, or after the counter that bounds the pool -- so
   # the window is six lines, not one. A spawn is supervised if something in that window
   # captures $! or waits; anything else is work started and never reaped.
+  # A heredoc body is text this script writes, not commands it runs. `test/cases/123` writes
+  # a fixture case whose whole subject is an unsupervised background process — the runner
+  # must reap it — and reading that fixture as this file's own debt reported the gate's
+  # subject as its violation. Where the written text is itself run, the debt is real and
+  # belongs to whatever runs it; it is not this file's to carry.
   awk -v f="$f" -v W=6 '
-    { line[NR] = $0 }
+    {
+      line[NR] = $0
+      inheredoc[NR] = here
+      if (here != "") { if ($0 == here || $0 == "\t" here) here = "" }
+      else if (match($0, /<<-?[[:space:]]*"?'"'"'?[A-Za-z_][A-Za-z_0-9]*"?'"'"'?/)) {
+        tag = substr($0, RSTART, RLENGTH)
+        gsub(/^<<-?[[:space:]]*|["'"'"']/, "", tag)
+        here = tag
+      }
+    }
     END {
       for (i = 1; i <= NR; i++) {
         L = line[i]
+        if (inheredoc[i] != "") continue
         if (L ~ /^[[:space:]]*#/) continue
         if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
         supervised = 0

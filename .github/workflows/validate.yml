@@ -180,6 +180,15 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # `just` is a subject of this suite, not a convenience: 77_rust_evidence asks whether a
+      # person running `just test` reaches the same gates CI runs, and 90 and 102 read the
+      # recipe list and the completion it declares. The runner had no `just`, so 77 died at
+      # the `just --dump` assignment — `bash -eu` makes a 127 fatal before the case's own
+      # "the justfile does not parse" guard can say so — and 90 and 102 skipped their
+      # justfile halves silently. A gate nothing can run is not a gate.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       - name: the executable, built once for every case
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
