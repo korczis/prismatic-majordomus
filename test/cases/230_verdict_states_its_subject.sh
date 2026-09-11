@@ -1,4 +1,4 @@
-# majordomus-covers: project.a-verdict-states-its-subject
+# majordomus-covers: none
 # The gate of project.a-verdict-states-its-subject, driven against fixture trees rather than
 # against this checkout. A case that asserted this repository's own six blocking rules and
 # 129 unproven claims would pass the day somebody edited the baseline in the same commit as
