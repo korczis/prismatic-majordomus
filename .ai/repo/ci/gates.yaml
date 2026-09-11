@@ -32,6 +32,16 @@ gates:
     runs: scripts/ci/shell-lint
     summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
 
+  # The raw prompt archive is ignored and doctor refuses a repository that tracks it; neither
+  # covers a *derived* artefact that carries a prompt. One `find` in a site generator that
+  # forgot to exclude the local half would publish the archive with no prompt file committed
+  # anywhere for a reviewer to see. File reads only, so it belongs with the structure checks.
+  - id: prompt-privacy
+    job: structure
+    always: true
+    runs: scripts/ci/prompt-privacy
+    summary: no published or generated file is a prompt record, a rendering, or a copy of one; every site generator names the local half so it can exclude it
+
   - id: ui-check
     job: structure
     always: true

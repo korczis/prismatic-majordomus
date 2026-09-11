@@ -907,7 +907,7 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null; }
 trap mj_cleanup EXIT
 
 # ---------------------------------------------------------------- records
@@ -970,19 +970,34 @@ mj_reject_identity() {
   grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"
 }
 
+# collect staging files an earlier writer was killed before it could unlink. A SIGKILL runs
+# no trap, and the file it leaves sits in a tracked directory looking like repository content.
+# An hour of grace, so that a sibling publishing right now is never robbed of the file it is
+# about to link: the window between mktemp and ln is microseconds.
+mj_sweep_record_temps() {
+  find "$1" -maxdepth 1 -type f -name '.tmp.??????' -mmin +60 -exec rm -f {} + 2>/dev/null || true
+}
+
 # publish content as a new file in a directory, atomically, mode 0600, never overwriting.
 # mj_publish_record DIR NAME_PREFIX CONTENT_FILE -> prints the final path
+#
+# The staging file is created inside DIR because the hard link that publishes it cannot cross
+# a filesystem, and DIR is tracked — so an abort between mktemp and the unlink below dirties a
+# record section. Three things stop that: MJ_REC_TMP puts the file on the EXIT trap's list, the
+# sweep above collects what a kill left on an earlier run, and .gitignore makes either
+# uncommittable in the meantime. A leftover must never be able to reach a commit.
 mj_publish_record() {
-  local dir="$1" prefix="$2" src="$3" tmp final n=0 head
+  local dir="$1" prefix="$2" src="$3" final n=0 head
   mkdir -p "$dir"
-  tmp="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$tmp"; cat "$src" > "$tmp"
+  mj_sweep_record_temps "$dir"
+  MJ_REC_TMP="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$MJ_REC_TMP"; cat "$src" > "$MJ_REC_TMP"
   head="$(mj_git_head)"
   while :; do
     final="$dir/$(mj_now_compact)--${prefix:+$prefix--}$(mj_branch_key)--${head:0:7}--$(mj_rand16).md"
-    ln "$tmp" "$final" 2>/dev/null && break
-    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$tmp"; return 1; }
+    ln "$MJ_REC_TMP" "$final" 2>/dev/null && break
+    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""; return 1; }
   done
-  rm -f "$tmp"
+  rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""
   printf '%s\n' "$final"
 }
 

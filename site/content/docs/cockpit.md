@@ -62,6 +62,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
+| `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
@@ -95,6 +96,60 @@ A **detail** page pages nothing. A graph's nodes and edges, and the artifact man
 listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
 has only them, and a reader checking whether a path is in the manifest must be able to
 find it with the browser's own search.
+
+## The one page that is about this machine
+
+Every other page is about the repository: the same answer in any clone, and safe to publish.
+`/cockpit/continuity` is not. It reads `.ai/local/` — the open episodes, the resolved
+handover, the blockers of this checkout — and those records name this disk. That is the
+reason the Cockpit is bound to the loopback interface and the reason this page has no
+counterpart on the website (ADR 0014).
+
+It is also the page that has to answer two different readers, and it says which is which.
+
+**The worker** asks *what am I resuming from?* That is `continuity.state`: one episode — the
+one `session-current.yaml` resolves to — one handover, one checkpoint, each with the
+divergence label that says how far to trust it, and the questions that refuse completion.
+(ADR 0041 adds a freshness label beside the divergence one, because `advanced` is a true
+statement about git topology and says nothing about age.)
+
+**The operator** asks *is this subsystem working?* That is the `lifecycle.*` group, and it
+exists because the worker's answer is structurally blind to the operator's question. The
+pointer is a symlink the most recent start event re-aims; on 2026-09-11 this repository held
+five open episodes in one checkout and every surface could name one. So the page carries,
+below the briefing's own cards:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Card | What it shows | Capability |
+|---|---|---|
+| Every open episode | one row per open episode: its standing (`current`, `open`, `foreign`, `stranded`), the provider that opened it, the branch, when it opened, the last ledger line stamped with it, and the tasks it touched | `lifecycle.episodes` |
+| This process against the repository | the commit the served index was built at, against the commit `git` reports on the call, and whether they agree | `lifecycle.runtime` |
+| Recovery | episodes that cannot close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic | `lifecycle.recovery` |
+| Providers | per provider: the lifecycle events its adapter declares, whether it can archive prompts, its client configuration, and the enforcement entries this repository wires to its hook | `lifecycle.providers` |
+| Closed episodes | how many tracked records exist, how many closed on this branch, and the newest twenty, each linking to its object page | `lifecycle.closed` |
+
+</div>
+
+
+Three rules this page keeps, and the reason for each.
+
+**No value is computed here.** Every number, word and badge above arrives from a capability
+answer; the page decides colours and nothing else. A Cockpit that worked out for itself
+whether an episode was stranded would be a second session model, and the first thing two
+session models do is disagree.
+
+**No prompt is ever rendered.** The prompt archive is the one part of the local half that is
+a conversation, and no card on this page reads it. What a worker typed is not operational
+state, and a surface that showed it would be a transcript with better formatting.
+
+**The page is a photograph, and does not poll.** The executions pages follow a WebSocket
+because an execution emits events; the session store does not, and a browser asking every
+five seconds whether an episode is still open would spend the whole day answering "yes". A
+reload is the refresh, `Cache-Control: no-cache` makes it honest, and one section failing to
+read renders as a failed card rather than as a dead page — the section most likely to fail
+is a store nothing has written yet, and hiding the other five behind it would be the wrong
+trade.
 
 ## What makes it a projection and not a dashboard
 
