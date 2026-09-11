@@ -124,7 +124,9 @@ scripts/ci/worktree-check              # one constant, the guard wired, every do
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
 scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
 scripts/rust-check --integration       # the executable built and the registry checks only
-just coverage                          # line coverage against scripts/rust-coverage-threshold
+just coverage                          # coverage with test code out of the denominator, against
+                                      # scripts/rust-coverage-threshold and, for the session/continuity
+                                      # domain, scripts/session-coverage-threshold
 scripts/site-build && scripts/site-check
 SITE_PROBE_JOBS=4 scripts/site-probe   # every route at three widths, four routes at a time
 ```

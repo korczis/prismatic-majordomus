@@ -41,7 +41,7 @@ bench coverage --check
 web validate
 quality report
 bench --profile ci --check
-cargo llvm-cov --fail-under-lines $threshold
+scripts/rust-coverage (crate $threshold%, session domain $domain%)
 artifact $ARTIFACT'
 got="$(grep -oE '^[[:space:]]*step "[^"]+"' "$RC" | sed -E 's/^[[:space:]]*step "//; s/"$//' | grep -v '^rust-check:')"
 [ "$got" = "$want" ] || { printf '    scripts/rust-check does not run the gates in CI'"'"'s order\n    want:\n%s\n    got:\n%s\n' "$want" "$got"; exit 1; }
@@ -54,8 +54,9 @@ expect_grep 'cargo run --quiet -- capabilities validate' "$RC"
 expect_grep 'cargo run --quiet -- generate --check' "$RC"
 expect_grep 'cargo run --quiet -- bench coverage --check' "$RC"
 expect_grep 'cargo run --quiet -- quality report' "$RC"
-expect_grep 'cargo llvm-cov --all-targets --summary-only --fail-under-lines "[$]threshold"' "$RC"
 expect_grep 'scripts/rust-coverage-threshold' "$RC"
+expect_grep 'scripts/rust-coverage' "$RC"
+expect_grep 'session-coverage-threshold' "$RC"
 
 # --- the coverage floor is one integer, committed, and not under the figure it was set at;
 #     lowering it is an edit to this case, visible in review, not a quiet change to a number
@@ -79,8 +80,29 @@ printf '%s\n' "$rust_job" | grep -q 'upload-artifact' || { echo "    the rust jo
 grep -qE "^  (step \"cargo doc -D warnings\";|.*)RUSTDOCFLAGS='-D warnings' cargo doc" "$RC" || { echo "    scripts/rust-check builds the docs without -D warnings"; exit 1; }
 cov_job="$(awk '/^  coverage:/{f=1} /^  bench:/{f=0} f' "$WF")"
 [ -n "$cov_job" ] || { echo "    validate.yml has no coverage job"; exit 1; }
-printf '%s\n' "$cov_job" | grep -qF 'cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"' \
-  || { echo "    the coverage job does not fail under scripts/rust-coverage-threshold"; exit 1; }
+printf '%s\n' "$cov_job" | grep -qF 'scripts/rust-coverage' \
+  || { echo "    the coverage job does not run scripts/rust-coverage"; exit 1; }
+# The measurement subtracts test code from both sides of the fraction, which is the whole
+# reason it is a script of this repository's rather than a cargo-llvm-cov invocation: a
+# `#[cfg(test)] mod tests` lives in the same file as the code it tests, and no filename regex
+# can reach it. A job that went back to calling cargo-llvm-cov directly would be measuring
+# the crate plus its tests again, and the threshold would move whenever a test was written.
+printf '%s\n' "$cov_job" | grep -qF 'cargo llvm-cov --all-targets --summary-only' \
+  && { echo "    the coverage job measures the crate together with its own test code again"; exit 1; }
+# and the second threshold is a file of its own with a domain beside it, so that the domain
+# cannot be narrowed to raise the number without the narrowing being a visible edit
+SD="$ROOT/scripts/session-coverage-threshold"
+expect_file "$SD"
+expect_file "$ROOT/scripts/session-coverage-domain"
+sd="$(tr -d ' \n' < "$SD")"
+case "$sd" in ''|*[!0-9]*) echo "    scripts/session-coverage-threshold is not one integer: '$sd'"; exit 1 ;; esac
+{ [ "$sd" -ge 90 ] && [ "$sd" -le 100 ]; } || { echo "    the session domain floor is $sd; the mission asks for 100"; exit 1; }
+grep -q 'continuity.rs' "$ROOT/scripts/session-coverage-domain" \
+  || { echo "    the session/continuity domain does not name continuity.rs"; exit 1; }
+while IFS= read -r d; do
+  case "$d" in ''|\#*) continue ;; esac
+  [ -f "$ROOT/$d" ] || { echo "    the session/continuity domain names $d, which is not a file; a threshold over a file nothing compiles is a threshold over nothing"; exit 1; }
+done < "$ROOT/scripts/session-coverage-domain"
 bench_job="$(awk '/^  bench:/{f=1} /^  site:/{f=0} f' "$WF")"
 printf '%s\n' "$bench_job" | grep -qF 'cargo run --quiet -- bench --profile ci --check --no-write' \
   || { echo "    the bench job does not run the benchmark check against the baseline"; exit 1; }
@@ -111,8 +133,8 @@ recipe_exists rust-check
 recipe_body rust-check | grep -q 'scripts/rust-check' \
   || { echo "    just rust-check does not run scripts/rust-check"; exit 1; }
 recipe_exists coverage
-recipe_body coverage | grep -q 'rust-coverage-threshold' \
-  || { echo "    just coverage does not read scripts/rust-coverage-threshold"; exit 1; }
+recipe_body coverage | grep -q 'scripts/rust-coverage' \
+  || { echo "    just coverage does not run scripts/rust-coverage"; exit 1; }
 recipe_exists test-rust
 recipe_exists bench
 
