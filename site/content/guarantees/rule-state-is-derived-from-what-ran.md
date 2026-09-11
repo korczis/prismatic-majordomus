@@ -1,7 +1,7 @@
 +++
 title = "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed"
 description = "There are two questions about a rule and they are not the same question."
-weight = 167
+weight = 168
 [extra]
 claim_id = "rule-state-is-derived-from-what-ran"
 status = "guaranteed"

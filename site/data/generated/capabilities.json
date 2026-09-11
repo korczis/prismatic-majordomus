@@ -307,6 +307,19 @@
       "test_case": "03_update"
     },
     {
+      "id": "archive-fidelity",
+      "claim": "An archive that lost the file modes fails rather than travelling",
+      "source": "docs/ARCHIVE.md",
+      "implementation": "lib/archive.sh",
+      "test": "test/cases/130_archive.sh",
+      "status": "guaranteed",
+      "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
+      "responsibility": "projection",
+      "source_route": "/docs/archive/",
+      "command": "archive",
+      "test_case": "130_archive"
+    },
+    {
       "id": "context-budget",
       "claim": "The always-loaded instruction file has a line budget with a failing check",
       "source": "share/skeleton/policy.yaml",
@@ -2001,26 +2014,26 @@
       "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
       "source": "docs/DOCTRINE.md",
       "implementation": "scripts/ci/english-only-check",
-      "test": "test/cases/134_governance_gates.sh",
+      "test": "test/cases/138_governance_gates.sh",
       "status": "guaranteed",
       "note": "The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one.",
       "responsibility": "none",
       "source_route": "/docs/doctrine/",
       "command": null,
-      "test_case": "134_governance_gates"
+      "test_case": "138_governance_gates"
     },
     {
       "id": "a-finding-names-how-to-see-it-again",
       "claim": "Every finding a command reports names the command that reproduces it",
       "source": "docs/DOCTRINE.md",
       "implementation": "scripts/ci/finding-reproduce-check",
-      "test": "test/cases/134_governance_gates.sh",
+      "test": "test/cases/138_governance_gates.sh",
       "status": "guaranteed",
       "note": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
       "responsibility": "none",
       "source_route": "/docs/doctrine/",
       "command": null,
-      "test_case": "134_governance_gates"
+      "test_case": "138_governance_gates"
     },
     {
       "id": "evidence-currency-is-not-collapsed",

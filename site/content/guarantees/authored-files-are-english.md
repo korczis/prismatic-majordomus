@@ -1,7 +1,7 @@
 +++
 title = "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check"
 description = "project.english-only says every artifact of this repository is written in English:"
-weight = 168
+weight = 169
 [extra]
 claim_id = "authored-files-are-english"
 status = "guaranteed"
@@ -78,7 +78,7 @@ whoever wrote it and as noise to everyone else.
 ## What proves it
 
 The check itself, run against this repository in CI on every change, and
-`test/cases/134_governance_gates.sh`, which proves it by mutation rather than by assertion
+`test/cases/138_governance_gates.sh`, which proves it by mutation rather than by assertion
 that it exists: a Czech letter in an authored file is named with its file and line, a whole
 other script is too, a declared proper noun is stripped, a declared fixture is exempt only
 with its reason, and the generated trees are out of scope because a projection carrying a

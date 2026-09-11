@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0047
+id: adr-0049
 kind: adr
 title: Proof is a recorded execution, and inputs unchanged is not proven
 status: proposed
@@ -34,7 +34,7 @@ provenance:
   origin: authored
 ---
 
-# 47. Proof is a recorded execution, and inputs unchanged is not proven
+# 49. Proof is a recorded execution, and inputs unchanged is not proven
 
 ## Context
 

@@ -33,8 +33,8 @@ related:
   - file:.ai/repo/rule-proof-baseline.txt
   - test:test/cases/125_rule_proof.sh
   - test:test/cases/133_rule_graph.sh
-  - test:test/cases/134_governance_gates.sh
-  - file:.ai/repo/adrs/0047-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md
+  - test:test/cases/138_governance_gates.sh
+  - file:.ai/repo/adrs/0049-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md
 provenance:
   origin: authored
 ---
