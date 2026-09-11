@@ -1029,13 +1029,22 @@ claims:
     note: The gates that always run are in every plan; a changed path selects the gates of every class it matches, as a union; a class may escalate; a gate brings what it implies and what it requires; the plan is deterministic and says for every gate why it ran or did not. The workflow reads the plan's outputs and carries no path list of its own; test/cases/26_ci_wiring.sh proves every gate's job exists, is gated on the plan and is needed by the verdict.
 
   - id: ci-verdict
-    claim: The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red
+    claim: The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red
     source: docs/CI.md
     implementation: scripts/ci/verdict
     test: test/cases/94_ci_plan.sh
     status: guaranteed
     responsibility: none      # the pipeline, not a supervised responsibility
-    note: The verdict job always runs, so a required check is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition.
+    note: The verdict job always runs, so the status is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition. This claim was worded "the one status a branch rule requires" until 2026-09-11, which asserted a branch rule that does not exist - see ci-verdict-is-required below. What scripts/ci/verdict computes was always true; what gated a merge on it was not.
+
+  - id: ci-verdict-is-required
+    claim: No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it
+    source: docs/CI.md
+    implementation: "-"
+    test: "-"
+    status: planned
+    responsibility: none      # the pipeline, not a supervised responsibility
+    note: Named so the omission is visible rather than implied by the claim above, which asserted it. Measured on 2026-09-11 - `gh api repos/korczis/prismatic-majordomus/branches/master/protection` answers 404 Branch not protected and `gh api repos/korczis/prismatic-majordomus/rulesets` answers []. There is therefore no required status on master and every gate in this repository is advisory at the merge, which is why a red trunk can persist, why derived data can go stale across a server-side merge (docs/CI.md records both), and why the honest reading of a green run is "nothing objected" rather than "nothing could object". Closing this is a repository-settings act an operator takes, not a change to this tree; it is recorded here because a promise nobody keeps is worse when nobody can see it is unkept.
 
   - id: suite-parallel
     claim: The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it
