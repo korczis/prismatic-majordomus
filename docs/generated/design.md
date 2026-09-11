@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.5.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `1c73468b1437a8c9066eef0eb69fd19f2392c8cbb080db92d7c630195bdce2be` (`--mj-design: "1c73468b1437"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `f6de6438c347101e41bac8e63f5c203ccebcd476606ef9686de5c309873dff05` (`--mj-design: "f6de6438c347"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -59,7 +59,7 @@ Five meanings; every state word any surface renders is filed under one of them a
 |---|---|---|
 | `--mj-measure` | 62rem | the widest a reading column gets |
 | `--mj-cockpit` | 1600px | the widest the Cockpit's layout gets before it centres |
-| `--mj-topbar` | 2.75rem | the Cockpit's top bar; the sidebar and a sticky header sit under it |
+| `--mj-topbar` | 3.75rem | the height of the top bar both surfaces render; a sidebar and a sticky header sit under it |
 | `--radius-sm` | 0.25rem | a badge, a chip, an input |
 | `--radius-md` | 0.375rem | a button, a code block |
 | `--radius-lg` | 0.5rem | a card, a panel |

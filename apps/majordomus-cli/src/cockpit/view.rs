@@ -1,11 +1,13 @@
 //! The shell every Cockpit page is rendered into, and the small vocabulary of components
 //! the pages are built from.
 //!
-//! The pages carry no raw utility classes. Every class here is a semantic one the
-//! Cockpit's stylesheet defines (`mj-card`, `mj-table`, `mj-badge--fail`), so the design
-//! lives in one file a designer can read and the Rust says what a thing *is* rather than
-//! how it looks. That is also what makes the stylesheet deterministic: it is a function of
-//! its own source and nothing else, and the drift check over it is exact.
+//! The pages carry no raw utility classes. Every class here is a semantic one — the shell
+//! around a page and the components inside it in `share/design/shell.css` and
+//! `share/design/primitives.css`, which the published site renders with too, and what the
+//! Cockpit alone has in `share/cockpit/src/cockpit.css` — so the design lives in files a
+//! designer can read and the Rust says what a thing *is* rather than how it looks. That is
+//! also what makes the stylesheet deterministic: it is a function of its own sources and
+//! nothing else, and the drift check over it is exact.
 //!
 //! Every `x-` attribute here names a *top-level* property or method of the one Alpine
 //! component and never an expression — not even a dotted path, which the CSP build reads
@@ -93,10 +95,10 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
                     .attr("id", "main")
                     .class("mj-main")
                     .when(!shell.assets_present, |m| m.child(alert("warn", NO_ASSETS)))
-                    .child(breadcrumbs(&shell.breadcrumbs))
                     .child(
                         el("header")
                             .class("mj-page-head")
+                            .child(breadcrumbs(&shell.breadcrumbs))
                             .child(el("h1").class("mj-page-title").text(shell.title))
                             .node(match &shell.subtitle {
                                 Some(s) => Node::Element(el("p").class("mj-page-subtitle").text(s)),
@@ -138,48 +140,62 @@ fn skip_link() -> El {
         .text("Skip to content")
 }
 
+/// The top bar: the same band, the same brand lockup and the same controls the site's
+/// navbar renders, from share/design/shell.css. What is the Cockpit's own is what sits
+/// between them — the button that opens the command palette.
 fn header(shell: &Shell<'_>) -> El {
-    el("header")
-        .class("mj-topbar")
-        .child(
-            el("a")
-                .class("mj-brand")
-                .attr("href", "/cockpit")
-                .child(
-                    el("span")
-                        .class("mj-brand-mark")
-                        .attr("aria-hidden", "true")
-                        .raw(MARK),
-                )
-                .child(el("span").class("mj-brand-name").text("Majordomus"))
-                .child(el("span").class("mj-brand-suffix").text("Cockpit")),
-        )
-        .child(
-            el("button")
-                .class("mj-palette-open")
-                .attr("type", "button")
-                .attr("x-on:click", "openPalette")
-                .attr("aria-keyshortcuts", "Control+K Meta+K")
-                .child(el("span").text("Search or run"))
-                .child(el("kbd").class("mj-kbd").text("Ctrl K")),
-        )
-        .child(
-            el("nav")
-                .class("mj-topbar-links")
-                .attr("aria-label", "External surfaces")
-                .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger"))
-                .child(link("/openapi.json", "OpenAPI"))
-                .child(
-                    el("button")
-                        .class("mj-theme-toggle")
-                        .attr("type", "button")
-                        .attr("x-on:click", "toggleTheme")
-                        .attr("aria-label", "Switch between light and dark")
-                        .attr("title", "Switch between light and dark")
-                        .text("Theme"),
-                ),
-        )
-        .child(el("span").class("mj-version").text(shell.version))
+    el("header").class("mj-topbar").child(
+        el("div")
+            .class("mj-topbar-inner")
+            .child(
+                el("a")
+                    .class("mj-brand")
+                    .attr("href", "/cockpit")
+                    .child(
+                        el("span")
+                            .class("mj-brand-mark")
+                            .attr("aria-hidden", "true")
+                            .raw(MARK),
+                    )
+                    .child(el("span").class("mj-brand-name").text("Majordomus"))
+                    .child(el("span").class("mj-brand-suffix").text(shell.version)),
+            )
+            .child(
+                el("button")
+                    .class("mj-palette-open")
+                    .attr("type", "button")
+                    .attr("x-on:click", "openPalette")
+                    .attr("aria-keyshortcuts", "Control+K Meta+K")
+                    .child(el("span").text("Search or run"))
+                    .child(el("kbd").class("mj-kbd").text("Ctrl K")),
+            )
+            .child(
+                el("nav")
+                    .class("mj-topbar-actions")
+                    .attr("aria-label", "External surfaces")
+                    .child(
+                        el("button")
+                            .class("mj-theme-toggle")
+                            .attr("type", "button")
+                            .attr("x-on:click", "toggleTheme")
+                            .attr("aria-label", "Switch between light and dark")
+                            .attr("title", "Switch between light and dark")
+                            .text("Theme"),
+                    )
+                    .child(
+                        el("a")
+                            .class("mj-action")
+                            .attr("href", crate::http::swagger::SWAGGER_PATH)
+                            .text("Swagger"),
+                    )
+                    .child(
+                        el("a")
+                            .class("mj-action")
+                            .attr("href", "/openapi.json")
+                            .text("OpenAPI"),
+                    ),
+            ),
+    )
 }
 
 fn sidebar(shell: &Shell<'_>) -> El {
@@ -260,30 +276,55 @@ fn sidebar(shell: &Shell<'_>) -> El {
 /// dozen modules are a menu; thirty object kinds under them are a wall.
 const FOLD_ABOVE: usize = 12;
 
+/// The footer: the site's band, inner measure and link row, from share/design/shell.css.
 fn footer(shell: &Shell<'_>) -> El {
-    el("footer")
-        .class("mj-footer")
-        .child(el("span").text(format!("majordomus {}", shell.version)))
-        .child(el("span").text("·"))
-        .child(link("/openapi.json", "openapi.json"))
-        .child(el("span").text("·"))
-        .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI"))
-        .child(el("span").text("·"))
-        .child(link("/cockpit/health", "health"))
+    el("footer").class("mj-footer").child(
+        el("div")
+            .class("mj-footer-inner")
+            .child(
+                el("ul")
+                    .class("mj-footer-links")
+                    .child(el("li").child(link("/openapi.json", "openapi.json")))
+                    .child(el("li").child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI")))
+                    .child(el("li").child(link("/cockpit/health", "health"))),
+            )
+            .child(
+                el("p")
+                    .class("mj-footer-note")
+                    .text(format!("majordomus {}", shell.version)),
+            ),
+    )
 }
 
+/// The trail, composed as the site composes it: the separator is markup — one
+/// `<li aria-hidden="true">/</li>` between the crumbs — rather than a `::before`, so a
+/// screen reader is never read a slash and both surfaces emit the same trail.
 fn breadcrumbs(trail: &[(String, Option<String>)]) -> El {
     if trail.is_empty() {
         return el("div").class("mj-hidden");
     }
     let mut list = el("ol").class("mj-crumbs");
-    for (label, href) in trail {
-        list = list.child(el("li").child(match href {
-            Some(h) => el("a").attr("href", h.clone()).text(label),
-            None => el("span").attr("aria-current", "page").text(label),
-        }));
+    for (index, (label, href)) in trail.iter().enumerate() {
+        if index > 0 {
+            list = list.child(el("li").attr("aria-hidden", "true").text("/"));
+        }
+        list = list.child(match href {
+            Some(h) => el("li").class("mj-crumb").child(
+                el("a")
+                    .class("mj-crumb-link")
+                    .attr("href", h.clone())
+                    .text(label),
+            ),
+            None => el("li")
+                .class("mj-crumb-current")
+                .attr("aria-current", "page")
+                .text(label),
+        });
     }
-    el("nav").attr("aria-label", "Breadcrumb").child(list)
+    el("nav")
+        .class("mj-crumbs-nav")
+        .attr("aria-label", "Breadcrumb")
+        .child(list)
 }
 
 /// The command palette: an empty shell the script fills from the capability, graph and

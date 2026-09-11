@@ -60,47 +60,15 @@
 @layer components {
   /* ---------------------------------------------------------------- structure */
 
-  .mj-body {
-    @apply min-h-screen;
-  }
+  /* The body, the skip link, the top bar and its brand, the page head, the breadcrumb, the
+     footer and the theme toggle are share/design/shell.css now: one vocabulary, composed
+     the way the published site composes it. What is left here is what the Cockpit alone
+     has — the layout with a sidebar in it, the sidebar, the command palette, the
+     statistics strip, pagination, the runner, the log and the canvases. */
 
-  .mj-skip {
-    @apply absolute left-2 top-2 z-50 -translate-y-16 rounded-md px-3 py-2 focus:translate-y-0;
-    background: var(--mj-raised);
-    color: var(--mj-fg);
-    border: 1px solid var(--mj-line);
-  }
-
-  /* Wraps rather than overflows: at the narrowest audited width the brand, the palette
-     button and the external links do not fit on one line, and a control plane that
-     scrolls sideways in a split pane is worse than one that is two lines tall. */
-  .mj-topbar {
-    @apply sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2;
-    min-height: var(--mj-topbar);
-    background: var(--mj-raised);
-    border-bottom: 1px solid var(--mj-line);
-  }
-
-  .mj-brand {
-    @apply flex items-center gap-2 font-semibold no-underline;
-    color: var(--mj-fg);
-  }
-  /* The mark is the canonical one, inlined by the shell from its compiled copy; it draws in
-     currentColor, so it is the text colour of the brand in either theme. */
-  .mj-brand-mark {
-    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center;
-  }
-  .mj-brand-mark > svg {
-    @apply h-full w-full;
-  }
-  .mj-brand-name {
-    @apply tracking-tight;
-  }
-  .mj-brand-suffix {
-    @apply hidden text-label uppercase tracking-caps sm:inline;
-    color: var(--mj-muted);
-  }
-
+  /* The button that opens the palette. Only a control plane has one, and it takes the
+     middle of the bar: full width on its own line when the bar has wrapped, and the space
+     between the brand and the controls when it has not. */
   .mj-palette-open {
     @apply order-3 flex w-full min-w-0 items-center justify-between gap-3 rounded-md px-3 py-1.5 text-left;
     @apply sm:order-none sm:ml-auto sm:w-auto sm:max-w-md sm:flex-1;
@@ -110,22 +78,6 @@
   }
   .mj-palette-open:hover {
     border-color: var(--mj-accent);
-  }
-
-  .mj-topbar-links {
-    @apply ml-auto flex shrink-0 items-center gap-3 text-small sm:ml-0;
-  }
-  .mj-theme-toggle {
-    @apply rounded-md px-2 py-1 text-small;
-    border: 1px solid var(--mj-line);
-    color: var(--mj-muted);
-  }
-  .mj-theme-toggle:hover {
-    color: var(--mj-fg);
-  }
-  .mj-version {
-    @apply hidden font-mono text-label sm:block;
-    color: var(--mj-muted);
   }
 
   .mj-layout {
@@ -195,7 +147,7 @@
     color: var(--mj-muted);
   }
   .mj-nav-section--foldable[open] > .mj-nav-summary::after {
-    content: "−";
+    content: "\2212";
   }
   .mj-nav-section--foldable > .mj-nav-summary:hover {
     background: var(--mj-sunken);
@@ -204,40 +156,6 @@
 
   .mj-main {
     @apply min-w-0 flex-1 py-6;
-  }
-  .mj-page-head {
-    @apply mb-5;
-  }
-  /* A heading is an identity here — `document.docs/EXTRACTION_REPORT.md` — and an identity
-     has no spaces to break at. Breaking anywhere is right for a name; wrapping the page
-     sideways is not. */
-  .mj-page-title {
-    @apply text-xl font-semibold tracking-tight [overflow-wrap:anywhere];
-    color: var(--mj-fg);
-  }
-  .mj-page-subtitle {
-    @apply mt-1 max-w-[var(--mj-measure)] [overflow-wrap:anywhere];
-    color: var(--mj-muted);
-  }
-  .mj-crumbs {
-    @apply mb-2 flex min-w-0 flex-wrap items-center gap-1 text-label [overflow-wrap:anywhere];
-    color: var(--mj-muted);
-  }
-  .mj-crumbs li + li::before {
-    content: "/";
-    @apply mr-1 opacity-50;
-  }
-  .mj-crumbs a {
-    @apply no-underline;
-    color: inherit;
-  }
-  .mj-crumbs a:hover {
-    color: var(--mj-fg);
-  }
-
-  .mj-footer {
-    @apply mx-auto flex w-full max-w-[var(--mj-cockpit)] flex-wrap items-center gap-2 px-4 py-6 text-label;
-    color: var(--mj-muted);
   }
   .mj-hidden {
     @apply hidden;
