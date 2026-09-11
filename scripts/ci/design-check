@@ -166,7 +166,7 @@ for file in $(printf '%s\n' "$tracked" | grep -E '\.(js|mjs|css|rs|html|tera)$' 
     # the day `series` is removed from tokens.yaml this still fails.
     case "$token" in
       *-)
-        printf '%s\n' "$declared" | grep -q -- "^$token[0-9a-z]" && continue
+        printf '%s\n' "$declared" | grep -q -- "^${token}[0-9a-z]" && continue
         fail "$file  reads the family $token*, of which the declaration emits nothing"
         continue
         ;;

@@ -435,10 +435,21 @@ function choose(shape) {
     avoidOverlap: true,
     condense: true,
     // kinds in contiguous blocks, and within a kind the busiest first: the eye reads the
-    // vocabulary as bands and finds the hubs at the front of each
-    sort: (a, b) =>
-      a.data('kind').localeCompare(b.data('kind')) || b.data('weight') - a.data('weight'),
+    // vocabulary as bands and finds the hubs at the front of each. By code unit, not by
+    // `localeCompare`: every comparator in this repository orders by code unit, so that the
+    // drawing a reader sees does not depend on the locale of the machine rendering it
+    // (`scripts/ci/order-check`, question 3).
+    sort: (a, b) => byCodeUnit(a.data('kind'), b.data('kind')) || b.data('weight') - a.data('weight'),
   };
+}
+
+/**
+ * Order two strings by code unit. The repository's one ordering rule: a comparator orders by
+ * code unit and never by the reader's locale, so the same tree renders the same everywhere.
+ */
+function byCodeUnit(a, b) {
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }
 
 /** A node's diameter, from its degree. Square-rooted, so a hub is bigger and not absurd. */
