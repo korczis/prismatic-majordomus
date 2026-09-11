@@ -1,7 +1,7 @@
 +++
 title = "A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it"
 description = "majordomus why diagnose and the questionnaire on /why/ answer \"what is my operational"
-weight = 148
+weight = 149
 [extra]
 claim_id = "why-diagnosis-explainable"
 status = "guaranteed"

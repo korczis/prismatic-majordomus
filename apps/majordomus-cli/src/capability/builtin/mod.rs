@@ -40,6 +40,7 @@ pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
+pub mod evidence;
 pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
@@ -138,6 +139,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         continuity,
         obligations,
         deploy,
+        evidence,
         executions,
         peers,
         server,

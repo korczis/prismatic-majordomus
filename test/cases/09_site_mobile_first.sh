@@ -5,7 +5,20 @@
 . "$ROOT/test/lib.sh"
 command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
-expect_exit 0 "$ROOT/scripts/site-build" --no-css
+# `--no-css` skips the Node steps, which is what this case wants: it lints markup and never
+# looks at a stylesheet. But the Zola build itself resolves `get_url(path="app.css")` in
+# base.html, and `site/static/app.css` is generated and gitignored — absent in any fresh
+# checkout. So `--no-css` succeeds only when some earlier case in the same run happened to
+# leave the file behind, which made this case pass by accident of ordering and fail the day
+# a new exclusive case changed it. Build the stylesheet once when it is missing, and keep the
+# fast path when it is not.
+if [ -f "$ROOT/site/static/app.css" ]; then
+  expect_exit 0 "$ROOT/scripts/site-build" --no-css
+elif [ -x "$ROOT/node_modules/.bin/tailwindcss" ]; then
+  expect_exit 0 "$ROOT/scripts/site-build"
+else
+  echo "    node_modules absent and no stylesheet to reuse; skipping"; exit 0
+fi
 out="$ROOT/site/public"
 pages="$(find "$out" -name '*.html')"
 [ -n "$pages" ]

@@ -1,7 +1,7 @@
 +++
 title = "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount"
 description = "/docs is this repository's own documentation — the Zola site, served by the running executable from the same source that is published to GitHub Pages. /swagger is the Swagger UI. /openapi.json is the document the viewer reads, derived from the capability registry. / is the landing page. Each of those names belongs to exactly one producer, and a change that gives one of them to something else is refused rather than merged."
-weight = 156
+weight = 157
 [extra]
 claim_id = "web-namespaces-reserved"
 status = "guaranteed"
