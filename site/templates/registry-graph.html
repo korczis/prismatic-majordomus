@@ -1,0 +1,60 @@
+{% extends "page.html" %}
+{#- The composed graph, from data/registry/registry.json .graph: the shape of the artifact
+    the executable generates, not the artifact itself. Every number here is a build-time
+    snapshot of the tree this site was generated from — the page says so beside them,
+    because a published page cannot know what a running process is doing now, and a count
+    presented without that distinction is a claim nobody can check. -#}
+{% block body %}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set g = reg.graph -%}
+{%- set cov = reg.benchmarks.coverage -%}
+{%- set ex = load_data(path="data/generated/executable.json") -%}
+{%- set current = "graph" -%}{% include "partials/registry-nav.html" %}
+<div class="mt-6 min-w-0">
+  <p class="break-words text-lg text-body">Each registry of this repository stays authoritative for what it owns — the capabilities, the rules, the decisions, the skills, the use cases, the documents — and one derivation composes them into a single graph. The nodes are those things as themselves; the edges are the references their own front matter already carries. Nothing here is authored: a node exists because an object or a capability exists, and an edge exists because one of them names another.</p>
+
+  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm">
+    <p class="text-body"><span class="font-semibold text-heading">A build-time snapshot.</span> These counts were taken when this site was generated, over index <code class="break-all font-mono text-xs">{{ g.derived_from.index }}</code> and registry <code class="break-all font-mono text-xs">{{ g.derived_from.registry }}</code>. They are not live: {{ g.runtime.requires }}, which answers the same model at <code class="font-mono text-xs">{{ g.runtime.route }}</code>.</p>
+    <p class="mt-2 text-body-subtle">The whole graph is one generated artifact — <code class="break-all font-mono text-xs">{{ g.artifact }}</code>, schema <code class="break-all font-mono text-xs">{{ g.schema }}</code> — so a reader who wants the nodes themselves takes the file rather than a page.</p>
+  </div>
+
+  <dl class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="rounded-base border border-default px-4 py-3"><dt class="text-xs uppercase tracking-wide text-body-subtle">nodes</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ g.nodes }}</dd></div>
+    <div class="rounded-base border border-default px-4 py-3"><dt class="text-xs uppercase tracking-wide text-body-subtle">edges</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ g.edges }}</dd></div>
+    <div class="rounded-base border border-default px-4 py-3"><dt class="text-xs uppercase tracking-wide text-body-subtle">node kinds</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ g.node_kinds | length }}</dd></div>
+    <div class="rounded-base border border-default px-4 py-3"><dt class="text-xs uppercase tracking-wide text-body-subtle">relation kinds</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ g.edge_kinds | length }}</dd></div>
+  </dl>
+  <p class="mt-2 text-xs text-body-subtle">Acyclic: {% if g.acyclic %}yes{% else %}no — the edges close a cycle, which is a fact about the data and not a failure of the derivation{% endif %}.{% if g.truncated %} Truncated: the derivation stopped at its node ceiling, so this snapshot is a prefix.{% endif %}</p>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the graph holds</h2>
+  <p class="mt-2 text-sm text-body">The node kinds are the kinds the layer registers, read off what was indexed rather than listed in the derivation: a kind this repository gains appears here without a line of code changing.</p>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">kind</th><th class="px-3 py-2">nodes</th><th class="px-3 py-2">what it is</th></tr></thead>
+      <tbody>
+      {%- for k in g.node_kinds -%}
+      <tr class="border-t border-default align-top"><td class="px-3 py-2"><code class="break-all font-mono font-semibold text-heading">{{ k.kind }}</code></td><td class="px-3 py-2 font-mono text-xs text-body">{{ k.count }}</td><td class="px-3 py-2 max-w-lg break-words text-body">{{ k.meaning }}</td></tr>
+      {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it asserts</h2>
+  <p class="mt-2 text-sm text-body">Every edge is typed and every reference resolves through a stable identity, a declared id or a repository-relative path — never a title. A reference that names something this repository does not hold is a finding rather than an edge, so a relation drawn here is one the layer actually carries.</p>
+  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">relation</th><th class="px-3 py-2">edges</th><th class="px-3 py-2">what it asserts</th></tr></thead>
+      <tbody>
+      {%- for k in g.edge_kinds -%}
+      <tr class="border-t border-default align-top"><td class="px-3 py-2"><code class="break-all font-mono font-semibold text-heading">{{ k.kind }}</code></td><td class="px-3 py-2 font-mono text-xs text-body">{{ k.count }}</td><td class="px-3 py-2 max-w-lg break-words text-body">{{ k.meaning }}</td></tr>
+      {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Coverage</h2>
+  {%- set total = cov.tallies.total -%}
+  <p class="mt-2 text-sm text-body">What the benchmark projection says is timed, computed over the same tree: {{ total.covered }} of {{ total.required }} targets covered, {{ total.missing }} without a case and {{ total.waived }} waived. The <a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}" class="text-fg-brand hover:underline">benchmark page</a> presents the measurements themselves and the host each was taken on.</p>
+  <p class="mt-4 text-xs text-body-subtle">The derivation is <code class="break-all font-mono">apps/majordomus-cli/src/graph.rs</code>; the decision behind it is recorded as an architecture decision, and the artifact is regenerated by <code class="font-mono">majordomus generate</code> and compared by <code class="font-mono">majordomus generate --check</code>.</p>
+</div>
+{% endblock body %}
