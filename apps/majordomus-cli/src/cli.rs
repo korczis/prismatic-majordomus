@@ -70,6 +70,8 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
+    Evidence(EvidenceArgs),
 }
 
 #[derive(Debug, Args)]
@@ -378,6 +380,127 @@ pub enum ExecutionsCommand {
     },
     /// The live channel's contract: where it is, what it writes, and the schema of each message
     Protocol,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus evidence`. The output shape is global, so it reads the way a person writes
+/// it — `evidence show --findings --format json` — and is declared once.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EvidenceArgs, EvidenceCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "evidence", "show", "--findings", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: EvidenceArgs = match cli.command {
+///     Command::Evidence(args) => args,
+///     other => panic!("expected `evidence`, parsed {other:?}"),
+/// };
+/// // `--format` is declared once and reaches every subcommand, so it parses where a
+/// // person writes it rather than only before the subcommand
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, EvidenceCommand::Show { findings: true, .. }));
+///
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "evidence"]).is_err());
+/// ```
+pub struct EvidenceArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
+    /// so that every runnable path here is one a capability declares
+    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    pub command: EvidenceCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, and
+/// the recorder.
+///
+/// `show`, `claim` and `proves` are the command line of `evidence.report`,
+/// `evidence.claim` and `evidence.test`; `record` is the command line of
+/// `evidence.record`, which is a command line and nothing else because it writes a tracked
+/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// `proves` — `test` is a word the fish completion adapter refuses, so the command line
+/// spells the relation with the verb rather than renaming the identity.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EvidenceCommand};
+///
+/// fn parse(args: &[&str]) -> EvidenceCommand {
+///     let cli = Cli::try_parse_from(args.iter().copied()).unwrap();
+///     let Command::Evidence(args) = cli.command else { panic!("evidence") };
+///     args.command
+/// }
+///
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "show", "--state", "stale"]),
+///     EvidenceCommand::Show { state: Some(s), check: false, .. } if s == "stale"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "claim", "evidence-both-directions"]),
+///     EvidenceCommand::Claim { id } if id == "evidence-both-directions"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "proves", "crate:why"]),
+///     EvidenceCommand::Proves { id } if id == "crate:why"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "test", "crate:why"]).is_err());
+///
+/// // recording reads a report a runner already wrote; it runs no test
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
+///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
+/// ```
+pub enum EvidenceCommand {
+    /// Every claim against the evidence recorded for it
+    Show {
+        /// Only claims in this proof state (proven, inputs_unchanged, stale, failing, not_run, unrunnable, no_test)
+        #[arg(long)]
+        state: Option<String>,
+        /// Only claims declaring this status (guaranteed, advisory, planned, rejected)
+        #[arg(long)]
+        status: Option<String>,
+        /// Only the claims whose declared status the evidence does not support
+        #[arg(long)]
+        findings: bool,
+        /// Exit 10 when a claim declares a guarantee the evidence does not support
+        #[arg(long)]
+        check: bool,
+    },
+    /// One claim: its proof state, the execution behind it, and how to reproduce it
+    Claim {
+        /// The claim id, as docs/CLAIMS.yaml spells it
+        id: String,
+    },
+    /// One test: its latest execution and every claim it proves
+    Proves {
+        /// `suite:<case>`, `crate:<binary>`, or the path a claim names it with
+        id: String,
+    },
+    /// Record a run that happened into the ledger
+    Record {
+        /// The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)
+        #[arg(long)]
+        suite: Option<PathBuf>,
+        /// A file holding `cargo test`'s output, for the crate's own integration tests
+        #[arg(long)]
+        crate_output: Option<PathBuf>,
+        /// Where the run happened: local (the default), ci or release
+        #[arg(long)]
+        origin: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -1698,6 +1821,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["executions"],
             setup: &[],
             expect: Expect::StdoutContains(&["execution"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence show",
+        examples: &[ExampleDoc {
+            id: "evidence-show-json",
+            title: "The whole join, as one document",
+            description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
+            argv: &["evidence", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence claim",
+        examples: &[ExampleDoc {
+            id: "evidence-claim-absent",
+            title: "A claim the matrix does not declare",
+            description: "A claim id nothing declares is a not-found rather than an empty answer. A typo that read as `this claim has no evidence` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+            argv: &["evidence", "claim", "no-such-claim-exists"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence proves",
+        examples: &[ExampleDoc {
+            id: "evidence-proves-unknown",
+            title: "Something that names no test",
+            description: "A test is named by its identity (`suite:<case>`, `crate:<binary>`) or by the path a claim writes down, and the two resolve to the same thing. An argument that is neither is refused with the spellings it could have been, rather than answered with a test that proves nothing.",
+            argv: &["evidence", "proves", "not-a-test"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence record",
+        examples: &[ExampleDoc {
+            id: "evidence-record-missing",
+            title: "Recording a report that is not there",
+            description: "The recorder reads what a run already wrote — the suite's TSV report, `cargo test`'s output — and stamps it with the provenance the run did not carry. A report it cannot read is refused: recording nothing would leave every claim reading `not run` after a run that ran, which is a lie in the safe direction and still a lie.",
+            argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {

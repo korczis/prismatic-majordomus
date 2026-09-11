@@ -1,7 +1,7 @@
 +++
 title = "The tool runs read-only from any location, and two locations of one version agree about one repository"
 description = "The distribution — bin/, lib/, share/ — is not part of the repository's data. It may be a checkout under ~/tools, a package on PATH, or a copy inside the repository, and every form behaves the same because nothing writes into it. Two copies of one version, pointed at one repository, read the same files under .ai/ and produce the same findings."
-weight = 81
+weight = 82
 [extra]
 claim_id = "tool-location-independent"
 status = "guaranteed"

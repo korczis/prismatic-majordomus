@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.no-network-no-eval@1, project.hot-path-reads-once@1]
 tags: [environment, shell, performance]
+
+x-majordomus:
+  tests: [test/cases/100_environment.sh]
 ---
 
 # What changed in version 2

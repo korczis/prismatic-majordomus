@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.envrc-is-an-adapter@2, project.shared-server-resilience@1, project.interfaces-are-projections@1, project.the-lease-is-read-once@1, project.every-wait-is-bounded@1]
 tags: [entry, mcp, environment, enforcement, performance]
+
+x-majordomus:
+  tests: [test/cases/118_entry_converges_by_rule.sh, test/cases/108_entry_converges_on_a_server.sh, test/cases/190_entry_is_automatic.sh, test/cases/191_entry_races.sh, test/cases/192_entry_across_checkouts_and_clients.sh]
 ---
 
 # What changed in version 2, and why
