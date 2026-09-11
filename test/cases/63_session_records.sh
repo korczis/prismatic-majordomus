@@ -86,3 +86,29 @@ rm -f .ai/repo/sessions/a-second-claim.md; git add -A >/dev/null
 "$MJ" knowledge nodes --kind session | grep -q 'README' \
   && { echo "    the section's contract was read as a record"; exit 1; }
 "$MJ" doctor 2>&1 | grep -q '1 record(s)' || { echo "    doctor did not count exactly the record"; exit 1; }
+
+# ---------------------------------------------------------------- the staging file is not content
+# A record is published by hard-linking a staging file created in the record directory itself,
+# because the link cannot cross a filesystem. That file is repository-shaped noise sitting in a
+# tracked section: a writer that leaves one behind dirties the tree and offers a nameless
+# `.tmp.XXXXXX` to the next `git add -A`. Three guards, each proved here.
+sessions=.ai/repo/sessions
+
+# 1. the writer unlinks its own
+ls "$sessions"/.tmp.* >/dev/null 2>&1 && { echo "    publishing left its staging file behind"; exit 1; }
+
+# 2. a kill runs no trap, so the next publish sweeps what the last one left — and only that.
+stale="$sessions/.tmp.AAAAAA"; live="$sessions/.tmp.BBBBBB"
+: > "$stale"; : > "$live"
+touch -t "$(date -v-2H +%Y%m%d%H%M 2>/dev/null || date -d '2 hours ago' +%Y%m%d%H%M)" "$stale"
+expect_exit 0 "$MJ" session start --worker "test/worker"
+printf 'A second episode, to make the next publish sweep.\n' | "$MJ" session close >/dev/null
+[ -e "$stale" ] && { echo "    a staging file a killed run left behind was not swept"; exit 1; }
+[ -e "$live" ] || { echo "    the sweep took a staging file a concurrent writer still needs"; exit 1; }
+
+# 3. and while one exists it is uncommittable, so it can never be read as a record
+git check-ignore -q "$live" || { echo "    a staging file is committable"; exit 1; }
+git add -A >/dev/null
+git diff --cached --name-only | grep -q '\.tmp\.' && { echo "    a staging file reached the index"; exit 1; }
+"$MJ" doctor 2>&1 | grep -q '2 record(s)' || { echo "    doctor did not count exactly the two records"; exit 1; }
+rm -f "$live"

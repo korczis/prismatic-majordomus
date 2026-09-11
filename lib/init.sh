@@ -142,11 +142,17 @@ mj_init_tree() {
   [ "$n" -gt 0 ] && MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")/"
   return 0
 }
-# the ignore boundary: one line, added once, to a file whose other content is left alone
+# the ignore boundary: each line added once, to a file whose other content is left alone.
+#
+# Two lines, for two different reasons. The local section is this checkout's own state and is
+# never shared. The staging file of mj_publish_record is the opposite — it lives inside a
+# tracked section, because the hard link that publishes a record cannot cross a filesystem —
+# and this line is what keeps a leftover from one from ever reaching a commit.
 mj_init_gitignore() {
   local gi="$MJ_ROOT/.gitignore" line
-  line="$(mj_rel "$MJ_AI_LOCAL_DIR")/"
-  grep -qx "$line" "$gi" 2>/dev/null && return 0
-  { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
-  MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
+  for line in "$(mj_rel "$MJ_AI_LOCAL_DIR")/" "$(mj_rel "$MJ_AI_REPO_DIR")/**/.tmp.*"; do
+    grep -qxF "$line" "$gi" 2>/dev/null && continue
+    { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
+    MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
+  done
 }
