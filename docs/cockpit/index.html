@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="1c73468b1437">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=528da1cf85a26c0135fb">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -345,6 +345,67 @@ clock, no absolute path, no discovery order).</p>
 <p>A drawing library is a consumer. The translation to Cytoscape's element shape is one
 function in <code>share/cockpit/graph.js</code>; a projection to Mermaid, Graphviz or a terminal would
 rebuild no semantics.</p>
+<h3 id="what-the-drawing-decides"><a class="zola-anchor" href="#what-the-drawing-decides" aria-label="Anchor link for: what-the-drawing-decides">What the drawing decides</a></h3>
+<p>The viewer chooses a <strong>layout from the graph's measured shape</strong>, not one name for every
+graph. Every graph used <code>breadthfirst</code>, which puts one breadth-first level on one row; the
+composed graph is 1442 nodes and one level held nearly all of them, so <code>cy.fit()</code> zoomed out
+until that row fitted the frame and the drawing was a horizontal line about one pixel tall.
+<code>measure()</code> derives node count, edge density, breadth-first depth and — the number that
+diagnoses it — the widest level; <code>choose()</code> picks between the layouts cytoscape ships:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>When</th><th>Layout</th><th>Why</th></tr></thead><tbody>
+<tr><td>24 nodes or fewer</td><td><code>circle</code></td><td>everything fits on one ring at a readable size; physics over twenty nodes only wobbles</td></tr>
+<tr><td>3+ levels, widest level ≤ 48, density &lt; 2</td><td><code>breadthfirst</code></td><td>the only built-in layout that shows direction; the guard is the widest level, because past it breadthfirst is a line</td></tr>
+<tr><td>400 nodes or fewer</td><td><code>cose</code></td><td>force-directed: the only built-in that puts a cluster together, so communities are visible</td></tr>
+<tr><td>up to 900 nodes, degrees peaked</td><td><code>concentric</code> by degree</td><td>a sort rather than an iteration, so it is instant; hubs at the centre. Only when the degrees are peaked: on a flat distribution every node lands in one ring</td></tr>
+<tr><td>larger</td><td><code>grid</code>, by kind then degree</td><td>measured: <code>concentric</code> over 1452 nodes gave a disc 19000px across, so <code>fit()</code> hit <code>minZoom</code> and a node rendered under a pixel. At 480 square pixels per node no arrangement is both structural and legible, so each node gets a cell, kinds form bands, and the structure is reached through the filter and the selection</td></tr>
+</tbody></table>
+</div>
+<p>No layout extension is vendored and none should be: <code>share/cockpit/vendor/</code> holds
+<code>cytoscape.min.js</code> alone, and the Cockpit's content-security policy names no remote origin.</p>
+<p>Everything else the drawing shows is derived the same way. A node's diameter is its degree,
+square-rooted. A node kind's colour is <code>--mj-series-&lt;n&gt;</code> from <code>share/design/tokens.yaml</code> —
+eight roles that carry no meaning, chosen for separation — and <em>which</em> of them a kind gets is
+an FNV-1a hash of the kind's own name, so a kind is the same colour in every graph and stays
+that colour when a thirty-fifth kind is declared. Eight colours and 34 kinds means kinds do
+share a colour, and that is the price of the stability: the alternative — rank the kinds and
+hand out colours in order — moves every kind's colour the day one is added. The legend names
+which kinds share, and the filter separates them.</p>
+<p>Cytoscape cannot read <code>oklch</code>, which is what the declaration's palette is. Handed one it logs
+that the property is invalid and falls back to black, and every token this file read had been
+landing that way. A token is therefore painted onto a one-pixel canvas and its channels read
+back, and the library gets <code>[r, g, b]</code>, which it accepts. No colour string is composed
+anywhere: this is arithmetic at a library boundary, and the value is still the
+declaration's. Labels are the declared <code>meta</code> step and
+appear above 80 nodes only when the reader has zoomed close enough to read them, except for
+the twelve busiest, which are always named. An edge's kind is painted on the edges of the
+selected or hovered node, never on all of them at once. The legend beside the drawing is also
+the filter: a swatch and a count per kind, and a click that takes the kind out.</p>
+<p>Nothing here is a colour, a size or a count written in JavaScript, and <code>scripts/ci/design-check</code>
+reads <code>share/cockpit/graph.js</code> like every other first-party surface — it used to exempt the
+file by path, which is what let a hue computed in a script stand for a year.</p>
+<h3 id="why-the-tables-under-it-still-page-nothing"><a class="zola-anchor" href="#why-the-tables-under-it-still-page-nothing" aria-label="Anchor link for: why-the-tables-under-it-still-page-nothing">Why the tables under it still page nothing</a></h3>
+<p>A graph page lists every node and every edge. For <code>composed</code> that is 4,729 table rows and
+about 420 kB of text in one response, and the obvious reaction is to page it. It is not
+paged, deliberately.</p>
+<p>The tables are not a convenience beside the drawing; they <em>are</em> the page. The drawing needs
+JavaScript, a 400 kB library and a canvas, and the page says so in its own prose: "everything
+it shows is in the lists below, which is what a reader without JavaScript, a crawler and a
+screen reader get". Page them and that sentence stops being true — the drawing would show
+1452 nodes while the text showed a hundred, and the reader with no JavaScript would be the
+only one who could not see the whole graph. The listing pages elsewhere in the Cockpit
+(<code>/cockpit/objects</code>, <code>/cockpit/capabilities</code>) page because they are <em>views over</em> a
+collection, and a view may show a slice. A graph page is the rendering of one object.</p>
+<p>The bulk format already exists and is linked from the page: <code>/api/v1/graph?id=&lt;id&gt;</code>. A reader
+who wants the graph as data takes that; a reader who wants it as a page gets all of it. The
+cost is one 420 kB response of static text, which is smaller than the drawing library the
+same page loads to show the same data.</p>
+<p><code>test/cases/190_graph_drawing.sh</code> runs <code>choose()</code> and <code>measure()</code> over synthetic shapes
+without a browser; <code>scripts/lib/cockpit-probe.mjs</code> asks the running renderer, through
+<code>frame.mjGraph.extent()</code>, how much of the frame the drawing occupies and fails below a tenth
+in either direction — for <code>registry</code> and again for the largest graph there is, which is the
+only one that ever had the defect. The assertion it replaces counted <code>canvas</code> elements, and
+cytoscape makes three of those over a one-pixel line.</p>
 <h2 id="health"><a class="zola-anchor" href="#health" aria-label="Anchor link for: health">Health</a></h2>
 <p><code>health.report</code> reports one check per dimension. Every check carries <strong>who decided it</strong> and
 <strong>what reproduces it</strong>, because a health report that decides things itself is a fourth
@@ -602,7 +663,7 @@ process — and it is why the probe reports the digest it was served.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3a032c1e033ba437325f64f883356269d7a6c73e" class="font-mono underline">3a032c1</a> · inputs <span class="font-mono">defab51ee4eb</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0675d67b7f485e732de991ede8f0e77fd6928609" class="font-mono underline">0675d67</a> · inputs <span class="font-mono">4d7579e6c6b1</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
