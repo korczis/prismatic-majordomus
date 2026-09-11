@@ -5,16 +5,16 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "13dd0609147b5e4c8489cff4a69f0ec075bd2206d46e8768409e6ffa3dfd4613",
+  "fingerprint": "4bd34883b0d5465aaf0f971bf9781ff00637d3cd8b54fd0f3269b76e1e609fdc",
   "route": "/features/",
   "counts": {
     "features": 19,
-    "features_all": 21,
+    "features_all": 22,
     "featured": 9,
     "providers": 6,
     "modules": 29,
     "modules_covered": 17,
-    "commands": 28,
+    "commands": 29,
     "commands_covered": 27,
     "kinds": 26,
     "kinds_covered": 22
@@ -266,15 +266,15 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 21
+          "objects": 22
         },
         {
           "name": "command",
-          "objects": 29
+          "objects": 30
         },
         {
           "name": "claim",
-          "objects": 155
+          "objects": 156
         }
       ],
       "rule_refs": [
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 209,
+        "mcp_resources": 212,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 205,
+        "objects": 208,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -1962,7 +1962,9 @@
       ],
       "web_refs": [],
       "moments": [],
-      "backlinks": [],
+      "backlinks": [
+        "models"
+      ],
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
@@ -1972,6 +1974,158 @@
         "commands": 0,
         "objects": 0,
         "rules": 1,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 3
+        },
+        "modules": {
+          "experimental": 1
+        }
+      }
+    },
+    {
+      "id": "models",
+      "title": "The models the world offers, declared once and routed with reasons",
+      "short_title": "Models",
+      "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
+      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
+      "status": "draft",
+      "weight": 46,
+      "featured": false,
+      "areas": [
+        "coordination"
+      ],
+      "audiences": [],
+      "modules": [
+        "models"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/MODELS.md"
+      ],
+      "adrs": [
+        "adr-0044"
+      ],
+      "claims": [
+        "models-one-declaration",
+        "models-routing-explains-itself",
+        "models-no-secret-fields"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "models"
+      ],
+      "web": [],
+      "related": [
+        "mesh"
+      ],
+      "tags": [
+        "models",
+        "catalogue",
+        "routing"
+      ],
+      "route": "/features/models/",
+      "source": ".ai/repo/features/models.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "models",
+          "title": "Models",
+          "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+          "capabilities": [
+            {
+              "id": "models.list",
+              "title": "The model catalogue",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_models",
+              "resource": "majordomus://models",
+              "route": "GET /api/v1/models",
+              "cli": "majordomus models list"
+            },
+            {
+              "id": "models.route",
+              "title": "Route a need to a model",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_models_route",
+              "route": "GET /api/v1/models/route",
+              "cli": "majordomus models route"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/MODELS.md",
+          "title": "The model catalogue"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0044",
+          "title": "The model catalogue is declarative data, and routing is an explainable projection of it",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0044-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "models-one-declaration",
+          "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+          "status": "guaranteed"
+        },
+        {
+          "id": "models-routing-explains-itself",
+          "claim": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+          "status": "guaranteed"
+        },
+        {
+          "id": "models-no-secret-fields",
+          "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "models",
+          "title": "Models",
+          "route": "/cockpit/models"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 2,
+        "mcp_tools": 2,
+        "mcp_resources": 1,
+        "http_routes": 2,
+        "cli_paths": 2,
+        "commands": 0,
+        "objects": 0,
+        "rules": 0,
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
@@ -2656,7 +2810,7 @@
         },
         {
           "name": "document",
-          "objects": 217
+          "objects": 226
         }
       ],
       "rule_refs": [
@@ -2905,11 +3059,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 260,
+        "mcp_resources": 269,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 259,
+        "objects": 268,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -5974,7 +6128,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 43
+          "objects": 44
         },
         {
           "name": "application",
@@ -6086,11 +6240,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 58,
+        "mcp_resources": 59,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 58,
+        "objects": 59,
         "rules": 3,
         "enforced_rules": 2,
         "docs": 2,
@@ -7272,6 +7426,26 @@
         ]
       },
       {
+        "id": "models",
+        "label": "Models",
+        "route": "/features/models/",
+        "status": "draft",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "continuity",
         "label": "Continuity",
         "route": "/features/continuity/",
@@ -7769,6 +7943,11 @@
         ]
       },
       {
+        "id": "archive",
+        "title": "archive",
+        "features": []
+      },
+      {
         "id": "bench",
         "title": "bench",
         "features": [
@@ -8003,14 +8182,14 @@
       },
       {
         "id": "claim",
-        "title": "claim (155)",
+        "title": "claim (156)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "command",
-        "title": "command (29)",
+        "title": "command (30)",
         "features": [
           "declare-once"
         ]
@@ -8036,7 +8215,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (21)",
+        "title": "feature (22)",
         "features": [
           "declare-once"
         ]
@@ -8138,7 +8317,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (43)",
+        "title": "use-case (44)",
         "features": [
           "use-cases"
         ]
@@ -8889,30 +9068,30 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1265,
+    "capabilities": 1281,
     "builtin": 87,
-    "declarative": 1178,
+    "declarative": 1194,
     "modules": 29,
     "mcp_tools": 85,
-    "mcp_resources": 1208,
+    "mcp_resources": 1224,
     "http_routes": 87,
     "cli_commands": 99,
-    "shell_commands": 28,
+    "shell_commands": 29,
     "kinds": 29,
-    "objects": 1178,
+    "objects": 1194,
     "by_kind": {
       "adr": 41,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 155,
-      "command": 29,
+      "claim": 156,
+      "command": 30,
       "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 217,
-      "feature": 21,
-      "implementation": 45,
+      "document": 226,
+      "feature": 22,
+      "implementation": 46,
       "issue": 203,
       "knowledge": 1,
       "mesh-declaration": 1,
@@ -8927,8 +9106,8 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 155,
-      "use-case": 43,
+      "test": 157,
+      "use-case": 44,
       "workspace": 1
     },
     "providers": 6,

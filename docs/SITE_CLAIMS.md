@@ -32,6 +32,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [Every repository-local prompt asset renders, and an unknown token is a failure](https://majordomus.dev/guarantees/prompt-assets/) | `docs/DOCTRINE.md` | `lib/prompt.sh` | `test/cases/24_prompt_search.sh` |
 | [A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which](https://majordomus.dev/guarantees/catalogue-resolves/) | `docs/DOCTRINE.md` | `lib/usecase.sh` | `test/cases/28_catalogue.sh` |
 | [A hand-edited instruction file is never silently overwritten](https://majordomus.dev/guarantees/no-silent-overwrite/) | `docs/CLI.md` | `lib/update.sh` | `test/cases/03_update.sh` |
+| [An archive that lost the file modes fails rather than travelling](https://majordomus.dev/guarantees/archive-fidelity/) | `docs/ARCHIVE.md` | `lib/archive.sh` | `test/cases/130_archive.sh` |
 | [The always-loaded instruction file has a line budget with a failing check](https://majordomus.dev/guarantees/context-budget/) | `share/skeleton/policy.yaml` | `lib/update.sh` | `test/cases/03_update.sh` |
 | [Every repository-relative reference in the always-loaded file is proven to resolve](https://majordomus.dev/guarantees/pointer-integrity/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |
 | [A hardcoded count in the always-loaded file is a failure](https://majordomus.dev/guarantees/no-counts-in-context/) | `docs/DESIGN.md` | `lib/doctor.sh` | `test/cases/03_update.sh` |

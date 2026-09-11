@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 41
+weight = 42
 [extra]
 source = "docs/COCKPIT.md"
 +++

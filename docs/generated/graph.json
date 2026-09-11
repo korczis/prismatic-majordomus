@@ -855,6 +855,13 @@
         "external": true
       },
       {
+        "id": "command:archive",
+        "kind": "command",
+        "label": "archive",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
         "id": "command:bench",
         "kind": "command",
         "label": "bench",
@@ -1620,14 +1627,6 @@
         "external": true
       },
       {
-        "id": "file:docs/MODELS.md",
-        "kind": "file",
-        "label": "MODELS.md",
-        "summary": "named by the layer; not an object of this index",
-        "source": "docs/MODELS.md",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci-plan",
         "kind": "file",
         "label": "ci-plan",
@@ -2049,14 +2048,6 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
-        "external": true
-      },
-      {
-        "id": "file:test/cases/131_models.sh",
-        "kind": "file",
-        "label": "131_models.sh",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/cases/131_models.sh",
         "external": true
       },
       {
@@ -3798,6 +3789,23 @@
           "responsibility": "layer",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/01_init.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/archive-fidelity",
+        "kind": "claim",
+        "label": "archive-fidelity",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Farchive-fidelity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An archive that lost the file modes fails rather than travelling",
+          "implementation": "lib/archive.sh",
+          "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
+          "responsibility": "projection",
+          "source": "docs/ARCHIVE.md",
+          "test": "test/cases/130_archive.sh"
         }
       },
       {
@@ -6255,6 +6263,43 @@
         }
       },
       {
+        "id": "majordomus://command/archive",
+        "kind": "command",
+        "label": "archive",
+        "summary": "archive",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcommand%2Farchive",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "system",
+          "class": "generated-output-mutating",
+          "demo": "archive-profiles",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12",
+            "13",
+            "15"
+          ],
+          "json": true,
+          "reads": [
+            "share/archive.yaml",
+            ".ai/repo/archive.yaml",
+            ".gitattributes"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "none",
+          "stage": "inspect",
+          "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+          "syntax": "majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]",
+          "visibility": "public",
+          "writes": [
+            "tmp/archives/"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/bench",
         "kind": "command",
         "label": "bench",
@@ -8129,6 +8174,14 @@
         "source": "docs/ADOPTION_FIRST_RUN.md"
       },
       {
+        "id": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "document",
+        "label": "docs/ARCHIVE.md",
+        "summary": "Archiving the repository",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FARCHIVE.md",
+        "source": "docs/ARCHIVE.md"
+      },
+      {
         "id": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "label": "docs/CAPABILITIES.md",
@@ -8353,6 +8406,14 @@
         "source": "docs/MESH.md"
       },
       {
+        "id": "majordomus://document/docs/MODELS.md",
+        "kind": "document",
+        "label": "docs/MODELS.md",
+        "summary": "The model catalogue",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FMODELS.md",
+        "source": "docs/MODELS.md"
+      },
+      {
         "id": "majordomus://document/docs/PAGES_STATUS.md",
         "kind": "document",
         "label": "docs/PAGES_STATUS.md",
@@ -8543,6 +8604,14 @@
         "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fai-layer-manifest.md",
         "source": "docs/claims/ai-layer-manifest.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/archive-fidelity.md",
+        "kind": "document",
+        "label": "docs/claims/archive-fidelity.md",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Farchive-fidelity.md",
+        "source": "docs/claims/archive-fidelity.md"
       },
       {
         "id": "majordomus://document/docs/claims/benchmark-coverage-derived.md",
@@ -9097,12 +9166,60 @@
         "source": "docs/claims/mcp-uri-resolution.md"
       },
       {
+        "id": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-observation-not-authority.md",
+        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmesh-observation-not-authority.md",
+        "source": "docs/claims/mesh-observation-not-authority.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-off-by-default.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-off-by-default.md",
+        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmesh-off-by-default.md",
+        "source": "docs/claims/mesh-off-by-default.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-one-registry.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-one-registry.md",
+        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmesh-one-registry.md",
+        "source": "docs/claims/mesh-one-registry.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/minimum-context.md",
         "kind": "document",
         "label": "docs/claims/minimum-context.md",
         "summary": "A profile declares which context a worker should load and no more",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fminimum-context.md",
         "source": "docs/claims/minimum-context.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/models-no-secret-fields.md",
+        "kind": "document",
+        "label": "docs/claims/models-no-secret-fields.md",
+        "summary": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmodels-no-secret-fields.md",
+        "source": "docs/claims/models-no-secret-fields.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/models-one-declaration.md",
+        "kind": "document",
+        "label": "docs/claims/models-one-declaration.md",
+        "summary": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmodels-one-declaration.md",
+        "source": "docs/claims/models-one-declaration.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/models-routing-explains-itself.md",
+        "kind": "document",
+        "label": "docs/claims/models-routing-explains-itself.md",
+        "summary": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmodels-routing-explains-itself.md",
+        "source": "docs/claims/models-routing-explains-itself.md"
       },
       {
         "id": "majordomus://document/docs/claims/no-counts-in-context.md",
@@ -10605,6 +10722,51 @@
         }
       },
       {
+        "id": "majordomus://feature/models",
+        "kind": "feature",
+        "label": "models",
+        "summary": "The models the world offers, declared once and routed with reasons",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fmodels",
+        "source": ".ai/repo/features/models.md",
+        "status": "draft",
+        "facts": {
+          "adrs": [
+            "adr-0044"
+          ],
+          "areas": [
+            "coordination"
+          ],
+          "claims": [
+            "models-one-declaration",
+            "models-routing-explains-itself",
+            "models-no-secret-fields"
+          ],
+          "cockpit": [
+            "models"
+          ],
+          "docs": [
+            "docs/MODELS.md"
+          ],
+          "featured": false,
+          "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
+          "modules": [
+            "models"
+          ],
+          "related": [
+            "mesh"
+          ],
+          "rules": [],
+          "short_title": "Models",
+          "tags": [
+            "models",
+            "catalogue",
+            "routing"
+          ],
+          "use_cases": [],
+          "weight": 46
+        }
+      },
+      {
         "id": "majordomus://feature/planning",
         "kind": "feature",
         "label": "planning",
@@ -11051,6 +11213,13 @@
         "label": "lib/adr.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fadr.sh",
         "source": "lib/adr.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/archive.sh",
+        "kind": "implementation",
+        "label": "lib/archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Farchive.sh",
+        "source": "lib/archive.sh"
       },
       {
         "id": "majordomus://implementation/lib/bench.sh",
@@ -28551,11 +28720,25 @@
         "source": "test/cases/12c_graph_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_archive.sh",
+        "kind": "test",
+        "label": "test/cases/130_archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_archive.sh",
+        "source": "test/cases/130_archive.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/130_mesh.sh",
         "kind": "test",
         "label": "test/cases/130_mesh.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_mesh.sh",
         "source": "test/cases/130_mesh.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/131_models.sh",
+        "kind": "test",
+        "label": "test/cases/131_models.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_models.sh",
+        "source": "test/cases/131_models.sh"
       },
       {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
@@ -30013,6 +30196,38 @@
           "summary": "Run the checks CI runs, read every finding with the command that reproduces it, and rely on exit codes that mean one thing each: no code means warn and continue.",
           "target": "guaranteed",
           "weight": 44
+        }
+      },
+      {
+        "id": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "kind": "use-case",
+        "label": "hand-the-repository-to-a-reader",
+        "summary": "Hand the repository to someone who cannot clone it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fhand-the-repository-to-a-reader",
+        "source": ".ai/repo/use-cases/hand-the-repository-to-a-reader.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "agent"
+          ],
+          "applications": [],
+          "category": "knowledge",
+          "claims": [
+            "archive-fidelity",
+            "no-network"
+          ],
+          "commands": [
+            "archive"
+          ],
+          "difficulty": "basic",
+          "doctrines": [],
+          "responsibilities": [
+            "projection"
+          ],
+          "summary": "Take a snapshot that a model can read or a gate can run in, without sending anything untracked and without losing the file modes on the way.",
+          "target": "guaranteed",
+          "weight": 60
         }
       },
       {
@@ -33903,11 +34118,6 @@
       },
       {
         "source": "majordomus://adr/adr-0044",
-        "target": "file:docs/MODELS.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0044",
         "target": "file:share/models.yaml",
         "kind": "put_in_force"
       },
@@ -33924,6 +34134,11 @@
       {
         "source": "majordomus://adr/adr-0044",
         "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://document/docs/MODELS.md",
         "kind": "put_in_force"
       },
       {
@@ -34209,6 +34424,26 @@
       {
         "source": "majordomus://claim/ai-layer-manifest",
         "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://implementation/lib/archive.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://test/test/cases/130_archive.sh",
         "kind": "tested_by"
       },
       {
@@ -35673,13 +35908,13 @@
       },
       {
         "source": "majordomus://claim/models-no-secret-fields",
-        "target": "file:docs/MODELS.md",
-        "kind": "defined_in"
+        "target": "kind:claim",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://claim/models-no-secret-fields",
-        "target": "kind:claim",
-        "kind": "is_a"
+        "target": "majordomus://document/docs/MODELS.md",
+        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/models-one-declaration",
@@ -35688,18 +35923,18 @@
       },
       {
         "source": "majordomus://claim/models-one-declaration",
-        "target": "file:docs/MODELS.md",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-one-declaration",
+        "target": "majordomus://document/docs/MODELS.md",
         "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/models-one-declaration",
-        "target": "file:test/cases/131_models.sh",
+        "target": "majordomus://test/test/cases/131_models.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/models-one-declaration",
-        "target": "kind:claim",
-        "kind": "is_a"
       },
       {
         "source": "majordomus://claim/models-routing-explains-itself",
@@ -35708,18 +35943,18 @@
       },
       {
         "source": "majordomus://claim/models-routing-explains-itself",
-        "target": "file:docs/MODELS.md",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-routing-explains-itself",
+        "target": "majordomus://document/docs/MODELS.md",
         "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/models-routing-explains-itself",
-        "target": "file:test/cases/131_models.sh",
+        "target": "majordomus://test/test/cases/131_models.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/models-routing-explains-itself",
-        "target": "kind:claim",
-        "kind": "is_a"
       },
       {
         "source": "majordomus://claim/no-counts-in-context",
@@ -37137,6 +37372,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/archive",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/bench",
         "target": "kind:command",
         "kind": "is_a"
@@ -37752,6 +37992,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/ARCHIVE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CAPABILITIES.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -37892,6 +38137,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/MODELS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/PAGES_STATUS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -38008,6 +38258,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/ai-layer-manifest.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/archive-fidelity.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -38357,7 +38612,37 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-off-by-default.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-one-registry.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/minimum-context.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/models-no-secret-fields.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/models-one-declaration.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/models-routing-explains-itself.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -38802,6 +39087,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://feature/models",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://feature/planning",
         "target": "kind:feature",
         "kind": "is_a"
@@ -38858,6 +39148,11 @@
       },
       {
         "source": "majordomus://implementation/lib/adr.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/archive.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -44522,7 +44817,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_archive.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/130_mesh.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/131_models.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46050,6 +46355,26 @@
         "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "command:archive",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/archive-fidelity",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/no-network",
+        "kind": "evidences"
       },
       {
         "source": "majordomus://use-case/hand-work-between-sessions",
@@ -48113,8 +48438,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1484,
-      "edges": 3351,
+      "nodes": 1499,
+      "edges": 3373,
       "acyclic": true,
       "truncated": false
     }

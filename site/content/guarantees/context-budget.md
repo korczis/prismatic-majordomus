@@ -1,7 +1,7 @@
 +++
 title = "The always-loaded instruction file has a line budget with a failing check"
 description = "Exactly one projection is marked always_loaded: true — the file every session of the worker reads before doing anything. The policy sets context.always_loaded_budget_lines; update refuses to write a projection over the budget, and doctor fails if the file on disk is over it. A budget without a failing check is a wish."
-weight = 38
+weight = 39
 [extra]
 claim_id = "context-budget"
 status = "guaranteed"

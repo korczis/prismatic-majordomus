@@ -307,6 +307,19 @@
       "test_case": "03_update"
     },
     {
+      "id": "archive-fidelity",
+      "claim": "An archive that lost the file modes fails rather than travelling",
+      "source": "docs/ARCHIVE.md",
+      "implementation": "lib/archive.sh",
+      "test": "test/cases/130_archive.sh",
+      "status": "guaranteed",
+      "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
+      "responsibility": "projection",
+      "source_route": "/docs/archive/",
+      "command": "archive",
+      "test_case": "130_archive"
+    },
+    {
       "id": "context-budget",
       "claim": "The always-loaded instruction file has a line budget with a failing check",
       "source": "share/skeleton/policy.yaml",
