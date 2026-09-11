@@ -67,9 +67,14 @@ of the binary, and is not a second opinion any reader can see. Counting those as
 canonical order in a test whose whole purpose is to assert an order, and a gate that cries
 wolf is a gate somebody switches off. `scripts/ci/order-check --sites` lists exactly what
 each ratchet counts, so a reader of the number is never left to reconstruct which sites it
-is made of. A commit that adopts the canonical order lowers the baseline with
-`scripts/ci/order-check --update`, and the gate refuses a baseline that no longer matches
-the tree in either direction, so the debt cannot be quietly rewritten either way.
+is made of. The shell count is over `sort(1)` and nothing else: a `.jq` file holds a jq
+program rather than shell, and a `sort` inside a single-quoted region is an argument the
+shell never builds a pipeline from — in both, the word is jq's own filter, which orders JSON
+values by an order the language defines and no environment variable reaches, so there is no
+locale to pin and `LC_ALL=C` in front of it would be nonsense. A commit that adopts the
+canonical order lowers the baseline with `scripts/ci/order-check --update`, and the gate
+refuses a baseline that no longer matches the tree in either direction, so the debt cannot be
+quietly rewritten either way.
 
 The gate runs in the `structure` job for changes to the crate, the scripts, the shell tool
 and the site.
