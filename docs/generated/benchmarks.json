@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 94,
-      "covered": 90,
+      "required": 101,
+      "covered": 97,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "http",
-      "required": 93,
-      "covered": 90,
+      "required": 100,
+      "covered": 97,
       "missing": 0,
       "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 91,
-      "covered": 88,
+      "required": 98,
+      "covered": 95,
       "missing": 0,
       "waived": 3
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 291,
-      "covered": 281,
+      "required": 312,
+      "covered": 302,
       "missing": 0,
       "waived": 10
     }
@@ -637,6 +637,91 @@
       "module": "lifecycle",
       "kind": "query",
       "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.doctor",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.identity",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.nodes",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.register",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused"
+      ]
+    },
+    {
+      "id": "mesh.status",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "models.list",
+      "module": "models",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "narrowed"
+      ]
+    },
+    {
+      "id": "models.route",
+      "module": "models",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",

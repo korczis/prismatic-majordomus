@@ -2047,6 +2047,84 @@
       "source_route": "/docs/evidence/",
       "command": null,
       "test_case": "124_evidence"
+    },
+    {
+      "id": "mesh-off-by-default",
+      "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/shared.rs",
+      "test": "apps/majordomus-cli/tests/mesh.rs",
+      "status": "guaranteed",
+      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050).",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/mesh.rs"
+    },
+    {
+      "id": "mesh-one-registry",
+      "claim": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
+      "test": "test/cases/130_mesh.sh",
+      "status": "guaranteed",
+      "note": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site.",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "130_mesh"
+    },
+    {
+      "id": "mesh-observation-not-authority",
+      "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
+      "test": "apps/majordomus-cli/tests/mesh.rs",
+      "status": "guaranteed",
+      "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/mesh.rs"
+    },
+    {
+      "id": "models-one-declaration",
+      "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+      "source": "docs/MODELS.md",
+      "implementation": "apps/majordomus-cli/src/models/mod.rs",
+      "test": "test/cases/131_models.sh",
+      "status": "guaranteed",
+      "note": "models.list and models.route are capability declarations, so every surface is a projection; the catalogue's own diagnostics report a duplicate alias or an undeclared vendor at first read. Declaration order is routing's preference order, verifiable by reading the file.",
+      "responsibility": "none",
+      "source_route": "/docs/models/",
+      "command": null,
+      "test_case": "131_models"
+    },
+    {
+      "id": "models-routing-explains-itself",
+      "claim": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+      "source": "docs/MODELS.md",
+      "implementation": "apps/majordomus-cli/src/models/mod.rs",
+      "test": "test/cases/131_models.sh",
+      "status": "guaranteed",
+      "note": "Routing is a pure function over the declared catalogue and the stated need; the unit tests prove the preference order, the fixed check order behind every exclusion reason, and that a model named outright is still checked against the requirements.",
+      "responsibility": "none",
+      "source_route": "/docs/models/",
+      "command": null,
+      "test_case": "131_models"
+    },
+    {
+      "id": "models-no-secret-fields",
+      "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+      "source": "docs/MODELS.md",
+      "implementation": "apps/majordomus-cli/src/models/mod.rs",
+      "test": "apps/majordomus-cli/src/models/mod.rs",
+      "status": "guaranteed",
+      "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.",
+      "responsibility": "none",
+      "source_route": "/docs/models/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/src/models/mod.rs"
     }
   ]
 }

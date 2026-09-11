@@ -41,6 +41,8 @@ pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
 pub(crate) mod mcp;
+pub(crate) mod mesh;
+pub(crate) mod models;
 pub(crate) mod product;
 pub(crate) mod quality;
 pub(crate) mod release;
@@ -76,6 +78,8 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
         Command::Devcontext(args) => devcontext::run(args),
+        Command::Mesh(args) => mesh::run(args),
+        Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
     }
 }

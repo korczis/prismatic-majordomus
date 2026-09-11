@@ -72,8 +72,118 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
     Devcontext(DevcontextArgs),
+    /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
+    Mesh(MeshArgs),
+    /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
+    Models(ModelsArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models`.
+pub struct ModelsArgs {
+    #[command(subcommand)]
+    /// `list`, `route`.
+    pub command: ModelsCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `models` subcommands.
+pub enum ModelsCommand {
+    /// Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order
+    List(ModelsListArgs),
+    /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
+    Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models list`.
+pub struct ModelsListArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only models declaring this capability word.
+    pub capability: Option<String>,
+
+    #[arg(long)]
+    /// One model, by canonical id or alias.
+    pub id: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models route`.
+pub struct ModelsRouteArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Capability words the model must declare, comma-separated: `vision,tools`.
+    pub require: Option<String>,
+
+    #[arg(long)]
+    /// The least context window, tokens.
+    pub min_context: Option<u64>,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only local inference.
+    pub local_only: bool,
+
+    #[arg(long)]
+    /// A model named outright, by canonical id or alias; still checked against the other requirements.
+    pub model: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus mesh`.
+pub struct MeshArgs {
+    #[command(subcommand)]
+    /// `status`, `nodes`, `identity`, `doctor`.
+    pub command: MeshCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh` subcommands.
+pub enum MeshCommand {
+    /// Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies
+    Status(MeshQueryArgs),
+    /// Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance
+    Nodes(MeshQueryArgs),
+    /// This machine's node identity, public half only; absent is an answer, not an error
+    Identity(MeshQueryArgs),
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+    Doctor(MeshQueryArgs),
+}
+
+#[derive(Debug, Args)]
+/// One read-only `mesh` question.
+pub struct MeshQueryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -2977,6 +3087,72 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["devcontext", "policy"],
             setup: &[],
             expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh status",
+        examples: &[ExampleDoc {
+            id: "mesh-status",
+            title: "Whether this checkout's server runs a mesh",
+            description: "The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.",
+            argv: &["mesh", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh nodes",
+        examples: &[ExampleDoc {
+            id: "mesh-nodes",
+            title: "The nodes the running server has observed",
+            description: "One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.",
+            argv: &["mesh", "nodes"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh identity",
+        examples: &[ExampleDoc {
+            id: "mesh-identity",
+            title: "This machine's node identity, public half only",
+            description: "The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.",
+            argv: &["mesh", "identity"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["present"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh doctor",
+        examples: &[ExampleDoc {
+            id: "mesh-doctor",
+            title: "Every mesh prerequisite, proved on this machine alone",
+            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+            argv: &["mesh", "doctor"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "models list",
+        examples: &[ExampleDoc {
+            id: "models-list",
+            title: "The declared model catalogue",
+            description: "Every vendor and model share/models.yaml declares, in declaration order — which is also routing's preference order. Vendors show whether their named credential variable is set: presence only, never a value. An empty catalogue is an answer, not an error.",
+            argv: &["models", "list"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["model(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "models route",
+        examples: &[ExampleDoc {
+            id: "models-route",
+            title: "Which model a need selects, and why",
+            description: "The first declared model satisfying every requirement wins; the qualifying rest are the fallback chain, and every excluded model carries the first check it failed. Pure over the declared data — the same question always gets the same answer, and the reasons are in it.",
+            argv: &["models", "route", "--require", "text"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected"]),
         }],
     },
 ];

@@ -131,6 +131,11 @@ pub struct Context {
     /// value rather than discovering its own, so what the HTTP router serves, what the home
     /// page lists and what `web.surfaces` answers are three readings of one resolution.
     pub web: Arc<Topology>,
+    /// The mesh runtime: the discovered nodes of this process, and the machinery that
+    /// observes them. Inactive (an empty registry with a reason) until a shared server
+    /// activates it from the repository's mesh declaration; the capabilities of the
+    /// `mesh` module are its projections.
+    pub mesh: Arc<crate::mesh::MeshRuntime>,
 }
 
 impl Context {
@@ -153,6 +158,7 @@ impl Context {
             progress: crate::execution::Progress::silent(),
             caller: None,
             web,
+            mesh: Arc::new(crate::mesh::MeshRuntime::new()),
         }
     }
 
@@ -183,6 +189,11 @@ impl Context {
             peers: Arc::clone(&previous.peers),
             executions: Arc::clone(&previous.executions),
             executor: Arc::clone(&previous.executor),
+            // The mesh runtime is this process's, not this generation's: it holds the
+            // sockets that are already announcing and the registry every observation has
+            // converged into. A rebuild that handed the surfaces a fresh one would leave
+            // the server announcing from a runtime nothing could read.
+            mesh: Arc::clone(&previous.mesh),
             ..self.same()
         }
     }
@@ -226,6 +237,7 @@ impl Context {
             progress: self.progress.clone(),
             caller: self.caller.clone(),
             web: Arc::clone(&self.web),
+            mesh: Arc::clone(&self.mesh),
         }
     }
 
