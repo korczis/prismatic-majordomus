@@ -246,7 +246,7 @@ Everything this executable exposes over HTTP is a *surface*, and no list of them
 They are discovered — from `capability!` declarations and the constants in
 `web::discover::native_all()`, from `site/config.toml`, and from a `surface.json` a producer
 writes beside its output under `target/web/<id>/`. One resolution, held on `Context::web`
-and resolved once per process, feeds the router, the home page at `/`, the `web.surfaces`
+and resolved once per generation of the repository (`live::Live`), feeds the router, the home page at `/`, the `web.surfaces`
 capability, the validator, the publication, the startup log and `docs/generated/web.json`.
 
 **If you are changing anything under `src/http/`, `src/web/` or `src/cockpit/`, the

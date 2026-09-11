@@ -58,6 +58,7 @@ registry entry, none declared in the MCP code. The decision is
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within fifteen seconds is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
+| freshness | the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (`HEAD`, the staging index, `packed-refs`, the reflog, the merge and rebase markers — one `stat` each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. `project.the-server-sees-the-current-tree` |
 | signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
 | takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
 | options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
@@ -357,8 +358,10 @@ how each kind is read from the tool distribution at run time. The rest is data:
 
 Consequences a repository can rely on:
 
-- a new rule, prompt, profile, milestone, issue, claim or document is served after `git add`
-  and a restart, with no change to the executable;
+- a new rule, prompt, profile, milestone, issue, claim or document is served as soon as
+  `git add` has put it in the staging index, with no change to the executable and no
+  restart: staging moves a file the server watches, so the next request rebuilds the layer
+  (`project.the-server-sees-the-current-tree`);
 - a new class in `sources.yaml` naming a known kind, or a new kind with its schema under
   `.ai/repo/knowledge/`, is served the same way;
 - `.ai/local/` is never served, tracked or not;
