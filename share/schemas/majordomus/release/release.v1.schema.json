@@ -57,6 +57,13 @@
       "type": "boolean",
       "description": "True when the release must no longer be resolved: it stays addressable by its exact tag and stops being a candidate for the stable pointer. This is how a bad release is withdrawn without deleting artifacts anyone already has."
     },
+    "required_targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The distribution targets this release was published against, snapshotted at publication rather than recomputed later. A target added to the model afterwards is a promise about the next release; it cannot retroactively make this one incomplete. Absent on records written before the field existed, which are judged on internal consistency alone."
+    },
     "artifacts": {
       "type": "array",
       "minItems": 1,
