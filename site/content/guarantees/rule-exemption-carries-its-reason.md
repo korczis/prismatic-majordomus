@@ -1,7 +1,7 @@
 +++
 title = "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate"
 description = "Some rules genuinely have no machine expression. *The provenance of what was written* is"
-weight = 167
+weight = 169
 [extra]
 claim_id = "rule-exemption-carries-its-reason"
 status = "guaranteed"

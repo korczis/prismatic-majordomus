@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 46
+weight = 47
 [extra]
 source = "docs/MCP.md"
 +++
@@ -34,7 +34,7 @@ bin/majordomus-mcp                                           # the same, built f
 The log on stderr names it the moment it is up:
 
 ```
-shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server for this repository ...
+shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server of this checkout ...
 ```
 
 It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,
@@ -47,7 +47,7 @@ and the `capabilities` commands, and every tool and resource here is derived fro
 registry entry, none declared in the MCP code. The decision is
 [`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](../.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
 
-## One server per repository
+## One server per checkout
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -58,6 +58,7 @@ registry entry, none declared in the MCP code. The decision is
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within fifteen seconds is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
+| freshness | the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (`HEAD`, the staging index, `packed-refs`, the reflog, the merge and rebase markers — one `stat` each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. `project.the-server-sees-the-current-tree` |
 | signals | `SIGTERM`, `SIGINT` or `SIGHUP` (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; `kill -9` cannot be caught, and the next process takes the stale lease over |
 | takeover | a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's `initialize` across so that the client never notices, or attaches to whichever process won first (`re-attached to the shared server`); when it can serve neither way (its own `--strict` refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence |
 | options | the server's `--discovery` and `--strict` apply to every session it serves; a bridge inherits them and the log says which server it attached to |
@@ -291,7 +292,7 @@ what it announced, before its first tool call.
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
-| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, each peer's announcement, and every pair of claims that meet |
+| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 </div>
@@ -303,6 +304,48 @@ to touch. The board lives in the server's memory and is gone with the process;
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.
+
+### The board is the repository's (ADR 0044)
+
+A server serves a checkout, so a repository worked on through linked worktrees has one
+board per worktree — and until ADR 0044 `peers.list` answered with one of them while the
+bootstrap in `CLAUDE.md` and `AGENTS.md` told every worker it had seen the repository.
+Measured on 2026-09-11: seven live servers, one `git_repository_id`, seven boards, nine
+agents across sixty worktrees each reading a board that held itself.
+
+`peers.list` now gathers. It enumerates the checkouts git registers and reads the lease of
+each — the same readers `server.status` uses — takes its own board from this process's
+memory, and asks every other checkout whose server answers for **its own board alone**
+(`checkouts=this`). That parameter is what keeps the gather one hop deep: a server asked
+for `this` enumerates no checkout and probes no server, so it can never ask back. There is
+no retry without it, because a server too old to know the parameter would answer its whole
+board and a cycle is the one failure this must not have; such a checkout is reported unread
+with the reason instead.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| field | what it says |
+|---|---|
+| `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
+| `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
+| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
+| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+
+</div>
+
+
+A peer id is a **position on one board**, handed out in attachment order and reassigned
+after a reconnect — a session that was `p3` this morning is `p1` once its bridge
+re-attaches. Nothing may correlate a worker across time by it; the checkout a peer carries
+is the durable half of its identity. An announcement likewise belongs to a connection: the
+bridge repeats its client's last one after a re-attach or a takeover, and a worker whose
+bridge process is replaced announces again.
+
+Costs one lease read per registered checkout, one probe per checkout whose lease names an
+address, and one round trip per server that answers. On this repository on 2026-09-11 —
+118 registered checkouts, 7 live servers — the enumeration and probing `server.status`
+already performs took 3.0s wall.
 
 **A claim is answered, not merely recorded.** `peers.announce` compares the scope it is
 given against every other announcement and returns the peers whose claims meet it, with
@@ -357,8 +400,10 @@ how each kind is read from the tool distribution at run time. The rest is data:
 
 Consequences a repository can rely on:
 
-- a new rule, prompt, profile, milestone, issue, claim or document is served after `git add`
-  and a restart, with no change to the executable;
+- a new rule, prompt, profile, milestone, issue, claim or document is served as soon as
+  `git add` has put it in the staging index, with no change to the executable and no
+  restart: staging moves a file the server watches, so the next request rebuilds the layer
+  (`project.the-server-sees-the-current-tree`);
 - a new class in `sources.yaml` naming a known kind, or a new kind with its schema under
   `.ai/repo/knowledge/`, is served the same way;
 - `.ai/local/` is never served, tracked or not;
@@ -407,7 +452,7 @@ manifest section it falls under, and its size.
 | `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
 | `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
-| `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
+| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
 | `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
 | `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
@@ -417,6 +462,38 @@ manifest section it falls under, and its size.
 
 </div>
 
+
+The table above is the core set and not the whole of it: the tool list is a projection of
+the capability registry, it grows whenever a module is composed, and a list in prose that
+claimed to be complete would be wrong the next time one is. `majordomus_capabilities` and
+`docs/generated/capabilities.md` are the derived, total reference; what is written here is
+what a reader needs before opening it.
+
+### Sessions and continuity
+
+Two of the tools answer about `.ai/local/` — the half of the layer that names this machine —
+and they are the reason the server binds to the loopback interface. They are served and
+never published: no generator writes them into `docs/generated/` and no site page carries
+one.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| tool | capability | answers |
+|---|---|---|
+| `majordomus_continuity` | `continuity.state` | what a worker resuming *here* would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers |
+| `majordomus_lifecycle_episodes` | `lifecycle.episodes` | every open episode of the store — not only the one the pointer follows — with its provider session, its standing (`current`, `open`, `foreign`, `stranded`) and the last ledger line stamped with it |
+| `majordomus_lifecycle_recovery` | `lifecycle.recovery` | episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic |
+| `majordomus_lifecycle_runtime` | `lifecycle.runtime` | the commit this process's index was built at, against the commit the repository is on right now, and whether they agree |
+| `majordomus_lifecycle_providers` | `lifecycle.providers` | per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook |
+| `majordomus_lifecycle_closed` | `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty |
+
+</div>
+
+
+The first answers the worker's question and the rest answer the operator's, which is a
+different question and not a superset: `continuity.state` follows
+`state/session-current.yaml`, and that pointer is a symlink the most recent start event
+re-aims. [`CONTINUITY.md`](@/docs/continuity.md) has the model and the whole path.
 
 Every query is read-only and says so in its annotations; `majordomus_announce`, the one
 command, says it is not, and it changes this process's memory and nothing else. Each tool
@@ -467,9 +544,11 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
   server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus
   serve`; see [`CAPABILITIES.md`](@/docs/capabilities.md).
-- **Persistent coordination.** The peer board is one process's memory: what a peer is
-  working on across sessions and machines is the shell tool's task record and scope, not
-  this.
+- **Persistent coordination.** A peer board is one process's memory, and the gathered board
+  is a read of several of them at the moment of asking: what a peer is working on across
+  sessions and machines is the shell tool's task record and scope, not this. A branch
+  pushed before a session started carries no announcement and no less of a claim;
+  `scripts/collision-check` is the reader for that.
 
 ## What proves it
 

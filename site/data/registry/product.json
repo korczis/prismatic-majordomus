@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "825d4757863ae46aac2367aa9e156b87e0238d4167bd951e906a3357238be9aa",
+  "fingerprint": "d9e25bdcdbea036fb2507e6cf5dd22b943ef37bae26231c001049e23c7de1cfd",
   "route": "/features/",
   "counts": {
     "features": 20,
     "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 29,
+    "modules": 32,
     "modules_covered": 19,
     "commands": 29,
     "commands_covered": 28,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 160
+          "objects": 162
         }
       ],
       "rule_refs": [
@@ -537,11 +537,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 215,
+        "mcp_resources": 217,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 211,
+        "objects": 213,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -824,7 +824,7 @@
         },
         {
           "id": "mcp-shared-server",
-          "claim": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+          "claim": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
           "status": "guaranteed"
         },
         {
@@ -834,7 +834,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1223,7 +1223,7 @@
         {
           "id": "peers",
           "title": "Peers",
-          "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+          "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
           "capabilities": [
@@ -1420,7 +1420,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1939,7 +1939,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -1953,7 +1953,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         },
         {
           "name": "prompt",
@@ -2286,11 +2286,11 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 17,
+        "mcp_resources": 27,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 16,
+        "objects": 26,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -2460,7 +2460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 41
+          "objects": 44
         },
         {
           "name": "knowledge",
@@ -2468,7 +2468,7 @@
         },
         {
           "name": "document",
-          "objects": 229
+          "objects": 232
         }
       ],
       "rule_refs": [
@@ -2717,11 +2717,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 272,
+        "mcp_resources": 278,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 271,
+        "objects": 277,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -2931,7 +2931,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 121
+          "objects": 126
         }
       ],
       "rule_refs": [
@@ -3293,11 +3293,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 123,
+        "mcp_resources": 128,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 121,
+        "objects": 126,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -4506,7 +4506,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -4520,7 +4520,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         }
       ],
       "rule_refs": [
@@ -4746,11 +4746,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 12,
+        "mcp_resources": 22,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 12,
+        "objects": 22,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -5180,11 +5180,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 18
+          "objects": 19
         },
         {
           "name": "issue",
-          "objects": 203
+          "objects": 215
         }
       ],
       "rule_refs": [
@@ -5327,11 +5327,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 222,
+        "mcp_resources": 235,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 221,
+        "objects": 234,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -6740,7 +6740,7 @@
         },
         {
           "id": "rust-coverage-floor",
-          "claim": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
           "status": "guaranteed"
         }
       ],
@@ -7700,6 +7700,11 @@
         "features": []
       },
       {
+        "id": "devcontext",
+        "title": "Development context",
+        "features": []
+      },
+      {
         "id": "devtask",
         "title": "Executable development scopes",
         "features": []
@@ -7749,6 +7754,11 @@
           "doctrine",
           "cockpit"
         ]
+      },
+      {
+        "id": "lifecycle",
+        "title": "Session lifecycle",
+        "features": []
       },
       {
         "id": "objects",
@@ -7819,6 +7829,11 @@
         "features": [
           "coordination"
         ]
+      },
+      {
+        "id": "session_domain",
+        "title": "The session domain",
+        "features": []
       },
       {
         "id": "trace",
@@ -8072,7 +8087,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (41)",
+        "title": "adr (44)",
         "features": [
           "knowledge"
         ]
@@ -8100,7 +8115,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (160)",
+        "title": "claim (162)",
         "features": [
           "declare-once"
         ]
@@ -8140,7 +8155,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (203)",
+        "title": "issue (215)",
         "features": [
           "planning"
         ]
@@ -8154,7 +8169,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (18)",
+        "title": "milestone (19)",
         "features": [
           "planning"
         ]
@@ -8194,7 +8209,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (121)",
+        "title": "rule (126)",
         "features": [
           "doctrine"
         ]
@@ -8208,7 +8223,7 @@
       },
       {
         "id": "session",
-        "title": "session (12)",
+        "title": "session (22)",
         "features": [
           "continuity",
           "provenance"
@@ -8979,44 +8994,44 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1290,
-    "builtin": 87,
-    "declarative": 1203,
-    "modules": 29,
-    "mcp_tools": 84,
-    "mcp_resources": 1233,
-    "http_routes": 86,
-    "cli_commands": 100,
+    "capabilities": 1356,
+    "builtin": 97,
+    "declarative": 1259,
+    "modules": 32,
+    "mcp_tools": 94,
+    "mcp_resources": 1294,
+    "http_routes": 96,
+    "cli_commands": 104,
     "shell_commands": 29,
     "kinds": 28,
-    "objects": 1203,
+    "objects": 1259,
     "by_kind": {
-      "adr": 41,
+      "adr": 44,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 160,
+      "claim": 162,
       "command": 30,
       "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 229,
+      "document": 232,
       "feature": 21,
       "implementation": 46,
-      "issue": 203,
+      "issue": 215,
       "knowledge": 1,
-      "milestone": 18,
+      "milestone": 19,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 121,
+      "rule": 126,
       "scope": 1,
-      "session": 12,
+      "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 161,
+      "test": 181,
       "use-case": 44,
       "workspace": 1
     },

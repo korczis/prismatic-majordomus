@@ -15,6 +15,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
+| `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
@@ -23,6 +24,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
+| `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
@@ -34,6 +36,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `server` | Server | behaviorally_verified | 1 | [`modules/server.md`](modules/server.md) |
+| `session_domain` | The session domain | behaviorally_verified | 2 | [`modules/session_domain.md`](modules/session_domain.md) |
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
@@ -58,6 +61,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |
 | `design.tokens` | `design` | query | behaviorally_verified | `majordomus_design_tokens` | — | `GET /api/v1/design/tokens` | — | — | required |
+| `devcontext.compile` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext` | — | `GET /api/v1/devcontext` | `majordomus devcontext compile` | process, 16 entries | required |
+| `devcontext.explain` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_explain` | — | `GET /api/v1/devcontext/explain` | `majordomus devcontext explain` | process, 8 entries | required |
+| `devcontext.policy` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_policy` | `majordomus://devcontext/policy` | `GET /api/v1/devcontext/policy` | `majordomus devcontext policy` | — | required |
 | `devtask.issue` | `devtask` | query | behaviorally_verified | `majordomus_devtask` | — | `GET /api/v1/devtask/issue` | `majordomus devtask issue` | — | required |
 | `devtask.milestone` | `devtask` | query | behaviorally_verified | `majordomus_devtask_milestone` | — | `GET /api/v1/devtask/milestone` | `majordomus devtask milestone` | — | required |
 | `directories.list` | `directories` | query | behaviorally_verified | `majordomus_directories` | `majordomus://directories` | `GET /api/v1/directories` | — | process, 8 entries, 5s | required |
@@ -84,6 +90,11 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
 | `health.ready` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/ready` | — | — | required |
 | `health.report` | `health` | query | behaviorally_verified | `majordomus_health` | `majordomus://health` | `GET /api/v1/health` | — | process, 4 entries, 5s | required |
+| `lifecycle.closed` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_closed` | — | `GET /api/v1/lifecycle/closed` | — | process, 2 entries, 30s | required |
+| `lifecycle.episodes` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_episodes` | `majordomus://lifecycle/episodes` | `GET /api/v1/lifecycle/episodes` | — | process, 2 entries, 2s | required |
+| `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |
+| `lifecycle.recovery` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_recovery` | `majordomus://lifecycle/recovery` | `GET /api/v1/lifecycle/recovery` | — | process, 2 entries, 2s | required |
+| `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |
@@ -116,6 +127,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `rules.report` | `rules` | query | behaviorally_verified | `majordomus_rules` | `majordomus://rules` | `GET /api/v1/rules` | `majordomus rules report` | — | required |
 | `rules.show` | `rules` | query | behaviorally_verified | `majordomus_rule` | — | `GET /api/v1/rules/rule` | `majordomus rules show` | — | required |
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |
+| `session_domain.identity` | `session_domain` | query | behaviorally_verified | `majordomus_session_identity` | `majordomus://session/identity` | `GET /api/v1/session/identity` | — | process, 2 entries, 2s | required |
+| `session_domain.machine` | `session_domain` | query | behaviorally_verified | `majordomus_session_machine` | `majordomus://session/machine` | `GET /api/v1/session/machine` | — | process, 1 entries, 600s | required |
 | `trace.commit` | `trace` | query | behaviorally_verified | `majordomus_trace_commit` | — | `GET /api/v1/trace/commit` | — | — | required |
 | `trace.issue` | `trace` | query | behaviorally_verified | `majordomus_trace_issue` | — | `GET /api/v1/trace/issue` | — | — | required |
 | `trace.report` | `trace` | query | behaviorally_verified | `majordomus_traceability` | `majordomus://traceability` | `GET /api/v1/trace` | — | — | required |

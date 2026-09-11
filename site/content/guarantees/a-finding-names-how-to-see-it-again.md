@@ -1,7 +1,7 @@
 +++
 title = "Every finding a command reports names the command that reproduces it"
 description = "A finding without a way to see it again is an opinion. The reproduce command is what lets"
-weight = 170
+weight = 172
 [extra]
 claim_id = "a-finding-names-how-to-see-it-again"
 status = "guaranteed"

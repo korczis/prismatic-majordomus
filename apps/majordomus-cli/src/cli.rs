@@ -70,6 +70,8 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
+    Devcontext(DevcontextArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
@@ -177,6 +179,27 @@ pub enum EnvCommand {
         /// Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call
         #[arg(long)]
         bridge: bool,
+    },
+    /// Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer
+    Enter {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// How much banner to draw; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", conflicts_with = "no_banner")]
+        mode: Option<String>,
+        /// Do not draw the banner
+        #[arg(long = "no-banner")]
+        no_banner: bool,
+        /// Do not refresh the workflow bridge
+        #[arg(long = "no-bridge")]
+        no_bridge: bool,
+        /// Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument
+        #[arg(long = "no-runtime")]
+        no_runtime: bool,
+        /// Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published
+        #[arg(long, value_name = "SECONDS", default_value_t = 0)]
+        wait: u64,
     },
     /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
     Explain {
@@ -960,7 +983,7 @@ pub enum Transport {
 }
 
 /// Where and how the repository is read; shared by every command that reads it.
-#[derive(Debug, Args, Default)]
+#[derive(Debug, Args, Default, Clone)]
 pub struct RepoArgs {
     /// Start the search for the repository root here (default: the current directory)
     #[arg(long, value_name = "PATH", global = true)]
@@ -1554,6 +1577,72 @@ pub enum CompletionShell {
     Fish,
 }
 
+#[derive(Debug, Args)]
+/// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
+/// capability; the request flags are declared once and shared by `compile` and `explain`.
+pub struct DevcontextArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `compile`, `explain` or `policy`.
+    pub command: DevcontextCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// What to ask of the context compiler.
+pub enum DevcontextCommand {
+    /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
+    Compile(DevcontextRequest),
+    /// Why one canonical identifier is or is not in the context a request compiles to
+    Explain {
+        /// The canonical identifier, `majordomus://<kind>/<identity>`
+        uri: String,
+        #[command(flatten)]
+        /// The request to judge it under.
+        request: DevcontextRequest,
+    },
+    /// The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults
+    Policy,
+}
+
+#[derive(Debug, Clone, Args)]
+/// What to compile a context about; every flag is optional.
+pub struct DevcontextRequest {
+    /// An issue id (`I0301`) or its canonical identifier
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// A milestone id or slug, or its canonical identifier
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// What the session is trying to do, in words; the only input the compiler infers from
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// A repository-relative path the work touches; repeat for each
+    #[arg(long = "path")]
+    pub paths: Vec<String>,
+    /// A canonical identifier to seed with directly; repeat for each
+    #[arg(long = "uri")]
+    pub uris: Vec<String>,
+    /// The ceiling in estimated tokens
+    #[arg(long)]
+    pub budget_tokens: Option<u64>,
+    /// How far from a seed the walk goes
+    #[arg(long)]
+    pub max_depth: Option<usize>,
+    /// Relevance below which an entry is reported rather than given, between 0 and 1
+    #[arg(long)]
+    pub floor: Option<f64>,
+    /// Every blocking rule of the layer, not only the ones the work reaches
+    #[arg(long)]
+    pub all_blocking_rules: bool,
+}
+
 // ------------------------------------------------------------------ the command line as data
 //
 // clap is the one declaration of the command line: every command, argument, default and
@@ -1830,6 +1919,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "The assignments a shell in this repository wants",
             description: "Assignments and nothing else, safe to `eval`: no command runs, no file is touched, and every value is quoted so that a repository path holding a quote or a `$(...)` cannot become shell code. This is the whole of what `.envrc` needs from Majordomus.",
             argv: &["env", "export", "--shell", "direnv"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
+        command: "env enter",
+        examples: &[ExampleDoc {
+            id: "env-enter",
+            title: "Everything entering this repository is, as one call",
+            description: "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+            argv: &["env", "enter", "--shell", "direnv", "--no-banner", "--no-bridge", "--no-runtime"],
             setup: &[],
             expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
         }],
@@ -2944,5 +3044,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "devcontext compile",
+        examples: &[
+            ExampleDoc {
+                id: "devcontext-compile-issue",
+                title: "The context a session working on one issue should be given",
+                description: "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.",
+                argv: &["devcontext", "compile", "--issue", "I0001"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SELECTED", "majordomus://issue/I0001", "EXCLUDED"]),
+            },
+            ExampleDoc {
+                id: "devcontext-compile-json",
+                title: "The same, as the structure every other surface answers with",
+                description: "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.",
+                argv: &["devcontext", "compile", "--issue", "I0001", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/selected/0/uri", "/selected/0/discovered_by/0/reason", "/budget/limit_tokens", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "devcontext explain",
+        examples: &[ExampleDoc {
+            id: "devcontext-explain-seed",
+            title: "Why one thing is in the context",
+            description: "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.",
+            argv: &["devcontext", "explain", "majordomus://issue/I0001", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected", "majordomus://issue/I0001"]),
+        }],
+    },
+    CommandExamples {
+        command: "devcontext policy",
+        examples: &[ExampleDoc {
+            id: "devcontext-policy",
+            title: "The compiler's own rules",
+            description: "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.",
+            argv: &["devcontext", "policy"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
     },
 ];

@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# shell-coverage — how much of the shell half of the lifecycle a run of the suite executes.
+#
+#   scripts/shell-coverage <case> [<case> ...]    run those cases under tracing and report
+#   scripts/shell-coverage --all                  every case (slow; the whole suite)
+#   scripts/shell-coverage --files a.sh,b.sh      report over these lib files only
+#                                                 (default: the session lifecycle's own)
+#   scripts/shell-coverage --trace FILE           reuse a trace instead of producing one
+#
+# WHY THIS EXISTS, AND WHAT IT IS NOT.
+#
+# The Rust half of this repository has had a coverage gate since it had a crate. The shell
+# half — four thousand lines that own the whole session lifecycle, the ledger, the record
+# stores and every provider hook — has had none, and "the suite covers it" was a belief
+# nobody had measured. This measures it.
+#
+# It is not a gate and it declares no threshold. It is an instrument, and the number it
+# prints is reported rather than enforced, for one honest reason: the denominator of a line
+# count over shell is an estimate. `bash -x` reports the lines it executes, so the numerator
+# is exact; what it never reports is which lines it *could* have executed, and a static
+# reading of a shell script cannot tell a runnable line from a continuation of one, from a
+# `}` that closes a function, from a line inside a heredoc. So this prints two numbers with
+# very different standing:
+#
+#   FUNCTION COVERAGE is exact. A function's line range is its `name() {` and the `}` in
+#   column one that closes it; the function was executed if any traced line falls inside it.
+#   Nothing is estimated, and this is the number to read.
+#
+#   LINE COVERAGE is an estimate, and the estimate is stated rather than hidden: the
+#   denominator is every line that is not blank, not comment-only, and not one of the bare
+#   structural keywords bash never traces (`}`, `fi`, `done`, `esac`, `else`, `do`, `then`,
+#   `;;`). That over-counts — a heredoc body is in it, and so is a `local` declaration bash
+#   folds into the line before — so the percentage is a floor, not a measurement.
+#
+# HOW. Every case drives the tool through `$MJ`, so the whole shell half is reached through
+# one executable. This puts a tracing wrapper in front of it on PATH: the wrapper opens the
+# trace file on a private descriptor, points BASH_XTRACEFD at it, and runs the real tool
+# under `bash -x` with a PS4 that carries `$BASH_SOURCE` and `$LINENO`. Nothing in lib/ or
+# bin/ is modified, and nothing about the run changes except that it is slower.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+FILES="session.sh,capture.sh,checkpoint.sh,handover.sh,derive.sh,common.sh,session_context.sh"
+TRACE=""; CASES=""; ALL=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --all) ALL=1; shift ;;
+    --files) FILES="$2"; shift 2 ;;
+    --files=*) FILES="${1#--files=}"; shift ;;
+    --trace) TRACE="$2"; shift 2 ;;
+    --trace=*) TRACE="${1#--trace=}"; shift ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -*) echo "shell-coverage: unknown option $1" >&2; exit 2 ;;
+    *) CASES="$CASES $1"; shift ;;
+  esac
+done
+
+if [ -z "$TRACE" ]; then
+  [ "$ALL" = 1 ] || [ -n "$CASES" ] || { echo "shell-coverage: name a case, or --all" >&2; exit 2; }
+  TRACE="$(mktemp "${TMPDIR:-/tmp}/mj-shcov.XXXXXX")"
+  WRAP="$(mktemp -d "${TMPDIR:-/tmp}/mj-shcov-bin.XXXXXX")"
+  # The wrapper the cases will find on PATH. `exec 9>>` opens the trace once per invocation
+  # and appends, so a run that starts four hundred processes produces one file; BASH_XTRACEFD
+  # keeps the trace off stderr, where it would be read by every case that asserts on stderr
+  # and would fail all of them.
+  cat > "$WRAP/majordomus" <<WRAPPER
+#!/usr/bin/env bash
+exec 9>>"$TRACE"
+BASH_XTRACEFD=9 PS4='+\${BASH_SOURCE}:\${LINENO}:' exec bash -x "$ROOT/bin/majordomus" "\$@"
+WRAPPER
+  chmod +x "$WRAP/majordomus"
+  names="$CASES"
+  if [ "$ALL" = 1 ]; then
+    names=""
+    for c in "$ROOT"/test/cases/*.sh; do names="$names $(basename "$c" .sh)"; done
+  fi
+  # The fixture is built here rather than by test/run.sh, and the four lines are the same
+  # four: a disposable repository with one empty commit, and the case run inside it with $T
+  # and $MJ. The runner cannot be used, because it exports `MJ="$ROOT/bin/majordomus"` over
+  # whatever the caller set — which is correct for the runner and is exactly what has to be
+  # replaced here. Nothing in bin/ or lib/ is modified to make this measurement.
+  for name in $names; do
+    case="$ROOT/test/cases/$name.sh"
+    [ -f "$case" ] || { printf 'shell-coverage: no case %s\n' "$name" >&2; continue; }
+    printf '==> %s\n' "$name" >&2
+    T="$(mktemp -d "${TMPDIR:-/tmp}/mj-shcov-case.XXXXXX")"
+    ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
+      && git commit -q --allow-empty -m init ) || { rm -rf "$T"; continue; }
+    # The wrapper is both the case's own `$MJ` and what the provider shims find: they
+    # resolve `<root>/bin/majordomus` first and PATH second, so the shims of a fixture
+    # repository (which has no bin/) reach the wrapper through PATH.
+    ( cd "$T" && ROOT="$ROOT" T="$T" MJ="$WRAP/majordomus" PATH="$WRAP:$PATH" \
+      bash -eu "$case" ) >/dev/null 2>&1 || true
+    rm -rf "$T"
+  done
+  rm -rf "$WRAP"
+fi
+
+ROOT="$ROOT" FILES="$FILES" python3 - "$TRACE" <<'PY'
+import os, re, sys, collections
+
+root  = os.environ["ROOT"]
+want  = [f for f in os.environ["FILES"].split(",") if f]
+trace = sys.argv[1]
+
+# The lines the run executed, per file. PS4 is `+<source>:<line>:`, and bash prefixes nested
+# shell levels with more `+`, so the leading run of them is stripped rather than matched.
+hit = collections.defaultdict(set)
+line_re = re.compile(r'^\++(?P<src>[^:]+):(?P<line>\d+):')
+with open(trace, encoding="utf-8", errors="replace") as fh:
+    for raw in fh:
+        m = line_re.match(raw)
+        if not m:
+            continue
+        src = os.path.relpath(m.group("src"), root) if m.group("src").startswith(root) else m.group("src")
+        hit[os.path.basename(src)].add(int(m.group("line")))
+
+STRUCTURAL = {"}", "fi", "done", "esac", "else", "do", "then", ";;", "{", "fi;", "esac;", "'"}
+FUNC = re.compile(r'^(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*\{')
+
+total_fn = covered_fn = total_ln = covered_ln = 0
+print("%-22s %-28s %s" % ("file", "functions", "lines (estimate, a floor)"))
+uncovered_all = []
+for name in want:
+    path = os.path.join(root, "lib", name)
+    if not os.path.exists(path):
+        print("%-22s NOT PRESENT" % name)
+        continue
+    src = open(path, encoding="utf-8", errors="replace").read().splitlines()
+    seen = hit.get(name, set())
+
+    # functions: from `name() {` to the `}` in column one that closes it. A one-line
+    # function (`mj_x() { ...; }`) closes on its own line.
+    fns, i = [], 0
+    while i < len(src):
+        m = FUNC.match(src[i])
+        if m:
+            start = i + 1
+            end = start
+            if src[i].rstrip().endswith("}"):
+                end = start
+            else:
+                j = i + 1
+                while j < len(src) and src[j] != "}":
+                    j += 1
+                end = j + 1
+            fns.append((m.group("name"), start, end))
+            i = end
+        else:
+            i += 1
+    cov = [f for f in fns if any(l in seen for l in range(f[1], f[2] + 1))]
+    uncovered_all += [(name, f[0]) for f in fns if f not in cov]
+
+    runnable = set()
+    in_heredoc = None
+    for n, text in enumerate(src, 1):
+        s = text.strip()
+        if in_heredoc is not None:
+            if s == in_heredoc:
+                in_heredoc = None
+            continue
+        h = re.search(r"<<-?\s*'?([A-Za-z_][A-Za-z0-9_]*)'?\s*$", text)
+        if h:
+            in_heredoc = h.group(1)
+        if not s or s.startswith("#") or s in STRUCTURAL:
+            continue
+        runnable.add(n)
+    seen_runnable = seen & runnable
+
+    total_fn += len(fns); covered_fn += len(cov)
+    total_ln += len(runnable); covered_ln += len(seen_runnable)
+    fpct = 100.0 if not fns else 100.0 * len(cov) / len(fns)
+    lpct = 100.0 if not runnable else 100.0 * len(seen_runnable) / len(runnable)
+    print("%-22s %5.1f%% (%3d/%3d)%13s %5.1f%% (%4d/%4d)"
+          % (name, fpct, len(cov), len(fns), "", lpct, len(seen_runnable), len(runnable)))
+
+print("%-22s %5.1f%% (%3d/%3d)%13s %5.1f%% (%4d/%4d)"
+      % ("TOTAL", 100.0 if not total_fn else 100.0 * covered_fn / total_fn, covered_fn, total_fn,
+         "", 100.0 if not total_ln else 100.0 * covered_ln / total_ln, covered_ln, total_ln))
+if uncovered_all:
+    print("\nnot executed by this run:")
+    for f, n in uncovered_all:
+        print("  %s %s" % (f, n))
+PY

@@ -1,7 +1,7 @@
 +++
 title = "A blocking question keeps blocking after the work is handed to a new task"
 description = "An unresolved entry in state/open-questions.md refuses finish --outcome completed — any entry, not only one the active task opened. Hand the work over, start a new task, and the question still refuses completion, because it is still unanswered."
-weight = 90
+weight = 91
 [extra]
 claim_id = "blocker-survives-handover"
 status = "guaranteed"

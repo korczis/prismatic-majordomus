@@ -1,7 +1,7 @@
 +++
 title = "Every blocking rule names what proves it, and every path it names is in the tree"
 description = "A rule of this repository declares a class. blocking means a gate refuses work that"
-weight = 166
+weight = 168
 [extra]
 claim_id = "rule-proof-is-named-and-resolves"
 status = "guaranteed"

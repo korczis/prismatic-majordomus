@@ -5828,6 +5828,157 @@ cli:
         - path:
             - majordomus
             - env
+            - enter
+          route: /docs/cli/env/enter/
+          executable: true
+          usage: "majordomus env enter [OPTIONS]"
+          about: "Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer"
+          args:
+            - name: shell
+              long: shell
+              positional: false
+              help: "The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`"
+              value_name: SHELL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - direnv
+            - name: mode
+              long: mode
+              positional: false
+              help: How much banner to draw; MAJORDOMUS_BANNER decides without it
+              value_name: MODE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: no_banner
+              long: no-banner
+              positional: false
+              help: Do not draw the banner
+              value_name: NO_BANNER
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: no_bridge
+              long: no-bridge
+              positional: false
+              help: Do not refresh the workflow bridge
+              value_name: NO_BRIDGE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: no_runtime
+              long: no-runtime
+              positional: false
+              help: "Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument"
+              value_name: NO_RUNTIME
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: wait
+              long: wait
+              positional: false
+              help: "Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published"
+              value_name: SECONDS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "0"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-enter
+              title: "Everything entering this repository is, as one call"
+              description: "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server."
+              argv:
+                - env
+                - enter
+                - "--shell"
+                - direnv
+                - "--no-banner"
+                - "--no-bridge"
+                - "--no-runtime"
+              command: majordomus env enter --shell direnv --no-banner --no-bridge --no-runtime
+              setup: []
+              expectation: exits 0; prints export MAJORDOMUS_ROOT=
+          subcommands: []
+        - path:
+            - majordomus
+            - env
             - explain
           route: /docs/cli/env/explain/
           executable: true
@@ -10587,6 +10738,529 @@ cli:
               command: majordomus executions protocol --format json
               setup: []
               expectation: "exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events"
+          subcommands: []
+    - path:
+        - majordomus
+        - devcontext
+      route: /docs/cli/devcontext/
+      executable: false
+      usage: "majordomus devcontext [OPTIONS] <COMMAND>"
+      about: "The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - devcontext
+            - compile
+          route: /docs/cli/devcontext/compile/
+          executable: true
+          usage: "majordomus devcontext compile [OPTIONS]"
+          about: "Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget"
+          args:
+            - name: issue
+              long: issue
+              positional: false
+              help: "An issue id (`I0301`) or its canonical identifier"
+              value_name: ISSUE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: "A milestone id or slug, or its canonical identifier"
+              value_name: MILESTONE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: intent
+              long: intent
+              positional: false
+              help: "What the session is trying to do, in words; the only input the compiler infers from"
+              value_name: INTENT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: paths
+              long: path
+              positional: false
+              help: A repository-relative path the work touches; repeat for each
+              value_name: PATHS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: uris
+              long: uri
+              positional: false
+              help: A canonical identifier to seed with directly; repeat for each
+              value_name: URIS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: budget_tokens
+              long: budget-tokens
+              positional: false
+              help: The ceiling in estimated tokens
+              value_name: BUDGET_TOKENS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: max_depth
+              long: max-depth
+              positional: false
+              help: How far from a seed the walk goes
+              value_name: MAX_DEPTH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: floor
+              long: floor
+              positional: false
+              help: "Relevance below which an entry is reported rather than given, between 0 and 1"
+              value_name: FLOOR
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: all_blocking_rules
+              long: all-blocking-rules
+              positional: false
+              help: "Every blocking rule of the layer, not only the ones the work reaches"
+              value_name: ALL_BLOCKING_RULES
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: devcontext-compile-issue
+              title: The context a session working on one issue should be given
+              description: "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason."
+              argv:
+                - devcontext
+                - compile
+                - "--issue"
+                - I0001
+              command: majordomus devcontext compile --issue I0001
+              setup: []
+              expectation: "exits 0; prints SELECTED, majordomus://issue/I0001, EXCLUDED"
+            - id: devcontext-compile-json
+              title: "The same, as the structure every other surface answers with"
+              description: "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose."
+              argv:
+                - devcontext
+                - compile
+                - "--issue"
+                - I0001
+                - "--format"
+                - json
+              command: majordomus devcontext compile --issue I0001 --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /selected/0/uri, /selected/0/discovered_by/0/reason, /budget/limit_tokens, /fingerprint"
+          subcommands: []
+        - path:
+            - majordomus
+            - devcontext
+            - explain
+          route: /docs/cli/devcontext/explain/
+          executable: true
+          usage: "majordomus devcontext explain [OPTIONS] <URI>"
+          about: Why one canonical identifier is or is not in the context a request compiles to
+          args:
+            - name: uri
+              positional: true
+              help: "The canonical identifier, `majordomus://<kind>/<identity>`"
+              value_name: URI
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: issue
+              long: issue
+              positional: false
+              help: "An issue id (`I0301`) or its canonical identifier"
+              value_name: ISSUE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: "A milestone id or slug, or its canonical identifier"
+              value_name: MILESTONE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: intent
+              long: intent
+              positional: false
+              help: "What the session is trying to do, in words; the only input the compiler infers from"
+              value_name: INTENT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: paths
+              long: path
+              positional: false
+              help: A repository-relative path the work touches; repeat for each
+              value_name: PATHS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: uris
+              long: uri
+              positional: false
+              help: A canonical identifier to seed with directly; repeat for each
+              value_name: URIS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: budget_tokens
+              long: budget-tokens
+              positional: false
+              help: The ceiling in estimated tokens
+              value_name: BUDGET_TOKENS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: max_depth
+              long: max-depth
+              positional: false
+              help: How far from a seed the walk goes
+              value_name: MAX_DEPTH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: floor
+              long: floor
+              positional: false
+              help: "Relevance below which an entry is reported rather than given, between 0 and 1"
+              value_name: FLOOR
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: all_blocking_rules
+              long: all-blocking-rules
+              positional: false
+              help: "Every blocking rule of the layer, not only the ones the work reaches"
+              value_name: ALL_BLOCKING_RULES
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: devcontext-explain-seed
+              title: Why one thing is in the context
+              description: "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown."
+              argv:
+                - devcontext
+                - explain
+                - majordomus://issue/I0001
+                - "--issue"
+                - I0001
+              command: majordomus devcontext explain majordomus://issue/I0001 --issue I0001
+              setup: []
+              expectation: "exits 0; prints selected, majordomus://issue/I0001"
+          subcommands: []
+        - path:
+            - majordomus
+            - devcontext
+            - policy
+          route: /docs/cli/devcontext/policy/
+          executable: true
+          usage: "majordomus devcontext policy [OPTIONS]"
+          about: "The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: devcontext-policy
+              title: "The compiler's own rules"
+              description: "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read."
+              argv:
+                - devcontext
+                - policy
+              command: majordomus devcontext policy
+              setup: []
+              expectation: "exits 0; prints TIER, is_a, REFUSED"
           subcommands: []
     - path:
         - majordomus

@@ -192,7 +192,13 @@ unset OPENAI_API_KEY ANTHROPIC_API_KEY
 # repository must not appear when the question is asked about another one. Leaving a
 # repository leaves nothing behind because there is nothing to leave: the answer is
 # recomputed from where the caller is.
-OTHER="$T/other"; mkdir -p "$OTHER"; ( cd "$OTHER" && git init -q . && git commit -q --allow-empty -m x )
+# The identity is set here as every other fixture in this suite sets it: `git init` inherits
+# none, and a runner has no global one, so the commit below failed on CI with "empty ident
+# name" and nowhere else. test/run.sh configures the case's own $T repository; this is a
+# second repository the case makes for itself.
+OTHER="$T/other"; mkdir -p "$OTHER"
+( cd "$OTHER" && git init -q . && git config user.email t@example.com && git config user.name t \
+  && git commit -q --allow-empty -m x )
 "$RB" --repo "$OTHER" completion query --surface workflow -- just > "$T/other.txt" 2>&1 || true
 if grep -q 'site-build' "$T/other.txt"; then
   echo "    a workflow of one repository was offered in another"; exit 1

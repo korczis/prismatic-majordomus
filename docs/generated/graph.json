@@ -199,6 +199,33 @@
         "status": "query"
       },
       {
+        "id": "capability:devcontext.compile",
+        "kind": "capability",
+        "label": "devcontext.compile",
+        "summary": "Compile the context for a piece of work",
+        "route": "/cockpit/capabilities/devcontext.compile",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:devcontext.explain",
+        "kind": "capability",
+        "label": "devcontext.explain",
+        "summary": "Why one thing is or is not in a compiled context",
+        "route": "/cockpit/capabilities/devcontext.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:devcontext.policy",
+        "kind": "capability",
+        "label": "devcontext.policy",
+        "summary": "The compiler's own rules",
+        "route": "/cockpit/capabilities/devcontext.policy",
+        "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:devtask.issue",
         "kind": "capability",
         "label": "devtask.issue",
@@ -430,6 +457,51 @@
         "summary": "Health of this process",
         "route": "/cockpit/capabilities/health.report",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.closed",
+        "kind": "capability",
+        "label": "lifecycle.closed",
+        "summary": "The records a clone receives",
+        "route": "/cockpit/capabilities/lifecycle.closed",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.episodes",
+        "kind": "capability",
+        "label": "lifecycle.episodes",
+        "summary": "Every open episode",
+        "route": "/cockpit/capabilities/lifecycle.episodes",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.providers",
+        "kind": "capability",
+        "label": "lifecycle.providers",
+        "summary": "What each provider's adapter declares",
+        "route": "/cockpit/capabilities/lifecycle.providers",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.recovery",
+        "kind": "capability",
+        "label": "lifecycle.recovery",
+        "summary": "What the store needs somebody to do",
+        "route": "/cockpit/capabilities/lifecycle.recovery",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.runtime",
+        "kind": "capability",
+        "label": "lifecycle.runtime",
+        "summary": "The commit this process is answering about",
+        "route": "/cockpit/capabilities/lifecycle.runtime",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
         "status": "query"
       },
       {
@@ -718,6 +790,24 @@
         "summary": "The shared server, and every server of the repository",
         "route": "/cockpit/capabilities/server.status",
         "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:session_domain.identity",
+        "kind": "capability",
+        "label": "session_domain.identity",
+        "summary": "What identifies this checkout, and how each store spells it",
+        "route": "/cockpit/capabilities/session_domain.identity",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:session_domain.machine",
+        "kind": "capability",
+        "label": "session_domain.machine",
+        "summary": "The episode lifecycle, as data",
+        "route": "/cockpit/capabilities/session_domain.machine",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "status": "query"
       },
       {
@@ -1050,6 +1140,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "kind": "file",
+        "label": "0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/ci/gates.yaml",
         "kind": "file",
         "label": "gates.yaml",
@@ -1170,11 +1268,27 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "kind": "file",
+        "label": "lifecycle.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
         "kind": "file",
         "label": "objects.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "kind": "file",
+        "label": "peers.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/peers.rs",
         "external": true
       },
       {
@@ -1207,6 +1321,14 @@
         "label": "rules.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "kind": "file",
+        "label": "session_domain.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "external": true
       },
       {
@@ -1527,6 +1649,14 @@
         "label": "scope.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/scope.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/session/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/session/mod.rs",
         "external": true
       },
       {
@@ -1866,6 +1996,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/rust-coverage",
+        "kind": "file",
+        "label": "rust-coverage",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/rust-coverage",
+        "external": true
+      },
+      {
         "id": "file:scripts/site-deploy",
         "kind": "file",
         "label": "site-deploy",
@@ -1951,6 +2089,14 @@
         "label": "tokens.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/tokens.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/events.yaml",
+        "kind": "file",
+        "label": "events.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/events.yaml",
         "external": true
       },
       {
@@ -3195,6 +3341,77 @@
             "claims",
             "verification",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "label": "adr-0043",
+        "summary": "Entering the repository brings its runtime up, through one bootstrap command the entry file calls",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0043",
+        "source": ".ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "tags": [
+            "entry",
+            "mcp",
+            "environment",
+            "doctrine"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0044",
+        "kind": "adr",
+        "label": "adr-0044",
+        "summary": "Cooperation is repository-wide because the board is gathered, not because the server is shared",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0044",
+        "source": ".ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:apps/majordomus-cli/src/peers.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "file:test/cases/250_the_board_is_repository_wide.sh",
+            "claim:mcp-peers",
+            "claim:mcp-shared-server"
+          ],
+          "tags": [
+            "mcp",
+            "architecture",
+            "coordination",
+            "worktrees"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0047",
+        "kind": "adr",
+        "label": "adr-0047",
+        "summary": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0047",
+        "source": ".ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:apps/majordomus-cli/src/session/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+            "file:share/events.yaml",
+            "test:test/cases/240_the_session_domain_is_typed.sh"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "architecture",
+            "identity",
+            "rust"
           ]
         }
       },
@@ -5066,7 +5283,7 @@
         "id": "majordomus://claim/mcp-peers",
         "kind": "claim",
         "label": "mcp-peers",
-        "summary": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+        "summary": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-peers",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -5074,14 +5291,14 @@
           "implementation": "apps/majordomus-cli/src/peers.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
-          "test": "test/cases/90_mcp_shared_server.sh"
+          "test": "test/cases/250_the_board_is_repository_wide.sh"
         }
       },
       {
         "id": "majordomus://claim/mcp-shared-server",
         "kind": "claim",
         "label": "mcp-shared-server",
-        "summary": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+        "summary": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-shared-server",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -5528,6 +5745,22 @@
         }
       },
       {
+        "id": "majordomus://claim/prompt-continuity",
+        "kind": "claim",
+        "label": "prompt-continuity",
+        "summary": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fprompt-continuity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+          "implementation": "lib/capture.sh",
+          "responsibility": "policy",
+          "source": "docs/DOCTRINE.md",
+          "test": "test/cases/140_prompt_continuity.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/provider-projections-one-renderer",
         "kind": "claim",
         "label": "provider-projections-one-renderer",
@@ -5809,12 +6042,12 @@
         "id": "majordomus://claim/rust-coverage-floor",
         "kind": "claim",
         "label": "rust-coverage-floor",
-        "summary": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "summary": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Frust-coverage-floor",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "implementation": ".github/workflows/validate.yml",
+          "implementation": "scripts/rust-coverage",
           "responsibility": "none",
           "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
           "test": "test/cases/77_rust_evidence.sh"
@@ -5945,6 +6178,21 @@
           "responsibility": "policy",
           "source": "docs/DOCTRINE.md",
           "test": "test/cases/54_session_lifecycle_hooks.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/session-observability",
+        "kind": "claim",
+        "label": "session-observability",
+        "summary": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fsession-observability",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "responsibility": "state",
+          "source": "docs/CONTINUITY.md",
+          "test": "test/cases/171_session_observability.sh"
         }
       },
       {
@@ -8328,6 +8576,14 @@
         "source": "docs/ARCHIVE.md"
       },
       {
+        "id": "majordomus://document/docs/BACKLOG.md",
+        "kind": "document",
+        "label": "docs/BACKLOG.md",
+        "summary": "Backlog",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FBACKLOG.md",
+        "source": "docs/BACKLOG.md"
+      },
+      {
         "id": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "label": "docs/CAPABILITIES.md",
@@ -9560,6 +9816,14 @@
         "source": "docs/claims/prompt-capture.md"
       },
       {
+        "id": "majordomus://document/docs/claims/prompt-continuity.md",
+        "kind": "document",
+        "label": "docs/claims/prompt-continuity.md",
+        "summary": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fprompt-continuity.md",
+        "source": "docs/claims/prompt-continuity.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
         "kind": "document",
         "label": "docs/claims/provider-projections-one-renderer.md",
@@ -9699,7 +9963,7 @@
         "id": "majordomus://document/docs/claims/rust-coverage-floor.md",
         "kind": "document",
         "label": "docs/claims/rust-coverage-floor.md",
-        "summary": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+        "summary": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Frust-coverage-floor.md",
         "source": "docs/claims/rust-coverage-floor.md"
       },
@@ -9766,6 +10030,14 @@
         "summary": "A provider hook opens and closes the execution episode, and the context it was given at the open is frozen beside it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fsession-lifecycle.md",
         "source": "docs/claims/session-lifecycle.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/session-observability.md",
+        "kind": "document",
+        "label": "docs/claims/session-observability.md",
+        "summary": "The session subsystem can be watched, not only used: every open episode, what cannot close itself, and which commit the process is answering about",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fsession-observability.md",
+        "source": "docs/claims/session-observability.md"
       },
       {
         "id": "majordomus://document/docs/claims/session-records.md",
@@ -20953,6 +21225,527 @@
         }
       },
       {
+        "id": "majordomus://issue/I1501",
+        "kind": "issue",
+        "label": "I1501",
+        "summary": "An execution a person starts is an execution the server can see",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1501",
+        "source": ".ai/repo/project/issues/I1501.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An execution started by the CLI while a server is serving the repository is visible in that server's execution list, or the CLI says plainly that it is not and why",
+            "The claim is proved by polling the server while a run is in flight, not by reading the source",
+            "No surface describes an execution history that no writer reaches"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "run_is_visible_to_the_server",
+            "measured_while_in_flight"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A durable queue, retries or a scheduler. The execution module states it has none by decision; convergence of the two planes does not reopen that.",
+            "Making the server execute on the caller's behalf when no server is running. A checkout with no server must still be able to run a capability."
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "apps/majordomus-cli/src/commands",
+            "docs/EXECUTIONS.md",
+            "test/cases"
+          ],
+          "slug": "execution-planes-converge",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bash test/run.sh 100_execution_plane",
+            "bin/majordomus-cli capabilities validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1502",
+        "kind": "issue",
+        "label": "I1502",
+        "summary": "A server serving code that no longer exists stops calling itself ready",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1502",
+        "source": ".ai/repo/project/issues/I1502.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A server whose executable has been replaced reports that fact on the endpoint a client asks for its standing",
+            "The check is answerable by a client holding no second executable",
+            "A current server is not reported stale, proved by a fresh start"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "stale_server_says_so",
+            "current_server_is_not_flagged"
+          ],
+          "milestone": "development-runtime",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Low in mechanism, high in value. The risk worth naming is the opposite one: a check that flags a current server as stale would make every worker ignore the signal, which is worse than not having it.",
+          "scope": [
+            "apps/majordomus-cli/src/server",
+            "apps/majordomus-cli/src/capability/builtin/server.rs",
+            "apps/majordomus-cli/src/capability/builtin/health.rs",
+            "docs/COCKPIT.md",
+            "test/cases"
+          ],
+          "slug": "stale-server-is-not-ready",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus-cli serve status",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1503",
+        "kind": "issue",
+        "label": "I1503",
+        "summary": "A closed session is not closed a second time under the same identity",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1503",
+        "source": ".ai/repo/project/issues/I1503.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Closing an already-closed session does not produce a second record under the same identity",
+            "A tree carrying two objects that claim one identity is refused by a check, with both paths named",
+            "The repository's own diagnostics report no duplicate_identity on a clean tree"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "second_close_is_refused",
+            "duplicate_identity_is_gated"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Deleting any session record. The repair that preceded this issue kept the complete record and deleted only the partial one it contains.",
+            "The wider question of when an episode begins and ends, which ADR 0041 owns on a branch of its own."
+          ],
+          "objective": "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib",
+            ".ai/repo/sessions",
+            "test/cases"
+          ],
+          "slug": "one-record-per-session-identity",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus doctor",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1504",
+        "kind": "issue",
+        "label": "I1504",
+        "summary": "One development transition is a capability, end to end",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1504",
+        "source": ".ai/repo/project/issues/I1504.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The MCP tool exists and tools/call moves an issue to done",
+            "A non-GET operation for the transition appears in the generated OpenAPI without anyone editing the document",
+            "The Cockpit's existing generic runner drives it with no file under apps/majordomus-cli/src/cockpit changed",
+            "lib/plan.sh no longer writes the issue YAML itself",
+            "test/cases/99_plan_capabilities.sh still holds the two engines to byte equality",
+            "The development-semantics gate reports one fewer entry and refuses the baseline's return"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "transition_is_a_capability",
+            "projection_not_handwritten",
+            "two_engines_still_agree"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The other transitions. Start and verify follow the same shape once this one is proved; widening before it is proved is the failure this issue is designed to catch.",
+            "Any Cockpit page. The existing generic runner must drive the new capability with no Cockpit source edited; if it cannot, that is the finding.",
+            "A second project model. The canonical records stay where they are and keep their shape."
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "deep-work",
+          "risk": "High value, contained blast radius. The real risk is scope: a branch that ports lib/plan.sh wholesale proves nothing and cannot be reviewed. One transition, or stop.",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "share/events.yaml",
+            "lib/plan.sh",
+            ".ai/repo/development-semantics-baseline.txt",
+            "test/cases"
+          ],
+          "slug": "phase-a-one-mutating-capability",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh 99_plan_capabilities",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1505",
+        "kind": "issue",
+        "label": "I1505",
+        "summary": "A mutating capability leaves a durable event, and the ledger can be read back",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1505",
+        "source": ".ai/repo/project/issues/I1505.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A command capability's mutation appends an event whose name share/events.yaml declares",
+            "The same mutation reaches the execution stream",
+            "The ledger is readable through a capability, on every surface the registry projects",
+            "A restart does not lose the durable half"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [
+            "I1504"
+          ],
+          "desired_state": "One mutation produces one durable event and one live frame, from one place in the code, and the durable half is readable through the registry like anything else.",
+          "evidence_required": [
+            "mutation_leaves_an_event",
+            "ledger_is_readable"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A durable execution queue. Durability of the event record is not durability of the execution, and the second is a stated non-goal.",
+            "A second vocabulary. The event names are share/events.yaml's, and this issue adds to that file rather than beside it."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. Two writers of one history is the defect this issue exists to remove, so an implementation that adds a third record type has made it worse.",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/execution",
+            "share/events.yaml",
+            "lib/plan.sh",
+            "test/cases"
+          ],
+          "slug": "phase-b-one-event-model",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus-cli capabilities validate",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1506",
+        "kind": "issue",
+        "label": "I1506",
+        "summary": "The lifecycle commands become non-interactive capabilities",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1506",
+        "source": ".ai/repo/project/issues/I1506.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each named transition is a capability with a typed input and no interactive prompt on its capability path",
+            "The exposure policy withholds none of them for interactivity",
+            "The command graph judges each operation rather than its group"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [
+            "I1504",
+            "I1505"
+          ],
+          "evidence_required": [
+            "lifecycle_is_reachable",
+            "nothing_withheld_for_interactivity"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The compiled, budgeted context. It is Phase D of the audit's plan and belongs to the parallel context-compiler work, not here.",
+            "Removing the shell tool. It stays as the person-facing front end and calls the capability."
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "lib",
+            "share/commands.yaml",
+            "test/cases"
+          ],
+          "slug": "phase-c-the-lifecycle",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus-cli commands",
+            "bin/majordomus-cli capabilities validate",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1507",
+        "kind": "issue",
+        "label": "I1507",
+        "summary": "Issues, milestones, sessions and peers reach the Cockpit as projections",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1507",
+        "source": ".ai/repo/project/issues/I1507.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each new area renders from a capability's answer with no status derived in the page or in the browser",
+            "Every new page appears in the navigation and is reached by the probe",
+            "A page shows everything it knows before any JavaScript loads"
+          ],
+          "created_at": "2026-09-11",
+          "current_state": "No Cockpit page for issues, milestones, sessions or the current task. Peers have no area. devtask.issue and devtask.milestone are exposed on CLI, MCP and HTTP and on no page.",
+          "depends_on": [
+            "I1505",
+            "I1506"
+          ],
+          "desired_state": "Each area is a page that renders a capability's answer. A status shown on a page came from devtask or plan, and the page contains no rule for deriving one.",
+          "evidence_required": [
+            "pages_are_projections",
+            "pages_are_navigable"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Any write path invented for a page. A page may only offer a transition that exists as a capability, through the mechanism the Cockpit already has.",
+            "A second readiness vocabulary. devtask's refines the canonical statuses; a page must not add a third."
+          ],
+          "objective": "Give the Cockpit the development areas it has none of — issues, milestones, sessions, peers and the current task — each one rendering what a capability answered and computing nothing of its own.",
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "share/cockpit",
+            "docs/COCKPIT.md",
+            "test/cases"
+          ],
+          "slug": "phase-e-development-pages",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bash test/run.sh",
+            "bin/majordomus-cli web"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1508",
+        "kind": "issue",
+        "label": "I1508",
+        "summary": "The navigation is derived from the dispatcher, not kept beside it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1508",
+        "source": ".ai/repo/project/issues/I1508.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A route the dispatcher answers and no area names is a reported failure",
+            "The sidebar, the product model's area validation and the site dataset read one declaration",
+            "The route table in docs/COCKPIT.md is generated or checked against the dispatcher",
+            "The probe reaches every routed page"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "no_unlisted_route",
+            "route_table_is_checked"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Adding any page. This issue makes the existing ones reachable and checkable.",
+            "The design of the sidebar. Nothing here changes how it looks."
+          ],
+          "objective": "Reconcile the Cockpit's area list against the routes the dispatcher actually answers, and derive or check the route table in docs/COCKPIT.md, so that a routed page cannot be invisible.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. The one trap is that the route table lives in a file that is currently hand-written and public; deriving it changes who may edit it, and that must be said in the file itself.",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "docs/COCKPIT.md",
+            "test/cases"
+          ],
+          "slug": "phase-f-navigation-is-derived",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bash test/run.sh",
+            "bin/majordomus-cli product validate",
+            "bin/majordomus-cli generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1509",
+        "kind": "issue",
+        "label": "I1509",
+        "summary": "A detail page that pages nothing has outgrown the reason it pages nothing",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1509",
+        "source": ".ai/repo/project/issues/I1509.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every node and edge of the composed graph remains reachable with JavaScript disabled",
+            "The page a reader receives is not a single document of this size, or docs/COCKPIT.md states the size at which the contract changes and why",
+            "/cockpit/graphs/composed is rendered by the page sweep that covers the other pages"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "complete_without_javascript",
+            "page_is_covered"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Making the nodes and edges reachable only by JavaScript. That is the one outcome the existing contract exists to prevent, and it stays prevented.",
+            "The other detail pages, unless the same measurement says they are also over. The artifact manifest is named by the same contract sentence and was not measured here."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit",
+            "docs/COCKPIT.md",
+            "apps/majordomus-cli/tests"
+          ],
+          "slug": "composed-graph-is-unreadable",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1510",
+        "kind": "issue",
+        "label": "I1510",
+        "summary": "A gap the audit calls planned names a plan object that exists",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1510",
+        "source": ".ai/repo/project/issues/I1510.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A row whose status is planned and which names no existing issue is a reported failure, with the row and the missing id named",
+            "A row naming an issue that exists passes",
+            "The check runs in the repository's own suite as test case 194"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "unplanned_row_is_refused",
+            "check_is_in_the_suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Checking the other statuses. Whether a row is genuinely canonical+implemented+verified is an evidence question that its named test answers, not something a text check can decide.",
+            "Generating the matrix. It is a human argument about a moment, and a generated table would lose the reasoning that makes it worth reading."
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases",
+            "scripts",
+            "docs/COCKPIT_IDE_AUDIT.md"
+          ],
+          "slug": "audit-rows-are-checked-against-the-plan",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bash test/run.sh 194_audit_rows_are_planned",
+            "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1511",
+        "kind": "issue",
+        "label": "I1511",
+        "summary": "The documentation surface answers in a checkout that has not built the site",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1511",
+        "source": ".ai/repo/project/issues/I1511.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A checkout that has not built the site gets an answer or an error naming the command that fixes it",
+            "Nothing builds anything as a side effect of a GET"
+          ],
+          "created_at": "2026-09-11",
+          "current_state": "GET /docs/ returns 503 with a 251-byte JSON body in a checkout whose site has not been built. Nothing on the way in says the surface has a build step.",
+          "depends_on": [],
+          "desired_state": "The surface either answers from something every checkout has, or returns an error that names the one command that would make it answer.",
+          "evidence_required": [
+            "unbuilt_checkout_gets_a_useful_answer"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Building the site as a side effect of serving. A read surface that triggers a build is the class of side effect the repository's own diagnostics rule forbids."
+          ],
+          "objective": "Make /docs/ say what it needs rather than fail, so that a developer entering a fresh worktree does not meet a broken documentation surface as their first impression of the runtime.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low.",
+          "scope": [
+            "apps/majordomus-cli/src/web",
+            "docs/COCKPIT.md",
+            "test/cases"
+          ],
+          "slug": "docs-surface-answers-unbuilt",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1512",
+        "kind": "issue",
+        "label": "I1512",
+        "summary": "Gate state is something the runtime can answer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1512",
+        "source": ".ai/repo/project/issues/I1512.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A capability answers the declared gate set and the last known standing of each",
+            "A gate that has never reported is distinguished from a gate that passed",
+            "The capability answers without network access, saying what it could not reach"
+          ],
+          "created_at": "2026-09-11",
+          "current_state": "Gates are declared and planned. Their run state is read by a person on GitHub and by nothing in this repository. No capability, no route, no page.",
+          "depends_on": [],
+          "desired_state": "The runtime answers the gate set and the standing of each gate's last run, including the case where no run has reported, which is the case that matters most and the one an absent reader hides.",
+          "evidence_required": [
+            "gate_state_is_answerable",
+            "never_reported_is_distinct_from_passed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Editing .ai/repo/ci/gates.yaml or docs/CI.md. The gate declaration is canonical and this issue reads it.",
+            "Running gates from the runtime. Reading state is not executing it.",
+            "A GitHub token requirement for the local read. A capability that cannot answer offline must say so rather than fail."
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. The failure to avoid is a reader that renders a missing verdict as a green one; this repository has already paid for that mistake twice.",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "scripts/ci",
+            "docs/COCKPIT.md",
+            "test/cases"
+          ],
+          "slug": "ci-status-is-a-capability",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "bin/majordomus-cli capabilities validate",
+            "bash test/run.sh"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -21409,6 +22202,56 @@
             "scripts/derive-check",
             "scripts/pages current",
             "test/run.sh 56_derived_current_gate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/development-runtime",
+        "kind": "milestone",
+        "label": "development-runtime",
+        "summary": "The runtime has a development surface",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fdevelopment-runtime",
+        "source": ".ai/repo/project/milestones/development-runtime.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The registry declares at least one capability of kind command that changes a development record, and the generated OpenAPI carries its non-GET operation without anyone editing the document",
+            "The same transition is reachable from the CLI, from MCP and over HTTP, and the Cockpit's existing generic runner drives it with no Cockpit source edited",
+            "An execution a person starts is visible to the server that serves the repository, or the record says which decision was taken instead and why",
+            "A surface that reports a runtime as ready cannot be serving an executable that no longer exists on disk",
+            "No claim in docs/COCKPIT_IDE_AUDIT.md is left standing that a command in this repository contradicts"
+          ],
+          "created_at": "2026-09-11",
+          "depends_on": [],
+          "evidence_required": [
+            "suite",
+            "one_mutating_development_capability",
+            "projection_not_handwritten"
+          ],
+          "non_scope": [
+            "A terminal, a PTY or shell execution on any surface. The audit records this as a non-goal and share/cockpit/palette.js already states the boundary in terms.",
+            "Editing repository source in the browser. The Cockpit refuses every non-GET route by decision, and this milestone does not reopen that decision.",
+            "Retries and a scheduler. apps/majordomus-cli/src/execution/mod.rs states in its own module documentation that it has none, by decision.",
+            "A second datastore or a second project model. The records stay canonical and the runtime reads them.",
+            "The `/cockpit/worktrees` response time. It is F3 in the audit's table and is being fixed on fix/cockpit-answers-quickly; this milestone references that work rather than duplicating it.",
+            "A wholesale port of lib/*.sh. Phase A is one transition; the rest is scheduled behind it or not at all."
+          ],
+          "order": 100,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/cockpit",
+            "lib",
+            "share",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "development-runtime",
+          "updated_at": "2026-09-11",
+          "validation": [
+            "majordomus plan validate",
+            "bin/majordomus-cli capabilities validate",
+            "bin/majordomus-cli generate --check",
+            "bash test/run.sh"
           ]
         }
       },
@@ -25563,6 +26406,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.prompt-continuity@1",
+        "kind": "rule",
+        "label": "majordomus.prompt-continuity@1",
+        "summary": "A prompt record carries its own identity, is bounded, and is private",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.prompt-continuity%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/prompt-continuity.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.prompt-capture@1"
+          ],
+          "tags": [
+            "prompts",
+            "continuity",
+            "privacy",
+            "retention"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.prompt-integrity@1",
         "kind": "rule",
         "label": "majordomus.prompt-integrity@1",
@@ -25912,6 +26776,31 @@
           "tags": [
             "process",
             "integration"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.accumulation-is-measured@1",
+        "kind": "rule",
+        "label": "project.accumulation-is-measured@1",
+        "summary": "Everything that accumulates is measured, bounded and reaped by a committed command",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.accumulation-is-measured%401",
+        "source": ".ai/repo/rules/project/accumulation-is-measured.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.worktree-topology@1",
+            "project.work-is-claimed-before-it-is-built@1"
+          ],
+          "tags": [
+            "operations",
+            "git",
+            "worktree",
+            "safety",
+            "agents",
+            "coordination",
+            "ci"
           ]
         }
       },
@@ -26271,36 +27160,38 @@
         }
       },
       {
-        "id": "majordomus://rule/project.entry-converges@1",
+        "id": "majordomus://rule/project.entry-converges@2",
         "kind": "rule",
-        "label": "project.entry-converges@1",
-        "summary": "Entering as an agent converges on a server; entering as a shell reports",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%401",
-        "source": ".ai/repo/rules/project/entry-converges.v1.md",
+        "label": "project.entry-converges@2",
+        "summary": "Entering the repository converges on a server, by either door, without anything to remember",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%402",
+        "source": ".ai/repo/rules/project/entry-converges.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
-            "project.envrc-is-an-adapter@1",
+            "project.envrc-is-an-adapter@2",
             "project.shared-server-resilience@1",
             "project.interfaces-are-projections@1",
-            "project.the-lease-is-read-once@1"
+            "project.the-lease-is-read-once@1",
+            "project.every-wait-is-bounded@1"
           ],
           "tags": [
             "entry",
             "mcp",
             "environment",
-            "enforcement"
+            "enforcement",
+            "performance"
           ]
         }
       },
       {
-        "id": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "id": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "rule",
-        "label": "project.envrc-is-an-adapter@1",
-        "summary": "The shell entry point is an adapter, and repository facts come from one typed source",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.envrc-is-an-adapter%401",
-        "source": ".ai/repo/rules/project/envrc-is-an-adapter.v1.md",
+        "label": "project.envrc-is-an-adapter@2",
+        "summary": "The shell entry point is an adapter, and it makes one call",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.envrc-is-an-adapter%402",
+        "source": ".ai/repo/rules/project/envrc-is-an-adapter.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -26801,6 +27692,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.provider-support-is-declared@1",
+        "kind": "rule",
+        "label": "project.provider-support-is-declared@1",
+        "summary": "What a provider's adapter can do is declared, never observed from the filesystem",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.provider-support-is-declared%401",
+        "source": ".ai/repo/rules/project/provider-support-is-declared.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.providers-are-data@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "providers",
+            "sessions",
+            "continuity",
+            "capabilities"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.providers-are-data@1",
         "kind": "rule",
         "label": "project.providers-are-data@1",
@@ -27073,6 +27986,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "kind": "rule",
+        "label": "project.the-briefing-is-checked-against-git@1",
+        "summary": "The briefing an episode opened with is compared against git before it is believed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-briefing-is-checked-against-git%401",
+        "source": ".ai/repo/rules/project/the-briefing-is-checked-against-git.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.execution-state-is-authoritative@1"
+          ],
+          "tags": [
+            "session",
+            "context",
+            "provenance",
+            "git"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "label": "project.the-lease-is-read-once@1",
@@ -27093,6 +28027,27 @@
             "coordination",
             "derived",
             "gates"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "kind": "rule",
+        "label": "project.the-server-sees-the-current-tree@1",
+        "summary": "A long-lived process serves the repository as it is, never as it was when it started",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-server-sees-the-current-tree%401",
+        "source": ".ai/repo/rules/project/the-server-sees-the-current-tree.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-hot-path@1"
+          ],
+          "tags": [
+            "rust",
+            "mcp",
+            "server",
+            "freshness"
           ]
         }
       },
@@ -28208,37 +29163,192 @@
         "label": "s-20260909152316-024f",
         "summary": "Session s-20260909152316-024f on master",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260909152316-024f",
-        "source": ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+        "source": ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
         "facts": {
           "branch": "master",
           "changed_files": [
+            ".ai/README.md",
             ".ai/repo/ci/gates.yaml",
-            ".ai/repo/workflows/task-lifecycle.md",
-            ".ai/repo/rules/project/a-return-code-is-not-the-diagnostic-channel.v1.md"
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/tests/common/mod.rs",
+            "docs/PAGES_STATUS.md",
+            "docs/PLAN_STATUS.md",
+            "docs/SITE_CLAIMS.md",
+            "docs/generated/artifacts.json",
+            "docs/generated/artifacts.md",
+            "docs/generated/artifacts.yaml",
+            "docs/generated/benchmarks.json",
+            "docs/generated/benchmarks.md",
+            "docs/generated/benchmarks.yaml",
+            "docs/generated/capabilities.md",
+            "docs/generated/changelog.json",
+            "docs/generated/changelog.md",
+            "docs/generated/changelog.yaml",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "site/content/docs/pages-status.md",
+            "site/content/guarantees/adr-catalogue.md",
+            "site/content/guarantees/adr-propose.md",
+            "site/content/guarantees/adr-traceability.md",
+            "site/content/guarantees/cli-documentation-executable.md",
+            "site/content/guarantees/landing-page-is-a-projection.md",
+            "site/content/guarantees/obligation-establishment.md",
+            "site/content/guarantees/product-features-discovered.md",
+            "site/content/guarantees/product-projection-public-safe.md",
+            "site/content/guarantees/product-references-resolve.md",
+            "site/content/guarantees/product-surfaces-derived.md",
+            "site/content/guarantees/session-lifecycle.md",
+            "site/content/guarantees/session-records.md",
+            "site/content/guarantees/skill-check.md",
+            "site/content/guarantees/skill-site-projection.md",
+            "site/content/guarantees/web-namespaces-reserved.md",
+            "site/content/guarantees/web-surface-declared-once.md",
+            "site/content/guarantees/why-catalogue-discovered.md",
+            "site/content/guarantees/why-diagnosis-explainable.md",
+            "site/content/guarantees/why-references-resolve.md",
+            "site/content/guarantees/worktree-migration-lossless.md",
+            "site/content/guarantees/worktree-topology-derived.md",
+            "site/content/registry/capabilities/plan-issues.md",
+            "site/content/registry/capabilities/plan-model.md",
+            "site/content/registry/capabilities/plan-next.md",
+            "site/content/registry/capabilities/plan-record.md",
+            "site/content/registry/capabilities/plan-roadmap.md",
+            "site/content/registry/capabilities/plan-status.md",
+            "site/content/registry/capabilities/plan-validate.md",
+            "site/content/registry/capabilities/plan-waves.md",
+            "site/content/registry/capabilities/product-feature.md",
+            "site/content/registry/capabilities/product-features.md",
+            "site/content/registry/capabilities/product-matrix.md",
+            "site/content/registry/capabilities/product-providers.md",
+            "site/content/registry/capabilities/product-validate.md",
+            "site/content/registry/capabilities/quality-report.md",
+            "site/content/registry/capabilities/release-changelog.md",
+            "site/content/registry/capabilities/release-version.md",
+            "site/content/registry/capabilities/repository-info.md",
+            "site/content/registry/capabilities/repository-scope-classify.md",
+            "site/content/registry/capabilities/repository-scope.md",
+            "site/content/registry/capabilities/trace-commit.md",
+            "site/content/registry/capabilities/trace-issue.md",
+            "site/content/registry/capabilities/trace-report.md",
+            "site/content/registry/capabilities/web-surfaces.md",
+            "site/content/registry/capabilities/why-areas.md",
+            "site/content/registry/capabilities/why-audiences.md",
+            "site/content/registry/capabilities/why-diagnose.md",
+            "site/content/registry/capabilities/why-list.md",
+            "site/content/registry/capabilities/why-moment.md",
+            "site/content/registry/capabilities/why-validate.md",
+            "site/content/registry/capabilities/worktree-inspect.md",
+            "site/content/registry/capabilities/worktree-migration-plan.md",
+            "site/content/registry/capabilities/worktree-status.md",
+            "site/content/registry/capabilities/worktree-topology.md",
+            "site/content/registry/modules/plan.md",
+            "site/content/registry/modules/product.md",
+            "site/content/registry/modules/quality.md",
+            "site/content/registry/modules/release.md",
+            "site/content/registry/modules/repository.md",
+            "site/content/registry/modules/trace.md",
+            "site/content/registry/modules/web.md",
+            "site/content/registry/modules/why.md",
+            "site/content/registry/modules/worktree.md",
+            "site/content/sessions/s-20260906035523-7b6c.md",
+            "site/content/sessions/s-20260906053339-ec22.md",
+            "site/content/sessions/s-20260906054911-cbb8.md",
+            "site/content/sessions/s-20260906055206-8ece.md",
+            "site/content/sessions/s-20260906055253-ba53.md",
+            "site/content/sessions/s-20260906085201-3c11.md",
+            "site/content/sessions/s-20260906100402-1b4e.md",
+            "site/content/sessions/s-20260906104842-c7cf.md",
+            "site/content/sessions/s-20260906214710-1a63.md",
+            "site/content/sessions/s-20260908003954-b327.md",
+            "site/content/sessions/s-20260908193341-cdf1.md",
+            "site/data/generated/artifacts.json",
+            "site/data/generated/capabilities.json",
+            "site/data/generated/catalogue.json",
+            "site/data/generated/changelog.json",
+            "site/data/generated/claims-graph.json",
+            "site/data/generated/commands.json",
+            "site/data/generated/executable.json",
+            "site/data/generated/openapi.json",
+            "site/data/generated/readme.json",
+            "site/data/generated/sessions.json",
+            "site/data/generated/source.json",
+            "site/data/registry/product-graph.json",
+            "site/data/registry/product.json",
+            "site/data/registry/registry.json",
+            "site/templates/changelog.html",
+            "site/templates/dag.html",
+            "site/templates/issue.html",
+            "site/templates/milestone.html",
+            "site/templates/partials/cli-examples.html",
+            "site/templates/plan-section.html",
+            ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            "scripts/ci/surface-coverage",
+            "site/content/sessions/s-20260909152316-024f.md"
           ],
           "checkpoints": [],
-          "closed_at": "2026-09-09T21:41:35Z",
+          "closed_at": "2026-09-10T10:39:31Z",
           "commits": [
+            "ea622df",
+            "937900e",
+            "b77bc89",
             "a3c7102",
             "5314bd6",
+            "c986e56",
+            "095481c",
+            "7a8fe73",
             "6815b9b",
             "8f1dfb9",
+            "674b899",
             "7779fe7",
+            "2766249",
+            "6df5eaf",
+            "ad34804",
+            "5928ff3",
+            "2365af0",
+            "7e4f739",
+            "e25278a",
+            "a7e37b5",
+            "8bafa28",
             "aa64215",
+            "b9e5f78",
             "c6bbce3",
+            "e95e5e8",
+            "146defe",
+            "824c470",
+            "2cfe78d",
+            "5e6d18b",
             "d648e97",
             "a81fe06",
             "b405705",
             "a10f0af",
             "97f4cad",
             "c85c2cb",
+            "de52b84",
+            "ade9050",
+            "99ead07",
+            "1410a0c",
+            "e5dc415",
+            "6579f19",
+            "034f334",
             "04b3d8b",
+            "efc6a08",
+            "6064b70",
             "bd989ee",
             "3c5705d",
+            "e4ef4cb",
             "f2606c9",
             "427b732",
             "f37da56",
+            "65dded9",
+            "9badf24",
             "8e7faed",
+            "1ffa946",
+            "9ee7c29",
             "fe4958a",
             "94b0c22",
             "db8b6f2",
@@ -28254,17 +29364,26 @@
             "6b21a9e",
             "82ec364",
             "e5933f4",
+            "0105416",
             "fd51973",
+            "000e40d",
+            "30d2c4f",
             "3f0fee7",
             "09d410b",
             "93977cc",
+            "52bfbe7",
             "bb3dd0f",
             "946bc36",
             "d7df74e",
             "28304f3",
+            "a845624",
+            "a3a267e",
+            "7f75414",
             "2a2b62c",
             "1c36ca9",
+            "54c5f45",
             "26743da",
+            "f9bbc63",
             "ff2d64e",
             "1ea8da1",
             "2a7af42",
@@ -28275,23 +29394,29 @@
             "6b1e7c0",
             "a13f409",
             "810456f",
+            "209a82c",
             "5d720d0",
             "f6af288",
             "8918daa",
+            "3db47f7",
             "143a857",
             "d5d9577",
             "5dfa33c",
+            "21f7ad8",
             "7af039a",
             "6d19fc7",
             "b8f06e5",
             "60bc499",
             "4916745",
             "9b0769b",
+            "597ebe4",
             "ee9e79b",
             "3c4d26e",
             "1015d8f",
             "4066bdf",
             "82583eb",
+            "3d9c929",
+            "990bd05",
             "4457512",
             "4734bf8",
             "a1a014c",
@@ -28299,26 +29424,177 @@
             "03e3f25",
             "957a6ff",
             "44468db",
+            "d64b2e1",
+            "59f5c8b",
+            "5bd2f77",
+            "59aa376",
             "1529143",
+            "691fab7",
+            "fc9864e",
             "8a4b1fe",
             "493f154",
             "ae8f528",
             "3f0322b",
+            "012fed6",
             "ed649c7",
+            "5a7427a",
+            "1ceffd0",
+            "3c19f54",
+            "af2275f",
+            "252f268",
+            "cadb2a1",
+            "0ad0223",
+            "fcdb1f8",
+            "e4185a0",
+            "48c9c80",
             "fbc1da9",
+            "6aeec67",
             "2f04eff",
             "b551a33",
             "4cca357",
             "5609ab1",
+            "cf1ee94",
+            "44156e0",
+            "2b3b9ff",
+            "3831e15",
+            "c76ebe4",
+            "5949e2f",
+            "e4c40b8",
+            "f1c1b65",
+            "03a7760",
+            "be13fb0",
+            "efe5afd",
             "e66d7d7",
+            "25053c1",
+            "1487d72",
+            "e282f1d",
+            "41886dc",
+            "e6571df",
+            "8e2cc7e",
+            "1cbb368",
+            "3be29c2",
+            "e41faa6",
+            "8ad5bb6",
+            "f6b73b0",
+            "d52f433",
             "98f6606",
-            "06b3c3c"
+            "06b3c3c",
+            "2dab851",
+            "9dbd84f",
+            "35382fd",
+            "6890df0",
+            "b90e0dd",
+            "b793636",
+            "0a4859d",
+            "5fe8f2e",
+            "b40cdf7",
+            "40eb971",
+            "e94b760",
+            "3fc59c4",
+            "b9745fa",
+            "6b3caf5",
+            "3426826",
+            "21a1203",
+            "e41053b",
+            "50f276b",
+            "0d45da1",
+            "82876c9",
+            "5e6d324",
+            "f9e1ca9",
+            "8ff0631",
+            "784b291",
+            "b005ade",
+            "53b21b4",
+            "67d6298",
+            "cdc8596",
+            "e377a8b",
+            "5be3057",
+            "8ddb649",
+            "e0b6334",
+            "d0e99d6",
+            "ddb19cc",
+            "faab51c",
+            "9aba9df",
+            "11fc8bf",
+            "52362ea",
+            "173c3d1",
+            "ead965b",
+            "501ea2d",
+            "aaaf562",
+            "1e96e91",
+            "27efb9a",
+            "3eba5cd",
+            "968716e",
+            "f2b018f",
+            "a0e7537",
+            "7703370",
+            "75075e9",
+            "c291fd5",
+            "a572ce2",
+            "c3220f9",
+            "3a2aeab",
+            "9fcd06f",
+            "91b4e8b",
+            "aeb44df",
+            "a4b9896",
+            "afce27b",
+            "341451c",
+            "c114a92",
+            "a5be6a0",
+            "e15b311",
+            "a6a8ba3",
+            "0242e8f",
+            "fc5e6c1",
+            "824223c",
+            "d7f4922",
+            "77f3107",
+            "c45621e",
+            "98f3dfb",
+            "bd63891",
+            "0df29db",
+            "45bbe87",
+            "16cc159",
+            "a4f9780",
+            "d302335",
+            "a861289",
+            "eaad5a9",
+            "8c53e2b",
+            "faed20b",
+            "f36420c",
+            "6be9c80",
+            "c4b6d07",
+            "7c3e9f9",
+            "293adce",
+            "08348b0",
+            "d39b5b0",
+            "10d45ff",
+            "e2cbf49",
+            "6afaa73",
+            "c1a3e79",
+            "26475a0",
+            "33a5804",
+            "dc14dd0",
+            "f2000a5",
+            "432ce43",
+            "a511e9d",
+            "6b5c2eb",
+            "83775c7",
+            "c526850",
+            "789e95a",
+            "a5f07ed",
+            "bd04cd0",
+            "075bde0",
+            "a50f765",
+            "cd92ed7",
+            "29e3e3e",
+            "e9c8100",
+            "38f056b"
           ],
-          "created_at": "2026-09-09T21:41:35Z",
+          "created_at": "2026-09-10T10:39:31Z",
           "decisions": [],
           "evidence": [],
           "handovers": [],
-          "head": "06b3c3cf092dbc2cfd86b84ca2f36329d32b6aa0",
+          "head": "38f056b0515bbcfbdda04cf5c5071cb2eb3ee6f0",
           "issues": [],
           "milestones": [],
           "outcome": "closed",
@@ -28329,6 +29605,534 @@
           "start_head": "867f3a9f82ca97ad880ccbc4366a92b5ede0e953",
           "start_working_tree": "dirty",
           "started_at": "2026-09-09T15:23:16Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910205542-e2a6",
+        "kind": "session",
+        "label": "s-20260910205542-e2a6",
+        "summary": "Session s-20260910205542-e2a6 on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910205542-e2a6",
+        "source": ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            "docs/generated/artifacts.json",
+            "docs/generated/artifacts.md",
+            "docs/generated/artifacts.yaml",
+            "docs/generated/benchmarks.json",
+            "docs/generated/benchmarks.md",
+            "docs/generated/benchmarks.yaml",
+            "docs/generated/changelog.json",
+            "docs/generated/changelog.md",
+            "docs/generated/changelog.yaml",
+            "docs/generated/cli.json",
+            "docs/generated/cli.md",
+            "docs/generated/cli.yaml",
+            "docs/generated/graph.json",
+            "docs/generated/modules/server.md",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "site/data/registry/product.json",
+            "site/data/registry/registry.json",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            "deploy/docs/",
+            "feature_design-system",
+            "feature_entry-convergence",
+            "feature_graph-artifact-relanded",
+            "feature_health-names-the-server",
+            "feature_the-lease-is-read-once",
+            "feature_unblock-command",
+            "fix_mobile-overflow-audit",
+            "fix_pages-verify-short-sha",
+            "fix_ratchets-back-to-master",
+            "fix_rust-job-sees-release-history",
+            "fix_share-found-from-any-target-dir",
+            "fix_the-share-is-located-once",
+            "site/content/sessions/s-20260909152316-024f.md"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-10T21:04:26Z",
+          "commits": [],
+          "created_at": "2026-09-10T21:04:26Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910205542-e2a6",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T20:55:42Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910210510-8f20",
+        "kind": "session",
+        "label": "s-20260910210510-8f20",
+        "summary": "Session s-20260910210510-8f20 on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910210510-8f20",
+        "source": ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            "docs/generated/artifacts.json",
+            "docs/generated/artifacts.md",
+            "docs/generated/artifacts.yaml",
+            "docs/generated/benchmarks.json",
+            "docs/generated/benchmarks.md",
+            "docs/generated/benchmarks.yaml",
+            "docs/generated/changelog.json",
+            "docs/generated/changelog.md",
+            "docs/generated/changelog.yaml",
+            "docs/generated/cli.json",
+            "docs/generated/cli.md",
+            "docs/generated/cli.yaml",
+            "docs/generated/graph.json",
+            "docs/generated/modules/server.md",
+            "docs/generated/openapi.json",
+            "docs/generated/openapi.yaml",
+            "docs/generated/registry.json",
+            "docs/generated/registry.yaml",
+            "site/data/registry/product.json",
+            "site/data/registry/registry.json",
+            "site/templates/index.html",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            "deploy/docs/",
+            "feature_design-system",
+            "feature_entry-convergence",
+            "feature_graph-artifact-relanded",
+            "feature_health-names-the-server",
+            "feature_the-lease-is-read-once",
+            "feature_unblock-command",
+            "fix_mobile-overflow-audit",
+            "fix_pages-verify-short-sha",
+            "fix_ratchets-back-to-master",
+            "fix_rust-job-sees-release-history",
+            "fix_share-found-from-any-target-dir",
+            "fix_the-share-is-located-once",
+            "scripts/force-merge-all",
+            "site/content/sessions/s-20260909152316-024f.md"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-10T21:15:03Z",
+          "commits": [],
+          "created_at": "2026-09-10T21:15:03Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910210510-8f20",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:05:10Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910211505-3dbe",
+        "kind": "session",
+        "label": "s-20260910211505-3dbe",
+        "summary": "Session s-20260910211505-3dbe on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910211505-3dbe",
+        "source": ".ai/repo/sessions/20260911T072724Z--s-20260910211505-3dbe--master--06fa258--60fd7c775ffd6e0b.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910214250-e597--master--06fa258--4ecadd3cb116eca9.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910222723-14ce--master--06fa258--8783a5771fe49116.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:23Z",
+          "commits": [
+            "diverged"
+          ],
+          "created_at": "2026-09-11T07:27:23Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910211505-3dbe",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:15:05Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910211853-8a3e",
+        "kind": "session",
+        "label": "s-20260910211853-8a3e",
+        "summary": "Session s-20260910211853-8a3e on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910211853-8a3e",
+        "source": ".ai/repo/sessions/20260911T072724Z--s-20260910211853-8a3e--master--06fa258--d44fd8943c9f6917.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910214250-e597--master--06fa258--4ecadd3cb116eca9.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910222723-14ce--master--06fa258--8783a5771fe49116.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:23Z",
+          "commits": [
+            "diverged"
+          ],
+          "created_at": "2026-09-11T07:27:23Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910211853-8a3e",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:18:53Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910212104-f50d",
+        "kind": "session",
+        "label": "s-20260910212104-f50d",
+        "summary": "Session s-20260910212104-f50d on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910212104-f50d",
+        "source": ".ai/repo/sessions/20260911T072724Z--s-20260910212104-f50d--master--06fa258--af6e403dc4126fd5.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910214250-e597--master--06fa258--4ecadd3cb116eca9.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910222723-14ce--master--06fa258--8783a5771fe49116.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:23Z",
+          "commits": [
+            "diverged"
+          ],
+          "created_at": "2026-09-11T07:27:23Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910212104-f50d",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:21:04Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910214152-71cb",
+        "kind": "session",
+        "label": "s-20260910214152-71cb",
+        "summary": "Session s-20260910214152-71cb on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910214152-71cb",
+        "source": ".ai/repo/sessions/20260911T072724Z--s-20260910214152-71cb--master--06fa258--a9b5e2c526832ce2.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910214250-e597--master--06fa258--4ecadd3cb116eca9.md",
+            ".ai/repo/sessions/20260911T072719Z--s-20260910222723-14ce--master--06fa258--8783a5771fe49116.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:23Z",
+          "commits": [
+            "diverged"
+          ],
+          "created_at": "2026-09-11T07:27:23Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910214152-71cb",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:41:53Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910214250-e597",
+        "kind": "session",
+        "label": "s-20260910214250-e597",
+        "summary": "Session s-20260910214250-e597 on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910214250-e597",
+        "source": ".ai/repo/sessions/20260911T072719Z--s-20260910214250-e597--master--06fa258--4ecadd3cb116eca9.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:18Z",
+          "commits": [
+            "diverged"
+          ],
+          "created_at": "2026-09-11T07:27:18Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910214250-e597",
+          "start_head": "9f3a2a0d2c3274c3df821c961076e6b5f1be2ad4",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T21:42:50Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260910222723-14ce",
+        "kind": "session",
+        "label": "s-20260910222723-14ce",
+        "summary": "Session s-20260910222723-14ce on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260910222723-14ce",
+        "source": ".ai/repo/sessions/20260911T072719Z--s-20260910222723-14ce--master--06fa258--8783a5771fe49116.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T07:27:18Z",
+          "commits": [
+            "06fa258"
+          ],
+          "created_at": "2026-09-11T07:27:18Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "interrupted",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260910222723-14ce",
+          "start_head": "08e4bb2520efea0d9deb79faba0f9200ca5ef742",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-10T22:27:23Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260911054710-3523",
+        "kind": "session",
+        "label": "s-20260911054710-3523",
+        "summary": "Session s-20260911054710-3523 on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260911054710-3523",
+        "source": ".ai/repo/sessions/20260911T063812Z--s-20260911054710-3523--master--06fa258--b2a73dd26a124107.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T06:38:11Z",
+          "commits": [],
+          "created_at": "2026-09-11T06:38:11Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260911054710-3523",
+          "start_head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-11T05:47:10Z",
+          "task_id": "t-20260905034523-a9f1",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "b8293f118965878b"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20260911060123-e0d4",
+        "kind": "session",
+        "label": "s-20260911060123-e0d4",
+        "summary": "Session s-20260911060123-e0d4 on master",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fsession%2Fs-20260911060123-e0d4",
+        "source": ".ai/repo/sessions/20260911T063531Z--s-20260911060123-e0d4--master--06fa258--42c1bfb3b397e4c9.md",
+        "facts": {
+          "branch": "master",
+          "changed_files": [
+            ".ai/repo/sessions/20260910T103903Z--s-20260909152316-024f--master--38f056b--3a1683e77f8f2784.md",
+            ".ai/repo/sessions/20260910T103920Z--s-20260909152316-024f--master--38f056b--45cf7290879697af.md",
+            ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
+            ".ai/repo/sessions/20260910T210426Z--s-20260910205542-e2a6--master--9f3a2a0--691dfe3d1cd1b3be.md",
+            ".ai/repo/sessions/20260910T211503Z--s-20260910210510-8f20--master--9f3a2a0--d3eff159759e1cfd.md",
+            ".ai/repo/sessions/.tmp.5bcIMW",
+            "deploy/docs/",
+            "scripts/force-merge-all"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-09-11T06:35:31Z",
+          "commits": [],
+          "created_at": "2026-09-11T06:35:31Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20260911060123-e0d4",
+          "start_head": "06fa25891550d6118f3446d0b33ff211388ce779",
+          "start_working_tree": "dirty",
+          "started_at": "2026-09-11T06:01:23Z",
           "task_id": "t-20260905034523-a9f1",
           "tasks": [],
           "working_tree": "dirty",
@@ -28828,6 +30632,13 @@
         "source": "test/cases/125_rule_proof.sh"
       },
       {
+        "id": "majordomus://test/test/cases/127_briefing_freshness.sh",
+        "kind": "test",
+        "label": "test/cases/127_briefing_freshness.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F127_briefing_freshness.sh",
+        "source": "test/cases/127_briefing_freshness.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
         "kind": "test",
         "label": "test/cases/128_the_subset_is_a_subset.sh",
@@ -28870,6 +30681,20 @@
         "source": "test/cases/130_archive.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_context_compiler.sh",
+        "kind": "test",
+        "label": "test/cases/130_context_compiler.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_context_compiler.sh",
+        "source": "test/cases/130_context_compiler.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "kind": "test",
+        "label": "test/cases/131_backlog_hygiene.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_backlog_hygiene.sh",
+        "source": "test/cases/131_backlog_hygiene.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/133_rule_graph.sh",
         "kind": "test",
         "label": "test/cases/133_rule_graph.sh",
@@ -28898,11 +30723,25 @@
         "source": "test/cases/13_region_projection.sh"
       },
       {
+        "id": "majordomus://test/test/cases/140_prompt_continuity.sh",
+        "kind": "test",
+        "label": "test/cases/140_prompt_continuity.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F140_prompt_continuity.sh",
+        "source": "test/cases/140_prompt_continuity.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/14_wiring_dispatcher.sh",
         "kind": "test",
         "label": "test/cases/14_wiring_dispatcher.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F14_wiring_dispatcher.sh",
         "source": "test/cases/14_wiring_dispatcher.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
+        "kind": "test",
+        "label": "test/cases/150_server_sees_the_current_tree.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F150_server_sees_the_current_tree.sh",
+        "source": "test/cases/150_server_sees_the_current_tree.sh"
       },
       {
         "id": "majordomus://test/test/cases/15_command_surface.sh",
@@ -28919,11 +30758,46 @@
         "source": "test/cases/16_profiles.sh"
       },
       {
+        "id": "majordomus://test/test/cases/170_provider_lifecycle_declared.sh",
+        "kind": "test",
+        "label": "test/cases/170_provider_lifecycle_declared.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F170_provider_lifecycle_declared.sh",
+        "source": "test/cases/170_provider_lifecycle_declared.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/171_session_observability.sh",
+        "kind": "test",
+        "label": "test/cases/171_session_observability.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F171_session_observability.sh",
+        "source": "test/cases/171_session_observability.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/17_doctrine_enforcement.sh",
         "kind": "test",
         "label": "test/cases/17_doctrine_enforcement.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F17_doctrine_enforcement.sh",
         "source": "test/cases/17_doctrine_enforcement.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/180_publication_is_observed.sh",
+        "kind": "test",
+        "label": "test/cases/180_publication_is_observed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F180_publication_is_observed.sh",
+        "source": "test/cases/180_publication_is_observed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/181_local_is_never_published.sh",
+        "kind": "test",
+        "label": "test/cases/181_local_is_never_published.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F181_local_is_never_published.sh",
+        "source": "test/cases/181_local_is_never_published.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/182_sessions_published_are_the_records.sh",
+        "kind": "test",
+        "label": "test/cases/182_sessions_published_are_the_records.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F182_sessions_published_are_the_records.sh",
+        "source": "test/cases/182_sessions_published_are_the_records.sh"
       },
       {
         "id": "majordomus://test/test/cases/18_doctrine_wiring.sh",
@@ -28933,11 +30807,32 @@
         "source": "test/cases/18_doctrine_wiring.sh"
       },
       {
+        "id": "majordomus://test/test/cases/190_entry_is_automatic.sh",
+        "kind": "test",
+        "label": "test/cases/190_entry_is_automatic.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F190_entry_is_automatic.sh",
+        "source": "test/cases/190_entry_is_automatic.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/190_graph_drawing.sh",
         "kind": "test",
         "label": "test/cases/190_graph_drawing.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F190_graph_drawing.sh",
         "source": "test/cases/190_graph_drawing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/191_entry_races.sh",
+        "kind": "test",
+        "label": "test/cases/191_entry_races.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F191_entry_races.sh",
+        "source": "test/cases/191_entry_races.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
+        "kind": "test",
+        "label": "test/cases/192_entry_across_checkouts_and_clients.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F192_entry_across_checkouts_and_clients.sh",
+        "source": "test/cases/192_entry_across_checkouts_and_clients.sh"
       },
       {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
@@ -28961,6 +30856,41 @@
         "source": "test/cases/21_decision_question.sh"
       },
       {
+        "id": "majordomus://test/test/cases/220_exactly_once_close.sh",
+        "kind": "test",
+        "label": "test/cases/220_exactly_once_close.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F220_exactly_once_close.sh",
+        "source": "test/cases/220_exactly_once_close.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/221_the_lifecycle_under_concurrency.sh",
+        "kind": "test",
+        "label": "test/cases/221_the_lifecycle_under_concurrency.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F221_the_lifecycle_under_concurrency.sh",
+        "source": "test/cases/221_the_lifecycle_under_concurrency.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/222_an_episode_nobody_ended.sh",
+        "kind": "test",
+        "label": "test/cases/222_an_episode_nobody_ended.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F222_an_episode_nobody_ended.sh",
+        "source": "test/cases/222_an_episode_nobody_ended.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "kind": "test",
+        "label": "test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F223_an_unsupported_schema_is_a_finding.sh",
+        "source": "test/cases/223_an_unsupported_schema_is_a_finding.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/224_continuity_crosses_machines.sh",
+        "kind": "test",
+        "label": "test/cases/224_continuity_crosses_machines.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F224_continuity_crosses_machines.sh",
+        "source": "test/cases/224_continuity_crosses_machines.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/22_history.sh",
         "kind": "test",
         "label": "test/cases/22_history.sh",
@@ -28975,11 +30905,25 @@
         "source": "test/cases/23_context.sh"
       },
       {
+        "id": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
+        "kind": "test",
+        "label": "test/cases/240_the_session_domain_is_typed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F240_the_session_domain_is_typed.sh",
+        "source": "test/cases/240_the_session_domain_is_typed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/24_prompt_search.sh",
         "kind": "test",
         "label": "test/cases/24_prompt_search.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F24_prompt_search.sh",
         "source": "test/cases/24_prompt_search.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
+        "kind": "test",
+        "label": "test/cases/250_the_board_is_repository_wide.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F250_the_board_is_repository_wide.sh",
+        "source": "test/cases/250_the_board_is_repository_wide.sh"
       },
       {
         "id": "majordomus://test/test/cases/25_continuity_lifecycle.sh",
@@ -31580,6 +33524,11 @@
         "label": "design"
       },
       {
+        "id": "module:devcontext",
+        "kind": "module",
+        "label": "devcontext"
+      },
+      {
         "id": "module:devtask",
         "kind": "module",
         "label": "devtask"
@@ -31618,6 +33567,11 @@
         "id": "module:health",
         "kind": "module",
         "label": "health"
+      },
+      {
+        "id": "module:lifecycle",
+        "kind": "module",
+        "label": "lifecycle"
       },
       {
         "id": "module:objects",
@@ -31673,6 +33627,11 @@
         "id": "module:server",
         "kind": "module",
         "label": "server"
+      },
+      {
+        "id": "module:session_domain",
+        "kind": "module",
+        "label": "session_domain"
       },
       {
         "id": "module:trace",
@@ -31969,6 +33928,66 @@
         "kind": "projects"
       },
       {
+        "source": "capability:devcontext.compile",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.compile",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devcontext.policy",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:devtask.issue",
         "target": "projection:cli",
         "kind": "projects"
@@ -32424,6 +34443,81 @@
         "kind": "projects"
       },
       {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:objects.get",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -32955,6 +35049,36 @@
       },
       {
         "source": "capability:server.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -34351,6 +36475,81 @@
       {
         "source": "majordomus://adr/adr-0041",
         "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/peers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://claim/mcp-peers",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://claim/mcp-shared-server",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "file:apps/majordomus-cli/src/session/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0047",
+        "target": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
         "kind": "put_in_force"
       },
       {
@@ -36230,7 +38429,7 @@
       },
       {
         "source": "majordomus://claim/mcp-peers",
-        "target": "majordomus://test/test/cases/90_mcp_shared_server.sh",
+        "target": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
         "kind": "tested_by"
       },
       {
@@ -36794,6 +38993,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://document/docs/DOCTRINE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://test/test/cases/140_prompt_continuity.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/provider-projections-one-renderer",
         "target": "file:apps/majordomus-cli/src/providers.rs",
         "kind": "implemented_by"
@@ -37115,7 +39334,7 @@
       },
       {
         "source": "majordomus://claim/rust-coverage-floor",
-        "target": "file:.github/workflows/validate.yml",
+        "target": "file:scripts/rust-coverage",
         "kind": "implemented_by"
       },
       {
@@ -37281,6 +39500,26 @@
       {
         "source": "majordomus://claim/session-lifecycle",
         "target": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "majordomus://document/docs/CONTINUITY.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "majordomus://test/test/cases/171_session_observability.sh",
         "kind": "tested_by"
       },
       {
@@ -38399,6 +40638,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/BACKLOG.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CAPABILITIES.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -39169,6 +41413,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/prompt-continuity.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -39295,6 +41544,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/session-lifecycle.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/session-observability.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -43184,6 +45438,151 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1501",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1501",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1502",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1502",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1503",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1503",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1504",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1504",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1505",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1505",
+        "target": "majordomus://issue/I1504",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1505",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1506",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1506",
+        "target": "majordomus://issue/I1504",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1506",
+        "target": "majordomus://issue/I1505",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1506",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1507",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1507",
+        "target": "majordomus://issue/I1505",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1507",
+        "target": "majordomus://issue/I1506",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1507",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1508",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1508",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1509",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1509",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1510",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1510",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1511",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1511",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1512",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1512",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -43235,6 +45634,11 @@
       },
       {
         "source": "majordomus://milestone/derived-data-integrity",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/development-runtime",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -43904,6 +46308,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.prompt-continuity@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.prompt-continuity@1",
+        "target": "majordomus://rule/majordomus.prompt-capture@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.prompt-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -44081,6 +46495,21 @@
       {
         "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.accumulation-is-measured@1",
+        "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
       {
@@ -44279,47 +46708,52 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
-        "target": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.entry-converges@2",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.shared-server-resilience@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.no-network-no-eval@1",
         "kind": "depends_on"
       },
@@ -44584,6 +47018,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "majordomus://rule/project.providers-are-data@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.providers-are-data@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -44719,6 +47168,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -44736,6 +47195,16 @@
       {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "target": "majordomus://rule/project.rust-hot-path@1",
         "kind": "depends_on"
       },
       {
@@ -44925,6 +47394,56 @@
       },
       {
         "source": "majordomus://session/s-20260909152316-024f",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910205542-e2a6",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910210510-8f20",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910211505-3dbe",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910211853-8a3e",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910212104-f50d",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910214152-71cb",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910214250-e597",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260910222723-14ce",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260911054710-3523",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20260911060123-e0d4",
         "target": "kind:session",
         "kind": "is_a"
       },
@@ -45209,6 +47728,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/127_briefing_freshness.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -45239,6 +47763,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_context_compiler.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/131_backlog_hygiene.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/133_rule_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -45259,7 +47793,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/140_prompt_continuity.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/14_wiring_dispatcher.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -45274,7 +47818,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/170_provider_lifecycle_declared.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/171_session_observability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/17_doctrine_enforcement.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/180_publication_is_observed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/181_local_is_never_published.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/182_sessions_published_are_the_records.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -45284,7 +47853,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/190_entry_is_automatic.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/190_graph_drawing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/191_entry_races.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -45304,6 +47888,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/220_exactly_once_close.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/221_the_lifecycle_under_concurrency.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/222_an_episode_nobody_ended.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/223_an_unsupported_schema_is_a_finding.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/224_continuity_crosses_machines.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/22_history.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -45314,7 +47923,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/24_prompt_search.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -48504,6 +51123,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.compile",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devcontext",
+        "target": "capability:devcontext.policy",
+        "kind": "composes"
+      },
+      {
         "source": "module:devtask",
         "target": "capability:devtask.issue",
         "kind": "composes"
@@ -48631,6 +51265,31 @@
       {
         "source": "module:health",
         "target": "capability:health.report",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.closed",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.episodes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.providers",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.recovery",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.runtime",
         "kind": "composes"
       },
       {
@@ -48794,6 +51453,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:session_domain",
+        "target": "capability:session_domain.identity",
+        "kind": "composes"
+      },
+      {
+        "source": "module:session_domain",
+        "target": "capability:session_domain.machine",
+        "kind": "composes"
+      },
+      {
         "source": "module:trace",
         "target": "capability:trace.commit",
         "kind": "composes"
@@ -48865,8 +51534,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1514,
-      "edges": 3427,
+      "nodes": 1590,
+      "edges": 3569,
       "acyclic": true,
       "truncated": false
     }

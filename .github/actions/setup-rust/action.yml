@@ -1,7 +1,11 @@
 name: setup-rust
 description: >-
-  The pinned Rust toolchain and the crate's build cache, the same in every job that touches
-  apps/majordomus-cli. The cache (Swatinem/rust-cache) holds the cargo registry, the git
+  The Rust toolchain and the crate's build cache, the same in every job that touches
+  apps/majordomus-cli. The version is not chosen here: `rust-toolchain.toml` at the root is
+  the one declaration, and rustup reads it, so a runner and a developer get the same rustc,
+  rustfmt and clippy. This step seeds a toolchain and the components; the file governs which
+  one cargo then uses. It said "the pinned Rust toolchain" while nothing was pinned, and the
+  gap between a runner's `stable` and a developer's default reached eight minor versions. The cache (Swatinem/rust-cache) holds the cargo registry, the git
   checkouts of dependencies and the target directory, keyed by the job, the OS, the
   toolchain and Cargo.lock, restored from the default branch when a branch has none yet.
 inputs:

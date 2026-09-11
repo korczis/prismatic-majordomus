@@ -19,10 +19,6 @@ use std::time::{Duration, Instant};
 use common::{Fixture, BIN};
 use serde_json::{json, Value};
 
-/// One peer board as a client sees it: per peer, its id, what it announced and when. The
-/// tuple is wide enough that clippy asks for a name, and a name is better anyway.
-type Board = Vec<(String, String, String)>;
-
 const WAIT: Duration = Duration::from_secs(20);
 
 /// A `majordomus mcp` child with its stdout frames and stderr lines readable with a timeout.
@@ -1235,6 +1231,14 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
 
 // ---------------------------------------------------------------- the storm
 
+/// One peer as the board shows it: its id, its client's name, and what it announced.
+type PeerRow = (String, String, String);
+
+/// One client's reading of the board: the identity the server calls it, and the rows it saw.
+/// Named rather than written out, because `Vec<(String, Vec<(String, String, String)>)>` is
+/// what `clippy::type_complexity` refuses and it says nothing to a reader either.
+type BoardRead = (String, Vec<PeerRow>);
+
 /// How many clients start in the same instant. Two were tested, and two is not a storm: the
 /// race the election has to survive is the one where several processes read the same absent
 /// lease in the same millisecond, and only a barrier makes that happen on purpose.
@@ -1341,7 +1345,7 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     }
 
     // and reads the layer through it, and sees the whole board
-    let mut boards: Vec<(String, Board)> = Vec::new();
+    let mut boards: Vec<BoardRead> = Vec::new();
     for (i, m, _) in clients.iter_mut() {
         let repo = m.call("majordomus_repository", json!({}));
         assert_eq!(
@@ -1356,7 +1360,7 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
             Some(STORM as u64),
             "client {i} sees a partial board: {sc}"
         );
-        let mut seen: Vec<(String, String, String)> = sc["peers"]
+        let mut seen: Vec<PeerRow> = sc["peers"]
             .as_array()
             .unwrap()
             .iter()

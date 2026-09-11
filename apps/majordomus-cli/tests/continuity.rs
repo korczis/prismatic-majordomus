@@ -458,3 +458,74 @@ fn the_local_half_is_served_here_and_projected_nowhere() {
         }
     }
 }
+
+#[test]
+fn the_ledger_is_counted_and_a_detached_checkout_says_detached_rather_than_guessing() {
+    // Two fields of the answer that nothing reached until now, and both of them are about
+    // saying what is true rather than what is convenient.
+    //
+    // `tallies.ledger_lines` is how a reader learns whether this checkout's lifecycle has
+    // written anything at all — the distinction ADR 0041 was written after, where events kept
+    // arriving and derived state stopped advancing. Blank lines are not lines: a store that
+    // ends with a newline would otherwise be reported one event richer than it is.
+    //
+    // `branch` is `DETACHED` when git has no branch to name. It matters beyond the label:
+    // the resolver's second tier is "another worktree of this repository, on this branch",
+    // and a detached checkout has no branch, so that tier must be unreachable rather than
+    // matching everything. A reader handed another worktree's record because its own branch
+    // was the empty string cannot tell the record is not about its work.
+    let f = Fixture::new();
+    let root = f.root();
+    let root_s = root.to_string_lossy().to_string();
+    let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
+
+    // a record on the branch, in another worktree of this repository: tier 1, and therefore
+    // offered while a branch is checked out and not offered once there is none
+    f.write(
+        ".ai/local/state/handovers/theirs.md",
+        &record(
+            "2026-01-01T00:00:00Z",
+            "t-1",
+            &branch,
+            &head,
+            "/somewhere/else",
+            "Theirs.",
+        ),
+    );
+    f.write(
+        ".ai/local/state/ledger.jsonl",
+        "{\"ts\":\"2026-01-01T00:00:00Z\",\"event\":\"session.started\"}\n\
+         \n\
+         {\"ts\":\"2026-01-01T00:01:00Z\",\"event\":\"session.closed\"}\n\
+         \n",
+    );
+
+    let mut s = Served::start(&root, &[]);
+    let c = state(&s);
+    assert_eq!(c["branch"], branch, "{c}");
+    assert_eq!(c["tallies"]["ledger_lines"], 2, "blank lines are not events: {c}");
+    assert_eq!(c["tallies"]["handovers"], 1, "{c}");
+    assert_eq!(
+        c["handover"]["matched"], "same_branch",
+        "a record from another worktree on this branch is offered, and labelled: {c}"
+    );
+    assert_eq!(c["present"], true, "{c}");
+    s.stop();
+
+    // ...and with no branch at all, the second tier has nothing to match on
+    f.git(&["checkout", "--detach"]);
+    let mut s = Served::start(&root, &[]);
+    let c = state(&s);
+    assert_eq!(c["branch"], "DETACHED", "{c}");
+    assert!(
+        c.get("handover").is_none() || c["handover"].is_null(),
+        "a detached checkout was handed another worktree's record: {c}"
+    );
+    assert_eq!(c["tallies"]["ledger_lines"], 2, "{c}");
+    let _ = root_s;
+    s.stop();
+}

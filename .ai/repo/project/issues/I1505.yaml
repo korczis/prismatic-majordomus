@@ -1,0 +1,36 @@
+id: I1505
+milestone: development-runtime
+title: A mutating capability leaves a durable event, and the ledger can be read back
+slug: phase-b-one-event-model
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give a capability of kind command one way to record what it did: append a ledger event whose name share/events.yaml declares, publish the same change to the execution stream, and add a read capability for the ledger so a surface can show history at all."
+why: "R5 of the audit's root causes: there is no development history anywhere. The durable tier is a local ledger with its own vocabulary, the live tier is per-process and forgets on exit, and a run writes to neither. A development surface that cannot answer what happened yesterday is a dashboard of the current second. The two tiers also disagree by construction — the live channel works and streams frames, and it is a window onto a plane almost nothing writes to — so unifying what a mutation records is a precondition for any later page rather than a nicety."
+current_state: "share/events.yaml declares event names. The ledger is written shell-side and has no read capability. Executions are remembered only in the process that accepted them, which the execution module states as its own decision."
+desired_state: "One mutation produces one durable event and one live frame, from one place in the code, and the durable half is readable through the registry like anything else."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/execution
+  - share/events.yaml
+  - lib/plan.sh
+  - test/cases
+non_scope:
+  - A durable execution queue. Durability of the event record is not durability of the execution, and the second is a stated non-goal.
+  - A second vocabulary. The event names are share/events.yaml's, and this issue adds to that file rather than beside it.
+depends_on:
+  - I1504
+acceptance_criteria:
+  - A command capability's mutation appends an event whose name share/events.yaml declares
+  - The same mutation reaches the execution stream
+  - The ledger is readable through a capability, on every surface the registry projects
+  - A restart does not lose the durable half
+validation:
+  - bin/majordomus-cli capabilities validate
+  - bash test/run.sh
+evidence_required:
+  - mutation_leaves_an_event
+  - ledger_is_readable
+risk: "Medium. Two writers of one history is the defect this issue exists to remove, so an implementation that adds a third record type has made it worse."
+created_at: 2026-09-11
+updated_at: 2026-09-11
