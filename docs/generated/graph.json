@@ -658,6 +658,24 @@
         "status": "query"
       },
       {
+        "id": "capability:session_domain.identity",
+        "kind": "capability",
+        "label": "session_domain.identity",
+        "summary": "What identifies this checkout, and how each store spells it",
+        "route": "/cockpit/capabilities/session_domain.identity",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:session_domain.machine",
+        "kind": "capability",
+        "label": "session_domain.machine",
+        "summary": "The episode lifecycle, as data",
+        "route": "/cockpit/capabilities/session_domain.machine",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:trace.commit",
         "kind": "capability",
         "label": "trace.commit",
@@ -980,6 +998,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "kind": "file",
+        "label": "0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/ci/gates.yaml",
         "kind": "file",
         "label": "gates.yaml",
@@ -1105,6 +1131,14 @@
         "label": "release.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "kind": "file",
+        "label": "session_domain.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "external": true
       },
       {
@@ -1393,6 +1427,14 @@
         "label": "scope.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/scope.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/session/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/session/mod.rs",
         "external": true
       },
       {
@@ -1777,6 +1819,14 @@
         "label": "tokens.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/design/tokens.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/events.yaml",
+        "kind": "file",
+        "label": "events.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/events.yaml",
         "external": true
       },
       {
@@ -2974,6 +3024,34 @@
             "cockpit",
             "runtime",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0044",
+        "kind": "adr",
+        "label": "adr-0044",
+        "summary": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0044",
+        "source": ".ai/repo/adrs/0044-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+            "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:apps/majordomus-cli/src/session/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+            "file:share/events.yaml",
+            "test:test/cases/240_the_session_domain_is_typed.sh"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "architecture",
+            "identity",
+            "rust"
           ]
         }
       },
@@ -28235,6 +28313,13 @@
         "source": "test/cases/23_context.sh"
       },
       {
+        "id": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
+        "kind": "test",
+        "label": "test/cases/240_the_session_domain_is_typed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F240_the_session_domain_is_typed.sh",
+        "source": "test/cases/240_the_session_domain_is_typed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/24_prompt_search.sh",
         "kind": "test",
         "label": "test/cases/24_prompt_search.sh",
@@ -30893,6 +30978,11 @@
         "label": "server"
       },
       {
+        "id": "module:session_domain",
+        "kind": "module",
+        "label": "session_domain"
+      },
+      {
         "id": "module:trace",
         "kind": "module",
         "label": "trace"
@@ -32043,6 +32133,36 @@
       },
       {
         "source": "capability:server.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.identity",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:session_domain.machine",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33339,6 +33459,46 @@
       {
         "source": "majordomus://adr/adr-0040",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:.ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/session/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
         "kind": "put_in_force"
       },
       {
@@ -43832,6 +43992,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/240_the_session_domain_is_typed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/24_prompt_search.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47257,6 +47422,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:session_domain",
+        "target": "capability:session_domain.identity",
+        "kind": "composes"
+      },
+      {
+        "source": "module:session_domain",
+        "target": "capability:session_domain.machine",
+        "kind": "composes"
+      },
+      {
         "source": "module:trace",
         "target": "capability:trace.commit",
         "kind": "composes"
@@ -47328,8 +47503,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1460,
+      "edges": 3293,
       "acyclic": true,
       "truncated": false
     }

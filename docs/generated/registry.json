@@ -188,6 +188,14 @@
       "capabilities": 1
     },
     {
+      "id": "session_domain",
+      "title": "The session domain",
+      "description": "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 2
+    },
+    {
       "id": "trace",
       "title": "Traceability",
       "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",
@@ -23591,6 +23599,379 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs"
+    },
+    {
+      "id": "session_domain.identity",
+      "module": "session_domain",
+      "kind": "query",
+      "title": "What identifies this checkout, and how each store spells it",
+      "description": "The repository, the checkout, the open episode and the provider session, each with the canonical value this executable computes and each store's own spelling beside it. The stores record the repository sometimes as an absolute .git path and sometimes as a remote URL, the worktree as a path and as a digest, and the session as both an episode id and a provider UUID; this is the surface that says so, so that a reader never compares two spellings of different things and concludes they disagree.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "IdentityReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "checkout": {
+              "type": "string",
+              "description": "The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014)."
+            },
+            "facets": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/IdentityFacet"
+              },
+              "description": "One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What a reader should know before comparing any two of these. Empty is not the good\ncase here — the conflation is a property of the stores, not of this checkout — so\nthe standing note is always present."
+            }
+          },
+          "required": [
+            "checkout",
+            "facets",
+            "findings"
+          ],
+          "description": "The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec<&str> = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\"repository\", \"checkout\", \"episode\", \"provider_session\"]);\n```",
+          "title": "IdentityReport",
+          "$defs": {
+            "IdentityFacet": {
+              "type": "object",
+              "properties": {
+                "subject": {
+                  "type": "string",
+                  "description": "What is being identified: `repository`, `checkout`, `episode`, `provider_session`."
+                },
+                "canonical": {
+                  "type": "string",
+                  "description": "The canonical value this executable computes, when it can compute one."
+                },
+                "spellings": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/RecordedSpelling"
+                  },
+                  "description": "How each store spells the same subject, in the order [`crate::order`] gives."
+                },
+                "note": {
+                  "type": "string",
+                  "description": "Why the subject needs its own type, in one line, for a reader meeting it in a\nprojection rather than in this module."
+                }
+              },
+              "required": [
+                "subject",
+                "note"
+              ],
+              "description": "One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit's table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec<IdentityFacet> = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \"repository\").expect(\"a facet\");\nassert!(repository.spellings.len() >= 2, \"one word, two writers, two values\");\n```"
+            },
+            "RecordedSpelling": {
+              "type": "object",
+              "properties": {
+                "spelling": {
+                  "$ref": "#/$defs/Spelling",
+                  "description": "Which half of the layer wrote it."
+                },
+                "writer": {
+                  "type": "string",
+                  "description": "The writer, named so a reader can go and look at it."
+                },
+                "value": {
+                  "type": "string",
+                  "description": "The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault."
+                }
+              },
+              "required": [
+                "spelling",
+                "writer"
+              ],
+              "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/Users/x/dev/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+            },
+            "Spelling": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "The local half's spelling: a path, in `.ai/local/state/`. It names this disk and is\nnever published."
+                },
+                {
+                  "type": "string",
+                  "const": "shared",
+                  "description": "The shared half's spelling: a remote URL or a digest, in `.ai/repo/sessions/`. It\nnames the repository and travels with a clone (ADR 0014)."
+                },
+                {
+                  "type": "string",
+                  "const": "canonical",
+                  "description": "This executable's own canonical digest, computed rather than read."
+                }
+              ],
+              "description": "Which store a recorded identity was read from, kept beside the value.\n\nThe point is not to choose between `mj_git_repo_id` and `mj_repository_id`, or between\n`worktree:` and `worktree_id:`. It is to stop pretending they are one value. A reader\nthat knows a string is the *local* spelling can compare it with other local spellings\nand can refuse to compare it with a shared one, which is precisely the comparison that\nproduced \"these two records are about different repositories\" for records of the same\nrepository written four minutes apart.\n\n```\nuse majordomus_cli::session::Spelling;\n// the two halves are different answers to one question, and are never compared\nassert_ne!(Spelling::Local, Spelling::Shared);\nassert_eq!(Spelling::Canonical.as_str(), \"canonical\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::session_domain"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_session_identity",
+          "resource": {
+            "uri": "majordomus://session/identity",
+            "name": "session-identity"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/session/identity"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "session",
+        "identity",
+        "continuity"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2,
+        "ttl_seconds": 2
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs"
+    },
+    {
+      "id": "session_domain.machine",
+      "module": "session_domain",
+      "kind": "query",
+      "title": "The episode lifecycle, as data",
+      "description": "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "MachineReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "states": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/StateView"
+              },
+              "description": "Every state, with what it means and whether it is terminal."
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TransitionView"
+              },
+              "description": "Every transition, with the states it runs between."
+            },
+            "independent_of": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What the machine deliberately does not depend on, stated so that a reader does not\nhave to infer an absence. One entry today: task state."
+            },
+            "decision": {
+              "type": "string",
+              "description": "The decision this machine is the implementation of, so a reader meeting it in a\nprojection can go and read why it is shaped this way."
+            }
+          },
+          "required": [
+            "states",
+            "transitions",
+            "independent_of",
+            "decision"
+          ],
+          "description": "The lifecycle machine, with the decision it implements, so that a reader meeting it in\na projection can go and read why it is shaped this way.\n\n```\nuse majordomus_cli::capability::builtin::MachineReport;\nuse majordomus_cli::session::Machine;\n\n// the report is the machine plus one citation; the machine itself is derived from the\n// types and carries no second list\nlet report = MachineReport { machine: Machine::describe(), decision: \"adr-0044\".into() };\nassert!(report.machine.transitions.iter().any(|t| !t.moves_state), \"a checkpoint is an event\");\nassert!(report.decision.contains(\"0044\"));\n```",
+          "title": "MachineReport",
+          "$defs": {
+            "StateView": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "$ref": "#/$defs/EpisodeState",
+                  "description": "The state's word."
+                },
+                "terminal": {
+                  "type": "boolean",
+                  "description": "Whether an episode ever leaves it."
+                },
+                "may_move_to": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EpisodeState"
+                  },
+                  "description": "The states an episode in this one may move to, in canonical order."
+                }
+              },
+              "required": [
+                "state",
+                "terminal",
+                "may_move_to"
+              ],
+              "description": "One state of the machine: its word, whether an episode ever leaves it, and where it may\ngo from there.\n\n```\nuse majordomus_cli::session::{EpisodeState, Machine, StateView};\n\nlet m = Machine::describe();\nlet closed: &StateView =\n    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(\"a state\");\nassert!(closed.terminal && closed.may_move_to.is_empty());\n```"
+            },
+            "EpisodeState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "opening",
+                  "description": "An identity has been minted and nothing durable has been written yet. It exists so\nthat a crash between minting an id and writing the open record is a state the model\ncan name rather than an episode that never happened."
+                },
+                {
+                  "type": "string",
+                  "const": "open",
+                  "description": "The open record stands. The worker is here, or was recently."
+                },
+                {
+                  "type": "string",
+                  "const": "detached",
+                  "description": "The connection that held the episode went away, and the episode did not. A dropped\nsocket is the most ordinary thing that happens to a session; an episode that closed\nitself on every disconnect would lose the work of every worker whose network\nhiccuped. It is still resumable, and it is still recoverable if nobody resumes it."
+                },
+                {
+                  "type": "string",
+                  "const": "closed",
+                  "description": "The immutable record has been published. Terminal, and terminal is the point: the\nfour records of `s-20260909152316-024f` all exist because nothing in the previous\nrepresentation could say this."
+                }
+              ],
+              "description": "Where an episode is: minted, open, detached from the connection that held it, or closed\ninto the immutable record.\n\n```\nuse majordomus_cli::session::EpisodeState;\n\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Closed));\nassert!(!EpisodeState::Closed.may_move_to(EpisodeState::Open), \"a record is immutable\");\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open), \"a resume is not a move\");\nassert!(EpisodeState::Closed.is_final());\n```"
+            },
+            "TransitionView": {
+              "type": "object",
+              "properties": {
+                "transition": {
+                  "$ref": "#/$defs/Transition",
+                  "description": "The transition's word."
+                },
+                "from": {
+                  "$ref": "#/$defs/EpisodeState",
+                  "description": "Where it starts."
+                },
+                "to": {
+                  "$ref": "#/$defs/EpisodeState",
+                  "description": "Where it ends."
+                },
+                "moves_state": {
+                  "type": "boolean",
+                  "description": "False for `resume` and `checkpoint`, which are events inside a state."
+                }
+              },
+              "required": [
+                "transition",
+                "from",
+                "to",
+                "moves_state"
+              ],
+              "description": "One transition of the machine: its word, the states it runs between, and whether it\nmoves the state at all.\n\n```\nuse majordomus_cli::session::{Machine, Transition, TransitionView};\n\nlet m = Machine::describe();\nlet close: &TransitionView = m\n    .transitions\n    .iter()\n    .find(|t| t.transition == Transition::Close)\n    .expect(\"a transition\");\nassert!(close.moves_state);\n```"
+            },
+            "Transition": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "open",
+                  "description": "The episode begins: an id is minted and the open record is written."
+                },
+                {
+                  "type": "string",
+                  "const": "resume",
+                  "description": "The worker came back to a detached episode. A provider's start event also fires\nagain on a resume and on a compaction against an episode that is still open; that\nis the same transition observed from `Open`, and the honest answer to \"your episode\nis already open\" is to keep it rather than to open a second one."
+                },
+                {
+                  "type": "string",
+                  "const": "checkpoint",
+                  "description": "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
+                },
+                {
+                  "type": "string",
+                  "const": "detach",
+                  "description": "The connection went away without an end event."
+                },
+                {
+                  "type": "string",
+                  "const": "close",
+                  "description": "The worker ended the episode and the immutable record was published."
+                },
+                {
+                  "type": "string",
+                  "const": "recover",
+                  "description": "Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete."
+                }
+              ],
+              "description": "What moved an episode. The vocabulary the ADR 0041 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::session_domain"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_session_machine",
+          "resource": {
+            "uri": "majordomus://session/machine",
+            "name": "session-machine"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/session/machine"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "session",
+        "continuity",
+        "lifecycle"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 1,
+        "ttl_seconds": 600
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs"
     },
     {
       "id": "trace.commit",

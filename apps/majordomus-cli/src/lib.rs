@@ -50,6 +50,7 @@ pub mod quality;
 pub mod release;
 pub mod repository;
 pub mod scope;
+pub mod session;
 pub mod share;
 pub(crate) mod shared;
 pub mod site;
