@@ -137,6 +137,23 @@
         }
       }
     },
+    "prompts": {
+      "description": "Bounds on the raw prompt archive under .ai/local/prompts/. Pruning replaces a prompt body with a tombstone and keeps every other field, including the provenance of its episode link; a record is never deleted. Either bound alone is a bound.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retention_max_days": {
+          "description": "A prompt body older than this many days is pruned.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_bytes": {
+          "description": "The total size of the prompt bodies the archive keeps; the oldest are pruned first past it.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
     "enforcement": {
       "type": "array",
       "items": {
