@@ -93,6 +93,13 @@ pub struct CapabilityView {
     pub source_path: String,
 }
 
+/// The view orders as the capability it carries: the source path it adds is provenance.
+impl crate::order::Ordered for CapabilityView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        self.capability.order_key()
+    }
+}
+
 /// One module.
 #[derive(Debug, Clone, Serialize)]
 pub struct ModuleView {
@@ -165,6 +172,13 @@ pub struct ObjectView {
     pub tags: Vec<String>,
 }
 
+/// A module is presented by its id, the same string its capabilities are prefixed with.
+impl crate::order::Ordered for ModuleView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One kind.
 #[derive(Debug, Clone, Serialize)]
 pub struct KindView {
@@ -181,6 +195,14 @@ pub struct KindView {
     pub identity: Vec<String>,
     /// Objects of this kind in the index.
     pub objects: usize,
+}
+
+/// A kind is presented by its name, which is the identity the whole index files objects
+/// under; there is nothing else about a kind that a reader would look it up by.
+impl crate::order::Ordered for KindView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name)
+    }
 }
 
 /// One declared provider projection.
@@ -385,7 +407,7 @@ pub fn dataset(
             source_path: c.provenance.source_path(),
         })
         .collect();
-    builtin.sort_by(|a, b| a.capability.id.as_str().cmp(b.capability.id.as_str()));
+    crate::order::canonical(&mut builtin);
     let mut modules: Vec<ModuleView> = registry
         .modules()
         .map(|m| {
@@ -413,7 +435,7 @@ pub fn dataset(
             }
         })
         .collect();
-    modules.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut modules);
 
     let mut objects: Vec<ObjectView> = index
         .objects
@@ -455,7 +477,7 @@ pub fn dataset(
             objects: by_kind.get(name).copied().unwrap_or(0),
         })
         .collect();
-    kinds.sort_by(|a, b| a.name.cmp(&b.name));
+    crate::order::canonical(&mut kinds);
 
     let projections = policy
         .policy

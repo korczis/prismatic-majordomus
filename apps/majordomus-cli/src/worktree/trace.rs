@@ -249,6 +249,15 @@ pub struct TraceTallies {
     pub ambiguous: usize,
 }
 
+/// A ref is presented by its name, which is unique in the namespace it was listed from.
+/// `feature/x-2` sorts before `feature/x-10` here, which is what a person reading a branch
+/// listing expects and not what the bytes give.
+impl crate::order::Ordered for IssueRef {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name)
+    }
+}
+
 /// One ref that names an issue, as `for-each-ref` reported it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IssueRef {
@@ -621,8 +630,8 @@ fn parse_refs(text: &str, ids: &[String]) -> Vec<IssueRef> {
             .split_once('/')
             .is_some_and(|(_, rest)| local_names.contains(rest))
     });
-    local.sort_by(|a, b| a.name.cmp(&b.name));
-    remote.sort_by(|a, b| a.name.cmp(&b.name));
+    crate::order::canonical(&mut local);
+    crate::order::canonical(&mut remote);
     local.extend(remote);
     local
 }
