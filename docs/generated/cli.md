@@ -66,6 +66,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus env status`](#majordomus-env-status) | `/docs/cli/env/status/` | The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written |
 | [`majordomus env banner`](#majordomus-env-banner) | `/docs/cli/env/banner/` | Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting |
 | [`majordomus env export`](#majordomus-env-export) | `/docs/cli/env/export/` | The variable assignments a shell in this repository benefits from, for `eval`. Assignments only: no command, no side effect |
+| [`majordomus env enter`](#majordomus-env-enter) | `/docs/cli/env/enter/` | Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer |
 | [`majordomus env explain`](#majordomus-env-explain) | `/docs/cli/env/explain/` | Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted |
 | [`majordomus commands`](#majordomus-commands) | `/docs/cli/commands/` | Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it |
 | [`majordomus commands list`](#majordomus-commands-list) | `/docs/cli/commands/list/` | Every command, one line each: what it is, what running it changes, and where it is projected |
@@ -1640,7 +1641,7 @@ Examples:
 
 What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
 
-Subcommands: [`majordomus env status`](#majordomus-env-status), [`majordomus env banner`](#majordomus-env-banner), [`majordomus env export`](#majordomus-env-export), [`majordomus env explain`](#majordomus-env-explain).
+Subcommands: [`majordomus env status`](#majordomus-env-status), [`majordomus env banner`](#majordomus-env-banner), [`majordomus env export`](#majordomus-env-export), [`majordomus env enter`](#majordomus-env-enter), [`majordomus env explain`](#majordomus-env-explain).
 
 ```text
 majordomus env [OPTIONS] [COMMAND]
@@ -1747,6 +1748,39 @@ Examples:
 
   ```console
   $ majordomus env export --shell direnv
+  ```
+
+  Verified: exits 0; prints export MAJORDOMUS_ROOT=.
+
+<a id="majordomus-env-enter"></a>
+## `majordomus env enter`
+
+Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer
+
+```text
+majordomus env enter [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--shell` | `<SHELL>` | `direnv` | The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish` |
+| `--mode` | `<MODE>` | — | How much banner to draw; MAJORDOMUS_BANNER decides without it |
+| `--no-banner` | flag | — | Do not draw the banner |
+| `--no-bridge` | flag | — | Do not refresh the workflow bridge |
+| `--no-runtime` | flag | — | Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument |
+| `--wait` | `<SECONDS>` | `0` | Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Everything entering this repository is, as one call** — What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.
+
+  ```console
+  $ majordomus env enter --shell direnv --no-banner --no-bridge --no-runtime
   ```
 
   Verified: exits 0; prints export MAJORDOMUS_ROOT=.

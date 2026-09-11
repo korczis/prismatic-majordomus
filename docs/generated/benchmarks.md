@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 87 | 83 | 0 | 4 |
-| http | 86 | 83 | 0 | 3 |
-| mcp | 84 | 81 | 0 | 3 |
+| direct | 94 | 90 | 0 | 4 |
+| http | 93 | 90 | 0 | 3 |
+| mcp | 91 | 88 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 270 | 260 | 0 | 10 |
+| total | 291 | 281 | 0 | 10 |
 
 ## Capabilities
 
@@ -63,6 +63,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
+| `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
+| `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
@@ -92,6 +97,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
+| `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

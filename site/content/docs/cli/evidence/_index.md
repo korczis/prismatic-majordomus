@@ -4,7 +4,7 @@ description = "What actually ran and what it proves: every claim of the matrix a
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 104
+weight = 105
 [extra]
 route = "/docs/cli/evidence/"
 command = "majordomus evidence"
