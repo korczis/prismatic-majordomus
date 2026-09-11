@@ -24,6 +24,13 @@
 # the scoped context documents: discovery, resolution, validation, impact
 # shellcheck source=context_docs.sh
 . "$MJ_LIB_DIR/context_docs.sh"
+# the open episode and the working context it froze, so that the GIT section can say how far
+# the briefing the worker is actually holding has drifted from the checkout it describes.
+# session.sh reaches back here through session_context.sh; both files guard against being
+# sourced twice, and every reference across the pair is resolved when it is called rather
+# than when it is read, so the cycle terminates and no definition is missing at call time.
+# shellcheck source=session.sh
+. "$MJ_LIB_DIR/session.sh"
 
 mj_cmd_context() {
   local for_provider="" budget="" prompt_name="" no_prompt="${MJ_NO_PROMPT:-0}"
@@ -89,6 +96,34 @@ H
 # projections describe the same selection.
 mj_ctx_excl() { printf '%s — %s\n' "$1" "$2" >> "$MJ_CTX_TMP/excluded"; }
 
+# The age of the briefing the worker is holding, printed inside the GIT section because that
+# is where every other recorded head is already checked. The briefing is the document the
+# provider's start hook froze when the episode opened; it is the only thing in this output
+# the worker did not just ask for, and until now the only recorded head in the repository
+# that nothing compared. `advanced` carries the distance because "your briefing is four
+# commits old" is actionable and "your briefing is stale" is not.
+#
+# Silent when there is no open episode, when the episode belongs to another worktree, and
+# when the store holds no document for it: each of those is a different fact, and the
+# session_lifecycle doctrine is the surface that reports them.
+mj_ctx_briefing() {
+  mj_is_function mj_load_session || return 0
+  mj_load_session >/dev/null 2>&1 || return 0
+  mj_session_is_foreign && return 0
+  local sid fresh label head since
+  sid="$(mj_ses session_id)"
+  [ -n "$sid" ] || return 0
+  fresh="$(mj_session_context_freshness "$sid")" || return 0
+  label="${fresh%%	*}"; fresh="${fresh#*	}"
+  head="${fresh%%	*}"; since="${fresh#*	}"
+  case "$label" in
+    exact)    printf 'briefing     %s at %s\n' "$label" "${head:0:7}" ;;
+    advanced) printf 'briefing     %s — %s commit(s) since it was frozen at %s\n' "$label" "$since" "${head:0:7}" ;;
+    *)        printf 'briefing     %s from %s\n' "$label" "${head:0:7}"
+              printf 'WARNING      the briefing this episode opened with no longer describes this checkout; this output supersedes it\n' ;;
+  esac
+}
+
 mj_context_sections() {
   local prompt_name="$1" no_prompt="$2"
   : > "$MJ_CTX_TMP/excluded"
@@ -115,6 +150,7 @@ mj_context_sections() {
         diverged|different_context) printf 'WARNING      the task record no longer describes this checkout; trust git, not the records below\n' ;;
       esac
     fi
+    mj_ctx_briefing
   } > "$MJ_CTX_TMP/10.git"
   MJ_CTX_LABEL="${label:-none}"
 

@@ -26292,6 +26292,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "kind": "rule",
+        "label": "project.the-briefing-is-checked-against-git@1",
+        "summary": "The briefing an episode opened with is compared against git before it is believed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-briefing-is-checked-against-git%401",
+        "source": ".ai/repo/rules/project/the-briefing-is-checked-against-git.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.execution-state-is-authoritative@1"
+          ],
+          "tags": [
+            "session",
+            "context",
+            "provenance",
+            "git"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "label": "project.the-lease-is-read-once@1",
@@ -28031,6 +28052,13 @@
         "label": "test/cases/123_case_bound.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F123_case_bound.sh",
         "source": "test/cases/123_case_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/127_briefing_freshness.sh",
+        "kind": "test",
+        "label": "test/cases/127_briefing_freshness.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F127_briefing_freshness.sh",
+        "source": "test/cases/127_briefing_freshness.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -43068,6 +43096,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-briefing-is-checked-against-git@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43544,6 +43582,11 @@
       },
       {
         "source": "majordomus://test/test/cases/123_case_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/127_briefing_freshness.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47104,8 +47147,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1441,
-      "edges": 3253,
+      "nodes": 1443,
+      "edges": 3256,
       "acyclic": true,
       "truncated": false
     }
