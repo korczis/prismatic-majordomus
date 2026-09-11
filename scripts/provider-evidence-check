@@ -32,7 +32,13 @@
 # something down, which is the whole of the difference between a verified answer and a
 # guess: a cell nobody can cite is a cell nobody should have written. Re-verification is a
 # person's job and the date in each citation is what tells them when it was last done.
+# pipefail beside `set -e`, because a gate whose pipeline fails silently in its middle
+# reports a pass it did not earn (project rule, scripts/ci/pipefail-check). Every pipeline
+# below whose components may legitimately exit non-zero — a grep that matches nothing, a
+# head that closes the pipe under sed — says so explicitly with `|| true`, so pipefail
+# catches the failures that are real and none that are not.
 set -eu
+set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # The declaration of whichever distribution the tool would read, not this checkout's by
@@ -72,10 +78,10 @@ finding() { printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$FINDINGS"; }
     }
 }
 
-providers="$(sed -n 's/^providers\.\([^.]*\)\..*$/\1/p' "$TMP/flat" | awk '!seen[$0]++')"
+providers="$(sed -n 's/^providers\.\([^.]*\)\..*$/\1/p' "$TMP/flat" | awk '!seen[$0]++' || true)"
 [ -n "$providers" ] || { printf 'provider-evidence-check: %s declares no providers\n' "$DECL" >&2; exit 10; }
 
-decl() { sed -n "s/^providers\.$1\.$2=//p" "$TMP/flat" | head -n 1; }
+decl() { sed -n "s/^providers\.$1\.$2=//p" "$TMP/flat" | head -n 1 || true; }
 
 for p in $providers; do
   for aspect in episode prompts; do
@@ -106,8 +112,10 @@ if "$ROOT/bin/majordomus" --repo "$ROOT" --json capture status > "$TMP/status.js
   for p in $providers; do
     for aspect in prompt session; do
       declared_aspect=prompts; [ "$aspect" = session ] && declared_aspect=episode
+      # A provider the status does not report yields no line, and that absence is exactly
+      # the finding below — so it must not be read as a pipeline failure.
       row="$(sed 's/},{/}\n{/g' "$TMP/status.json" \
-        | grep -F "\"provider\":\"$p\"" | grep -F "\"aspect\":\"$aspect\"" | head -n 1)"
+        | grep -F "\"provider\":\"$p\"" | grep -F "\"aspect\":\"$aspect\"" | head -n 1 || true)"
       if [ -z "$row" ]; then
         finding "$p" "$aspect" "the declaration names this provider and 'capture status' does not report it; a provider nobody reports is a provider a reader concludes nothing about"
         continue
@@ -126,7 +134,7 @@ fi
 n="$(grep -c . "$FINDINGS" 2>/dev/null || true)"; n="${n:-0}"
 if [ "$JSON" = 1 ]; then
   printf '{"schema":"majordomus.provider-evidence/v1","providers":%s,"findings":[' \
-    "$(printf '%s\n' "$providers" | grep -c .)"
+    "$(printf '%s\n' "$providers" | grep -c . || true)"
   first=1
   while IFS="$(printf '\t')" read -r p a why; do
     [ -n "$p" ] || continue
@@ -141,7 +149,7 @@ else
   done < "$FINDINGS"
   if [ "$n" = 0 ]; then
     printf 'provider-evidence-check: %s provider(s), every capability declared and cited, every one reported\n' \
-      "$(printf '%s\n' "$providers" | grep -c .)"
+      "$(printf '%s\n' "$providers" | grep -c . || true)"
   else
     printf 'provider-evidence-check: %s finding(s)  [rule: project.a-provider-capability-cites-its-evidence]\n' "$n" >&2
   fi
