@@ -19,8 +19,12 @@
 #      sorts not pinned with LC_ALL=C, may fall and may not rise. The counts live in
 #      .ai/repo/order-baseline.txt; lowering one is a commit that adopts the canonical
 #      order or pins a locale, and the gate then asks for the baseline to be lowered too.
+#      The crate count is production code only: a sort in a `#[cfg(test)]` module, in a
+#      file a `#[cfg(test)] mod` declaration gates, or in a doc comment orders a fixture,
+#      not a collection a surface shows, and is not debt.
 #
 #   scripts/ci/order-check              report every finding, exit 10 on any
+#   scripts/ci/order-check --sites      list the sites both ratchets count
 #   scripts/ci/order-check --update     rewrite the baseline from this tree (never in CI)
 #   MJ_ROOT=<dir> scripts/ci/order-check
 #
@@ -31,6 +35,8 @@ cd "$ROOT"
 BASELINE=.ai/repo/order-baseline.txt
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
+SITES=0
+[ "${1:-}" = "--sites" ] && SITES=1
 
 findings=0
 ok()   { printf 'ok    %s\n' "$*"; }
@@ -79,20 +85,120 @@ else
 fi
 
 # ---------------------------------------------------------------- 4. the ratchets
-crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' \
-  apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -vc 'src/order\.rs:' || true)"
+# Every sort site of the crate that orders something a person could be shown. A sort inside
+# anything `#[cfg(test)]` introduces — a module, a function, or a whole file a `#[cfg(test)]
+# mod` declaration gates — or inside a doc comment orders a fixture or an example: it is
+# compiled out of the shipped binary, no surface renders it, and two of them cannot disagree
+# with each other in front of a reader. Counting those as debt made the ratchet ask for
+# canonical order in a test that asserts an order — a gate that cries wolf is a gate somebody
+# switches off.
+crate_files() {
+  # Sorted, and pinned: `find` enumerates in filesystem order, so the listing this feeds
+  # would otherwise come out in a different sequence on a different machine — which is the
+  # defect this whole gate exists to refuse. The count does not depend on it; the `--sites`
+  # listing, and anyone diffing two runs of it, do.
+  find apps/majordomus-cli/src -name '*.rs' | grep -v '/order\.rs$' | LC_ALL=C sort
+}
+
+# The files a `#[cfg(test)] mod <name>;` declaration compiles only for tests, as paths.
+test_gated_files() {
+  crate_files | xargs awk '
+    /#\[cfg\(test\)\]/ { pend = 1; next }
+    pend && /^[[:space:]]*(pub[[:space:]]+)?mod[[:space:]]+[A-Za-z0-9_]+[[:space:]]*;/ {
+      name = $0
+      sub(/^[^m]*mod[[:space:]]+/, "", name)
+      sub(/[[:space:]]*;.*$/, "", name)
+      dir = FILENAME
+      sub(/\/[^\/]*$/, "", dir)
+      print dir "/" name ".rs"
+      print dir "/" name "/mod.rs"
+    }
+    { pend = 0 }
+  '
+}
+
+crate_sort_sites() {
+  gated=":$(test_gated_files | tr '\n' ':')"
+  crate_files | xargs awk -v gated="$gated" '
+    FNR == 1 { depth = 0; testdepth = 0; pend = 0; skip = index(gated, ":" FILENAME ":") > 0 }
+    skip { next }
+    {
+      line = $0
+      doc = (line ~ /^[[:space:]]*(\/\/\/|\/\/!)/)
+      if (line ~ /#\[cfg\(test\)\]/) pend = 1
+      if (pend && line ~ /^[[:space:]]*(pub[[:space:]]+)?mod[[:space:]]+[A-Za-z0-9_]+[[:space:]]*;/) pend = 0
+      opened = gsub(/\{/, "{", line)
+      closed = gsub(/\}/, "}", line)
+      if (pend && opened > 0 && testdepth == 0) { testdepth = depth + 1; pend = 0 }
+      depth += opened - closed
+      if (testdepth > 0 && depth < testdepth) testdepth = 0
+      if (!doc && testdepth == 0 && $0 ~ /\.sort_by\(|\.sort_by_key\(|\.sort\(\)|\.sort_unstable/)
+        print FILENAME ":" FNR ":" $0
+    }
+  '
+}
+
+crate_sorts="$(crate_sort_sites | wc -l | tr -d ' ')"
+
+if [ "$SITES" = 1 ]; then
+  crate_sort_sites
+  printf '# %s crate sort site(s)\n' "$crate_sorts"
+fi
 # `sort` wherever a command begins — after a pipe, a semicolon, a brace, a `&&`, or at the
 # start of a line — because an unpinned sort collates by the locale whatever precedes it.
-shell_sorts="$(grep -rnE '(\|[[:space:]]*sort\b)|((^|[;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
-  lib scripts bin test 2>/dev/null | grep -vc 'LC_ALL=C' || true)"
+#
+# Two things that spell `sort` are not `sort(1)` and are not counted:
+#
+#   * a `.jq` file. It holds a jq program, not shell. jq's own `sort` orders JSON values by
+#     jq's total order, which is defined by the language and not by the environment, so
+#     there is no locale to pin and `LC_ALL=C jq` would be nonsense.
+#   * a `sort` inside a single-quoted region of a line. Inside single quotes the shell does
+#     not interpret `|` as a pipe and does not run anything: the text is an argument, almost
+#     always the jq program a case asserts with. A pipeline that the shell never builds
+#     cannot collate by the machine's locale.
+#
+# Counting those made the ratchet demand `LC_ALL=C` in front of a jq filter, which is a
+# change nobody can make, and a ratchet that is over a baseline nobody can reach is a gate
+# that stays red for everyone for a reason that belongs to no one.
+shell_sort_sites() {
+  grep -rnE '(\|[[:space:]]*sort\b)|((^|[;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
+    lib scripts bin test 2>/dev/null \
+    | grep -v 'LC_ALL=C' \
+    | grep -v '^[^:]*\.jq:' \
+    | awk '
+        {
+          # The content of the hit, past the "<file>:<line>:" that grep prefixed. A path or
+          # a line of code may itself contain a colon, so cut exactly two and keep the rest.
+          i = index($0, ":"); rest = substr($0, i + 1)
+          j = index(rest, ":"); content = substr(rest, j + 1)
+          if (!match(content, /(^|[|;&{(])[[:space:]]*sort([[:space:]]|$)/)) next
+          # Quote parity up to the match: an odd number of single quotes before it means the
+          # word sits inside a quoted argument, where the shell runs nothing.
+          before = substr(content, 1, RSTART)
+          quotes = gsub(/'"'"'/, "", before)
+          if (quotes % 2 == 0) print $0
+        }
+      '
+}
+
+shell_sorts="$(shell_sort_sites | wc -l | tr -d ' ')"
+
+if [ "$SITES" = 1 ]; then
+  shell_sort_sites
+  printf '# %s unpinned shell sort(s)\n' "$shell_sorts"
+  exit 0
+fi
 
 if [ "$UPDATE" = 1 ]; then
   {
     printf '# The two ordering debts of this tree, as counts. Written by\n'
     printf '# `scripts/ci/order-check --update`; the gate refuses a rise.\n'
     printf '#\n'
-    printf '# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs. Each is a\n'
-    printf '#               comparator that could be the canonical order and is not yet.\n'
+    printf '# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs, in code\n'
+    printf '#               that ships. Each is a comparator that could be the canonical order\n'
+    printf '#               and is not yet. Test-only code — anything `#[cfg(test)]` introduces,\n'
+    printf '#               module, function or a whole file, and a doc comment — is not counted:\n'
+    printf '#               it orders a fixture, and no surface renders it.\n'
     printf '# shell_sorts   `sort` invocations under lib/, scripts/, bin/ and test/ that are not\n'
     printf '#               pinned with LC_ALL=C. A glob or a sort collates by the locale, so an\n'
     printf '#               unpinned one orders by whose machine ran it.\n'

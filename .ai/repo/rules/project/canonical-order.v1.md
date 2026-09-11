@@ -60,7 +60,14 @@ satisfies them and a new violation is always a mistake: a case-folded comparator
 `share/` or `site/`. The fourth is a ratchet over the debt that predates the rule — the
 number of sort sites in the crate outside `order.rs`, and the number of shell `sort`
 invocations not pinned with `LC_ALL=C` — held in `.ai/repo/order-baseline.txt`, which may
-fall and may not rise. A commit that adopts the canonical order lowers the baseline with
+fall and may not rise. The crate count is over code that ships: a sort inside anything
+`#[cfg(test)]` introduces — a module, a function, or a whole file a `#[cfg(test)] mod`
+declaration gates — or inside a doc comment orders a fixture or an example, is compiled out
+of the binary, and is not a second opinion any reader can see. Counting those asked for
+canonical order in a test whose whole purpose is to assert an order, and a gate that cries
+wolf is a gate somebody switches off. `scripts/ci/order-check --sites` lists exactly what
+each ratchet counts, so a reader of the number is never left to reconstruct which sites it
+is made of. A commit that adopts the canonical order lowers the baseline with
 `scripts/ci/order-check --update`, and the gate refuses a baseline that no longer matches
 the tree in either direction, so the debt cannot be quietly rewritten either way.
 
