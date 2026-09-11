@@ -71,6 +71,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 7
+  - id: gates
+    title: Completion gates
+    description: "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 2
   - id: graph
     title: Graphs
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
@@ -9704,6 +9710,575 @@ capabilities:
       cancellable: false
       concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/executions.rs
+  - id: gates.completion
+    module: gates
+    kind: query
+    title: Whether this task may be called finished
+    description: "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted."
+    input:
+      name: CompletionInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          changed:
+            type:
+              - array
+              - "null"
+            items:
+              type: string
+            description: "The changed paths, repository-relative. Absent means the task's own change set:\neverything between the commit the task started at and the working tree."
+          base:
+            type:
+              - string
+              - "null"
+            description: "The commit to compare with, when the task's own starting commit is not wanted."
+          on_demand:
+            type:
+              - boolean
+              - "null"
+            description: "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
+        description: Which change to judge completion over.
+        title: CompletionInput
+    output:
+      name: Completion
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: True when a task record was found in this checkout.
+          task:
+            anyOf:
+              - "$ref": "#/$defs/ActiveTask"
+              - type: "null"
+            description: "The task, as its record declares it."
+          model:
+            type: string
+            description: The CI model this was judged against.
+          plan:
+            "$ref": "#/$defs/GatePlan"
+            description: "Affected or full, and why."
+          finishable:
+            type: boolean
+            description: "False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty."
+          blocking:
+            type: array
+            items:
+              type: string
+            description: The required gates whose status refuses completion.
+          unverified:
+            type: array
+            items:
+              type: string
+            description: "The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so."
+          tallies:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many gates stand in each status, by word."
+          gates:
+            type: array
+            items:
+              "$ref": "#/$defs/Gate"
+            description: "Every gate of the model, what refuses first."
+          obligations:
+            type: array
+            items:
+              "$ref": "#/$defs/ImpliedObligation"
+            description: "Which obligations the change set implies, and whether the task promised them. The\njudgement of a declared one is `obligations.closure`'s, not this module's."
+          questions:
+            type: array
+            items:
+              "$ref": "#/$defs/DoneQuestion"
+            description: "The done invariant: the questions a task must answer before anybody may call it\nfinished, each with the source that answered it and the evidence it read. Composed\nfrom the obligation closure, the gates and the change set; a question nothing here\nreaches is `unknown` and names the command that would answer it."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred."
+        required:
+          - present
+          - model
+          - plan
+          - finishable
+          - tallies
+          - gates
+          - obligations
+          - questions
+        description: "Whether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+        title: Completion
+        "$defs":
+          ActiveTask:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The task id.
+              task:
+                type: string
+                description: What is being worked on.
+              profile:
+                type: string
+                description: The execution profile it runs under.
+              outcome:
+                type: string
+                description: "Its typed outcome so far: `active`, `handed_over`, or a finished one."
+              scope:
+                type: array
+                items:
+                  type: string
+                description: The paths it claims.
+              requires:
+                type: array
+                items:
+                  type: string
+                description: "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared."
+              started_at:
+                type: string
+                description: When it started.
+              head:
+                type: string
+                description: The commit it started at.
+            required:
+              - id
+              - task
+              - profile
+              - outcome
+            description: "The active task of this checkout, when there is one."
+          GatePlan:
+            type: object
+            properties:
+              mode:
+                "$ref": "#/$defs/GatePlanMode"
+                description: "Affected, or full."
+              reason:
+                type: string
+                description: "Why, in words."
+              changed:
+                type: array
+                items:
+                  type: string
+                description: "The changed paths the plan was computed over, sorted."
+              classes:
+                type: array
+                items:
+                  "$ref": "#/$defs/GateClassMatch"
+                description: The classes they fall in.
+              unclassified:
+                type: array
+                items:
+                  type: string
+                description: Changed paths no class of the model covers; each one escalates the plan.
+              selected:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Gate id to the reason it was selected, for the gates in the plan."
+              excluded:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Gate id to the reason it was left out, for the gates that are not."
+            required:
+              - mode
+              - reason
+              - changed
+              - classes
+              - unclassified
+              - selected
+              - excluded
+            description: "Which gates a change must pass, and why each one is in or out."
+          GatePlanMode:
+            oneOf:
+              - type: string
+                const: affected
+                description: The gates of the classes the changed paths fall in.
+              - type: string
+                const: full
+                description: "Every gate but the on-demand ones: asked for, or escalated to."
+            description: Why the plan selects what it selects.
+          GateClassMatch:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The class's identity."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: The changed paths this class covers.
+            required:
+              - id
+              - paths
+            description: "One class a change fell in, and the paths that put it there."
+          Gate:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The gate's identity in the model."
+              title:
+                type: string
+                description: "One line naming it, from the model's own summary."
+              scope:
+                type: string
+                description: "What it is a gate over: the CI job that runs it."
+              required:
+                type: boolean
+                description: "True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand."
+              status:
+                "$ref": "#/$defs/GateStatus"
+                description: What is known about it.
+              reason:
+                type: string
+                description: "Why it is in this status, in words a worker can act on."
+              remediation:
+                type: string
+                description: "What would settle it, as a command."
+              source:
+                type: string
+                description: "Where the gate is declared: the model, and the command it runs."
+              evidence:
+                anyOf:
+                  - "$ref": "#/$defs/GateRun"
+                  - type: "null"
+                description: "The run that last reported, when one has."
+              inputs:
+                type: array
+                items:
+                  type: string
+                description: "The pathspecs its evidence is taken over, derived from the model."
+              inputs_hash:
+                type: string
+                description: "The hash of those files as they stand now, when it could be taken."
+              evaluated_at:
+                type: string
+                description: "When this judgement was made, RFC 3339 UTC. A judgement is about a moment."
+            required:
+              - id
+              - title
+              - scope
+              - required
+              - status
+              - reason
+              - remediation
+              - source
+              - evaluated_at
+            description: "One completion gate: what it is, whether it applies, what it said, and what to do."
+          GateStatus:
+            oneOf:
+              - type: string
+                const: pass
+                description: It ran over these inputs and succeeded. The only word that discharges anything.
+              - type: string
+                const: fail
+                description: It ran over these inputs and failed. Completion is refused.
+              - type: string
+                const: stale
+                description: "It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present."
+              - type: string
+                const: blocked
+                description: "Something it cannot run without has not passed, so its own silence means nothing."
+              - type: string
+                const: queued
+                description: "The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible."
+              - type: string
+                const: exempt
+                description: "The plan does not select it: nothing the task changed can make it true or false."
+              - type: string
+                const: unknown
+                description: "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass."
+            description: "What is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
+          GateRun:
+            type: object
+            properties:
+              recorded_at:
+                type: string
+                description: "When it was recorded, RFC 3339 UTC."
+              head:
+                type: string
+                description: "The commit the ledger's envelope stamped on it."
+              branch:
+                type: string
+                description: The branch it was recorded on.
+              exit:
+                type: integer
+                format: int64
+                description: "The exit status the gate reported. `0` is a pass."
+              command:
+                type: string
+                description: The command that produced it — narrative is not evidence.
+              inputs_hash:
+                type: string
+                description: "The hash of the files that select the gate, as they stood when it ran."
+              session:
+                type: string
+                description: The session that recorded it.
+            required:
+              - recorded_at
+              - head
+              - branch
+              - exit
+            description: "The `task.gate` ledger line that last reported a gate, as the ledger holds it."
+          ImpliedObligation:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The token.
+              title:
+                type: string
+                description: "The obligation as a heading, from the vocabulary."
+              applicable:
+                type: boolean
+                description: "True when the change set, or the task's own declaration, makes it owed."
+              declared:
+                type: boolean
+                description: "True when the task's `requires` names it, so `finish` already holds the task to it."
+              reason:
+                type: string
+                description: "Why it applies, or why it does not."
+              because:
+                type: array
+                items:
+                  type: string
+                description: "The changed paths that implied it, when paths did."
+              remediation:
+                type: string
+                description: What would discharge it.
+            required:
+              - id
+              - title
+              - applicable
+              - declared
+              - reason
+              - remediation
+            description: "One obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not."
+          DoneQuestion:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The question's identity, stable across reports."
+              question:
+                type: string
+                description: "The question, as a person would ask it."
+              status:
+                "$ref": "#/$defs/GateStatus"
+                description: "The answer, in the same vocabulary every gate uses."
+              evidence:
+                type: string
+                description: What was actually read — never a restatement of the status.
+              source:
+                type: string
+                description: "What answered it: an obligation token, a gate id, or the capability that would."
+              remediation:
+                type: string
+                description: "What would settle it, as a command."
+            required:
+              - id
+              - question
+              - status
+              - evidence
+              - source
+              - remediation
+            description: "One question of the done invariant, and what answered it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::gates
+    exposure:
+      mcp:
+        tool: majordomus_completion
+        resource:
+          uri: majordomus://gates/completion
+          name: completion
+      http:
+        method: GET
+        path: /api/v1/gates/completion
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - gates
+      - completion
+      - tasks
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/gates.rs
+  - id: gates.model
+    module: gates
+    kind: query
+    title: The CI model
+    description: "Every validation gate this repository declares — the job that runs it, the command it runs, what it proves, whether every plan selects it and whether its runner can be had on demand at all — with the path classes that decide which change selects which gate, and, derived from those classes, the pathspecs each gate's evidence is taken over."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: GateModelReport
+      schema:
+        type: object
+        properties:
+          version:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The schema version the file states.
+          source:
+            type: string
+            description: "Where it was read from, repository-relative."
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many gates it declares; measured, not written down."
+          on_demand:
+            type: array
+            items:
+              type: string
+            description: "The gates whose runner cannot be had on demand, so no routine plan selects them.\nA gate that never runs protects nothing, and this is where that is said out loud."
+          gates:
+            type: array
+            items:
+              "$ref": "#/$defs/GateModelEntry"
+            description: "Every gate, in declaration order, with the pathspecs its evidence is taken over."
+          classes:
+            type: array
+            items:
+              "$ref": "#/$defs/GateClass"
+            description: "Every path class, in declaration order."
+        required:
+          - version
+          - source
+          - count
+          - on_demand
+          - gates
+          - classes
+        description: "The CI model this repository declares: what may refuse a change, and what selects each."
+        title: GateModelReport
+        "$defs":
+          GateModelEntry:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The gate's identity, unique in the model."
+              job:
+                type: string
+                description: The CI job that runs it.
+              runs:
+                type: string
+                description: The command it runs.
+              summary:
+                type: string
+                description: One line saying what it proves.
+                default: ""
+              always:
+                type: boolean
+                description: "True when every plan selects it, whatever changed."
+                default: false
+              on-demand:
+                type: boolean
+                description: "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives."
+                default: false
+              implies:
+                type: array
+                items:
+                  type: string
+                description: Gates that are selected whenever this one is.
+                default: []
+              requires:
+                type: array
+                items:
+                  type: string
+                description: Gates this one cannot run without.
+                default: []
+              inputs:
+                type: array
+                items:
+                  type: string
+                description: "The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale."
+            required:
+              - id
+              - job
+              - runs
+              - inputs
+            description: "One gate of the model, with what the model implies about it."
+          GateClass:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The class's identity."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: "The pathspecs it covers, in the subset the model's header defines."
+                default: []
+              gates:
+                anyOf:
+                  - "$ref": "#/$defs/GateClassSelects"
+                  - type: "null"
+                description: "`full`, or the gates it names."
+                default: null
+            required:
+              - id
+            description: "One path class: the paths it covers and the gates a change to them selects."
+          GateClassSelects:
+            anyOf:
+              - type: string
+                description: "`gates: full` — any change in this class escalates the whole plan."
+              - type: array
+                items:
+                  type: string
+                description: "`gates: [a, b]` — exactly these, and `gates: []` — nothing."
+            description: "What a class selects: the word `full`, or the gates it names."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::gates
+    exposure:
+      mcp:
+        tool: majordomus_gates
+        resource:
+          uri: majordomus://gates
+          name: gates
+      http:
+        method: GET
+        path: /api/v1/gates
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - gates
+      - ci
+      - completion
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/gates.rs
   - id: graph.get
     module: graph
     kind: query
