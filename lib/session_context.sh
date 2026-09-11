@@ -12,7 +12,24 @@
 # the episode produced. The prompt archive under .ai/local/prompts/ is the person's half of
 # the exchange, raw and local. Neither of them says what the worker was actually told at the
 # open, and that is the fact this store keeps: the context the builder resolved at the
-# moment the episode began, frozen, next to the notes the worker adds while working.
+# moment the episode began, frozen.
+#
+# Frozen is the right shape for a snapshot and the wrong shape for a working context, and
+# for a long time this store was asked to be both. It carried a `## Notes` heading for the
+# worker to hand-edit; measured on 2026-09-11 across the 23 episodes this checkout has
+# opened, 23 of 23 carried the template and 0 carried a note. A lifecycle that depends on a
+# model remembering to edit a Markdown section is not a lifecycle, and a heading with no
+# producer is a database nobody writes to.
+#
+# So the two are separated. The document here is the opening snapshot and nothing else, and
+# the *working* context is not a document at all: `mj_session_context_render` composes it on
+# every read from the episode's own ledger window, from git, and from this snapshot's
+# provenance. Nothing has to remember to refresh it, because nothing refreshes it — it is
+# derived, so it cannot be stale. What the worker records with `majordomus decision`,
+# `majordomus question` and `majordomus checkpoint` reaches it because `mj_ledger_append`
+# already stamps every one of those lines with the open episode's id. No fourth noun was
+# invented to carry a note (project.no-new-nouns): the three that exist already have
+# commands, ledger events and episode attribution, and what they lacked was a reader.
 #
 # It is local, and stays local, for two reasons that are not the same one. The body names
 # this machine — the worktree path, the checkpoint that was newest here — and a fact about a
@@ -82,16 +99,15 @@ mj_session_context_open() {
       "$(mj_git_branch)" "$(mj_git_head)" "$task" "$profile"
     [ -n "$worker" ] && printf 'worker: "%s"\n' "$(printf '%s' "$worker" | sed 's/"/\\"/g')"
     printf -- '---\n\n'
-    printf '# Working context of session %s\n\n' "$sid"
+    printf '# Opening snapshot of session %s\n\n' "$sid"
     printf 'The context below is the builder'"'"'s output at the moment this episode opened,\n'
     printf 'frozen. It is evidence of what the worker was told, not a source of truth: every\n'
     printf 'line of it is checked against git, and `majordomus context` re-resolves it.\n\n'
+    printf 'This file is the snapshot alone. The episode'"'"'s *working* context — what is true\n'
+    printf 'now, including everything the episode has recorded since it opened — is not stored\n'
+    printf 'here and is not a file: `majordomus session context` composes it on every read.\n\n'
     printf '## Context at open\n\n'
     mj_session_context_body
-    printf '\n## Notes\n\n'
-    printf 'The worker'"'"'s own notes about the repository — what was decided, what is left,\n'
-    printf 'what the next episode needs. Not a retelling of the conversation: the prompts have\n'
-    printf 'their own store, and a summary of a dialogue is not a fact this repository can check.\n'
   } > "$tmp" 2>/dev/null || { rm -f "$tmp"; mj_session_context_log "cannot write $(mj_rel "$out")"; return 0; }
   mv "$tmp" "$out" 2>/dev/null || { rm -f "$tmp"; return 0; }
   printf '%s\n' "${out#"$MJ_ROOT/"}"
@@ -119,6 +135,211 @@ mj_session_context_body() {
   fi
   rm -rf "$MJ_CTX_TMP"
   MJ_CTX_TMP=""
+}
+
+# ---------------------------------------------------------------- render
+# The working context of an episode, composed at the moment it is asked for.
+#
+# This is the answer to "what is true for this episode now", and it is deliberately not a
+# file. The store beside it holds the opening snapshot, which is frozen because a snapshot
+# that changes is not evidence of anything; this is derived on every read, because a working
+# context that is written once is a snapshot wearing the wrong name. Between them there is
+# no third artefact to keep in step, and therefore nothing that can go stale — the shape the
+# mandate asked for (events + repository state -> context) with the materialisation left
+# out, because at this size the projection costs one awk pass over a ledger window and a
+# cache would only add a way to be wrong.
+#
+# Its three sources are the three that can be checked:
+#
+#   * the open episode's own record — identity, when it opened, who opened it, and the head
+#     it opened at. That record is what `session start` wrote and what every later command
+#     resolves through.
+#   * git, now. The branch and head now against the branch and head at open, the commits in
+#     between, and whether the tree is dirty.
+#   * the episode's ledger window — every line `mj_ledger_append` stamped with this session
+#     id. That is where the worker's own records are: checkpoints, decisions, questions,
+#     handovers, evidence. They are already episode-attributed; nothing here infers which
+#     episode wrote what from a timestamp, which is the mistake the window exists to avoid.
+#
+# It does not re-resolve the context builder. `majordomus context` is that capability and
+# duplicating it here would be a second definition of one semantic, which this repository
+# treats as a design defect rather than a convenience (ADR 0004). What this prints instead
+# is the episode; what the builder resolves is the repository.
+#
+# It never fabricates. A section with nothing in it says so and names the command that would
+# have put something there, for the same reason the closed record's body does: an
+# acknowledged gap is a fact a reader can act on, and an invented summary is one nobody can
+# tell from a real one afterwards.
+
+# A multi-line document as one JSON string. `mj_json_esc` is for scalars and ends with
+# `tr -d '\n'`, which deletes line breaks rather than escaping them — correct for a title,
+# silently destructive for a document, which would arrive as one run-on line. This escapes
+# them instead, so the JSON form of the context is the same document the text form is.
+mj_json_esc_lines() {
+  LC_ALL=C awk '
+    { gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, "\\t"); gsub(/\r/, "")
+      printf "%s%s", sep, $0; sep = "\\n" }
+    END { printf "" }'
+}
+
+# mj_session_context_render <session-id>
+# Writes the composed working context to standard output. Returns 0 even where a source is
+# missing: a context assembled from two of three sources is worth more than a failure.
+mj_session_context_render() {
+  local sid="$1" snap win opened_at opened_by provider psession worker task profile
+  local start_head start_branch head_now branch_now n_commits n_files
+
+  snap="$(mj_session_context_path "$sid")"
+  win="$(mktemp "${TMPDIR:-/tmp}/mj.swin.XXXXXX")"
+  if command -v mj_session_window >/dev/null 2>&1; then
+    mj_session_window "$sid" > "$win" 2>/dev/null || : > "$win"
+  else : > "$win"; fi
+
+  # The episode's own facts come from the open record when this episode is the open one,
+  # and from the snapshot's front matter otherwise — a context can be asked for by id after
+  # the episode closed, and the answer then is still the episode's, not this checkout's.
+  opened_at="$(mj_ses started_at 2>/dev/null || true)"
+  opened_by="$(mj_ses opened_by 2>/dev/null || true)"
+  provider="$(mj_ses provider 2>/dev/null || true)"
+  psession="$(mj_ses provider_session 2>/dev/null || true)"
+  worker="$(mj_ses worker 2>/dev/null || true)"
+  start_head="$(mj_ses start_head 2>/dev/null || true)"
+  start_branch="$(mj_ses branch 2>/dev/null || true)"
+  # The snapshot fills what the open record does not carry, and answers entirely for an
+  # episode that is no longer the open one — a context can be asked for by id after its
+  # episode closed, and the answer then is still that episode's, not this checkout's.
+  # `opened_by` is always one of these: the open record has never carried it.
+  if [ -n "$snap" ]; then
+    [ -z "$opened_at" ]   && opened_at="$(mj_session_context_fm "$snap" opened_at)"
+    [ -z "$opened_by" ]   && opened_by="$(mj_session_context_fm "$snap" opened_by)"
+    [ -z "$provider" ]    && provider="$(mj_session_context_fm "$snap" provider)"
+    [ -z "$worker" ]      && worker="$(mj_session_context_fm "$snap" worker)"
+    [ -z "$start_head" ]  && start_head="$(mj_session_context_fm "$snap" head)"
+    [ -z "$start_branch" ] && start_branch="$(mj_session_context_fm "$snap" branch)"
+  fi
+  task=none; profile=none
+  if mj_load_current 2>/dev/null; then task="$(mj_cur id)"; profile="$(mj_cur profile)"; fi
+
+  head_now="$(mj_git_head)"; branch_now="$(mj_git_branch)"
+
+  printf '# Working context of session %s\n\n' "$sid"
+  printf 'Composed now, from this episode'"'"'s record, from git, and from the ledger lines this\n'
+  printf 'episode wrote. It is not stored and is not a snapshot: every read recomposes it.\n\n'
+
+  printf '## Episode\n\n'
+  printf -- '- session: %s\n' "$sid"
+  [ -n "$opened_at" ] && printf -- '- opened: %s%s\n' "$opened_at" "${opened_by:+ by $opened_by}"
+  [ -n "$provider" ] && printf -- '- provider: %s%s\n' "$provider" "${psession:+ (session $psession)}"
+  [ -n "$worker" ] && printf -- '- worker: %s\n' "$worker"
+  printf -- '- task: %s (profile %s)\n' "$task" "$profile"
+  if [ -n "$snap" ]; then printf -- '- opening snapshot: %s\n' "${snap#"$MJ_ROOT/"}"
+  else printf -- '- opening snapshot: none was written; `majordomus doctor` reports why\n'; fi
+
+  printf '\n## Repository now\n\n'
+  printf -- '- branch: %s' "$branch_now"
+  [ -n "$start_branch" ] && [ "$start_branch" != "$branch_now" ] && printf ' (opened on %s)' "$start_branch"
+  printf '\n'
+  printf -- '- head: %s' "$(printf '%.7s' "$head_now")"
+  if [ -n "$start_head" ] && [ "$start_head" != NONE ] && [ "$start_head" != "$head_now" ]; then
+    printf ' (opened at %s)' "$(printf '%.7s' "$start_head")"
+  fi
+  printf '\n'
+  printf -- '- working tree: %s\n' "$(mj_git_dirty)"
+  if [ -n "$start_head" ] && [ "$start_head" != NONE ] && mj_git merge-base --is-ancestor "$start_head" HEAD 2>/dev/null; then
+    n_commits="$(mj_git rev-list --count "$start_head..HEAD" 2>/dev/null || printf 0)"
+    n_files="$(mj_git diff --name-only "$start_head" HEAD 2>/dev/null | grep -c . || true)"
+    printf -- '- this episode: %s commit(s), %s file(s) changed\n' "$n_commits" "${n_files:-0}"
+  elif [ -n "$start_head" ] && [ "$start_head" != NONE ]; then
+    printf -- '- this episode: the history diverged from the commit it opened at (%s), so its commits cannot be counted\n' "$(printf '%.7s' "$start_head")"
+  fi
+
+  printf '\n## Recorded in this episode\n\n'
+  printf 'What the worker itself put on the record. These are the three commands that write\n'
+  printf 'here; nothing infers an entry from a diff, and a section with nothing in it means\n'
+  printf 'nothing was recorded, not that nothing happened.\n\n'
+  mj_session_context_recorded "$win"
+
+  printf '\n## The repository'"'"'s own context\n\n'
+  printf 'Not repeated here: `majordomus context` resolves it, now, against the current tree.\n'
+  [ -n "$snap" ] && printf 'What this episode was told at its open is under `## Context at open` in %s.\n' "${snap#"$MJ_ROOT/"}"
+
+  rm -f "$win"
+  return 0
+}
+
+# One front-matter scalar of a snapshot, unquoted. Small enough to stay here rather than
+# grow a parser: the snapshot's key set is closed and declared above.
+mj_session_context_fm() {
+  awk -v k="$2" '
+    FNR == 1 { if ($0 != "---") exit; next }
+    $0 == "---" { exit }
+    index($0, k ":") == 1 { v = substr($0, length(k) + 2); sub(/^ +/, "", v); gsub(/^"|"$/, "", v); print v; exit }' "$1" 2>/dev/null
+}
+
+# The four kinds of authored record, read back out of the episode's window. Each one names
+# the command that fills it, so that a worker reading its own empty context is told what to
+# do rather than left to infer that the section is decorative — which is exactly what the
+# `## Notes` template it replaces failed to do, 23 times out of 23.
+mj_session_context_recorded() {
+  local win="$1" list f body n
+
+  printf '### Progress notes\n\n'
+  list="$(mj_session_context_win "$win" 'task.checkpoint' checkpoint_path)"
+  if [ -z "$list" ]; then
+    printf 'None. `majordomus checkpoint` records what this episode is doing and why, and is\n'
+    printf 'what puts a note of the worker'"'"'s own into this context and into the closed record.\n'
+  else
+    local IFS='
+'
+    for f in $list; do
+      [ -n "$f" ] || continue
+      if [ -f "$MJ_ROOT/$f" ]; then
+        body="$(mj_record_body "$MJ_ROOT/$f" | sed '/^$/d' | head -n 8)"
+        [ -n "$body" ] && printf -- '- %s\n' "$(printf '%s' "$body" | head -n 1)" && \
+          printf '%s\n' "$body" | tail -n +2 | sed 's/^/  /'
+      else
+        printf -- '- (a checkpoint was recorded and its file is no longer present)\n'
+      fi
+    done
+    unset IFS
+  fi
+
+  printf '\n### Decisions\n\n'
+  mj_session_context_lines "$win" 'decision.recorded' decision \
+    'None. `majordomus decision add "<what>" --why "<why>"` records one; nothing infers a decision from a diff.'
+
+  printf '\n### Open questions\n\n'
+  mj_session_context_lines "$win" 'question.opened|question.resolved' question \
+    'None. `majordomus question add "<question>"` opens one, and `question resolve` closes it.'
+
+  printf '\n### Continuation records\n\n'
+  n="$(mj_session_context_win "$win" 'task.handed_over' handover_path | grep -c . || true)"
+  if [ "${n:-0}" = 0 ]; then
+    printf 'None. `majordomus handover` writes the record the next worker starts from.\n'
+  else
+    printf '%s written in this episode; `majordomus handover show` reads the latest.\n' "$n"
+  fi
+  return 0
+}
+
+# Values of one field over the window, as a list, or the given sentence when there are none.
+mj_session_context_lines() {
+  local win="$1" ev="$2" key="$3" empty="$4" list v
+  list="$(mj_session_context_win "$win" "$ev" "$key")"
+  if [ -z "$list" ]; then printf '%s\n' "$empty"; return 0; fi
+  local IFS='
+'
+  for v in $list; do [ -n "$v" ] && printf -- '- %s\n' "$v"; done
+  unset IFS
+  return 0
+}
+
+# mj_session_field belongs to the session module, which is what calls this; the guard keeps
+# this file sourceable on its own, as doctor and capture source it without session.sh.
+mj_session_context_win() {
+  command -v mj_session_field >/dev/null 2>&1 || return 0
+  [ -f "$1" ] || return 0
+  mj_session_field "$1" "$2" "$3"
 }
 
 # ---------------------------------------------------------------- close

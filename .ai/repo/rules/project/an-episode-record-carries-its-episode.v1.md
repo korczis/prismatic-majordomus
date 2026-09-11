@@ -4,15 +4,10 @@ version: 1
 kind: rule
 title: An episode record carries its episode
 description: A closed episode's record has a body composed at close from what the episode wrote down and what git and the ledger prove, and the lifecycle that writes it commits it.
-statement: >-
-  `session close` writes a record whose body is never empty: an authored summary when one
-  was supplied, and otherwise one composed from this episode's own checkpoints and
-  decisions and from what git and the ledger can prove about it. The lifecycle that writes
-  the record also commits it, so that the record reaches the surfaces that read the tracked
-  tree.
+statement: "`session close` writes a record whose body is never empty: an authored summary when one was supplied, and otherwise one composed from this episode's own checkpoints and decisions and from what git and the ledger can prove about it. The lifecycle that writes the record also commits it, so that the record reaches the surfaces that read the tracked tree."
 status: active
 class: blocking
-depends_on: [project.diagnostics-decide-the-exit]
+depends_on: [project.diagnostics-decide-the-exit@1]
 tags: [sessions, records, lifecycle]
 ---
 
