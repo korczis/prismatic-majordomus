@@ -47,7 +47,7 @@ primary_lead = "A prompt is not the source of truth. It is one way to communicat
 kicker = "the execution model"
 title = "Intent → Context → Plan → Execute → Verify → Proof"
 lead = "Development as a transformation from the current reality of the repository to the desired one. Every stage has an input it did not invent and an output the next stage can check."
-caption = "Six stages of the model, and under each the honest mark of how much of it exists here today; the section near the foot of this page is the same answer in full. With scripts running, one stage shows at a time and advances until you take it over or pause it. Without them, all six are on the page at once."
+caption = "Under each stage is the honest mark of how much of it exists here today; the section near the foot of this page is the same answer in full. With scripts running, a single stage shows at a time and advances until you take it over or pause it. Without them, every stage is on the page at once."
 
 [[pipeline.stages]]
 id = "capture"
@@ -86,7 +86,7 @@ id = "verify"
 name = "Verify"
 verb = "verify"
 summary = "Against the acceptance criteria, not against the diff."
-note = "shipped against the finish contract"
+note = "shipped, against the finish contract, not against criteria"
 items = ["acceptance criteria", "invariants", "regression checks", "claims against implementation", "runtime evidence"]
 
 [[pipeline.stages]]
@@ -168,7 +168,7 @@ text = "Can this regress silently later?"
 [loop]
 kicker = "a control loop"
 title = "An agent does not get to declare success because its patch applied"
-lead = "Observe the current state, compute the difference, act, measure, compare against the intent, repeat until satisfied. That is a control system rather than an assistant. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, which is the comparator in that loop."
+lead = "The same stages, closed: context observes, the plan computes the difference, execution acts, verification measures, and the result is compared against the intent rather than against the diff — replanning until it is satisfied. That is a control system rather than an assistant. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, which is the comparator in that loop."
 votes_title = "Who gets a vote"
 closing = "Evidence gets the final one."
 

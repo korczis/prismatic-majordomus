@@ -160,13 +160,13 @@
         <li class="min-w-0">
           <button type="button" x-on:click="active = {{ loop.index0 }}; paused = true"
             :aria-pressed="active === {{ loop.index0 }} ? 'true' : 'false'" aria-controls="stage-{{ s.id }}"
-            :class="active === {{ loop.index0 }} ? 'ring-2 ring-brand-medium shadow-xs' : ''"
+            :class="active === {{ loop.index0 }} ? 'ring-2 ring-brand shadow-xs' : ''"
             class="flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 text-start hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ x.pipeline.stages | length }}</span>
             <span class="mt-1 text-base font-semibold tracking-tight text-heading">{{ s.name }}</span>
             <span class="mt-2 text-sm leading-relaxed text-body">{{ s.summary }}</span>
             <span class="mt-2 font-mono text-xs text-body-subtle">{{ s.note }}</span>
-            <span aria-hidden="true" :class="active === {{ loop.index0 }} ? 'bg-brand' : 'bg-neutral-tertiary'" class="mt-4 h-1 w-full rounded-base"></span>
+            <span aria-hidden="true" class="mt-4 h-1 w-full rounded-base bg-neutral-tertiary"></span>
           </button>
         </li>
         {%- endfor %}
@@ -265,7 +265,7 @@
     {{ <section_head number="07" kicker={x.projections.kicker} title={x.projections.title} lead={x.projections.lead} /> }}
     <ul class="grid gap-3 md:grid-cols-2">
       {%- for d in x.projections.detects %}
-      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-warning">!</span><span class="min-w-0">{{ d.text }}</span></li>
+      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ d.text }}</span></li>
       {%- endfor %}
     </ul>
     <p class="mt-6 max-w-3xl text-base leading-relaxed text-body">{{ x.projections.closing }}</p>
@@ -484,7 +484,7 @@ PROOF            ▼
     <div class="grid gap-5 lg:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 sm:p-6">
         <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.shipped_title }}</h3>
-        <p class="mt-2 text-sm leading-relaxed text-body">Each command below is declared once, and that declaration is what the command line, the HTTP API, the MCP tools and this site are all projections of. They run at a terminal; the other interfaces read them.</p>
+        <p class="mt-2 text-sm leading-relaxed text-body">Each command below is declared once, and that declaration is what the command line, the HTTP API, the MCP tools and this site are all projections of. Most run at a terminal and the other interfaces read them; a few are startable over the API.</p>
         <ul class="mt-4 flex flex-wrap gap-2">
           {%- set cmds = load_data(path="data/generated/commands.json") -%}
         {%- for c in cmds.commands %}
@@ -496,7 +496,7 @@ PROOF            ▼
       <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5 sm:p-6">
         <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
         <p class="mt-3 text-base leading-relaxed text-heading">{{ x.direction.planned_lead }}</p>
-        <p class="mt-4 text-sm"><a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The roadmap, and what each wave depends on &rarr;</a></p>
+        <p class="mt-4 text-sm text-heading">No wave of the roadmap is this work yet. <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What is scheduled, wave by wave &rarr;</a></p>
       </div>
     </div>
   </div>
