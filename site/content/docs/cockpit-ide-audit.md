@@ -72,8 +72,8 @@ exported into every shell in this repository and points at the *primary* checkou
 script did not carry it and the pre-push hook refused:
 
 ```text
-majordomus: MAJORDOMUS_SHARE names <primary checkout>/share, the
-distribution of <primary checkout> — another worktree of this
+majordomus: MAJORDOMUS_SHARE names ~/dev/prismatic-majordomus/share, the
+distribution of ~/dev/prismatic-majordomus — another worktree of this
 repository, not this one … Run with: env -u MAJORDOMUS_SHARE
 error: failed to push some refs to 'github.com:korczis/prismatic-majordomus.git'
 ```
@@ -151,7 +151,7 @@ output:
 
 ```console
 $ ./bin/majordomus-cli serve status
-  outdated  <primary checkout> (master)               http://127.0.0.1:8741  peers 5
+  outdated  ~/dev/prismatic-majordomus (master)  http://127.0.0.1:8741  peers 5
             the executable it was started from … has been replaced since
             (it is serving code that is no longer on disk)
   outdated  …/feature/swagger-offline           http://127.0.0.1:60204  peers 0

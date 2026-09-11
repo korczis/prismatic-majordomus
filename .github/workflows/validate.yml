@@ -168,7 +168,14 @@ jobs:
   suite:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
-    timeout-minutes: 100
+    # 150, not 100. The bound is a backstop against a wedged runner, and every case already
+    # carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound only has
+    # to be above what a healthy run costs. It was not: the five most recent completed suite
+    # jobs took 67, 78, 84 and 95 minutes, and the fifth was cancelled at exactly 100 — the
+    # bound firing on a run that was not wedged, only slow. A cancelled job carries no
+    # verdict and reads as infrastructure trouble rather than as a result, so a bound set
+    # under its own subject's cost does not protect the pipeline; it destroys its output.
+    timeout-minutes: 150
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
