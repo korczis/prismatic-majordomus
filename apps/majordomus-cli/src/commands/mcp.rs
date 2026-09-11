@@ -224,12 +224,12 @@ impl Session {
     /// the server (carrying the client's session over) or attach to whoever did.
     fn failover(&mut self, message: Value, cause: BridgeError) -> Option<Reply> {
         tracing::warn!("{cause}; electing again");
-        let (client, announcement) = match &self.backend {
+        let (client, announcements) = match &self.backend {
             Backend::Remote { bridge, .. } => {
                 let b = lock(bridge);
-                (b.client().cloned(), b.announcement().cloned())
+                (b.client().cloned(), b.announcements().cloned().collect())
             }
-            Backend::Local(_) | Backend::Alone(_) => (None, None),
+            Backend::Local(_) | Backend::Alone(_) => (None, Vec::new()),
         };
         match lease::elect(&self.repo) {
             Ok(Role::Server(lease)) => {
@@ -240,26 +240,40 @@ impl Session {
                             "took over as the shared server; this session continues locally"
                         );
                         // what the client said it was working on, said again on the board it
-                        // now serves itself: the announcement outlives the server it was made to
-                        if let (Backend::Local(local), Some(a)) = (&self.backend, announcement) {
-                            let intent = a["intent"].as_str().unwrap_or_default().trim();
-                            let scope: Vec<String> = a["scope"]
-                                .as_array()
-                                .map(|s| {
-                                    s.iter()
-                                        .filter_map(|v| v.as_str())
-                                        .map(|v| v.trim().to_string())
-                                        .filter(|v| !v.is_empty())
-                                        .collect()
-                                })
-                                .unwrap_or_default();
-                            if !intent.is_empty() {
-                                local.server.surface().context().peers.announce(
+                        // now serves itself: an announcement outlives the server it was made
+                        // to. Every claim it holds, not the newest — a client that carried
+                        // one of three onto its own board would be understating itself to
+                        // every peer that arrives after the takeover.
+                        if let Backend::Local(local) = &self.backend {
+                            for a in &announcements {
+                                let intent = a["intent"].as_str().unwrap_or_default().trim();
+                                if intent.is_empty() {
+                                    continue;
+                                }
+                                let scope: Vec<String> = a["scope"]
+                                    .as_array()
+                                    .map(|s| {
+                                        s.iter()
+                                            .filter_map(|v| v.as_str())
+                                            .map(|v| v.trim().to_string())
+                                            .filter(|v| !v.is_empty())
+                                            .collect()
+                                    })
+                                    .unwrap_or_default();
+                                let claim =
+                                    a["claim"].as_str().map(str::trim).filter(|c| !c.is_empty());
+                                local.server.surface().context().peers.announce_claim(
                                     &local.peer,
+                                    claim,
                                     intent,
                                     scope,
                                 );
-                                tracing::info!("the client's announcement was carried onto this server's board");
+                            }
+                            if !announcements.is_empty() {
+                                tracing::info!(
+                                    claims = announcements.len(),
+                                    "the client's announcement was carried onto this server's board"
+                                );
                             }
                         }
                         self.handle(message)
