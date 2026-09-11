@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "c0f9801bd9ecd22cddf2dda79791169de3178bd964d64f249737334b9c5b0044",
+  "fingerprint": "114e22b6431c41d013aa76ffbfc1eb556fa005068f33953ef75be1ae9c911902",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -283,7 +283,7 @@
           "identity": "project.interfaces-are-projections@1",
           "title": "External interfaces are projections of one capability definition",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
         },
         {
@@ -291,7 +291,7 @@
           "identity": "project.rust-canonical-declaration@1",
           "title": "One canonical declaration; modules compose capabilities; the root composes modules",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md"
         },
         {
@@ -299,7 +299,7 @@
           "identity": "project.derived-files-regenerated@1",
           "title": "Derived files are regenerated, never edited",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/derived-files-regenerated.v1.md"
         },
         {
@@ -307,7 +307,7 @@
           "identity": "project.generated-artifacts-are-typed@1",
           "title": "A generated artifact declares its document, its encoding, its contract and its source",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/generated-artifacts-are-typed.v1.md"
         },
         {
@@ -542,7 +542,7 @@
         "commands": 2,
         "objects": 198,
         "rules": 5,
-        "enforced_rules": 0,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 4,
         "claims": 9,
@@ -748,7 +748,7 @@
           "identity": "project.web-surface-declared-once@1",
           "title": "A web surface is declared once and every web projection is derived from it",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/web-surface-declared-once.v1.md"
         },
         {
@@ -756,7 +756,7 @@
           "identity": "project.web-surface-topology@1",
           "title": "A web surface is discovered from its producer, never registered twice",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/web-surface-topology.v1.md"
         },
         {
@@ -764,7 +764,7 @@
           "identity": "project.native-cli-documented@1",
           "title": "A native command line command exists only with its documentation and its executable examples",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/native-cli-documented.v1.md"
         },
         {
@@ -772,7 +772,7 @@
           "identity": "project.shared-server-resilience@1",
           "title": "Nothing a client leaves behind locks another client out",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
         }
       ],
@@ -1124,7 +1124,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 4,
-        "enforced_rules": 0,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 3,
         "claims": 11,
@@ -1361,7 +1361,7 @@
           "identity": "project.worktree-topology@1",
           "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/worktree-topology.v1.md"
         },
         {
@@ -1369,7 +1369,7 @@
           "identity": "project.shared-server-resilience@1",
           "title": "Nothing a client leaves behind locks another client out",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
         }
       ],
@@ -1556,7 +1556,7 @@
         "commands": 3,
         "objects": 0,
         "rules": 5,
-        "enforced_rules": 1,
+        "enforced_rules": 3,
         "docs": 3,
         "adrs": 2,
         "claims": 5,
@@ -1687,7 +1687,7 @@
           "identity": "project.worktree-topology@1",
           "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/worktree-topology.v1.md"
         },
         {
@@ -1695,7 +1695,7 @@
           "identity": "project.no-machine-paths@1",
           "title": "Nothing this repository commits names a path of the machine it was written on",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-machine-paths.v1.md"
         }
       ],
@@ -1783,7 +1783,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 2,
-        "enforced_rules": 0,
+        "enforced_rules": 2,
         "docs": 1,
         "adrs": 1,
         "claims": 3,
@@ -2013,7 +2013,7 @@
           "identity": "project.never-store-transcripts@1",
           "title": "Never store or summarise transcripts",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/never-store-transcripts.v1.md"
         },
         {
@@ -2291,7 +2291,7 @@
         "commands": 6,
         "objects": 16,
         "rules": 8,
-        "enforced_rules": 6,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 4,
         "claims": 11,
@@ -2894,7 +2894,7 @@
           "identity": "project.rule-is-a-doctrine@1",
           "title": "A new enforced rule is a doctrine, not an inline check",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
         },
         {
@@ -2926,7 +2926,7 @@
           "identity": "project.no-claim-without-test@1",
           "title": "No claim without a test",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-claim-without-test.v1.md"
         }
       ],
@@ -3212,7 +3212,7 @@
         "commands": 5,
         "objects": 120,
         "rules": 5,
-        "enforced_rules": 3,
+        "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
         "claims": 7,
@@ -3770,7 +3770,7 @@
           "identity": "project.unknown-keys-are-errors@1",
           "title": "Unknown configuration keys are errors",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/unknown-keys-are-errors.v1.md"
         }
       ],
@@ -4019,7 +4019,7 @@
         "commands": 3,
         "objects": 5,
         "rules": 7,
-        "enforced_rules": 6,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 1,
         "claims": 14,
@@ -4140,7 +4140,7 @@
           "identity": "project.interfaces-are-projections@1",
           "title": "External interfaces are projections of one capability definition",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
         }
       ],
@@ -4311,7 +4311,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 1,
-        "enforced_rules": 0,
+        "enforced_rules": 1,
         "docs": 1,
         "adrs": 2,
         "claims": 0,
@@ -4450,7 +4450,7 @@
           "identity": "project.never-author-identity@1",
           "title": "Never author identity fields",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/never-author-identity.v1.md"
         },
         {
@@ -4665,7 +4665,7 @@
         "commands": 4,
         "objects": 12,
         "rules": 4,
-        "enforced_rules": 3,
+        "enforced_rules": 4,
         "docs": 2,
         "adrs": 2,
         "claims": 9,
@@ -4839,7 +4839,7 @@
           "identity": "project.distribution-canonical@1",
           "title": "Distribution has one canonical model",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/distribution-canonical.v1.md"
         },
         {
@@ -4847,7 +4847,7 @@
           "identity": "project.portable-shell@1",
           "title": "Portable shell",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/portable-shell.v1.md"
         },
         {
@@ -4855,7 +4855,7 @@
           "identity": "project.no-network-no-eval@1",
           "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-network-no-eval.v1.md"
         }
       ],
@@ -4962,7 +4962,7 @@
         "commands": 3,
         "objects": 1,
         "rules": 3,
-        "enforced_rules": 0,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 8,
@@ -5436,7 +5436,7 @@
           "identity": "project.context-locality@1",
           "title": "Context locality",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/context-locality.v1.md"
         },
         {
@@ -5444,7 +5444,7 @@
           "identity": "project.scope-is-declared@1",
           "title": "What a worker reads is declared once, and nothing outside it is read or served",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/scope-is-declared.v1.md"
         },
         {
@@ -5693,7 +5693,7 @@
         "commands": 1,
         "objects": 28,
         "rules": 6,
-        "enforced_rules": 3,
+        "enforced_rules": 5,
         "docs": 2,
         "adrs": 1,
         "claims": 9,
@@ -5802,7 +5802,7 @@
           "identity": "project.use-case-evidence@1",
           "title": "A use case is proved by execution, and a capability is covered by a use case",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/use-case-evidence.v1.md"
         },
         {
@@ -5903,7 +5903,7 @@
         "commands": 1,
         "objects": 58,
         "rules": 3,
-        "enforced_rules": 2,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 4,
@@ -6209,7 +6209,7 @@
           "identity": "project.why-catalogue-is-canonical@1",
           "title": "An operational failure mode is a catalogue object, never a page",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/why-catalogue-is-canonical.v1.md"
         }
       ],
@@ -6266,7 +6266,7 @@
         "commands": 0,
         "objects": 55,
         "rules": 1,
-        "enforced_rules": 0,
+        "enforced_rules": 1,
         "docs": 1,
         "adrs": 1,
         "claims": 3,
@@ -6389,7 +6389,7 @@
           "identity": "project.rust-benchmark-coverage@1",
           "title": "No endpoint of the Rust executable without a benchmark, and no number without evidence",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md"
         },
         {
@@ -6397,7 +6397,7 @@
           "identity": "project.benchmarkable-commands@1",
           "title": "Every public command is benchmarkable from the registry",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/benchmarkable-commands.v1.md"
         },
         {
@@ -6405,7 +6405,7 @@
           "identity": "project.rust-hot-path@1",
           "title": "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-hot-path.v1.md"
         },
         {
@@ -6530,7 +6530,7 @@
         "commands": 1,
         "objects": 0,
         "rules": 6,
-        "enforced_rules": 0,
+        "enforced_rules": 3,
         "docs": 1,
         "adrs": 1,
         "claims": 6,
@@ -6630,7 +6630,7 @@
           "identity": "project.blocking-checks-cheap@1",
           "title": "Blocking checks are deterministic and cheap",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/blocking-checks-cheap.v1.md"
         },
         {
@@ -6646,7 +6646,7 @@
           "identity": "project.rust-cli-evidence@1",
           "title": "The Rust executable carries its evidence with it",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-cli-evidence.v1.md"
         },
         {
@@ -6654,7 +6654,7 @@
           "identity": "project.rust-command-tested-in-file@1",
           "title": "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-command-tested-in-file.v1.md"
         }
       ],
@@ -6839,7 +6839,7 @@
         "commands": 2,
         "objects": 0,
         "rules": 4,
-        "enforced_rules": 0,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 6,
@@ -8327,7 +8327,7 @@
       "identity": "project.benchmarkable-commands@1",
       "title": "Every public command is benchmarkable from the registry",
       "class": "advisory",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/benchmarkable-commands.v1.md"
     },
     {
@@ -8335,7 +8335,7 @@
       "identity": "project.blocking-checks-cheap@1",
       "title": "Blocking checks are deterministic and cheap",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/blocking-checks-cheap.v1.md"
     },
     {
@@ -8343,7 +8343,7 @@
       "identity": "project.context-locality@1",
       "title": "Context locality",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/context-locality.v1.md"
     },
     {
@@ -8351,7 +8351,7 @@
       "identity": "project.derived-files-regenerated@1",
       "title": "Derived files are regenerated, never edited",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/derived-files-regenerated.v1.md"
     },
     {
@@ -8367,7 +8367,7 @@
       "identity": "project.distribution-canonical@1",
       "title": "Distribution has one canonical model",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/distribution-canonical.v1.md"
     },
     {
@@ -8383,7 +8383,7 @@
       "identity": "project.generated-artifacts-are-typed@1",
       "title": "A generated artifact declares its document, its encoding, its contract and its source",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/generated-artifacts-are-typed.v1.md"
     },
     {
@@ -8399,7 +8399,7 @@
       "identity": "project.interfaces-are-projections@1",
       "title": "External interfaces are projections of one capability definition",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
     },
     {
@@ -8407,7 +8407,7 @@
       "identity": "project.native-cli-documented@1",
       "title": "A native command line command exists only with its documentation and its executable examples",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/native-cli-documented.v1.md"
     },
     {
@@ -8415,7 +8415,7 @@
       "identity": "project.never-author-identity@1",
       "title": "Never author identity fields",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/never-author-identity.v1.md"
     },
     {
@@ -8423,7 +8423,7 @@
       "identity": "project.never-store-transcripts@1",
       "title": "Never store or summarise transcripts",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/never-store-transcripts.v1.md"
     },
     {
@@ -8431,7 +8431,7 @@
       "identity": "project.no-claim-without-test@1",
       "title": "No claim without a test",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-claim-without-test.v1.md"
     },
     {
@@ -8439,7 +8439,7 @@
       "identity": "project.no-machine-paths@1",
       "title": "Nothing this repository commits names a path of the machine it was written on",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-machine-paths.v1.md"
     },
     {
@@ -8447,7 +8447,7 @@
       "identity": "project.no-network-no-eval@1",
       "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-network-no-eval.v1.md"
     },
     {
@@ -8463,7 +8463,7 @@
       "identity": "project.portable-shell@1",
       "title": "Portable shell",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/portable-shell.v1.md"
     },
     {
@@ -8471,7 +8471,7 @@
       "identity": "project.rule-is-a-doctrine@1",
       "title": "A new enforced rule is a doctrine, not an inline check",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
     },
     {
@@ -8479,7 +8479,7 @@
       "identity": "project.rust-benchmark-coverage@1",
       "title": "No endpoint of the Rust executable without a benchmark, and no number without evidence",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md"
     },
     {
@@ -8487,7 +8487,7 @@
       "identity": "project.rust-canonical-declaration@1",
       "title": "One canonical declaration; modules compose capabilities; the root composes modules",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md"
     },
     {
@@ -8495,7 +8495,7 @@
       "identity": "project.rust-cli-evidence@1",
       "title": "The Rust executable carries its evidence with it",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-cli-evidence.v1.md"
     },
     {
@@ -8503,7 +8503,7 @@
       "identity": "project.rust-command-tested-in-file@1",
       "title": "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-command-tested-in-file.v1.md"
     },
     {
@@ -8511,7 +8511,7 @@
       "identity": "project.rust-hot-path@1",
       "title": "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-hot-path.v1.md"
     },
     {
@@ -8519,7 +8519,7 @@
       "identity": "project.scope-is-declared@1",
       "title": "What a worker reads is declared once, and nothing outside it is read or served",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/scope-is-declared.v1.md"
     },
     {
@@ -8527,7 +8527,7 @@
       "identity": "project.shared-server-resilience@1",
       "title": "Nothing a client leaves behind locks another client out",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
     },
     {
@@ -8543,7 +8543,7 @@
       "identity": "project.unknown-keys-are-errors@1",
       "title": "Unknown configuration keys are errors",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/unknown-keys-are-errors.v1.md"
     },
     {
@@ -8551,7 +8551,7 @@
       "identity": "project.use-case-evidence@1",
       "title": "A use case is proved by execution, and a capability is covered by a use case",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/use-case-evidence.v1.md"
     },
     {
@@ -8559,7 +8559,7 @@
       "identity": "project.web-surface-declared-once@1",
       "title": "A web surface is declared once and every web projection is derived from it",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/web-surface-declared-once.v1.md"
     },
     {
@@ -8567,7 +8567,7 @@
       "identity": "project.web-surface-topology@1",
       "title": "A web surface is discovered from its producer, never registered twice",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/web-surface-topology.v1.md"
     },
     {
@@ -8575,7 +8575,7 @@
       "identity": "project.why-catalogue-is-canonical@1",
       "title": "An operational failure mode is a catalogue object, never a page",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/why-catalogue-is-canonical.v1.md"
     },
     {
@@ -8583,7 +8583,7 @@
       "identity": "project.worktree-topology@1",
       "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/worktree-topology.v1.md"
     }
   ],
@@ -8650,17 +8650,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1236,
+    "capabilities": 1237,
     "builtin": 78,
-    "declarative": 1158,
+    "declarative": 1159,
     "modules": 26,
     "mcp_tools": 76,
-    "mcp_resources": 1186,
+    "mcp_resources": 1187,
     "http_routes": 78,
     "cli_commands": 91,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1158,
+    "objects": 1159,
     "by_kind": {
       "adr": 38,
       "application": 5,
@@ -8687,7 +8687,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 152,
+      "test": 153,
       "use-case": 43,
       "workspace": 1
     },
