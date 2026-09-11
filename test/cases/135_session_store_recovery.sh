@@ -234,6 +234,14 @@ done
 : > .ai/repo/sessions/.tmp.inflight
 expect_exit 0 "$MJ" recover orphans --check
 expect_grep 'live +\.ai/repo/sessions/\.tmp\.inflight.*under the 12h threshold'
+# The age must actually be READ, on whichever platform this is. `stat -f` means "this format
+# string" on BSD and "report the file system, not the file" on GNU, so the first draft asked
+# GNU for a field that does not exist and every candidate came back unmeasurable: the command
+# reported "its age cannot be read on this platform" seven times and did nothing at all. The
+# guard behaved perfectly — nothing was deleted — which is exactly why it was invisible on
+# macOS and only CI saw it. A subject that skips everything is not a passing subject, so the
+# absence of that warning is asserted rather than assumed.
+expect_no_grep 'age cannot be read on this platform'
 expect_grep 'orphan +\.ai/repo/sessions/\.tmp\.empty000'
 expect_grep 'foreign +\.ai/repo/sessions/\.tmp\.foreign0'
 expect_grep 'incomplete +\.ai/repo/sessions/\.tmp\.rescue00'

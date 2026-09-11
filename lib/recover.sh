@@ -613,12 +613,21 @@ mj_recover_fold_record() {
 # (project.reclaim-only-what-you-own), and "the run that made it did not finish" is a claim,
 # not a measurement, until something reads the clock.
 #
-# `stat` is spelled twice because BSD and GNU disagree; a read that fails returns nothing,
-# and every caller treats that as "not a candidate" rather than as a large age
-# (project.destructive-sweeps-fail-closed).
+# `stat` is spelled twice because BSD and GNU disagree, and the ORDER is load-bearing.
+# GNU first. `stat -f` means two different things: on BSD it is "this format string", on GNU
+# it is "report the FILE SYSTEM, not the file". So `stat -f %m` asked GNU for a filesystem
+# field that does not exist, and on Linux every age read failed — the whole subject reported
+# "its age cannot be read on this platform" for all seven candidates and did nothing at all.
+# CI caught it on the first run; macOS never would have, because BSD answers `-f %m`
+# correctly. `stat -c` is unambiguous: GNU accepts it, BSD rejects the option and falls
+# through. The guard behaved perfectly while this was wrong — nothing was deleted, every
+# candidate was skipped and counted — which is the whole point of
+# project.destructive-sweeps-fail-closed: a measurement that breaks must cost an action, not
+# take the wrong one. The test now asserts the ages are read, so neither platform can regress
+# to doing nothing quietly.
 mj_recover_age_secs() {
   local m now
-  m="$(stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || true)"
+  m="$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || true)"
   case "$m" in ''|*[!0-9]*) return 1 ;; esac
   now="$(date +%s 2>/dev/null || true)"
   case "$now" in ''|*[!0-9]*) return 1 ;; esac
