@@ -1,0 +1,83 @@
+# Internal links on the built site that do not resolve, as they stood when the check that
+# finds them was repaired. scripts/site-check matched `href="$PREFIX/...` only; PREFIX is
+# base_url with scheme and host removed, the site is published at the origin root, so PREFIX
+# was empty and the pattern was root-relative — which a Zola site built with an absolute
+# base_url never emits. The check ran over an empty set and reported success every time.
+#
+# These are pre-existing and not all of one cause: relative links inside rendered documents
+# resolved against the document's route, milestone routes carrying a colon, and registry
+# capability pages a route names but the site does not build. They are listed rather than
+# tolerated: the gate refuses any link not on this list, so the rot cannot grow, and a line
+# removed from here can never come back. Shorten this file; never lengthen it.
+/commands/adr/SCHEMAS.md
+/commands/finish/DOCTRINE.md
+/commands/plan/PLANNING.md
+/commands/skills/SCHEMAS.md
+/data/generated/architecture.json
+/docs/cockpit-ide-audit/DEVELOPMENT_RUNTIME.md
+/docs/contract/.ai/
+/docs/contract/.ai/README.md
+/docs/dynamicity/HARDCODING_LEDGER.yaml
+/docs/environment/generated/capabilities.md
+/docs/environment/generated/cli.md
+/docs/mcp/CLAIMS.yaml
+/docs/mcp/generated/providers.md
+/docs/plan-status/
+/docs/release/DISTRIBUTION.md
+/docs/release/generated/capabilities.md
+/docs/release/generated/cli.md
+/docs/scope/CLAIMS.yaml
+/docs/scope/generated/modules/repository.md
+/docs/use-cases/CLAIMS.yaml
+/guarantees/github-projection-gated/github-projection.md
+/guarantees/obligation-closure/obligation-establishment.md
+/plan/milestone:cost-per-accepted-outcome/
+/plan/milestone:execution-telemetry/
+/plan/milestone:routing-recommendations/
+/plan/milestone:shared-policy/
+/registry/capabilities/artifacts.list/
+/registry/capabilities/capabilities.describe/
+/registry/capabilities/capabilities.list/
+/registry/capabilities/capabilities.projections/
+/registry/capabilities/continuity.state/
+/registry/capabilities/directories.list/
+/registry/capabilities/distribution.artifact/
+/registry/capabilities/distribution.build/
+/registry/capabilities/distribution.model/
+/registry/capabilities/distribution.releases/
+/registry/capabilities/distribution.status/
+/registry/capabilities/graph.get/
+/registry/capabilities/graph.list/
+/registry/capabilities/health.live/
+/registry/capabilities/health.ready/
+/registry/capabilities/health.report/
+/registry/capabilities/objects.get/
+/registry/capabilities/objects.list/
+/registry/capabilities/objects.search/
+/registry/capabilities/objects.verify/
+/registry/capabilities/peers.announce/
+/registry/capabilities/peers.list/
+/registry/capabilities/perf.counters/
+/registry/capabilities/product.feature/
+/registry/capabilities/product.features/
+/registry/capabilities/product.matrix/
+/registry/capabilities/product.providers/
+/registry/capabilities/product.validate/
+/registry/capabilities/repository.info/
+/registry/capabilities/repository.scope/
+/registry/capabilities/repository.scope_classify/
+/registry/capabilities/server.status/
+/registry/capabilities/trace.commit/
+/registry/capabilities/trace.issue/
+/registry/capabilities/trace.report/
+/registry/capabilities/web.surfaces/
+/registry/capabilities/why.areas/
+/registry/capabilities/why.audiences/
+/registry/capabilities/why.diagnose/
+/registry/capabilities/why.list/
+/registry/capabilities/why.moment/
+/registry/capabilities/why.validate/
+/registry/capabilities/worktree.inspect/
+/registry/capabilities/worktree.migration_plan/
+/registry/capabilities/worktree.status/
+/registry/capabilities/worktree.topology/

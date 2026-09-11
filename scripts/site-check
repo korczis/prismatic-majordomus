@@ -23,6 +23,7 @@ MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
+BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
 pages="$(find "$PUB" -name '*.html')"
 # Every per-page assertion, measured once. The checks below read the rows rather than
@@ -77,6 +78,41 @@ if [ -z "$pt" ] || [ -z "$pl" ]; then bad promo "manifesto.toml has no planned_t
 elif ! grep -qF "$pt" "$PUB/index.html"; then bad promo "the homepage does not carry the unbuilt-half heading '$pt'"
 elif [ "${#pl}" -lt 200 ]; then bad promo "planned_lead is ${#pl} characters; it names the unbuilt capabilities, not a word"
 else ok promo "the homepage names the unbuilt half of the model: '$pt'"; fi
+# 3a2. the version the page describes against the version the advertised install delivers.
+# Three gates already touch this area and each checks one direction: installer-live proves the
+# installer works and reports whatever the metadata resolved, version-matches-surface proves the
+# declared version is at least what the surface implies, and release-check refuses a tree behind
+# the published release. None of them asks the converse — whether the version this page advertises
+# is a version that was ever published — which is how a site generated at one version came to
+# advertise an install delivering a much older one, with nothing anywhere saying so.
+#
+# This does not refuse the gap itself: a repository is allowed to be ahead of its last release,
+# and refusing that would block every commit until someone cut one. It refuses the SILENCE. If
+# the two versions disagree, the built page has to say so; if they agree, it must not carry a
+# stale notice saying they do not. Both directions, because a check that only fires one way is
+# the class of defect this whole section exists to answer.
+DIST="$SITE/data/registry/distribution.json"
+if [ -f "$DIST" ]; then
+  released="$(jq -r '.latest.version // ""' "$DIST")"
+  described="$(jq -r '.source_version // ""' "$SITE/data/build.json" 2>/dev/null)"
+  if [ -z "$released" ] || [ -z "$described" ]; then
+    bad version "cannot compare the released version ('$released') with the one this page describes ('$described')"
+  elif [ "$released" = "$described" ]; then
+    if grep -q 'id="version-gap"' "$PUB/index.html"; then
+      bad version "the homepage carries the version-gap notice while the release ($released) and the tree agree; the notice is stale"
+    else
+      ok version "the advertised install delivers v$released, the version this page describes"
+    fi
+  elif ! grep -q 'id="version-gap"' "$PUB/index.html"; then
+    bad version "this page describes v$described and the advertised install delivers v$released, and the homepage does not say so (reproduce: curl -s $(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')/releases/latest.json)"
+  else
+    # the gap is real and disclosed: say it out loud rather than passing quietly, because a
+    # verdict nobody reads is how it went unnoticed for six hundred commits
+    ok version "this page describes v$described, the advertised install delivers v$released, and the homepage says so"
+  fi
+else
+  bad version "site/data/registry/distribution.json missing; the released version cannot be read"
+fi
 # 3b. the product surface: the homepage and /features/ are projections of
 # site/data/registry/product.json, so every feature has its page, every page has its feature,
 # every mark on the matrix is the dataset's, and no feature, module, command, provider or
@@ -119,7 +155,7 @@ if [ -f "$PD" ]; then
     [ "$want" = "$got" ] || { bad product "/features/$id/ links $got of the $want claim(s) the model gives it"; prod_bad=1; }
   done
   # the telemetry the homepage prints is the dataset's, never a number in a template
-  for k in capabilities mcp_tools http_routes objects; do
+  for k in builtin declarative mcp_tools http_routes; do
     n="$(jq -r --arg k "$k" '.telemetry[$k]' "$PD")"
     grep -qF ">$n</dd>" "$PUB/index.html" || { bad product "the homepage does not print the derived $k ($n)"; prod_bad=1; }
   done
@@ -192,11 +228,56 @@ if [ -f "$SITE/static/CNAME" ]; then
   elif [ -n "$host" ] && [ "$declared" != "$host" ]; then bad domain "CNAME is $declared; base_url is served from $host"
   else ok domain "the build carries CNAME $declared, the host base_url is published at"; fi
 fi
-# 6. internal links resolve to a generated file
-missing=0
-for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##" | LC_ALL=C sort -u); do
-  t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
-done; [ "$missing" = 0 ] && ok link "every internal link resolves"
+# 6. internal links resolve to a generated file.
+# This matched `href="$PREFIX/...` only. PREFIX is base_url with the scheme and host stripped,
+# and the site is published at the origin root, so PREFIX is empty and the pattern was
+# `href="/...` — root-relative links, of which a Zola site built with an absolute base_url emits
+# none. The check therefore ran over an empty set and reported that every internal link resolved,
+# every time, while twenty-three links on the homepage alone were 404. A check that cannot reach
+# its subject has to say so rather than pass: it now matches the site's own absolute links as
+# well, and refuses to pass at all if it found nothing to look at.
+missing=0; seen=0
+linkpaths() {
+  # absolute self-links (what this site actually emits), then root-relative ones (what a site
+  # published under a path prefix emits) — the same href space either way, normalised to a path
+  grep -rhoE 'href="'"$BASE_URL"'/[^"#?]*' $pages | sed -E "s#^href=\"$BASE_URL##"
+  if [ -n "$PREFIX" ]; then
+    grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PREFIX##"
+  else
+    grep -rhoE 'href="/[^"#?]*' $pages | sed -E 's#^href="##'
+  fi
+}
+# The rot the repaired check exposed is pre-existing and of several causes, so it is ratcheted
+# rather than made fatal on the day it became visible: .ai/repo/site-link-baseline.txt lists
+# what was already broken, a link not on that list fails, and a line that stops being broken
+# must be deleted from the list or the gate says the baseline is stale. It can only shrink.
+LINKBASE="$MJ_AI_REPO_DIR/site-link-baseline.txt"
+[ -f "$LINKBASE" ] || LINKBASE="$ROOT/.ai/repo/site-link-baseline.txt"
+known="$(grep -vE '^\s*(#|$)' "$LINKBASE" 2>/dev/null | LC_ALL=C sort -u || true)"
+broken=""
+for l in $(linkpaths | LC_ALL=C sort -u); do
+  seen=$((seen + 1))
+  t="$PUB$l"
+  [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || broken="$broken$l
+"
+done
+broken="$(printf '%s' "$broken" | grep -v '^$' | LC_ALL=C sort -u || true)"
+if [ "$seen" = 0 ]; then
+  bad link "no internal link was examined; the pattern does not match this site's hrefs"
+else
+  new_broken="$(printf '%s\n' "$broken" | grep -v '^$' | grep -vxF -f <(printf '%s\n' "$known") 2>/dev/null || true)"
+  fixed="$(printf '%s\n' "$known" | grep -v '^$' | grep -vxF -f <(printf '%s\n' "$broken") 2>/dev/null || true)"
+  n_broken="$(printf '%s\n' "$broken" | grep -c . || true)"
+  if [ -n "$new_broken" ]; then
+    for l in $new_broken; do bad link "$l does not resolve, and is not in the baseline"; missing=1; done
+  fi
+  if [ -n "$fixed" ]; then
+    for l in $fixed; do bad link "$l resolves now; delete it from .ai/repo/site-link-baseline.txt"; done
+  fi
+  if [ -z "$new_broken" ] && [ -z "$fixed" ]; then
+    ok link "$seen internal link target(s) examined (absolute and root-relative hrefs; document-relative and unquoted ones are not matched); $n_broken known-broken, exactly the baseline, none new"
+  fi
+fi
 # 7. assets present
 for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
@@ -467,9 +548,22 @@ for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
 done
 ok tiles "every profile, claim, status, responsibility, command, doctrine, use case, application and why-moment has its own page"
-# 13d. every navigation target resolves
-for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
-ok nav "every navigation link on the homepage resolves"
+# 13d. the navigation and hero targets resolve.
+# This said "every navigation link on the homepage resolves" and emitted that verdict
+# unconditionally, outside the loop that decides it — so it was printed whether or not
+# anything had been examined, exactly the shape check 6 was repaired for. Its extractor also
+# read only the first eighty href attributes of the page, which is a fraction of what the
+# homepage carries, while the word "every" claimed the lot. It now counts what it looked at,
+# says that number, refuses to pass on an empty set, and the verdict says navigation and hero
+# rather than every link — check 6 is what covers the whole page.
+nav_seen=0; nav_bad=0
+for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$BASE_URL##; s#href=\"##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do
+  nav_seen=$((nav_seen + 1))
+  t="$PUB$href"
+  [ -f "$t/index.html" ] || [ -f "$t" ] || { bad nav "navigation/hero link $href does not resolve"; nav_bad=1; }
+done
+if [ "$nav_seen" = 0 ]; then bad nav "no navigation link was examined; the extractor does not match this page's hrefs"
+elif [ "$nav_bad" = 0 ]; then ok nav "$nav_seen navigation and hero link(s) of the homepage's first attributes resolve"; fi
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
 # The half that was missing. Check 13d proves nav -> page, so a menu entry can never point at

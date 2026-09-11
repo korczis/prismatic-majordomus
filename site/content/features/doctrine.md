@@ -1,5 +1,5 @@
 +++
-title = "Rules a machine decides, wired, tested and CI-blocking"
+title = "Rules a machine decides, wired, tested and run in CI"
 description = "Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported."
 weight = 70
 [extra]

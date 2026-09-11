@@ -1750,10 +1750,14 @@ fn product_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                     kind: "kind".into(),
                     label: k.name.clone(),
                     summary: Some(format!("{} object(s) of the layer", k.objects)),
-                    route: Some(format!(
-                        "/registry/modules/{}/",
-                        k.name.replace(['.', '_'], "-")
-                    )),
+                    // A kind has no page of its own. This carried the capability-module route
+                    // of the branch above, which a kind is not, so every kind node on the
+                    // product graph linked to a route the site never builds — twenty-three
+                    // dead links on the homepage, under a caption promising that a feature
+                    // naming something absent would fail validation rather than draw an edge
+                    // to nothing. A node without a route is rendered as text, so None is the
+                    // truthful value until kinds have somewhere to point.
+                    route: None,
                     source: Some("share/kinds.yaml".into()),
                     status: None,
                     external: false,
