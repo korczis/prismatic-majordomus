@@ -43,6 +43,9 @@
 # helper below pipes, and `grep -c` exits 1 when it counts none, so every pipeline that may
 # legitimately find nothing says `|| true` for itself.
 set -eu
+# pipefail, so a pipeline reports the failure of any stage rather than the success of its
+# last. Every counting pipeline below therefore ends in `|| echo 0` or `|| true`, because
+# grep exits 1 on no match and "no findings" is the healthy case, not an error.
 set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
@@ -54,11 +57,6 @@ while [ $# -gt 0 ]; do case "$1" in
   --strict) MODE="strict"; shift ;;
   *) echo "rule-proof-check: unknown option $1" >&2; exit 2 ;;
 esac; done
-
-# How many non-blank lines a list holds. Written once because the obvious spelling is wrong
-# in a way that prints: `grep -c` exits 1 when it counts none, so `grep -vc "^$" || echo 0`
-# prints the count *and* the fallback, and a summary reads "0\n0 rule(s)".
-count_lines() { printf '%s\n' "${1:-}" | grep -c '[^[:space:]]' || true; }
 
 [ -d "$RULES" ] || { echo "rule-proof-check: no rules section here; nothing to measure"; exit 0; }
 
@@ -121,6 +119,12 @@ read_rules() {
   ' $files
 }
 
+# How many non-empty lines a newline-joined list holds. grep -c prints the count and exits
+# 1 when that count is zero, which under pipefail is a failure rather than an answer, so
+# the count is taken once here and every caller reads a number instead of guarding its own
+# pipeline. Getting this wrong printed the healthy case as "0\n0 rule(s) known".
+nlines() { printf '%s\n' "$1" | grep -c '[^[:space:]]' || true; }
+
 findings=""   # one "<id>\t<kind>\t<what>" per line
 add() { findings="$findings$1	$2	$3
 "; }
@@ -171,7 +175,7 @@ if [ "$MODE" = write ]; then
     echo "# a blocking rule not on it that names no proof fails the gate. Do not add by hand."
     printf '%s\n' "$unproven" | grep -v '^$' || true
   } > "$BASELINE"
-  echo "rule-proof-check: baseline written with $(count_lines "$unproven") rule(s)"
+  echo "rule-proof-check: baseline written with $(nlines "$unproven") rule(s)"
   exit 0
 fi
 
@@ -198,14 +202,14 @@ done
 # A dangling proof is never ratcheted: the rule reads as proven and is not.
 if [ -n "$dangling" ]; then
   echo >&2
-  echo "rule-proof-check: $(count_lines "$dangling") rule(s) name a proof that is not in the tree." >&2
+  echo "rule-proof-check: $(nlines "$dangling") rule(s) name a proof that is not in the tree." >&2
   echo "  Either the case was renamed and the rule was not, or it was deleted and the rule still claims it." >&2
   exit 10
 fi
 
 if [ "$MODE" = strict ]; then
   [ -z "$unproven" ] && { echo "rule-proof-check: every blocking rule names what proves it, and every proof is in the tree"; exit 0; }
-  echo "rule-proof-check: $(count_lines "$unproven") blocking rule(s) name no proof (--strict)" >&2
+  echo "rule-proof-check: $(nlines "$unproven") blocking rule(s) name no proof (--strict)" >&2
   exit 10
 fi
 
@@ -222,4 +226,4 @@ if [ -n "$new" ]; then
   echo "  case in its x-majordomus block: tests: [test/cases/NN_name.sh]." >&2
   exit 10
 fi
-echo "rule-proof-check: no new debt ($(count_lines "$known") rule(s) known, $(count_lines "$reviewed") declared review-enforced, $(count_lines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"
+echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"
