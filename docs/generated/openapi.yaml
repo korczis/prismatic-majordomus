@@ -47,6 +47,8 @@ tags:
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
+  - name: lifecycle
+    description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
   - name: objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
   - name: obligations
@@ -2348,6 +2350,276 @@ paths:
         resource:
           uri: majordomus://health
           name: health
+  "/api/v1/lifecycle/closed":
+    get:
+      operationId: lifecycle.closed
+      summary: The records a clone receives
+      description: "The tracked, durable projection of closed episodes: how many there are, how many closed on this branch, and the newest twenty. This is the only half of the subsystem that survives a clone; everything under .ai/local/ names this machine and travels nowhere."
+      tags:
+        - lifecycle
+      parameters: []
+      responses:
+        "200":
+          description: "The records a clone receives: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ClosedSessions"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: lifecycle.closed
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::lifecycle
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+        ttl_seconds: 30
+      x-majordomus-mcp:
+        tool: majordomus_lifecycle_closed
+  "/api/v1/lifecycle/episodes":
+    get:
+      operationId: lifecycle.episodes
+      summary: Every open episode
+      description: "Every open episode in this checkout's store, with the provider session that owns it, the worktree and branch it opened on, where it stands, and what the ledger last saw it do. `continuity.state` reports the one episode the pointer resolves to, which is right for a briefing and blind to every other window open on the same worktree."
+      tags:
+        - lifecycle
+      parameters: []
+      responses:
+        "200":
+          description: "Every open episode: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Episodes"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: lifecycle.episodes
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::lifecycle
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+        ttl_seconds: 2
+      x-majordomus-mcp:
+        tool: majordomus_lifecycle_episodes
+        resource:
+          uri: majordomus://lifecycle/episodes
+          name: lifecycle-episodes
+  "/api/v1/lifecycle/providers":
+    get:
+      operationId: lifecycle.providers
+      summary: "What each provider's adapter declares"
+      description: "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk."
+      tags:
+        - lifecycle
+      parameters: []
+      responses:
+        "200":
+          description: "What each provider's adapter declares: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProviderLifecycles"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: lifecycle.providers
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::lifecycle
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+      x-majordomus-mcp:
+        tool: majordomus_lifecycle_providers
+  "/api/v1/lifecycle/recovery":
+    get:
+      operationId: lifecycle.recovery
+      summary: What the store needs somebody to do
+      description: "Open records that can no longer close themselves, temporary files a killed close left in the tracked sessions section, whether the pointer has been migrated to the per-provider layout, and the arithmetic that says whether every episode the ledger has seen start is accounted for. Every finding carries the command that clears it."
+      tags:
+        - lifecycle
+      parameters: []
+      responses:
+        "200":
+          description: "What the store needs somebody to do: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Recovery"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: lifecycle.recovery
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::lifecycle
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+        ttl_seconds: 2
+      x-majordomus-mcp:
+        tool: majordomus_lifecycle_recovery
+        resource:
+          uri: majordomus://lifecycle/recovery
+          name: lifecycle-recovery
+  "/api/v1/lifecycle/runtime":
+    get:
+      operationId: lifecycle.runtime
+      summary: The commit this process is answering about
+      description: "The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell."
+      tags:
+        - lifecycle
+      parameters: []
+      responses:
+        "200":
+          description: "The commit this process is answering about: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RuntimeView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: lifecycle.runtime
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::lifecycle
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+        ttl_seconds: 2
+      x-majordomus-mcp:
+        tool: majordomus_lifecycle_runtime
   "/api/v1/live":
     get:
       operationId: health.live
@@ -5745,6 +6017,42 @@ components:
         - moments
         - count
       description: "One audience, with the membership nobody authored."
+    Balance:
+      type: object
+      properties:
+        started:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "`session.started` lines in the ledger."
+        closed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "`session.closed` lines."
+        open:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Open records in the store.
+        unaccounted:
+          type: integer
+          format: int64
+          description: "`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary."
+        agrees:
+          type: boolean
+          description: Whether the three agree.
+        note:
+          type: string
+          description: "What the numbers mean, in words."
+      required:
+        - started
+        - closed
+        - open
+        - unaccounted
+        - agrees
+        - note
+      description: "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
     BenchmarkPolicy:
       oneOf:
         - type: object
@@ -6513,6 +6821,66 @@ components:
         - name
         - version
       description: "What a client said about itself in `initialize`."
+    ClosedSession:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: The episode id.
+        uri:
+          type: string
+          description: "`majordomus://session/<identity>`, for the object page."
+        path:
+          type: string
+          description: Repository-relative path.
+        created_at:
+          type: string
+          description: "When it closed, as recorded."
+        branch:
+          type: string
+          description: The branch it closed on.
+        head:
+          type: string
+          description: The commit it closed at.
+        outcome:
+          type: string
+          description: The typed outcome the close recorded.
+        title:
+          type: string
+          description: "Its title, when the record carries one."
+      required:
+        - session_id
+        - uri
+        - path
+      description: "One closed episode of the tracked, durable projection."
+    ClosedSessions:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many closed records the index holds. Exact.
+        on_this_branch:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them closed on the branch this checkout is on.
+        newest:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClosedSession"
+          description: "The newest [`CLOSED_WINDOW`], newest first."
+        window:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many are carried in `newest`, against the total."
+      required:
+        - total
+        - on_this_branch
+        - window
+      description: "The tracked half of the subsystem: the records a clone receives."
     Closure:
       type: object
       properties:
@@ -8845,6 +9213,113 @@ components:
             - message
           description: "direnv was asked and refused, or could not be run; the message is its own."
       description: "What became of the `.envrc` of a worktree that was just created, found, or moved."
+    Episode:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: The episode id the ledger stamps on every line this worker wrote.
+        path:
+          type: string
+          description: Repository-relative path of the open record. The body is at the path.
+        provider:
+          type: string
+          description: "The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns."
+        provider_session:
+          type: string
+          description: "That provider's own session identity: the file's stem, and the string the prompt\narchive stamps on the same worker's records."
+        owner:
+          type: string
+          description: Who opened it.
+        worker:
+          type: string
+          description: "The worker identity, when one was supplied. Never inferred."
+        worktree:
+          type: string
+          description: "The worktree it opened in, absolute, as recorded."
+        branch:
+          type: string
+          description: The branch it opened on.
+        start_head:
+          type: string
+          description: The commit it opened at.
+        started_at:
+          type: string
+          description: "When it opened, as recorded."
+        standing:
+          "$ref": "#/components/schemas/EpisodeStanding"
+          description: Where it stands.
+        events:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many ledger lines carry this episode id. Zero for an episode that opened and did\nnothing, which is ordinary and not a fault."
+        last_activity:
+          type: string
+          description: "The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none."
+        last_event:
+          type: string
+          description: "That line's event name."
+        tasks:
+          type: array
+          items:
+            type: string
+          description: "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes."
+        note:
+          type: string
+          description: "Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for."
+      required:
+        - session_id
+        - path
+        - standing
+        - events
+        - note
+      description: "One open episode, as its file records it and as the ledger has seen it."
+    EpisodeStanding:
+      oneOf:
+        - type: string
+          const: current
+          description: "This checkout's pointer resolves to it. `continuity.state` is about this one."
+        - type: string
+          const: open
+          description: "Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at."
+        - type: string
+          const: foreign
+          description: "It names another worktree of this repository. Reported, never treated as this\ncheckout's — a record about somebody else's work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent."
+        - type: string
+          const: stranded
+          description: "The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in."
+      description: "Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which."
+    Episodes:
+      type: object
+      properties:
+        present:
+          type: boolean
+          description: "Whether the open-episode store exists. False in a fresh clone, which is not a fault."
+        store:
+          type: string
+          description: "The store, repository-relative."
+        worktree:
+          type: string
+          description: "This worktree, absolute. Every standing above is decided against it."
+        current:
+          type: string
+          description: "The episode id the pointer resolves to, when it resolves to one."
+        episodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Episode"
+          description: "Every open episode, newest first by recorded start."
+        findings:
+          type: array
+          items:
+            type: string
+          description: "What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case."
+      required:
+        - present
+        - store
+        - worktree
+      description: "Every open episode of this checkout's store."
     ErrorBody:
       type: object
       properties:
@@ -12025,6 +12500,21 @@ components:
           const: distribution
           description: "The distribution's default, because the repository declares none."
       description: Where the declaration was read from.
+    Orphan:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Repository-relative path.
+        bytes:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "Its size in bytes, which is how a reader tells an empty stub from a lost record."
+      required:
+        - path
+        - bytes
+      description: "A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`."
     Os:
       oneOf:
         - type: string
@@ -12831,6 +13321,41 @@ components:
         - wave
         - issues
       description: "One wave, with the issues in it."
+    Pointer:
+      type: object
+      properties:
+        layout:
+          "$ref": "#/components/schemas/PointerLayout"
+          description: The layout.
+        target:
+          type: string
+          description: "What the symlink names, as written, when it is one."
+        resolves:
+          type: boolean
+          description: Whether reading through it yields an episode.
+        session_id:
+          type: string
+          description: The episode it resolves to.
+        note:
+          type: string
+          description: "What that means, in words."
+      required:
+        - layout
+        - resolves
+        - note
+      description: What the pointer is and whether it leads anywhere.
+    PointerLayout:
+      oneOf:
+        - type: string
+          const: pointer
+          description: "A symlink into `sessions-open/`: the per-provider layout."
+        - type: string
+          const: inline
+          description: "A regular file: the pre-migration layout, one episode per checkout."
+        - type: string
+          const: absent
+          description: "Nothing is there. No episode is open here, which is not a fault."
+      description: "The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten."
     Port:
       type: integer
       format: uint16
@@ -13264,6 +13789,62 @@ components:
         - mode
         - always_loaded
       description: One bootstrap a provider renders.
+    ProviderLifecycle:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The provider id: the bootstrap template's file stem."
+        title:
+          type: string
+          description: The name a person knows it by.
+        lifecycle:
+          type: array
+          items:
+            type: string
+          description: "The lifecycle events its adapter declares, in the provider's own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same."
+        prompt_capture:
+          type: boolean
+          description: "Whether its adapter can archive the worker's prompts."
+        client_config:
+          type: string
+          description: "The file it reads a project-scoped MCP client configuration from, when it has one."
+        wired:
+          type: array
+          items:
+            type: string
+          description: "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
+        note:
+          type: string
+          description: What the two together mean.
+      required:
+        - id
+        - title
+        - prompt_capture
+        - note
+      description: "One provider's lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it."
+    ProviderLifecycles:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProviderLifecycle"
+          description: "The providers, in declaration order."
+        with_lifecycle:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them declare a lifecycle adapter.
+        findings:
+          type: array
+          items:
+            type: string
+          description: "What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like."
+      required:
+        - providers
+        - with_lifecycle
+      description: Every provider the distribution ships an adapter for.
     ProviderList:
       type: object
       properties:
@@ -13571,6 +14152,38 @@ components:
         - matched
         - divergence
       description: "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
+    Recovery:
+      type: object
+      properties:
+        present:
+          type: boolean
+          description: Whether the local half exists at all.
+        pointer:
+          "$ref": "#/components/schemas/Pointer"
+          description: The pointer and its layout.
+        stranded:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Stranded"
+          description: Episodes that can no longer close themselves.
+        orphans:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Orphan"
+          description: Temporary files left in the tracked sessions section.
+        balance:
+          "$ref": "#/components/schemas/Balance"
+          description: The started/closed/open arithmetic.
+        findings:
+          type: array
+          items:
+            type: string
+          description: "Everything above, said once, for a reader that wants the summary. Empty is the good\ncase and means there is nothing to recover."
+      required:
+        - present
+        - pointer
+        - balance
+      description: "What this checkout's session store needs somebody to do."
     Refusal:
       type: object
       properties:
@@ -14652,6 +15265,51 @@ components:
         - enforced
         - path
       description: One rule the feature names.
+    RuntimeView:
+      type: object
+      properties:
+        root:
+          type: string
+          description: The repository root this process is serving.
+        served_head:
+          type: string
+          description: The commit the served index was built at.
+        served_branch:
+          type: string
+          description: "Its branch, or `DETACHED`."
+        served_working_tree:
+          type: string
+          description: Whether the working tree was clean when the index was built.
+        repository_head:
+          type: string
+          description: "The commit the repository is on, read on this call."
+        repository_branch:
+          type: string
+          description: Its branch now.
+        repository_working_tree:
+          type: string
+          description: The working tree now.
+        agree:
+          type: boolean
+          description: Whether the two agree on the commit and the branch.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many objects the served index holds, and whether it was degraded."
+        index_state:
+          type: string
+          description: "`ok` or `degraded`."
+        note:
+          type: string
+          description: "What the comparison means, and what to do when it disagrees."
+      required:
+        - root
+        - agree
+        - objects
+        - index_state
+        - note
+      description: "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out."
     ScopeConflict:
       type: object
       properties:
@@ -15087,6 +15745,27 @@ components:
         - state
         - started_at
       description: "One named phase of an execution, as the handler reported it."
+    Stranded:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: The episode id.
+        path:
+          type: string
+          description: "The open record, repository-relative."
+        reason:
+          type: string
+          description: Why it is stranded.
+        remedy:
+          type: string
+          description: The command that clears it. A finding with no remedy is a complaint.
+      required:
+        - session_id
+        - path
+        - reason
+        - remedy
+      description: "An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \"stranded\" means are two definitions, and this repository has been bitten by that\nshape often enough to name it."
     Summary:
       type: object
       properties:

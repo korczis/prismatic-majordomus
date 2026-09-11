@@ -397,6 +397,51 @@
         "status": "query"
       },
       {
+        "id": "capability:lifecycle.closed",
+        "kind": "capability",
+        "label": "lifecycle.closed",
+        "summary": "The records a clone receives",
+        "route": "/cockpit/capabilities/lifecycle.closed",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.episodes",
+        "kind": "capability",
+        "label": "lifecycle.episodes",
+        "summary": "Every open episode",
+        "route": "/cockpit/capabilities/lifecycle.episodes",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.providers",
+        "kind": "capability",
+        "label": "lifecycle.providers",
+        "summary": "What each provider's adapter declares",
+        "route": "/cockpit/capabilities/lifecycle.providers",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.recovery",
+        "kind": "capability",
+        "label": "lifecycle.recovery",
+        "summary": "What the store needs somebody to do",
+        "route": "/cockpit/capabilities/lifecycle.recovery",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:lifecycle.runtime",
+        "kind": "capability",
+        "label": "lifecycle.runtime",
+        "summary": "The commit this process is answering about",
+        "route": "/cockpit/capabilities/lifecycle.runtime",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:objects.get",
         "kind": "capability",
         "label": "objects.get",
@@ -1073,6 +1118,14 @@
         "label": "health.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "kind": "file",
+        "label": "lifecycle.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
         "external": true
       },
       {
@@ -5506,6 +5559,21 @@
         }
       },
       {
+        "id": "majordomus://claim/session-observability",
+        "kind": "claim",
+        "label": "session-observability",
+        "summary": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fsession-observability",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "responsibility": "state",
+          "source": "docs/CONTINUITY.md",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/session-records",
         "kind": "claim",
         "label": "session-records",
@@ -9162,6 +9230,14 @@
         "summary": "A provider hook opens and closes the execution episode, and the context it was given at the open is frozen beside it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fsession-lifecycle.md",
         "source": "docs/claims/session-lifecycle.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/session-observability.md",
+        "kind": "document",
+        "label": "docs/claims/session-observability.md",
+        "summary": "The session subsystem can be watched, not only used: every open episode, what cannot close itself, and which commit the process is answering about",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fsession-observability.md",
+        "source": "docs/claims/session-observability.md"
       },
       {
         "id": "majordomus://document/docs/claims/session-records.md",
@@ -26110,6 +26186,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.provider-support-is-declared@1",
+        "kind": "rule",
+        "label": "project.provider-support-is-declared@1",
+        "summary": "What a provider's adapter can do is declared, never observed from the filesystem",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.provider-support-is-declared%401",
+        "source": ".ai/repo/rules/project/provider-support-is-declared.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.providers-are-data@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "providers",
+            "sessions",
+            "continuity",
+            "capabilities"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.providers-are-data@1",
         "kind": "rule",
         "label": "project.providers-are-data@1",
@@ -28184,6 +28282,20 @@
         "label": "test/cases/16_profiles.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F16_profiles.sh",
         "source": "test/cases/16_profiles.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/170_provider_lifecycle_declared.sh",
+        "kind": "test",
+        "label": "test/cases/170_provider_lifecycle_declared.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F170_provider_lifecycle_declared.sh",
+        "source": "test/cases/170_provider_lifecycle_declared.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/171_session_observability.sh",
+        "kind": "test",
+        "label": "test/cases/171_session_observability.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F171_session_observability.sh",
+        "source": "test/cases/171_session_observability.sh"
       },
       {
         "id": "majordomus://test/test/cases/17_doctrine_enforcement.sh",
@@ -30843,6 +30955,11 @@
         "label": "health"
       },
       {
+        "id": "module:lifecycle",
+        "kind": "module",
+        "label": "lifecycle"
+      },
+      {
         "id": "module:objects",
         "kind": "module",
         "label": "objects"
@@ -31568,6 +31685,81 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.closed",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.episodes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.providers",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.recovery",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:lifecycle.runtime",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -35927,6 +36119,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/session-observability",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "majordomus://document/docs/CONTINUITY.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/session-observability",
+        "target": "majordomus://test/test/cases/171_session_observability.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/session-records",
         "target": "kind:claim",
         "kind": "is_a"
@@ -37863,6 +38075,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/session-lifecycle.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/session-observability.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -43137,6 +43354,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.provider-support-is-declared@1",
+        "target": "majordomus://rule/project.providers-are-data@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.providers-are-data@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43793,6 +44025,16 @@
       },
       {
         "source": "majordomus://test/test/cases/16_profiles.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/170_provider_lifecycle_declared.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/171_session_observability.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47112,6 +47354,31 @@
         "kind": "composes"
       },
       {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.closed",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.episodes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.providers",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.recovery",
+        "kind": "composes"
+      },
+      {
+        "source": "module:lifecycle",
+        "target": "capability:lifecycle.runtime",
+        "kind": "composes"
+      },
+      {
         "source": "module:objects",
         "target": "capability:objects.get",
         "kind": "composes"
@@ -47328,8 +47595,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1463,
+      "edges": 3306,
       "acyclic": true,
       "truncated": false
     }
