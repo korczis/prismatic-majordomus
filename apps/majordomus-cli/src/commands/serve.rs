@@ -479,8 +479,30 @@ fn report(
 
 /// Start a server for this checkout as a process of its own: this executable, `serve`, the
 /// port asked for with a free one as the fallback, the idle life it was given, its log
-/// beside the lease, in its own process group so that it outlives the shell that asked. The
-/// election in that process decides whether it serves or defers; this only starts it.
+/// beside the lease, in its own process group so that it outlives the shell that asked, and
+/// carrying none of its parent's open file descriptors. The election in that process decides
+/// whether it serves or defers; this only starts it.
+///
+/// # Why the descriptors are closed, and what happened when they were not
+///
+/// Standard input, output and error are redirected here, and for a long time that looked
+/// like enough. It is not: `Command` only replaces those three, and **every other descriptor
+/// the parent had open is inherited by the child**, which then holds it for its whole life —
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+///
+/// direnv is where that stops being theoretical. It hands the file it evaluates an extra
+/// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
+/// 2026-09-11, the first real `cd` into a checkout after entry learnt to start a server hung
+/// for **481 seconds** and only returned when the server was killed by hand: `lsof` showed
+/// the server holding fd 3 on the other end of direnv's own pipe. Nothing in this
+/// repository's tests could see it, because a test that captures a command's output in a
+/// command substitution passes it no descriptor above two — the very thing direnv does.
+///
+/// So the child closes everything above the three it was given, between `fork` and `exec`.
+/// The limit is read in the parent, because `pre_exec` runs in a forked child where only
+/// async-signal-safe calls are allowed and `close(2)` is one while `sysconf(3)` is not
+/// promised to be. `test/cases/190` holds it: an entry made with a descriptor open on a pipe
+/// must leave that pipe closed when it returns.
 fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<()> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
@@ -510,6 +532,30 @@ fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<(
     {
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
+        // Read here, in the parent: see the note above on what `pre_exec` may call.
+        // SAFETY: sysconf(3) with a standard name; it reads a limit and touches no memory
+        // of ours.
+        let limit = unsafe { libc::sysconf(libc::_SC_OPEN_MAX) };
+        // A machine with no answer, or an absurd one, still gets a bounded sweep: the cost
+        // is one `close(2)` per descriptor on a path that is already forking a process.
+        let highest: i32 = if limit < 4 {
+            1024
+        } else {
+            limit.min(65_536) as i32
+        };
+        // SAFETY: the closure runs in the forked child before `exec`, and calls nothing but
+        // `close(2)`, which is async-signal-safe. It touches no descriptor the child was
+        // given — standard input, output and error are set above and are 0, 1 and 2 — and a
+        // descriptor that was not open makes `close` fail harmlessly, which is why the
+        // result is ignored.
+        unsafe {
+            cmd.pre_exec(move || {
+                for fd in 3..highest {
+                    libc::close(fd);
+                }
+                Ok(())
+            });
+        }
     }
     let child = cmd.spawn().map_err(|e| Error::io(log, e))?;
     tracing::info!(pid = child.id(), log = %log.display(), "started a server for this checkout");

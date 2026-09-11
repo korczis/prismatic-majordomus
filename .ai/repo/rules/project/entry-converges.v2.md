@@ -113,6 +113,12 @@ lease is what brings the published address into the environment a moment later. 
 bootstrap command's `--wait` defaults to zero and the entry file does not pass it.
 Everything the call does wait for is bounded (`project.every-wait-is-bounded`).
 
+**A server entry starts inherits nothing of the caller.** Standard input, output and error
+are redirected; every other descriptor the caller had open is closed between `fork` and
+`exec`. This is not tidiness: direnv hands the file it evaluates a descriptor of its own and
+does not return until that pipe closes, and a server holding it holds the shell for its
+whole idle life — 481 seconds, measured, on 2026-09-11.
+
 **Entry never fails.** Every runtime outcome is at most one line on standard error and an
 exit of 0. A non-zero exit makes direnv report that the whole environment failed and leaves
 a person with a broken shell in a repository that is fine.
@@ -172,7 +178,9 @@ per check and exits 10 on any finding. It decides, mechanically:
 - that the briefing composer does not ask the server for its own standing (the lease half is
   `scripts/ci/lease-reader-check`'s, for the whole repository, and is not read twice here);
 - that the idle life is one constant greater than zero and that the spawned server is given
-  it.
+  it;
+- that the spawned server closes the descriptors it inherited, so that a caller waiting on a
+  pipe of its own is not held for that idle life.
 
 No validator of this rule lives in `lib/`. Which file a shell evaluates on entry, which
 provider fires the start event, and where this repository declares its policy, its skeleton

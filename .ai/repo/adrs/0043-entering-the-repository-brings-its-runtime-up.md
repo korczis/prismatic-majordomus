@@ -123,6 +123,19 @@ refusal now covers the path that had no opinion about it. The measured cost of t
 half, warm, is inside the noise of what entry already cost: at a load average of 100, warm
 entry ran 166–241 ms against 166–287 ms for the old export-only entry.
 
+**Found by building it, and fixed here.** A server started by `Command::spawn` inherits
+every file descriptor above the three that are redirected. direnv hands the file it
+evaluates an extra descriptor of its own and does not return until that pipe closes, so the
+first real `cd` into a checkout after entry learnt to start a server **hung for 481
+seconds**, releasing only when the server was killed by hand. No test in this repository
+could see it: a case that captures output in a command substitution passes the command no
+descriptor above two, which is exactly what direnv does not do. `spawn_server` now closes
+them between `fork` and `exec`, `test/cases/190` opens one deliberately and requires it to
+be closed when the entry returns, and the same `cd` through real direnv now costs 917 ms
+cold. The class is worth naming: **a hot path proved only through a harness is proved under
+the harness's conditions**, and the caller's open descriptors are one of the conditions a
+harness quietly normalises.
+
 **Bad, and accepted.** A `cd` can now start a process. That is the whole decision, and what
 bounds it is the idle life: a server nobody attaches to ends. Ten shells entering a cold
 checkout at the same instant can each spawn a server before any of them has written a lease;
