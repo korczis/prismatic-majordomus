@@ -1,0 +1,210 @@
+# The long-form positioning of the landing page: intent-driven development, stated as a
+# doctrine. Hand-written prose only — the same rule marketing.toml lives under. No capability
+# claim, no count, no route: every fact beside these words is derived from the registry, the
+# product model and the objects of the layer, and a sentence here that a dataset contradicts
+# is a bug in this file, not in the dataset.
+#
+# Tense is load-bearing here. A sentence in the present tense asserts behaviour the registry
+# must be able to back; the model this page argues for is mostly written in the conditional,
+# because most of it is a design and not yet a capability. What is shipped is on the matrix.
+# scripts/site-check holds this file to the same rules as marketing.toml.
+
+[problem]
+kicker = "the problem"
+title = "Prompt-driven development does not scale with the repository"
+lead = "A developer says: edit this file, add this endpoint, write these tests, update this component. The model follows the immediate instruction. Sometimes it works."
+question = "What user intent was this change actually supposed to satisfy?"
+closing = "Giving a model a larger context window does not solve this. A larger pile of unstructured information is still a pile."
+
+[[problem.failures]]
+text = "It builds a second implementation of something that already exists."
+[[problem.failures]]
+text = "It ignores an ADR nobody put in front of it."
+[[problem.failures]]
+text = "Documentation claims one thing while the runtime does another."
+[[problem.failures]]
+text = "Tests pass while a whole integration surface is broken."
+[[problem.failures]]
+text = "The change merges, and nobody can answer a fairly basic question later."
+
+[problem.fragments]
+title = "Context is fragmented across"
+items = ["source code", "tests", "git history", "issues", "milestones", "ADRs", "rules", "doctrines", "policies", "session contexts", "handovers", "knowledge", "generated documentation", "runtime state", "API schemas", "deployment state", "other agents working on the same system"]
+
+[core]
+kicker = "the core idea"
+title = "Describe the desired state, not the edit"
+lead = "An intent is a statement about reality: what must become true, what must stay true, and what evidence would settle it. It is deliberately not a list of files to open."
+intent_example = "Every coding agent entering this repository must automatically discover the runtime, load the relevant governance and session context, join the active peer environment, and be ready to cooperate without manual bootstrap."
+assumption_title = "An implementation assumption"
+assumption_example = "Modify .envrc. Add a bootstrap. Create a peer registry. Add a route. Update the Cockpit."
+assumption_note = "Those may be right. They may be incomplete. They may already exist. They may contradict the architecture. The first question is the other one."
+question = "Given the current repository, what must change for the intent to become true?"
+primary_title = "Intent is the primary artifact"
+primary_lead = "A prompt is not the source of truth. It is one way to communicate an intent to a worker. Neither is an issue, a milestone, a commit, a pull request, an ADR or a test: those are projections, constraints, evidence or consequences around it."
+
+[pipeline]
+kicker = "the execution model"
+title = "Intent → Context → Plan → Execute → Verify → Proof"
+lead = "Development as a transformation from the current reality of the repository to the desired one. Every stage has an input it did not invent and an output the next stage can check."
+caption = "Under each stage is the honest mark of how much of it exists here today; the section near the foot of this page is the same answer in full. With scripts running, a single stage shows at a time and advances until you take it over or pause it. Without them, every stage is on the page at once."
+
+[[pipeline.stages]]
+id = "capture"
+name = "Intent capture"
+verb = "capture"
+summary = "The statement, and what would settle it."
+note = "not built"
+items = ["desired outcomes", "constraints", "invariants", "acceptance criteria", "provenance"]
+
+[[pipeline.stages]]
+id = "context"
+name = "Context"
+verb = "discover"
+summary = "Governance preflight, then discovery, then compilation — not retrieval."
+note = "largely shipped: majordomus context"
+items = ["rules, doctrines, policies, ADRs", "session contexts and handovers", "decisions, knowledge, open questions", "issues, milestones, worktree and branch state", "authority order and provenance", "a line budget that names its exclusions"]
+
+[[pipeline.stages]]
+id = "plan"
+name = "Plan"
+verb = "resolve"
+summary = "Ambiguity named, impact derived, strategy chosen against the architecture."
+note = "not built; the authored work model is"
+items = ["ambiguity detection", "impact analysis", "architectural constraints", "capability mapping", "source, tests, docs, schemas", "integration surfaces and deployment"]
+
+[[pipeline.stages]]
+id = "execute"
+name = "Execute"
+verb = "execute"
+summary = "Several workers, different responsibilities, one coordination object."
+note = "partly: peers, scope claims, worktrees"
+items = ["implementation", "opposition", "review", "testing", "verification"]
+
+[[pipeline.stages]]
+id = "verify"
+name = "Verify"
+verb = "verify"
+summary = "Against the acceptance criteria, not against the diff."
+note = "shipped, against the finish contract, not against criteria"
+items = ["acceptance criteria", "invariants", "regression checks", "claims against implementation", "runtime evidence"]
+
+[[pipeline.stages]]
+id = "proof"
+name = "Proof"
+verb = "prove"
+summary = "An inspectable bundle, not the word success."
+note = "partly: evidence discharges obligations"
+items = ["requirements and changed code", "tests and runtime checks", "governance that applied", "commits, artifacts, API and deployment state", "remaining limitations"]
+
+[compiled]
+kicker = "context before code"
+title = "Context is compiled, not merely retrieved"
+lead = "The goal is not to pour the repository into the model. It is to compile the smallest useful representation of reality the work needs. Ordered by authority, carrying its provenance, and fitted to a line budget that names every exclusion: that part runs today. Deduplication against what a worker already holds, and detecting when two sources disagree, are the parts the model still wants."
+closing = "Dumping twenty Markdown files into a context window is not architecture. It is littering with GPUs."
+
+[governance]
+kicker = "governance is executable"
+title = "Rules a machine decides, not suggestions a model may follow"
+lead = "Rules and doctrines are not inspirational prose; they participate in execution. The rules that apply to a piece of work are resolved before it starts, from the policy and the profile, and a blocking rule stops the command rather than advising it. Resolving them against an intent instead is the step the model adds."
+closing = "Intent plus repository governance is what produces the effective requirements for a change. The rules below are not a selection somebody made for this page — they are the ones the public features rest on, resolved by the executable."
+
+[graph]
+kicker = "provenance"
+title = "Every significant change should be explainable"
+lead = "An intent should carry its origin, its governance, its constraints, its realisation, its verification and the interfaces it reached. That is what turns development history into something you can ask a question of — and it is the shape of the record, not one this repository writes yet."
+bad_question = "Why does this code exist?"
+bad_answer = "fix stuff"
+good_answer = "This subsystem exists because an intent required automatic worker bootstrap. It was introduced in these commits, under this doctrine, verified by this test, exposed on these interfaces, and its verification status is current. Commit to issue, this repository already answers; the intent above them is what is missing."
+
+[projections]
+kicker = "issues are a projection"
+title = "The tracker stops pretending to be the semantic model"
+lead = "Issues stay useful. Milestones stay useful. In this model they become projections of intent rather than the place intent is kept. Commit to issue is already traceable in both directions here; the intent above them is not, which is why the questions below are still unanswerable."
+closing = "None of these are questions a tracker can answer, and none of them are questions this repository can answer today. They are the reason the intent object is worth building."
+
+[[projections.detects]]
+text = "implementation with no active intent behind it"
+[[projections.detects]]
+text = "intent with no implementation"
+[[projections.detects]]
+text = "an issue marked complete while its acceptance criteria fail"
+[[projections.detects]]
+text = "a commit not linked to the intent it serves"
+[[projections.detects]]
+text = "a milestone claiming completion while dependent intents are unresolved"
+
+[claims]
+kicker = "claims must match reality"
+title = "Automatic. Supported. Enforced. Generated. Tested."
+lead = "Repositories accumulate words like these, and they are surprisingly dangerous. A claim is worth having only when something connects it to evidence. Here every claim names the source, the implementation and the test that settle it, and a claim whose evidence no longer resolves fails the build."
+closing = "Then either the implementation changes or the claim does. Reality wins — an unusual policy for software documentation, admittedly."
+
+[completion]
+kicker = "done"
+title = "Completion means intent satisfaction"
+lead = "Code written, tests green, PR merged: all useful, none of them proof of the outcome. A merged pull request whose intent remains false is unfinished work, and the git server is not an oracle."
+
+[opposition]
+kicker = "opposition"
+title = "Disagreement is cheap before deployment and expensive after"
+lead = "Before an implementation is accepted, another pass should try to disprove it. No command runs this today; it is the discipline the model asks for, and these are the questions that actually catch the failures."
+
+[[opposition.questions]]
+text = "Did we misunderstand the intent?"
+[[opposition.questions]]
+text = "Does an existing implementation already solve this?"
+[[opposition.questions]]
+text = "Is this duplicating another subsystem?"
+[[opposition.questions]]
+text = "Which decision constrains it?"
+[[opposition.questions]]
+text = "Which edge cases and which surfaces were forgotten?"
+[[opposition.questions]]
+text = "Do the tests match the requirement, or only the implementation?"
+[[opposition.questions]]
+text = "Can this regress silently later?"
+
+[loop]
+kicker = "a control loop — mostly not built"
+title = "An agent does not get to declare success because its patch applied"
+lead = "Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists."
+votes_title = "Who gets a vote"
+closing = "Evidence gets the final one."
+
+[direction]
+kicker = "direction"
+title = "What is shipped, and what this is becoming"
+lead = "The argument above is a doctrine and a design. Parts of it run today; more of it does not. The matrix at the top of this page is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume."
+shipped_title = "Shipped: the commands behind Context, Verify and Proof"
+planned_title = "Not built: everything the word intent names"
+planned_lead = "There is no intent object, no intent registry and no intent id. An issue here already records its objective, its desired state, its acceptance criteria and the evidence it requires — what is missing is anything above the issue that those roll up to, and any evaluation of those criteria when work is declared done. Nothing derives a plan from a desired outcome, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink."
+
+[doctrine]
+kicker = "the doctrine"
+title = "Implementation is subordinate to intent"
+lead = "A change is not complete because code was written, tests passed, a pull request merged or a deployment succeeded. It is complete when all of this holds."
+
+[[doctrine.conditions]]
+text = "the originating intent is known"
+[[doctrine.conditions]]
+text = "relevant context has been considered"
+[[doctrine.conditions]]
+text = "applicable governance holds"
+[[doctrine.conditions]]
+text = "the required implementation exists"
+[[doctrine.conditions]]
+text = "affected surfaces are synchronized"
+[[doctrine.conditions]]
+text = "acceptance criteria pass"
+[[doctrine.conditions]]
+text = "claims match implementation"
+[[doctrine.conditions]]
+text = "runtime behaviour is verified where it applies"
+[[doctrine.conditions]]
+text = "evidence enough to demonstrate the outcome exists"
+
+[close]
+title = "Discover once. Reason once. Derive everywhere. Verify against intent."
+lead = "A repository stops being a collection of partially synchronized artifacts and becomes an inspectable model of what we wanted, what we knew, what we decided, what changed, why it changed, what constrains it, whether it works, and how we know."
+closing = "Humans define intent. Majordomus keeps the system honest."
