@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.derived-once@1, project.no-counts-in-prose@1]
 tags: [documentation, provider, derivation]
+
+x-majordomus:
+  tests: [scripts/ci/providers-check]
 ---
 
 # Rationale

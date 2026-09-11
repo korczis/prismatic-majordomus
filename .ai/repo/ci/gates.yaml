@@ -109,6 +109,11 @@ gates:
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
+  - id: rule-proof
+    job: structure
+    runs: scripts/ci/rule-proof-check
+    summary: every rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, and a named case that was renamed or deleted fails outright
+
   # A grep over the tree, so it costs nothing and runs in every plan: a second parser of
   # the lease can be introduced from a shell script, a recipe, a hook or the crate, and no
   # one path class names all four.
@@ -309,6 +314,16 @@ classes:
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
     gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
+
+  # governance: the rule objects themselves, the gate that holds their proof, and the
+  # baseline of the rules nothing executable proves yet. `layer` already selects the suite
+  # for anything under .ai/; this class is narrower and adds the one gate that reads the
+  # rules as a relation rather than as files. The planner takes the union of every matching
+  # class, so both apply, and the vendored package under share/ is selected here too —
+  # `share` does not name it and a doctrine's proof can go stale exactly like a rule's.
+  - id: governance
+    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, test/cases/125_rule_proof.sh]
+    gates: [rule-proof, shell-suite, rust-integration]
 
   # the evidence fabric: the ledger of recorded executions, the join that reads it and the
   # gate that ratchets it. A claim's proof is derived from the matrix and the ledger

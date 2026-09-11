@@ -26634,7 +26634,7 @@
         "facts": {
           "class": "blocking",
           "depends_on": [],
-          "statement": "A rule the tool enforces is declared as a rule object with an x-majordomus block and a validator named mj_validate_<name>; no command selects checks by hand.",
+          "statement": "A rule the tool enforces declares an x-majordomus block — a validator named mj_validate_<name> when a command runs it, the tests that prove it when a gate does; no command selects checks by hand.",
           "tags": [
             "doctrine"
           ]
@@ -28558,6 +28558,13 @@
         "source": "test/cases/124_evidence.sh"
       },
       {
+        "id": "majordomus://test/test/cases/125_rule_proof.sh",
+        "kind": "test",
+        "label": "test/cases/125_rule_proof.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F125_rule_proof.sh",
+        "source": "test/cases/125_rule_proof.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
         "kind": "test",
         "label": "test/cases/128_the_subset_is_a_subset.sh",
@@ -28598,6 +28605,13 @@
         "label": "test/cases/130_archive.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_archive.sh",
         "source": "test/cases/130_archive.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/139_release_record_schema.sh",
+        "kind": "test",
+        "label": "test/cases/139_release_record_schema.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F139_release_record_schema.sh",
+        "source": "test/cases/139_release_record_schema.sh"
       },
       {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
@@ -44598,6 +44612,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/125_rule_proof.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -44624,6 +44643,11 @@
       },
       {
         "source": "majordomus://test/test/cases/130_archive.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/139_release_record_schema.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -48224,8 +48248,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1487,
-      "edges": 3358,
+      "nodes": 1489,
+      "edges": 3360,
       "acyclic": true,
       "truncated": false
     }
