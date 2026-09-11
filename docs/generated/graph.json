@@ -1580,6 +1580,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/development-semantics-check",
+        "kind": "file",
+        "label": "development-semantics-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/development-semantics-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/generate-site-data",
         "kind": "file",
         "label": "generate-site-data",
@@ -2941,6 +2949,31 @@
             "agents",
             "governance",
             "process"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "label": "adr-0040",
+        "summary": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0040",
+        "source": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.development-semantics-are-canonical",
+            "rule:project.rust-canonical-declaration",
+            "file:docs/DEVELOPMENT_RUNTIME.md",
+            "file:scripts/development-semantics-check"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime",
+            "governance"
           ]
         }
       },
@@ -5098,6 +5131,22 @@
           "responsibility": "policy",
           "source": "docs/DOCTRINE.md",
           "test": "test/cases/29_prompt_capture.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/prompt-continuity",
+        "kind": "claim",
+        "label": "prompt-continuity",
+        "summary": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fprompt-continuity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+          "implementation": "lib/capture.sh",
+          "responsibility": "policy",
+          "source": "docs/DOCTRINE.md",
+          "test": "test/cases/140_prompt_continuity.sh"
         }
       },
       {
@@ -7827,6 +7876,14 @@
         "source": "docs/COCKPIT.md"
       },
       {
+        "id": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "label": "docs/COCKPIT_IDE_AUDIT.md",
+        "summary": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT_IDE_AUDIT.md",
+        "source": "docs/COCKPIT_IDE_AUDIT.md"
+      },
+      {
         "id": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "label": "docs/COMMANDS.md",
@@ -7873,6 +7930,14 @@
         "summary": "The design system — one declaration, every surface",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
         "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "id": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "label": "docs/DEVELOPMENT_RUNTIME.md",
+        "summary": "The development runtime",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDEVELOPMENT_RUNTIME.md",
+        "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -8929,6 +8994,14 @@
         "summary": "A provider hook captures the person's raw prompts below the model, as a record and a rendering, and doctor proves it by running it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fprompt-capture.md",
         "source": "docs/claims/prompt-capture.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/prompt-continuity.md",
+        "kind": "document",
+        "label": "docs/claims/prompt-continuity.md",
+        "summary": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fprompt-continuity.md",
+        "source": "docs/claims/prompt-continuity.md"
       },
       {
         "id": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
@@ -24823,6 +24896,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.prompt-continuity@1",
+        "kind": "rule",
+        "label": "majordomus.prompt-continuity@1",
+        "summary": "A prompt record carries its own identity, is bounded, and is private",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.prompt-continuity%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/prompt-continuity.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.prompt-capture@1"
+          ],
+          "tags": [
+            "prompts",
+            "continuity",
+            "privacy",
+            "retention"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.prompt-integrity@1",
         "kind": "rule",
         "label": "majordomus.prompt-integrity@1",
@@ -25427,6 +25521,29 @@
           "tags": [
             "safety",
             "tooling"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "label": "project.development-semantics-are-canonical@1",
+        "summary": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.development-semantics-are-canonical%401",
+        "source": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-canonical-declaration@1",
+            "project.interfaces-are-projections@1",
+            "project.commands-are-projections@1"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime"
           ]
         }
       },
@@ -28051,6 +28168,13 @@
         "source": "test/cases/123_case_bound.sh"
       },
       {
+        "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "label": "test/cases/128_the_subset_is_a_subset.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F128_the_subset_is_a_subset.sh",
+        "source": "test/cases/128_the_subset_is_a_subset.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/129_executable_issues.sh",
         "kind": "test",
         "label": "test/cases/129_executable_issues.sh",
@@ -28084,6 +28208,13 @@
         "label": "test/cases/13_region_projection.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F13_region_projection.sh",
         "source": "test/cases/13_region_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/140_prompt_continuity.sh",
+        "kind": "test",
+        "label": "test/cases/140_prompt_continuity.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F140_prompt_continuity.sh",
+        "source": "test/cases/140_prompt_continuity.sh"
       },
       {
         "id": "majordomus://test/test/cases/14_wiring_dispatcher.sh",
@@ -33238,6 +33369,31 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0040",
+        "target": "file:scripts/development-semantics-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -35393,6 +35549,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://document/docs/DOCTRINE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/prompt-continuity",
+        "target": "majordomus://test/test/cases/140_prompt_continuity.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/provider-projections-one-renderer",
         "target": "file:apps/majordomus-cli/src/providers.rs",
         "kind": "implemented_by"
@@ -36948,6 +37124,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/COMMANDS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -36974,6 +37155,11 @@
       },
       {
         "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -37634,6 +37820,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/prompt-capture.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/prompt-continuity.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42343,6 +42534,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.prompt-continuity@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.prompt-continuity@1",
+        "target": "majordomus://rule/majordomus.prompt-capture@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.prompt-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42656,6 +42857,26 @@
         "source": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.commands-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.diagnostics-decide-the-exit@1",
@@ -43618,6 +43839,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/129_executable_issues.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -43639,6 +43865,11 @@
       },
       {
         "source": "majordomus://test/test/cases/13_region_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/140_prompt_continuity.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47189,8 +47420,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1445,
-      "edges": 3264,
+      "nodes": 1455,
+      "edges": 3284,
       "acyclic": true,
       "truncated": false
     }

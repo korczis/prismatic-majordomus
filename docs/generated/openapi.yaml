@@ -2759,7 +2759,7 @@ paths:
     post:
       operationId: peers.announce
       summary: Announce what this peer is working on
-      description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller."
+      description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller."
       tags:
         - peers
       requestBody:
@@ -5185,6 +5185,11 @@ components:
             type: string
           description: "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it."
           default: []
+        claim:
+          type:
+            - string
+            - "null"
+          description: "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
       required:
         - intent
       description: "The input of `peers.announce`: what the calling peer is working on."
@@ -5211,16 +5216,26 @@ components:
         attached:
           type: boolean
           description: "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Announcement"
+          description: "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
         announcement:
           anyOf:
             - "$ref": "#/components/schemas/Announcement"
             - type: "null"
-          description: "Its announcement, when it made one."
+          description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
         overlaps:
           type: array
           items:
             "$ref": "#/components/schemas/Overlap"
           description: Every other peer whose claimed scope meets this one. Empty is the ordinary case.
+        released:
+          type: array
+          items:
+            type: string
+          description: "Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case."
       required:
         - id
         - client
@@ -5232,6 +5247,11 @@ components:
     Announcement:
       type: object
       properties:
+        name:
+          type:
+            - string
+            - "null"
+          description: "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
         intent:
           type: string
           description: "One line: the task or intent, in the peer's words."
@@ -5247,7 +5267,7 @@ components:
         - intent
         - scope
         - at
-      description: What a peer said it is working on.
+      description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
     AnswerView:
       type: object
       properties:
@@ -12196,11 +12216,16 @@ components:
         attached:
           type: boolean
           description: "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Announcement"
+          description: "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
         announcement:
           anyOf:
             - "$ref": "#/components/schemas/Announcement"
             - type: "null"
-          description: "Its announcement, when it made one."
+          description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
       required:
         - id
         - client
