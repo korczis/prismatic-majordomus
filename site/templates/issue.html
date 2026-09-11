@@ -26,10 +26,15 @@
   {%- endif %}
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.objective }}</p>
-  {%- if it.why %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.why }}</p>{% endif %}
-  {%- if it.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.current_state }}</p>{% endif %}
-  {%- if it.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.desired_state }}</p>{% endif %}
+  {#- break-words on every paragraph that renders a record's own prose: an issue says things
+      like `repos/korczis/prismatic-majordomus/branches/master/protection` and
+      `.ai/repo/deployments/majordomus.yaml`, and the default overflow-wrap breaks at spaces
+      and hyphens but not at a slash, so a 61-character path is one unbreakable word wider
+      than a 320px viewport. Four plan pages failed the mobile audit on exactly that. #}
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.objective }}</p>
+  {%- if it.why %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.why }}</p>{% endif %}
+  {%- if it.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.current_state }}</p>{% endif %}
+  {%- if it.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.desired_state }}</p>{% endif %}
 
   {{ <plan_list title="Scope" items={it.scope} mono="1" /> }}
   {{ <plan_list title="Out of scope" items={it.non_scope} /> }}
@@ -70,8 +75,8 @@
   </div>
   {%- endif %}
 
-  {%- if it.risk %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.risk }}</p>{% endif %}
-  {%- if it.completion %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Completion report</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ it.completion }}</p>{% endif %}
+  {%- if it.risk %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.risk }}</p>{% endif %}
+  {%- if it.completion %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Completion report</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ it.completion }}</p>{% endif %}
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">

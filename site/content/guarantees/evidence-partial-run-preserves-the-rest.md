@@ -1,7 +1,7 @@
 +++
 title = "Recording one test's result never erases the evidence recorded for any other test"
 description = "The ledger is merged per test, not rewritten per run. Recording replaces the entry for"
-weight = 167
+weight = 169
 [extra]
 claim_id = "evidence-partial-run-preserves-the-rest"
 status = "guaranteed"

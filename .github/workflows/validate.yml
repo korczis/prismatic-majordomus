@@ -130,7 +130,15 @@ jobs:
     timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
+      # the whole history and its tags: `version-matches-surface` asks what the public
+      # surface has lost since the last release, and it finds that release with
+      # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A
+      # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
+      # data rather than for anything about the tree, on every run it has ever had. The
+      # suite job already checks out in full, for the same class of reason.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
       - name: pinned actionlint
         env:
@@ -168,7 +176,21 @@ jobs:
   suite:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
-    timeout-minutes: 100
+    # 150, not 100. The bound is a backstop against a wedged runner, and every case already
+    # carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound only has
+    # to sit above what a healthy run costs. It did not. The suite costs 93 to 100 minutes,
+    # and two branches cut a minute apart on 2026-09-11 decided it:
+    #
+    #   #209  10:01:37Z -> 11:34:25Z   92m 48s   failure    (a verdict)
+    #   #208  10:02:38Z -> 11:43:00Z  100m 22s   cancelled  (killed at the bound)
+    #
+    # Seventy-nine seconds of runner variance settled whether a pull request was validated
+    # at all. A margin of 7% is a coin flip, not a bound; 150 makes it about 60%. And a
+    # cancelled job carries no verdict while looking, in GitHub's own interface, exactly
+    # like one a person abandoned — which is how master's suite went days without reporting
+    # and nobody noticed. The true cost should be re-measured from the first run that is
+    # allowed to finish, and this number set from that.
+    timeout-minutes: 150
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
@@ -180,6 +202,15 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # `just` is a subject of this suite, not a convenience: 77_rust_evidence asks whether a
+      # person running `just test` reaches the same gates CI runs, and 90 and 102 read the
+      # recipe list and the completion it declares. The runner had no `just`, so 77 died at
+      # the `just --dump` assignment — `bash -eu` makes a 127 fatal before the case's own
+      # "the justfile does not parse" guard can say so — and 90 and 102 skipped their
+      # justfile halves silently. A gate nothing can run is not a gate.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just
       - name: the executable, built once for every case
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml

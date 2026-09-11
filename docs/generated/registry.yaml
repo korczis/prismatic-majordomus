@@ -89,6 +89,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: lifecycle
+    title: Session lifecycle
+    description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 5
   - id: objects
     title: Objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
@@ -103,7 +109,7 @@ modules:
     capabilities: 2
   - id: peers
     title: Peers
-    description: "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
+    description: "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes."
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
@@ -11218,6 +11224,632 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/health.rs
+  - id: lifecycle.closed
+    module: lifecycle
+    kind: query
+    title: The records a clone receives
+    description: "The tracked, durable projection of closed episodes: how many there are, how many closed on this branch, and the newest twenty. This is the only half of the subsystem that survives a clone; everything under .ai/local/ names this machine and travels nowhere."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ClosedSessions
+      schema:
+        type: object
+        properties:
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many closed records the index holds. Exact.
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them closed on the branch this checkout is on.
+          newest:
+            type: array
+            items:
+              "$ref": "#/$defs/ClosedSession"
+            description: "The newest [`CLOSED_WINDOW`], newest first."
+          window:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many are carried in `newest`, against the total."
+        required:
+          - total
+          - on_this_branch
+          - window
+        description: "The tracked half of the subsystem: the records a clone receives."
+        title: ClosedSessions
+        "$defs":
+          ClosedSession:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id.
+              uri:
+                type: string
+                description: "`majordomus://session/<identity>`, for the object page."
+              path:
+                type: string
+                description: Repository-relative path.
+              created_at:
+                type: string
+                description: "When it closed, as recorded."
+              branch:
+                type: string
+                description: The branch it closed on.
+              head:
+                type: string
+                description: The commit it closed at.
+              outcome:
+                type: string
+                description: The typed outcome the close recorded.
+              title:
+                type: string
+                description: "Its title, when the record carries one."
+            required:
+              - session_id
+              - uri
+              - path
+            description: "One closed episode of the tracked, durable projection."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_closed
+      http:
+        method: GET
+        path: /api/v1/lifecycle/closed
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - record
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 30
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.episodes
+    module: lifecycle
+    kind: query
+    title: Every open episode
+    description: "Every open episode in this checkout's store, with the provider session that owns it, the worktree and branch it opened on, where it stands, and what the ledger last saw it do. `continuity.state` reports the one episode the pointer resolves to, which is right for a briefing and blind to every other window open on the same worktree."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: Episodes
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: "Whether the open-episode store exists. False in a fresh clone, which is not a fault."
+          store:
+            type: string
+            description: "The store, repository-relative."
+          worktree:
+            type: string
+            description: "This worktree, absolute. Every standing above is decided against it."
+          current:
+            type: string
+            description: "The episode id the pointer resolves to, when it resolves to one."
+          episodes:
+            type: array
+            items:
+              "$ref": "#/$defs/Episode"
+            description: "Every open episode, newest first by recorded start."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case."
+        required:
+          - present
+          - store
+          - worktree
+        description: "Every open episode of this checkout's store."
+        title: Episodes
+        "$defs":
+          Episode:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id the ledger stamps on every line this worker wrote.
+              path:
+                type: string
+                description: Repository-relative path of the open record. The body is at the path.
+              provider:
+                type: string
+                description: "The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns."
+              provider_session:
+                type: string
+                description: "That provider's own session identity: the file's stem, and the string the prompt\narchive stamps on the same worker's records."
+              owner:
+                type: string
+                description: Who opened it.
+              worker:
+                type: string
+                description: "The worker identity, when one was supplied. Never inferred."
+              worktree:
+                type: string
+                description: "The worktree it opened in, absolute, as recorded."
+              branch:
+                type: string
+                description: The branch it opened on.
+              start_head:
+                type: string
+                description: The commit it opened at.
+              started_at:
+                type: string
+                description: "When it opened, as recorded."
+              standing:
+                "$ref": "#/$defs/EpisodeStanding"
+                description: Where it stands.
+              events:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many ledger lines carry this episode id. Zero for an episode that opened and did\nnothing, which is ordinary and not a fault."
+              last_activity:
+                type: string
+                description: "The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none."
+              last_event:
+                type: string
+                description: "That line's event name."
+              tasks:
+                type: array
+                items:
+                  type: string
+                description: "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes."
+              note:
+                type: string
+                description: "Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for."
+            required:
+              - session_id
+              - path
+              - standing
+              - events
+              - note
+            description: "One open episode, as its file records it and as the ledger has seen it."
+          EpisodeStanding:
+            oneOf:
+              - type: string
+                const: current
+                description: "This checkout's pointer resolves to it. `continuity.state` is about this one."
+              - type: string
+                const: open
+                description: "Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at."
+              - type: string
+                const: foreign
+                description: "It names another worktree of this repository. Reported, never treated as this\ncheckout's — a record about somebody else's work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent."
+              - type: string
+                const: stranded
+                description: "The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in."
+            description: "Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_episodes
+        resource:
+          uri: majordomus://lifecycle/episodes
+          name: lifecycle-episodes
+      http:
+        method: GET
+        path: /api/v1/lifecycle/episodes
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - episode
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.providers
+    module: lifecycle
+    kind: query
+    title: "What each provider's adapter declares"
+    description: "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ProviderLifecycles
+      schema:
+        type: object
+        properties:
+          providers:
+            type: array
+            items:
+              "$ref": "#/$defs/ProviderLifecycle"
+            description: "The providers, in declaration order."
+          with_lifecycle:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them declare a lifecycle adapter.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like."
+        required:
+          - providers
+          - with_lifecycle
+        description: Every provider the distribution ships an adapter for.
+        title: ProviderLifecycles
+        "$defs":
+          ProviderLifecycle:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The provider id: the bootstrap template's file stem."
+              title:
+                type: string
+                description: The name a person knows it by.
+              lifecycle:
+                type: array
+                items:
+                  type: string
+                description: "The lifecycle events its adapter declares, in the provider's own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same."
+              prompt_capture:
+                type: boolean
+                description: "Whether its adapter can archive the worker's prompts."
+              client_config:
+                type: string
+                description: "The file it reads a project-scoped MCP client configuration from, when it has one."
+              wired:
+                type: array
+                items:
+                  type: string
+                description: "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
+              note:
+                type: string
+                description: What the two together mean.
+            required:
+              - id
+              - title
+              - prompt_capture
+              - note
+            description: "One provider's lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_providers
+      http:
+        method: GET
+        path: /api/v1/lifecycle/providers
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - provider
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.recovery
+    module: lifecycle
+    kind: query
+    title: What the store needs somebody to do
+    description: "Open records that can no longer close themselves, temporary files a killed close left in the tracked sessions section, whether the pointer has been migrated to the per-provider layout, and the arithmetic that says whether every episode the ledger has seen start is accounted for. Every finding carries the command that clears it."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: Recovery
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: Whether the local half exists at all.
+          pointer:
+            "$ref": "#/$defs/Pointer"
+            description: The pointer and its layout.
+          stranded:
+            type: array
+            items:
+              "$ref": "#/$defs/Stranded"
+            description: Episodes that can no longer close themselves.
+          orphans:
+            type: array
+            items:
+              "$ref": "#/$defs/Orphan"
+            description: Temporary files left in the tracked sessions section.
+          balance:
+            "$ref": "#/$defs/Balance"
+            description: The started/closed/open arithmetic.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "Everything above, said once, for a reader that wants the summary. Empty is the good\ncase and means there is nothing to recover."
+        required:
+          - present
+          - pointer
+          - balance
+        description: "What this checkout's session store needs somebody to do."
+        title: Recovery
+        "$defs":
+          Pointer:
+            type: object
+            properties:
+              layout:
+                "$ref": "#/$defs/PointerLayout"
+                description: The layout.
+              target:
+                type: string
+                description: "What the symlink names, as written, when it is one."
+              resolves:
+                type: boolean
+                description: Whether reading through it yields an episode.
+              session_id:
+                type: string
+                description: The episode it resolves to.
+              note:
+                type: string
+                description: "What that means, in words."
+            required:
+              - layout
+              - resolves
+              - note
+            description: What the pointer is and whether it leads anywhere.
+          PointerLayout:
+            oneOf:
+              - type: string
+                const: pointer
+                description: "A symlink into `sessions-open/`: the per-provider layout."
+              - type: string
+                const: inline
+                description: "A regular file: the pre-migration layout, one episode per checkout."
+              - type: string
+                const: absent
+                description: "Nothing is there. No episode is open here, which is not a fault."
+            description: "The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten."
+          Stranded:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id.
+              path:
+                type: string
+                description: "The open record, repository-relative."
+              reason:
+                type: string
+                description: Why it is stranded.
+              remedy:
+                type: string
+                description: The command that clears it. A finding with no remedy is a complaint.
+            required:
+              - session_id
+              - path
+              - reason
+              - remedy
+            description: "An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \"stranded\" means are two definitions, and this repository has been bitten by that\nshape often enough to name it."
+          Orphan:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative path.
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Its size in bytes, which is how a reader tells an empty stub from a lost record."
+            required:
+              - path
+              - bytes
+            description: "A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`."
+          Balance:
+            type: object
+            properties:
+              started:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "`session.started` lines in the ledger."
+              closed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "`session.closed` lines."
+              open:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Open records in the store.
+              unaccounted:
+                type: integer
+                format: int64
+                description: "`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary."
+              agrees:
+                type: boolean
+                description: Whether the three agree.
+              note:
+                type: string
+                description: "What the numbers mean, in words."
+            required:
+              - started
+              - closed
+              - open
+              - unaccounted
+              - agrees
+              - note
+            description: "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_recovery
+        resource:
+          uri: majordomus://lifecycle/recovery
+          name: lifecycle-recovery
+      http:
+        method: GET
+        path: /api/v1/lifecycle/recovery
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - recovery
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.runtime
+    module: lifecycle
+    kind: query
+    title: The commit this process is answering about
+    description: "The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: RuntimeView
+      schema:
+        type: object
+        properties:
+          root:
+            type: string
+            description: The repository root this process is serving.
+          served_head:
+            type: string
+            description: The commit the served index was built at.
+          served_branch:
+            type: string
+            description: "Its branch, or `DETACHED`."
+          served_working_tree:
+            type: string
+            description: Whether the working tree was clean when the index was built.
+          repository_head:
+            type: string
+            description: "The commit the repository is on, read on this call."
+          repository_branch:
+            type: string
+            description: Its branch now.
+          repository_working_tree:
+            type: string
+            description: The working tree now.
+          agree:
+            type: boolean
+            description: Whether the two agree on the commit and the branch.
+          objects:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many objects the served index holds, and whether it was degraded."
+          index_state:
+            type: string
+            description: "`ok` or `degraded`."
+          note:
+            type: string
+            description: "What the comparison means, and what to do when it disagrees."
+        required:
+          - root
+          - agree
+          - objects
+          - index_state
+          - note
+        description: "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out."
+        title: RuntimeView
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_runtime
+      http:
+        method: GET
+        path: /api/v1/lifecycle/runtime
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - server
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
   - id: objects.get
     module: objects
     kind: query
@@ -12288,6 +12920,11 @@ capabilities:
               - "$ref": "#/$defs/Announcement"
               - type: "null"
             description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+          checkout:
+            anyOf:
+              - "$ref": "#/$defs/PeerCheckout"
+              - type: "null"
+            description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
           overlaps:
             type: array
             items:
@@ -12362,6 +12999,28 @@ capabilities:
               - scope
               - at
             description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+          PeerCheckout:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+            required:
+              - id
+              - worktree
+              - this_checkout
+            description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
           Overlap:
             type: object
             properties:
@@ -12379,6 +13038,11 @@ capabilities:
                 items:
                   "$ref": "#/$defs/OverlapPath"
                 description: "The claims that meet: one line per pair, `yours` and `theirs`."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board."
             required:
               - peer
               - attached
@@ -12426,14 +13090,28 @@ capabilities:
     module: peers
     kind: query
     title: List peers
-    description: "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process."
+    description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
     input:
-      name: Empty
+      name: PeerListInput
       schema:
         type: object
-        additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          checkouts:
+            "$ref": "#/$defs/Checkouts"
+            description: "Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back."
+            default: repository
+        description: "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n[`super::server::ServerStatusInput`], because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\n```\nuse majordomus_cli::capability::builtin::peers::PeerListInput;\nuse majordomus_cli::capability::builtin::server::Checkouts;\nlet asked_nothing: PeerListInput = serde_json::from_str(\"{}\").unwrap();\nassert_eq!(asked_nothing.checkouts, Checkouts::Repository, \"the board is the repository's\");\nlet narrow: PeerListInput = serde_json::from_str(r#\"{\"checkouts\":\"this\"}\"#).unwrap();\nassert_eq!(narrow.checkouts, Checkouts::This);\n```"
+        title: PeerListInput
+        "$defs":
+          Checkouts:
+            oneOf:
+              - type: string
+                const: repository
+                description: "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+              - type: string
+                const: this
+                description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+            description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
     output:
       name: PeerList
       schema:
@@ -12443,26 +13121,36 @@ capabilities:
             type: integer
             format: uint
             minimum: 0
-            description: "How many peers are attached, the caller included."
+            description: "How many peers are attached across every board that was read, the caller included."
           caller:
             anyOf:
               - "$ref": "#/$defs/PeerId"
               - type: "null"
-            description: "The caller's own peer id, when the call came through an MCP session."
+            description: "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and [`Peer::checkout`] is the half of a worker's identity that is not."
           peers:
             type: array
             items:
               "$ref": "#/$defs/Peer"
-            description: "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+            description: "The peers, this checkout's board first and then the siblings in the order git\nregisters them, each in its own board's attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`."
           overlaps:
             type: array
             items:
               "$ref": "#/$defs/Overlap"
-            description: "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
+            description: "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
+          boards:
+            type: array
+            items:
+              "$ref": "#/$defs/BoardView"
+            description: "One entry per checkout the answer covers, reached or not."
+          complete:
+            type: boolean
+            description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and [`BoardView::reason`] says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
         required:
           - count
           - peers
-        description: "The answer of `peers.list`: every client attached to this shared server."
+          - boards
+          - complete
+        description: "The answer of `peers.list`: every worker of this repository, from every checkout's board."
         title: PeerList
         "$defs":
           PeerId:
@@ -12501,6 +13189,11 @@ capabilities:
                   - "$ref": "#/$defs/Announcement"
                   - type: "null"
                 description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
             required:
               - id
               - client
@@ -12560,6 +13253,28 @@ capabilities:
               - scope
               - at
             description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+          PeerCheckout:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+            required:
+              - id
+              - worktree
+              - this_checkout
+            description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
           Overlap:
             type: object
             properties:
@@ -12577,6 +13292,11 @@ capabilities:
                 items:
                   "$ref": "#/$defs/OverlapPath"
                 description: "The claims that meet: one line per pair, `yours` and `theirs`."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board."
             required:
               - peer
               - attached
@@ -12596,6 +13316,66 @@ capabilities:
               - yours
               - theirs
             description: One pair of claims that contain one another.
+          BoardView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+              standing:
+                "$ref": "#/$defs/ServerStanding"
+                description: "Where its server stands, by the same reading `server.status` reports."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The address its lease names, when it has one."
+              attached:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many of this board's peers are attached."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why this board is not in the answer. `None` when it is."
+            required:
+              - id
+              - worktree
+              - this_checkout
+              - standing
+              - attached
+            description: "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here."
+          ServerStanding:
+            oneOf:
+              - type: string
+                const: absent
+                description: "No lease: nothing serves this checkout."
+              - type: string
+                const: starting
+                description: "A lease without an address, young enough that its owner is still binding."
+              - type: string
+                const: ready
+                description: "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+              - type: string
+                const: outdated
+                description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+              - type: string
+                const: stale
+                description: "The lease names a server that does not answer, or is not a lease at all."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::peers

@@ -116,8 +116,13 @@ awk '/^on:/{f=1} /^jobs:/{f=0} f' "$WF" | grep -qE '^  (push|pull_request):' || 
 # after the imports are spliced, and it carries the dependencies and the body. Grepping one
 # file would be a justfile parser, and a second one at that.
 [ -f "$JF" ] || { echo "    the justfile is missing"; exit 1; }
-dump="$(cd "$ROOT" && just --dump --dump-format json 2>/dev/null)"
-[ -n "$dump" ] || { echo "    just --dump produced nothing; the justfile does not parse"; exit 1; }
+# `|| true`, because the case runs under `bash -eu`: without it a `just` that is not
+# installed exits 127, the assignment inherits it, and the case dies before the guard on the
+# next line can say anything at all. That is how this case spent its CI life failing in one
+# second with no output — the runner had no `just` — while the sentence explaining what was
+# wrong sat one line below, unreachable.
+dump="$(cd "$ROOT" && just --dump --dump-format json 2>/dev/null || true)"
+[ -n "$dump" ] || { echo "    just --dump produced nothing: just is not installed, or the justfile does not parse"; exit 1; }
 
 recipe_exists() {
   printf '%s' "$dump" | jq -e --arg r "$1" '.recipes | has($r)' >/dev/null 2>&1 \

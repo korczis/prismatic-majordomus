@@ -195,6 +195,15 @@
       "note": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves."
     },
     {
+      "id": "claim:prompt-continuity",
+      "kind": "claim",
+      "label": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+      "status": "guaranteed",
+      "route": "/guarantees/prompt-continuity/",
+      "external": false,
+      "note": "The mapping from a provider session to an episode used to exist only while the episode was open, so a closed episode's prompts became unattributable at once — 713 of this repository's 974 records. The record now carries the episode, the provider session, the repository and the worktree, with the provenance of the link; the archive is 0600 and bounded by prompts.retention_max_days and prompts.retention_max_bytes, which prune the body and keep the record; and credential shapes are replaced before anything is persisted. The unlinked legacy records stay unlinked: the evidence for them does not exist, and this claim does not pretend otherwise."
+    },
+    {
       "id": "claim:prompt-assets",
       "kind": "claim",
       "label": "Every repository-local prompt asset renders, and an unknown token is a failure",
@@ -899,11 +908,11 @@
     {
       "id": "claim:mcp-shared-server",
       "kind": "claim",
-      "label": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+      "label": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
       "status": "guaranteed",
       "route": "/guarantees/mcp-shared-server/",
       "external": false,
-      "note": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client."
+      "note": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client. A checkout, not a repository - a linked worktree is a checkout of its own and elects a server of its own (ADR 0035), which measured on 2026-09-11 meant seven live servers over one git repository. The word was wrong here until ADR 0044; what makes cooperation repository-wide is the gathered board of mcp-peers, not a shared process."
     },
     {
       "id": "claim:mcp-lease-resilience",
@@ -926,11 +935,11 @@
     {
       "id": "claim:mcp-peers",
       "kind": "claim",
-      "label": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+      "label": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
       "status": "guaranteed",
       "route": "/guarantees/mcp-peers/",
       "external": false,
-      "note": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here."
+      "note": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; each board is one process's memory and is gone with it. peers.list gathers - it enumerates the checkouts git registers, reads its own board from memory and asks every other checkout's server for its own board (checkouts=this, which is what keeps the gather one hop deep), and reports in boards and complete which checkouts it covered and whether it could read them all. Before ADR 0044 it answered one checkout's board while the bootstrap told every worker it had seen the repository; measured on 2026-09-11, nine agents across sixty worktrees each read a board that held only itself. A peer id is a position on one board and is reassigned on reconnect; the checkout a peer carries is the durable half. Announcements are informational and die with the connection; scope is enforced by the shell tool's task record, not here."
     },
     {
       "id": "claim:mcp-client-autostart",
@@ -1248,6 +1257,15 @@
       "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
     },
     {
+      "id": "claim:session-observability",
+      "kind": "claim",
+      "label": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+      "status": "guaranteed",
+      "route": "/guarantees/session-observability/",
+      "external": false,
+      "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1434,6 +1452,13 @@
       "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "route": null,
       "external": false
     },
@@ -2348,11 +2373,25 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/13_region_projection.sh"
     },
     {
+      "id": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "test",
+      "label": "test/cases/140_prompt_continuity.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/140_prompt_continuity.sh"
+    },
+    {
       "id": "test:test/cases/14_wiring_dispatcher.sh",
       "kind": "test",
       "label": "test/cases/14_wiring_dispatcher.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/14_wiring_dispatcher.sh"
+    },
+    {
+      "id": "test:test/cases/171_session_observability.sh",
+      "kind": "test",
+      "label": "test/cases/171_session_observability.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh"
     },
     {
       "id": "test:test/cases/17_doctrine_enforcement.sh",
@@ -2402,6 +2441,13 @@
       "label": "test/cases/24_prompt_search.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/24_prompt_search.sh"
+    },
+    {
+      "id": "test:test/cases/250_the_board_is_repository_wide.sh",
+      "kind": "test",
+      "label": "test/cases/250_the_board_is_repository_wide.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/250_the_board_is_repository_wide.sh"
     },
     {
       "id": "test:test/cases/25_continuity_lifecycle.sh",
@@ -2845,6 +2891,11 @@
     },
     {
       "source": "claim:prompt-capture",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:prompt-continuity",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
     },
@@ -3434,6 +3485,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3620,6 +3676,11 @@
     },
     {
       "source": "claim:prompt-capture",
+      "target": "impl:lib/capture.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:prompt-continuity",
       "target": "impl:lib/capture.sh",
       "kind": "implemented_by"
     },
@@ -4169,6 +4230,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -4356,6 +4422,11 @@
     {
       "source": "claim:prompt-capture",
       "target": "test:test/cases/29_prompt_capture.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:prompt-continuity",
+      "target": "test:test/cases/140_prompt_continuity.sh",
       "kind": "proved_by"
     },
     {
@@ -4725,7 +4796,7 @@
     },
     {
       "source": "claim:mcp-peers",
-      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "target": "test:test/cases/250_the_board_is_repository_wide.sh",
       "kind": "proved_by"
     },
     {
@@ -4901,6 +4972,11 @@
     {
       "source": "claim:session-lifecycle",
       "target": "test:test/cases/54_session_lifecycle_hooks.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-observability",
+      "target": "test:test/cases/171_session_observability.sh",
       "kind": "proved_by"
     },
     {

@@ -845,8 +845,24 @@ mj_session_context_cmd() {
     else printf 'No working context for %s under %s.\n' "$sid" "$(mj_rel "$(mj_session_context_dir)")"; fi
     return "$MJ_EX_MISSING"
   fi
-  if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":"%s"}\n' "$sid" "$(mj_json_esc "${out#"$MJ_ROOT/"}")"
-  else printf '%s\n' "${out#"$MJ_ROOT/"}"; fi
+  # The document's age in the vocabulary `session show` already uses for a closed record.
+  #
+  # It rides in the JSON only. The text form of this command is a path and stays one: the
+  # command exists so that a person who wants to add to the document does not have to know
+  # how the store names its files, callers consume `$(majordomus session context)` as that
+  # path, and a second line on standard output would turn every one of them into a caller of
+  # a two-line path. The surface a worker reads for the same fact is the context builder,
+  # whose GIT section labels the briefing beside the head it is being compared with.
+  local fresh label rhead since
+  fresh="$(mj_session_context_freshness "$sid")" || fresh="unknown	NONE	0"
+  label="${fresh%%	*}"; fresh="${fresh#*	}"
+  rhead="${fresh%%	*}"; since="${fresh#*	}"
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"session_id":"%s","context":"%s","label":"%s","recorded_head":"%s","commits_since":%s}\n' \
+      "$sid" "$(mj_json_esc "${out#"$MJ_ROOT/"}")" "$label" "$rhead" "$since"
+  else
+    printf '%s\n' "${out#"$MJ_ROOT/"}"
+  fi
 }
 
 mj_session_show() {

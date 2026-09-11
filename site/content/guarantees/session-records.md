@@ -1,7 +1,7 @@
 +++
 title = "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered"
 description = "A stretch of work ends, and what it did becomes a file the whole repository can read: when"
-weight = 150
+weight = 151
 [extra]
 claim_id = "session-records"
 status = "guaranteed"
