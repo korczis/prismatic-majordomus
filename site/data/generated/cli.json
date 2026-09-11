@@ -54,6 +54,12 @@
           "route": "/docs/cli/why/"
         },
         {
+          "about": "One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value",
+          "command": "majordomus devtask",
+          "name": "devtask",
+          "route": "/docs/cli/devtask/"
+        },
+        {
           "about": "How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases",
           "command": "majordomus distribution",
           "name": "distribution",
@@ -6520,6 +6526,470 @@
       ],
       "route": "/docs/cli/why/validate/",
       "usage": "majordomus why validate [OPTIONS]"
+    },
+    {
+      "about": "One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "One issue as an executable development task, every field carrying where it came from",
+          "command": "majordomus devtask issue",
+          "name": "issue",
+          "route": "/docs/cli/devtask/issue/"
+        },
+        {
+          "about": "One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles",
+          "command": "majordomus devtask milestone",
+          "name": "milestone",
+          "route": "/docs/cli/devtask/milestone/"
+        }
+      ],
+      "command": "majordomus devtask",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "devtask",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "devtask"
+      ],
+      "route": "/docs/cli/devtask/",
+      "usage": "majordomus devtask [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "One issue as an executable development task, every field carrying where it came from",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus devtask",
+          "name": "devtask",
+          "route": "/docs/cli/devtask/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The issue id, as the canonical model spells it. An id the model does not declare is answered, not refused",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Answer from the canonical records alone, without consulting git — a deterministic answer that is the same on every machine",
+          "long": "no-git",
+          "name": "no_git",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_GIT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus devtask issue",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "devtask",
+            "issue",
+            "I0001"
+          ],
+          "command": "majordomus devtask issue I0001",
+          "description": "Identity, intent, status, milestone, dependencies, blockers, branches, commits, sessions and readiness in one answer, composed from the derivations that already own each half — the plan for the graph, `trace` for git, the canonical record for everything a person wrote. Nothing is manufactured: a key the record does not carry is `unknown` with the reason, never an empty string that reads as authored.",
+          "expectation": "exits 0; prints readiness, explicit",
+          "id": "devtask-issue",
+          "setup": [],
+          "title": "One issue as work to be done, not as metadata"
+        },
+        {
+          "argv": [
+            "devtask",
+            "issue",
+            "I0001",
+            "--no-git",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus devtask issue I0001 --no-git --format json",
+          "description": "One domain model behind every projection: this document is what `GET /api/v1/devtask/issue` returns and what the `majordomus_devtask` tool answers, with the four groups kept apart by the type — what a person authored, what the plan derives, what happened locally, and where the external projection stands — and a provenance on every field.",
+          "expectation": "exits 0; prints one JSON document carrying /declaration/title/provenance, /position/status/provenance, /readiness/state, /attestation/explicit",
+          "id": "devtask-issue-json",
+          "setup": [],
+          "title": "The same, as the shape the API and MCP answer with"
+        },
+        {
+          "argv": [
+            "devtask",
+            "issue",
+            "I9999",
+            "--no-git"
+          ],
+          "command": "majordomus devtask issue I9999 --no-git",
+          "description": "A typo that read as \"nothing has been authored\" is the one answer a work surface must never give, so an unknown id answers with `declared: false`, the readiness `undeclared`, and every canonical field `unknown` with the reason on it.",
+          "expectation": "exits 0; prints undeclared",
+          "id": "devtask-issue-undeclared",
+          "setup": [],
+          "title": "An id the model does not declare is answered, not refused"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "issue",
+      "parent_route": "/docs/cli/devtask/",
+      "path": [
+        "majordomus",
+        "devtask",
+        "issue"
+      ],
+      "route": "/docs/cli/devtask/issue/",
+      "usage": "majordomus devtask issue [OPTIONS] <ID>"
+    },
+    {
+      "about": "One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus devtask",
+          "name": "devtask",
+          "route": "/docs/cli/devtask/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The milestone id, as the canonical model spells it",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus devtask milestone",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "devtask",
+            "milestone",
+            "foundation"
+          ],
+          "command": "majordomus devtask milestone foundation",
+          "description": "The issues partitioned by readiness, the critical blockers ordered by how much unfinished work each holds back, and the startable work partitioned into subsets that may genuinely run at the same time. A pure function of the canonical records — no git, no clock, no network — so two runs on two machines produce the same bytes and a reader derives nothing itself.",
+          "expectation": "exits 0; prints READINESS",
+          "id": "devtask-milestone",
+          "setup": [],
+          "title": "What to work on next in one outcome, and what to unblock first"
+        },
+        {
+          "argv": [
+            "devtask",
+            "milestone",
+            "foundation",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus devtask milestone foundation --format json",
+          "description": "Every partition the plan implies and no surface should recompute: `ready`, `blocked`, `waiting`, `active`, `review`, `completion_blocked`, `complete`, `cancelled`, plus `critical_blockers`, `parallelizable` with the scope path behind each serialisation, and `cycles` as strongly connected components.",
+          "expectation": "exits 0; prints one JSON document carrying /counts/total, /ready, /critical_blockers, /parallelizable",
+          "id": "devtask-milestone-json",
+          "setup": [],
+          "title": "The graph, as the shape the API and MCP answer with"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "milestone",
+      "parent_route": "/docs/cli/devtask/",
+      "path": [
+        "majordomus",
+        "devtask",
+        "milestone"
+      ],
+      "route": "/docs/cli/devtask/milestone/",
+      "usage": "majordomus devtask milestone [OPTIONS] <ID>"
     },
     {
       "about": "How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases",
@@ -15963,10 +16433,10 @@
     }
   ],
   "counts": {
-    "arguments": 703,
-    "commands": 96,
-    "examples": 104,
-    "runnable": 91
+    "arguments": 721,
+    "commands": 99,
+    "examples": 109,
+    "runnable": 93
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.5.0",
