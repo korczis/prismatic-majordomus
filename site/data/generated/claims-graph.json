@@ -971,11 +971,11 @@
     {
       "id": "claim:rust-coverage-floor",
       "kind": "claim",
-      "label": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+      "label": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
       "status": "guaranteed",
       "route": "/guarantees/rust-coverage-floor/",
       "external": false,
-      "note": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does; a change that cannot reach the crate does not recompile it with instrumentation."
+      "note": "cargo-llvm-cov over all targets, exported as JSON and post-processed so that tests/, benches/, examples/ and every inline `#[cfg(test)]` item leave the fraction on both sides. --ignore-filename-regex cannot do the second, which is why this is a script and not a flag. Two floors, each one integer in a file of its own, each read by CI, by scripts/rust-check and by just coverage; the domain the second measures is declared in scripts/session-coverage-domain and the script refuses a domain naming a file the export does not carry, so narrowing it to raise the number is a visible edit. Branch coverage proper needs a nightly toolchain; region coverage stands in for it and is reported under that name. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does."
     },
     {
       "id": "claim:rust-hot-path-benchmarks",
@@ -1431,13 +1431,6 @@
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:.github/workflows/validate.yml",
-      "kind": "implementation",
-      "label": ".github/workflows/validate.yml",
       "route": null,
       "external": false
     },
@@ -1963,6 +1956,13 @@
       "id": "impl:scripts/rust-check",
       "kind": "implementation",
       "label": "scripts/rust-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/rust-coverage",
+      "kind": "implementation",
+      "label": "scripts/rust-coverage",
       "route": null,
       "external": false
     },
@@ -4071,7 +4071,7 @@
     },
     {
       "source": "claim:rust-coverage-floor",
-      "target": "impl:.github/workflows/validate.yml",
+      "target": "impl:scripts/rust-coverage",
       "kind": "implemented_by"
     },
     {

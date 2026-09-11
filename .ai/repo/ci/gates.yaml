@@ -146,7 +146,7 @@ gates:
   - id: rust-coverage
     job: coverage
     runs: just coverage
-    summary: line coverage of the crate against scripts/rust-coverage-threshold
+    summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
 
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
@@ -316,7 +316,7 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
     gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
 
   # projections of the registry and the policy: generate --check decides whether they are
