@@ -1,7 +1,7 @@
 +++
 title = "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed"
 description = "One Markdown file under .ai/repo/why/moments/ with schema-valid front matter is the whole"
-weight = 146
+weight = 147
 [extra]
 claim_id = "why-catalogue-discovered"
 status = "guaranteed"

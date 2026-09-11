@@ -1,7 +1,7 @@
 +++
 title = "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin"
 description = "A client that learns a URI from resources/list, from majordomus_list, from a search"
-weight = 117
+weight = 118
 [extra]
 claim_id = "mcp-uri-resolution"
 status = "guaranteed"
