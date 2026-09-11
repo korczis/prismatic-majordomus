@@ -292,6 +292,57 @@ pub enum Match {
     SameBranch,
 }
 
+/// What the resolution rule did with one file it looked at.
+///
+/// Three outcomes and no fourth, because the rule has three: a file is not a record at all,
+/// or it is a record that lost, or it is the one that won.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Standing {
+    /// This is the record the rule chose.
+    Selected,
+    /// It matched a tier and lost — to a nearer tier, or to a later timestamp.
+    Superseded,
+    /// It never matched a tier: it is about another branch or another worktree, or it
+    /// could not be read as a record at all.
+    Rejected,
+}
+
+impl Standing {
+    /// The word as serialised.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::continuity::Standing;
+    /// assert_eq!(Standing::Superseded.as_str(), "superseded");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Standing::Selected => "selected",
+            Standing::Superseded => "superseded",
+            Standing::Rejected => "rejected",
+        }
+    }
+}
+
+/// One file the resolution rule looked at, and what it decided about it.
+///
+/// This is the part of the rule that was always computed and never reported. The selected
+/// record has been visible on every surface for months; the four it beat, and the reason
+/// each lost, have been visible nowhere — so a worker handed the wrong record could not
+/// tell a deliberate refusal ("that one is another branch's") from a defect ("that one has
+/// no front matter") from a tie-break ("that one is nine minutes older").
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Candidate {
+    /// Repository-relative path of the file.
+    pub path: String,
+    /// What the rule did with it.
+    pub outcome: Standing,
+    /// Why, in one sentence, naming the field that decided it. Never empty.
+    pub reason: String,
+}
+
 /// One durable record of the local half, as much of it as a reader needs to decide whether
 /// to open the file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -530,8 +581,18 @@ pub(crate) fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Diver
 /// ordering inside a tier is by the timestamp the record asserts — never by filesystem
 /// modification time, which does not survive a clone and is not the time the record claims.
 ///
-/// Returns the record and the number of files that were skipped because they could not be
-/// read as records.
+/// Returns the record, the number of files that were skipped because they could not be
+/// read as records, and one [`Candidate`] entry per `.md` file the directory held — the
+/// reason each one was rejected, superseded or selected.
+///
+/// The trace is produced by the selection itself rather than by a second pass over the
+/// directory, and that is the whole point of it being here. The reasons this rule acts on
+/// have always existed — `mj_resolve_latest` sets `MJ_RES_MATCH` and `MJ_RES_SKIPPED`, and
+/// the `continue` arms below each encode one — and they were simply dropped on the floor.
+/// A worker who met a six-day-old handover between 2026-09-05 and 2026-09-11 could see
+/// *that* it had been chosen and never *why*, which is the failure `continuity.explain`
+/// exists to close (ADR 0041). A trace recomputed by a second function would be a second
+/// account of the same rule, and the first thing it would do is drift.
 fn resolve(
     root: &Path,
     dir: &Path,
@@ -539,13 +600,21 @@ fn resolve(
     head: Option<&str>,
     thresholds: Thresholds,
     now: i64,
-) -> (Option<Record>, usize) {
+) -> (Option<Record>, usize, Vec<Candidate>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
-        return (None, 0);
+        // Not a finding: a checkout that has never written a handover has no directory for
+        // them, and reporting that as a skipped file would invent a fault.
+        return (None, 0, Vec::new());
     };
     let worktree = root.to_string_lossy().to_string();
     let mut best: Option<(u8, String, Record)> = None;
     let mut skipped = 0usize;
+    // Every `.md` file the directory held, with what happened to it. Filled as the rule
+    // runs, so it cannot disagree with the rule.
+    let mut trace: Vec<Candidate> = Vec::new();
+    // (tier, ordering key, path, created_at) for every file that matched a tier. Held back
+    // until the winner is known, because "superseded" is a fact about a pair.
+    let mut matched: Vec<(u8, String, String, String)> = Vec::new();
 
     let mut paths: Vec<PathBuf> = entries
         .filter_map(|e| e.ok().map(|e| e.path()))
@@ -556,16 +625,39 @@ fn resolve(
     paths.sort();
 
     for path in paths {
+        let rel = path
+            .strip_prefix(root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .to_string();
+        let mut reject = |reason: String| {
+            trace.push(Candidate {
+                path: rel.clone(),
+                outcome: Standing::Rejected,
+                reason,
+            });
+        };
         let Some(f) = front(&path) else {
             skipped += 1;
+            reject("it has no front matter that parses, so nothing in it can be read as a record".into());
             continue;
         };
         let (Some(created), Some(rhead)) = (f.get("created_at"), f.get("head")) else {
             skipped += 1;
+            reject(
+                "its front matter is missing created_at or head, the two fields the ordering and the divergence label are computed from"
+                    .into(),
+            );
             continue;
         };
         if f.get("schema_version").map(String::as_str) != Some("1") {
             skipped += 1;
+            reject(format!(
+                "its schema_version is {}, and this reader knows version 1 only",
+                f.get("schema_version")
+                    .map(String::as_str)
+                    .unwrap_or("absent")
+            ));
             continue;
         }
         let rbranch = f.get("branch").cloned().unwrap_or_default();
@@ -575,15 +667,23 @@ fn resolve(
         } else if branch != "DETACHED" && rbranch == branch {
             1u8
         } else {
+            // The one rejection that is a deliberate refusal rather than a defect in the
+            // file: the record is well formed and is about somebody else's work. Neither
+            // tier is widened to reach it, because a briefing that is quietly about
+            // another branch is worse than no briefing at all.
+            reject(if branch == "DETACHED" {
+                format!(
+                    "it was written on branch {rbranch}, and this checkout is on no branch (DETACHED); the second tier matches by branch and there is none to match"
+                )
+            } else {
+                format!(
+                    "it was written on branch {rbranch} in worktree {rworktree}; this checkout is on {branch} in {worktree}, and neither tier reaches it"
+                )
+            });
             continue;
         };
-        let rel = path
-            .strip_prefix(root)
-            .unwrap_or(&path)
-            .to_string_lossy()
-            .to_string();
         let record = Record {
-            path: rel,
+            path: rel.clone(),
             created_at: created.clone(),
             task_id: f.get("task_id").cloned().unwrap_or_else(|| "none".into()),
             branch: rbranch,
@@ -619,6 +719,11 @@ fn resolve(
             record.next_action.clear();
         }
         let key = created.clone();
+        // Every file that reached here matched a tier and is a real candidate. It is kept
+        // whether or not it wins, because "there were four and this one is newest" is the
+        // answer to *why this record*, and a trace that recorded only the winner would
+        // answer a different question.
+        matched.push((tier, key.clone(), rel, created.clone()));
         let better = match &best {
             None => true,
             Some((btier, bkey, _)) => tier < *btier || (tier == *btier && key > *bkey),
@@ -627,7 +732,61 @@ fn resolve(
             best = Some((tier, key, record));
         }
     }
-    (best.map(|(_, _, r)| r), skipped)
+
+    // The winner is known only now, so the verdict on each candidate is written now — from
+    // the same two facts the comparison above used, and from nothing else.
+    let won = best.as_ref().map(|(t, k, _)| (*t, k.clone()));
+    for (tier, key, rel, created) in matched {
+        let (outcome, reason) = match &won {
+            Some((wt, wk)) if *wt == tier && *wk == key => (
+                Standing::Selected,
+                format!(
+                    "tier {tier} ({}), and the newest of them: it asserts {created}",
+                    tier_name(tier)
+                ),
+            ),
+            Some((wt, _)) if tier > *wt => (
+                Standing::Superseded,
+                format!(
+                    "tier {tier} ({}), and a tier {wt} ({}) record exists; the nearer tier wins outright, whatever the timestamps say",
+                    tier_name(tier),
+                    tier_name(*wt)
+                ),
+            ),
+            Some((_, wk)) => (
+                Standing::Superseded,
+                format!(
+                    "tier {tier} ({}), same as the selected record, but it asserts {created} and the selected one asserts {wk}; the later timestamp wins",
+                    tier_name(tier)
+                ),
+            ),
+            // Unreachable while `matched` is non-empty, because a matched candidate always
+            // produces a `best`. Written as a verdict rather than an `unwrap` so that a
+            // future change to the comparison cannot turn a logic slip into a panic in the
+            // one subsystem whose job is to be trusted.
+            None => (
+                Standing::Rejected,
+                "it matched a tier and yet no record was selected; this is a defect in the resolver, not a fact about the record".into(),
+            ),
+        };
+        trace.push(Candidate {
+            path: rel,
+            outcome,
+            reason,
+        });
+    }
+    trace.sort_by(|a, b| a.path.cmp(&b.path));
+    (best.map(|(_, _, r)| r), skipped, trace)
+}
+
+/// The tier's name, as [`Match`] serialises it. One spelling for the tiers, shared by the
+/// selected record's `matched` field and by the sentence that explains a rejection.
+fn tier_name(tier: u8) -> &'static str {
+    if tier == 0 {
+        "same worktree, same branch"
+    } else {
+        "same branch, another worktree"
+    }
 }
 
 /// How many `.md` records a directory holds.
@@ -752,7 +911,7 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
-    let (handover, s1) = resolve(
+    let (handover, s1, _) = resolve(
         &root,
         &dir.join("handovers"),
         &branch,
@@ -760,7 +919,7 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
         thresholds,
         now,
     );
-    let (checkpoint, s2) = resolve(
+    let (checkpoint, s2, _) = resolve(
         &root,
         &dir.join("checkpoints"),
         &branch,
