@@ -171,6 +171,7 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/landing" => pages::landing(&self.ctx),
             "/cockpit/quality" => pages::quality(&self.ctx),
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/design" => pages::design(&self.ctx),

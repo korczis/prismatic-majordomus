@@ -12,8 +12,8 @@ use serde_json::{json, Value};
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
-    TokenList,
+    InstallabilityReport, LandingClosure, ObjectList, ObjectSummary, QualityAnswer, Record,
+    RepositoryReport, TokenList,
 };
 use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
@@ -2115,6 +2115,99 @@ pub fn health(ctx: &Context) -> Page {
     )
     .subtitle("The same verdicts `capabilities validate`, `bench coverage --check` and `generate --check` reach, read through one capability.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
+}
+
+// --------------------------------------------------------------------- landing
+
+/// What is preventing this repository from being landed and delivered: every stage of
+/// delivery with the capability that decided it and the remedy for each refusal.
+///
+/// Read through `landing.closure`, which composes the engines that already own each fact.
+/// This page decides nothing and holds no list of stages: it gains one the moment the
+/// capability does.
+pub fn landing(ctx: &Context) -> Page {
+    let closure: LandingClosure = match ask(ctx, "landing.closure", json!({})) {
+        Ok(c) => c,
+        Err(e) => return failed(Area::Landing, "Landing", e),
+    };
+    let cards: Vec<El> = closure
+        .stages
+        .iter()
+        .map(|s| {
+            card_with(
+                s.question.clone(),
+                badge(s.status.as_str(), s.status.as_str()),
+                el("div")
+                    .child(el("p").class("mj-prose").text(&s.evidence))
+                    .child(facts(vec![
+                        ("Stage", Node::Element(mono(s.id.clone()))),
+                        ("Decided by", Node::Element(mono(s.source.clone()))),
+                    ]))
+                    .when(s.status.refuses() || s.status.unverified(), |d| {
+                        d.child(
+                            el("div")
+                                .class("mj-marks")
+                                .child(mono(s.remediation.clone())),
+                        )
+                    })
+                    .when(!s.findings.is_empty(), |d| {
+                        d.child(details(
+                            format!("{} finding(s)", s.findings.len()),
+                            el("ul").class("mj-list").children(
+                                s.findings
+                                    .iter()
+                                    .map(|f| el("li").text(f))
+                                    .collect::<Vec<_>>(),
+                            ),
+                        ))
+                    }),
+            )
+        })
+        .collect();
+
+    Page::new(
+        Area::Landing,
+        "Landing",
+        el("div")
+            .class("mj-grid")
+            .child(card(
+                "Where this repository stands",
+                el("div")
+                    .child(badge(
+                        if closure.landed { "pass" } else { "fail" },
+                        closure.verdict.clone(),
+                    ))
+                    .child(
+                        el("div").class("mj-marks").children(
+                            closure
+                                .tallies
+                                .iter()
+                                .map(|(word, n)| badge(word, format!("{n} {word}")))
+                                .collect::<Vec<_>>(),
+                        ),
+                    )
+                    .child(facts(vec![
+                        (
+                            "Head",
+                            Node::Element(mono(closure.head.clone().unwrap_or_default())),
+                        ),
+                        (
+                            "Branch",
+                            Node::Element(mono(closure.branch.clone().unwrap_or_default())),
+                        ),
+                        (
+                            "Trunk",
+                            Node::Element(mono(closure.trunk.clone().unwrap_or_default())),
+                        ),
+                    ]))
+                    .child(el("p").class("mj-note").text(
+                        "Every stage is decided by the capability that already owns the fact. The Cockpit has no stage of its own, and a stage nothing answered leaves the repository unlanded rather than reading as clear.",
+                    )),
+            ))
+            .children(cards),
+    )
+    .subtitle("Implementation, tests, documentation, projections, commit, push, integration, CI, deployment, publication, project model, cleanup — composed, never measured here.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Landing", None)])
 }
 
 // --------------------------------------------------------------------- artifacts

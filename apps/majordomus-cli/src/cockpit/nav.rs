@@ -51,6 +51,8 @@ pub enum Area {
     Worktrees,
     /// The health report.
     Health,
+    /// What is preventing the repository from being landed and delivered.
+    Landing,
     /// What the crate's own public surface is held to.
     Quality,
     /// What the generator writes.
@@ -139,6 +141,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Health",
             href: "/cockpit/health",
             area: Area::Health,
+        },
+        AreaInfo {
+            id: "landing",
+            label: "Landing",
+            href: "/cockpit/landing",
+            area: Area::Landing,
         },
         AreaInfo {
             id: "artifacts",

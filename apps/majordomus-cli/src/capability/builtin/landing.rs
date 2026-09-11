@@ -276,7 +276,7 @@ fn stages(
         ),
         stage(
             "tests",
-            "Is every executable target covered by a case that runs it?",
+            "Is every target the benchmark projection declares covered by a case that runs it?",
             "health.report (benchmark-coverage)",
             "majordomus bench coverage --check",
             health,
