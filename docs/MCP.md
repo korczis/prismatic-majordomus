@@ -26,7 +26,7 @@ bin/majordomus-mcp                                           # the same, built f
 The log on stderr names it the moment it is up:
 
 ```
-shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server for this repository ...
+shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server of this checkout ...
 ```
 
 It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,
@@ -39,7 +39,7 @@ and the `capabilities` commands, and every tool and resource here is derived fro
 registry entry, none declared in the MCP code. The decision is
 [`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](../.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
 
-## One server per repository
+## One server per checkout
 
 | | |
 |---|---|
@@ -252,7 +252,7 @@ what it announced, before its first tool call.
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
-| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, each peer's announcement, and every pair of claims that meet |
+| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 An announcement is one line of intent and the repository-relative paths the peer expects
@@ -261,6 +261,43 @@ to touch. The board lives in the server's memory and is gone with the process;
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
 a `caller`.
+
+### The board is the repository's (ADR 0044)
+
+A server serves a checkout, so a repository worked on through linked worktrees has one
+board per worktree — and until ADR 0044 `peers.list` answered with one of them while the
+bootstrap in `CLAUDE.md` and `AGENTS.md` told every worker it had seen the repository.
+Measured on 2026-09-11: seven live servers, one `git_repository_id`, seven boards, nine
+agents across sixty worktrees each reading a board that held itself.
+
+`peers.list` now gathers. It enumerates the checkouts git registers and reads the lease of
+each — the same readers `server.status` uses — takes its own board from this process's
+memory, and asks every other checkout whose server answers for **its own board alone**
+(`checkouts=this`). That parameter is what keeps the gather one hop deep: a server asked
+for `this` enumerates no checkout and probes no server, so it can never ask back. There is
+no retry without it, because a server too old to know the parameter would answer its whole
+board and a cycle is the one failure this must not have; such a checkout is reported unread
+with the reason instead.
+
+| field | what it says |
+|---|---|
+| `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
+| `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
+| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
+| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+
+A peer id is a **position on one board**, handed out in attachment order and reassigned
+after a reconnect — a session that was `p3` this morning is `p1` once its bridge
+re-attaches. Nothing may correlate a worker across time by it; the checkout a peer carries
+is the durable half of its identity. An announcement likewise belongs to a connection: the
+bridge repeats its client's last one after a re-attach or a takeover, and a worker whose
+bridge process is replaced announces again.
+
+Costs one lease read per registered checkout, one probe per checkout whose lease names an
+address, and one round trip per server that answers. On this repository on 2026-09-11 —
+118 registered checkouts, 7 live servers — the enumeration and probing `server.status`
+already performs took 3.0s wall.
 
 **A claim is answered, not merely recorded.** `peers.announce` compares the scope it is
 given against every other announcement and returns the peers whose claims meet it, with
@@ -355,7 +392,7 @@ manifest section it falls under, and its size.
 | `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
 | `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
 | `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
-| `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
+| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
 | `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
 | `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
@@ -434,9 +471,11 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
   server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus
   serve`; see [`CAPABILITIES.md`](CAPABILITIES.md).
-- **Persistent coordination.** The peer board is one process's memory: what a peer is
-  working on across sessions and machines is the shell tool's task record and scope, not
-  this.
+- **Persistent coordination.** A peer board is one process's memory, and the gathered board
+  is a read of several of them at the moment of asking: what a peer is working on across
+  sessions and machines is the shell tool's task record and scope, not this. A branch
+  pushed before a session started carries no announcement and no less of a claim;
+  `scripts/collision-check` is the reader for that.
 
 ## What proves it
 
