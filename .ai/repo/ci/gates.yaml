@@ -187,6 +187,19 @@ gates:
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
+  # The quantities that grow on their own — open pull requests, linked worktrees, local
+  # branches, running servers. None shrinks by itself and none is visible from where a person
+  # looks, so each one's absence of a command is the defect. The runner has none of these
+  # quantities; what it holds together is that the commands still exist, that the reaper is
+  # safe by construction, that .gitattributes and the site generator still agree about which
+  # trees resolve on merge, and that no document sends a reader to a merge button this
+  # repository's merge policy cannot reach.
+  - id: backlog-hygiene
+    job: structure
+    always: true
+    runs: scripts/ci/backlog-check
+    summary: every self-accumulating quantity keeps its measuring command, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
+
   - id: mesh-check
     job: structure
     runs: scripts/ci/mesh-check
@@ -430,3 +443,10 @@ classes:
   - id: release
     paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
     gates: [release-check]
+
+  # The commands that keep the self-accumulating quantities bounded (rule
+  # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
+  # rather than the whole rules tree, so a change to one rule does not escalate every plan.
+  - id: backlog
+    paths: [scripts/reap-orphans, scripts/land, .ai/repo/rules/project/accumulation-is-measured.v1.md, test/cases/131_backlog_hygiene.sh]
+    gates: [backlog-hygiene, shell-lint, shell-suite]

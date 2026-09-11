@@ -36,6 +36,7 @@ pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;
+pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
@@ -79,6 +80,7 @@ pub use deploy::{
 // the Cockpit's Design page renders these two; everything else the module declares is
 // read as JSON through the executor, like every other capability's output
 pub(crate) use design::{DesignReport, TokenList};
+pub use devcontext::DEVCONTEXT_POLICY_URI;
 pub use devtask::{DevMilestoneInput, DevTaskInput};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
@@ -160,6 +162,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         plan,
         directories,
+        devcontext,
         artifacts,
         environment,
         quality,

@@ -1,7 +1,7 @@
 +++
 title = "Performance"
 description = "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
-weight = 21
+weight = 22
 slug = "perf"
 [extra]
 id = "perf"

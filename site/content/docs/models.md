@@ -1,7 +1,7 @@
 +++
 title = "The model catalogue"
 description = "the model catalogue: vendors and models declared once in share/models.yaml with provenance and no fabricated facts, and the explainable routing that names why every candidate was chosen or excluded"
-weight = 48
+weight = 49
 [extra]
 source = "docs/MODELS.md"
 +++

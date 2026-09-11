@@ -195,7 +195,7 @@ pub struct Requirements {
 
 /// One model that did not qualify, and exactly why.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Excluded {
+pub struct ExcludedModel {
     /// The canonical id.
     pub model: String,
     /// The first reason it fell out, in the order the checks run.
@@ -218,7 +218,7 @@ pub struct RoutingDecision {
     pub fallbacks: Vec<String>,
     /// Every model that did not qualify, with its reason.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub excluded: Vec<Excluded>,
+    pub excluded: Vec<ExcludedModel>,
 }
 
 /// Decide. Pure over the catalogue and the requirements; the preference order is the
@@ -228,7 +228,7 @@ pub fn route(catalogue: &ModelCatalogue, needs: &Requirements) -> RoutingDecisio
     let mut excluded = Vec::new();
     for model in &catalogue.models {
         match disqualify(catalogue, model, needs) {
-            Some(reason) => excluded.push(Excluded {
+            Some(reason) => excluded.push(ExcludedModel {
                 model: model.id.clone(),
                 reason,
             }),

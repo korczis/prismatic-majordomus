@@ -41,6 +41,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 4
+  - id: devcontext
+    title: Development context
+    description: "The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: devtask
     title: Executable development scopes
     description: "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it."
@@ -4745,6 +4751,1385 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: devcontext.compile
+    module: devcontext
+    kind: query
+    title: Compile the context for a piece of work
+    description: "The objects a session working on this issue, milestone, intent or set of paths should be given: each with its canonical identifier, the index's own provenance, every discovery path that reached it with the reason and the confidence, its version, its tier and its cost in estimated tokens — followed by everything reached and not given with the reason for each, everything that collapsed into one entry, every pair that does not agree, and the per-tier spend against the budget. Deterministic for a given tree and request; the index fingerprint it was compiled from is in the answer."
+    input:
+      name: DevContextInput
+      schema:
+        "$ref": "#/$defs/CompileInput"
+        description: "The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over [`devcontext::CompileInput`] so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module's input is."
+        title: DevContextInput
+        "$defs":
+          CompileInput:
+            type: object
+            additionalProperties: false
+            properties:
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "A milestone id or slug, or its canonical identifier."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: "Repository-relative paths the work touches, added to whatever the seeds declare."
+              uris:
+                type: array
+                items:
+                  type: string
+                description: "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              budget_tokens:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+              max_depth:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+              floor:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+              all_blocking_rules:
+                type:
+                  - boolean
+                  - "null"
+                description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+            description: "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is."
+    output:
+      name: CompiledContext
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The format of this answer.
+          fingerprint:
+            type: string
+            description: "The index this was compiled from, over every object's path and content. Two answers\nwith the same fingerprint and the same request are the same answer; a different\nfingerprint is a different tree."
+          git:
+            "$ref": "#/$defs/GitContext"
+            description: The head the answer is true of.
+          seeds:
+            type: array
+            items:
+              "$ref": "#/$defs/Seed"
+            description: What was asked for.
+          selected:
+            type: array
+            items:
+              "$ref": "#/$defs/ContextEntry"
+            description: "What to give the session, in the order the budget spent: tier, then relevance, then\ncanonical identifier."
+          excluded:
+            type: array
+            items:
+              "$ref": "#/$defs/Excluded"
+            description: "What was reached and not given, with the reason for each."
+          deduplicated:
+            type: array
+            items:
+              "$ref": "#/$defs/Deduplicated"
+            description: What collapsed into what.
+          conflicts:
+            type: array
+            items:
+              "$ref": "#/$defs/Conflict"
+            description: What does not agree with what.
+          budget:
+            "$ref": "#/$defs/Budget"
+            description: The budget and its per-tier spend.
+          diagnostics:
+            type: array
+            items:
+              "$ref": "#/$defs/Diagnostic"
+            description: "What the compiler could not read: a knowledge source the layer names and does not\nhold, a session record that no longer describes this checkout. Never an error: an\nabsent source is an answer."
+        required:
+          - schema
+          - fingerprint
+          - git
+          - seeds
+          - selected
+          - excluded
+          - deduplicated
+          - conflicts
+          - budget
+          - diagnostics
+        description: "A compiled development context: what to give a session, what was left out, what\ncollapsed into what, and the budget it was all decided under.\n\nThis is the canonical form. Rendering it as a prompt is a downstream projection of this\nvalue and is not performed here — the structure is what lets a caller re-budget, re-order\nor explain the selection without recompiling it."
+        title: CompiledContext
+        "$defs":
+          GitContext:
+            type: object
+            properties:
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, when the checkout is on one."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The head commit.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty`, or what git said."
+              commits:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommitReference"
+                description: "Commits the selected entries name as their own evidence, newest record first.\nDerived from the layer's records, never from a log walk."
+            required:
+              - working_tree
+            description: "The head this answer was compiled against. A compiled context is only true of one tree,\nand these three fields plus the index fingerprint are what say which."
+          CommitReference:
+            type: object
+            properties:
+              commit:
+                type: string
+                description: The commit as the record wrote it.
+              named_by:
+                type: string
+                description: The entry that named it.
+              covers:
+                type:
+                  - string
+                  - "null"
+                description: What the record says the commit was for.
+            required:
+              - commit
+              - named_by
+            description: "One commit the layer itself names, and the record that named it."
+          Seed:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier of the seed, or the literal the request gave for an\nintent or a path."
+              kind:
+                type: string
+                description: "`issue`, `milestone`, `path`, `intent`, or the kind of the object named."
+              from:
+                type: string
+                description: "Where it came from: which field of the request."
+              resolved:
+                type:
+                  - string
+                  - "null"
+                description: "What the compiler resolved it to, when the request named something by a short name."
+            required:
+              - uri
+              - kind
+              - from
+            description: What the request asked to compile a context about.
+          ContextEntry:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier: `majordomus://<kind>/<identity>`, unique in the answer."
+              kind:
+                type: string
+                description: The kind the layer declared for it.
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "Its title, when it has one."
+              provenance:
+                "$ref": "#/$defs/EntryProvenance"
+                description: Where it lives.
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: "Which tier's budget it is spent from."
+              relevance:
+                type: number
+                format: double
+                description: "0.0 to 1.0, deterministic for a given tree and request. The order within a tier."
+              confidence:
+                type: number
+                format: double
+                description: The highest confidence of any path that reached it.
+              discovered_by:
+                type: array
+                items:
+                  "$ref": "#/$defs/Discovery"
+                description: "Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The shortest number of hops from a seed.
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+              cost_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's bytes, the measured half of the cost."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version or date the object states about itself, when it states one: a rule's\nversion, an ADR's date, an issue's `updated_at`."
+              status:
+                type:
+                  - string
+                  - "null"
+                description: "The status word the object declares, when it declares one."
+              required:
+                type: boolean
+                description: "True when a blocking rule, a policy or the scope: never dropped for budget."
+              facts:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Facts worth carrying about this entry that are not the object's prose — a rule's\nclass, an issue's milestone, the commits an issue's evidence names."
+            required:
+              - uri
+              - kind
+              - provenance
+              - tier
+              - relevance
+              - confidence
+              - discovered_by
+              - depth
+              - cost_tokens
+              - cost_bytes
+              - required
+            description: "One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it."
+          EntryProvenance:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Repository-relative path, forward slashes."
+              directory:
+                type: string
+                description: The directory it sits in.
+              source_class:
+                type: string
+                description: "The `sources.yaml` class that discovered it."
+              section:
+                type:
+                  - string
+                  - "null"
+                description: "The manifest section it falls under, when it falls under one."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Size of the file in bytes.
+            required:
+              - path
+              - directory
+              - source_class
+              - bytes
+            description: "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          Discovery:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: What reached it.
+              reason:
+                type: string
+                description: "Why it was included, in words a person reads without this file."
+              via:
+                type:
+                  - string
+                  - "null"
+                description: "The entry this one was reached from, when it was reached from one."
+              edge:
+                type:
+                  - string
+                  - "null"
+                description: "The edge kind followed, for `Relation`."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Hops from a seed; a seed is 0.
+              confidence:
+                type: number
+                format: double
+                description: "1.0 when the repository declared this path, less when it was inferred."
+              weight:
+                type: number
+                format: double
+                description: "What this path contributes to the entry's relevance."
+            required:
+              - selector
+              - reason
+              - depth
+              - confidence
+              - weight
+            description: "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+          Excluded:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier, or the name the layer used when nothing resolves."
+              kind:
+                type:
+                  - string
+                  - "null"
+                description: "Its kind, when it resolved to something."
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier it would have been spent from.
+              reason:
+                "$ref": "#/$defs/ExclusionReason"
+                description: Why it is not in the answer.
+              detail:
+                type: string
+                description: "The same, in words."
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it would have cost, so that a reader can decide whether to raise the budget."
+              relevance:
+                type: number
+                format: double
+                description: What its relevance was.
+            required:
+              - uri
+              - tier
+              - reason
+              - detail
+              - cost_tokens
+              - relevance
+            description: "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing."
+          ExclusionReason:
+            oneOf:
+              - type: string
+                const: budget
+                description: The budget ran out before its tier was filled.
+              - type: string
+                const: relevance
+                description: Its relevance fell below the floor the request set.
+              - type: string
+                const: depth
+                description: It is beyond the depth the request allows.
+              - type: string
+                const: stale
+                description: The object says it is deprecated or superseded.
+              - type: string
+                const: superseded
+                description: A newer version of the same thing is in the answer.
+              - type: string
+                const: unresolved
+                description: The layer names it and holds nothing under that name.
+            description: Why something the compiler selected did not survive.
+          Deduplicated:
+            type: object
+            properties:
+              kept:
+                type: string
+                description: The entry that survived.
+              dropped:
+                type: array
+                items:
+                  type: string
+                description: "What was folded into it, or dropped for it."
+              key:
+                type: string
+                description: "What made them the same thing: `uri`, `path` or `identity`."
+              detail:
+                type: string
+                description: "The same, in words."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many discovery paths reached the surviving entry.
+            required:
+              - kept
+              - dropped
+              - key
+              - detail
+              - paths
+            description: "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line."
+          Conflict:
+            type: object
+            properties:
+              current:
+                type: string
+                description: The entry the compiler treats as current.
+              against:
+                type: string
+                description: The entry it stands against.
+              kind:
+                type: string
+                description: "What kind of disagreement: `supersedes` or `version`."
+              detail:
+                type: string
+                description: "The same, in words."
+            required:
+              - current
+              - against
+              - kind
+              - detail
+            description: "Two things in the answer that do not agree, named rather than silently ordered."
+          Budget:
+            type: object
+            properties:
+              limit_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The ceiling this answer was compiled under, in estimated tokens."
+              used_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What the survivors cost.
+              required_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep."
+              remaining_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`limit - used`, floored at zero."
+              over_budget:
+                type: boolean
+                description: True when the required entries alone exceed the limit.
+              bytes_per_token:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Bytes per token, the divisor the estimate uses."
+              tiers:
+                type: array
+                items:
+                  "$ref": "#/$defs/TierSpend"
+                description: "Per tier, in the order the budget spends in."
+            required:
+              - limit_tokens
+              - used_tokens
+              - required_tokens
+              - remaining_tokens
+              - over_budget
+              - bytes_per_token
+              - tiers
+            description: "The budget, and what became of it."
+          TierSpend:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              meaning:
+                type: string
+                description: What it is for.
+              selected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many entries survived in it.
+              excluded:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many were dropped from it for budget.
+              tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tokens the survivors cost.
+              required:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries in it that cannot be dropped.
+            required:
+              - tier
+              - meaning
+              - selected
+              - excluded
+              - tokens
+              - required
+            description: What one tier cost and what it was allowed.
+          Diagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How bad.
+              code:
+                type: string
+                description: "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+              path:
+                type:
+                  - string
+                  - "null"
+                description: "Repository-relative path of the file concerned, when there is one."
+              message:
+                type: string
+                description: "What is wrong, for a person; the code is for a program."
+            required:
+              - severity
+              - code
+              - message
+            description: "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext
+      http:
+        method: GET
+        path: /api/v1/devcontext
+      cli:
+        path:
+          - devcontext
+          - compile
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - session
+      - planning
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 16
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
+  - id: devcontext.explain
+    module: devcontext
+    kind: query
+    title: Why one thing is or is not in a compiled context
+    description: "One canonical identifier judged under a request: whether it was selected, reached and excluded, folded into another identifier, held by the index and never reached, or unknown — with the entry, the exclusion or the collapse itself, and the budget the judgement was made under so that `excluded for budget` can be acted on without a second call."
+    input:
+      name: DevContextExplainInput
+      schema:
+        "$ref": "#/$defs/ExplainInput"
+        description: "The input of `devcontext.explain`: one identifier, and the request to judge it under."
+        title: DevContextExplainInput
+        "$defs":
+          ExplainInput:
+            type: object
+            additionalProperties: false
+            properties:
+              uri:
+                type: string
+                description: The canonical identifier to explain.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "A milestone id or slug, or its canonical identifier."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: "Repository-relative paths the work touches, added to whatever the seeds declare."
+              uris:
+                type: array
+                items:
+                  type: string
+                description: "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              budget_tokens:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+              max_depth:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+              floor:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+              all_blocking_rules:
+                type:
+                  - boolean
+                  - "null"
+                description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+            required:
+              - uri
+            description: "The input of `devcontext.explain`: one identifier, and the request to judge it under."
+    output:
+      name: Explanation
+      schema:
+        type: object
+        properties:
+          uri:
+            type: string
+            description: What was asked about.
+          standing:
+            "$ref": "#/$defs/DevContextStanding"
+            description: Where it stands.
+          detail:
+            type: string
+            description: "The same, in words."
+          entry:
+            anyOf:
+              - "$ref": "#/$defs/ContextEntry"
+              - type: "null"
+            description: "The entry, when it is in the answer."
+          excluded:
+            anyOf:
+              - "$ref": "#/$defs/Excluded"
+              - type: "null"
+            description: "The exclusion, when it was reached and not given."
+          deduplicated:
+            anyOf:
+              - "$ref": "#/$defs/Deduplicated"
+              - type: "null"
+            description: "The collapse it was part of, when it was folded or dropped for another."
+          budget:
+            "$ref": "#/$defs/Budget"
+            description: "The budget the judgement was made under, so that \"excluded for budget\" can be acted\non without a second call."
+        required:
+          - uri
+          - standing
+          - detail
+          - budget
+        description: "Why one identifier is, or is not, in a compiled context."
+        title: Explanation
+        "$defs":
+          DevContextStanding:
+            oneOf:
+              - type: string
+                const: selected
+                description: In the answer.
+              - type: string
+                const: excluded
+                description: Reached and not given; the exclusion says why.
+              - type: string
+                const: deduplicated
+                description: "Folded into another identifier, or dropped for one."
+              - type: string
+                const: not_reached
+                description: The index holds it and this request never reached it.
+              - type: string
+                const: unknown
+                description: The index holds nothing under that identifier.
+            description: "What one identifier's standing in a compiled context is."
+          ContextEntry:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier: `majordomus://<kind>/<identity>`, unique in the answer."
+              kind:
+                type: string
+                description: The kind the layer declared for it.
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "Its title, when it has one."
+              provenance:
+                "$ref": "#/$defs/EntryProvenance"
+                description: Where it lives.
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: "Which tier's budget it is spent from."
+              relevance:
+                type: number
+                format: double
+                description: "0.0 to 1.0, deterministic for a given tree and request. The order within a tier."
+              confidence:
+                type: number
+                format: double
+                description: The highest confidence of any path that reached it.
+              discovered_by:
+                type: array
+                items:
+                  "$ref": "#/$defs/Discovery"
+                description: "Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The shortest number of hops from a seed.
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+              cost_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's bytes, the measured half of the cost."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version or date the object states about itself, when it states one: a rule's\nversion, an ADR's date, an issue's `updated_at`."
+              status:
+                type:
+                  - string
+                  - "null"
+                description: "The status word the object declares, when it declares one."
+              required:
+                type: boolean
+                description: "True when a blocking rule, a policy or the scope: never dropped for budget."
+              facts:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Facts worth carrying about this entry that are not the object's prose — a rule's\nclass, an issue's milestone, the commits an issue's evidence names."
+            required:
+              - uri
+              - kind
+              - provenance
+              - tier
+              - relevance
+              - confidence
+              - discovered_by
+              - depth
+              - cost_tokens
+              - cost_bytes
+              - required
+            description: "One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it."
+          EntryProvenance:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Repository-relative path, forward slashes."
+              directory:
+                type: string
+                description: The directory it sits in.
+              source_class:
+                type: string
+                description: "The `sources.yaml` class that discovered it."
+              section:
+                type:
+                  - string
+                  - "null"
+                description: "The manifest section it falls under, when it falls under one."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Size of the file in bytes.
+            required:
+              - path
+              - directory
+              - source_class
+              - bytes
+            description: "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          Discovery:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: What reached it.
+              reason:
+                type: string
+                description: "Why it was included, in words a person reads without this file."
+              via:
+                type:
+                  - string
+                  - "null"
+                description: "The entry this one was reached from, when it was reached from one."
+              edge:
+                type:
+                  - string
+                  - "null"
+                description: "The edge kind followed, for `Relation`."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Hops from a seed; a seed is 0.
+              confidence:
+                type: number
+                format: double
+                description: "1.0 when the repository declared this path, less when it was inferred."
+              weight:
+                type: number
+                format: double
+                description: "What this path contributes to the entry's relevance."
+            required:
+              - selector
+              - reason
+              - depth
+              - confidence
+              - weight
+            description: "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+          Excluded:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier, or the name the layer used when nothing resolves."
+              kind:
+                type:
+                  - string
+                  - "null"
+                description: "Its kind, when it resolved to something."
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier it would have been spent from.
+              reason:
+                "$ref": "#/$defs/ExclusionReason"
+                description: Why it is not in the answer.
+              detail:
+                type: string
+                description: "The same, in words."
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it would have cost, so that a reader can decide whether to raise the budget."
+              relevance:
+                type: number
+                format: double
+                description: What its relevance was.
+            required:
+              - uri
+              - tier
+              - reason
+              - detail
+              - cost_tokens
+              - relevance
+            description: "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing."
+          ExclusionReason:
+            oneOf:
+              - type: string
+                const: budget
+                description: The budget ran out before its tier was filled.
+              - type: string
+                const: relevance
+                description: Its relevance fell below the floor the request set.
+              - type: string
+                const: depth
+                description: It is beyond the depth the request allows.
+              - type: string
+                const: stale
+                description: The object says it is deprecated or superseded.
+              - type: string
+                const: superseded
+                description: A newer version of the same thing is in the answer.
+              - type: string
+                const: unresolved
+                description: The layer names it and holds nothing under that name.
+            description: Why something the compiler selected did not survive.
+          Deduplicated:
+            type: object
+            properties:
+              kept:
+                type: string
+                description: The entry that survived.
+              dropped:
+                type: array
+                items:
+                  type: string
+                description: "What was folded into it, or dropped for it."
+              key:
+                type: string
+                description: "What made them the same thing: `uri`, `path` or `identity`."
+              detail:
+                type: string
+                description: "The same, in words."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many discovery paths reached the surviving entry.
+            required:
+              - kept
+              - dropped
+              - key
+              - detail
+              - paths
+            description: "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line."
+          Budget:
+            type: object
+            properties:
+              limit_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The ceiling this answer was compiled under, in estimated tokens."
+              used_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What the survivors cost.
+              required_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep."
+              remaining_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`limit - used`, floored at zero."
+              over_budget:
+                type: boolean
+                description: True when the required entries alone exceed the limit.
+              bytes_per_token:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Bytes per token, the divisor the estimate uses."
+              tiers:
+                type: array
+                items:
+                  "$ref": "#/$defs/TierSpend"
+                description: "Per tier, in the order the budget spends in."
+            required:
+              - limit_tokens
+              - used_tokens
+              - required_tokens
+              - remaining_tokens
+              - over_budget
+              - bytes_per_token
+              - tiers
+            description: "The budget, and what became of it."
+          TierSpend:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              meaning:
+                type: string
+                description: What it is for.
+              selected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many entries survived in it.
+              excluded:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many were dropped from it for budget.
+              tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tokens the survivors cost.
+              required:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries in it that cannot be dropped.
+            required:
+              - tier
+              - meaning
+              - selected
+              - excluded
+              - tokens
+              - required
+            description: What one tier cost and what it was allowed.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext_explain
+      http:
+        method: GET
+        path: /api/v1/devcontext/explain
+      cli:
+        path:
+          - devcontext
+          - explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - provenance
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 8
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
+  - id: devcontext.policy
+    module: devcontext
+    kind: query
+    title: "The compiler's own rules"
+    description: "What the compiler decides and how: the tiers in the order the budget spends in with the kinds that land in each, every edge kind the composed graph declares with the relevance multiplier the compiler follows it by in each direction — or the reason it refuses to follow it at all — the selectors with which of them infer rather than read, and the defaults for the budget, the depth and the relevance floor. Read this rather than inferring the policy from an answer."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: CompilerPolicy
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The format of this answer.
+          graph:
+            type: string
+            description: The graph the relations are read from.
+          tiers:
+            type: array
+            items:
+              "$ref": "#/$defs/TierRule"
+            description: "The tiers, in the order the budget spends in."
+          edges:
+            type: array
+            items:
+              "$ref": "#/$defs/EdgeRule"
+            description: "Every edge kind the composed graph has, followed or refused."
+          selectors:
+            type: array
+            items:
+              "$ref": "#/$defs/SelectorRule"
+            description: "The selectors, and which of them infer."
+          default_budget_tokens:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The default ceiling in estimated tokens.
+          default_max_depth:
+            type: integer
+            format: uint
+            minimum: 0
+            description: The default depth limit.
+          default_floor:
+            type: number
+            format: double
+            description: The default relevance floor.
+          bytes_per_token:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Bytes per estimated token.
+        required:
+          - schema
+          - graph
+          - tiers
+          - edges
+          - selectors
+          - default_budget_tokens
+          - default_max_depth
+          - default_floor
+          - bytes_per_token
+        description: "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer."
+        title: CompilerPolicy
+        "$defs":
+          TierRule:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              position:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Its position in the order the budget spends in; 1 is spent first.
+              meaning:
+                type: string
+                description: What it is for.
+              kinds:
+                type: array
+                items:
+                  type: string
+                description: The kinds of object that land in it.
+            required:
+              - tier
+              - position
+              - meaning
+              - kinds
+            description: "One tier, as the policy reports it."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          EdgeRule:
+            type: object
+            properties:
+              edge:
+                type: string
+                description: "The edge kind, as the composed graph names it."
+              means:
+                type: string
+                description: What the graph asserts by it.
+              forward:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The relevance multiplier when followed source to target; absent when refused.
+              reverse:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The multiplier when followed target to source; absent when refused.
+              reason:
+                type: string
+                description: "Why the target is context for the source, or why the edge is refused."
+              refused:
+                type: boolean
+                description: True when the compiler will not follow it in either direction.
+            required:
+              - edge
+              - means
+              - reason
+              - refused
+            description: "One edge of the composed graph, and what the compiler does with it."
+          SelectorRule:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: The selector.
+              declared:
+                type: boolean
+                description: "Declared by the repository, or inferred by the compiler."
+            required:
+              - selector
+              - declared
+            description: "One selector, and whether what it produces was declared or inferred."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext_policy
+        resource:
+          uri: majordomus://devcontext/policy
+          name: devcontext-policy
+      http:
+        method: GET
+        path: /api/v1/devcontext/policy
+      cli:
+        path:
+          - devcontext
+          - policy
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
   - id: devtask.issue
     module: devtask
     kind: query
@@ -12886,12 +14271,12 @@ capabilities:
           excluded:
             type: array
             items:
-              "$ref": "#/$defs/Excluded"
+              "$ref": "#/$defs/ExcludedModel"
             description: "Every model that did not qualify, with its reason."
         description: "The routing answer: what was selected, what stands behind it, who fell out and why.\nThe whole decision is derived from the catalogue and the requirements — run it\ntwice, get it twice; there is no state to consult and no health to guess."
         title: RoutingDecision
         "$defs":
-          Excluded:
+          ExcludedModel:
             type: object
             properties:
               model:

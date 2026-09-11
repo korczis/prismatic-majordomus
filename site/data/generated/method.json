@@ -38,7 +38,7 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>98 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>42 of 98</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>97 of 98</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>95 of 98</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>101 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>45 of 101</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>100 of 101</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>98 of 101</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
     "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>41 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>41 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
@@ -158,6 +158,13 @@
         "http": 3,
         "mcp": 3,
         "module": "deploy"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "devcontext"
       },
       {
         "capabilities": 3,
@@ -286,14 +293,14 @@
         "module": "web"
       }
     ],
-    "capabilities": 98,
+    "capabilities": 101,
     "combinations": [
       {
         "count": 54,
         "surfaces": "http + mcp"
       },
       {
-        "count": 41,
+        "count": 44,
         "surfaces": "cli + http + mcp"
       },
       {
@@ -305,20 +312,20 @@
         "surfaces": "cli"
       }
     ],
-    "modules": 32,
+    "modules": 33,
     "surfaces": [
       {
-        "count": 42,
+        "count": 45,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 97,
+        "count": 100,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 95,
+        "count": 98,
         "id": "mcp",
         "label": "MCP tools and resources"
       }

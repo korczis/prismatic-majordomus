@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [mesh, security, doctrine]
+
+x-majordomus:
+  tests: [scripts/ci/mesh-check, test/cases/130_mesh.sh, apps/majordomus-cli/tests/mesh.rs]
 ---
 
 # Rationale
