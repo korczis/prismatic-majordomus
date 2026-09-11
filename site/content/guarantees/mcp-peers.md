@@ -1,7 +1,7 @@
 +++
 title = "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch"
 description = "When two or three AI clients are open in one checkout, each of them can ask the shared server who else is there. A peer is a session: the server's own stdio client, every bridged majordomus mcp, and every client speaking /mcp directly. It is named by what its client sent in initialize (clientInfo.name and version), numbered p1, p2, ... in attachment order, with its transport, when it attached and when it was last seen. A client can announce one line of intent and the repository-relative paths it expects to touch; the others see it in majordomus_peers and in the instructions they get from initialize, which name the server's URL, the caller's own id and every other peer before the first tool call."
-weight = 115
+weight = 116
 [extra]
 claim_id = "mcp-peers"
 status = "guaranteed"
