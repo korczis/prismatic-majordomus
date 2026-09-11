@@ -140,16 +140,31 @@ mod tests {
     #[test]
     fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
         // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
-        // which fails in the browser and nowhere else. Three occurrences: the stylesheet,
-        // the bundle, and the data-mj-foreign marker the surface audit reads — all from
-        // the one pin.
+        // which fails in the browser and nowhere else.
+        //
+        // The subject is the asset URLs, not every mention of the distribution: the widget
+        // also names it in `data-mj-foreign`, which is a declaration about whose component
+        // tree this is and not a thing the browser fetches. Counting bare occurrences
+        // conflated the two and made this test refuse a correct page, so it counts the
+        // fetched URLs, and separately holds every mention to the pinned version — which
+        // is stronger than the count was, and does not break when another mention is added.
         let shell = page();
+        let fetched = shell
+            .matches(&format!(
+                "https://unpkg.com/swagger-ui-dist@{SWAGGER_UI_VERSION}/"
+            ))
+            .count();
+        assert_eq!(
+            fetched, 2,
+            "the stylesheet and the bundle both come from the pinned version"
+        );
+        let pinned = shell.matches("swagger-ui-dist@").count();
         assert_eq!(
             shell
                 .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
                 .count(),
-            3,
-            "the stylesheet, the bundle and the foreign-surface marker all name the pinned version"
+            pinned,
+            "every mention of the distribution names the pinned version, not only the URLs"
         );
     }
 }
