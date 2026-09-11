@@ -205,6 +205,15 @@ claims:
     responsibility: policy
     note: Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves.
 
+  - id: prompt-continuity
+    claim: A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material
+    source: docs/DOCTRINE.md
+    implementation: lib/capture.sh
+    test: test/cases/140_prompt_continuity.sh
+    status: guaranteed
+    responsibility: policy
+    note: The mapping from a provider session to an episode used to exist only while the episode was open, so a closed episode's prompts became unattributable at once — 713 of this repository's 974 records. The record now carries the episode, the provider session, the repository and the worktree, with the provenance of the link; the archive is 0600 and bounded by prompts.retention_max_days and prompts.retention_max_bytes, which prune the body and keep the record; and credential shapes are replaced before anything is persisted. The unlinked legacy records stay unlinked: the evidence for them does not exist, and this claim does not pretend otherwise.
+
   - id: prompt-assets
     claim: Every repository-local prompt asset renders, and an unknown token is a failure
     source: docs/DOCTRINE.md
