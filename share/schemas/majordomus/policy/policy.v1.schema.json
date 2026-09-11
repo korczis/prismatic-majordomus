@@ -124,6 +124,23 @@
         "ensure_server_on_start": {
           "type": "boolean",
           "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."
+        },
+        "record_sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "description": "The sections a closed episode's record carries in its body, in order. The front matter is what a machine can prove; these are what the episode was for and how it turned out, composed from the worker's own checkpoints and decisions where it left any and from git and the ledger where it did not. A section named here with no writer in lib/derive.sh ends `session close` with exit 10 naming the section, so an unwritable section is a configuration error rather than a silently empty heading."
+        },
+        "commit_record_on_end": {
+          "type": "boolean",
+          "description": "Commit the record the end event publishes. Every surface that reads session records reads the tracked tree, so a record left in the working tree is written, validated, counted healthy and invisible. The commit carries that one path and runs no commit hook. False restores the older behaviour, in which the lifecycle wrote a record and nothing committed it."
+        },
+        "push_record_on_end": {
+          "type": "boolean",
+          "description": "Publish the record commit, as a fast-forward only and through the pre-push hook like any other push. That hook asks whether the task may be published, so the push often will not go out and the record travels with the worker's next push instead."
         }
       }
     },
