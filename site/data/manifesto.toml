@@ -166,9 +166,9 @@ text = "Do the tests match the requirement, or only the implementation?"
 text = "Can this regress silently later?"
 
 [loop]
-kicker = "a control loop"
+kicker = "a control loop — mostly not built"
 title = "An agent does not get to declare success because its patch applied"
-lead = "The same stages, closed: context observes, the plan computes the difference, execution acts, verification measures, and the result is compared against the intent rather than against the diff — replanning until it is satisfied. That is a control system rather than an assistant. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, which is the comparator in that loop."
+lead = "Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists."
 votes_title = "Who gets a vote"
 closing = "Evidence gets the final one."
 
@@ -178,7 +178,7 @@ title = "What is shipped, and what this is becoming"
 lead = "The argument above is a doctrine and a design. Parts of it run today; more of it does not. The matrix at the top of this page is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume."
 shipped_title = "Shipped: the commands behind Context, Verify and Proof"
 planned_title = "Not built: everything the word intent names"
-planned_lead = "There is no intent object, no intent registry and no intent id. Nothing captures a desired outcome or an acceptance criterion, derives a plan from one, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink."
+planned_lead = "There is no intent object, no intent registry and no intent id. An issue here already records its objective, its desired state, its acceptance criteria and the evidence it requires — what is missing is anything above the issue that those roll up to, and any evaluation of those criteria when work is declared done. Nothing derives a plan from a desired outcome, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink."
 
 [doctrine]
 kicker = "the doctrine"

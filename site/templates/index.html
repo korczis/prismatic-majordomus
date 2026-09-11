@@ -292,7 +292,7 @@
   claim                  automatic peer cooperation
   observed               manual registration required
   confidence             high</code></pre></div>
-        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding, and the only invented console output on this page. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
+        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
       </div>
     </div>
   </div>
@@ -510,7 +510,7 @@ PROOF            ▼
     <p class="mt-5 max-w-3xl text-base leading-relaxed text-heading sm:text-lg">{{ x.doctrine.lead }}</p>
     <ul class="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {%- for c in x.doctrine.conditions %}
-      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">{{ c.text }}</span></li>
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-body-subtle">{{ loop.index }}</span><span class="min-w-0">{{ c.text }}</span></li>
       {%- endfor %}
     </ul>
   </div>
