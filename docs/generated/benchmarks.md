@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 101 | 97 | 0 | 4 |
-| http | 100 | 97 | 0 | 3 |
-| mcp | 98 | 95 | 0 | 3 |
+| direct | 105 | 101 | 0 | 4 |
+| http | 104 | 101 | 0 | 3 |
+| mcp | 102 | 99 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 312 | 302 | 0 | 10 |
+| total | 324 | 314 | 0 | 10 |
 
 ## Capabilities
 
@@ -90,6 +90,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
 | `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
@@ -103,6 +104,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
+| `rules.report` | rules | query | — | covered | covered | covered | `all`, `findings`, `blocking` |
+| `rules.show` | rules | query | — | covered | covered | covered | `first` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |

@@ -1338,6 +1338,23 @@
       "tool": "majordomus_plan_status"
     },
     {
+      "api_anchor": "/docs/api/#op-plan-transition",
+      "claims": [],
+      "cli": null,
+      "id": "plan.transition",
+      "kind": "command",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-transition/",
+      "slug": "plan-transition",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Move one issue through the lifecycle",
+      "tool": "majordomus_plan_transition"
+    },
+    {
       "api_anchor": "/docs/api/#op-plan-validate",
       "claims": [],
       "cli": null,
@@ -1557,6 +1574,57 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-rules-proves",
+      "claims": [],
+      "cli": "majordomus rules proves",
+      "id": "rules.proves",
+      "kind": "query",
+      "module": "rules",
+      "module_route": "/registry/modules/rules/",
+      "resource": null,
+      "route": "/registry/capabilities/rules-proves/",
+      "slug": "rules-proves",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "tests": [],
+      "title": "What this test proves",
+      "tool": "majordomus_rule_proves"
+    },
+    {
+      "api_anchor": "/docs/api/#op-rules-report",
+      "claims": [],
+      "cli": "majordomus rules report",
+      "id": "rules.report",
+      "kind": "query",
+      "module": "rules",
+      "module_route": "/registry/modules/rules/",
+      "resource": "majordomus://rules",
+      "route": "/registry/capabilities/rules-report/",
+      "slug": "rules-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "tests": [],
+      "title": "Every rule against the proof there is for it",
+      "tool": "majordomus_rules"
+    },
+    {
+      "api_anchor": "/docs/api/#op-rules-show",
+      "claims": [],
+      "cli": "majordomus rules show",
+      "id": "rules.show",
+      "kind": "query",
+      "module": "rules",
+      "module_route": "/registry/modules/rules/",
+      "resource": null,
+      "route": "/registry/capabilities/rules-show/",
+      "slug": "rules-show",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "tests": [],
+      "title": "What proves this rule",
+      "tool": "majordomus_rule"
     },
     {
       "api_anchor": "/docs/api/#op-server-status",
@@ -2058,6 +2126,13 @@
         "test": "test/cases/124_evidence.sh"
       },
       {
+        "id": "rule-state-is-derived-from-what-ran",
+        "implementation": "apps/majordomus-cli/src/rules/mod.rs",
+        "route": "/guarantees/rule-state-is-derived-from-what-ran/",
+        "status": "guaranteed",
+        "test": "test/cases/133_rule_graph.sh"
+      },
+      {
         "id": "evidence-currency-is-not-collapsed",
         "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
         "route": "/guarantees/evidence-currency-is-not-collapsed/",
@@ -2169,9 +2244,9 @@
     ]
   },
   "counts": {
-    "capabilities": 101,
-    "claims": 47,
-    "modules": 33
+    "capabilities": 105,
+    "claims": 48,
+    "modules": 34
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -2799,6 +2874,11 @@
           "slug": "plan-status"
         },
         {
+          "id": "plan.transition",
+          "route": "/registry/capabilities/plan-transition/",
+          "slug": "plan-transition"
+        },
+        {
           "id": "plan.validate",
           "route": "/registry/capabilities/plan-validate/",
           "slug": "plan-validate"
@@ -2915,6 +2995,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "rules.proves",
+          "route": "/registry/capabilities/rules-proves/",
+          "slug": "rules-proves"
+        },
+        {
+          "id": "rules.report",
+          "route": "/registry/capabilities/rules-report/",
+          "slug": "rules-report"
+        },
+        {
+          "id": "rules.show",
+          "route": "/registry/capabilities/rules-show/",
+          "slug": "rules-show"
+        }
+      ],
+      "claims": [],
+      "id": "rules",
+      "route": "/registry/modules/rules/",
+      "slug": "rules",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/rules.rs",
+      "title": "Rules"
     },
     {
       "capabilities": [

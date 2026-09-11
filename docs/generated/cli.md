@@ -5,9 +5,9 @@
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.
+The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.
 
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.
 
 Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../../apps/majordomus-cli/src/cli.rs), together with its examples; this file is a projection of that declaration, as `--help` is, as `docs/generated/cli.json` is, and as the website's reference under `/docs/cli/` is. Every example printed here is executed against the built executable by `apps/majordomus-cli/tests/cli_examples.rs`. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the *shell* tool `bin/majordomus`, a different program, documented in `docs/CLI.md`.
 
@@ -15,8 +15,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 | command | route | does |
 |---|---|---|
-| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
-| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
+| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio |
+| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ |
 | [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
 | [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
 | [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go |
@@ -131,13 +131,17 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
 | [`majordomus evidence proves`](#majordomus-evidence-proves) | `/docs/cli/evidence/proves/` | One test: its latest execution and every claim it proves |
 | [`majordomus evidence record`](#majordomus-evidence-record) | `/docs/cli/evidence/record/` | Record a run that happened into the ledger |
+| [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
+| [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
+| [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
+| [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
 
 ```text
 majordomus <COMMAND>
@@ -148,7 +152,7 @@ Arguments: none.
 <a id="majordomus-mcp"></a>
 ## `majordomus mcp`
 
-Serve the repository's AI layer to an MCP client over stdio (read-only)
+Serve the repository's AI layer to an MCP client over stdio
 
 ```text
 majordomus mcp [OPTIONS]
@@ -196,7 +200,7 @@ Examples:
 <a id="majordomus-serve"></a>
 ## `majordomus serve`
 
-Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
+Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
 
 Subcommands: [`majordomus serve status`](#majordomus-serve-status), [`majordomus serve ensure`](#majordomus-serve-ensure), [`majordomus serve stop`](#majordomus-serve-stop).
 
@@ -3628,4 +3632,111 @@ Examples:
   ```
 
   Verified: exits 13.
+
+<a id="majordomus-rules"></a>
+## `majordomus rules`
+
+Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
+
+Subcommands: [`majordomus rules report`](#majordomus-rules-report), [`majordomus rules show`](#majordomus-rules-show), [`majordomus rules proves`](#majordomus-rules-proves).
+
+```text
+majordomus rules [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-rules-report"></a>
+## `majordomus rules report`
+
+Every rule against the proof there is for it
+
+```text
+majordomus rules report [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--state` | `<STATE>` | — | Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven) |
+| `--class` | `<CLASS>` | — | Only rules of this class (blocking, advisory) |
+| `--namespace` | `<NAMESPACE>` | — | Only rules of this namespace (project, majordomus) |
+| `--findings` | flag | — | Only the rules whose declared class the proof does not support |
+| `--check` | flag | — | Exit 10 when a rule declares a class the proof does not support |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every rule against the proof there is for it** — The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.
+
+  ```console
+  $ majordomus rules report --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /rules, /states, /coverage/rules, /findings.
+
+<a id="majordomus-rules-show"></a>
+## `majordomus rules show`
+
+One rule: what proves it, what it depends on, and what is missing
+
+```text
+majordomus rules show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The rule id, with or without its version |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A rule the repository does not declare** — A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.
+
+  ```console
+  $ majordomus rules show project.no-such-rule
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-rules-proves"></a>
+## `majordomus rules proves`
+
+One test: every rule it proves, and the rules that would be left with none
+
+```text
+majordomus rules proves [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | `suite:<case>`, `crate:<binary>`, or the path a rule names it with |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a case proves, and what would lose its only proof** — The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.
+
+  ```console
+  $ majordomus rules proves test/cases/125_rule_proof.sh --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
 

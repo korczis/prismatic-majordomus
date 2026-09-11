@@ -13,7 +13,7 @@
     "executable": false,
     "usage": "majordomus <COMMAND>",
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
-    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.\n\nMost of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.",
     "args": [],
     "examples": [],
     "subcommands": [
@@ -25,7 +25,7 @@
         "route": "/docs/cli/mcp/",
         "executable": true,
         "usage": "majordomus mcp [OPTIONS]",
-        "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+        "about": "Serve the repository's AI layer to an MCP client over stdio",
         "args": [
           {
             "name": "repo",
@@ -237,7 +237,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS] [COMMAND]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
         "args": [
           {
             "name": "repo",
@@ -16596,6 +16596,533 @@
                 "command": "majordomus evidence record --suite target/no-such-run.tsv",
                 "setup": [],
                 "expectation": "exits 13"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "rules"
+        ],
+        "route": "/docs/cli/rules/",
+        "executable": false,
+        "usage": "majordomus rules [OPTIONS] <COMMAND>",
+        "about": "Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "rules",
+              "report"
+            ],
+            "route": "/docs/cli/rules/report/",
+            "executable": true,
+            "usage": "majordomus rules report [OPTIONS]",
+            "about": "Every rule against the proof there is for it",
+            "args": [
+              {
+                "name": "state",
+                "long": "state",
+                "positional": false,
+                "help": "Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven)",
+                "value_name": "STATE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "class",
+                "long": "class",
+                "positional": false,
+                "help": "Only rules of this class (blocking, advisory)",
+                "value_name": "CLASS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "namespace",
+                "long": "namespace",
+                "positional": false,
+                "help": "Only rules of this namespace (project, majordomus)",
+                "value_name": "NAMESPACE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "findings",
+                "long": "findings",
+                "positional": false,
+                "help": "Only the rules whose declared class the proof does not support",
+                "value_name": "FINDINGS",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "check",
+                "long": "check",
+                "positional": false,
+                "help": "Exit 10 when a rule declares a class the proof does not support",
+                "value_name": "CHECK",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "rules-report-json",
+                "title": "Every rule against the proof there is for it",
+                "description": "The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.",
+                "argv": [
+                  "rules",
+                  "report",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus rules report --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /rules, /states, /coverage/rules, /findings"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "rules",
+              "show"
+            ],
+            "route": "/docs/cli/rules/show/",
+            "executable": true,
+            "usage": "majordomus rules show [OPTIONS] <ID>",
+            "about": "One rule: what proves it, what it depends on, and what is missing",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "The rule id, with or without its version",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "rules-show-absent",
+                "title": "A rule the repository does not declare",
+                "description": "A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+                "argv": [
+                  "rules",
+                  "show",
+                  "project.no-such-rule"
+                ],
+                "command": "majordomus rules show project.no-such-rule",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "rules",
+              "proves"
+            ],
+            "route": "/docs/cli/rules/proves/",
+            "executable": true,
+            "usage": "majordomus rules proves [OPTIONS] <ID>",
+            "about": "One test: every rule it proves, and the rules that would be left with none",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "`suite:<case>`, `crate:<binary>`, or the path a rule names it with",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "rules-proves-case",
+                "title": "What a case proves, and what would lose its only proof",
+                "description": "The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.",
+                "argv": [
+                  "rules",
+                  "proves",
+                  "test/cases/125_rule_proof.sh",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus rules proves test/cases/125_rule_proof.sh --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path"
               }
             ],
             "subcommands": []

@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.5.0
 coverage:
   - scope: direct
-    required: 101
-    covered: 97
+    required: 105
+    covered: 101
     missing: 0
     waived: 4
   - scope: http
-    required: 100
-    covered: 97
+    required: 104
+    covered: 101
     missing: 0
     waived: 3
   - scope: mcp
-    required: 98
-    covered: 95
+    required: 102
+    covered: 99
     missing: 0
     waived: 3
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 312
-    covered: 302
+    required: 324
+    covered: 314
     missing: 0
     waived: 10
 capabilities:
@@ -699,6 +699,15 @@ capabilities:
     cases:
       - whole-plan
       - one-milestone
+  - id: plan.transition
+    module: plan
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - refused-by-status
   - id: plan.validate
     module: plan
     kind: query
@@ -824,6 +833,35 @@ capabilities:
       - secret
       - undeclared
       - first-object
+  - id: rules.proves
+    module: rules
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - suite
+  - id: rules.report
+    module: rules
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - findings
+      - blocking
+  - id: rules.show
+    module: rules
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first
   - id: server.status
     module: server
     kind: query
