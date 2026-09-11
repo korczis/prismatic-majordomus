@@ -214,6 +214,11 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "rule:majordomus.prompt-capture"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.session-lifecycle",
       "target": "rule:majordomus.session-records"
     },
@@ -351,6 +356,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.prompt-capture",
       "target": "validator:prompt_capture"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "validator:prompt_continuity"
     },
     {
       "kind": "decided_by",
@@ -664,6 +674,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:prompts",
       "target": "command:doctor"
     },
@@ -941,6 +961,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.prompt-capture",
       "target": "test:test/cases/29_prompt_capture.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "test:test/cases/140_prompt_continuity.sh"
     },
     {
       "kind": "proved_by",
@@ -1361,6 +1386,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.prompt-continuity",
+      "kind": "rule",
+      "label": "prompt-continuity",
+      "note": "exit 10 · prompts",
+      "role": "text",
+      "route": "/doctrines/prompt-continuity/",
+      "status": "blocking",
+      "summary": "Every captured prompt names the episode it belongs to or says why it cannot; the archive is readable by its owner alone, bounded by a declared retention policy, and never holds credential material verbatim."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.prompt-integrity",
       "kind": "rule",
       "label": "prompt-integrity",
@@ -1726,6 +1762,14 @@
     },
     {
       "external": false,
+      "id": "validator:prompt_continuity",
+      "kind": "validator",
+      "label": "mj_validate_prompt_continuity",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/capture.sh."
+    },
+    {
+      "external": false,
       "id": "validator:prompts",
       "kind": "validator",
       "label": "mj_validate_prompts",
@@ -1921,6 +1965,14 @@
       "id": "test:test/cases/103_obligations.sh",
       "kind": "test",
       "label": "test/cases/103_obligations.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "test",
+      "label": "test/cases/140_prompt_continuity.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

@@ -114,6 +114,22 @@ fn refuse_foreign_generation(app: &App) -> Result<()> {
     if package_field(&text, "name").as_deref() != Some(CRATE_NAME) {
         return Ok(());
     }
+    // A manifest with no crate root beside it is not a crate this executable could have
+    // been built from, and a generation computed over it is a hash of a few files rather
+    // than of a model. The tree that does this on purpose is a fixture: a repository
+    // written to say "the crate lives here", so that the generator projects the design into
+    // it. Reading that as a foreign generation refused three cases for a property their
+    // subject does not have — and it was the same refusal that protects a real checkout, so
+    // it could not be told apart from the thing it exists to catch.
+    //
+    // The test is the crate root — `src/lib.rs` or `src/main.rs` — and not the presence of
+    // `src/`, because this command writes `src/web/tokens.css` and `src/design/tokens.yaml`
+    // into the tree it generates: a directory this executable created a moment ago is not
+    // evidence that the tree carries the crate. A real checkout always has the root; a
+    // distribution carries no manifest and left above.
+    if !crate_dir.join("src/lib.rs").is_file() && !crate_dir.join("src/main.rs").is_file() {
+        return Ok(());
+    }
     if let Some(declared) = package_version(&text) {
         if declared != crate::VERSION {
             return Err(Error::Refused {
@@ -283,7 +299,9 @@ fn package_field(text: &str, key: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{package_field, package_version, short, CRATE_NAME, PROVENANCE_MEMBERS, REFUSED};
+    use super::{
+        package_field, package_version, short, CRATE_DIR, CRATE_NAME, PROVENANCE_MEMBERS, REFUSED,
+    };
 
     #[test]
     fn a_short_digest_is_short_and_never_panics_on_a_short_input() {
@@ -370,5 +388,55 @@ mod tests {
     fn a_trailing_comment_is_not_part_of_the_version() {
         let manifest = "[package]\nversion = \"1.2.3\"   # bumped by `release version`\n";
         assert_eq!(package_version(manifest).as_deref(), Some("1.2.3"));
+    }
+
+    /// The guard's subject is a crate, and a directory holding only a manifest is not one.
+    /// Both directions, because the exemption is only safe while the loaded case still
+    /// refuses: a tree that carries source of another generation is what this protects.
+    #[test]
+    fn a_manifest_with_no_source_beside_it_is_not_a_crate_of_any_generation() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let crate_dir = dir.path().join(CRATE_DIR);
+        std::fs::create_dir_all(&crate_dir).expect("crate dir");
+        std::fs::write(
+            crate_dir.join("Cargo.toml"),
+            format!(
+                "[package]\nname = \"{CRATE_NAME}\"\nversion = \"{}\"\n",
+                crate::VERSION
+            ),
+        )
+        .expect("manifest");
+
+        assert!(
+            crate::generation::crate_generation(&crate_dir).is_some(),
+            "a manifest alone still hashes to something, which is the trap"
+        );
+        assert_ne!(
+            crate::generation::crate_generation(&crate_dir).as_deref(),
+            Some(crate::GENERATION),
+            "and that something is not this executable's generation"
+        );
+        assert!(
+            !crate_dir.join("src/lib.rs").is_file() && !crate_dir.join("src/main.rs").is_file(),
+            "the fixture under test carries no crate root"
+        );
+
+        // and what this command writes into the tree it generates does not make one: a
+        // `src/` full of generated stylesheets is still not a crate
+        std::fs::create_dir_all(crate_dir.join("src/web")).expect("src/web");
+        std::fs::write(crate_dir.join("src/web/tokens.css"), ":root{}\n").expect("token css");
+        assert!(
+            !crate_dir.join("src/lib.rs").is_file() && !crate_dir.join("src/main.rs").is_file(),
+            "a directory the generator created is not evidence of the crate"
+        );
+
+        // with a crate root beside it, the generation is the tree's and differs from ours:
+        // the case the guard exists for, still a refusal
+        std::fs::write(crate_dir.join("src/main.rs"), "fn main() {}\n").expect("source");
+        assert!(crate_dir.join("src/main.rs").is_file());
+        assert_ne!(
+            crate::generation::crate_generation(&crate_dir).as_deref(),
+            Some(crate::GENERATION)
+        );
     }
 }

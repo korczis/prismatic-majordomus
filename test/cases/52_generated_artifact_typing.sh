@@ -44,10 +44,25 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
     markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
     # A generated script cannot carry its banner first: the first line belongs to the
     # interpreter. The banner is still required, on the line after the shebang.
+    #
+    # `text` is every encoding with no schema, and they do not share a comment syntax: a
+    # stylesheet opens one with `/*` and an SVG with `<!--`, where a `#` would be a syntax
+    # error. The generator already knows this — `generate::text_comment_opening` maps the
+    # suffix to the opening, with doctests — and this case did not, so it read the correct
+    # banner of eight design artifacts as no banner at all. The mapping below is that
+    # function's; if one moves, the other must, and `majordomus generate` is the source.
     yaml|text)
+      case "$format" in
+        yaml) open='#' ;;
+        *) case "$path" in
+             *.css|*.js|*.mjs) open='/\*' ;;
+             *.svg|*.html|*.xml) open='<!--' ;;
+             *) open='#' ;;
+           esac ;;
+      esac
       if head -n 1 "$f" | grep -q '^#!'; then line=2; else line=1; fi
-      head -n "$line" "$f" | tail -n 1 | grep -q '^# GENERATED FILE' \
-        || { echo "    $path carries no banner"; exit 1; } ;;
+      head -n "$line" "$f" | tail -n 1 | grep -q "^$open GENERATED FILE" \
+        || { echo "    $path carries no banner ($open GENERATED FILE, the form its encoding allows)"; exit 1; } ;;
     json) jq -e '(.generated // .["x-majordomus-generated"] // "") | startswith("GENERATED FILE")' "$f" >/dev/null \
             || { echo "    $path says nothing about being generated"; exit 1; } ;;
     *) echo "    $path declares the unknown encoding $format"; exit 1 ;;
