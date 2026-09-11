@@ -54,6 +54,7 @@ pub mod release;
 pub mod repository;
 mod scope;
 pub mod server;
+pub mod session_domain;
 pub mod trace;
 mod views;
 pub mod web;
@@ -112,6 +113,7 @@ pub use server::{
     Checkouts, Desired, LeaseView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
     SERVER_URI,
 };
+pub use session_domain::{IdentityReport, MachineReport, IDENTITY_URI, MACHINE_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -139,6 +141,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         executions,
         peers,
         server,
+        session_domain,
         perf,
         plan,
         directories,
