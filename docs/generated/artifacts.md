@@ -233,7 +233,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `5a9eb4b9a098bd40` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 61048 | `40a3928755f2bac4` |
 | `site/data/registry/product.json` | `site-product` | json | 305305 | `0e6fce3f1fde23ac` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2548444 | `99b7a50b7450889d` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2548444 | `f397b64f89a85d76` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `840609c69b09d1f7` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `c7422aeb14f1ddcc` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `d955b7757408c4a4` |
