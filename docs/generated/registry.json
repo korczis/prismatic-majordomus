@@ -76,6 +76,14 @@
       "capabilities": 2
     },
     {
+      "id": "evidence",
+      "title": "Evidence",
+      "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 4
+    },
+    {
       "id": "executions",
       "title": "Executions",
       "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
@@ -9040,6 +9048,1374 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs"
+    },
+    {
+      "id": "evidence.claim",
+      "module": "evidence",
+      "kind": "query",
+      "title": "What proves this claim",
+      "description": "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give.",
+      "input": {
+        "name": "EvidenceClaimInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "claim": {
+              "type": "string",
+              "description": "The claim id, as `docs/CLAIMS.yaml` spells it."
+            }
+          },
+          "required": [
+            "claim"
+          ],
+          "description": "One claim of the matrix.",
+          "title": "EvidenceClaimInput"
+        }
+      },
+      "output": {
+        "name": "ClaimEvidence",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The claim's id, as `docs/CLAIMS.yaml` spells it."
+            },
+            "claim": {
+              "type": "string",
+              "description": "The claim sentence."
+            },
+            "status": {
+              "type": "string",
+              "description": "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The document that defines the behaviour."
+            },
+            "implementation": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The file that implements it."
+            },
+            "test_path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The path the claim names as its test, verbatim."
+            },
+            "test": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The test's stable identity, when a runner owns it."
+            },
+            "state": {
+              "$ref": "#/$defs/ProofState",
+              "description": "What the repository can say about the proof."
+            },
+            "meaning": {
+              "type": "string",
+              "description": "That state, in one sentence."
+            },
+            "execution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceExecution"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The execution the state was derived from, when there is one."
+            },
+            "changed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+            },
+            "reproduce": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The command that produces the proof again, when a runner owns the test."
+            },
+            "executions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvidenceExecution"
+              },
+              "description": "Every execution the ledger holds for this claim's test — today one, the latest, and\na list because the ledger's retention is a decision that may change and a client\nthat read a bare object would break when it did."
+            },
+            "also_proves": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The other claims the same test proves. A test shared by twelve claims is a test\nwhose failure is twelve findings, and a reader of one of them should be able to see\nthe other eleven without searching."
+            }
+          },
+          "required": [
+            "id",
+            "claim",
+            "status",
+            "state",
+            "meaning",
+            "changed",
+            "executions",
+            "also_proves"
+          ],
+          "description": "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.",
+          "title": "ClaimEvidence",
+          "$defs": {
+            "ProofState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "proven",
+                  "description": "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+                },
+                {
+                  "type": "string",
+                  "const": "inputs_unchanged",
+                  "description": "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+                },
+                {
+                  "type": "string",
+                  "const": "failing",
+                  "description": "The latest run of this claim's test did not pass."
+                },
+                {
+                  "type": "string",
+                  "const": "not_run",
+                  "description": "The claim names a test a runner owns, and no run of it has ever been recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "unrunnable",
+                  "description": "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+                },
+                {
+                  "type": "string",
+                  "const": "no_test",
+                  "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+                }
+              ],
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+            },
+            "EvidenceExecution": {
+              "type": "object",
+              "properties": {
+                "test": {
+                  "type": "string",
+                  "description": "The test, in [`TestId::as_string`] form."
+                },
+                "runner": {
+                  "$ref": "#/$defs/EvidenceRunner",
+                  "description": "Which runner produced it."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The test's own source, repository-relative."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/EvidenceOutcome",
+                  "description": "What it said."
+                },
+                "seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, in whole seconds."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The full commit id the run was made against."
+                },
+                "working_tree": {
+                  "type": "string",
+                  "description": "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339, UTC."
+                },
+                "origin": {
+                  "$ref": "#/$defs/EvidenceOrigin",
+                  "description": "Where the run happened."
+                },
+                "command": {
+                  "type": "string",
+                  "description": "The exact command that runs this one test again."
+                }
+              },
+              "required": [
+                "test",
+                "runner",
+                "source",
+                "outcome",
+                "seconds",
+                "commit",
+                "working_tree",
+                "digest",
+                "at",
+                "origin",
+                "command"
+              ],
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+            },
+            "EvidenceRunner": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "A behavioural case under `test/cases/`, run by `test/run.sh`."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+                }
+              ],
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+            },
+            "EvidenceOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                },
+                {
+                  "type": "string",
+                  "const": "skip",
+                  "description": "It declined to run and said so (an unmet precondition the case reports itself)."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "The bound fired before it finished."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The harness could not run it at all."
+                }
+              ],
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+            },
+            "EvidenceOrigin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Someone ran it on their own machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "A continuous-integration run."
+                },
+                {
+                  "type": "string",
+                  "const": "release",
+                  "description": "A release run."
+                }
+              ],
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::evidence"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_evidence_claim"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/evidence/claim"
+        },
+        "cli": {
+          "path": [
+            "evidence",
+            "claim"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "evidence",
+        "claims",
+        "verification",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+    },
+    {
+      "id": "evidence.record",
+      "module": "evidence",
+      "kind": "command",
+      "title": "Record a run that happened",
+      "description": "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing.",
+      "input": {
+        "name": "EvidenceRecordInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "suite": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The runner's TSV report: `MJ_TEST_REPORT=<file> bash test/run.sh`."
+            },
+            "crate_output": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A file holding `cargo test`'s output, for the crate's own integration tests."
+            },
+            "origin": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Where the run happened: `local` (the default), `ci` or `release`."
+            }
+          },
+          "description": "A run to record into the ledger.",
+          "title": "EvidenceRecordInput"
+        }
+      },
+      "output": {
+        "name": "RecordReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "recorded": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many executions were written."
+            },
+            "passed": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of them passed."
+            },
+            "commit": {
+              "type": "string",
+              "description": "The commit they were recorded against."
+            },
+            "working_tree": {
+              "type": "string",
+              "description": "The tree's state at the time."
+            },
+            "unknown": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Results the run named that no runner in this repository owns."
+            },
+            "ledger": {
+              "type": "string",
+              "description": "Where the ledger was written."
+            }
+          },
+          "required": [
+            "recorded",
+            "passed",
+            "commit",
+            "working_tree",
+            "unknown",
+            "ledger"
+          ],
+          "description": "What a recording did.",
+          "title": "RecordReport"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::evidence"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "evidence",
+            "record"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "evidence",
+        "tests",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+    },
+    {
+      "id": "evidence.report",
+      "module": "evidence",
+      "kind": "query",
+      "title": "Every claim against the evidence recorded for it",
+      "description": "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+      "input": {
+        "name": "EvidenceReportInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "state": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ProofState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `no_test`). Absent: every claim."
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).\nAbsent: every claim."
+            },
+            "findings_only": {
+              "type": "boolean",
+              "description": "Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined."
+            }
+          },
+          "description": "Which part of the matrix to answer for.",
+          "title": "EvidenceReportInput",
+          "$defs": {
+            "ProofState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "proven",
+                  "description": "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+                },
+                {
+                  "type": "string",
+                  "const": "inputs_unchanged",
+                  "description": "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+                },
+                {
+                  "type": "string",
+                  "const": "failing",
+                  "description": "The latest run of this claim's test did not pass."
+                },
+                {
+                  "type": "string",
+                  "const": "not_run",
+                  "description": "The claim names a test a runner owns, and no run of it has ever been recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "unrunnable",
+                  "description": "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+                },
+                {
+                  "type": "string",
+                  "const": "no_test",
+                  "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+                }
+              ],
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "EvidenceReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "head": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The commit the report was derived against."
+            },
+            "working_tree": {
+              "type": "string",
+              "description": "`clean`, `dirty` or `unknown`."
+            },
+            "ledger": {
+              "$ref": "#/$defs/EvidenceLedgerSummary",
+              "description": "The ledger this was joined against."
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvidenceClaimProof"
+              },
+              "description": "Every claim, in the matrix's own order."
+            },
+            "totals": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0
+              },
+              "description": "How many claims are in each state."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvidenceFinding"
+              },
+              "description": "Claims whose declared status the evidence does not support."
+            }
+          },
+          "required": [
+            "working_tree",
+            "ledger",
+            "claims",
+            "totals",
+            "findings"
+          ],
+          "description": "The whole joined picture: every claim of the matrix against every execution recorded.",
+          "title": "EvidenceReport",
+          "$defs": {
+            "EvidenceLedgerSummary": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Where it lives, repository-relative."
+                },
+                "present": {
+                  "type": "boolean",
+                  "description": "Is there one?"
+                },
+                "executions": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many executions it holds."
+                },
+                "newest": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The newest `at` in it, when it holds any."
+                },
+                "commits": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The distinct commits its executions were recorded against."
+                }
+              },
+              "required": [
+                "path",
+                "present",
+                "executions",
+                "commits"
+              ],
+              "description": "What the ledger is and whether it is there at all."
+            },
+            "EvidenceClaimProof": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The claim's id, as `docs/CLAIMS.yaml` spells it."
+                },
+                "claim": {
+                  "type": "string",
+                  "description": "The claim sentence."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The document that defines the behaviour."
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The file that implements it."
+                },
+                "test_path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The path the claim names as its test, verbatim."
+                },
+                "test": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The test's stable identity, when a runner owns it."
+                },
+                "state": {
+                  "$ref": "#/$defs/ProofState",
+                  "description": "What the repository can say about the proof."
+                },
+                "meaning": {
+                  "type": "string",
+                  "description": "That state, in one sentence."
+                },
+                "execution": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceExecution"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The execution the state was derived from, when there is one."
+                },
+                "changed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+                },
+                "reproduce": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The command that produces the proof again, when a runner owns the test."
+                }
+              },
+              "required": [
+                "id",
+                "claim",
+                "status",
+                "state",
+                "meaning",
+                "changed"
+              ],
+              "description": "One claim, joined to whatever the repository actually recorded about it."
+            },
+            "ProofState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "proven",
+                  "description": "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+                },
+                {
+                  "type": "string",
+                  "const": "inputs_unchanged",
+                  "description": "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+                },
+                {
+                  "type": "string",
+                  "const": "failing",
+                  "description": "The latest run of this claim's test did not pass."
+                },
+                {
+                  "type": "string",
+                  "const": "not_run",
+                  "description": "The claim names a test a runner owns, and no run of it has ever been recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "unrunnable",
+                  "description": "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+                },
+                {
+                  "type": "string",
+                  "const": "no_test",
+                  "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+                }
+              ],
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+            },
+            "EvidenceExecution": {
+              "type": "object",
+              "properties": {
+                "test": {
+                  "type": "string",
+                  "description": "The test, in [`TestId::as_string`] form."
+                },
+                "runner": {
+                  "$ref": "#/$defs/EvidenceRunner",
+                  "description": "Which runner produced it."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The test's own source, repository-relative."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/EvidenceOutcome",
+                  "description": "What it said."
+                },
+                "seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, in whole seconds."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The full commit id the run was made against."
+                },
+                "working_tree": {
+                  "type": "string",
+                  "description": "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339, UTC."
+                },
+                "origin": {
+                  "$ref": "#/$defs/EvidenceOrigin",
+                  "description": "Where the run happened."
+                },
+                "command": {
+                  "type": "string",
+                  "description": "The exact command that runs this one test again."
+                }
+              },
+              "required": [
+                "test",
+                "runner",
+                "source",
+                "outcome",
+                "seconds",
+                "commit",
+                "working_tree",
+                "digest",
+                "at",
+                "origin",
+                "command"
+              ],
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+            },
+            "EvidenceRunner": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "A behavioural case under `test/cases/`, run by `test/run.sh`."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+                }
+              ],
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+            },
+            "EvidenceOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                },
+                {
+                  "type": "string",
+                  "const": "skip",
+                  "description": "It declined to run and said so (an unmet precondition the case reports itself)."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "The bound fired before it finished."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The harness could not run it at all."
+                }
+              ],
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+            },
+            "EvidenceOrigin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Someone ran it on their own machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "A continuous-integration run."
+                },
+                {
+                  "type": "string",
+                  "const": "release",
+                  "description": "A release run."
+                }
+              ],
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+            },
+            "EvidenceFinding": {
+              "type": "object",
+              "properties": {
+                "claim": {
+                  "type": "string",
+                  "description": "The claim."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "What the claim says it is."
+                },
+                "state": {
+                  "$ref": "#/$defs/ProofState",
+                  "description": "What the evidence supports."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why this is a finding."
+                },
+                "reproduce": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What to run, when running something would settle it."
+                }
+              },
+              "required": [
+                "claim",
+                "status",
+                "state",
+                "reason"
+              ],
+              "description": "A claim whose declared status the evidence does not support."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::evidence"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_evidence",
+          "resource": {
+            "uri": "majordomus://evidence",
+            "name": "evidence"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/evidence"
+        },
+        "cli": {
+          "path": [
+            "evidence",
+            "show"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "evidence",
+        "claims",
+        "tests",
+        "verification",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs"
+    },
+    {
+      "id": "evidence.test",
+      "module": "evidence",
+      "kind": "query",
+      "title": "What this test proves",
+      "description": "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.",
+      "input": {
+        "name": "EvidenceTestInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "test": {
+              "type": "string",
+              "description": "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity."
+            }
+          },
+          "required": [
+            "test"
+          ],
+          "description": "One test, by its stable identity or by the path a claim names it with.",
+          "title": "EvidenceTestInput"
+        }
+      },
+      "output": {
+        "name": "TestEvidence",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "test": {
+              "type": "string",
+              "description": "The stable identity: `suite:<case>` or `crate:<binary>`."
+            },
+            "runner": {
+              "$ref": "#/$defs/EvidenceRunner",
+              "description": "Which runner owns it."
+            },
+            "source": {
+              "type": "string",
+              "description": "Its own source, repository-relative."
+            },
+            "present": {
+              "type": "boolean",
+              "description": "Whether that source is in this checkout."
+            },
+            "reproduce": {
+              "type": "string",
+              "description": "The command that runs this one test."
+            },
+            "execution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceExecution"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The latest recorded execution, when there is one."
+            },
+            "digest_matches": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Whether the test's source still hashes to what the execution recorded. `None` when\nthere is no execution, or the source is not there to hash."
+            },
+            "proves": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/EvidenceClaimProof"
+              },
+              "description": "Every claim that names this test, with the state each is in."
+            }
+          },
+          "required": [
+            "test",
+            "runner",
+            "source",
+            "present",
+            "reproduce",
+            "proves"
+          ],
+          "description": "One test, and what it proves.",
+          "title": "TestEvidence",
+          "$defs": {
+            "EvidenceRunner": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "suite",
+                  "description": "A behavioural case under `test/cases/`, run by `test/run.sh`."
+                },
+                {
+                  "type": "string",
+                  "const": "crate",
+                  "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+                }
+              ],
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+            },
+            "EvidenceExecution": {
+              "type": "object",
+              "properties": {
+                "test": {
+                  "type": "string",
+                  "description": "The test, in [`TestId::as_string`] form."
+                },
+                "runner": {
+                  "$ref": "#/$defs/EvidenceRunner",
+                  "description": "Which runner produced it."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "The test's own source, repository-relative."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/EvidenceOutcome",
+                  "description": "What it said."
+                },
+                "seconds": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long it took, in whole seconds."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The full commit id the run was made against."
+                },
+                "working_tree": {
+                  "type": "string",
+                  "description": "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+                },
+                "digest": {
+                  "type": "string",
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                },
+                "at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339, UTC."
+                },
+                "origin": {
+                  "$ref": "#/$defs/EvidenceOrigin",
+                  "description": "Where the run happened."
+                },
+                "command": {
+                  "type": "string",
+                  "description": "The exact command that runs this one test again."
+                }
+              },
+              "required": [
+                "test",
+                "runner",
+                "source",
+                "outcome",
+                "seconds",
+                "commit",
+                "working_tree",
+                "digest",
+                "at",
+                "origin",
+                "command"
+              ],
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+            },
+            "EvidenceOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                },
+                {
+                  "type": "string",
+                  "const": "skip",
+                  "description": "It declined to run and said so (an unmet precondition the case reports itself)."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "The bound fired before it finished."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The harness could not run it at all."
+                }
+              ],
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+            },
+            "EvidenceOrigin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Someone ran it on their own machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "A continuous-integration run."
+                },
+                {
+                  "type": "string",
+                  "const": "release",
+                  "description": "A release run."
+                }
+              ],
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+            },
+            "EvidenceClaimProof": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The claim's id, as `docs/CLAIMS.yaml` spells it."
+                },
+                "claim": {
+                  "type": "string",
+                  "description": "The claim sentence."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The document that defines the behaviour."
+                },
+                "implementation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The file that implements it."
+                },
+                "test_path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The path the claim names as its test, verbatim."
+                },
+                "test": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The test's stable identity, when a runner owns it."
+                },
+                "state": {
+                  "$ref": "#/$defs/ProofState",
+                  "description": "What the repository can say about the proof."
+                },
+                "meaning": {
+                  "type": "string",
+                  "description": "That state, in one sentence."
+                },
+                "execution": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceExecution"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The execution the state was derived from, when there is one."
+                },
+                "changed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+                },
+                "reproduce": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The command that produces the proof again, when a runner owns the test."
+                }
+              },
+              "required": [
+                "id",
+                "claim",
+                "status",
+                "state",
+                "meaning",
+                "changed"
+              ],
+              "description": "One claim, joined to whatever the repository actually recorded about it."
+            },
+            "ProofState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "proven",
+                  "description": "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+                },
+                {
+                  "type": "string",
+                  "const": "inputs_unchanged",
+                  "description": "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+                },
+                {
+                  "type": "string",
+                  "const": "failing",
+                  "description": "The latest run of this claim's test did not pass."
+                },
+                {
+                  "type": "string",
+                  "const": "not_run",
+                  "description": "The claim names a test a runner owns, and no run of it has ever been recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "unrunnable",
+                  "description": "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+                },
+                {
+                  "type": "string",
+                  "const": "no_test",
+                  "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+                }
+              ],
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::evidence"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_evidence_test"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/evidence/test"
+        },
+        "cli": {
+          "path": [
+            "evidence",
+            "proves"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "evidence",
+        "tests",
+        "verification",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs"
     },
     {
       "id": "executions.cancel",

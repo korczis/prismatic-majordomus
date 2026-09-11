@@ -37,6 +37,7 @@ pub(crate) mod distribution;
 pub(crate) mod env;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod evidence;
 pub(crate) mod mcp;
 pub(crate) mod product;
 pub(crate) mod quality;
@@ -71,6 +72,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Quality(args) => quality::run(args),
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
+        Command::Evidence(args) => evidence::run(args),
     }
 }
 

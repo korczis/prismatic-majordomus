@@ -1,7 +1,7 @@
 +++
 title = "why.areas"
 description = "Every operational area the catalogue declares, each with the public moments that fall under it. Membership is derived from the moments and is never listed in an area's own file."
-weight = 69
+weight = 73
 slug = "why-areas"
 [extra]
 id = "why.areas"

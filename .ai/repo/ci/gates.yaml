@@ -56,6 +56,12 @@ gates:
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, every reference a document makes, the derived site data
 
+  - id: evidence-check
+    job: structure
+    always: true
+    runs: scripts/evidence-check
+    summary: every claim that declares a guarantee, against the run actually recorded for it; a ratchet over the claims no recorded execution yet supports
+
   - id: site-basepath
     job: structure
     runs: scripts/site-basepath-check
@@ -292,6 +298,13 @@ classes:
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
     gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
+
+  # the evidence fabric: the ledger of recorded executions, the join that reads it and the
+  # gate that ratchets it. A claim's proof is derived from the matrix and the ledger
+  # together, so a change to either is a change to what this repository says is proven.
+  - id: evidence
+    paths: [.ai/repo/evidence/**, .ai/repo/evidence-baseline.txt, scripts/evidence-check, docs/CLAIMS.yaml, docs/claims/**, docs/EVIDENCE.md]
+    gates: [evidence-check, core-check, shell-suite, site-build]
 
   # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
   # Read from disk by the served executable, so the crate's suites see them; the compiled

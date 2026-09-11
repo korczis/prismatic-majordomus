@@ -39,6 +39,8 @@ tags:
     description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
   - name: environment
     description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
+  - name: evidence
+    description: "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
   - name: executions
     description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
   - name: graph
@@ -1538,6 +1540,206 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_environment_explain
+  "/api/v1/evidence":
+    get:
+      operationId: evidence.report
+      summary: Every claim against the evidence recorded for it
+      description: "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+      tags:
+        - evidence
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/ProofState"
+              - type: "null"
+          description: "Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `no_test`). Absent: every claim."
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).\nAbsent: every claim."
+        - name: findings_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: "Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined."
+          examples:
+            findings:
+              value: true
+      responses:
+        "200":
+          description: "Every claim against the evidence recorded for it: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EvidenceReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: evidence.report
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::evidence
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_evidence
+        resource:
+          uri: majordomus://evidence
+          name: evidence
+      x-majordomus-cli: evidence show
+  "/api/v1/evidence/claim":
+    get:
+      operationId: evidence.claim
+      summary: What proves this claim
+      description: "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give."
+      tags:
+        - evidence
+      parameters:
+        - name: claim
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The claim id, as `docs/CLAIMS.yaml` spells it."
+          examples:
+            first-claim:
+              value: adr-catalogue
+      responses:
+        "200":
+          description: "What proves this claim: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ClaimEvidence"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: evidence.claim
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::evidence
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_evidence_claim
+      x-majordomus-cli: evidence claim
+  "/api/v1/evidence/test":
+    get:
+      operationId: evidence.test
+      summary: What this test proves
+      description: "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree."
+      tags:
+        - evidence
+      parameters:
+        - name: test
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity."
+          examples:
+            first-test:
+              value: suite:99_adr
+      responses:
+        "200":
+          description: "What this test proves: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TestEvidence"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: evidence.test
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::evidence
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_evidence_test
+      x-majordomus-cli: evidence proves
   "/api/v1/executions":
     get:
       operationId: executions.list
@@ -6136,6 +6338,79 @@ components:
           const: this
           description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
       description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+    ClaimEvidence:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The claim's id, as `docs/CLAIMS.yaml` spells it."
+        claim:
+          type: string
+          description: The claim sentence.
+        status:
+          type: string
+          description: "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+        source:
+          type:
+            - string
+            - "null"
+          description: The document that defines the behaviour.
+        implementation:
+          type:
+            - string
+            - "null"
+          description: The file that implements it.
+        test_path:
+          type:
+            - string
+            - "null"
+          description: "The path the claim names as its test, verbatim."
+        test:
+          type:
+            - string
+            - "null"
+          description: "The test's stable identity, when a runner owns it."
+        state:
+          "$ref": "#/components/schemas/ProofState"
+          description: What the repository can say about the proof.
+        meaning:
+          type: string
+          description: "That state, in one sentence."
+        execution:
+          anyOf:
+            - "$ref": "#/components/schemas/EvidenceExecution"
+            - type: "null"
+          description: "The execution the state was derived from, when there is one."
+        changed:
+          type: array
+          items:
+            type: string
+          description: "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+        reproduce:
+          type:
+            - string
+            - "null"
+          description: "The command that produces the proof again, when a runner owns the test."
+        executions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EvidenceExecution"
+          description: "Every execution the ledger holds for this claim's test — today one, the latest, and\na list because the ledger's retention is a decision that may change and a client\nthat read a bare object would break when it did."
+        also_proves:
+          type: array
+          items:
+            type: string
+          description: "The other claims the same test proves. A test shared by twelve claims is a test\nwhose failure is twelve findings, and a reader of one of them should be able to see\nthe other eleven without searching."
+      required:
+        - id
+        - claim
+        - status
+        - state
+        - meaning
+        - changed
+        - executions
+        - also_proves
+      description: "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it."
     ClaimRef:
       type: object
       properties:
@@ -8321,6 +8596,251 @@ components:
         - recorded_at
         - head
       description: "The `task.evidence` line that discharged an obligation, as the ledger holds it.\n\nNothing older is consulted: evidence is superseded by evidence, and the ledger keeps\nthe history for a reader that wants it.\n```\nuse majordomus_cli::capability::builtin::obligations::Evidence;\nlet e: Evidence = serde_json::from_str(\n    r#\"{\"recorded_at\":\"2026-09-09T21:01:00Z\",\"head\":\"f00ba7\",\"branch\":\"master\",\n        \"kind\":\"ci\",\"command\":\"scripts/ci/reference-check\",\"inputs_hash\":\"7f68b9\"}\"#,\n)\n.unwrap();\nassert_eq!(e.head, \"f00ba7\", \"the envelope's commit is what a remote fact is judged against\");\nassert!(e.artifact.is_empty(), \"one of command and artifact; narrative is not evidence\");\n```"
+    EvidenceClaimProof:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The claim's id, as `docs/CLAIMS.yaml` spells it."
+        claim:
+          type: string
+          description: The claim sentence.
+        status:
+          type: string
+          description: "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+        source:
+          type:
+            - string
+            - "null"
+          description: The document that defines the behaviour.
+        implementation:
+          type:
+            - string
+            - "null"
+          description: The file that implements it.
+        test_path:
+          type:
+            - string
+            - "null"
+          description: "The path the claim names as its test, verbatim."
+        test:
+          type:
+            - string
+            - "null"
+          description: "The test's stable identity, when a runner owns it."
+        state:
+          "$ref": "#/components/schemas/ProofState"
+          description: What the repository can say about the proof.
+        meaning:
+          type: string
+          description: "That state, in one sentence."
+        execution:
+          anyOf:
+            - "$ref": "#/components/schemas/EvidenceExecution"
+            - type: "null"
+          description: "The execution the state was derived from, when there is one."
+        changed:
+          type: array
+          items:
+            type: string
+          description: "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+        reproduce:
+          type:
+            - string
+            - "null"
+          description: "The command that produces the proof again, when a runner owns the test."
+      required:
+        - id
+        - claim
+        - status
+        - state
+        - meaning
+        - changed
+      description: "One claim, joined to whatever the repository actually recorded about it."
+    EvidenceExecution:
+      type: object
+      properties:
+        test:
+          type: string
+          description: "The test, in [`TestId::as_string`] form."
+        runner:
+          "$ref": "#/components/schemas/EvidenceRunner"
+          description: Which runner produced it.
+        source:
+          type: string
+          description: "The test's own source, repository-relative."
+        outcome:
+          "$ref": "#/components/schemas/EvidenceOutcome"
+          description: What it said.
+        seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How long it took, in whole seconds."
+        commit:
+          type: string
+          description: The full commit id the run was made against.
+        working_tree:
+          type: string
+          description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+        digest:
+          type: string
+          description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+        at:
+          type: string
+          description: "When it was recorded, RFC 3339, UTC."
+        origin:
+          "$ref": "#/components/schemas/EvidenceOrigin"
+          description: Where the run happened.
+        command:
+          type: string
+          description: The exact command that runs this one test again.
+      required:
+        - test
+        - runner
+        - source
+        - outcome
+        - seconds
+        - commit
+        - working_tree
+        - digest
+        - at
+        - origin
+        - command
+      description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+    EvidenceFinding:
+      type: object
+      properties:
+        claim:
+          type: string
+          description: The claim.
+        status:
+          type: string
+          description: What the claim says it is.
+        state:
+          "$ref": "#/components/schemas/ProofState"
+          description: What the evidence supports.
+        reason:
+          type: string
+          description: Why this is a finding.
+        reproduce:
+          type:
+            - string
+            - "null"
+          description: "What to run, when running something would settle it."
+      required:
+        - claim
+        - status
+        - state
+        - reason
+      description: A claim whose declared status the evidence does not support.
+    EvidenceLedgerSummary:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Where it lives, repository-relative."
+        present:
+          type: boolean
+          description: Is there one?
+        executions:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many executions it holds.
+        newest:
+          type:
+            - string
+            - "null"
+          description: "The newest `at` in it, when it holds any."
+        commits:
+          type: array
+          items:
+            type: string
+          description: The distinct commits its executions were recorded against.
+      required:
+        - path
+        - present
+        - executions
+        - commits
+      description: What the ledger is and whether it is there at all.
+    EvidenceOrigin:
+      oneOf:
+        - type: string
+          const: local
+          description: Someone ran it on their own machine.
+        - type: string
+          const: ci
+          description: A continuous-integration run.
+        - type: string
+          const: release
+          description: A release run.
+      description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+    EvidenceOutcome:
+      oneOf:
+        - type: string
+          const: pass
+          description: It passed.
+        - type: string
+          const: fail
+          description: It failed.
+        - type: string
+          const: skip
+          description: It declined to run and said so (an unmet precondition the case reports itself).
+        - type: string
+          const: timeout
+          description: The bound fired before it finished.
+        - type: string
+          const: error
+          description: The harness could not run it at all.
+      description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+    EvidenceReport:
+      type: object
+      properties:
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit the report was derived against.
+        working_tree:
+          type: string
+          description: "`clean`, `dirty` or `unknown`."
+        ledger:
+          "$ref": "#/components/schemas/EvidenceLedgerSummary"
+          description: The ledger this was joined against.
+        claims:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EvidenceClaimProof"
+          description: "Every claim, in the matrix's own order."
+        totals:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: How many claims are in each state.
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EvidenceFinding"
+          description: Claims whose declared status the evidence does not support.
+      required:
+        - working_tree
+        - ledger
+        - claims
+        - totals
+        - findings
+      description: "The whole joined picture: every claim of the matrix against every execution recorded."
+    EvidenceRunner:
+      oneOf:
+        - type: string
+          const: suite
+          description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+        - type: string
+          const: crate
+          description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+      description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
     Example:
       type: object
       properties:
@@ -12223,6 +12743,30 @@ components:
         - path
         - read_by
       description: One generated projection of the design and what it is for.
+    ProofState:
+      oneOf:
+        - type: string
+          const: proven
+          description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+        - type: string
+          const: inputs_unchanged
+          description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+        - type: string
+          const: stale
+          description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+        - type: string
+          const: failing
+          description: "The latest run of this claim's test did not pass."
+        - type: string
+          const: not_run
+          description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+        - type: string
+          const: unrunnable
+          description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+        - type: string
+          const: no_test
+          description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+      description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
     ProtocolReport:
       type: object
       properties:
@@ -14576,6 +15120,47 @@ components:
         - status
         - artifact
       description: "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
+    TestEvidence:
+      type: object
+      properties:
+        test:
+          type: string
+          description: "The stable identity: `suite:<case>` or `crate:<binary>`."
+        runner:
+          "$ref": "#/components/schemas/EvidenceRunner"
+          description: Which runner owns it.
+        source:
+          type: string
+          description: "Its own source, repository-relative."
+        present:
+          type: boolean
+          description: Whether that source is in this checkout.
+        reproduce:
+          type: string
+          description: The command that runs this one test.
+        execution:
+          anyOf:
+            - "$ref": "#/components/schemas/EvidenceExecution"
+            - type: "null"
+          description: "The latest recorded execution, when there is one."
+        digest_matches:
+          type:
+            - boolean
+            - "null"
+          description: "Whether the test's source still hashes to what the execution recorded. `None` when\nthere is no execution, or the source is not there to hash."
+        proves:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EvidenceClaimProof"
+          description: "Every claim that names this test, with the state each is in."
+      required:
+        - test
+        - runner
+        - source
+        - present
+        - reproduce
+        - proves
+      description: "One test, and what it proves."
     ThemeView:
       type: object
       properties:
