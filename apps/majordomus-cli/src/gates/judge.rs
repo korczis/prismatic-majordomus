@@ -41,7 +41,9 @@ pub const GATE_EVENT: &str = "task.gate";
 
 // ---------------------------------------------------------------- the status vocabulary
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "lowercase")]
 /// What is known about one gate. Every word is one this repository's design tokens already
 /// carry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without
@@ -170,9 +172,10 @@ pub fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize)
         // the exit status is a number, and a line that carries it as a string is still
         // readable: the shell writes JSON by hand and one quoting mistake must not silence
         // a failing gate
-        let exit = v
-            .get("exit")
-            .and_then(|e| e.as_i64().or_else(|| e.as_str().and_then(|s| s.parse().ok())));
+        let exit = v.get("exit").and_then(|e| {
+            e.as_i64()
+                .or_else(|| e.as_str().and_then(|s| s.parse().ok()))
+        });
         let Some(exit) = exit else {
             skipped += 1;
             continue;

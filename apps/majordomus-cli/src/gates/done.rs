@@ -442,13 +442,18 @@ mod tests {
         assert_eq!(by("tested").status, GateStatus::Pass);
         assert_eq!(by("documented").status, GateStatus::Stale);
         assert_eq!(by("pushed").status, GateStatus::Queued);
-        assert!(by("tested").evidence.contains("the closure said discharged"));
+        assert!(by("tested")
+            .evidence
+            .contains("the closure said discharged"));
         assert!(by("tested").source.contains("obligations.closure"));
     }
 
     #[test]
     fn an_obligation_the_change_implies_and_nobody_declared_is_a_debt_not_a_pass() {
-        let implied = vec![implied_of("tests", true, false), implied_of("deploy", false, false)];
+        let implied = vec![
+            implied_of("tests", true, false),
+            implied_of("deploy", false, false),
+        ];
         let q = answer(&BTreeMap::new(), &implied, &[], &[], true);
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         assert_eq!(by("tested").status, GateStatus::Queued);
@@ -463,27 +468,54 @@ mod tests {
     #[test]
     fn the_ci_question_separates_refused_from_never_reported() {
         let none = answer(&BTreeMap::new(), &[], &[], &[], true);
-        assert_eq!(none.iter().find(|q| q.id == "ci").unwrap().status, GateStatus::Exempt);
+        assert_eq!(
+            none.iter().find(|q| q.id == "ci").unwrap().status,
+            GateStatus::Exempt
+        );
 
-        let silent = vec![gate("a", GateStatus::Queued, true), gate("b", GateStatus::Pass, true)];
+        let silent = vec![
+            gate("a", GateStatus::Queued, true),
+            gate("b", GateStatus::Pass, true),
+        ];
         let q = answer(&BTreeMap::new(), &[], &silent, &[], true);
-        assert_eq!(q.iter().find(|q| q.id == "ci").unwrap().status, GateStatus::Queued);
+        assert_eq!(
+            q.iter().find(|q| q.id == "ci").unwrap().status,
+            GateStatus::Queued
+        );
 
-        let red = vec![gate("a", GateStatus::Fail, true), gate("b", GateStatus::Queued, true)];
+        let red = vec![
+            gate("a", GateStatus::Fail, true),
+            gate("b", GateStatus::Queued, true),
+        ];
         let q = answer(&BTreeMap::new(), &[], &red, &[], true);
         let ci = q.iter().find(|q| q.id == "ci").unwrap();
         assert_eq!(ci.status, GateStatus::Fail, "a refusal outranks a silence");
         assert!(ci.evidence.contains("1 refusing") && ci.evidence.contains("1 never reported"));
 
-        let green = vec![gate("a", GateStatus::Pass, true), gate("b", GateStatus::Exempt, false)];
+        let green = vec![
+            gate("a", GateStatus::Pass, true),
+            gate("b", GateStatus::Exempt, false),
+        ];
         let q = answer(&BTreeMap::new(), &[], &green, &[], true);
-        assert_eq!(q.iter().find(|q| q.id == "ci").unwrap().status, GateStatus::Pass);
+        assert_eq!(
+            q.iter().find(|q| q.id == "ci").unwrap().status,
+            GateStatus::Pass
+        );
     }
 
     #[test]
     fn a_release_question_a_model_declares_no_gate_for_is_unknown_not_exempt() {
-        let q = answer(&BTreeMap::new(), &[], &[gate("version-surface", GateStatus::Pass, true)], &[], true);
-        assert_eq!(q.iter().find(|q| q.id == "version").unwrap().status, GateStatus::Pass);
+        let q = answer(
+            &BTreeMap::new(),
+            &[],
+            &[gate("version-surface", GateStatus::Pass, true)],
+            &[],
+            true,
+        );
+        assert_eq!(
+            q.iter().find(|q| q.id == "version").unwrap().status,
+            GateStatus::Pass
+        );
         let missing = q.iter().find(|q| q.id == "changelog").unwrap();
         assert_eq!(missing.status, GateStatus::Unknown);
         assert!(missing.evidence.contains("declares no gate"));
@@ -500,11 +532,17 @@ mod tests {
             &BTreeMap::new(),
             &[],
             &[],
-            &["lib/a.sh".to_string(), "test/cases/131_completion_gates.sh".to_string()],
+            &[
+                "lib/a.sh".to_string(),
+                "test/cases/131_completion_gates.sh".to_string(),
+            ],
             true,
         );
         assert_eq!(
-            q.iter().find(|q| q.id == "regression-tested").unwrap().status,
+            q.iter()
+                .find(|q| q.id == "regression-tested")
+                .unwrap()
+                .status,
             GateStatus::Pass
         );
     }
@@ -516,7 +554,10 @@ mod tests {
         assert!(is_test_path("src/foo_test.rs"));
         assert!(is_test_path("web/a.spec.ts"));
         assert!(!is_test_path("lib/check.sh"));
-        assert!(!is_test_path("docs/latest.md"), "a substring is not a segment");
+        assert!(
+            !is_test_path("docs/latest.md"),
+            "a substring is not a segment"
+        );
     }
 
     #[test]
@@ -525,7 +566,10 @@ mod tests {
         for id in ["parity", "no-stale-topology", "handover", "issue"] {
             let question = q.iter().find(|q| q.id == id).unwrap();
             assert_eq!(question.status, GateStatus::Unknown, "{id}");
-            assert!(question.evidence.contains("majordomus"), "{id} names no command");
+            assert!(
+                question.evidence.contains("majordomus"),
+                "{id} names no command"
+            );
         }
     }
 }

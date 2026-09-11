@@ -476,7 +476,10 @@ classes:
 
         let p = plan(&m, &["something/nobody/declared".into()], false);
         assert_eq!(p.mode, GatePlanMode::Full);
-        assert_eq!(p.unclassified, vec!["something/nobody/declared".to_string()]);
+        assert_eq!(
+            p.unclassified,
+            vec!["something/nobody/declared".to_string()]
+        );
     }
 
     #[test]
