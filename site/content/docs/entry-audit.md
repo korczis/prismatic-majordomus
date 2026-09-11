@@ -22,6 +22,11 @@ continuity, without a manual start or join. Every finding below names the file a
 was read from and the command that shows it again. Nothing here is a count the repository
 can compute; where a number matters, the command that computes it is given instead.
 
+The same applies to the providers named below. This document names some of them where a
+finding is about one; which providers exist, and what each declares, is not written here —
+[`docs/generated/providers.md`](generated/providers.md) is that list, projected from
+`share/providers.yaml`, and it is the one to read against (`project.providers-are-data`).
+
 ## Vocabulary
 
 The pack speaks its own language. This repository already has words for most of it

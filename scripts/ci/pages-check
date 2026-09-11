@@ -185,6 +185,42 @@ else
   fi
 fi
 
+# The repository this checkout belongs to, as owner/name: GitHub's own variable where there
+# is one, the remote's URL where there is not. Asked by both of the questions below.
+mj_slug() {
+  if [ -n "${GITHUB_REPOSITORY:-}" ]; then printf '%s' "$GITHUB_REPOSITORY"; return 0; fi
+  git remote get-url "$REMOTE" 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||'
+}
+
+# Is a deploy of this commit running right now? `queued`, `in_progress`, the conclusion of
+# the newest finished run, or empty when the question cannot be answered.
+#
+# The age below is the commit's, and a commit's age is not the obligation's: a commit
+# authored an hour before it is pushed is overdue the instant it lands. On 2026-09-10 this
+# gate failed with "changed what it is built from 3862s ago" ninety seconds before that very
+# deploy succeeded — a false refusal on every master push whose commit predates the push,
+# which is most of them. Git records no push time, so the honest question is not how old the
+# commit is but whether its deploy is happening, and that has an API.
+#
+# It can only excuse: a run in flight turns a refusal into an ok, and nothing here turns an
+# ok into a refusal. The age window stays exactly as it was for every other case.
+deploy_state() {
+  # The fixture is asked before --offline, because a fixture *is* the offline answer: it is
+  # how test/cases/127_pages_deploy_in_flight.sh proves both directions of this decision
+  # without a network.
+  if [ -n "${MJ_PAGES_RUNS_FIXTURE:-}" ]; then
+    # `<sha> <status> <conclusion>` per line, so the reconciliation is provable offline
+    awk -v sha="$1" '$1 == sha { print ($2 == "completed" ? $3 : $2); exit }' \
+      "$MJ_PAGES_RUNS_FIXTURE" 2>/dev/null
+    return 0
+  fi
+  [ "$OFFLINE" = 1 ] && return 0
+  command -v gh >/dev/null 2>&1 || return 0
+  slug="$(mj_slug)"; [ -n "$slug" ] || return 0
+  gh api "repos/$slug/actions/workflows/pages.yml/runs?head_sha=$1&per_page=1" \
+    --jq '.workflow_runs[0] | if .status == "completed" then .conclusion else .status end' 2>/dev/null || true
+}
+
 # ------------------------------------------------------- 3. is the publication still current
 #
 # The converse of 1, and the half nobody owned. Being a projection of master is two claims —
@@ -220,8 +256,11 @@ if [ "$on_trunk" = 1 ]; then
     owed_at="${owed##* }"
     age=$(( $(date +%s) - owed_at ))
     count="$(git rev-list --count --first-parent "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || echo '?')"
-    if [ "$age" -lt "$OWED_AFTER" ]; then
-      ok "a publication is owed for ${owed_sha:0:12} and is ${age}s old; inside the ${OWED_AFTER}s deploy window"
+    flight="$(deploy_state "$owed_sha")"
+    if [ "$flight" = queued ] || [ "$flight" = in_progress ]; then
+      ok "a publication is owed for ${owed_sha:0:12} and its deploy is $flight right now"
+    elif [ "$age" -lt "$OWED_AFTER" ]; then
+      ok "a publication is owed for ${owed_sha:0:12}, committed ${age}s ago; inside the ${OWED_AFTER}s deploy window"
     else
       bad "the site owes a publication: ${owed_sha:0:12} changed what it is built from ${age}s ago"
       say "      $count commit(s) on $TRUNK since ${source_sha:0:12} touch the publication's inputs,"
@@ -244,10 +283,7 @@ if [ "$OFFLINE" = 1 ]; then
 elif ! command -v gh >/dev/null 2>&1; then
   note "gh is not installed, so GitHub's own Pages build was not read"
 else
-  slug="${GITHUB_REPOSITORY:-}"
-  if [ -z "$slug" ]; then
-    slug="$(git remote get-url "$REMOTE" 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
-  fi
+  slug="$(mj_slug)"
   head_sha="$(git rev-parse "$REMOTE/$BRANCH" 2>/dev/null || true)"
   build="$(gh api "repos/$slug/pages/builds" --jq '.[0] | "\(.status) \(.commit) \(.error.message // "no message")"' 2>/dev/null || true)"
   if [ -z "$build" ]; then

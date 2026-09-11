@@ -493,6 +493,11 @@ jobs:
     permissions:
       contents: read
       pages: read
+      # scripts/ci/pages-check asks whether a deploy of the owed commit is running before it
+      # calls a publication overdue. Git records no push time, so the commit's age is not the
+      # obligation's, and the run's status is the only thing that can tell a deploy in flight
+      # from one that is never coming.
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
