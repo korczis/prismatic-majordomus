@@ -34,6 +34,7 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod completion;
 pub(crate) mod devcontext;
+pub(crate) mod devtask;
 pub(crate) mod distribution;
 pub(crate) mod env;
 pub(crate) mod executions;
@@ -62,6 +63,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Scope(args) => scope::run(args),
         Command::Web(args) => web::run(args),
         Command::Why(args) => why::run(args),
+        Command::Devtask(args) => devtask::run(args),
         Command::Distribution(args) => distribution::run(args),
         Command::Env(args) => env::run(args),
         Command::Commands(args) => command_graph::run(args),
@@ -109,6 +111,12 @@ mod tests {
             }),
             (&["majordomus", "why", "list"], |c| {
                 matches!(c, Command::Why(_))
+            }),
+            (&["majordomus", "devtask", "issue", "I0001"], |c| {
+                matches!(c, Command::Devtask(_))
+            }),
+            (&["majordomus", "devtask", "milestone", "foundation"], |c| {
+                matches!(c, Command::Devtask(_))
             }),
             (&["majordomus", "distribution", "show"], |c| {
                 matches!(c, Command::Distribution(_))

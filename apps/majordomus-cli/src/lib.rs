@@ -22,6 +22,7 @@ pub mod commands;
 pub mod deploy;
 pub(crate) mod design;
 pub mod devcontext;
+pub mod devtask;
 pub mod discovery;
 pub(crate) mod distribution;
 pub mod environment;

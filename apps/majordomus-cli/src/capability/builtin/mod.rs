@@ -37,6 +37,7 @@ pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
+pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
@@ -75,6 +76,7 @@ pub use deploy::{
 // read as JSON through the executor, like every other capability's output
 pub(crate) use design::{DesignReport, TokenList};
 pub use devcontext::DEVCONTEXT_POLICY_URI;
+pub use devtask::{DevMilestoneInput, DevTaskInput};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
@@ -150,6 +152,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         why,
         web,
         design,
+        devtask,
         worktree,
         trace,
         product

@@ -1,7 +1,7 @@
 +++
 title = "majordomus commands explain"
 description = "Why one command appears where it does: the declaration it came from, the policy that placed it, and the reason for every surface that withholds it"
-weight = 54
+weight = 57
 [extra]
 route = "/docs/cli/commands/explain/"
 command = "majordomus commands explain"
