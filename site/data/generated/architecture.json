@@ -300,6 +300,16 @@
       "external": false
     },
     {
+      "id": "lib/gates.sh",
+      "kind": "module",
+      "label": "gates",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/policy.yaml",
       "kind": "artifact",
       "label": "repo/policy.yaml",
@@ -1183,6 +1193,11 @@
     },
     {
       "source": "lib/check.sh",
+      "target": "lib/gates.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
       "target": "lib/question.sh",
       "kind": "sources"
     },
@@ -1332,6 +1347,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": "lib/gates.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/finish.sh",
       "target": "lib/check.sh",
       "kind": "sources"
@@ -1339,6 +1359,11 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/gates.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
