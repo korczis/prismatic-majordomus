@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # site-build — data → derived content → assets → Tailwind/Flowbite CSS → Zola. Deterministic.
 #   scripts/site-build            build into site/public/
-#   scripts/site-build --no-css   skip the Node steps (CSS and vendored JS are then absent)
+#   scripts/site-build --no-css   skip the Node steps; the stylesheet is written empty and the
+#                                 vendored JS is absent, so the markup is the site's and the styling is not
 #   scripts/site-build --no-data  build from site/data/generated as committed, without regenerating
 #                                 it. Only for a caller that has already established the data is
 #                                 current — scripts/pages does, by fingerprint. Nothing else may.
@@ -69,6 +70,17 @@ cp "$SITE/graph.js" "$SITE/static/js/graph.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
+else
+  # The stylesheet is a build product and is ignored, so a clean checkout has none — and
+  # base.html asks for it with cachebust=true, which makes zola read the file rather than
+  # only name it. Skipping the Node step therefore did not build the site without styling;
+  # it did not build the site at all, and `--no-css` could not run anywhere but on a
+  # machine that had already run a full build. An empty stylesheet is what this flag
+  # promises — "CSS is then absent" — written every time, so the build is the same build
+  # wherever it runs.
+  echo "== css (skipped: an empty stylesheet, so the pages resolve it)"
+  printf '/* --no-css: no Tailwind build. This file exists because every page links it. */\n' \
+    > "$SITE/static/app.css"
 fi
 echo "== zola"
 # an absolute output path, because zola resolves --output-dir against the site directory
