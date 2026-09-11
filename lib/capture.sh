@@ -142,29 +142,67 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # beside the payload keys, because a provider is one thing and a second table naming the
 # same providers elsewhere is how two lists come to disagree. A provider that exports
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
-MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
+#
+# Fields 14 to 17 are the fourth event, and the only one that can say no. Start, end and
+# compaction all describe an episode; none of them is asked anything and nothing rides on
+# their answer. The pre-tool event is asked, before every mutation of the repository,
+# whether this episode may make it — which is the one moment at which a shared server that
+# has died, been killed or gone outdated stops being a diagnostic and becomes a reason not
+# to write. Field 16 is the provider's matcher, its own way of saying which tools the event
+# fires for, and field 17 the payload keys naming the tool that is about to run. Both live
+# here rather than inside the guard, because which tools mutate a repository is a fact
+# about a provider: the configuration writer and the guard read the one declaration, so a
+# matcher that drifts cannot leave the two disagreeing about what is being guarded.
+MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID PreToolUse .claude/hooks/majordomus-session-guard Edit|Write|MultiEdit|NotebookEdit|Bash tool_name,toolName,tool'
 
 # The events an adapter line describes: the kind this tool calls it, the column holding the
-# provider's own name for it, and the column holding the shim. Adding a fourth event is a
-# row here and two columns there, rather than another pair of positional branches in four
+# provider's own name for it, the column holding the shim, the column holding the matcher
+# the provider fires it on (`-` when it fires on everything), the subcommand of `capture`
+# the shim dispatches, and the shape of the shim that carries it. Adding a fifth event is a
+# row here and a few columns there, rather than another set of positional branches in five
 # readers that can disagree about which column means what.
-MJ_LIFECYCLE_COLUMNS='start 3 5
-end 4 6
-compact 11 12'
+#
+# The shape is the one thing that is not the same for all four. Three events report and can
+# only ever exit 0, so their shims hand the process over with `exec`. The fourth is asked a
+# question whose answer can be no, so its shim runs the command instead, and passes on
+# exactly one non-zero code — the refusal — and nothing else. That is not defensiveness for
+# its own sake: this shim is tracked, it reaches every worktree of the repository at once,
+# and every exit code it invents is a tool call somebody cannot make.
+MJ_LIFECYCLE_COLUMNS='start 3 5 - session inline
+end 4 6 - session inline
+compact 11 12 - session inline
+guard 14 15 16 guard refusing'
 
 mj_lifecycle_adapter()   { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_lifecycle_field()     { mj_lifecycle_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
 mj_lifecycle_first()     { mj_lifecycle_field "$1" "$2" | cut -d, -f1; }
 # every event kind, in the order a configuration writes them
 mj_lifecycle_kinds()     { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk '{ print $1 }'; }
-# Which lifecycle events the model waits for. `start` injects the briefing it is about to
-# read; `compact` must checkpoint before the transcript is folded. Nothing reads what `end`
-# writes, and a session that is ending should not be held open to write it.
-mj_lifecycle_latency()   { printf 'inline\n'; }
+# the kinds one subcommand of `capture` answers for; `capture session` serves three events
+# and has to be told which, and nothing else may be dispatched to it by name
+mj_lifecycle_kinds_for() { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v s="$1" '$5 == s { print $1 }'; }
 mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1" -v n="$2" '$1 == k { print $n }'; }
 mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
 mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
 mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2)"; }
+# The provider's matcher for one event: which tools it fires for, in the provider's own
+# notation, or nothing when it fires on every one. The same string is what the guard reads
+# to decide a second time whether the tool in a payload is one that mutates the repository.
+mj_lifecycle_matcher() {
+  local col; col="$(mj_lifecycle_column "$2" 4)"
+  [ "$col" = - ] && return 0
+  mj_lifecycle_field "$1" "$col"
+}
+# The shape of the shim that carries one event: `inline` hands the process over, `refusing`
+# runs the command and passes on the refusal alone. See MJ_LIFECYCLE_COLUMNS.
+mj_lifecycle_shim_form() { mj_lifecycle_column "$1" 6; }
+# What one event's shim runs. `capture session` answers for three events and is told which
+# by name; every other event has a subcommand of its own, whose name is the kind.
+mj_lifecycle_dispatch() {
+  local p="$1" kind="$2" sub; sub="$(mj_lifecycle_column "$kind" 5)"
+  if [ "$sub" = session ]; then printf 'capture session --provider %s --event %s' "$p" "$kind"
+  else printf 'capture %s --provider %s' "$sub" "$p"; fi
+}
 # The environment variables in which some provider names the session a command is running
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
 mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
@@ -191,12 +229,14 @@ mj_cmd_capture() {
     prompt)  mj_capture_prompt "$@" ;;
     render)  mj_capture_render "$@" ;;
     session) mj_capture_session "$@" ;;
+    guard)   mj_capture_guard "$@" ;;
     install) mj_capture_install "$@" ;;
     status)  mj_capture_status "$@" ;;
     --help|-h|"") cat <<H
 usage: majordomus capture prompt --provider <name>   < the provider's hook payload
        majordomus capture render [--force]
        majordomus capture session --provider <name> --event start|end  < the payload
+       majordomus capture guard --provider <name>    < the provider's pre-tool payload
        majordomus capture install [--provider <name>]
        majordomus capture status [--json]
   providers with an adapter: $(mj_capture_providers | tr '\n' ' ' | sed 's/ $//')
@@ -210,9 +250,13 @@ usage: majordomus capture prompt --provider <name>   < the provider's hook paylo
   hook's output to the model's context, and the local half of the layer is never loaded
   'capture prompt' reads one JSON object on stdin and never exits 2, because in a
   provider hook that exit code can reject the person's prompt
+  'capture guard' is the one that may: it decides whether this episode may mutate the
+  repository, exits 2 with the reason on standard error when it may not, and exits 0
+  every other way — including when it cannot decide at all, which it says out loud.
+  It is off unless session.guard_before_mutation is true.
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|render|session|install|status)" ;;
+    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|render|session|guard|install|status)" ;;
   esac
 }
 
@@ -736,9 +780,10 @@ mj_capture_session() {
     esac
   done
   [ -n "$provider" ] || { mj_err "capture session: --provider is required"; return "$MJ_EX_MISSING"; }
-  case " $(mj_lifecycle_kinds | tr '\n' ' ')" in
+  # only the events this command answers for: the table has a fourth, and it is the guard's
+  case " $(mj_lifecycle_kinds_for session | tr '\n' ' ')" in
     *" $event "*) ;;
-    *) mj_err "capture session: --event must be one of $(mj_lifecycle_kinds | paste -sd' ' -)"; return "$MJ_EX_MISSING" ;;
+    *) mj_err "capture session: --event must be one of $(mj_lifecycle_kinds_for session | paste -sd' ' -)"; return "$MJ_EX_MISSING" ;;
   esac
   mj_lifecycle_adapter "$provider" >/dev/null 2>&1 || {
     mj_err "capture session: no lifecycle adapter for provider '$provider'"
@@ -947,6 +992,267 @@ mj_capture_session_end() {
   return 0
 }
 
+# ---------------------------------------------------------------- capture guard
+# May this episode mutate the repository?
+#
+# Entering as an agent converges on a ready shared server (project.entry-converges), and
+# then nothing asks again. A server that dies, is killed, or goes outdated halfway through
+# an episode changes nothing the worker can see: it keeps editing files, and every surface
+# that would have told it otherwise is the surface that is gone. This is the event that
+# asks again, before each mutation, and it is the only one of the four that may answer no.
+#
+# Three properties decide the whole design of it.
+#
+#   * It is off unless the policy says otherwise. A hook that can refuse a tool call is
+#     fleet-wide state that arrives in every worktree the moment it is tracked, and a wrong
+#     determination in it blocks the sessions that would fix it. `session.guard_before_mutation`
+#     is false in this repository's policy and in the skeleton, and a policy that predates
+#     the key reads as false too: the key must be turned on deliberately, per repository.
+#   * It runs in front of every Edit, Write and Bash, so its cost is paid hundreds of times
+#     an episode. The answer is therefore remembered in the checkout's local state, and the
+#     remembered path resolves no layout, parses no policy and starts no process: it is a
+#     builtin read of one small file and one call to `date`. Measured on 2026-09-11, thirty
+#     runs each: 81 ms, against 50 ms for `majordomus version`, which is the floor of this
+#     tool, and against 1.6 s for the reading it is standing in for.
+#   * It refuses only what it knows. A server that is absent or stale after `serve ensure`
+#     was given a chance to fix it is a determination. An executable that is not built, a
+#     payload that will not parse, a policy that does not load, a probe that does not answer
+#     are not: they are this tool failing to decide, and a guard that blocked every edit in
+#     a repository because cargo had not run would be a worse failure than the one it
+#     prevents. Those exit 0, loudly, on standard error. This is not the silent fallback the
+#     repository forbids elsewhere — entering this repository already names a missing
+#     executable rather than building one, and this says the same thing at the same volume.
+#
+# The exit codes are the provider's: 0 lets the tool run, 2 blocks it and hands the reason
+# back to the model. Nothing here returns anything else, and the shim the provider runs
+# collapses every other outcome to 0 as well.
+
+# How long a `pass` is worth. A refusal is never remembered — between two edits a server can
+# be started, and asking again costs one reading — so this bounds only how stale a yes may
+# be. Short enough that a server killed under a working episode is caught within a minute,
+# long enough that a burst of edits pays for one reading.
+MJ_GUARD_TTL_SECONDS=60
+
+# Where the answer is remembered, from the repository root alone.
+#
+# It is the same directory MJ_STATE_DIR names, written here relative to the root because the
+# remembered path has not resolved the layout and must not: resolving it costs 150 ms, which
+# is three times the whole warm reading. The two compositions cannot drift into a wrong
+# answer, only into a missed one — a layer that moved its local half would leave this file
+# unread, and every call would take the slow path and decide correctly from scratch.
+MJ_GUARD_CACHE_REL='.ai/local/state/guard/verdict'
+mj_guard_cache() { printf '%s/%s' "$1" "$MJ_GUARD_CACHE_REL"; }
+
+# What this tool says when it cannot decide. Loud, on standard error, and exit 0: the reader
+# is a model that is about to be handed the tool result, and silence here is the failure mode
+# this whole command exists to remove.
+mj_guard_undecided() {
+  mj_err "capture guard: $* — nothing was decided, so the tool is not refused"
+}
+
+# Is the tool named in the payload one that mutates the repository? The provider's matcher
+# is the declaration, so this is the same list the configuration was written from, read a
+# second time. It is read a second time on purpose: the matcher is provider data, a provider
+# may change what it means, and a configuration somebody edited by hand can widen it. The
+# event filtering it is the provider's own optimisation; this is the decision.
+mj_guard_mutating() {
+  local m; m="$(mj_lifecycle_matcher "$1" guard)"
+  case "|$m|" in *"|$2|"*) return 0 ;; esac
+  return 1
+}
+
+# The two things the guard needs from a payload — the tool that is about to run and the
+# provider session it belongs to — in one pass. The shared reader takes a file and one
+# process per candidate key, which is five processes for two values; here it is two, and
+# this runs in front of every edit. Prints "<tool><TAB><session>", and fails when the
+# payload did not parse, which is a different answer from "the payload names no tool".
+mj_guard_fields() {
+  awk -f "$MJ_LIB_DIR/json_scan.awk" | awk -F'\t' -v tk="$1" -v sk="$2" '
+    { v[$1] = $2 }
+    END { print pick(tk) "\t" pick(sk) }
+    function pick(keys,   n, a, i, s) {
+      n = split(keys, a, ",")
+      for (i = 1; i <= n; i++) if (a[i] in v) { s = v[a[i]]; sub(/^"/, "", s); sub(/"$/, "", s); return s }
+      return ""
+    }'
+}
+
+# The remembered answer, or nothing. Returns 0 when this call may exit 0 on its strength.
+#
+# Two things invalidate it: the policy file being newer than the file (which is how turning
+# the switch on or off takes effect at once, without this path knowing where the policy
+# lives — the slow path wrote the path down when it last decided), and age, for a `pass`
+# alone. An `off` does not age: the switch is not a fact about a running server, and a
+# repository with the guard off would otherwise pay a full reading every minute forever.
+mj_guard_remembered() {
+  local cache="$1" verdict="" stamp="" policy="" now
+  [ -f "$cache" ] || return 1
+  { read -r verdict stamp || true; read -r policy || true; } < "$cache" 2>/dev/null || return 1
+  if [ -n "$policy" ] && [ "$policy" != - ] && [ "$policy" -nt "$cache" ]; then return 1; fi
+  case "$verdict" in
+    off)  return 0 ;;
+    pass) ;;
+    *)    return 1 ;;
+  esac
+  case "$stamp" in ''|*[!0-9]*) return 1 ;; esac
+  now="$(date +%s 2>/dev/null || printf 0)"
+  case "$now" in ''|*[!0-9]*) return 1 ;; esac
+  [ "$now" -ge "$stamp" ] || return 1
+  [ "$(( now - stamp ))" -le "$MJ_GUARD_TTL_SECONDS" ] || return 1
+  return 0
+}
+
+# Remember one answer. Three lines rather than one, so that a policy path or a reason
+# holding a space cannot be read back as something else.
+mj_guard_remember() {
+  local cache="$1" verdict="$2" reason="$3" dir
+  dir="$(dirname "$cache")"
+  mkdir -p "$dir" 2>/dev/null || return 0
+  { printf '%s %s\n' "$verdict" "$(date +%s 2>/dev/null || printf 0)"
+    printf '%s\n' "${MJ_POLICY_FILE:--}"
+    printf '%s\n' "$reason"
+  } > "$cache" 2>/dev/null || return 0
+  return 0
+}
+
+# Where the shared server stands for this checkout, as "<standing><TAB><reason>".
+#
+# `serve status --checkouts this` is the canonical reading: it opens one lease, probes one
+# server and enumerates no other checkout. Everything that stops it from answering is
+# `unknown` — a word this tool adds to the five the executable declares, and the only one it
+# does — because "I could not ask" and "it is not there" are different answers and only one
+# of them is a reason to refuse. Nothing here builds: a hook is not the place to start a
+# compiler, and a server started from stale code answers with a tree that is no longer there.
+mj_guard_standing() {
+  local bin share out st
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  [ -x "$bin" ] || { printf 'unknown\tthe executable is not built, so where the server stands cannot be read (run `just build`)\n'; return 0; }
+  if mj_rust_stale "$MJ_ROOT" "$bin"; then
+    printf 'unknown\tthe executable is older than its sources, so what it would answer is yesterday'"'"'s (run `just build`)\n'; return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
+  out="$("$bin" serve status --repo "$MJ_ROOT" --checkouts this --format json 2>/dev/null)" \
+    || { printf 'unknown\t`serve status` did not answer\n'; return 0; }
+  st="$(printf '%s' "$out" | sed -n 's/.*"standing"[[:space:]]*:[[:space:]]*"\([a-z]*\)".*/\1/p' | head -n 1)"
+  [ -n "$st" ] || { printf 'unknown\t`serve status` answered without a standing\n'; return 0; }
+  printf '%s\t\n' "$st"
+}
+
+# One attempt to make it true. `serve ensure` is what the start event runs, bounded, and it
+# is asked exactly once: a guard that kept retrying would turn one dead server into a hook
+# that hangs in front of every edit.
+mj_guard_heal() {
+  local bin
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  [ -x "$bin" ] || return 0
+  mkdir -p "$MJ_STATE_DIR/mcp" 2>/dev/null || return 0
+  "$bin" serve ensure --repo "$MJ_ROOT" --wait "${MJ_GUARD_HEAL_WAIT:-20}" \
+    >>"$MJ_STATE_DIR/mcp/ensure.log" 2>&1 || return 0
+  return 0
+}
+
+mj_capture_guard() {
+  local provider=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --provider) provider="${2:-}"; shift 2 ;;
+      --provider=*) provider="${1#--provider=}"; shift ;;
+      *) mj_guard_undecided "unknown option $1"; return 0 ;;
+    esac
+  done
+  [ -n "$provider" ] || { mj_guard_undecided "--provider is required"; return 0; }
+
+  # ---- the payload, taken but not yet read
+  #
+  # Taken first because the provider is writing it into this process and exiting without
+  # draining it breaks its pipe; read into a variable rather than a file because a builtin
+  # is free and mktemp is not. Nothing is parsed here: what a remembered answer says is true
+  # of the episode and not of one tool, so the cheap path must not pay for a parse.
+  # A terminal is not a provider: read nothing from one, or a person who typed this command
+  # by hand waits at a blank line for a payload that was never going to come.
+  local payload=""
+  [ -t 0 ] || IFS= read -r -d '' payload 2>/dev/null || true
+
+  # ---- the remembered answer
+  #
+  # Before the adapter, before the parse, before the layout: this is the path that runs in
+  # front of every edit, and everything it does is a builtin except one call to `date`. The
+  # root is the one the shim passed, which the shim derived from its own location; a call
+  # with no --repo is a person at a prompt, and pays for the discovery.
+  local root cache
+  root="${MJ_REPO:-}"
+  [ -n "$root" ] || root="$(mj_repo_root 2>/dev/null || true)"
+  [ -n "$root" ] || { mj_guard_undecided "not in a repository"; return 0; }
+  cache="$(mj_guard_cache "$root")"
+  mj_guard_remembered "$cache" && return 0
+
+  # ---- what is about to run, and for which episode
+  mj_lifecycle_adapter "$provider" >/dev/null 2>&1 \
+    || { mj_guard_undecided "no lifecycle adapter for provider '$provider'"; return 0; }
+  local fields tool psession
+  fields="$( set -o pipefail
+    printf '%s' "$payload" | mj_guard_fields "$(mj_lifecycle_field "$provider" 17)" "$(mj_lifecycle_field "$provider" 7)" 2>/dev/null )" \
+    || { mj_guard_undecided "the $provider payload did not parse, so which tool is about to run is unknown"; return 0; }
+  tool="${fields%%"$MJ_TAB"*}"; psession="${fields#*"$MJ_TAB"}"
+  [ -n "$tool" ] || { mj_guard_undecided "the $provider payload names no tool"; return 0; }
+  # The matcher already filtered, and the matcher is provider data that can drift or be
+  # widened by hand. This is the decision; that was the optimisation.
+  mj_guard_mutating "$provider" "$tool" || return 0
+
+  # ---- and otherwise, the reading itself
+  mj_require_repo
+  cache="$(mj_guard_cache "$MJ_ROOT")"
+  mj_load_policy 2>/dev/null || {
+    mj_guard_undecided "the policy does not parse, so the switch cannot be read (majordomus doctor says why)"
+    return 0; }
+  if [ "$(mj_pol session.guard_before_mutation)" != true ]; then
+    mj_guard_remember "$cache" off "session.guard_before_mutation is not true"
+    return 0
+  fi
+
+  local line standing reason healed=0
+  line="$(mj_guard_standing)"; standing="${line%%"$MJ_TAB"*}"; reason="${line#*"$MJ_TAB"}"
+  if [ "$standing" = unknown ]; then mj_guard_undecided "$reason"; return 0; fi
+  if [ "$standing" != ready ]; then
+    mj_guard_heal
+    healed=1
+    line="$(mj_guard_standing)"; standing="${line%%"$MJ_TAB"*}"; reason="${line#*"$MJ_TAB"}"
+    if [ "$standing" = unknown ]; then mj_guard_undecided "$reason"; return 0; fi
+  fi
+  if [ "$standing" != ready ]; then
+    local after=""
+    [ "$healed" = 1 ] && after=' and `serve ensure` did not fix it'
+    mj_err "capture guard: refusing to mutate this repository: the shared server for this checkout is '$standing'$after."
+    mj_err "  Nothing that reads this repository through the server — the peer board, the index, the Cockpit — is answering, so a mutation made now is made blind."
+    mj_err "  Run: majordomus serve status --checkouts this   then: majordomus serve stop && majordomus serve ensure"
+    mj_err "  The switch is session.guard_before_mutation in $(mj_rel "$MJ_POLICY_FILE")."
+    return 2
+  fi
+
+  # ---- and the episode this mutation belongs to
+  # shellcheck source=session.sh
+  . "$MJ_LIB_DIR/session.sh"
+  # the payload names the provider session, which is the episode strictly: the pointer would
+  # answer with whichever episode this checkout opened last, which is somebody else's
+  # shellcheck disable=SC2034  # read by mj_session_here_file in lib/common.sh
+  [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
+  if [ ! -f "$(mj_session_here_file)" ]; then
+    mj_err "capture guard: refusing to mutate this repository: no episode is open${psession:+ for provider session $psession}."
+    mj_err "  The start event is what opens one, so this session entered without it: nothing that is about to be written would belong to a recorded episode."
+    mj_err "  Run: majordomus session start   (or start a new session, whose start event opens one)"
+    mj_err "  The switch is session.guard_before_mutation in $(mj_rel "$MJ_POLICY_FILE")."
+    return 2
+  fi
+
+  mj_guard_remember "$cache" pass "the server is ready and an episode is open"
+  return 0
+}
+
 # ---------------------------------------------------------------- capture state
 # One word for what is true about a provider here, and a reason. The words are distinct on
 # purpose: a provider with no observable event, one this repository does not wire, one that
@@ -1075,7 +1381,7 @@ mj_capture_install_one() {
   if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
     for one in $(mj_lifecycle_kinds); do
       mj_capture_install_shim "$p" "$(mj_lifecycle_shim_rel "$p" "$one")" "$(mj_lifecycle_event "$p" "$one")" \
-        "capture session --provider $p --event $one" "$(mj_lifecycle_latency "$one")"
+        "$(mj_lifecycle_dispatch "$p" "$one")" "$(mj_lifecycle_shim_form "$one")"
     done
   fi
 
@@ -1088,8 +1394,8 @@ mj_capture_install_one() {
   # before this tool knew about the lifecycle events is the same file: what is missing is
   # named, one event at a time, rather than the whole object being replaced.
   for one in $(mj_capture_events "$p"); do
-    event="${one%%=*}"; rel="${one#*=}"
-    grep -qF "$rel" "$cfg" || missing="$missing $event=$rel"
+    rel="$(mj_capture_event_shim "$one")"
+    grep -qF "$rel" "$cfg" || missing="$missing $one"
   done
   if [ -z "$missing" ]; then
     mj_info capture "$(mj_capture_field "$p" 2)" "already names the hooks; left as it is"
@@ -1097,23 +1403,31 @@ mj_capture_install_one() {
   fi
   mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to its \"hooks\" object:"
   for one in $missing; do
-    event="${one%%=*}"; rel="${one#*=}"
-    mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+    event="${one%%=*}"; rel="$(mj_capture_event_shim "$one")"
+    mj_err "  \"$event\": [ { \"matcher\": \"$(mj_capture_event_matcher "$one")\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
   done
   return "$MJ_EX_REFUSED"
 }
 
-# Every event this provider has a shim for, as <event>=<shim path>, in the order they are
-# written into a configuration. One list, read by the writer and by the reconciliation, so
-# the two cannot disagree about what "installed" means.
+# Every event this provider has a shim for, as <event>=<shim path>=<matcher>, in the order
+# they are written into a configuration. One list, read by the writer and by the
+# reconciliation, so the two cannot disagree about what "installed" means. The matcher is
+# the third field and is usually empty — the events that fire on everything take none — and
+# it is carried here rather than looked up again beside each reader, for the same reason
+# the shim path is: two lookups of one table are two answers waiting to disagree.
 mj_capture_events() {
   local p="$1" one
-  printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
+  printf '%s=%s=\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
   mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
   for one in $(mj_lifecycle_kinds); do
-    printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
+    printf '%s=%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")" \
+      "$(mj_lifecycle_matcher "$p" "$one")"
   done
 }
+# The parts of one such line. A shim path holds no `=` and a matcher may, so the event and
+# the path are taken from the front and everything after the second separator is the matcher.
+mj_capture_event_shim()    { local r="${1#*=}"; printf '%s' "${r%%=*}"; }
+mj_capture_event_matcher() { local r="${1#*=}"; printf '%s' "${r#*=}"; }
 
 # One shim: the provider runs it, it finds the repository from its own location, and it
 # never rejects what the person is doing. Two things differ between the events: the command
@@ -1169,8 +1483,17 @@ mj_capture_shim_body() {
     printf '# The repository is derived from this file: the provider substitutes its project\n'
     printf '# directory into the command string textually, so nothing in the environment names\n'
     printf '# the repository here, and the working directory is not contracted.\n#\n'
-    printf '# It must never reject what the person is doing, so every path out of it is exit 0\n'
-    printf '# or the exit of a command that is itself contracted never to return 2.\n'
+    if [ "$latency" = refusing ]; then
+      printf '# This is the one hook that may say no, so it is also the one whose every other\n'
+      printf '# exit must be a yes. It runs the command rather than exec-ing it and passes on\n'
+      printf '# exactly one code — 2, the refusal the provider blocks the tool on. Anything else\n'
+      printf '# the command can exit for, and anything it can die of, is exit 0 here: this file\n'
+      printf '# is tracked, it reaches every worktree of the repository at once, and an exit code\n'
+      printf '# it invents is a tool call somebody cannot make.\n'
+    else
+      printf '# It must never reject what the person is doing, so every path out of it is exit 0\n'
+      printf '# or the exit of a command that is itself contracted never to return 2.\n'
+    fi
     printf 'root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0\n'
     printf 'for mj in "$root/bin/majordomus" "$root/.majordomus/bin/majordomus"; do\n'
     printf '  [ -x "$mj" ] && break\n'
@@ -1185,6 +1508,11 @@ mj_capture_shim_body() {
       printf 'payload=$(cat)\n'
       printf 'printf %%s "$payload" | nohup "$mj" --repo "$root" %s >/dev/null 2>&1 &\n' "$args"
       printf 'exit 0\n'
+    elif [ "$latency" = refusing ]; then
+      printf '"$mj" --repo "$root" %s\n' "$args"
+      printf 'code=$?\n'
+      printf '[ "$code" = 2 ] && exit 2\n'
+      printf 'exit 0\n'
     else
       printf 'exec "$mj" --repo "$root" %s\n' "$args"
     fi
@@ -1192,15 +1520,17 @@ mj_capture_shim_body() {
 }
 
 # The configuration this tool writes when there is none: every event it has a shim for, in
-# one hooks object. The event takes no matcher and fires every time, but the shape is the
-# one every event uses — a group, then the handlers inside it.
+# one hooks object. Most events take no matcher and fire every time; the pre-tool event
+# takes the provider's own, so that the provider itself filters what it can before a
+# process is started. The shape is the one every event uses — a group, then the handlers
+# inside it.
 mj_capture_config() {
   local p="$1" one event rel first=1
   printf '{\n  "hooks": {\n'
   for one in $(mj_capture_events "$p"); do
-    event="${one%%=*}"; rel="${one#*=}"
+    event="${one%%=*}"; rel="$(mj_capture_event_shim "$one")"
     [ "$first" = 1 ] || printf ',\n'; first=0
-    printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
+    printf '    "%s": [\n      {\n        "matcher": "%s",\n        "hooks": [\n' "$event" "$(mj_capture_event_matcher "$one")"
     printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
     printf '        ]\n      }\n    ]'
   done

@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+# guard-refuses-unready — the gate of project.the-guard-refuses-an-unready-episode: the
+# pieces that make a mutation of this repository preceded by a readiness question still
+# agree with each other.
+#
+# A CI runner starts no provider and calls no tool, so what a script can decide is not
+# "was an unready episode refused" — that is behavioural, and test/cases/124 is where it is
+# proved. What this gate holds together is everything that would have to be quietly undone
+# first, each of which is a file comparison:
+#
+#   1. the event is provider data. The provider's lifecycle row declares the pre-tool event,
+#      its shim, a matcher naming the tools that mutate the repository, and the payload keys
+#      naming the tool; the event table has a row for it. A guard deleted from the adapter
+#      table leaves every other gate green, which is why this is the first thing checked.
+#   2. it is wired, and the wiring is what the reconciliation reads. The provider's own
+#      configuration declares the event, with a matcher covering the mutating tools, naming
+#      the shim; the shim exists, is executable, delegates to `capture guard`, and passes on
+#      the refusal alone rather than exec-ing the tool.
+#   3. the switch is declared wherever a key of the policy must be —
+#      `session.guard_before_mutation` in this repository's policy, in the skeleton a new
+#      repository is written from, in the allow list and in the schema — and the guard reads
+#      it before it refuses anything. A key the schema does not know is refused at run time
+#      (project.unknown-keys-are-errors); one the skeleton lacks exists only here.
+#   4. the decision is the one the rule describes: `serve status` is what it reads, `serve
+#      ensure` is the one chance it gives, a verdict is remembered, and a state it cannot
+#      decide is named rather than refused.
+#
+# What this gate deliberately does not check: whether the switch is on. It is off in this
+# repository and in the skeleton on purpose, and a gate that demanded otherwise would be
+# demanding that a tracked hook be armed for every worktree at once.
+#
+#   scripts/ci/guard-refuses-unready                 report every finding, exit 10 on any
+#   MJ_ROOT=<dir> scripts/ci/guard-refuses-unready   measure another tree
+#   scripts/ci/guard-refuses-unready --no-suite      the structural findings only
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+SUITE=1
+while [ $# -gt 0 ]; do case "$1" in
+  --no-suite) SUITE=0; shift ;;
+  *) echo "guard-refuses-unready: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+findings=0
+fail() { printf 'FAIL guard-refuses-unready  %s\n' "$*"; findings=$((findings+1)); }
+ok()   { printf 'OK   guard-refuses-unready  %s\n' "$*"; }
+
+CAPTURE='lib/capture.sh'
+CONFIG='.claude/settings.json'
+SHIM='.claude/hooks/majordomus-session-guard'
+SWITCH='guard_before_mutation'
+
+# ------------------------------------------------------------------ 1. the event is data
+#
+# Read out of the tables themselves rather than by grepping for today's strings: the row is
+# sourced and the accessors are asked, so a column that moves is seen here as it would be
+# seen by the tool. The library is sourced in a subshell with only what it needs, because
+# this gate must not become the thing that decides what capture.sh may depend on.
+if [ ! -f "$CAPTURE" ]; then
+  fail "$CAPTURE is missing; it carries the provider tables"
+else
+  declared="$(MJ_ROOT="$ROOT" MJ_LIB_DIR="$ROOT/lib" bash -c '
+    . "$MJ_LIB_DIR/capture.sh" 2>/dev/null || exit 1
+    printf "%s\n" "$(mj_lifecycle_kinds | paste -sd, -)"
+    printf "%s\n" "$(mj_lifecycle_event claude-code guard)"
+    printf "%s\n" "$(mj_lifecycle_shim_rel claude-code guard)"
+    printf "%s\n" "$(mj_lifecycle_matcher claude-code guard)"
+    printf "%s\n" "$(mj_lifecycle_dispatch claude-code guard)"
+    printf "%s\n" "$(mj_lifecycle_field claude-code 17)"
+  ' 2>/dev/null || true)"
+  kinds="$(printf '%s\n' "$declared" | sed -n 1p)"
+  ev="$(printf '%s\n' "$declared" | sed -n 2p)"
+  shim_rel="$(printf '%s\n' "$declared" | sed -n 3p)"
+  matcher="$(printf '%s\n' "$declared" | sed -n 4p)"
+  dispatch="$(printf '%s\n' "$declared" | sed -n 5p)"
+  toolkeys="$(printf '%s\n' "$declared" | sed -n 6p)"
+
+  # The event table first: without a row for the guard, no shim is written, nothing is
+  # wired, and every accessor below answers about a row that is not there.
+  case ",$kinds," in
+    *,guard,*) ok "the event table has a row for the guard (kinds: $kinds)"; have_row=1 ;;
+    *) fail "the event table has no row for the guard, so no shim is written for it and nothing runs before a mutation"; have_row=0 ;;
+  esac
+  if [ "$have_row" = 1 ]; then
+    if [ -n "$ev" ]; then ok "the provider table declares the pre-tool event ($ev)"
+    else fail "the provider's lifecycle row declares no pre-tool event"; fi
+    case "$shim_rel" in
+      */*) ok "it declares the shim that carries it ($shim_rel)" ;;
+      *) fail "the provider's lifecycle row declares no shim for the pre-tool event" ;;
+    esac
+    if [ -n "$toolkeys" ]; then ok "it declares the payload keys naming the tool ($toolkeys)"
+    else fail "the provider's lifecycle row declares no payload key for the tool that is about to run"; fi
+    case "$dispatch" in
+      *"capture guard"*) ok "the event dispatches 'capture guard'" ;;
+      *) fail "the pre-tool event dispatches '$dispatch' rather than 'capture guard'" ;;
+    esac
+    # the tools a repository is mutated through: a matcher that lost one of these is a hole
+    if [ -z "$matcher" ]; then
+      fail "the provider's lifecycle row declares no matcher; the guard would have nothing to decide a second time with"
+    else
+      ok "it declares which tools mutate the repository ($matcher)"
+      for t in Edit Write Bash; do
+        case "|$matcher|" in
+          *"|$t|"*) ok "the matcher covers $t" ;;
+          *) fail "the matcher does not cover $t, which mutates the repository" ;;
+        esac
+      done
+    fi
+  fi
+  # and the guard reads that same matcher rather than carrying a list of its own
+  if grep -q 'mj_lifecycle_matcher' "$CAPTURE"; then ok "the guard reads the provider's matcher rather than a list of its own"
+  else fail "$CAPTURE never reads mj_lifecycle_matcher; the guard and the configuration would carry two lists"; fi
+fi
+
+# ------------------------------------------------------------------ 2. it is wired
+if [ ! -f "$CONFIG" ]; then
+  fail "$CONFIG is missing; it is where the provider is told to run the guard"
+else
+  if grep -q 'PreToolUse' "$CONFIG"; then ok "$CONFIG declares the PreToolUse event"
+  else fail "$CONFIG declares no PreToolUse hook, so nothing runs before a mutation"; fi
+  if grep -qF 'majordomus-session-guard' "$CONFIG"; then ok "$CONFIG names the guard shim"
+  else fail "$CONFIG does not name $SHIM"; fi
+  for t in Edit Write Bash; do
+    if grep -q "\"matcher\":[^\"]*\"[^\"]*$t" "$CONFIG"; then ok "the wired matcher covers $t"
+    else fail "no matcher in $CONFIG covers $t; that tool would mutate the repository unguarded"; fi
+  done
+fi
+if [ ! -f "$SHIM" ]; then
+  fail "$SHIM is missing; the wiring names a file that is not there"
+else
+  [ -x "$SHIM" ] && ok "$SHIM is executable" || fail "$SHIM is not executable, so the provider cannot run it"
+  if grep -Eq 'capture[[:space:]]+guard' "$SHIM"; then ok "$SHIM delegates to 'capture guard'"
+  else fail "$SHIM does not dispatch 'capture guard'; the event reaches nothing"; fi
+  # it must not hand the process over: an exec passes on every exit code the tool can have,
+  # and every code but the refusal is a tool call somebody cannot make
+  if grep -Eq '^exec .*capture[[:space:]]+guard' "$SHIM"; then
+    fail "$SHIM execs the tool, so every exit code it can have reaches the provider; it must pass on the refusal alone"
+  else ok "$SHIM does not exec the tool"; fi
+  if grep -q 'exit 2' "$SHIM"; then ok "$SHIM passes on the refusal"
+  else fail "$SHIM never exits 2, so a refusal cannot reach the provider"; fi
+  if grep -q 'exit 0' "$SHIM"; then ok "$SHIM exits 0 on every other path"
+  else fail "$SHIM has no exit 0; something other than a refusal could block a tool"; fi
+fi
+
+# ------------------------------------------------------------------ 3. the switch
+while IFS='|' read -r file what; do
+  [ -n "$file" ] || continue
+  if [ -f "$file" ] && grep -q "$SWITCH" "$file"; then ok "$what declares session.$SWITCH"
+  else fail "$what ($file) does not declare session.$SWITCH"; fi
+done <<'SITES'
+.ai/repo/policy.yaml|this repository's policy
+share/skeleton/policy.yaml|the policy a new repository is written from
+share/allow/policy.txt|the policy allow list
+share/schemas/majordomus/policy/policy.v1.schema.json|the policy schema
+SITES
+
+# ------------------------------------------------------------------ 4. the decision
+if [ -f "$CAPTURE" ]; then
+  if grep -q "session\.$SWITCH" "$CAPTURE"; then ok "the guard reads session.$SWITCH before it refuses anything"
+  else fail "$CAPTURE does not read session.$SWITCH; the switch would be declared and unread"; fi
+  if grep -Eq 'serve[[:space:]]+status' "$CAPTURE"; then ok "the guard reads 'serve status' for where the server stands"
+  else fail "$CAPTURE never runs 'serve status'; the guard would decide on something other than the canonical reading"; fi
+  if grep -q -- '--checkouts this' "$CAPTURE"; then ok "it reads this checkout alone, probing no other"
+  else fail "$CAPTURE does not narrow 'serve status' to --checkouts this; the guard would enumerate every checkout in front of every edit"; fi
+  if grep -Eq 'serve[[:space:]]+ensure' "$CAPTURE"; then ok "it gives an unready server one chance through 'serve ensure'"
+  else fail "$CAPTURE never runs 'serve ensure'; the guard would refuse a server it never tried to fix"; fi
+  if grep -q 'mj_guard_remembered' "$CAPTURE"; then ok "the answer is remembered, so the reading is not paid before every edit"
+  else fail "$CAPTURE remembers no verdict; the canonical reading would be paid in front of every tool call"; fi
+  if grep -q 'mj_guard_undecided' "$CAPTURE"; then ok "a state it cannot decide is named rather than refused"
+  else fail "$CAPTURE has no path that names an undecidable state; a checkout nobody has built would be a checkout nobody can edit"; fi
+  if grep -q 'mj_rust_stale' "$CAPTURE"; then ok "it names a stale executable rather than deciding from one"
+  else fail "$CAPTURE does not consult mj_rust_stale; the guard could decide from yesterday's tree"; fi
+fi
+
+# ------------------------------------------------------------------ the behavioural half
+if [ "$SUITE" = 1 ]; then
+  CASE='test/cases/124_the_guard_refuses_an_unready_episode.sh'
+  if [ -f "$CASE" ]; then
+    if bash test/run.sh 124_the_guard_refuses_an_unready_episode; then ok "$CASE passes"
+    else fail "$CASE fails"; fi
+  else fail "$CASE is missing; the refusal itself is proved there and nowhere else"; fi
+fi
+
+if [ "$findings" -gt 0 ]; then
+  echo "guard-refuses-unready: $findings finding(s); the rule is project.the-guard-refuses-an-unready-episode" >&2
+  exit 10
+fi
+echo "guard-refuses-unready: the pre-tool event is provider data, it is wired where the reconciliation reads it, the switch is declared in four places, and the decision refuses only what it knows"

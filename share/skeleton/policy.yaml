@@ -45,6 +45,13 @@ session:
   checkpoint_on_compact: true
   handover_on_end: true
   ensure_server_on_start: true           # the start event converges on a ready shared server
+  # Before every tool call that mutates the repository, decide whether this episode may
+  # make it: the shared server serves this checkout and an episode is open, or the call is
+  # refused with the reason. It is off here, and turning it on is a deliberate act: the
+  # hook that carries it reaches every worktree of the repository at once, so a wrong
+  # determination in it blocks the sessions that would fix it. What the guard cannot decide
+  # it says out loud and lets through.
+  guard_before_mutation: false           # the pre-tool event refuses an unready episode
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's

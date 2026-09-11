@@ -124,6 +124,10 @@
         "ensure_server_on_start": {
           "type": "boolean",
           "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."
+        },
+        "guard_before_mutation": {
+          "type": "boolean",
+          "description": "Before every tool call that mutates the repository, decide whether this episode may make it: the shared server serves this checkout and an episode is open, or the tool call is refused with the reason. Off unless it is turned on deliberately, because the hook that carries it reaches every worktree of the repository at once and a wrong determination there blocks the sessions that would fix it. A state the guard cannot decide — an executable that is not built, a payload that does not parse, a probe that does not answer — is said out loud and is never a refusal."
         }
       }
     },
