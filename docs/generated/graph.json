@@ -1580,6 +1580,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/development-semantics-check",
+        "kind": "file",
+        "label": "development-semantics-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/development-semantics-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/generate-site-data",
         "kind": "file",
         "label": "generate-site-data",
@@ -1772,6 +1780,14 @@
         "external": true
       },
       {
+        "id": "file:share/events.yaml",
+        "kind": "file",
+        "label": "events.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/events.yaml",
+        "external": true
+      },
+      {
         "id": "file:share/install/install.sh.in",
         "kind": "file",
         "label": "install.sh.in",
@@ -1873,6 +1889,14 @@
         "label": "majordomus",
         "summary": "named by the layer; not an object of this index",
         "source": "share/standard/majordomus",
+        "external": true
+      },
+      {
+        "id": "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "kind": "file",
+        "label": "lifecycle-observed.v1.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/standard/majordomus/rules/lifecycle-observed.v1.md",
         "external": true
       },
       {
@@ -2941,6 +2965,63 @@
             "agents",
             "governance",
             "process"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "label": "adr-0040",
+        "summary": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0040",
+        "source": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.development-semantics-are-canonical",
+            "rule:project.rust-canonical-declaration",
+            "file:docs/DEVELOPMENT_RUNTIME.md",
+            "file:scripts/development-semantics-check"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0041",
+        "kind": "adr",
+        "label": "adr-0041",
+        "summary": "The session lifecycle is the episode's, not the task's",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0041",
+        "source": ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "rule:majordomus.lifecycle-observed",
+            "rule:majordomus.handover-integrity",
+            "rule:majordomus.session-lifecycle",
+            "rule:majordomus.checkpoint-freshness",
+            "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+            "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+            "file:share/events.yaml",
+            "file:docs/CONTINUITY.md",
+            "file:.ai/repo/policy.yaml",
+            "test:test/cases/130_lifecycle_survives_a_stale_task.sh",
+            "test:test/cases/131_freshness_has_an_age.sh",
+            "test:test/cases/132_health_sees_a_stopped_writer.sh"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "governance",
+            "architecture"
           ]
         }
       },
@@ -7827,6 +7908,14 @@
         "source": "docs/COCKPIT.md"
       },
       {
+        "id": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "label": "docs/COCKPIT_IDE_AUDIT.md",
+        "summary": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT_IDE_AUDIT.md",
+        "source": "docs/COCKPIT_IDE_AUDIT.md"
+      },
+      {
         "id": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "label": "docs/COMMANDS.md",
@@ -7873,6 +7962,14 @@
         "summary": "The design system — one declaration, every surface",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
         "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "id": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "label": "docs/DEVELOPMENT_RUNTIME.md",
+        "summary": "The development runtime",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDEVELOPMENT_RUNTIME.md",
+        "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -24632,6 +24729,26 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "rule",
+        "label": "majordomus.lifecycle-observed@1",
+        "summary": "Lifecycle observation",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.lifecycle-observed%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/lifecycle-observed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.handover-integrity@1"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "health"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.minimum-sufficient-context@1",
         "kind": "rule",
         "label": "majordomus.minimum-sufficient-context@1",
@@ -25427,6 +25544,29 @@
           "tags": [
             "safety",
             "tooling"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "label": "project.development-semantics-are-canonical@1",
+        "summary": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.development-semantics-are-canonical%401",
+        "source": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-canonical-declaration@1",
+            "project.interfaces-are-projections@1",
+            "project.commands-are-projections@1"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime"
           ]
         }
       },
@@ -28051,6 +28191,13 @@
         "source": "test/cases/123_case_bound.sh"
       },
       {
+        "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "label": "test/cases/128_the_subset_is_a_subset.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F128_the_subset_is_a_subset.sh",
+        "source": "test/cases/128_the_subset_is_a_subset.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/129_executable_issues.sh",
         "kind": "test",
         "label": "test/cases/129_executable_issues.sh",
@@ -28077,6 +28224,27 @@
         "label": "test/cases/12c_graph_data.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F12c_graph_data.sh",
         "source": "test/cases/12c_graph_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "kind": "test",
+        "label": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_lifecycle_survives_a_stale_task.sh",
+        "source": "test/cases/130_lifecycle_survives_a_stale_task.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "kind": "test",
+        "label": "test/cases/131_freshness_has_an_age.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_freshness_has_an_age.sh",
+        "source": "test/cases/131_freshness_has_an_age.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "kind": "test",
+        "label": "test/cases/132_health_sees_a_stopped_writer.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F132_health_sees_a_stopped_writer.sh",
+        "source": "test/cases/132_health_sees_a_stopped_writer.sh"
       },
       {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
@@ -33238,6 +33406,96 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0040",
+        "target": "file:scripts/development-semantics-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:share/events.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://document/docs/CONTINUITY.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://policy/.ai/repo/policy.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/majordomus.checkpoint-freshness@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/majordomus.session-lifecycle@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -36948,6 +37206,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/COMMANDS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -36974,6 +37237,11 @@
       },
       {
         "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42253,6 +42521,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.lifecycle-observed@1",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.minimum-sufficient-context@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42656,6 +42934,26 @@
         "source": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.commands-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.diagnostics-decide-the-exit@1",
@@ -43618,6 +43916,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/129_executable_issues.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -43634,6 +43937,21 @@
       },
       {
         "source": "majordomus://test/test/cases/12c_graph_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/130_lifecycle_survives_a_stale_task.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47189,8 +47507,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1445,
-      "edges": 3264,
+      "nodes": 1458,
+      "edges": 3294,
       "acyclic": true,
       "truncated": false
     }

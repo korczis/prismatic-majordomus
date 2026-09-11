@@ -6,11 +6,25 @@
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
 
-# no task
-expect_exit 12 bash -c "echo progress | '$MJ' checkpoint"
-expect_grep 'no active task'
+# no task — the record is the episode's, so it is written, and the task field says `none`
+#
+# This asserted `exit 12, no active task` until ADR 0041. The refusal was the defect: it
+# meant that finishing a task turned progress records off for every episode after it, and
+# between 2026-09-05 and 2026-09-11 this repository wrote no checkpoint at all while every
+# health check passed. A checkpoint belongs to the episode; a task is an optional relation
+# it names when it has one. `test/cases/130` keeps the whole outage.
 expect_exit 0 "$MJ" checkpoint --list
 expect_grep 'no checkpoint records for this worktree'
+expect_exit 0 bash -c "echo progress | '$MJ' checkpoint"
+first="$(find .ai/local/state/checkpoints -name '*.md' | head -n 1)"
+[ -n "$first" ] || { echo "    a checkpoint outside a task wrote no record"; exit 1; }
+grep -q '^task_id: none' "$first" || { echo "    the record does not say it belongs to no task"; exit 1; }
+# and the event it emits carries no task_id at all: every reader of this event collects the
+# field's distinct values as task identifiers, and a literal "none" would enter a session
+# record's task list as though somebody had opened a task by that name
+grep '"event":"task.checkpoint"' .ai/local/state/ledger.jsonl | tail -n 1 | grep -q '"task_id"' \
+  && { echo "    a checkpoint outside a task emitted a task_id anyway"; exit 1; }
+rm -f "$first"
 
 "$MJ" start "t1" --scope lib >/dev/null
 id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
@@ -77,7 +91,19 @@ expect_grep '^No checkpoint for t-'
 expect_exit 0 "$MJ" checkpoint --list
 [ "$(printf '%s\n' "$LAST_OUT" | grep -c 'checkpoints/')" = 2 ]
 
-# a finished task refuses a checkpoint: progress inside a task that has none is nonsense
+# A handed-over task does not refuse a checkpoint.
+#
+# This asserted `exit 15, handed_over` until ADR 0041, and that refusal is the whole of the
+# 2026-09-05 outage in one line: a task marked `handed_over` on the 5th and never replaced
+# silenced this repository's progress records for six days, while episodes kept opening and
+# closing and every health check passed. The episode that goes on working after a task is
+# handed over is still working, and what it is doing is still worth recording. The task's
+# own `checkpoint_at` is what must not move — that field is the task's, and the task is
+# over.
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover --close >/dev/null
-expect_exit 15 bash -c "echo late | '$MJ' checkpoint"
-expect_grep 'handed_over'
+grep -q '^outcome: handed_over' .ai/local/state/current.yaml \
+  || { echo "    the handover did not hand the task over, so this asserts nothing"; exit 1; }
+before="$(find .ai/local/state/checkpoints -name '*.md' | wc -l | tr -d ' ')"
+expect_exit 0 bash -c "echo late | '$MJ' checkpoint"
+after="$(find .ai/local/state/checkpoints -name '*.md' | wc -l | tr -d ' ')"
+[ "$after" -gt "$before" ] || { echo "    a handed-over task suppressed the episode's checkpoint"; exit 1; }

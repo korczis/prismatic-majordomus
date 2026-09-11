@@ -4198,9 +4198,29 @@
                   "$ref": "#/$defs/Divergence",
                   "description": "How far its commit is from this one."
                 },
+                "freshness": {
+                  "$ref": "#/$defs/Freshness",
+                  "description": "How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \"trustworthy\"."
+                },
+                "age_minutes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int64",
+                  "description": "Its age in whole minutes, when it has a timestamp that parses."
+                },
+                "freshness_reason": {
+                  "type": "string",
+                  "description": "Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for."
+                },
                 "next_action": {
                   "type": "string",
-                  "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+                  "description": "The section a resuming worker acts on, when the record has one and is still current.\nA handover's `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`."
+                },
+                "next_action_withheld": {
+                  "type": "string",
+                  "description": "Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \"there is nothing to do\" from \"what there was to do is six days old\"."
                 }
               },
               "required": [
@@ -4211,7 +4231,9 @@
                 "head",
                 "working_tree",
                 "matched",
-                "divergence"
+                "divergence",
+                "freshness",
+                "freshness_reason"
               ],
               "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
             },
@@ -4259,6 +4281,36 @@
                 }
               ],
               "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
+            },
+            "Freshness": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "fresh",
+                  "description": "Inside `session.freshness.fresh_minutes`. Current; act on it."
+                },
+                {
+                  "type": "string",
+                  "const": "aging",
+                  "description": "Between the two thresholds. Still current, but its age is worth stating."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "At or beyond `session.freshness.stale_minutes`. History, never current."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "Nothing to judge it by: no timestamp, or no thresholds declared."
+                },
+                {
+                  "type": "string",
+                  "const": "invalid",
+                  "description": "A timestamp that does not parse, or one in the future."
+                }
+              ],
+              "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0041).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
             }
           }
         }
@@ -15835,7 +15887,7 @@
       "module": "peers",
       "kind": "command",
       "title": "Announce what this peer is working on",
-      "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+      "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
       "input": {
         "name": "AnnounceInput",
         "schema": {
@@ -15853,6 +15905,13 @@
               },
               "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
               "default": []
+            },
+            "claim": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
             }
           },
           "required": [
@@ -15893,6 +15952,13 @@
               "type": "boolean",
               "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
             },
+            "claims": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Announcement"
+              },
+              "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+            },
             "announcement": {
               "anyOf": [
                 {
@@ -15902,7 +15968,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Its announcement, when it made one."
+              "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
             },
             "overlaps": {
               "type": "array",
@@ -15910,6 +15976,13 @@
                 "$ref": "#/$defs/Overlap"
               },
               "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case."
+            },
+            "released": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case."
             }
           },
           "required": [
@@ -15970,6 +16043,13 @@
             "Announcement": {
               "type": "object",
               "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                },
                 "intent": {
                   "type": "string",
                   "description": "One line: the task or intent, in the peer's words."
@@ -15991,7 +16071,7 @@
                 "scope",
                 "at"
               ],
-              "description": "What a peer said it is working on."
+              "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
             },
             "Overlap": {
               "type": "object",
@@ -16170,6 +16250,13 @@
                   "type": "boolean",
                   "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
                 },
+                "claims": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Announcement"
+                  },
+                  "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+                },
                 "announcement": {
                   "anyOf": [
                     {
@@ -16179,7 +16266,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Its announcement, when it made one."
+                  "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
                 }
               },
               "required": [
@@ -16235,6 +16322,13 @@
             "Announcement": {
               "type": "object",
               "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                },
                 "intent": {
                   "type": "string",
                   "description": "One line: the task or intent, in the peer's words."
@@ -16256,7 +16350,7 @@
                 "scope",
                 "at"
               ],
-              "description": "What a peer said it is working on."
+              "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
             },
             "Overlap": {
               "type": "object",
