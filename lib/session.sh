@@ -427,6 +427,17 @@ mj_session_close() {
     mj_session_refs "$win"
     printf -- '---\n'
   } > "$rec"
+  # A record with no body is a receipt, not a record: it names ninety-four commits and says
+  # nothing about any of them. The authored summary stays optional — nothing should refuse
+  # to close an episode over prose — but its absence now composes one instead of leaving the
+  # body blank, from this episode's own checkpoints and decisions and from what git and the
+  # ledger can prove. The lifecycle closes with `< /dev/null`, so before this every
+  # automatically closed record had an empty body, which was every record.
+  if [ ! -s "$body" ]; then
+    # shellcheck source=derive.sh
+    . "$MJ_LIB_DIR/derive.sh"
+    mj_derive_session_body "$win" "$outcome" > "$body" 2>/dev/null || : > "$body"
+  fi
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
