@@ -123,8 +123,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `AGENTS.md` | `providers/agents` | markdown | 5475 | `cca4cdce03fcb954` |
 | `CLAUDE.md` | `providers/claude-code` | markdown | 4764 | `eb748059fff7afe3` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 903 | `d955b7757408c4a4` |
-| `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 14264 | `5bce1ee72f19a42c` |
-| `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 4618 | `75123c5cfed47b9b` |
+| `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 16876 | `40b195e60e17a6ce` |
+| `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 5692 | `90f7fdfbb4eb97e7` |
 | `deploy/Dockerfile` | `deployment` | text | 1429 | `bd5ae89f838bd0ea` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9218 | `9f3c69c15341dddf` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
@@ -140,11 +140,11 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/cli.json` | `cli` | json | 533707 | `fd442498abb45592` |
 | `docs/generated/cli.md` | `cli` | markdown | 225532 | `b10f2b8ab7184537` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 415485 | `15ae351ec8700556` |
-| `docs/generated/design.json` | `design` | json | 109848 | `c109c5d4b493c947` |
-| `docs/generated/design.md` | `design` | markdown | 7733 | `f30bb7f1f7d70947` |
-| `docs/generated/design.yaml` | `design` | yaml | 89425 | `5f1e5b276d85ce76` |
+| `docs/generated/design.json` | `design` | json | 125620 | `9d30d6a9c681cd77` |
+| `docs/generated/design.md` | `design` | markdown | 9232 | `e73f58caeaefe52d` |
+| `docs/generated/design.yaml` | `design` | yaml | 102269 | `6f6653414971c32c` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 1791114 | `df2217926173658c` |
+| `docs/generated/graph.json` | `graph` | json | 1791570 | `3487a6bae58c133b` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `71e561e0eb5fbf61` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `b235d97efff54f98` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `a6458783c48e2be2` |
@@ -209,8 +209,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/use-case.txt` | `allow/use-case` | text | 546 | `3cc50dd7375d29c7` |
 | `share/allow/workspace.txt` | `allow/workspace` | text | 567 | `0527f12871610c3c` |
 | `share/cockpit/favicon.svg` | `design-mark` | text | 903 | `d955b7757408c4a4` |
-| `share/design/status.css` | `design-status` | text | 9558 | `961af207ab5536b3` |
-| `share/design/surface.css` | `design-surface` | text | 2858 | `602f43ff5b7c6745` |
+| `share/design/status.css` | `design-status` | text | 10030 | `6d8999a671ce65f1` |
+| `share/design/surface.css` | `design-surface` | text | 3597 | `e53a543862a647f6` |
 | `share/design/theme.css` | `design-theme` | text | 2378 | `af965c3c6a150a7a` |
 | `share/schemas/majordomus/adr/adr.v1.schema.json` | `schemas/majordomus.adr/v1` | json | 6106 | `f0b297dce177305a` |
 | `share/schemas/majordomus/application/application.v1.schema.json` | `schemas/majordomus.application/v1` | json | 3960 | `03f0261d33ce16ad` |
@@ -229,11 +229,11 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/rule.txt` | `sections/rule` | text | 335 | `fa43355b8b9c71b3` |
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `ce0ec0e187ae8737` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `fba60ec94ced0f49` |
-| `site/data/registry/design.json` | `site-design` | json | 8204 | `06cd661fe76c7781` |
+| `site/data/registry/design.json` | `site-design` | json | 9987 | `0057f0ff8810dd51` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `5a9eb4b9a098bd40` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 61048 | `40a3928755f2bac4` |
-| `site/data/registry/product.json` | `site-product` | json | 305305 | `e8dbcb3093a900b6` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2548175 | `1c05a802126c8517` |
+| `site/data/registry/product.json` | `site-product` | json | 305305 | `0e6fce3f1fde23ac` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2548444 | `99b7a50b7450889d` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `840609c69b09d1f7` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `c7422aeb14f1ddcc` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `d955b7757408c4a4` |
