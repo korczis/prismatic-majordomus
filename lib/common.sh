@@ -317,7 +317,15 @@ mj_git_touched() {
 # one tab, computed once: a loop that writes IFS="$MJ_TAB" per iteration forks a
 # subshell per line, which is where a listing of a few hundred rows lost a second
 MJ_TAB="$(printf '\t')"
-mj_now()    { date -u +%Y-%m-%dT%H:%M:%SZ; }
+# The clock, in one place, so that a test can move it. Ageing is a first-class dimension of
+# this subsystem (ADR 0041) and the thresholds it is judged against are measured in days;
+# a suite that proved them by waiting would take a week to run once. MAJORDOMUS_NOW, when
+# set to an ISO-8601 UTC instant, is that instant for every reader here. It is deliberately
+# not a policy key: policy is a repository decision and this is a test instrument.
+mj_now() {
+  if [ -n "${MAJORDOMUS_NOW:-}" ]; then printf '%s' "$MAJORDOMUS_NOW"; return; fi
+  date -u +%Y-%m-%dT%H:%M:%SZ
+}
 
 # ---------------------------------------------------------------- timing
 # Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
@@ -365,7 +373,13 @@ mj_timing_report() {
   } >&2
   rm -f "$MJ_TIMING_FILE"
 }
-mj_now_compact() { date -u +%Y%m%dT%H%M%SZ; }
+# The same instant as mj_now, in the form a record's filename uses. It reads the same
+# override for the same reason: a record dated six days ago in its front matter and today in
+# its name is a fixture no resolver would agree with itself about.
+mj_now_compact() {
+  if [ -n "${MAJORDOMUS_NOW:-}" ]; then printf '%s' "$MAJORDOMUS_NOW" | tr -d ':-'; return; fi
+  date -u +%Y%m%dT%H%M%SZ
+}
 mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d ' \n'; }
 mj_sha256() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
@@ -806,9 +820,11 @@ mj_provider_session_env() {
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
     local n v
     for n in $(mj_lifecycle_session_vars); do
-      # the name comes from the adapter table, never from anything a payload carries.
-      # Indirect expansion, not eval: eval would run whatever the name expanded to, and
-      # SECURITY.md forbids it outright (test/cases/08_no_forbidden_constructs.sh).
+      # The name comes from the adapter table, never from anything a payload carries.
+      # Indirect expansion rather than `eval`: it reads a variable by name and can do
+      # nothing else, where `eval` would run whatever the name expanded to. SECURITY.md
+      # forbids `eval` in this tool's own source and test/cases/08 enforces it; this line
+      # was the one instance left, and the construct it needed was never `eval`.
       v="${!n:-}"
       if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
     done
@@ -1075,6 +1091,16 @@ mj_age_minutes() {
   local e; e="$(mj_epoch "$1")"; [ -n "$e" ] || return 1
   printf '%s' $(( ( $(mj_epoch "$(mj_now)") - e ) / 60 ))
 }
+# "18" -> "18m"; "1500" -> "25h". A span, not a moment: a threshold is a length of time
+# and rendering it with mj_age_human produced "past the 2d ago this repository calls stale".
+mj_duration_human() {
+  local m="$1"
+  if [ -z "$m" ]; then printf 'unknown'
+  elif [ "$m" -lt 90 ]; then printf '%sm' "$m"
+  elif [ "$m" -lt 2880 ]; then printf '%sh' $((m/60))
+  else printf '%sd' $((m/1440)); fi
+}
+
 # "18" -> "18m ago"; "1500" -> "25h ago"
 mj_age_human() {
   local m="$1"
@@ -1082,6 +1108,75 @@ mj_age_human() {
   elif [ "$m" -lt 90 ]; then printf '%sm ago' "$m"
   elif [ "$m" -lt 2880 ]; then printf '%sh ago' $((m/60))
   else printf '%sd ago' $((m/1440)); fi
+}
+
+# ---------------------------------------------------------------- freshness
+# How far a record may still be trusted as *current*, which is a different question from
+# how far its commit is from HEAD. mj_git_label answers the second: exact, advanced,
+# diverged, different_context — a statement about topology. A record whose commit is an
+# ancestor of HEAD is `advanced` on the day it is written and `advanced` six days later,
+# and on 2026-09-05 that word carried a finished instruction into every episode for a week
+# (ADR 0041). This answers the first, in five words:
+#
+#   fresh     inside session.freshness.fresh_minutes — current, act on it
+#   aging     between the two thresholds — current, but say how old
+#   stale     at or beyond session.freshness.stale_minutes — history, never current
+#   unknown   no timestamp to judge; absence reported as absence, not as freshness
+#   invalid   a timestamp that does not parse, or one in the future
+#
+# Sets MJ_FRESH_STATE, MJ_FRESH_MINUTES and MJ_FRESH_REASON, and prints the state. The
+# three variables are the answer and the printed word is a convenience: a caller that wants
+# the reason must call this as a statement, because `f="$(mj_freshness ...)"` runs it in a
+# subshell and the variables die with it. Under `set -u` that mistake is not a wrong string
+# but an unbound variable that kills the briefing mid-sentence, so they are initialised at
+# load time below and the callers here are statements.
+# Requires
+# a loaded policy: the thresholds live in .ai/repo/policy.yaml and nothing here carries a
+# default, for the reason mj_pol_req states — a fallback beside the reader is a second
+# source of truth for the same number.
+MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=""; MJ_FRESH_REASON=""
+mj_freshness() {
+  local ts="$1" fresh stale mins
+  MJ_FRESH_STATE=unknown; MJ_FRESH_MINUTES=""; MJ_FRESH_REASON=""
+
+  if [ -z "$ts" ]; then
+    MJ_FRESH_REASON="no timestamp"; printf 'unknown'; return 0
+  fi
+  if ! mins="$(mj_age_minutes "$ts")"; then
+    MJ_FRESH_STATE=invalid; MJ_FRESH_REASON="timestamp does not parse: $ts"
+    printf 'invalid'; return 0
+  fi
+  MJ_FRESH_MINUTES="$mins"
+  if [ "$mins" -lt 0 ]; then
+    MJ_FRESH_STATE=invalid
+    MJ_FRESH_REASON="timestamp is $(( -mins )) minute(s) in the future"
+    printf 'invalid'; return 0
+  fi
+
+  fresh="$(mj_pol session.freshness.fresh_minutes)"
+  stale="$(mj_pol session.freshness.stale_minutes)"
+  case "$fresh" in ''|*[!0-9]*) MJ_FRESH_REASON="policy is missing session.freshness.fresh_minutes"; printf 'unknown'; return 0 ;; esac
+  case "$stale" in ''|*[!0-9]*) MJ_FRESH_REASON="policy is missing session.freshness.stale_minutes"; printf 'unknown'; return 0 ;; esac
+
+  if [ "$mins" -ge "$stale" ]; then
+    MJ_FRESH_STATE=stale
+    MJ_FRESH_REASON="$(mj_age_human "$mins"), past the $(mj_duration_human "$stale") this repository calls stale"
+  elif [ "$mins" -ge "$fresh" ]; then
+    MJ_FRESH_STATE=aging
+    MJ_FRESH_REASON="$(mj_age_human "$mins"), past the $(mj_duration_human "$fresh") this repository calls fresh"
+  else
+    MJ_FRESH_STATE=fresh
+    MJ_FRESH_REASON="$(mj_age_human "$mins")"
+  fi
+  printf '%s' "$MJ_FRESH_STATE"
+}
+
+# True when a record must not be presented as the current instruction. `stale` and
+# `invalid` are the two states a reader acts on differently; `unknown` is not one of them,
+# because a record with no timestamp is not thereby old.
+mj_freshness_is_history() {
+  case "$1" in stale|invalid) return 0 ;; esac
+  return 1
 }
 
 # value of a flat JSON key on one ledger line: mj_json_field LINE KEY

@@ -102,6 +102,183 @@ impl Divergence {
     }
 }
 
+/// How old a record is, judged against `session.freshness` in the policy.
+///
+/// This is the second of two independent judgements every record carries, and it exists
+/// because the first one cannot answer this question. [`Divergence`] says where a record's
+/// commit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,
+/// which sounds like agreement and is identically true on the day the record is written and
+/// a month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that
+/// was `advanced` and six days dead, and every surface that read this model — MCP, the HTTP
+/// API, the Cockpit — presented its `Next Action` as the thing to do (ADR 0041).
+///
+/// The thresholds are policy and are read, never restated here: a constant in this file
+/// would be a second source of truth for a number the policy owns, and a repository whose
+/// policy predates the key is reported as [`Freshness::Unknown`] naming the missing key
+/// rather than judged against a default nobody declared.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Freshness {
+    /// Inside `session.freshness.fresh_minutes`. Current; act on it.
+    Fresh,
+    /// Between the two thresholds. Still current, but its age is worth stating.
+    Aging,
+    /// At or beyond `session.freshness.stale_minutes`. History, never current.
+    Stale,
+    /// Nothing to judge it by: no timestamp, or no thresholds declared.
+    Unknown,
+    /// A timestamp that does not parse, or one in the future.
+    Invalid,
+}
+
+impl Freshness {
+    /// The word as serialised.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::continuity::Freshness;
+    /// assert_eq!(Freshness::Stale.as_str(), "stale");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Freshness::Fresh => "fresh",
+            Freshness::Aging => "aging",
+            Freshness::Stale => "stale",
+            Freshness::Unknown => "unknown",
+            Freshness::Invalid => "invalid",
+        }
+    }
+
+    /// Whether a record this old must be shown as history rather than as the current
+    /// instruction. `unknown` is not history: a record with no timestamp is not thereby old.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::continuity::Freshness;
+    /// assert!(Freshness::Stale.history());
+    /// assert!(!Freshness::Unknown.history());
+    /// ```
+    pub fn history(self) -> bool {
+        matches!(self, Freshness::Stale | Freshness::Invalid)
+    }
+}
+
+/// Seconds since the Unix epoch for an RFC 3339 instant in UTC (`2026-09-05T12:34:56Z`), or
+/// `None` when the string is not one. The inverse of [`crate::peers::rfc3339`], and written
+/// beside it for the same reason: no date crate, and the layer's timestamps are one shape.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::continuity::epoch_seconds;
+/// assert_eq!(epoch_seconds("1970-01-01T00:00:00Z"), Some(0));
+/// assert_eq!(epoch_seconds("2026-08-29T10:40:00Z"), Some(1_788_000_000));
+/// assert_eq!(epoch_seconds("not a timestamp"), None);
+/// ```
+pub fn epoch_seconds(ts: &str) -> Option<i64> {
+    let b = ts.as_bytes();
+    if b.len() != 20 || b[4] != b'-' || b[7] != b'-' || b[10] != b'T' || b[19] != b'Z' {
+        return None;
+    }
+    let n = |a: usize, z: usize| ts.get(a..z)?.parse::<i64>().ok();
+    let (y, mth, d) = (n(0, 4)?, n(5, 7)?, n(8, 10)?);
+    let (h, mi, sec) = (n(11, 13)?, n(14, 16)?, n(17, 19)?);
+    if !(1..=12).contains(&mth) || !(1..=31).contains(&d) || h > 23 || mi > 59 || sec > 60 {
+        return None;
+    }
+    // days-from-civil, Howard Hinnant's algorithm: the inverse of the one in peers.rs.
+    let y = if mth <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let mp = if mth > 2 { mth - 3 } else { mth + 9 };
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    Some(days * 86_400 + h * 3600 + mi * 60 + sec)
+}
+
+/// The thresholds a record is judged against, as the policy declares them.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Thresholds {
+    /// `session.freshness.fresh_minutes`.
+    pub fresh_minutes: Option<i64>,
+    /// `session.freshness.stale_minutes`.
+    pub stale_minutes: Option<i64>,
+}
+
+impl Thresholds {
+    /// Judge one record's `created_at` against these thresholds, at `now` (Unix seconds).
+    /// Returns the verdict, the age in whole minutes when there is one, and the reason —
+    /// which is never empty, because a verdict a reader cannot act on is the failure this
+    /// whole subsystem is being corrected for.
+    pub fn judge(self, created_at: &str, now: i64) -> (Freshness, Option<i64>, String) {
+        if created_at.is_empty() {
+            return (Freshness::Unknown, None, "no timestamp".into());
+        }
+        let Some(then) = epoch_seconds(created_at) else {
+            return (
+                Freshness::Invalid,
+                None,
+                format!("timestamp does not parse: {created_at}"),
+            );
+        };
+        let minutes = (now - then) / 60;
+        if minutes < 0 {
+            return (
+                Freshness::Invalid,
+                Some(minutes),
+                format!("timestamp is {} minute(s) in the future", -minutes),
+            );
+        }
+        let (Some(fresh), Some(stale)) = (self.fresh_minutes, self.stale_minutes) else {
+            return (
+                Freshness::Unknown,
+                Some(minutes),
+                "the policy declares no session.freshness thresholds".into(),
+            );
+        };
+        if minutes >= stale {
+            (
+                Freshness::Stale,
+                Some(minutes),
+                format!(
+                    "{} old, past the {} this repository calls stale",
+                    span(minutes),
+                    span(stale)
+                ),
+            )
+        } else if minutes >= fresh {
+            (
+                Freshness::Aging,
+                Some(minutes),
+                format!(
+                    "{} old, past the {} this repository calls fresh",
+                    span(minutes),
+                    span(fresh)
+                ),
+            )
+        } else {
+            (Freshness::Fresh, Some(minutes), format!("{} old", span(minutes)))
+        }
+    }
+}
+
+/// Whole minutes as the shell tool renders a span: `18m`, `25h`, `6d`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::continuity::span;
+/// assert_eq!(span(18), "18m");
+/// assert_eq!(span(1500), "25h");
+/// assert_eq!(span(8640), "6d");
+/// ```
+pub fn span(minutes: i64) -> String {
+    if minutes < 90 {
+        format!("{minutes}m")
+    } else if minutes < 2880 {
+        format!("{}h", minutes / 60)
+    } else {
+        format!("{}d", minutes / 1440)
+    }
+}
+
 /// Which tier of the resolution rule matched. There is no third tier on purpose: a record
 /// from an unrelated worktree or branch is never offered.
 #[derive(
@@ -135,10 +312,26 @@ pub struct Record {
     pub matched: Match,
     /// How far its commit is from this one.
     pub divergence: Divergence,
-    /// The section a resuming worker acts on, when the record has one. A handover's `Next
-    /// Action`; empty for a record that carries no sections.
+    /// How old it is, judged against `session.freshness`. Independent of `divergence`: a
+    /// record is routinely `advanced` and `stale` at once, and that pair is what a reader
+    /// must not collapse into "trustworthy".
+    pub freshness: Freshness,
+    /// Its age in whole minutes, when it has a timestamp that parses.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub age_minutes: Option<i64>,
+    /// Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot
+    /// act on is the failure this subsystem is being corrected for.
+    pub freshness_reason: String,
+    /// The section a resuming worker acts on, when the record has one and is still current.
+    /// A handover's `Next Action`; empty for a record that carries no sections, and
+    /// deliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub next_action: String,
+    /// Why `next_action` is empty despite the record having one. Set only when it was
+    /// withheld, never when the record simply carries no such section, so that a reader can
+    /// tell "there is nothing to do" from "what there was to do is six days old".
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub next_action_withheld: String,
 }
 
 /// The open episode this checkout points at, when there is one.
@@ -339,7 +532,14 @@ pub(crate) fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Diver
 ///
 /// Returns the record and the number of files that were skipped because they could not be
 /// read as records.
-fn resolve(root: &Path, dir: &Path, branch: &str, head: Option<&str>) -> (Option<Record>, usize) {
+fn resolve(
+    root: &Path,
+    dir: &Path,
+    branch: &str,
+    head: Option<&str>,
+    thresholds: Thresholds,
+    now: i64,
+) -> (Option<Record>, usize) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return (None, 0);
     };
@@ -395,8 +595,29 @@ fn resolve(root: &Path, dir: &Path, branch: &str, head: Option<&str>) -> (Option
                 Match::SameBranch
             },
             divergence: divergence(root, rhead, head),
+            freshness: Freshness::Unknown,
+            age_minutes: None,
+            freshness_reason: String::new(),
             next_action: section(&path, "Next Action"),
+            next_action_withheld: String::new(),
         };
+        // Judged here rather than by each surface: MCP, the HTTP API and the Cockpit all
+        // read this one value, which is the point. A record past the stale threshold keeps
+        // its path — knowing what the last worker was doing is worth having — and loses the
+        // section a reader would otherwise act on, with the reason in its place.
+        let mut record = record;
+        let (f, age, why) = thresholds.judge(&record.created_at, now);
+        record.freshness = f;
+        record.age_minutes = age;
+        record.freshness_reason = why;
+        if f.history() && !record.next_action.is_empty() {
+            record.next_action_withheld = format!(
+                "the record is {}: {}. It is history, not an instruction; read it at the path above.",
+                f.as_str(),
+                record.freshness_reason
+            );
+            record.next_action.clear();
+        }
         let key = created.clone();
         let better = match &best {
             None => true,
@@ -454,6 +675,29 @@ fn blockers(path: &Path) -> Vec<String> {
 
 // --------------------------------------------------------------------- handler
 
+/// The freshness thresholds this repository declares, read from the policy the manifest
+/// names.
+///
+/// Read here rather than carried on the [`Context`] because nothing else in this process
+/// needs them, and read from the policy rather than written down because a constant in this
+/// file would be the second copy of a number the policy owns — the drift `session.freshness`
+/// exists in one place to prevent. A repository whose policy predates the key, or whose
+/// policy cannot be read at all, yields no thresholds; every record is then reported as
+/// `unknown` naming the missing key, which is the honest answer and not a default.
+fn thresholds_of(ctx: &Context) -> Thresholds {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let Ok(repo) = crate::repository::Repository::open(&root) else {
+        return Thresholds::default();
+    };
+    let Ok(loaded) = crate::policy::LoadedPolicy::load(&repo) else {
+        return Thresholds::default();
+    };
+    Thresholds {
+        fresh_minutes: loaded.policy.session.freshness.fresh_minutes,
+        stale_minutes: loaded.policy.session.freshness.stale_minutes,
+    }
+}
+
 fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let dir = root.join(STATE_DIR);
@@ -500,8 +744,30 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
     let task = read_task(&dir.join("current.yaml"));
 
     // --- the two resolved records
-    let (handover, s1) = resolve(&root, &dir.join("handovers"), &branch, head.as_deref());
-    let (checkpoint, s2) = resolve(&root, &dir.join("checkpoints"), &branch, head.as_deref());
+    // One reading of the policy's thresholds and one reading of the clock for both records,
+    // so that two records resolved in the same call cannot be judged against different
+    // instants — and so that the numbers come from the policy rather than from this file.
+    let thresholds = thresholds_of(ctx);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let (handover, s1) = resolve(
+        &root,
+        &dir.join("handovers"),
+        &branch,
+        head.as_deref(),
+        thresholds,
+        now,
+    );
+    let (checkpoint, s2) = resolve(
+        &root,
+        &dir.join("checkpoints"),
+        &branch,
+        head.as_deref(),
+        thresholds,
+        now,
+    );
     skipped += s1 + s2;
     if skipped > 0 {
         findings.push(format!(
@@ -515,6 +781,17 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
                     "the resolved {what} is {}: it was written at {} and that commit is not in this history; trust git over it",
                     r.divergence.as_str(),
                     &r.head[..7.min(r.head.len())]
+                ));
+            }
+            // Reported separately, because it is a separate fact. A record is routinely
+            // `advanced` — its commit an ancestor of HEAD, which reads as agreement — and
+            // long dead at the same time, and it was exactly that pair, unreported, that
+            // handed six days of workers a finished instruction (ADR 0041).
+            if r.freshness.history() {
+                findings.push(format!(
+                    "the resolved {what} is {}: {}. It is context, not an instruction; what it said to do next is not offered as current.",
+                    r.freshness.as_str(),
+                    r.freshness_reason
                 ));
             }
         }
@@ -633,6 +910,125 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The thresholds, both sides of each and exactly on it. "At or beyond" and "beyond"
+    /// are different contracts, and prose cannot be trusted to say which one is implemented.
+    #[test]
+    fn freshness_is_decided_at_the_thresholds_the_policy_declares() {
+        let t = Thresholds {
+            fresh_minutes: Some(720),
+            stale_minutes: Some(2880),
+        };
+        let now = epoch_seconds("2026-06-15T12:00:00Z").expect("a parseable instant");
+        let at = |minutes: i64| {
+            let secs = now - minutes * 60;
+            // Only the verdict is under test; the timestamp is built by the same arithmetic
+            // the judgement uses, so a bug in one cancels in the other. Hence the round
+            // trip through the formatter this crate already proves elsewhere.
+            crate::peers::rfc3339(
+                std::time::UNIX_EPOCH + std::time::Duration::from_secs(secs as u64),
+            )
+        };
+        let verdict = |minutes: i64| t.judge(&at(minutes), now).0;
+
+        assert_eq!(verdict(1), Freshness::Fresh);
+        assert_eq!(verdict(719), Freshness::Fresh);
+        assert_eq!(verdict(720), Freshness::Aging);
+        assert_eq!(verdict(721), Freshness::Aging);
+        assert_eq!(verdict(2879), Freshness::Aging);
+        assert_eq!(verdict(2880), Freshness::Stale);
+        assert_eq!(verdict(2881), Freshness::Stale);
+        // the 2026-09-05 outage, to the day
+        assert_eq!(verdict(6 * 24 * 60), Freshness::Stale);
+    }
+
+    /// A verdict a reader cannot act on is the failure this subsystem is being corrected
+    /// for, so every one of them carries a reason.
+    #[test]
+    fn every_verdict_says_why() {
+        let t = Thresholds {
+            fresh_minutes: Some(720),
+            stale_minutes: Some(2880),
+        };
+        let now = epoch_seconds("2026-06-15T12:00:00Z").expect("a parseable instant");
+        for ts in [
+            "2026-06-15T11:59:00Z",
+            "2026-06-14T00:00:00Z",
+            "2026-06-01T00:00:00Z",
+            "2026-06-15T13:00:00Z",
+            "not a timestamp",
+            "",
+        ] {
+            let (_, _, why) = t.judge(ts, now);
+            assert!(!why.is_empty(), "no reason given for {ts:?}");
+        }
+    }
+
+    /// The three answers that are not an age. They are distinct on purpose: a record with
+    /// no timestamp is not thereby old, one dated in the future is evidence that something
+    /// wrote it wrongly, and a policy with no thresholds is a repository that has not said
+    /// what it means by stale — none of which is a default this file may invent.
+    #[test]
+    fn what_cannot_be_judged_is_reported_as_itself() {
+        let t = Thresholds {
+            fresh_minutes: Some(720),
+            stale_minutes: Some(2880),
+        };
+        let now = epoch_seconds("2026-06-15T12:00:00Z").expect("a parseable instant");
+
+        assert_eq!(t.judge("", now).0, Freshness::Unknown);
+        assert_eq!(t.judge("not a timestamp", now).0, Freshness::Invalid);
+
+        let (f, _, why) = t.judge("2026-06-15T13:00:00Z", now);
+        assert_eq!(f, Freshness::Invalid);
+        assert!(why.contains("future"), "a future timestamp did not say so: {why}");
+
+        let none = Thresholds::default();
+        let (f, age, why) = none.judge("2026-06-01T00:00:00Z", now);
+        assert_eq!(f, Freshness::Unknown);
+        // 2026-06-01T00:00:00Z to 2026-06-15T12:00:00Z: 14 days and 12 hours.
+        assert_eq!(
+            age,
+            Some(14 * 1440 + 720),
+            "the age is known even when the verdict is not"
+        );
+        assert!(why.contains("session.freshness"), "the missing key is not named: {why}");
+    }
+
+    /// `stale` and `invalid` are the two a reader must refuse to present as current.
+    /// `unknown` is not one of them.
+    #[test]
+    fn only_stale_and_invalid_are_history() {
+        assert!(Freshness::Stale.history());
+        assert!(Freshness::Invalid.history());
+        assert!(!Freshness::Fresh.history());
+        assert!(!Freshness::Aging.history());
+        assert!(!Freshness::Unknown.history());
+    }
+
+    /// The parser is the inverse of the formatter beside it, over instants this layer
+    /// actually writes, and rejects what is not one rather than guessing.
+    #[test]
+    fn the_parser_inverts_the_formatter() {
+        for secs in [0i64, 1_788_000_000, 1_757_000_000, 253_370_764_800] {
+            let text = crate::peers::rfc3339(
+                std::time::UNIX_EPOCH + std::time::Duration::from_secs(secs as u64),
+            );
+            assert_eq!(epoch_seconds(&text), Some(secs), "round trip failed for {text}");
+        }
+        for bad in [
+            "",
+            "2026-09-05",
+            "2026-09-05T12:34:56",
+            "2026-09-05T12:34:56+01:00",
+            "2026-13-05T12:34:56Z",
+            "2026-09-32T12:34:56Z",
+            "2026-09-05T24:34:56Z",
+            "xxxx-09-05T12:34:56Z",
+        ] {
+            assert_eq!(epoch_seconds(bad), None, "{bad:?} was accepted");
+        }
+    }
 
     /// The declaration is the only place the id, the tool name, the resource URI and the
     /// route exist. A refactor that dropped one of them would still compile, and every

@@ -235,7 +235,11 @@ mj_derive_gather() {
       "$MJ_STATE_DIR/ledger.jsonl" | LC_ALL=C sort -u | tr '\n' ' ' | sed 's/ $//; s/ /, /g')"
   fi
 
-  if [ "$MJ_DV_TASK_ID" != none ] && mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$MJ_DV_TASK_ID"; then
+  # The newest checkpoint on this worktree and branch, whether or not a task named it: a
+  # checkpoint is the episode's record (ADR 0041), and an episode working outside a task
+  # still wrote the ones it wrote.
+  local want_task=""; [ "$MJ_DV_TASK_ID" != none ] && want_task="$MJ_DV_TASK_ID"
+  if mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$want_task"; then
     MJ_DV_LAST_CHECKPOINT="$MJ_RES_PATH"
     MJ_DV_LAST_CHECKPOINT_AGE="$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
   fi
@@ -361,17 +365,33 @@ mj_derive_briefing_body() {
   # --- the continuation record, with the label that says how far to trust it
   printf '\n'
   if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
-    printf 'Handover %s (%s, %s, %s).\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" \
-      "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" \
-      "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
-    case "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" in
-      diverged|different_context)
-        printf 'Its commit is not in this history. Trust git over anything it says.\n' ;;
-    esac
-    # The one section a resuming worker acts on. The rest of the record is at the path
-    # above; quoting all of it here would put the whole document in every episode.
-    local next; next="$(mj_derive_section "$MJ_RES_PATH" "Next Action")"
-    if [ -n "$next" ]; then printf '\nIts Next Action:\n\n'; printf '%s\n' "$next" | mj_derive_bounded 12 "line(s)"; fi
+    # Two independent judgements, and the briefing states both. mj_git_label says where the
+    # record's commit sits relative to HEAD; mj_freshness says how old it is. A record can
+    # be `advanced` — its commit an ancestor of HEAD, which sounds like agreement — and six
+    # days dead at the same time. That combination carried a finished instruction into
+    # every new episode here for a week (ADR 0041).
+    local fresh; mj_freshness "$MJ_RES_CREATED" >/dev/null; fresh="$MJ_FRESH_STATE"
+    if mj_freshness_is_history "$fresh"; then
+      printf 'Historical handover %s (%s, %s).\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" \
+        "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")"
+      printf 'It is %s: %s.\n' "$fresh" "$MJ_FRESH_REASON"
+      printf 'That makes it context, not an instruction. What it said to do next was true when it\n'
+      printf 'was written and is deliberately not quoted here as current — read the record at the\n'
+      printf 'path above to see what the last worker was doing, and derive what to do now from\n'
+      printf 'this repository as it stands.\n'
+    else
+      printf 'Handover %s (%s, %s, %s, %s).\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" \
+        "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" "$fresh" \
+        "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
+      case "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" in
+        diverged|different_context)
+          printf 'Its commit is not in this history. Trust git over anything it says.\n' ;;
+      esac
+      # The one section a resuming worker acts on. The rest of the record is at the path
+      # above; quoting all of it here would put the whole document in every episode.
+      local next; next="$(mj_derive_section "$MJ_RES_PATH" "Next Action")"
+      if [ -n "$next" ]; then printf '\nIts Next Action:\n\n'; printf '%s\n' "$next" | mj_derive_bounded 12 "line(s)"; fi
+    fi
   else
     printf 'No relevant handover for this worktree and branch. That is an answer, not a gap: a record from another branch is never offered, because a briefing that is quietly about somebody else is worse than none.\n'
   fi

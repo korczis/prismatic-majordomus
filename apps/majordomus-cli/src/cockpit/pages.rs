@@ -1635,6 +1635,11 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
 /// The divergence label is a badge and a word, never a colour alone, because the difference
 /// between `advanced` and `diverged` is the difference between "some of this is already
 /// done" and "this describes a history that no longer exists".
+///
+/// Freshness is a second badge beside it and not a shade of the first, because the two
+/// answer different questions and their disagreement is the interesting case. This page
+/// showed one badge until ADR 0041, so a handover that was `advanced` and six days dead
+/// rendered as a calm blue `advanced` with its `Next action` printed underneath in full.
 fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     let Some(r) = r else {
         return card(title, nothing(empty_note));
@@ -1645,9 +1650,31 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
         "unknown" => "warn",
         _ => "fail",
     };
+    let fresh_level = match r.freshness.as_str() {
+        "fresh" => "ok",
+        "aging" => "info",
+        "unknown" => "warn",
+        _ => "fail",
+    };
+    // One badge carrying both words, at the worse of the two levels. Two elements would
+    // want a flex container and a gap, and the stylesheet is a Tailwind build — a new class
+    // here is a build step for a separator. What matters is that `advanced` can no longer
+    // appear alone: the reader sees `advanced · stale` and the two stop agreeing in public.
+    let worst = if fresh_level == "fail" || level == "fail" {
+        "fail"
+    } else if fresh_level == "warn" || level == "warn" {
+        "warn"
+    } else if fresh_level == "info" || level == "info" {
+        "info"
+    } else {
+        "ok"
+    };
     card_with(
         title,
-        badge(level, r.divergence.as_str()),
+        badge(
+            worst,
+            format!("{} · {}", r.divergence.as_str(), r.freshness.as_str()),
+        ),
         el("div")
             .child(facts(vec![
                 ("Path", Node::Element(mono(r.path.clone()))),
@@ -1665,12 +1692,19 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
                     "Working tree then",
                     Node::Element(el("span").text(&r.working_tree)),
                 ),
+                (
+                    "Age",
+                    Node::Element(el("span").text(&r.freshness_reason)),
+                ),
             ]))
             .when(!r.divergence.trustworthy(), |d| {
                 d.child(alert(
                     "fail",
                     "The commit this record was written at is not in this history. Trust git over anything it says.",
                 ))
+            })
+            .when(!r.next_action_withheld.is_empty(), |d| {
+                d.child(alert("fail", &r.next_action_withheld))
             })
             .when(!r.next_action.is_empty(), |d| {
                 d.child(el("h3").class("mj-card-title").text("Next action"))

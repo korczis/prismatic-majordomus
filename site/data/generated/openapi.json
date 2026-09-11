@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 80,
-    "schemas": 373,
+    "schemas": 374,
     "tags": 27
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -9003,6 +9003,40 @@
       "variants": []
     },
     {
+      "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0041).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared.",
+      "is_enum": true,
+      "name": "Freshness",
+      "properties": [],
+      "type": "\"fresh\" | \"aging\" | \"stale\" | \"unknown\" | \"invalid\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Record"
+      ],
+      "values": [
+        {
+          "description": "Inside `session.freshness.fresh_minutes`. Current; act on it.",
+          "value": "fresh"
+        },
+        {
+          "description": "Between the two thresholds. Still current, but its age is worth stating.",
+          "value": "aging"
+        },
+        {
+          "description": "At or beyond `session.freshness.stale_minutes`. History, never current.",
+          "value": "stale"
+        },
+        {
+          "description": "Nothing to judge it by: no timestamp, or no thresholds declared.",
+          "value": "unknown"
+        },
+        {
+          "description": "A timestamp that does not parse, or one in the future.",
+          "value": "invalid"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```",
       "is_enum": false,
       "name": "GitIdentity",
@@ -15293,8 +15327,38 @@
           "type": "Divergence"
         },
         {
-          "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections.",
+          "description": "How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \"trustworthy\".",
+          "name": "freshness",
+          "refs": [
+            "Freshness"
+          ],
+          "required": true,
+          "type": "Freshness"
+        },
+        {
+          "description": "Its age in whole minutes, when it has a timestamp that parses.",
+          "name": "age_minutes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for.",
+          "name": "freshness_reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The section a resuming worker acts on, when the record has one and is still current.\nA handover's `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`.",
           "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \"there is nothing to do\" from \"what there was to do is six days old\".",
+          "name": "next_action_withheld",
           "refs": [],
           "required": false,
           "type": "string"

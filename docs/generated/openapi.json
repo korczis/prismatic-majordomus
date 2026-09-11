@@ -14700,6 +14700,36 @@
         ],
         "description": "The two type stacks."
       },
+      "Freshness": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "fresh",
+            "description": "Inside `session.freshness.fresh_minutes`. Current; act on it."
+          },
+          {
+            "type": "string",
+            "const": "aging",
+            "description": "Between the two thresholds. Still current, but its age is worth stating."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "At or beyond `session.freshness.stale_minutes`. History, never current."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "Nothing to judge it by: no timestamp, or no thresholds declared."
+          },
+          {
+            "type": "string",
+            "const": "invalid",
+            "description": "A timestamp that does not parse, or one in the future."
+          }
+        ],
+        "description": "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. [`Divergence`] says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0041).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as [`Freshness::Unknown`] naming the missing key\nrather than judged against a default nobody declared."
+      },
       "GitIdentity": {
         "type": "object",
         "properties": {
@@ -19632,9 +19662,29 @@
             "$ref": "#/components/schemas/Divergence",
             "description": "How far its commit is from this one."
           },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness",
+            "description": "How old it is, judged against `session.freshness`. Independent of `divergence`: a\nrecord is routinely `advanced` and `stale` at once, and that pair is what a reader\nmust not collapse into \"trustworthy\"."
+          },
+          "age_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Its age in whole minutes, when it has a timestamp that parses."
+          },
+          "freshness_reason": {
+            "type": "string",
+            "description": "Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot\nact on is the failure this subsystem is being corrected for."
+          },
           "next_action": {
             "type": "string",
-            "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+            "description": "The section a resuming worker acts on, when the record has one and is still current.\nA handover's `Next Action`; empty for a record that carries no sections, and\ndeliberately empty for one that is `stale` or `invalid` — see `next_action_withheld`."
+          },
+          "next_action_withheld": {
+            "type": "string",
+            "description": "Why `next_action` is empty despite the record having one. Set only when it was\nwithheld, never when the record simply carries no such section, so that a reader can\ntell \"there is nothing to do\" from \"what there was to do is six days old\"."
           }
         },
         "required": [
@@ -19645,7 +19695,9 @@
           "head",
           "working_tree",
           "matched",
-          "divergence"
+          "divergence",
+          "freshness",
+          "freshness_reason"
         ],
         "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
       },
