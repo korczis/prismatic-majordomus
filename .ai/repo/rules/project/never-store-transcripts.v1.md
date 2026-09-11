@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [records, continuity]
+
+x-majordomus:
+  tests: [test/cases/05_handover.sh, test/cases/20_checkpoint.sh]
 ---
 
 # Rationale

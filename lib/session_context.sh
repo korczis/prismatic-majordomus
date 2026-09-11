@@ -54,6 +54,65 @@ mj_session_context_path() {
   find "$dir" -maxdepth 1 -name "*--$1.md" 2>/dev/null | LC_ALL=C sort | tail -n 1
 }
 
+# ---------------------------------------------------------------- freshness
+# One front-matter field of a document, read without parsing the body. The front matter is
+# a closed set of plain `key: value` lines (MJ_SESSION_CONTEXT_KEYS above), so the reader
+# stops at the closing fence rather than scanning a document whose body is a whole context.
+mj_session_context_field() {
+  awk -v k="$2" '
+    FNR == 1 { if ($0 != "---") exit; next }
+    $0 == "---" { exit }
+    index($0, k ": ") == 1 { print substr($0, length(k) + 3); exit }
+  ' "$1" 2>/dev/null
+}
+
+# mj_session_context_freshness <session-id>
+# How far the frozen briefing has drifted from the checkout it describes.
+#
+# Every other artefact in this repository that records a head is compared against git before
+# it is believed. The task record is (mj_validate_state, and the GIT section of the context
+# builder), so is the resolved handover, so is the checkpoint, so is the derivation's start
+# head, and so is the closed session record, which `session show` labels for exactly this
+# reason. They all speak one vocabulary — `exact`, `advanced`, `diverged`,
+# `different_context` — and they all get it from mj_git_label.
+#
+# The working context was the single artefact carrying a recorded head that nobody compared,
+# and it is the one the worker is actually holding: the briefing a provider hook delivered
+# once, at the open, and never again. So a session could work all afternoon from a briefing
+# whose repository had moved underneath it while `context`, `check` and `doctor` each stayed
+# quiet — a relation checked in every direction but the one that mattered.
+#
+# Nothing here refreshes the document. It is frozen evidence of what the worker was told,
+# and a store that rewrote its own history underneath an earlier prompt would be worth less
+# than one that admits its age. What was missing was the age, not a mutation.
+#
+# Prints: <label> <TAB> <recorded-head> <TAB> <commits-since>, and returns 1 when the
+# session has no document at all — which is a different fact, and one the open-episode
+# check above already reports.
+mj_session_context_freshness() {
+  local sid="$1" doc head branch label since=0
+  doc="$(mj_session_context_path "$sid")"
+  [ -n "$doc" ] || return 1
+  head="$(mj_session_context_field "$doc" head)"
+  branch="$(mj_session_context_field "$doc" branch)"
+  # A document without both fields cannot be compared, and `unknown` is the vocabulary's own
+  # word for that: it is not `exact`, and reporting it as `exact` is how a stale briefing
+  # would come to look current.
+  if [ -z "$head" ] || [ -z "$branch" ]; then
+    printf 'unknown\t%s\t0\n' "${head:-NONE}"
+    return 0
+  fi
+  label="$(mj_git_label "$head" "$branch")"
+  # The count is only meaningful along one line of history: `diverged` and
+  # `different_context` are not a distance, and a number printed for them would invite the
+  # reader to treat them as one.
+  if [ "$label" = advanced ]; then
+    since="$(mj_git rev-list --count "$head..HEAD" 2>/dev/null || printf 0)"
+    case "$since" in ''|*[!0-9]*) since=0 ;; esac
+  fi
+  printf '%s\t%s\t%s\n' "$label" "$head" "$since"
+}
+
 # ---------------------------------------------------------------- open
 # mj_session_context_open <session-id> <opened-by> <provider> <provider-session> <worker>
 # Writes the document for an episode that has just opened. Prints its repository-relative
@@ -229,10 +288,36 @@ mj_session_context_open_episode() {
   mj_session_is_foreign && return 0
   sid="$(mj_ses session_id)"
   [ -n "$sid" ] || return 0
-  if [ -n "$(mj_session_context_path "$sid")" ]; then
-    mj_doctrine_ok session "$sid" "the open episode has its working context under $rel"
-  else
+  if [ -z "$(mj_session_context_path "$sid")" ]; then
     mj_doctrine_fail session "$sid" "the open episode has no working context under $rel" \
       "cat $rel/.session-context.log 2>/dev/null; majordomus session status"
+    return 0
   fi
+
+  # The document exists; say how far it has drifted from the checkout it describes, in the
+  # same vocabulary mj_validate_state uses for the task record. Drift is reported, never
+  # refused: a briefing is `advanced` the instant its own session makes a commit, and
+  # `different_context` the instant the worker moves to the branch it was told to build, so
+  # a doctrine that failed on either would stop every commit in the repository. The defect
+  # this closes is that nobody said the number at all. `unknown` is the exception and does
+  # fail, because a document this tool wrote always carries both fields: without them the
+  # producer is broken, and a briefing that cannot be compared must not read as a current one.
+  local fresh label head since
+  fresh="$(mj_session_context_freshness "$sid")" || return 0
+  label="${fresh%%	*}"; fresh="${fresh#*	}"
+  head="${fresh%%	*}"; since="${fresh#*	}"
+  case "$label" in
+    unknown)
+      mj_doctrine_fail session "$sid" \
+        "the open episode's working context carries no head and branch, so it cannot be compared with git" \
+        "head -n 12 $(mj_rel "$(mj_session_context_path "$sid")")" ;;
+    advanced)
+      mj_doctrine_ok session "$sid" \
+        "working context under $rel, $label: $since commit(s) since the briefing was frozen at ${head:0:7}" ;;
+    exact)
+      mj_doctrine_ok session "$sid" "working context under $rel, $label at ${head:0:7}" ;;
+    *)
+      mj_doctrine_ok session "$sid" \
+        "working context under $rel, $label from ${head:0:7}; re-resolve it with: majordomus context" ;;
+  esac
 }

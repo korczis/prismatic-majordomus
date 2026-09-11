@@ -44,7 +44,7 @@ la="$A/.ai/local/state/mcp/server.json"; lr="$R/.ai/local/state/mcp/server.json"
 
 # ---------------------------------------------------------------- 1. the two surfaces agree
 agree() {   # agree WHEN — the same question through HTTP and through the command line
-  curl -fsS "$url/api/v1/server" | jq -S . > "$T/http.json" \
+  curl -fsS --max-time 30 "$url/api/v1/server" | jq -S . > "$T/http.json" \
     || { echo "    GET /api/v1/server failed ($1)"; exit 1; }
   mj "$A" serve status --format json | jq -S . > "$T/cli.json" \
     || { echo "    serve status --format json failed ($1)"; exit 1; }

@@ -1,4 +1,4 @@
-//! The shared server: one per repository, holding the lease, serving every web surface the
+//! The shared server: one per checkout (ADR 0035, ADR 0044), holding the lease, serving every web surface the
 //! process resolved — the home page, the Cockpit, Swagger UI, OpenAPI, the capability
 //! routes, the documentation and every generated report — and MCP over HTTP for every
 //! peer that attaches. It is started by the first `majordomus mcp` or `serve` in a repository and
@@ -8,7 +8,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::capability::Context;
 use crate::error::Result;
 use crate::http::mcp::McpEndpoint;
 use crate::http::server::{self, Running};
@@ -32,7 +31,7 @@ impl SharedServer {
     /// port is replaced by a free one and said so; without it, a taken port is an error.
     #[allow(clippy::too_many_arguments)]
     pub fn start(
-        ctx: Arc<Context>,
+        live: Arc<crate::live::Live>,
         version: &'static str,
         host: &str,
         port: u16,
@@ -51,8 +50,8 @@ impl SharedServer {
             None => server::bind(host, port)?,
         };
         let url = bound.url();
-        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        let router = Router::new(ctx, version)
+        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
+        let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
         lease.publish(&url)?;
@@ -101,7 +100,10 @@ impl SharedServer {
             url = %url,
             lease = %lease.path().display(),
             surfaces = %surfaces,
-            "shared server listening on {url} — {surfaces}; the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
+            // "of this checkout", not "for this repository": a linked worktree is a
+            // checkout with a lease and a server of its own, and this line is the first
+            // thing a person reads when a client starts one (ADR 0044).
+            "shared server listening on {url} — {surfaces}; the one server of this checkout: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
         Ok(SharedServer {
             running,

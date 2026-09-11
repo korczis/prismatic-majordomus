@@ -62,6 +62,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
+| `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
@@ -95,6 +96,60 @@ A **detail** page pages nothing. A graph's nodes and edges, and the artifact man
 listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
 has only them, and a reader checking whether a path is in the manifest must be able to
 find it with the browser's own search.
+
+## The one page that is about this machine
+
+Every other page is about the repository: the same answer in any clone, and safe to publish.
+`/cockpit/continuity` is not. It reads `.ai/local/` — the open episodes, the resolved
+handover, the blockers of this checkout — and those records name this disk. That is the
+reason the Cockpit is bound to the loopback interface and the reason this page has no
+counterpart on the website (ADR 0014).
+
+It is also the page that has to answer two different readers, and it says which is which.
+
+**The worker** asks *what am I resuming from?* That is `continuity.state`: one episode — the
+one `session-current.yaml` resolves to — one handover, one checkpoint, each with the
+divergence label that says how far to trust it, and the questions that refuse completion.
+(ADR 0041 adds a freshness label beside the divergence one, because `advanced` is a true
+statement about git topology and says nothing about age.)
+
+**The operator** asks *is this subsystem working?* That is the `lifecycle.*` group, and it
+exists because the worker's answer is structurally blind to the operator's question. The
+pointer is a symlink the most recent start event re-aims; on 2026-09-11 this repository held
+five open episodes in one checkout and every surface could name one. So the page carries,
+below the briefing's own cards:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Card | What it shows | Capability |
+|---|---|---|
+| Every open episode | one row per open episode: its standing (`current`, `open`, `foreign`, `stranded`), the provider that opened it, the branch, when it opened, the last ledger line stamped with it, and the tasks it touched | `lifecycle.episodes` |
+| This process against the repository | the commit the served index was built at, against the commit `git` reports on the call, and whether they agree | `lifecycle.runtime` |
+| Recovery | episodes that cannot close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic | `lifecycle.recovery` |
+| Providers | per provider: the lifecycle events its adapter declares, whether it can archive prompts, its client configuration, and the enforcement entries this repository wires to its hook | `lifecycle.providers` |
+| Closed episodes | how many tracked records exist, how many closed on this branch, and the newest twenty, each linking to its object page | `lifecycle.closed` |
+
+</div>
+
+
+Three rules this page keeps, and the reason for each.
+
+**No value is computed here.** Every number, word and badge above arrives from a capability
+answer; the page decides colours and nothing else. A Cockpit that worked out for itself
+whether an episode was stranded would be a second session model, and the first thing two
+session models do is disagree.
+
+**No prompt is ever rendered.** The prompt archive is the one part of the local half that is
+a conversation, and no card on this page reads it. What a worker typed is not operational
+state, and a surface that showed it would be a transcript with better formatting.
+
+**The page is a photograph, and does not poll.** The executions pages follow a WebSocket
+because an execution emits events; the session store does not, and a browser asking every
+five seconds whether an episode is still open would spend the whole day answering "yes". A
+reload is the refresh, `Cache-Control: no-cache` makes it honest, and one section failing to
+read renders as a failed card rather than as a dead page — the section most likely to fail
+is a store nothing has written yet, and hiding the other five behind it would be the wrong
+trade.
 
 ## What makes it a projection and not a dashboard
 
@@ -157,6 +212,82 @@ clock, no absolute path, no discovery order).
 A drawing library is a consumer. The translation to Cytoscape's element shape is one
 function in `share/cockpit/graph.js`; a projection to Mermaid, Graphviz or a terminal would
 rebuild no semantics.
+
+### What the drawing decides
+
+The viewer chooses a **layout from the graph's measured shape**, not one name for every
+graph. Every graph used `breadthfirst`, which puts one breadth-first level on one row; the
+composed graph is 1442 nodes and one level held nearly all of them, so `cy.fit()` zoomed out
+until that row fitted the frame and the drawing was a horizontal line about one pixel tall.
+`measure()` derives node count, edge density, breadth-first depth and — the number that
+diagnoses it — the widest level; `choose()` picks between the layouts cytoscape ships:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| When | Layout | Why |
+|---|---|---|
+| 24 nodes or fewer | `circle` | everything fits on one ring at a readable size; physics over twenty nodes only wobbles |
+| 3+ levels, widest level ≤ 48, density < 2 | `breadthfirst` | the only built-in layout that shows direction; the guard is the widest level, because past it breadthfirst is a line |
+| 400 nodes or fewer | `cose` | force-directed: the only built-in that puts a cluster together, so communities are visible |
+| up to 900 nodes, degrees peaked | `concentric` by degree | a sort rather than an iteration, so it is instant; hubs at the centre. Only when the degrees are peaked: on a flat distribution every node lands in one ring |
+| larger | `grid`, by kind then degree | measured: `concentric` over 1452 nodes gave a disc 19000px across, so `fit()` hit `minZoom` and a node rendered under a pixel. At 480 square pixels per node no arrangement is both structural and legible, so each node gets a cell, kinds form bands, and the structure is reached through the filter and the selection |
+
+</div>
+
+
+No layout extension is vendored and none should be: `share/cockpit/vendor/` holds
+`cytoscape.min.js` alone, and the Cockpit's content-security policy names no remote origin.
+
+Everything else the drawing shows is derived the same way. A node's diameter is its degree,
+square-rooted. A node kind's colour is `--mj-series-<n>` from `share/design/tokens.yaml` —
+eight roles that carry no meaning, chosen for separation — and *which* of them a kind gets is
+an FNV-1a hash of the kind's own name, so a kind is the same colour in every graph and stays
+that colour when a thirty-fifth kind is declared. Eight colours and 34 kinds means kinds do
+share a colour, and that is the price of the stability: the alternative — rank the kinds and
+hand out colours in order — moves every kind's colour the day one is added. The legend names
+which kinds share, and the filter separates them.
+
+Cytoscape cannot read `oklch`, which is what the declaration's palette is. Handed one it logs
+that the property is invalid and falls back to black, and every token this file read had been
+landing that way. A token is therefore painted onto a one-pixel canvas and its channels read
+back, and the library gets `[r, g, b]`, which it accepts. No colour string is composed
+anywhere: this is arithmetic at a library boundary, and the value is still the
+declaration's. Labels are the declared `meta` step and
+appear above 80 nodes only when the reader has zoomed close enough to read them, except for
+the twelve busiest, which are always named. An edge's kind is painted on the edges of the
+selected or hovered node, never on all of them at once. The legend beside the drawing is also
+the filter: a swatch and a count per kind, and a click that takes the kind out.
+
+Nothing here is a colour, a size or a count written in JavaScript, and `scripts/ci/design-check`
+reads `share/cockpit/graph.js` like every other first-party surface — it used to exempt the
+file by path, which is what let a hue computed in a script stand for a year.
+
+### Why the tables under it still page nothing
+
+A graph page lists every node and every edge. For `composed` that is 4,729 table rows and
+about 420 kB of text in one response, and the obvious reaction is to page it. It is not
+paged, deliberately.
+
+The tables are not a convenience beside the drawing; they *are* the page. The drawing needs
+JavaScript, a 400 kB library and a canvas, and the page says so in its own prose: "everything
+it shows is in the lists below, which is what a reader without JavaScript, a crawler and a
+screen reader get". Page them and that sentence stops being true — the drawing would show
+1452 nodes while the text showed a hundred, and the reader with no JavaScript would be the
+only one who could not see the whole graph. The listing pages elsewhere in the Cockpit
+(`/cockpit/objects`, `/cockpit/capabilities`) page because they are *views over* a
+collection, and a view may show a slice. A graph page is the rendering of one object.
+
+The bulk format already exists and is linked from the page: `/api/v1/graph?id=<id>`. A reader
+who wants the graph as data takes that; a reader who wants it as a page gets all of it. The
+cost is one 420 kB response of static text, which is smaller than the drawing library the
+same page loads to show the same data.
+
+`test/cases/190_graph_drawing.sh` runs `choose()` and `measure()` over synthetic shapes
+without a browser; `scripts/lib/cockpit-probe.mjs` asks the running renderer, through
+`frame.mjGraph.extent()`, how much of the frame the drawing occupies and fails below a tenth
+in either direction — for `registry` and again for the largest graph there is, which is the
+only one that ever had the defect. The assertion it replaces counted `canvas` elements, and
+cytoscape makes three of those over a one-pixel line.
 
 ## Health
 

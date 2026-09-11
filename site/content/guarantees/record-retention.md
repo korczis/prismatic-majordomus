@@ -1,7 +1,7 @@
 +++
 title = "Rotating the ledger archives the oldest lines and never deletes them"
 description = "ledger.retention_max_lines has always been reported by doctor and watch when exceeded. majordomus history --rotate is the action that resolves it: the oldest lines move into a dated archive file beside the ledger, and the newest stay."
-weight = 67
+weight = 68
 [extra]
 claim_id = "record-retention"
 status = "guaranteed"
