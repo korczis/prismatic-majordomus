@@ -1,7 +1,7 @@
 +++
 title = "A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal"
 description = "majordomus worktree migrate brings a worktree to its canonical path exactly as it is:"
-weight = 158
+weight = 160
 [extra]
 claim_id = "worktree-migration-lossless"
 status = "guaranteed"

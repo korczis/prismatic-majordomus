@@ -360,8 +360,14 @@ fn providers_text(v: &Value) -> String {
         .max()
         .unwrap_or(8)
         .max(8);
+    // EPISODE and PROMPTS are the declared capability — what the vendor offers, cited in
+    // share/providers.yaml — and not what this repository has wired. HOOKS beside them is
+    // the wiring the policy declares, and the two being adjacent is deliberate: a provider
+    // with `hooks` under EPISODE and nothing under HOOKS is a gap in this distribution, and
+    // it used to be invisible because neither column existed. `majordomus capture status`
+    // is the reading that resolves it into one word per aspect.
     let mut out = vec![format!(
-        "{:<width$}  {:<36}  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
+        "{:<width$}  {:<36}  EPISODE     PROMPTS  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
         "PROVIDER",
         "TITLE",
         width = width
@@ -389,10 +395,20 @@ fn providers_text(v: &Value) -> String {
                 r.join(",")
             }
         };
+        let episode = {
+            let v = s(&p["lifecycle"], "episode");
+            if v.is_empty() { "-".to_string() } else { v }
+        };
+        let prompts = {
+            let v = s(&p["lifecycle"], "prompts");
+            if v.is_empty() { "-".to_string() } else { v }
+        };
         out.push(format!(
-            "{:<width$}  {:<36}  {:<10}  {:<13}  {:<5}  {}",
+            "{:<width$}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
             s(p, "id"),
             s(p, "title"),
+            episode,
+            prompts,
             if boots.is_empty() {
                 "-".to_string()
             } else {

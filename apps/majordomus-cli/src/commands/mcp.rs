@@ -349,6 +349,11 @@ impl Session {
                     peer,
                     shared,
                 } = *local;
+                // Detached, not closed: the stdio client that just went may be a client
+                // somebody is restarting, and it comes back to its own episode by name.
+                // `shared.stop()` below closes whatever is still held, which is the moment
+                // at which nothing can come back any more (ADR 0043).
+                server.surface().context().episodes.detach(&peer);
                 server.surface().context().peers.detach(&peer);
                 drop(server);
                 shared.wait_until_peers_leave();

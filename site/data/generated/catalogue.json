@@ -5174,7 +5174,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering\nclaude-code:session    verified     .claude/hooks/majordomus-session-start, .claude/hooks/majordomus-session-end, .claude/hooks/majordomus-session-compact are wired, and a synthetic payload through the end shim reached the command",
+            "output": "agents                 unsupported  none        as above: a convention hands nothing to anything.\nagents:session         unsupported  none        not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.\nbb                     unsupported  none        same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.\nbb:session             unsupported  none        no conversation-lifecycle hook is published. Searched <date>: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.\nclaude-code            verified     hook        .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering\nclaude-code:session    verified     hooks       .claude/hooks/majordomus-session-start, .claude/hooks/majordomus-session-end, .claude/hooks/majordomus-session-compact are wired, and a synthetic payload through the end shim reached the command\ncodex                  unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified <date>.\ncodex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified <date>. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.\ngemini                 unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified <date>.\ngemini:session         unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified <date>. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.\ngeneric                unsupported  none        no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.\ngeneric:session        unconfigured connection  bin/majordomus-mcp does not exist, so no client can start the shared server whose connection is the boundary",
             "assertions": [
               {
                 "kind": "exit",
@@ -5865,7 +5865,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "claude-code            unconfigured .claude/settings.json does not exist (run: majordomus capture install)\nclaude-code:session    unconfigured .claude/settings.json does not exist (run: majordomus capture install)",
+            "output": "agents                 unsupported  none        as above: a convention hands nothing to anything.\nagents:session         unsupported  none        not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.\nbb                     unsupported  none        same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.\nbb:session             unsupported  none        no conversation-lifecycle hook is published. Searched <date>: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.\nclaude-code            unconfigured hook        .claude/settings.json does not exist (run: majordomus capture install)\nclaude-code:session    unconfigured hooks       .claude/settings.json does not exist (run: majordomus capture install)\ncodex                  unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified <date>.\ncodex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified <date>. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.\ngemini                 unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified <date>.\ngemini:session         unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified <date>. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.\ngeneric                unsupported  none        no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.\ngeneric:session        unconfigured connection  bin/majordomus-mcp does not exist, so no client can start the shared server whose connection is the boundary",
             "assertions": [
               {
                 "kind": "exit",
@@ -5944,7 +5944,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering\nclaude-code:session    verified     .claude/hooks/majordomus-session-start, .claude/hooks/majordomus-session-end, .claude/hooks/majordomus-session-compact are wired, and a synthetic payload through the end shim reached the command",
+            "output": "agents                 unsupported  none        as above: a convention hands nothing to anything.\nagents:session         unsupported  none        not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.\nbb                     unsupported  none        same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.\nbb:session             unsupported  none        no conversation-lifecycle hook is published. Searched <date>: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.\nclaude-code            verified     hook        .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering\nclaude-code:session    verified     hooks       .claude/hooks/majordomus-session-start, .claude/hooks/majordomus-session-end, .claude/hooks/majordomus-session-compact are wired, and a synthetic payload through the end shim reached the command\ncodex                  unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified <date>.\ncodex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified <date>. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.\ngemini                 unadapted    hook        the provider documents a prompt event and this distribution ships no adapter for it — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified <date>.\ngemini:session         unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified <date>. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.\ngeneric                unsupported  none        no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.\ngeneric:session        unconfigured connection  bin/majordomus-mcp does not exist, so no client can start the shared server whose connection is the boundary",
             "assertions": [
               {
                 "kind": "exit",
@@ -8760,6 +8760,24 @@
       },
       {
         "class": "claim",
+        "id": "connection-episode",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "provider-capability-evidence",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
         "id": "adr-catalogue",
         "use_cases": 1,
         "executable": 1,
@@ -9013,6 +9031,15 @@
       {
         "class": "mcp_tool",
         "id": "majordomus_environment_explain",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_episodes",
         "use_cases": 0,
         "executable": 0,
         "evidence": 0,
@@ -9363,6 +9390,24 @@
       },
       {
         "class": "mcp_tool",
+        "id": "majordomus_session_attach",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_session_detach",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
         "id": "majordomus_trace_commit",
         "use_cases": 0,
         "executable": 0,
@@ -9497,7 +9542,7 @@
         "policy": "advisory"
       }
     ],
-    "total": 195,
+    "total": 200,
     "covered": 138,
     "partial": 0,
     "gaps_required": 0

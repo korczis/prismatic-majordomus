@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "29fb0066cee48e5f03297db24558afbe0c8f1c5a601d03f30926339ce7ccee7c",
+  "fingerprint": "b0f3937b78b9d8f200f8b19e0abddf8839015ed51a666ca93315bd061476b8e4",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 27,
+    "modules": 28,
     "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 149
+          "objects": 151
         }
       ],
       "rule_refs": [
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 202,
+        "mcp_resources": 204,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 198,
+        "objects": 200,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -2459,7 +2459,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 39
+          "objects": 40
         },
         {
           "name": "knowledge",
@@ -2467,7 +2467,7 @@
         },
         {
           "name": "document",
-          "objects": 216
+          "objects": 218
         }
       ],
       "rule_refs": [
@@ -2716,11 +2716,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 257,
+        "mcp_resources": 260,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 256,
+        "objects": 259,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2885,7 +2885,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 121
+          "objects": 122
         }
       ],
       "rule_refs": [
@@ -3206,11 +3206,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 122,
+        "mcp_resources": 123,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 121,
+        "objects": 122,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -7429,6 +7429,11 @@
         "features": []
       },
       {
+        "id": "episodes",
+        "title": "Episodes",
+        "features": []
+      },
+      {
         "id": "executions",
         "title": "Executions",
         "features": []
@@ -7756,7 +7761,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (39)",
+        "title": "adr (40)",
         "features": [
           "knowledge"
         ]
@@ -7784,7 +7789,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (149)",
+        "title": "claim (151)",
         "features": [
           "declare-once"
         ]
@@ -7878,7 +7883,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (121)",
+        "title": "rule (122)",
         "features": [
           "doctrine"
         ]
@@ -7938,7 +7943,13 @@
         }
       ],
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "lifecycle": {
+        "episode": "none",
+        "episode_evidence": "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.",
+        "prompts": "none",
+        "prompts_evidence": "as above: a convention hands nothing to anything."
+      }
     },
     {
       "id": "bb",
@@ -7953,7 +7964,13 @@
       "hooks": [],
       "scratch_roots": [
         "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
-      ]
+      ],
+      "lifecycle": {
+        "episode": "none",
+        "episode_evidence": "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.",
+        "prompts": "none",
+        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
+      }
     },
     {
       "id": "claude-code",
@@ -7972,7 +7989,13 @@
       ],
       "scratch_roots": [
         "<primary>/.claude/worktrees"
-      ]
+      ],
+      "lifecycle": {
+        "episode": "hooks",
+        "episode_evidence": "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}.",
+        "prompts": "hook",
+        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
+      }
     },
     {
       "id": "codex",
@@ -7980,7 +8003,13 @@
       "bootstraps": [],
       "client_config": ".codex/config.toml",
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "lifecycle": {
+        "episode": "hooks",
+        "episode_evidence": "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.",
+        "prompts": "hook",
+        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
+      }
     },
     {
       "id": "gemini",
@@ -7988,14 +8017,26 @@
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "lifecycle": {
+        "episode": "hooks",
+        "episode_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.",
+        "prompts": "hook",
+        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
+      }
     },
     {
       "id": "generic",
       "title": "A worker with no convention of its own",
       "bootstraps": [],
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "lifecycle": {
+        "episode": "connection",
+        "episode_evidence": "ADR 0043 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh.",
+        "prompts": "none",
+        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."
+      }
     }
   ],
   "rules": [
@@ -8655,28 +8696,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1244,
-    "builtin": 80,
-    "declarative": 1164,
-    "modules": 27,
-    "mcp_tools": 78,
-    "mcp_resources": 1192,
-    "http_routes": 80,
+    "capabilities": 1254,
+    "builtin": 83,
+    "declarative": 1171,
+    "modules": 28,
+    "mcp_tools": 81,
+    "mcp_resources": 1199,
+    "http_routes": 83,
     "cli_commands": 93,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1164,
+    "objects": 1171,
     "by_kind": {
-      "adr": 39,
+      "adr": 40,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 149,
+      "claim": 151,
       "command": 29,
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 216,
+      "document": 218,
       "feature": 20,
       "implementation": 45,
       "issue": 203,
@@ -8687,12 +8728,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 121,
+      "rule": 122,
       "scope": 1,
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 154,
+      "test": 155,
       "use-case": 43,
       "workspace": 1
     },

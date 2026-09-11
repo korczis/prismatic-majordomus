@@ -65,6 +65,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: episodes
+    title: Episodes
+    description: "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0043)."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: executions
     title: Executions
     description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
@@ -7416,6 +7422,359 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/environment.rs
+  - id: episodes.attach
+    module: episodes
+    kind: command
+    title: Attach this connection to an episode
+    description: "Open an execution episode for the calling client, or resume the one it already had. 'external_id' is the client's own durable name for the sitting — its conversation or thread id — and must survive a reconnect: a client that comes back under the same identity is given its own episode again, under whatever peer id it now has, rather than a second one. This server's peer id will not do; it is handed out per connection. After this the client's own traffic keeps the episode alive, losing the connection detaches rather than closes it, and it is closed by majordomus_session_detach, by the server stopping, or by the reaper once the reattach grace has passed. The repository's episode is opened by the same command a provider hook runs, and what it reported is in the answer. Needs an MCP session: over plain HTTP there is no connection to bind to."
+    input:
+      name: AttachInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          external_id:
+            type: string
+            description: "The client's own durable name for this episode — its conversation id, thread id, or\nwhatever it calls the sitting it is in.\n\n**It must survive a reconnect**, because that is the whole of its job: a client that\ncomes back under the same identity is given its own episode again rather than a\nsecond one. Anything the client can reproduce will do; what will not do is this\nserver's peer id, which is handed out per connection and is a different string every\ntime the client reconnects."
+        required:
+          - external_id
+        description: "The input of `episodes.attach`: which piece of work this connection is carrying."
+        title: AttachInput
+    output:
+      name: Attached
+      schema:
+        type: object
+        properties:
+          episode:
+            "$ref": "#/$defs/Episode"
+            description: The episode this connection now holds.
+          resumed:
+            type: boolean
+            description: "Whether an episode already under this identity was resumed rather than a new one\nopened. True after a reconnect, a client restart or a crash, and the field a caller\nchecks to know whether it is continuing something."
+          reattach_grace_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "How long this episode survives its connection before the reaper closes it, in\nseconds. Stated rather than left to be discovered: a client that knows the grace can\ndecide whether reconnecting is worth it."
+        required:
+          - episode
+          - resumed
+          - reattach_grace_seconds
+        description: "The answer of `episodes.attach`."
+        title: Attached
+        "$defs":
+          Episode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/EpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          EpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for [`REATTACH_GRACE`] so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: Where an episode stands.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_session_attach
+      http:
+        method: POST
+        path: /api/v1/episodes/attach
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
+  - id: episodes.detach
+    module: episodes
+    kind: command
+    title: "Close this connection's episode"
+    description: "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next."
+    input:
+      name: DetachInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          external_id:
+            type:
+              - string
+              - "null"
+            description: "The episode to close. Omitted, it is whichever one this connection holds, which is\nwhat a client ending its own sitting means."
+        description: "The input of `episodes.detach`: the episode to close."
+        title: DetachInput
+    output:
+      name: Detached
+      schema:
+        type: object
+        properties:
+          episode:
+            "$ref": "#/$defs/Episode"
+            description: "The episode as it was closed, its `repository` field carrying what the repository's\nown end event reported."
+        required:
+          - episode
+        description: "The answer of `episodes.detach`."
+        title: Detached
+        "$defs":
+          Episode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/EpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          EpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for [`REATTACH_GRACE`] so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: Where an episode stands.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_session_detach
+      http:
+        method: POST
+        path: /api/v1/episodes/detach
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
+  - id: episodes.list
+    module: episodes
+    kind: query
+    title: List episodes
+    description: "Every execution episode this shared server holds, open and detached, with the connection holding each, when its client last spoke, how many connections have carried it, and what the repository's own episode command reported. In-memory: what survives the process is the repository's session record."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: EpisodeList
+      schema:
+        type: object
+        properties:
+          open:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many are open — held by a connection that is still there.
+          detached:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many are detached, waiting for a client to come back inside the grace. Not a\nfault count: this is where a crashed client's work waits to be resumed."
+          episodes:
+            type: array
+            items:
+              "$ref": "#/$defs/Episode"
+            description: "Every episode, open and detached, in external-identity order."
+          mine:
+            anyOf:
+              - "$ref": "#/$defs/Episode"
+              - type: "null"
+            description: "The episode the calling connection holds, when it holds one."
+        required:
+          - open
+          - detached
+          - episodes
+        description: "The answer of `episodes.list`."
+        title: EpisodeList
+        "$defs":
+          Episode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/EpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          EpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for [`REATTACH_GRACE`] so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: Where an episode stands.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_episodes
+      http:
+        method: GET
+        path: /api/v1/episodes
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
   - id: executions.cancel
     module: executions
     kind: command
@@ -14847,6 +15206,14 @@ capabilities:
                   type: string
                 description: "The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session's scratch checkout and\nnever moves it (ADR 0024)."
                 default: []
+              lifecycle:
+                "$ref": "#/$defs/ProviderLifecycle"
+                description: "What it can do about the session lifecycle, and where each answer was verified\n(`share/providers.yaml`, ADR 0043). The capability, never the wiring: `hooks` says\nthe vendor fires session events, not that this repository has installed anything to\nreceive them. The other half — what is wired here, and whether driving it produced\nanything — is `majordomus capture status`, which reads this same declaration and\njoins it with the tree. It is not restated here because only the shell tool holds\nthe adapter table and can run a shim, and a second account it could not compute\ncorrectly is worse than one reader more."
+                default:
+                  episode: none
+                  episode_evidence: ""
+                  prompts: none
+                  prompts_evidence: ""
             required:
               - id
               - title
@@ -14870,6 +15237,48 @@ capabilities:
               - mode
               - always_loaded
             description: One bootstrap a provider renders.
+          ProviderLifecycle:
+            type: object
+            properties:
+              episode:
+                "$ref": "#/$defs/EpisodeSource"
+                description: How the episode boundary is drawn for this provider.
+              episode_evidence:
+                type: string
+                description: "Where `episode` was verified: a vendor documentation URL, or the statement that no\nsuch documentation exists and what was searched for it."
+              prompts:
+                "$ref": "#/$defs/PromptSource"
+                description: Whether the raw prompt can be captured below the model.
+              prompts_evidence:
+                type: string
+                description: "Where `prompts` was verified, on the same terms as `episode_evidence`."
+            required:
+              - episode
+              - episode_evidence
+              - prompts
+              - prompts_evidence
+            description: "What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one."
+          EpisodeSource:
+            oneOf:
+              - type: string
+                const: hooks
+                description: "The provider fires its own session events and a hook this tool installs draws the\nboundary from them. The strongest form: it sees a window somebody closed."
+              - type: string
+                const: connection
+                description: "The provider fires no session event, but its client attaches to this repository's\nshared MCP server, and the connection is the boundary (ADR 0043)."
+              - type: string
+                const: none
+                description: "Neither. Nothing can say when this provider's episode began or ended, and the tool\nreports that rather than implying a capability nobody has."
+            description: "How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \"supported / not supported\" is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing."
+          PromptSource:
+            oneOf:
+              - type: string
+                const: hook
+                description: The provider hands the raw prompt to a command before the model runs.
+              - type: string
+                const: none
+                description: It does not. Nothing this tool can do makes the prompt observable.
+            description: "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::product
