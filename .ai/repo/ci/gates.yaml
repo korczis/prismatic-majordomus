@@ -61,6 +61,17 @@ gates:
     runs: scripts/development-semantics-check
     summary: a mutating development command is backed by a capability of the canonical runtime and a Cockpit tree reaches into no layer path; the debt ratchets down and may not grow
 
+  # A tool that says what somebody else's product can do is making a claim about a third
+  # party, and this repository was making two of them wrong at once until ADR 0043: it
+  # reported one of the six providers it declares, and the omission had gone stale because
+  # two of the five had shipped hook systems since. The gate reads share/providers.yaml and
+  # runs `capture status`; no build, so it belongs with the other structure checks.
+  - id: provider-evidence
+    job: structure
+    always: true
+    runs: scripts/provider-evidence-check
+    summary: every declared provider's session and prompt capability is declared with the citation it was verified from, and every one of them is reported
+
   - id: core-check
     job: structure
     always: true

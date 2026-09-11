@@ -21,6 +21,11 @@ providers:
         always_loaded: true
     hooks: []
     scratch_roots: []
+    lifecycle:
+      episode: none
+      episode_evidence: "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do."
+      prompts: none
+      prompts_evidence: "as above: a convention hands nothing to anything."
   - id: bb
     title: bb
     bootstraps:
@@ -30,6 +35,11 @@ providers:
     hooks: []
     scratch_roots:
       - "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
+    lifecycle:
+      episode: none
+      episode_evidence: "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook."
+      prompts: none
+      prompts_evidence: "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
   - id: claude-code
     title: Claude Code
     bootstraps:
@@ -42,20 +52,40 @@ providers:
       - session-lifecycle
     scratch_roots:
       - "<primary>/.claude/worktrees"
+    lifecycle:
+      episode: hooks
+      episode_evidence: "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}."
+      prompts: hook
+      prompts_evidence: "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
   - id: codex
     title: Codex
     bootstraps: []
     client_config: .codex/config.toml
     hooks: []
     scratch_roots: []
+    lifecycle:
+      episode: hooks
+      episode_evidence: "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary."
+      prompts: hook
+      prompts_evidence: "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
   - id: gemini
     title: Gemini CLI
     bootstraps: []
     client_config: .gemini/settings.json
     hooks: []
     scratch_roots: []
+    lifecycle:
+      episode: hooks
+      episode_evidence: "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block."
+      prompts: hook
+      prompts_evidence: "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
   - id: generic
     title: A worker with no convention of its own
     bootstraps: []
     hooks: []
     scratch_roots: []
+    lifecycle:
+      episode: connection
+      episode_evidence: "ADR 0043 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh."
+      prompts: none
+      prompts_evidence: "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."

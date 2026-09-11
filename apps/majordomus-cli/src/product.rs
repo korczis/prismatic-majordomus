@@ -33,6 +33,7 @@ use crate::capability::{Capability, CapabilityRegistry, Provenance};
 use crate::cockpit::nav;
 use crate::index::Index;
 use crate::model::{Object, Severity};
+use crate::share::ProviderLifecycle;
 use crate::web::Topology;
 use crate::why::Catalogue;
 
@@ -471,6 +472,16 @@ pub struct ProductProvider {
     /// never moves it (ADR 0024).
     #[serde(default)]
     pub scratch_roots: Vec<String>,
+    /// What it can do about the session lifecycle, and where each answer was verified
+    /// (`share/providers.yaml`, ADR 0043). The capability, never the wiring: `hooks` says
+    /// the vendor fires session events, not that this repository has installed anything to
+    /// receive them. The other half — what is wired here, and whether driving it produced
+    /// anything — is `majordomus capture status`, which reads this same declaration and
+    /// joins it with the tree. It is not restated here because only the shell tool holds
+    /// the adapter table and can run a shim, and a second account it could not compute
+    /// correctly is worse than one reader more.
+    #[serde(default)]
+    pub lifecycle: ProviderLifecycle,
 }
 
 /// One bootstrap a provider renders.
@@ -1615,6 +1626,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
                     .map(|(_, n)| n.clone())
                     .collect(),
                 scratch_roots: decl.scratch_roots.clone(),
+                lifecycle: decl.lifecycle.clone(),
             }
         })
         .collect();

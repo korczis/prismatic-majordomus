@@ -426,6 +426,57 @@
       "tool": "majordomus_environment"
     },
     {
+      "api_anchor": "/docs/api/#op-episodes-attach",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.attach",
+      "kind": "command",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-attach/",
+      "slug": "episodes-attach",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "Attach this connection to an episode",
+      "tool": "majordomus_session_attach"
+    },
+    {
+      "api_anchor": "/docs/api/#op-episodes-detach",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.detach",
+      "kind": "command",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-detach/",
+      "slug": "episodes-detach",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "Close this connection's episode",
+      "tool": "majordomus_session_detach"
+    },
+    {
+      "api_anchor": "/docs/api/#op-episodes-list",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.list",
+      "kind": "query",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-list/",
+      "slug": "episodes-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "List episodes",
+      "tool": "majordomus_episodes"
+    },
+    {
       "api_anchor": "/docs/api/#op-executions-cancel",
       "claims": [],
       "cli": "majordomus executions cancel",
@@ -1548,6 +1599,13 @@
         "test": "apps/majordomus-cli/tests/why.rs"
       },
       {
+        "id": "connection-episode",
+        "implementation": "apps/majordomus-cli/src/episodes.rs",
+        "route": "/guarantees/connection-episode/",
+        "status": "guaranteed",
+        "test": "test/cases/200_generic_mcp_episode.sh"
+      },
+      {
         "id": "web-surface-declared-once",
         "implementation": "apps/majordomus-cli/src/web/model.rs",
         "route": "/guarantees/web-surface-declared-once/",
@@ -1659,9 +1717,9 @@
     ]
   },
   "counts": {
-    "capabilities": 80,
-    "claims": 36,
-    "modules": 27
+    "capabilities": 83,
+    "claims": 37,
+    "modules": 28
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -1899,6 +1957,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
       "title": "Repository environment"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "episodes.attach",
+          "route": "/registry/capabilities/episodes-attach/",
+          "slug": "episodes-attach"
+        },
+        {
+          "id": "episodes.detach",
+          "route": "/registry/capabilities/episodes-detach/",
+          "slug": "episodes-detach"
+        },
+        {
+          "id": "episodes.list",
+          "route": "/registry/capabilities/episodes-list/",
+          "slug": "episodes-list"
+        }
+      ],
+      "claims": [],
+      "id": "episodes",
+      "route": "/registry/modules/episodes/",
+      "slug": "episodes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "title": "Episodes"
     },
     {
       "capabilities": [

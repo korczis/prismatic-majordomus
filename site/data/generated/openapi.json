@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 80,
-    "schemas": 373,
-    "tags": 27
+    "operations": 83,
+    "schemas": 383,
+    "tags": 28
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -935,6 +935,64 @@
       "used_by_schemas": [
         "ArtifactReport"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `episodes.attach`: which piece of work this connection is carrying.",
+      "is_enum": false,
+      "name": "AttachInput",
+      "properties": [
+        {
+          "description": "The client's own durable name for this episode — its conversation id, thread id, or\nwhatever it calls the sitting it is in.\n\n**It must survive a reconnect**, because that is the whole of its job: a client that\ncomes back under the same identity is given its own episode again rather than a\nsecond one. Anything the client can reproduce will do; what will not do is this\nserver's peer id, which is handed out per connection and is a different string every\ntime the client reconnects.",
+          "name": "external_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "episodes.attach"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `episodes.attach`.",
+      "is_enum": false,
+      "name": "Attached",
+      "properties": [
+        {
+          "description": "The episode this connection now holds.",
+          "name": "episode",
+          "refs": [
+            "Episode"
+          ],
+          "required": true,
+          "type": "Episode"
+        },
+        {
+          "description": "Whether an episode already under this identity was resumed rather than a new one\nopened. True after a reconnect, a client restart or a crash, and the field a caller\nchecks to know whether it is continuing something.",
+          "name": "resumed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How long this episode survives its connection before the reaper closes it, in\nseconds. Stated rather than left to be discovered: a client that knows the grace can\ndecide whether reconnecting is worth it.",
+          "name": "reattach_grace_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "episodes.attach"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -5398,6 +5456,50 @@
       "variants": []
     },
     {
+      "description": "The input of `episodes.detach`: the episode to close.",
+      "is_enum": false,
+      "name": "DetachInput",
+      "properties": [
+        {
+          "description": "The episode to close. Omitted, it is whichever one this connection holds, which is\nwhat a client ending its own sitting means.",
+          "name": "external_id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "episodes.detach"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `episodes.detach`.",
+      "is_enum": false,
+      "name": "Detached",
+      "properties": [
+        {
+          "description": "The episode as it was closed, its `repository` field carrying what the repository's\nown end event reported.",
+          "name": "episode",
+          "refs": [
+            "Episode"
+          ],
+          "required": true,
+          "type": "Episode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "episodes.detach"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One issue as an executable development task: what was authored, where it sits, what has\nhappened to it, where its external projection stands, and whether a worker may start it.",
       "is_enum": false,
       "name": "DevTask",
@@ -7034,6 +7136,176 @@
       ]
     },
     {
+      "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.",
+      "is_enum": false,
+      "name": "Episode",
+      "properties": [
+        {
+          "description": "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation.",
+          "name": "external_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider id this episode is recorded under, as `share/providers.yaml` names one.",
+          "name": "provider",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault.",
+          "name": "peer",
+          "refs": [
+            "PeerId"
+          ],
+          "required": false,
+          "type": "PeerId | null"
+        },
+        {
+          "description": "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did.",
+          "name": "opened_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since the client last spoke on it, through any connection.",
+          "name": "last_activity_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How many times a connection has taken it over, the first attach included.",
+          "name": "attachments",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Open, or detached and waiting for its client.",
+          "name": "state",
+          "refs": [
+            "EpisodeState"
+          ],
+          "required": true,
+          "type": "EpisodeState"
+        },
+        {
+          "description": "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Attached",
+        "Detached",
+        "EpisodeList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `episodes.list`.",
+      "is_enum": false,
+      "name": "EpisodeList",
+      "properties": [
+        {
+          "description": "How many are open — held by a connection that is still there.",
+          "name": "open",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are detached, waiting for a client to come back inside the grace. Not a\nfault count: this is where a crashed client's work waits to be resumed.",
+          "name": "detached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every episode, open and detached, in external-identity order.",
+          "name": "episodes",
+          "refs": [
+            "Episode"
+          ],
+          "required": true,
+          "type": "array of Episode"
+        },
+        {
+          "description": "The episode the calling connection holds, when it holds one.",
+          "name": "mine",
+          "refs": [
+            "Episode"
+          ],
+          "required": false,
+          "type": "Episode | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "episodes.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \"supported / not supported\" is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing.",
+      "is_enum": true,
+      "name": "EpisodeSource",
+      "properties": [],
+      "type": "\"hooks\" | \"connection\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderLifecycle"
+      ],
+      "values": [
+        {
+          "description": "The provider fires its own session events and a hook this tool installs draws the\nboundary from them. The strongest form: it sees a window somebody closed.",
+          "value": "hooks"
+        },
+        {
+          "description": "The provider fires no session event, but its client attaches to this repository's\nshared MCP server, and the connection is the boundary (ADR 0043).",
+          "value": "connection"
+        },
+        {
+          "description": "Neither. Nothing can say when this provider's episode began or ended, and the tool\nreports that rather than implying a capability nobody has.",
+          "value": "none"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where an episode stands.",
+      "is_enum": true,
+      "name": "EpisodeState",
+      "properties": [],
+      "type": "\"open\" | \"detached\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Episode"
+      ],
+      "values": [
+        {
+          "description": "A connection holds it and the client is speaking.",
+          "value": "open"
+        },
+        {
+          "description": "The connection has gone; the episode is kept for [`REATTACH_GRACE`] so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from.",
+          "value": "detached"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -7076,6 +7348,9 @@
         "distribution.status",
         "environment.status",
         "environment.explain",
+        "episodes.list",
+        "episodes.attach",
+        "episodes.detach",
         "executions.list",
         "executions.cancel",
         "executions.demonstrate",
@@ -12983,6 +13258,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Announced",
+        "Episode",
         "Overlap",
         "Peer",
         "PeerList"
@@ -14249,6 +14525,15 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "What it can do about the session lifecycle, and where each answer was verified\n(`share/providers.yaml`, ADR 0043). The capability, never the wiring: `hooks` says\nthe vendor fires session events, not that this repository has installed anything to\nreceive them. The other half — what is wired here, and whether driving it produced\nanything — is `majordomus capture status`, which reads this same declaration and\njoins it with the tree. It is not restated here because only the shell tool holds\nthe adapter table and can run a shim, and a second account it could not compute\ncorrectly is worse than one reader more.",
+          "name": "lifecycle",
+          "refs": [
+            "ProviderLifecycle"
+          ],
+          "required": false,
+          "type": "ProviderLifecycle"
         }
       ],
       "type": "object",
@@ -14474,6 +14759,28 @@
         "DesignReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.",
+      "is_enum": true,
+      "name": "PromptSource",
+      "properties": [],
+      "type": "\"hook\" | \"none\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderLifecycle"
+      ],
+      "values": [
+        {
+          "description": "The provider hands the raw prompt to a command before the model runs.",
+          "value": "hook"
+        },
+        {
+          "description": "It does not. Nothing this tool can do makes the prompt observable.",
+          "value": "none"
+        }
+      ],
       "variants": []
     },
     {
@@ -14728,6 +15035,52 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProductProvider"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one.",
+      "is_enum": false,
+      "name": "ProviderLifecycle",
+      "properties": [
+        {
+          "description": "How the episode boundary is drawn for this provider.",
+          "name": "episode",
+          "refs": [
+            "EpisodeSource"
+          ],
+          "required": true,
+          "type": "EpisodeSource"
+        },
+        {
+          "description": "Where `episode` was verified: a vendor documentation URL, or the statement that no\nsuch documentation exists and what was searched for it.",
+          "name": "episode_evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the raw prompt can be captured below the model.",
+          "name": "prompts",
+          "refs": [
+            "PromptSource"
+          ],
+          "required": true,
+          "type": "PromptSource"
+        },
+        {
+          "description": "Where `prompts` was verified, on the same terms as `episode_evidence`.",
+          "name": "prompts_evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
         }
       ],
       "type": "object",
@@ -22276,6 +22629,188 @@
           "result_schema": "EnvironmentProvenance",
           "stability": "behaviorally_verified",
           "summary": "Where an environment value came from"
+        }
+      ]
+    },
+    {
+      "description": "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0043).",
+      "name": "episodes",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/episodes\"",
+          "description": "Every execution episode this shared server holds, open and detached, with the connection holding each, when its client last spoke, how many connections have carried it, and what the repository's own episode command reported. In-memory: what survives the process is the repository's session record.",
+          "id": "episodes.list",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_episodes",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/episodes",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::episodes",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List episodes: the result.",
+              "schema": "EpisodeList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EpisodeList",
+          "stability": "behaviorally_verified",
+          "summary": "List episodes"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{\"external_id\":\"benchmark-episode\"}"
+            }
+          ],
+          "body_schema": "AttachInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/episodes/attach\" -H \"content-type: application/json\" -d '{\"external_id\":\"benchmark-episode\"}'",
+          "description": "Open an execution episode for the calling client, or resume the one it already had. 'external_id' is the client's own durable name for the sitting — its conversation or thread id — and must survive a reconnect: a client that comes back under the same identity is given its own episode again, under whatever peer id it now has, rather than a second one. This server's peer id will not do; it is handed out per connection. After this the client's own traffic keeps the episode alive, losing the connection detaches rather than closes it, and it is closed by majordomus_session_detach, by the server stopping, or by the reaper once the reattach grace has passed. The repository's episode is opened by the same command a provider hook runs, and what it reported is in the answer. Needs an MCP session: over plain HTTP there is no connection to bind to.",
+          "id": "episodes.attach",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_session_attach",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/episodes/attach",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::episodes",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Attach this connection to an episode: the result.",
+              "schema": "Attached",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Attached",
+          "stability": "behaviorally_verified",
+          "summary": "Attach this connection to an episode"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "DetachInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/episodes/detach\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
+          "id": "episodes.detach",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_session_detach",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/episodes/detach",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::episodes",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Close this connection's episode: the result.",
+              "schema": "Detached",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Detached",
+          "stability": "behaviorally_verified",
+          "summary": "Close this connection's episode"
         }
       ]
     },

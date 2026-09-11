@@ -180,6 +180,11 @@ impl McpEndpoint {
         };
         match self.sessions().remove(id) {
             Some(s) => {
+                // The episode is detached, never closed here: a client that ends its
+                // transport session has not necessarily ended its work, and it may come
+                // back inside the reattach grace to the very same episode. What closes one
+                // is a deliberate `episodes.detach`, the reaper, or the server stopping.
+                self.surface.context().episodes.detach(&s.peer);
                 self.surface.context().peers.detach(&s.peer);
                 tracing::info!(session = %id, peer = %s.peer, "http session closed by the client");
                 Response::new(204, "application/json", String::new())
@@ -188,13 +193,21 @@ impl McpEndpoint {
         }
     }
 
-    /// Forget every session silent longer than [`SESSION_IDLE_TIMEOUT`]; the peers it returns are gone.
+    /// Forget every session silent longer than [`SESSION_IDLE_TIMEOUT`], and close every
+    /// episode detached longer than [`crate::episodes::REATTACH_GRACE`]; the peers it
+    /// returns are gone.
     pub fn reap(&self) -> Vec<PeerId> {
-        self.reap_idle(SESSION_IDLE_TIMEOUT)
+        self.reap_idle(SESSION_IDLE_TIMEOUT, crate::episodes::REATTACH_GRACE)
     }
 
-    /// Forget every session silent longer than `timeout`.
-    pub fn reap_idle(&self, timeout: Duration) -> Vec<PeerId> {
+    /// The same, with both bounds given.
+    ///
+    /// Two parameters and not one, because there are two clocks and a suite that could only
+    /// move the first could never see the second fire. The episode grace is fifteen minutes
+    /// and no test may wait it out, so a reaper wired to a constant would be a reaper
+    /// nothing proves — the shape this repository keeps calling a half-verdict. Production
+    /// passes the constants; `tests/shared_units.rs` passes zero and watches an episode close.
+    pub fn reap_idle(&self, timeout: Duration, episode_grace: Duration) -> Vec<PeerId> {
         let mut gone = Vec::new();
         let mut sessions = self.sessions();
         sessions.retain(|id, s| {
@@ -209,7 +222,19 @@ impl McpEndpoint {
         });
         drop(sessions);
         for p in &gone {
+            self.surface.context().episodes.detach(p);
             self.surface.context().peers.detach(p);
+        }
+        // And the other reaper, over a different clock. A connection is forgotten after
+        // ninety seconds of silence; the episode it was carrying waits out the reattach
+        // grace for its client to come back, and is closed as interrupted only when it does
+        // not. Two timeouts because they answer two questions: is this socket alive, and is
+        // this work over.
+        for episode in self.surface.context().episodes.reap(episode_grace) {
+            tracing::info!(
+                episode = %episode.external_id,
+                "episode expired: no connection came back inside the reattach grace"
+            );
         }
         gone
     }
@@ -219,6 +244,13 @@ impl McpEndpoint {
         let mut sessions = self.sessions();
         for (_, s) in std::mem::take(&mut *sessions) {
             self.surface.context().peers.detach(&s.peer);
+        }
+        drop(sessions);
+        // An episode left open by a server that has gone is an episode nothing will ever
+        // close, and the repository would carry it as open for ever. The server is the last
+        // thing that can close them, so it does, before it stops.
+        for episode in self.surface.context().episodes.close_all() {
+            tracing::info!(episode = %episode.external_id, "episode closed: the shared server is stopping");
         }
     }
 
