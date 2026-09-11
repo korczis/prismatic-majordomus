@@ -146,8 +146,11 @@ mod tests {
         // also names it in `data-mj-foreign`, which is a declaration about whose component
         // tree this is and not a thing the browser fetches. Counting bare occurrences
         // conflated the two and made this test refuse a correct page, so it counts the
-        // fetched URLs, and separately holds every mention to the pinned version — which
-        // is stronger than the count was, and does not break when another mention is added.
+        // fetched URLs, and separately holds every mention to the pinned version.
+        //
+        // master fixed the same failure in 4e04aa6ff by asking for 3 instead of 2. Both
+        // pass today; this one keeps passing when a fourth mention is added, and still
+        // refuses a pin that is half-upgraded wherever the stale version appears.
         let shell = page();
         let fetched = shell
             .matches(&format!(
