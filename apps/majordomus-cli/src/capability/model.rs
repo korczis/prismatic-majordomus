@@ -575,7 +575,7 @@ pub struct McpExposure {
 pub enum HttpMethod {
     /// Read-only; the input is bound from the query string.
     Get,
-    /// The input is bound from the JSON body. No builtin uses it yet.
+    /// The input is bound from the JSON body. Every mutating capability uses it.
     Post,
 }
 

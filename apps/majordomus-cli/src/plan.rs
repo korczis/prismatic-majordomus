@@ -438,32 +438,63 @@ impl Plan {
     /// Build the plan from an index. A walk of values already in memory: no file is opened,
     /// no subprocess is started, nothing is cached.
     pub fn build(index: &Index) -> Plan {
-        let mut milestones: Vec<PlanMilestoneRaw> = Vec::new();
-        let mut issues: Vec<PlanIssueRaw> = Vec::new();
-        let mut header = PlanProject {
-            name: String::new(),
-            repository: String::new(),
-            default_branch: String::new(),
-            active_milestone: String::new(),
-        };
-        for o in &index.objects {
-            match o.kind.as_str() {
-                MILESTONE => milestones.push(PlanMilestoneRaw::of(&o.identity, &o.metadata)),
-                ISSUE => issues.push(PlanIssueRaw::of(&o.identity, &o.metadata)),
-                PROJECT if o.provenance.path.ends_with("project/project.yaml") => {
-                    header.name = field(&o.metadata, "name");
-                    header.repository = field(&o.metadata, "repository");
-                    header.default_branch = field(&o.metadata, "default_branch");
-                }
-                _ => {}
-            }
-        }
-        // The awk reads the files in `LC_ALL=C sort` order of their names, and the loader
-        // refuses a record whose id disagrees with its file name, so id order is file order.
-        milestones.sort_by(|a, b| a.id.cmp(&b.id));
-        issues.sort_by(|a, b| a.id.cmp(&b.id));
+        let (header, milestones, issues) = raws(index);
         derive(header, milestones, issues)
     }
+
+    /// The plan as it will read once `transition` has been written to `id`.
+    ///
+    /// The same records, the same [`derive`], one timestamp changed: the status a caller is
+    /// told after a write is computed by the one derivation every reader uses, never
+    /// announced by the writer. This matters because the resulting status is not a function
+    /// of the transition alone — a `done` whose required evidence is absent stays VERIFY,
+    /// and a record marked `cancelled` stays CANCELLED whatever is written to it.
+    ///
+    /// Nothing is read from disk and nothing is written: this is the projection of a write,
+    /// and [`transition`] is what performs one.
+    pub fn after(index: &Index, id: &str, transition: Transition, now: &str) -> Plan {
+        let (header, milestones, mut issues) = raws(index);
+        if let Some(r) = issues.iter_mut().find(|r| r.id == id) {
+            match transition {
+                Transition::Start => r.started_at = now.to_string(),
+                Transition::Verify => r.verified_at = now.to_string(),
+                Transition::Done => r.completed_at = now.to_string(),
+            }
+        }
+        derive(header, milestones, issues)
+    }
+}
+
+/// Every record the plan is derived from, as its file declares it.
+///
+/// Split out of [`Plan::build`] so that [`Plan::after`] derives from the same collection
+/// rather than a second reading of the index.
+fn raws(index: &Index) -> (PlanProject, Vec<PlanMilestoneRaw>, Vec<PlanIssueRaw>) {
+    let mut milestones: Vec<PlanMilestoneRaw> = Vec::new();
+    let mut issues: Vec<PlanIssueRaw> = Vec::new();
+    let mut header = PlanProject {
+        name: String::new(),
+        repository: String::new(),
+        default_branch: String::new(),
+        active_milestone: String::new(),
+    };
+    for o in &index.objects {
+        match o.kind.as_str() {
+            MILESTONE => milestones.push(PlanMilestoneRaw::of(&o.identity, &o.metadata)),
+            ISSUE => issues.push(PlanIssueRaw::of(&o.identity, &o.metadata)),
+            PROJECT if o.provenance.path.ends_with("project/project.yaml") => {
+                header.name = field(&o.metadata, "name");
+                header.repository = field(&o.metadata, "repository");
+                header.default_branch = field(&o.metadata, "default_branch");
+            }
+            _ => {}
+        }
+    }
+    // The awk reads the files in `LC_ALL=C sort` order of their names, and the loader
+    // refuses a record whose id disagrees with its file name, so id order is file order.
+    milestones.sort_by(|a, b| a.id.cmp(&b.id));
+    issues.sort_by(|a, b| a.id.cmp(&b.id));
+    (header, milestones, issues)
 }
 
 fn priority_rank(p: &str) -> u8 {
@@ -1339,5 +1370,307 @@ mod tests {
         );
         assert_eq!(p.next_ready(None).unwrap().id, "I0002");
         assert_eq!(p.next_ready(Some("M999")).unwrap().id, "I0002");
+    }
+}
+
+// ---------------------------------------------------------------- transitions
+//
+// The write half of the plan, and the first mutating capability of the development
+// lifecycle. Everything above this line derives; everything below it changes one field of
+// one record and records that it did.
+//
+// `lib/plan.sh`'s `mj_plan_transition` has been the only implementation of these three
+// moves. This is the second, and the contract it is held to is byte equality of the file it
+// writes — `test/cases/133_plan_transition.sh` performs the same transition through both
+// engines over the same fixture and diffs the record. The guards are stated here in the
+// same order the shell states them, because the *first* refusal a caller meets is part of
+// the behaviour: an issue that is both blocked and missing its evidence must be told about
+// the blocker, which is the thing it can act on.
+
+/// One lifecycle move.
+///
+/// Three, not four: `evidence` appends a record rather than moving an issue, and it belongs
+/// with the record it proves rather than with the moves it unblocks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Transition {
+    /// Execution began. Refused unless the issue is READY.
+    Start,
+    /// Implementation is complete and the evidence is still outstanding.
+    Verify,
+    /// Complete. Refused while anything it waits on is unfinished, or while any evidence
+    /// its own record requires is absent.
+    Done,
+}
+
+impl Transition {
+    /// The field this move stamps.
+    pub fn field(self) -> &'static str {
+        match self {
+            Self::Start => "started_at",
+            Self::Verify => "verified_at",
+            Self::Done => "completed_at",
+        }
+    }
+
+    /// The event `share/events.yaml` declares for it.
+    pub fn event(self) -> &'static str {
+        match self {
+            Self::Start => "plan_start",
+            Self::Verify => "plan_verify",
+            Self::Done => "plan_done",
+        }
+    }
+}
+
+/// Why a transition did not happen.
+///
+/// Each variant carries what the caller needs to act, never only that it failed: which
+/// status the issue is actually in, which dependency holds it, which evidence token is
+/// missing. The messages are the shell's messages.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TransitionError {
+    /// No issue of that id.
+    NoSuchIssue(String),
+    /// The move is illegal from the status the issue is in.
+    Refused(String),
+    /// The record could not be rewritten.
+    Write {
+        /// The record.
+        path: std::path::PathBuf,
+        /// What the filesystem said.
+        reason: String,
+    },
+}
+
+impl std::fmt::Display for TransitionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NoSuchIssue(id) => write!(f, "no issue '{id}'"),
+            Self::Refused(m) => f.write_str(m),
+            Self::Write { path, reason } => write!(f, "{}: {reason}", path.display()),
+        }
+    }
+}
+
+impl std::error::Error for TransitionError {}
+
+/// Whether `transition` is legal for `issue` as the plan reads now, and why not when it is
+/// not.
+///
+/// Separate from the write so that a surface can offer or withhold a control without
+/// performing it: the Cockpit disables a button by asking this, and never by reimplementing
+/// the rule.
+pub fn check(
+    index: &Index,
+    plan: &Plan,
+    id: &str,
+    transition: Transition,
+    now: &str,
+) -> Result<(), TransitionError> {
+    let issue = plan
+        .issue(id)
+        .ok_or_else(|| TransitionError::NoSuchIssue(id.to_string()))?;
+    match transition {
+        Transition::Start => {
+            if issue.status != "READY" {
+                let waiting = if issue.blocked_by.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (waiting on {})", issue.blocked_by.join(" "))
+                };
+                return Err(TransitionError::Refused(format!(
+                    "{id} is {}, not READY{waiting}",
+                    issue.status
+                )));
+            }
+        }
+        Transition::Verify => {
+            if !matches!(issue.status.as_str(), "ACTIVE" | "VERIFY") {
+                return Err(TransitionError::Refused(format!(
+                    "{id} is {}; only an ACTIVE issue can move to VERIFY",
+                    issue.status
+                )));
+            }
+        }
+        Transition::Done => {
+            // The blocker first: an issue that is both blocked and short of evidence is
+            // told about the blocker, because that is the one it cannot act on alone.
+            if !issue.blocked_by.is_empty() {
+                return Err(TransitionError::Refused(format!(
+                    "{id} cannot be DONE while {} is not DONE",
+                    issue.blocked_by.join(" ")
+                )));
+            }
+            // Whether the evidence is complete is not a count — a record may carry two
+            // entries covering one token and none covering another — and the rule for it
+            // already exists inside `derive`. So rather than restate it, ask what the plan
+            // would say: write the stamp in memory and see whether the issue reaches DONE.
+            // An issue that stays VERIFY with `completed_at` set is exactly the record
+            // `derive` reports as "completed_at is set but evidence is missing".
+            let after = Plan::after(index, id, transition, now);
+            if after.issue(id).is_some_and(|i| i.status != "DONE") {
+                return Err(TransitionError::Refused(format!(
+                    "{id} has evidence for {} of {} requirement(s) (run: majordomus plan evidence {id} --covers <token> ...)",
+                    issue.evidence_have, issue.evidence_need
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Perform one transition: check it, stamp the record, append the event.
+///
+/// The order is the shell's and is not an implementation detail. The guard runs against the
+/// plan as it reads now; the record is rewritten; only then is the event appended. A ledger
+/// line therefore never describes a change that did not reach the file, which is the
+/// property that lets the record be read as history rather than as intent.
+///
+/// `path` is the issue's own file, as the index recorded it. It is passed in rather than
+/// derived from the id here, because the index already knows where every record lives and a
+/// second convention for locating one is how two readers come to disagree about which file
+/// is the record.
+#[allow(clippy::too_many_arguments)]
+pub fn transition(
+    root: &std::path::Path,
+    path: &std::path::Path,
+    index: &Index,
+    plan: &Plan,
+    id: &str,
+    transition: Transition,
+    now: &str,
+    vocabulary: &crate::ledger::Vocabulary,
+    git: &crate::git::GitState,
+) -> Result<(), TransitionError> {
+    check(index, plan, id, transition, now)?;
+    let text = std::fs::read_to_string(path).map_err(|e| TransitionError::Write {
+        path: path.to_path_buf(),
+        reason: e.to_string(),
+    })?;
+    // Both fields, in the order the shell writes them: the move's own stamp, then
+    // `updated_at`. A record whose `updated_at` preceded its `completed_at` would be a
+    // record that says it was finished before it was last touched.
+    let text = set_field(&text, transition.field(), now);
+    let text = set_field(&text, "updated_at", now);
+    std::fs::write(path, text).map_err(|e| TransitionError::Write {
+        path: path.to_path_buf(),
+        reason: e.to_string(),
+    })?;
+    crate::ledger::append(
+        root,
+        vocabulary,
+        git,
+        now,
+        transition.event(),
+        &[("issue", id.to_string())],
+    )
+    .map_err(|e| TransitionError::Write {
+        path: root.join(".ai/local/state/ledger.jsonl"),
+        reason: e.to_string(),
+    })?;
+    Ok(())
+}
+
+/// Set one top-level scalar field of a record, exactly as `mj_pj_set_field` in
+/// `lib/project.sh` does.
+///
+/// The rule is small and every part of it is load-bearing:
+///
+/// * a line beginning `key:` is replaced in place, keeping its position in the file, so a
+///   record's field order survives every write;
+/// * otherwise the field is inserted immediately *before* `evidence:`, because evidence is
+///   a block and a scalar appended after it would be read as one of its entries;
+/// * with no `evidence:` line, the field is appended at the end.
+///
+/// Only the first `evidence:` line is an anchor, and matching is on the line's start, which
+/// is what `grep -qE "^$key:"` and the awk beside it do. A nested key of the same name is
+/// indented and is therefore not matched — the same blindness, deliberately, because the
+/// two engines must be blind in the same places.
+fn set_field(text: &str, key: &str, value: &str) -> String {
+    let prefix = format!("{key}:");
+    let line = format!("{key}: {value}");
+    if text.lines().any(|l| l.starts_with(&prefix)) {
+        let mut out = String::with_capacity(text.len() + line.len());
+        for l in text.lines() {
+            if l.starts_with(&prefix) {
+                out.push_str(&line);
+            } else {
+                out.push_str(l);
+            }
+            out.push('\n');
+        }
+        return out;
+    }
+    let mut out = String::with_capacity(text.len() + line.len() + 1);
+    let mut inserted = false;
+    for l in text.lines() {
+        if !inserted && l.starts_with("evidence:") {
+            out.push_str(&line);
+            out.push('\n');
+            inserted = true;
+        }
+        out.push_str(l);
+        out.push('\n');
+    }
+    if !inserted {
+        out.push_str(&line);
+        out.push('\n');
+    }
+    out
+}
+
+#[cfg(test)]
+mod transition_tests {
+    use super::*;
+
+    /// Replacing in place keeps the field where the record put it: a write must not reorder
+    /// a record a person reads.
+    #[test]
+    fn an_existing_field_is_replaced_where_it_stands() {
+        let before = "id: I0001\nstarted_at: \ntitle: one\n";
+        assert_eq!(
+            set_field(before, "started_at", "2026-09-11T12:00:00Z"),
+            "id: I0001\nstarted_at: 2026-09-11T12:00:00Z\ntitle: one\n"
+        );
+    }
+
+    /// A new scalar goes before `evidence:`, never after: appended at the end it would be
+    /// indented under nothing and read as part of the evidence block.
+    #[test]
+    fn a_new_field_is_inserted_before_the_evidence_block() {
+        let before = "id: I0001\ntitle: one\nevidence:\n  - covers: t\n";
+        assert_eq!(
+            set_field(before, "completed_at", "2026-09-11T12:00:00Z"),
+            "id: I0001\ntitle: one\ncompleted_at: 2026-09-11T12:00:00Z\nevidence:\n  - covers: t\n"
+        );
+    }
+
+    /// With no evidence block there is nothing to sit before, and the field is appended.
+    #[test]
+    fn a_new_field_is_appended_when_there_is_no_evidence_block() {
+        let before = "id: I0001\ntitle: one\n";
+        assert_eq!(
+            set_field(before, "completed_at", "2026-09-11T12:00:00Z"),
+            "id: I0001\ntitle: one\ncompleted_at: 2026-09-11T12:00:00Z\n"
+        );
+    }
+
+    /// An indented key of the same name is not a top-level field and is not touched — the
+    /// shell's `^key:` is anchored the same way, and the two must be blind together.
+    #[test]
+    fn an_indented_key_of_the_same_name_is_not_the_field() {
+        let before = "id: I0001\nevidence:\n  - started_at: x\n";
+        assert_eq!(
+            set_field(before, "started_at", "T"),
+            "id: I0001\nstarted_at: T\nevidence:\n  - started_at: x\n"
+        );
+    }
+
+    /// A record with no trailing newline gets one: every writer of this repository's YAML
+    /// ends the file, and a record that lost its newline would move every later diff.
+    #[test]
+    fn the_record_ends_with_a_newline() {
+        assert_eq!(set_field("id: I0001", "x", "y"), "id: I0001\nx: y\n");
     }
 }

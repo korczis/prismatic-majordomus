@@ -13,10 +13,23 @@
 //! transition writes a lifecycle marker into a record between two calls — and a `next`
 //! that answered from a snapshot would send two workers to one issue.
 //!
-//! Writing is deliberately absent. `plan start`, `plan verify`, `plan evidence` and
-//! `plan done` each write one lifecycle marker into a record, and a capability of this
-//! registry never writes to the repository; that is the registry's contract and what the
-//! shared MCP server rests on. They stay command-line operations of the shell tool.
+//! One capability here writes: `plan.transition` moves an issue through `start`, `verify`
+//! and `done`. It is the first development operation of the runtime, and it is here because
+//! [ADR 0040] decided that development semantics are capabilities of this registry and every
+//! surface a consumer of them — not because the registry's read-only habit was an accident.
+//! Until it landed, an agent could be told what to work on and had no way to say it had
+//! started; the derivation and the transition were in two programs, and only one of them was
+//! reachable from MCP, HTTP or the Cockpit.
+//!
+//! What it does not do is own the semantics. The guards are [`crate::plan::check`], the
+//! resulting status is computed by the one `derive` every reader uses, and the record it
+//! writes is the same `.ai/repo/project/issues/<id>.yaml` `lib/plan.sh` writes, to the byte.
+//! `plan evidence` stays a command-line operation for now: it appends a block rather than
+//! setting a field, and it is the next transition to converge, not this one.
+//!
+//! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+
+use std::path::Path;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -25,12 +38,14 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
+use crate::capability::model::CapabilityKind;
 use crate::plan::{
     Plan, PlanCounts, PlanFinding, PlanIssue, PlanMilestone, PlanProject, PlanVocabulary, PlanWave,
+    Transition, TransitionError,
 };
 use crate::{capability, module};
 
-use super::{get, mcp, Empty};
+use super::{get, mcp, post, Empty};
 
 /// The URI under which the whole derived plan is read as an MCP resource.
 pub const PLAN_URI: &str = "majordomus://plan";
@@ -622,8 +637,184 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: plan_record,
             },
+            capability! {
+                id: "plan.transition",
+                kind: CapabilityKind::Command,
+                title: "Move one issue through the lifecycle",
+                description: "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+                input: PlanTransitionInput,
+                output: PlanTransitionResult,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_transition"),
+                    http: post("/api/v1/plan/transition"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "issues", "lifecycle"],
+                handler: plan_transition,
+            },
         ],
     }
+}
+
+// ---------------------------------------------------------------- plan.transition
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `plan.transition`.
+pub struct PlanTransitionInput {
+    /// The issue to move, by its id — which is also its file name.
+    pub issue: String,
+    /// Which move: `start`, `verify` or `done`.
+    pub transition: Transition,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// What one transition did.
+///
+/// `from` and `to` are both derived statuses, read before and after the write. They are
+/// reported rather than assumed because the move does not determine the status on its own:
+/// `done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is
+/// told that rather than told it succeeded.
+pub struct PlanTransitionResult {
+    /// The issue that moved.
+    pub issue: String,
+    /// The move that was performed.
+    pub transition: Transition,
+    /// The status the issue was in before.
+    pub from: String,
+    /// The status it is in now, derived from the record as written.
+    pub to: String,
+    /// The field that was stamped.
+    pub field: String,
+    /// The timestamp written into it, and into `updated_at`.
+    pub at: String,
+    /// The ledger event appended.
+    pub event: String,
+    /// The issue a worker should take next, derived after the move. Absent when the plan
+    /// has none — which after a `start` is the ordinary case, because the issue just taken
+    /// is no longer READY.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next_ready: Option<String>,
+}
+
+/// The benchmark cases of the one capability here that writes.
+///
+/// Both are refusals, and that is deliberate rather than a gap. A benchmark case is
+/// executed — `executions.start`'s case really starts an execution — so a case that moved an
+/// issue would mutate this repository's plan every time the suite ran, and a suite whose
+/// cost is a changed record is not a measurement. The runner states the principle that makes
+/// this sound: *"a refusal is an answer, and answering is the work a benchmark exists to
+/// measure"*, and only `Internal` is fatal. The refusal path is also the honest thing to
+/// time: it builds the plan, resolves the issue and evaluates the guard, which is everything
+/// the write path does except the two syscalls at the end.
+impl BenchmarkCases for PlanTransitionInput {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        let mut cases = vec![NamedCase::new(
+            "refused-unknown-issue",
+            PlanTransitionInput {
+                // An id no record can carry: issue ids are `I` and four digits, and the
+                // loader refuses a record whose id disagrees with its file name, so this
+                // cannot come to exist and the case cannot start writing later.
+                issue: "no-such-issue".into(),
+                transition: Transition::Start,
+            },
+        )];
+        // A real issue that is not READY, when the plan holds one: the guard then runs
+        // against a record rather than against a lookup miss. Absent such an issue the
+        // repository's plan is entirely startable, and the case above is the whole set.
+        if let Some(i) = plan.issues.iter().find(|i| i.status != "READY") {
+            cases.push(NamedCase::new(
+                "refused-not-ready",
+                PlanTransitionInput {
+                    issue: i.id.clone(),
+                    transition: Transition::Start,
+                },
+            ));
+        }
+        cases
+    }
+}
+
+fn plan_transition(
+    ctx: &Context,
+    input: PlanTransitionInput,
+) -> Result<PlanTransitionResult, CapabilityError> {
+    let plan = Plan::build(&ctx.index);
+    let before = plan
+        .issue(&input.issue)
+        .ok_or_else(|| {
+            CapabilityError::NotFound(format!(
+                "no issue '{}'; plan.issues lists every one",
+                input.issue
+            ))
+        })?
+        .status
+        .clone();
+
+    // The record's own file, as the index recorded it. Located here rather than composed
+    // from the id so that there is one answer to where a record lives.
+    let rel = ctx
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == crate::plan::ISSUE && o.identity == input.issue)
+        .map(|o| o.provenance.path.clone())
+        .ok_or_else(|| {
+            CapabilityError::NotFound(format!(
+                "issue '{}' is in the plan but no object carries its file",
+                input.issue
+            ))
+        })?;
+
+    let root = Path::new(&ctx.index.repository.root);
+    let events = ctx
+        .index
+        .share
+        .as_ref()
+        .map(|s| s.join("events.yaml"))
+        .ok_or_else(|| {
+            CapabilityError::Refused(
+                "this index was built without a share directory, so the event vocabulary cannot be read; a transition may not write an event it cannot validate".into(),
+            )
+        })?;
+    let vocabulary = crate::ledger::Vocabulary::load(&events)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+
+    let at = crate::ledger::now();
+    crate::plan::transition(
+        root,
+        &root.join(&rel),
+        &ctx.index,
+        &plan,
+        &input.issue,
+        input.transition,
+        &at,
+        &vocabulary,
+        &ctx.index.repository.git,
+    )
+    .map_err(|e| match e {
+        TransitionError::NoSuchIssue(_) => CapabilityError::NotFound(e.to_string()),
+        TransitionError::Refused(_) => CapabilityError::Refused(e.to_string()),
+        TransitionError::Write { .. } => CapabilityError::Refused(e.to_string()),
+    })?;
+
+    // What the plan says now, through the same derivation every reader uses.
+    let after = Plan::after(&ctx.index, &input.issue, input.transition, &at);
+    Ok(PlanTransitionResult {
+        to: after
+            .issue(&input.issue)
+            .map(|i| i.status.clone())
+            .unwrap_or_default(),
+        next_ready: after.next_ready(None).map(|i| i.id.clone()),
+        issue: input.issue,
+        transition: input.transition,
+        from: before,
+        field: input.transition.field().to_string(),
+        at,
+        event: input.transition.event().to_string(),
+    })
 }
 
 #[cfg(test)]
@@ -665,6 +856,11 @@ mod tests {
                 "majordomus_plan_record",
                 "/api/v1/plan/record",
             ),
+            (
+                "plan.transition",
+                "majordomus_plan_transition",
+                "/api/v1/plan/transition",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -699,16 +895,40 @@ mod tests {
         assert_eq!(resource.map(|r| r.uri.as_str()), Some(PLAN_URI));
     }
 
-    /// Every capability of the module is read-only: the registry's contract, and the reason
-    /// the four transitions live on the command line.
+    /// Exactly one capability of the module writes, and it is named here.
+    ///
+    /// This assertion used to read "every capability is a query", which was the registry's
+    /// contract until [ADR 0040] made development semantics capabilities of this runtime. It
+    /// is kept rather than deleted, and inverted rather than loosened: a module that reads
+    /// the plan and one that changes it are different things to depend on, and the next
+    /// capability to gain a write should have to say so here.
+    ///
+    /// [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     #[test]
-    fn every_capability_is_a_query() {
-        for e in module().capabilities {
-            assert!(
-                e.capability.kind.is_read_only(),
-                "{} writes",
-                e.capability.id
-            );
-        }
+    fn only_the_transition_writes() {
+        let m = module();
+        let writers: Vec<&str> = m
+            .capabilities
+            .iter()
+            .filter(|e| !e.capability.kind.is_read_only())
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(writers, ["plan.transition"]);
+    }
+
+    /// A transition is an HTTP POST, never a GET.
+    ///
+    /// Stated separately because the projection is what a caller meets: a mutating
+    /// capability reachable by GET would be followed by every crawler, prefetcher and
+    /// link-checker that ever met the Cockpit.
+    #[test]
+    fn the_transition_is_not_reachable_by_get() {
+        let e = module()
+            .capabilities
+            .into_iter()
+            .find(|e| e.capability.id.as_str() == "plan.transition")
+            .expect("the module declares plan.transition");
+        let http = e.capability.exposure.http.expect("it is exposed over HTTP");
+        assert_eq!(http.method.as_str(), "POST");
     }
 }
