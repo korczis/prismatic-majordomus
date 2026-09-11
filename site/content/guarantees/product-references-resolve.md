@@ -1,7 +1,7 @@
 +++
 title = "Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing"
 description = "Every reference a feature makes is typed and resolves against the registry that owns it: a"
-weight = 161
+weight = 162
 [extra]
 claim_id = "product-references-resolve"
 status = "guaranteed"
