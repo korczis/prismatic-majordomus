@@ -105,3 +105,20 @@ site/content/skills/**              merge=derived
 site/content/supervises/**          merge=derived
 site/content/use-cases/**           merge=derived
 site/content/why/**                 merge=derived
+
+# The design system's projections. Every one of these is generated from a canonical source
+# that is deliberately NOT listed here — share/design/tokens.yaml and share/design/brand/*
+# are edited by hand and must keep conflicting honestly. These are the copies the generator
+# writes into the crate, the shared assets and the site, and docs/generated/artifacts.json
+# names each with its source. test/cases/57_derived_merge_driver.sh has been failing on
+# master over exactly these ten paths.
+apps/majordomus-cli/src/cockpit/logo-mark.svg   merge=derived
+apps/majordomus-cli/src/design/tokens.yaml      merge=derived
+apps/majordomus-cli/src/web/tokens.css          merge=derived
+share/cockpit/favicon.svg                       merge=derived
+share/design/status.css                         merge=derived
+share/design/surface.css                        merge=derived
+share/design/theme.css                          merge=derived
+site/static/favicon.svg                         merge=derived
+site/static/images/logo-mark.svg                merge=derived
+site/static/images/logo.svg                     merge=derived
