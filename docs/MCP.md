@@ -363,6 +363,33 @@ manifest section it falls under, and its size.
 | `majordomus_worktree_inspect` | `worktree.inspect` | `branch` | the canonical path of a branch, whether it exists, what occupies the path, the worktree holding it |
 | `majordomus_worktree_migration_plan` | `worktree.migration_plan` | none | every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing |
 
+The table above is the core set and not the whole of it: the tool list is a projection of
+the capability registry, it grows whenever a module is composed, and a list in prose that
+claimed to be complete would be wrong the next time one is. `majordomus_capabilities` and
+`docs/generated/capabilities.md` are the derived, total reference; what is written here is
+what a reader needs before opening it.
+
+### Sessions and continuity
+
+Two of the tools answer about `.ai/local/` — the half of the layer that names this machine —
+and they are the reason the server binds to the loopback interface. They are served and
+never published: no generator writes them into `docs/generated/` and no site page carries
+one.
+
+| tool | capability | answers |
+|---|---|---|
+| `majordomus_continuity` | `continuity.state` | what a worker resuming *here* would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers |
+| `majordomus_lifecycle_episodes` | `lifecycle.episodes` | every open episode of the store — not only the one the pointer follows — with its provider session, its standing (`current`, `open`, `foreign`, `stranded`) and the last ledger line stamped with it |
+| `majordomus_lifecycle_recovery` | `lifecycle.recovery` | episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic |
+| `majordomus_lifecycle_runtime` | `lifecycle.runtime` | the commit this process's index was built at, against the commit the repository is on right now, and whether they agree |
+| `majordomus_lifecycle_providers` | `lifecycle.providers` | per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook |
+| `majordomus_lifecycle_closed` | `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty |
+
+The first answers the worker's question and the rest answer the operator's, which is a
+different question and not a superset: `continuity.state` follows
+`state/session-current.yaml`, and that pointer is a symlink the most recent start event
+re-aims. [`CONTINUITY.md`](CONTINUITY.md) has the model and the whole path.
+
 Every query is read-only and says so in its annotations; `majordomus_announce`, the one
 command, says it is not, and it changes this process's memory and nothing else. Each tool
 carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
