@@ -213,8 +213,51 @@ fn rewrite_refs(v: &mut Value) {
     }
 }
 
+/// Every type a property schema names, following the one level of `anyOf`/`oneOf` that
+/// schemars writes for an `Option<T>` of a structured type. A property whose type cannot be
+/// read names none, and the caller leaves the value a string.
+fn declared_types(property: &Value) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut collect = |v: Option<&Value>| match v {
+        Some(Value::String(s)) => out.push(s.clone()),
+        Some(Value::Array(a)) => out.extend(a.iter().filter_map(Value::as_str).map(String::from)),
+        _ => {}
+    };
+    collect(property.get("type"));
+    for key in ["anyOf", "oneOf"] {
+        for member in property
+            .get(key)
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            collect(member.get("type"));
+        }
+    }
+    out
+}
+
+/// The JSON type word for a value, for a message a caller can act on.
+fn kind_of(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "null",
+        Value::Bool(_) => "a boolean",
+        Value::Number(_) => "a number",
+        Value::String(_) => "a string",
+        Value::Array(_) => "an array",
+        Value::Object(_) => "an object",
+    }
+}
+
 /// Convert a query-string value to the JSON type a property schema names: integers and
-/// booleans are parsed, everything else stays a string.
+/// booleans are parsed, a structured parameter is read as the JSON text the binding sent,
+/// and everything else stays a string.
+///
+/// The array and object cases are the exact inverse of
+/// [`Request::bind`](crate::http::Request::bind), which puts a non-scalar on the query
+/// string as JSON. Without them a `GET` route could be *sent* a list and could not *read*
+/// one, which is a projection that only works in one direction — and the generic test that
+/// replays every capability's benchmark cases over the wire is where that showed.
 ///
 /// ```
 /// use majordomus_cli::capability::schema::coerce;
@@ -222,14 +265,32 @@ fn rewrite_refs(v: &mut Value) {
 /// assert_eq!(coerce(&json!({ "type": "integer" }), "7").unwrap(), json!(7));
 /// assert_eq!(coerce(&json!({ "type": "string" }), "7").unwrap(), json!("7"));
 /// assert!(coerce(&json!({ "type": "boolean" }), "yes").is_err());
+///
+/// // a list parameter arrives as the JSON the binding wrote, nullable or not
+/// let list = json!({ "type": ["array", "null"], "items": { "type": "string" } });
+/// assert_eq!(coerce(&list, r#"["a","b"]"#).unwrap(), json!(["a", "b"]));
+/// // and a value that is not that list is refused rather than passed on as a string
+/// assert!(coerce(&list, "a,b").is_err());
 /// ```
 pub fn coerce(property: &Value, raw: &str) -> Result<Value, String> {
-    let ty = property.get("type");
-    let types: Vec<&str> = match ty {
-        Some(Value::String(s)) => vec![s.as_str()],
-        Some(Value::Array(a)) => a.iter().filter_map(Value::as_str).collect(),
-        _ => vec![],
-    };
+    let types = declared_types(property);
+    let types: Vec<&str> = types.iter().map(String::as_str).collect();
+    if types.contains(&"array") || types.contains(&"object") {
+        let parsed: Value = serde_json::from_str(raw)
+            .map_err(|e| format!("'{raw}' is not the JSON this parameter takes: {e}"))?;
+        let fits = (parsed.is_array() && types.contains(&"array"))
+            || (parsed.is_object() && types.contains(&"object"))
+            || (parsed.is_null() && types.contains(&"null"));
+        return if fits {
+            Ok(parsed)
+        } else {
+            Err(format!(
+                "'{raw}' parses as {}, and this parameter takes {}",
+                kind_of(&parsed),
+                types.join(" or ")
+            ))
+        };
+    }
     if types.contains(&"integer") {
         return raw
             .parse::<i64>()

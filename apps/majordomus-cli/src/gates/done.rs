@@ -39,6 +39,22 @@ use serde::{Deserialize, Serialize};
 use super::judge::{Gate, GateStatus};
 use super::ImpliedObligation;
 
+/// ```
+/// use majordomus_cli::gates::{DoneQuestion, GateStatus};
+///
+/// let q = DoneQuestion {
+///     id: "pushed".into(),
+///     question: "Has the commit reached the remote?".into(),
+///     status: GateStatus::Queued,
+///     evidence: "the obligation is owed".into(),
+///     source: "obligation push (obligations.closure)".into(),
+///     remediation: "git push".into(),
+/// };
+/// // every question names what answered it and what would settle it: a question with
+/// // neither is a checklist line, which is the artifact this type exists instead of
+/// assert!(!q.source.is_empty() && !q.remediation.is_empty());
+/// assert!(q.status.unverified());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One question of the done invariant, and what answered it.
 pub struct DoneQuestion {
@@ -194,6 +210,17 @@ fn invariant() -> Vec<(&'static str, &'static str, Answers, &'static str)> {
     ]
 }
 
+/// ```
+/// use majordomus_cli::gates::ObligationStanding;
+///
+/// // the closure's own word, carried verbatim; nothing here re-judges it
+/// let standing = ObligationStanding {
+///     state: "owed".into(),
+///     detail: "no evidence covers it".into(),
+///     reproduce: "majordomus evidence --covers tests --command 'just test'".into(),
+/// };
+/// assert_eq!(standing.state, "owed");
+/// ```
 /// The state of one obligation as [`crate::capability::builtin::obligations`] judged it:
 /// the token, its state word, and the line the validator would refuse with.
 #[derive(Debug, Clone, Default)]
@@ -211,7 +238,7 @@ pub struct ObligationStanding {
 /// Every argument is a judgement somebody else already made: `standing` is the obligation
 /// closure's, `gates` is [`super::judge`]'s, `implied` is [`super::implied`]'s, and
 /// `changed` is the change set. Nothing is measured here — this composes.
-pub fn answer(
+pub(crate) fn answer(
     standing: &std::collections::BTreeMap<String, ObligationStanding>,
     implied: &[ImpliedObligation],
     gates: &[Gate],

@@ -38,6 +38,23 @@ pub enum GateClassSelects {
     Named(Vec<String>),
 }
 
+/// ```
+/// use majordomus_cli::gates::GateDecl;
+///
+/// // one gate as `.ai/repo/ci/gates.yaml` declares it
+/// let decl: GateDecl = serde_json::from_value(serde_json::json!({
+///     "id": "shell-lint",
+///     "job": "structure",
+///     "runs": "shellcheck lib/*.sh",
+///     "summary": "every script parses",
+///     "always": true
+/// }))
+/// .unwrap();
+/// assert_eq!(decl.id, "shell-lint");
+/// // `always` is what makes every plan select it, so any change can invalidate its evidence
+/// assert!(decl.always);
+/// assert!(!decl.on_demand);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One gate of the model, as the file declares it.
 pub struct GateDecl {
@@ -65,6 +82,19 @@ pub struct GateDecl {
     pub requires: Vec<String>,
 }
 
+/// ```
+/// use majordomus_cli::gates::GateClass;
+///
+/// // one path class as the CI model declares it: which paths select which gates
+/// let class: GateClass = serde_json::from_value(serde_json::json!({
+///     "id": "docs",
+///     "paths": ["docs/**"],
+///     "gates": ["reference-check"]
+/// }))
+/// .unwrap();
+/// assert_eq!(class.id, "docs");
+/// assert_eq!(class.paths, ["docs/**"]);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One path class: the paths it covers and the gates a change to them selects.
 pub struct GateClass {
@@ -80,13 +110,13 @@ pub struct GateClass {
 
 impl GateClass {
     /// True when any change in this class escalates the whole plan.
-    pub fn escalates(&self) -> bool {
+    pub(crate) fn escalates(&self) -> bool {
         matches!(&self.gates, Some(GateClassSelects::Word(w)) if w == FULL)
     }
 
     /// The gates this class names; empty for `full` (which selects everything instead) and
     /// for `gates: []`.
-    pub fn named(&self) -> &[String] {
+    pub(crate) fn named(&self) -> &[String] {
         match &self.gates {
             Some(GateClassSelects::Named(g)) => g,
             _ => &[],
@@ -102,7 +132,7 @@ impl GateClass {
     /// segments, so it does. Nothing is decided over a directory here — the paths are
     /// `git diff --name-only`'s, which are files — so the two agree over every input either
     /// is given, and `test/cases/131_completion_gates.sh` asserts that on this model.
-    pub fn matches(&self, path: &str) -> bool {
+    pub(crate) fn matches(&self, path: &str) -> bool {
         self.paths.iter().any(|p| Glob::new(p).matches(path))
     }
 }
@@ -124,7 +154,7 @@ impl GateModel {
     /// A repository with no model is not an error here: it is a repository whose gates
     /// cannot be known, which every caller reports as [`super::judge::GateStatus`]
     /// `unknown` rather than as a pass.
-    pub fn load(root: &Path) -> Result<GateModel, String> {
+    pub(crate) fn load(root: &Path) -> Result<GateModel, String> {
         let path = root.join(MODEL_PATH);
         let text = std::fs::read_to_string(&path)
             .map_err(|e| format!("{MODEL_PATH} could not be read: {e}"))?;
@@ -143,7 +173,7 @@ impl GateModel {
     }
 
     /// One gate by id.
-    pub fn gate(&self, id: &str) -> Option<&GateDecl> {
+    pub(crate) fn gate(&self, id: &str) -> Option<&GateDecl> {
         self.gates.iter().find(|g| g.id == id)
     }
 
@@ -154,7 +184,7 @@ impl GateModel {
     ///
     /// Derived from the model and from nothing else: a class that starts naming a gate
     /// starts invalidating its evidence in the same commit.
-    pub fn inputs_of(&self, id: &str) -> Vec<String> {
+    pub(crate) fn inputs_of(&self, id: &str) -> Vec<String> {
         if self.gate(id).is_some_and(|g| g.always) {
             return vec!["*".to_string()];
         }
@@ -170,6 +200,14 @@ impl GateModel {
 
 // ---------------------------------------------------------------- the plan
 
+/// ```
+/// use majordomus_cli::gates::GatePlanMode;
+///
+/// // a plan is either the gates the change selects, or everything the runners allow
+/// assert_eq!(GatePlanMode::Affected.as_str(), "affected");
+/// assert_eq!(GatePlanMode::Full.as_str(), "full");
+/// assert_ne!(GatePlanMode::Affected, GatePlanMode::Full);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 /// Why the plan selects what it selects.
@@ -182,6 +220,13 @@ pub enum GatePlanMode {
 
 impl GatePlanMode {
     /// The word this mode is reported under; `scripts/ci-plan`'s own.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::GatePlanMode;
+    /// // the same words the shell planner prints, because there is one model and two readers
+    /// assert_eq!(GatePlanMode::Full.as_str(), "full");
+    /// assert_eq!(GatePlanMode::Affected.as_str(), "affected");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             GatePlanMode::Affected => "affected",
@@ -190,6 +235,14 @@ impl GatePlanMode {
     }
 }
 
+/// ```
+/// use majordomus_cli::gates::GateClassMatch;
+///
+/// let hit = GateClassMatch { id: "docs".into(), paths: vec!["docs/CLI.md".into()] };
+/// // the class, and the files of the change that put it in the plan — never the class alone,
+/// // because a plan a reader cannot check is a plan a reader has to believe
+/// assert_eq!(hit.paths.len(), 1);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One class a change fell in, and the paths that put it there.
 pub struct GateClassMatch {
@@ -199,6 +252,23 @@ pub struct GateClassMatch {
     pub paths: Vec<String>,
 }
 
+/// ```
+/// use majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};
+/// use std::collections::BTreeMap;
+///
+/// let plan = GatePlan {
+///     mode: GatePlanMode::Affected,
+///     reason: "3 path(s) fall in 1 class".into(),
+///     changed: vec!["docs/CLI.md".into()],
+///     classes: vec![GateClassMatch { id: "docs".into(), paths: vec!["docs/CLI.md".into()] }],
+///     unclassified: Vec::new(),
+///     selected: BTreeMap::from([("reference-check".to_string(), "class docs".to_string())]),
+///     excluded: BTreeMap::new(),
+/// };
+/// // the plan says what it selected and why, so a reader can check it rather than believe it
+/// assert_eq!(plan.selected["reference-check"], "class docs");
+/// assert!(!plan.selected.contains_key("rust-check"), "a document change cannot break the crate");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Which gates a change must pass, and why each one is in or out.
 pub struct GatePlan {
@@ -220,7 +290,7 @@ pub struct GatePlan {
 
 impl GatePlan {
     /// Is this gate in the plan?
-    pub fn selects(&self, id: &str) -> bool {
+    pub(crate) fn selects(&self, id: &str) -> bool {
         self.selected.contains_key(id)
     }
 }
@@ -232,28 +302,17 @@ impl GatePlan {
 /// `requires` names a gate a gate cannot run without, and the plan adds it; and an
 /// on-demand gate is left out of every plan that did not ask for it, the full one included.
 ///
-/// ```
-/// use majordomus_cli::gates::model::{plan, GateModel, GatePlanMode};
-/// # use std::path::Path;
-/// # let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-/// # if let Ok(model) = GateModel::load(&root) {
-/// // a documentation change does not plan the Rust gates
-/// let p = plan(&model, &["docs/README.md".to_string()], false);
-/// assert_eq!(p.mode, GatePlanMode::Affected);
-/// assert!(!p.selects("rust-check"), "a document does not rebuild the crate");
 ///
-/// // and a path the model classifies nowhere escalates rather than passing quietly
-/// let p = plan(&model, &["nowhere/at/all.txt".to_string()], false);
-/// assert_eq!(p.mode, GatePlanMode::Full);
-/// # }
-/// ```
-pub fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> GatePlan {
+/// The worked example is `this_repositorys_own_model_plans_by_its_own_rules` below: it reads
+/// this repository's `.ai/repo/ci/gates.yaml` when there is one, which a doctest cannot do
+/// now that the model is the crate's own.
+pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> GatePlan {
     let mut sorted: Vec<String> = changed
         .iter()
         .filter(|p| !p.trim().is_empty())
         .cloned()
         .collect();
-    sorted.sort();
+    crate::order::canonical(&mut sorted);
     sorted.dedup();
 
     let mut classes: BTreeMap<String, Vec<String>> = BTreeMap::new();
@@ -383,7 +442,7 @@ pub fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> GatePlan 
         classes: classes
             .into_iter()
             .map(|(id, mut paths)| {
-                paths.sort();
+                crate::order::canonical(&mut paths);
                 paths.dedup();
                 GateClassMatch { id, paths }
             })
@@ -396,6 +455,27 @@ pub fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> GatePlan 
 
 #[cfg(test)]
 mod tests {
+    /// The rules the header states, over this repository's own model rather than a fixture:
+    /// a documentation change plans the document gates and not the crate's, and a path the
+    /// model classifies nowhere escalates the whole plan rather than passing quietly.
+    #[test]
+    fn this_repositorys_own_model_plans_by_its_own_rules() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let Ok(model) = GateModel::load(&root) else {
+            // a checkout with no CI model has nothing to assert about one
+            return;
+        };
+        let p = plan(&model, &["docs/README.md".to_string()], false);
+        assert_eq!(p.mode, GatePlanMode::Affected);
+        assert!(
+            !p.selects("rust-check"),
+            "a document does not rebuild the crate"
+        );
+
+        let p = plan(&model, &["nowhere/at/all.txt".to_string()], false);
+        assert_eq!(p.mode, GatePlanMode::Full, "an unclassified path escalates");
+    }
+
     use super::*;
 
     const MODEL: &str = r#"version: 1

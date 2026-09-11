@@ -23,9 +23,23 @@
 //! the property the module exists for: a worker cannot get a different verdict by asking a
 //! different surface, and no surface can be persuaded that "done" is true because an agent
 //! said so.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::gates::module;
+//!
+//! // the whole module, as every projection reads it: two capabilities, and neither has a
+//! // command-line arm of its own because `check` and `finish` are the command line's answer
+//! let m = module();
+//! let ids: Vec<&str> = m.capabilities.iter().map(|c| c.capability.id.as_str()).collect();
+//! assert_eq!(ids, ["gates.model", "gates.completion"]);
+//! for entry in &m.capabilities {
+//!     assert!(entry.capability.exposure.cli.is_none());
+//!     assert!(entry.capability.exposure.http.is_some());
+//! }
+//! ```
 
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -65,8 +79,30 @@ pub struct GateModelReport {
     pub gates: Vec<GateModelEntry>,
     /// Every path class, in declaration order.
     pub classes: Vec<model::GateClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Why there is no model to report, when there is none. A repository of the layer does
+    /// not have to declare a CI model, and a reader is entitled to the difference between
+    /// "this repository declares no gates" and "this call failed".
+    pub unreadable: Option<String>,
 }
 
+/// ```
+/// use majordomus_cli::capability::builtin::gates::GateModelEntry;
+/// use majordomus_cli::gates::GateDecl;
+///
+/// let decl: GateDecl = serde_json::from_value(serde_json::json!({
+///     "id": "site-check",
+///     "job": "site",
+///     "runs": "scripts/site-check",
+///     "summary": "the site is whole"
+/// }))
+/// .unwrap();
+/// let entry = GateModelEntry { declared: decl, inputs: vec!["site/**".into()] };
+/// // the declaration as the file carries it, plus the paths its evidence is taken over —
+/// // derived from the classes that select it, never written down a second time
+/// assert_eq!(entry.declared.id, "site-check");
+/// assert_eq!(entry.inputs, ["site/**"]);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One gate of the model, with what the model implies about it.
 pub struct GateModelEntry {
@@ -80,6 +116,20 @@ pub struct GateModelEntry {
 
 // ---------------------------------------------------------------- input
 
+/// ```
+/// use majordomus_cli::capability::builtin::gates::CompletionInput;
+///
+/// // the default asks about the active task's own change set
+/// let mine = CompletionInput::default();
+/// assert!(mine.changed.is_none() && mine.base.is_none());
+///
+/// // and a caller may name the change instead, which is how a test drives it
+/// let named = CompletionInput {
+///     changed: Some(vec!["docs/CLI.md".into()]),
+///     ..Default::default()
+/// };
+/// assert_eq!(named.changed.unwrap(), ["docs/CLI.md"]);
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// Which change to judge completion over.
@@ -145,9 +195,30 @@ fn vocabulary(ctx: &Context) -> Result<Vec<Obligation>, String> {
     Ok(file.obligations)
 }
 
+/// The CI model, or an empty one and the reason there is none.
+///
+/// A repository of the layer does not have to declare gates, and every reader of this module
+/// already says so in its own way: `lib/gates.sh` skips with "this repository declares no
+/// readable CI model" rather than failing. Refusing the call instead would make a capability
+/// that cannot answer about most repositories — and the generic tests that replay every
+/// capability's benchmark cases against a fixture are exactly where that showed.
+fn load_model(root: &Path) -> (model::GateModel, Option<String>) {
+    match model::GateModel::load(root) {
+        Ok(m) => (m, None),
+        Err(reason) => (
+            model::GateModel {
+                version: 0,
+                gates: Vec::new(),
+                classes: Vec::new(),
+            },
+            Some(reason),
+        ),
+    }
+}
+
 fn gates_model(ctx: &Context, _: Empty) -> Result<GateModelReport, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
-    let m = model::GateModel::load(&root).map_err(CapabilityError::NotFound)?;
+    let (m, unreadable) = load_model(&root);
     Ok(GateModelReport {
         version: m.version,
         source: model::MODEL_PATH.to_string(),
@@ -167,6 +238,7 @@ fn gates_model(ctx: &Context, _: Empty) -> Result<GateModelReport, CapabilityErr
             })
             .collect(),
         classes: m.classes.clone(),
+        unreadable,
     })
 }
 
@@ -174,7 +246,15 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
     let root = PathBuf::from(&ctx.index.repository.root);
     let mut findings: Vec<String> = Vec::new();
 
-    let m = model::GateModel::load(&root).map_err(CapabilityError::NotFound)?;
+    let (m, unreadable) = load_model(&root);
+    if let Some(reason) = unreadable {
+        // no model is not no answer: every gate is unknown, said out loud, and `finishable`
+        // is left to the obligations rather than granted by a silence
+        findings.push(format!(
+            "this repository declares no readable CI model at {}, so no gate can be judged              here — unknown, never a pass: {reason}",
+            model::MODEL_PATH
+        ));
+    }
     let task = super::continuity::read_task(&gates::task_path(&root));
     if task.is_none() {
         findings.push(format!(
