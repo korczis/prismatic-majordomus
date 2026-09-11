@@ -130,7 +130,15 @@ jobs:
     timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
+      # the whole history and its tags: `version-matches-surface` asks what the public
+      # surface has lost since the last release, and it finds that release with
+      # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A
+      # depth-1 checkout with no tags gives it neither, so the gate failed for want of the
+      # data rather than for anything about the tree, on every run it has ever had. The
+      # suite job already checks out in full, for the same class of reason.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: sudo apt-get install -y shellcheck >/dev/null
       - name: pinned actionlint
         env:

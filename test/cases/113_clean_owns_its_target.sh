@@ -50,6 +50,8 @@ mkchk() {
 }
 MINE="$T/mine"; THEIRS="$T/theirs"
 mkchk "$MINE"; mkchk "$THEIRS"
+# the file is chosen at run time by rust_bin, so there is no path for shellcheck to follow
+# shellcheck source=/dev/null
 . "$RB"
 
 # --- it refuses when the build directory is somebody else's --------------------------------

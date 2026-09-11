@@ -22,6 +22,7 @@
 # a regression and does fail; a baseline line that no longer matches anything is also
 # reported, so the ratchet tightens instead of rotting.
 set -eu
+set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASELINE="$ROOT/.ai/repo/liveness-baseline.txt"

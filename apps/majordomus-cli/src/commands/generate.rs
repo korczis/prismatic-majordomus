@@ -300,8 +300,7 @@ fn package_field(text: &str, key: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        package_field, package_version, short, CRATE_DIR, CRATE_NAME, PROVENANCE_MEMBERS,
-        REFUSED,
+        package_field, package_version, short, CRATE_DIR, CRATE_NAME, PROVENANCE_MEMBERS, REFUSED,
     };
 
     #[test]
@@ -401,7 +400,10 @@ mod tests {
         std::fs::create_dir_all(&crate_dir).expect("crate dir");
         std::fs::write(
             crate_dir.join("Cargo.toml"),
-            format!("[package]\nname = \"{CRATE_NAME}\"\nversion = \"{}\"\n", crate::VERSION),
+            format!(
+                "[package]\nname = \"{CRATE_NAME}\"\nversion = \"{}\"\n",
+                crate::VERSION
+            ),
         )
         .expect("manifest");
 
