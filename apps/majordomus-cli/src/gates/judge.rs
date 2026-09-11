@@ -44,6 +44,18 @@ pub const GATE_EVENT: &str = "task.gate";
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
+/// ```
+/// use majordomus_cli::gates::GateStatus;
+///
+/// // the three answers a reader is entitled to, and they are different answers
+/// assert!(GateStatus::Fail.refuses(), "a run that failed refuses");
+/// assert!(GateStatus::Queued.unverified(), "asked and unanswered is a debt");
+/// assert!(!GateStatus::Exempt.refuses() && !GateStatus::Exempt.unverified());
+///
+/// // and the one that is neither: a run whose tree has moved proves nothing about this one
+/// assert!(GateStatus::Stale.refuses());
+/// assert_eq!(GateStatus::Stale.as_str(), "stale");
+/// ```
 #[serde(rename_all = "lowercase")]
 /// What is known about one gate. Every word is one this repository's design tokens already
 /// carry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without
@@ -74,7 +86,7 @@ impl GateStatus {
     /// The word this status is reported under.
     ///
     /// ```
-    /// use majordomus_cli::gates::judge::GateStatus;
+    /// use majordomus_cli::gates::GateStatus;
     /// assert_eq!(GateStatus::Queued.as_str(), "queued");
     /// // green and never-reported are different words, which is the whole point
     /// assert_ne!(GateStatus::Pass.as_str(), GateStatus::Queued.as_str());
@@ -100,7 +112,7 @@ impl GateStatus {
     /// contradicts rather than one the tool accepted.
     ///
     /// ```
-    /// use majordomus_cli::gates::judge::GateStatus;
+    /// use majordomus_cli::gates::GateStatus;
     /// assert!(GateStatus::Fail.refuses() && GateStatus::Stale.refuses());
     /// assert!(!GateStatus::Queued.refuses(), "absence is a debt, not a failure");
     /// assert!(!GateStatus::Exempt.refuses());
@@ -113,6 +125,16 @@ impl GateStatus {
     }
 
     /// Is this status the absence of a verdict rather than a verdict?
+    ///
+    /// ```
+    /// use majordomus_cli::gates::GateStatus;
+    /// // asked and unanswered, or unaskable: two different gaps, both reported as gaps
+    /// assert!(GateStatus::Queued.unverified() && GateStatus::Unknown.unverified());
+    /// // a verdict is a verdict whichever way it went
+    /// assert!(!GateStatus::Pass.unverified() && !GateStatus::Fail.unverified());
+    /// // and a gate the change cannot affect was never a question
+    /// assert!(!GateStatus::Exempt.unverified());
+    /// ```
     pub fn unverified(self) -> bool {
         matches!(self, GateStatus::Queued | GateStatus::Unknown)
     }
@@ -120,6 +142,24 @@ impl GateStatus {
 
 // ---------------------------------------------------------------- the evidence
 
+/// ```
+/// use majordomus_cli::gates::GateRun;
+///
+/// // what `majordomus evidence --gate` writes: a run, and the tree it was taken over
+/// let run = GateRun {
+///     recorded_at: "2026-01-01T00:00:00Z".into(),
+///     head: "9b1e2d4".into(),
+///     branch: "master".into(),
+///     exit: 0,
+///     command: "scripts/rust-check --ci".into(),
+///     inputs_hash: "3f0a".into(),
+///     session: "s-1".into(),
+/// };
+/// // the hash is what makes a run go stale rather than merely old: the same run read
+/// // against a different tree is evidence about a tree that no longer exists
+/// assert_eq!(run.exit, 0);
+/// assert_ne!(run.inputs_hash, "0000");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// The `task.gate` ledger line that last reported a gate, as the ledger holds it.
 pub struct GateRun {
@@ -144,7 +184,7 @@ pub struct GateRun {
 
 /// The newest `task.gate` line per gate for one task. A line that is not JSON is skipped
 /// and counted: a ledger that has grown one bad line still holds the rest.
-pub fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize) {
+pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize) {
     let Ok(text) = std::fs::read_to_string(ledger) else {
         return (BTreeMap::new(), 0);
     };
@@ -199,6 +239,28 @@ pub fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize)
 
 // ---------------------------------------------------------------- one gate, judged
 
+/// ```
+/// use majordomus_cli::gates::{Gate, GateStatus};
+///
+/// let gate = Gate {
+///     id: "rust-check".into(),
+///     title: "the crate builds, is formatted and passes its tests".into(),
+///     scope: "apps/majordomus-cli".into(),
+///     required: true,
+///     status: GateStatus::Queued,
+///     reason: "the plan selects it and no run has ever reported".into(),
+///     remediation: "majordomus evidence --gate rust-check --exit 0".into(),
+///     source: "the plan".into(),
+///     evidence: None,
+///     inputs: vec!["apps/majordomus-cli/**".into()],
+///     inputs_hash: "3f0a".into(),
+///     evaluated_at: "2026-01-01T00:00:00Z".into(),
+/// };
+/// // silence does not refuse and is not a pass either: it is a debt, reported as one
+/// assert!(!gate.status.refuses());
+/// assert!(gate.status.unverified());
+/// assert!(gate.evidence.is_none());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One completion gate: what it is, whether it applies, what it said, and what to do.
 pub struct Gate {
@@ -360,7 +422,7 @@ fn short(v: &str) -> String {
 ///
 /// A gate that has already spoken keeps what it said. Blocking replaces only the absence of
 /// a verdict, so a failing prerequisite never hides a second real failure.
-pub fn judge(
+pub(crate) fn judge(
     model: &GateModel,
     plan: &GatePlan,
     runs: &BTreeMap<String, GateRun>,
@@ -420,12 +482,18 @@ pub fn judge(
 /// Sort key: the order a reader wants — what refuses first, then what is unverified, then
 /// the rest — and by id inside each band, through [`crate::order`] so the comparison is the
 /// repository's one comparator.
-pub fn report_order(gates: &mut [Gate]) {
-    gates.sort_by(|a, b| {
-        band(a.status)
-            .cmp(&band(b.status))
-            .then_with(|| crate::order::natural_cmp(&a.id, &b.id))
-    });
+pub(crate) fn report_order(gates: &mut [Gate]) {
+    crate::order::canonical(gates);
+}
+
+impl crate::order::Ordered for Gate {
+    /// The band is the rank and the id is both the label and the identity: what refuses
+    /// comes first, then what is unverified, then the rest, and inside each band the
+    /// repository's one comparator decides. Declared on the type rather than written as a
+    /// comparator beside the report, so every projection of a gate list is in this order.
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(band(self.status) as i64)
+    }
 }
 
 fn band(status: GateStatus) -> u8 {
