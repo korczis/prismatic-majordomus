@@ -1,31 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
-{#- The homepage is a projection. Every feature, interface, count, provider, kind and moment
-    below comes from data/registry/product.json and the datasets beside it, all written by
-    `majordomus generate site` from the capability registry, the objects of the layer and the
-    web topology. This template names no feature, no module, no command, no provider and no
-    number: adding a file under .ai/repo/features/ is what changes this page (ADR 23). The
-    only hand-written words are marketing.toml's, loaded as `m` by base.html. -#}
+{#- The homepage is two things at once, and neither is a hand-written inventory.
+
+    The argument — intent-driven development — is prose, and every word of it lives in
+    data/marketing.toml and data/manifesto.toml. The evidence beside the argument is derived:
+    every feature, interface, count, provider, kind, moment and rule below comes from
+    data/registry/product.json and the datasets around it, all written by `majordomus generate
+    site` from the capability registry, the objects of the layer and the web topology.
+
+    This template names no feature, no module, no command, no provider and no number: adding a
+    file under .ai/repo/features/ is what changes the evidence on this page (ADR 23), and
+    editing the two data files is what changes the argument. A claim that outruns the dataset
+    beside it is a defect in the prose, not in the dataset. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set dist = load_data(path="data/registry/distribution.json") -%}
+{%- set x = load_data(path="data/manifesto.toml") -%}
 {%- set chapters = [f for f in model.features if f.featured and f.status != "draft"] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
-{#- 1. hero — the positioning sentences, and beside them the real answer the tool gives: every
+{#- 1. hero — the positioning, and beside it the answer the tool actually gives today: every
     feature this repository declares against every interface, with the marks derived. -#}
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-20">
     <div class="flex min-w-0 flex-col">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
-      <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.title }}</h1>
-      <p class="mt-5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-sm uppercase tracking-widest text-fg-brand">
-        {%- for line in m.hero.mantra %}<span>{{ line }}</span>{% endfor -%}
-      </p>
+      <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.title }}<span class="mt-2 block text-fg-brand"> {{ m.hero.subtitle }}</span></h1>
       <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
+      <p class="mt-7 flex flex-col gap-1 font-mono text-sm uppercase tracking-widest text-body-subtle">
+        {%- for line in m.hero.mantra %}<span>{{ line }}</span>{% endfor -%}
+        <span class="mt-2 text-2xl font-bold normal-case tracking-tight text-fg-brand-strong sm:text-3xl">{{ m.hero.verdict }}</span>
+      </p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
         <a href="#install" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
-        <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
+        <a href="#loop" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">How an intent becomes proof</a>
       </div>
     </div>
 
@@ -74,7 +82,35 @@
   </div>
 </section>
 
-{#- 3. recognition — the featured moments of the Why catalogue; situations, not claims -#}
+{#- 3. the problem — prompt-driven development, and what it costs as the repository grows.
+    Beside the argument, the featured moments of the Why catalogue: situations from the
+    repository's own catalogue, not claims written here. -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="01" kicker={x.problem.kicker} title={x.problem.title} lead={x.problem.lead} /> }}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-10">
+      <div class="min-w-0">
+        <ul class="space-y-2">
+          {%- for f in x.problem.failures %}
+          <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-danger-strong">✗</span><span class="min-w-0">{{ f.text }}</span></li>
+          {%- endfor %}
+        </ul>
+        <blockquote class="mt-5 border-s-4 border-brand ps-4 text-lg font-medium leading-snug text-heading sm:text-xl">{{ x.problem.question }}</blockquote>
+      </div>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">{{ x.problem.fragments.title }}</h3>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          {%- for i in x.problem.fragments.items %}
+          <li class="rounded-base border border-default bg-neutral-primary-soft px-2.5 py-1 font-mono text-xs text-body">{{ i }}</li>
+          {%- endfor %}
+        </ul>
+        <p class="mt-5 text-base leading-relaxed text-body">{{ x.problem.closing }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{#- 3b. recognition — the featured moments of the Why catalogue; situations, not claims -#}
 <section class="border-b border-default bg-brand-softer">
   <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
     <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
@@ -83,127 +119,105 @@
   </div>
 </section>
 
-{#- 4. the chapters — the features that declare themselves featured, in their own weight order.
-    A feature becomes one of these by setting `featured: true` in its own file; this template
-    does not choose, and everything beside the words is derived from what the file names. -#}
-<section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="01" kicker={m.chapters.kicker} title="What it does" lead={m.chapters.lead} /> }}
-    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {%- for f in chapters %}
-      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ chapters | length }}</span>
-        <h3 class="mt-2 text-lg font-semibold tracking-tight text-heading"><a href="{{ base }}{{ f.route }}" class="hover:text-fg-brand hover:underline">{{ f.title }}</a></h3>
-        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.headline }}</p>
-        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
-        {%- if f.moments | length %}
-        <p class="mt-3 text-xs text-body-subtle">Answers {{ f.counts.moments }} of the catalogue&rsquo;s operational moments, among them &ldquo;{{ f.moments[0].hook }}&rdquo;.</p>
-        {%- endif %}
-        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
-      </li>
-      {%- endfor %}
-    </ol>
-    <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
-  </div>
-</section>
-
-{#- 5. write once — the kinds of the layer, counted from the index -#}
+{#- 4. the core idea — an intent against an implementation assumption, side by side -#}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="02" kicker="the layer" title={m.write_once.title} lead={m.write_once.lead} /> }}
-    <ul class="flex flex-wrap gap-2">
-      {%- for kind, n in model.telemetry.by_kind %}
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
-      {%- endfor %}
-    </ul>
-    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
-  </div>
-</section>
-
-{#- 6. providers — the adapters the distribution ships, and what this repository does with each -#}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="03" kicker="provider-neutral" title={m.providers.title} lead={m.providers.lead} /> }}
-    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {%- for p in model.providers %}
-      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
-        <span class="text-base font-semibold text-heading">{{ p.title }}</span>
-        {%- if p.bootstraps | length %}
-        <ul class="mt-3 space-y-1">
-          {%- for b in p.bootstraps %}<li class="break-all font-mono text-xs text-body">{{ b.target }}</li>{% endfor -%}
-        </ul>
-        {%- endif %}
-        {%- if p.client_config %}<p class="mt-auto break-all pt-2 font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
-      </li>
-      {%- endfor %}
-    </ul>
-    <div class="mt-8 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
-      <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</p>
-      <p class="mt-4 max-w-3xl text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
+    {{ <section_head number="02" kicker={x.core.kicker} title={x.core.title} lead={x.core.lead} /> }}
+    <div class="grid gap-5 lg:grid-cols-2">
+      <figure class="min-w-0 overflow-hidden rounded-base border border-brand bg-neutral-primary shadow-xs">
+        <figcaption class="border-b border-brand-subtle bg-brand-softer px-4 py-2 font-mono text-xs uppercase tracking-wide text-fg-brand-strong">an intent</figcaption>
+        <blockquote class="px-5 py-5 text-base leading-relaxed text-heading sm:text-lg">{{ x.core.intent_example }}</blockquote>
+      </figure>
+      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">{{ x.core.assumption_title }}</figcaption>
+        <div class="overflow-x-auto" tabindex="0"><pre class="m-0 px-5 py-5 font-mono text-sm leading-relaxed text-body"><code>{{ x.core.assumption_example }}</code></pre></div>
+        <p class="border-t border-default px-5 py-4 text-sm leading-relaxed text-body">{{ x.core.assumption_note }}</p>
+      </figure>
+    </div>
+    <p class="mt-8 max-w-3xl border-s-4 border-brand ps-4 text-lg font-semibold leading-snug text-heading sm:text-xl">{{ x.core.question }}</p>
+    <div class="mt-8 rounded-base border border-default bg-neutral-primary p-6 sm:p-8">
+      <h3 class="text-xl font-bold tracking-tight text-heading sm:text-2xl">{{ x.core.primary_title }}</h3>
+      <p class="mt-3 max-w-3xl text-base leading-relaxed text-body">{{ x.core.primary_lead }}</p>
     </div>
   </div>
 </section>
 
-{#- 7. the interfaces — the surfaces of the registry, with what stands behind each -#}
-<section class="border-b border-default bg-neutral-primary-soft">
+{#- 5. the pipeline — the execution model, as a stepper that advances until a reader takes it
+    over. Without JavaScript every stage and every one of its parts is on the page; the script
+    only decides which one is emphasised. -#}
+<section id="loop" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="04" kicker="one declaration" title={m.surfaces.title} lead={m.surfaces.lead} /> }}
-    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      {%- for s in model.surfaces %}
-      <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
-        <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
-        <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
-        <span class="text-xs text-body">features exposed here</span>
-      </a></li>
-      {%- endfor %}
-    </ul>
-    <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
-      <div class="rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
-      {%- endfor %}
-    </dl>
-    <div class="mt-8 rounded-base border border-default bg-neutral-primary p-5">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Coverage</h3>
-      <p class="mt-2 max-w-3xl text-sm text-body">{{ m.matrix.lead }}</p>
-      <dl class="mt-4 grid gap-2 sm:grid-cols-3">
-        {%- for label, pair in {"capability modules": ["modules_covered", "modules"], "public commands": ["commands_covered", "commands"], "object kinds": ["kinds_covered", "kinds"]} %}
-        <div class="flex items-baseline justify-between gap-3 border-b border-default pb-2"><dt class="text-sm text-body">{{ label }} named by a feature</dt><dd class="font-mono text-sm text-heading">{{ model.counts[pair[0]] }} / {{ model.counts[pair[1]] }}</dd></div>
+    {{ <section_head number="03" kicker={x.pipeline.kicker} title={x.pipeline.title} lead={x.pipeline.lead} /> }}
+    {#- The stepper owns its colours entirely in the binding: a utility named in the static class
+        as well would win or lose by stylesheet order rather than by state, and the active stage
+        would be indistinguishable from the rest. Without JavaScript no branch is applied, every
+        panel is on the page, and the section reads as six stages in order — which is why no panel
+        carries a static `hidden` and why x-cloak is absent. It advances on its own only when the
+        reader has not asked for reduced motion, and a control stops it either way (WCAG 2.2.2). -#}
+    <div x-data="{ active: 0, paused: false, n: {{ x.pipeline.stages | length }}, motion: true, tick() { if (!this.paused) { this.active = (this.active + 1) % this.n } } , start() { this.motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches; this.paused = !this.motion; setInterval(() => this.tick(), 3800) } }" x-init="start()">
+      <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {%- for s in x.pipeline.stages %}
+        <li class="min-w-0">
+          <button type="button" x-on:click="active = {{ loop.index0 }}; paused = true"
+            :aria-pressed="active === {{ loop.index0 }} ? 'true' : 'false'" aria-controls="stage-{{ s.id }}"
+            :class="active === {{ loop.index0 }} ? 'ring-2 ring-brand-medium shadow-xs' : ''"
+            class="flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 text-start hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
+            <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ x.pipeline.stages | length }}</span>
+            <span class="mt-1 text-base font-semibold tracking-tight text-heading">{{ s.name }}</span>
+            <span class="mt-2 text-sm leading-relaxed text-body">{{ s.summary }}</span>
+            <span class="mt-2 font-mono text-xs text-body-subtle">{{ s.note }}</span>
+            <span aria-hidden="true" :class="active === {{ loop.index0 }} ? 'bg-brand' : 'bg-neutral-tertiary'" class="mt-4 h-1 w-full rounded-base"></span>
+          </button>
+        </li>
         {%- endfor %}
-      </dl>
-      <p class="mt-4 text-sm text-body">A part of the product no feature names is reported as a gap by <code class="font-mono text-heading">majordomus product validate</code> and shown on the matrix, never quietly absent.</p>
+      </ol>
+      <div class="mt-6 grid gap-3 lg:min-h-[23rem]">
+        {%- for s in x.pipeline.stages %}
+        <section id="stage-{{ s.id }}" aria-label="{{ s.name }}" :class="active === {{ loop.index0 }} ? '' : 'hidden'" class="rounded-base border border-brand-subtle bg-brand-softer p-5 sm:p-6">
+          <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">stage {{ loop.index }} &middot; {{ s.verb }}</p>
+          <h3 class="mt-1 text-xl font-bold tracking-tight text-fg-brand-strong sm:text-2xl">{{ s.name }}</h3>
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {%- for i in s.items %}
+            <li class="rounded-base border border-default bg-neutral-primary px-3 py-1.5 font-mono text-xs text-heading">{{ i }}</li>
+            {%- endfor %}
+          </ul>
+          <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">in this repository today: {{ s.note }}</p>
+        </section>
+        {%- endfor %}
+      </div>
+      <div x-cloak class="mt-4 flex flex-wrap items-center gap-3">
+        <button type="button" x-on:click="paused = !paused" class="inline-flex items-center gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
+          <span x-text="paused ? 'Play the stages' : 'Pause the stages'">Pause the stages</span>
+        </button>
+        <span class="font-mono text-xs text-body-subtle" x-text="(active + 1) + ' / ' + n"></span>
+      </div>
+      <p class="mt-4 text-sm text-body-subtle">{{ x.pipeline.caption }}</p>
     </div>
-    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
-      <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix, both directions &rarr;</a>
-      <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself, capability by capability &rarr;</a>
-    </p>
   </div>
 </section>
 
+{#- 6. context is compiled -#}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="05" kicker="the same model" title="The product, composed" lead={m.graph.lead} /> }}
-    {%- set graph = load_data(path="data/registry/product-graph.json") -%}
-    {%- set graph_id = "product" -%}
-    {%- set graph_rings = "feature,module,command,kind,surface" -%}
-    {%- set graph_label = graph.description -%}
-    {% include "partials/graph.html" %}
+    {{ <section_head number="04" kicker={x.compiled.kicker} title={x.compiled.title} lead={x.compiled.lead} /> }}
+    <p class="max-w-3xl text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">{{ x.compiled.closing }}</p>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/context/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What a worker is actually handed when it opens this repository &rarr;</a></p>
   </div>
 </section>
 
-{#- 9. the doctrine — the rules the featured features rest on, with their class -#}
+{#- 7. governance is executable — the argument, then the rules the public features actually
+    rest on: the dataset's own `rules`, resolved and deduplicated by the executable. This page
+    does not work out which rules the product rests on; it renders the answer. -#}
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="06" kicker="doctrine" title={m.principles.title} lead={m.principles.lead} /> }}
-    {#- the dataset's own `rules`: every rule a public feature names, resolved and
-        deduplicated by the executable. This page does not work out which rules the product
-        rests on; it renders the answer. -#}
+    {{ <section_head number="05" kicker={x.governance.kicker} title={x.governance.title} lead={x.governance.lead} /> }}
+    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">{{ x.governance.closing }}</p>
     {#- the route of a rule is the doctrine dataset's, joined by id: this page does not know
-        how a rule id becomes a slug, and there is one such rule on the site -#}
+        how a rule id becomes a slug -#}
     {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
     <ul class="grid gap-3 md:grid-cols-2">
       {%- for r in model.rules %}
-      {%- set d = [x for x in doctrines.doctrines if x.id == r.id] -%}
+      {%- set d = [dx for dx in doctrines.doctrines if dx.id == r.id] -%}
       <li class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft p-4">
         {{ <doctrine_class class={r.class} /> }}
         {%- if d | length %}<a href="{{ get_url(path="/doctrines/" ~ d[0].slug ~ "/", trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
@@ -215,10 +229,93 @@
   </div>
 </section>
 
-{#- 10. the contract — real output from the repository's own README -#}
+{#- 8. the intent graph — the shape of the provenance an intent carries. The relations are the
+    model's; the targets are deliberately unnamed, because a record with invented ids on a
+    landing page is exactly the claim this project refuses to make. -#}
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="07" kicker="the finish contract" title="What &ldquo;done&rdquo; looks like when it has to be earned" lead={m.contract.caption} /> }}
+    {{ <section_head number="06" kicker={x.graph.kicker} title={x.graph.title} lead={x.graph.lead} /> }}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
+      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+        <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the relations an intent would carry — the shape of the record, not one written here</figcaption>
+        <ul class="divide-y divide-default">
+          {%- for rel, what in {"originated_from": "the session that raised it", "governed_by": "the doctrines, rules and policies that applied", "constrained_by": "the decisions it may not contradict", "related_to": "the issue and the milestone it projects onto", "realized_by": "the commits that changed the system", "verified_by": "the tests and the runtime checks", "exposed_through": "the interfaces it reached", "proven_by": "the evidence bundle"} %}
+          <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-2.5">
+            <code class="font-mono text-xs text-fg-brand">{{ rel }}</code>
+            <span class="min-w-0 text-sm text-body">{{ what }}</span>
+          </li>
+          {%- endfor %}
+        </ul>
+      </figure>
+      <div class="min-w-0">
+        <p class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Instead of</p>
+        <p class="mt-2 text-lg font-medium text-heading">{{ x.graph.bad_question }}</p>
+        <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary" tabindex="0"><pre class="m-0 p-4 font-mono text-sm text-body"><code>{{ x.graph.bad_answer }}</code></pre></div>
+        <p class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">An answerable history says</p>
+        <p class="mt-2 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading">{{ x.graph.good_answer }}</p>
+        <p class="mt-5 text-sm"><a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">What this repository already records, and what reads it back &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{#- 9. issues and milestones as projections -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="07" kicker={x.projections.kicker} title={x.projections.title} lead={x.projections.lead} /> }}
+    <ul class="grid gap-3 md:grid-cols-2">
+      {%- for d in x.projections.detects %}
+      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-warning">!</span><span class="min-w-0">{{ d.text }}</span></li>
+      {%- endfor %}
+    </ul>
+    <p class="mt-6 max-w-3xl text-base leading-relaxed text-body">{{ x.projections.closing }}</p>
+    <p class="mt-4 text-sm"><a href="{{ get_url(path="/plan/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The work graph this repository keeps, issue by issue and milestone by milestone &rarr;</a></p>
+  </div>
+</section>
+
+{#- 10. claims must match reality — the argument, and the count of claims this repository
+    holds, taken from the index rather than written here -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="08" kicker={x.claims.kicker} title={x.claims.title} lead={x.claims.lead} /> }}
+    <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
+      <div class="rounded-base border border-brand-subtle bg-brand-softer p-5 sm:p-6">
+        <p class="font-mono text-xs uppercase tracking-wide text-fg-brand">claims in this repository's index</p>
+        <p class="mt-2 font-mono text-4xl font-bold text-fg-brand-strong">{{ model.telemetry.by_kind.claim }}</p>
+        <p class="mt-3 text-sm leading-relaxed text-heading">Each is an entry naming the source, the implementation and the test that settle it. A claim whose evidence no longer resolves fails the build before the site can be published.</p>
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Read the guarantees &rarr;</a></p>
+      </div>
+      <div class="min-w-0">
+        <p class="text-base leading-relaxed text-body">{{ x.claims.closing }}</p>
+        <div class="mt-4 overflow-x-auto rounded-base border border-default bg-neutral-primary" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>CLAIM DRIFT
+
+  claim                  automatic peer cooperation
+  observed               manual registration required
+  confidence             high</code></pre></div>
+        <p class="mt-3 text-sm text-body-subtle">The shape of the finding, not a finding, and the only invented console output on this page. Comparing a claim&rsquo;s wording to the behaviour it describes is still a person&rsquo;s job here; what the build does enforce is that every claim&rsquo;s evidence resolves.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{#- 11. opposition -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="09" kicker={x.opposition.kicker} title={x.opposition.title} lead={x.opposition.lead} /> }}
+    <ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {%- for q in x.opposition.questions %}
+      <li class="flex gap-3 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">{{ q.text }}</span></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+{#- 12. completion — the argument, then the repository's own finish contract and a real
+    transcript of it from the README -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="10" kicker={x.completion.kicker} title={x.completion.title} lead={x.completion.lead} /> }}
+    <p class="mb-8 max-w-3xl text-base leading-relaxed text-body">{{ m.contract.caption }}</p>
     <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start">
       <div class="min-w-0">
         <ol class="divide-y divide-default rounded-base border border-default bg-neutral-primary">
@@ -236,12 +333,197 @@
   </div>
 </section>
 
-{#- 11. this page — the architecture note, and the final action -#}
+{#- 13. the control loop -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="11" kicker={x.loop.kicker} title={x.loop.title} lead={x.loop.lead} /> }}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10">
+      <div class="min-w-0 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0">
+        <pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>INTENT
+  ↓
+CONTEXT
+  ↓
+PLAN
+  ↓
+EXECUTE
+  ↓
+VERIFY ──────────┐
+  ↓              │ not satisfied
+PROOF            ▼
+              REPLAN</code></pre>
+      </div>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">{{ x.loop.votes_title }}</h3>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          {%- for v in ["the repository", "the tests", "the runtime", "governance", "evidence"] %}
+          <li class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading">{{ v }}</li>
+          {%- endfor %}
+        </ul>
+        <p class="mt-5 text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">{{ x.loop.closing }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{#- 14. the chapters — the features that declare themselves featured, in their own weight order.
+    A feature becomes one of these by setting `featured: true` in its own file; this template
+    does not choose, and everything beside the words is derived from what that file names. -#}
+<section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="12" kicker={m.chapters.kicker} title="What it does today" lead={m.chapters.lead} /> }}
+    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {%- for f in chapters %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-5 shadow-xs">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ chapters | length }}</span>
+        <h3 class="mt-2 text-lg font-semibold tracking-tight text-heading"><a href="{{ base }}{{ f.route }}" class="hover:text-fg-brand hover:underline">{{ f.title }}</a></h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.headline }}</p>
+        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+        {%- if f.moments | length %}
+        <p class="mt-3 text-xs text-body-subtle">Answers {{ f.counts.moments }} of the catalogue&rsquo;s operational moments, among them &ldquo;{{ f.moments[0].hook }}&rdquo;.</p>
+        {%- endif %}
+        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
+      </li>
+      {%- endfor %}
+    </ol>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
+  </div>
+</section>
+
+{#- 15. write once — the kinds of the layer, counted from the index -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="13" kicker="the layer" title={m.write_once.title} lead={m.write_once.lead} /> }}
+    <ul class="flex flex-wrap gap-2">
+      {%- for kind, n in model.telemetry.by_kind %}
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
+      {%- endfor %}
+    </ul>
+    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
+  </div>
+</section>
+
+{#- 16. providers — the adapters the distribution ships, and what this repository does with each -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="14" kicker="provider-neutral" title={m.providers.title} lead={m.providers.lead} /> }}
+    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for p in model.providers %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary p-4">
+        <span class="text-base font-semibold text-heading">{{ p.title }}</span>
+        {%- if p.bootstraps | length %}
+        <ul class="mt-3 space-y-1">
+          {%- for b in p.bootstraps %}<li class="break-all font-mono text-xs text-body">{{ b.target }}</li>{% endfor -%}
+        </ul>
+        {%- endif %}
+        {%- if p.client_config %}<p class="mt-auto break-all pt-2 font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
+      </li>
+      {%- endfor %}
+    </ul>
+    <div class="mt-8 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
+      <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</p>
+      <p class="mt-4 max-w-3xl text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
+    </div>
+  </div>
+</section>
+
+{#- 17. the interfaces — the surfaces of the registry, with what stands behind each -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="15" kicker="one declaration" title={m.surfaces.title} lead={m.surfaces.lead} /> }}
+    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {%- for s in model.surfaces %}
+      <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
+        <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
+        <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
+        <span class="text-xs text-body">features exposed here</span>
+      </a></li>
+      {%- endfor %}
+    </ul>
+    <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
+      <div class="rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
+      {%- endfor %}
+    </dl>
+    <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Coverage</h3>
+      <p class="mt-2 max-w-3xl text-sm text-body">{{ m.matrix.lead }}</p>
+      <dl class="mt-4 grid gap-2 sm:grid-cols-3">
+        {%- for label, pair in {"capability modules": ["modules_covered", "modules"], "public commands": ["commands_covered", "commands"], "object kinds": ["kinds_covered", "kinds"]} %}
+        <div class="flex items-baseline justify-between gap-3 border-b border-default pb-2"><dt class="text-sm text-body">{{ label }} named by a feature</dt><dd class="font-mono text-sm text-heading">{{ model.counts[pair[0]] }} / {{ model.counts[pair[1]] }}</dd></div>
+        {%- endfor %}
+      </dl>
+      <p class="mt-4 text-sm text-body">A part of the product no feature names is reported as a gap by <code class="font-mono text-heading">majordomus product validate</code> and shown on the matrix, never quietly absent.</p>
+    </div>
+    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix, both directions &rarr;</a>
+      <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself, capability by capability &rarr;</a>
+    </p>
+  </div>
+</section>
+
+{#- 18. the product as a graph -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="16" kicker="the same model" title="The product, composed" lead={m.graph.lead} /> }}
+    {%- set graph = load_data(path="data/registry/product-graph.json") -%}
+    {%- set graph_id = "product" -%}
+    {%- set graph_rings = "feature,module,command,kind,surface" -%}
+    {%- set graph_label = graph.description -%}
+    {% include "partials/graph.html" %}
+  </div>
+</section>
+
+{#- 19. direction — what of the loop is shipped and what is not. The shipped half is the
+    matrix above, linked rather than restated; the unbuilt half is named, because a landing
+    page that implies a capability the registry does not carry is the drift this project
+    exists to refuse. -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="17" kicker={x.direction.kicker} title={x.direction.title} lead={x.direction.lead} /> }}
+    <div class="grid gap-5 lg:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 sm:p-6">
+        <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.shipped_title }}</h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">Each command below is declared once, and that declaration is what the command line, the HTTP API, the MCP tools and this site are all projections of. They run at a terminal; the other interfaces read them.</p>
+        <ul class="mt-4 flex flex-wrap gap-2">
+          {%- set cmds = load_data(path="data/generated/commands.json") -%}
+        {%- for c in cmds.commands %}
+          <li><code class="inline-block rounded-base border border-default bg-neutral-primary px-2.5 py-1 font-mono text-xs text-heading">{{ c.name }}</code></li>
+          {%- endfor %}
+        </ul>
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every command, argument by argument &rarr;</a></p>
+      </div>
+      <div class="min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5 sm:p-6">
+        <h3 class="text-lg font-semibold tracking-tight text-heading">{{ x.direction.planned_title }}</h3>
+        <p class="mt-3 text-base leading-relaxed text-heading">{{ x.direction.planned_lead }}</p>
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The roadmap, and what each wave depends on &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{#- 20. the doctrine -#}
+<section class="border-b border-default bg-brand-softer">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ x.doctrine.kicker }}</p>
+    <h2 class="mt-2 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-fg-brand-strong sm:text-4xl lg:text-5xl">{{ x.doctrine.title }}</h2>
+    <p class="mt-5 max-w-3xl text-base leading-relaxed text-heading sm:text-lg">{{ x.doctrine.lead }}</p>
+    <ul class="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {%- for c in x.doctrine.conditions %}
+      <li class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-sm leading-relaxed text-heading"><span aria-hidden="true" class="font-mono text-fg-success-strong">✓</span><span class="min-w-0">{{ c.text }}</span></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+{#- 21. this page — the architecture note, and the final action -#}
 <section class="bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     <div class="mx-auto max-w-3xl text-center">
-      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.final.title }}</h2>
-      <p class="mt-4 text-base leading-relaxed text-body">{{ m.architecture.lead }}</p>
+      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ x.close.title }}</h2>
+      <p class="mt-4 text-base leading-relaxed text-body">{{ x.close.lead }}</p>
+      <p class="mt-4 text-lg font-semibold text-heading">{{ x.close.closing }}</p>
+      <p class="mt-6 text-sm leading-relaxed text-body-subtle">{{ m.architecture.lead }}</p>
       <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Install Majordomus</a>
       </div>
