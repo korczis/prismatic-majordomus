@@ -24,6 +24,37 @@
 #   $NAME              an environment variable; the root is skipped when it is unset
 # Nothing else is interpreted. A root that does not exist is not an error: the question is
 # only ever asked about a path that does.
+#
+# lifecycle — what this provider can do about the session lifecycle, and where each answer
+# was verified. Four keys, two capabilities and a citation each:
+#
+#   episode: hooks       the provider fires its own session events and a hook this tool
+#                        installs draws the boundary from them
+#            connection  it fires none, but its client attaches to this repository's shared
+#                        MCP server and the connection is the boundary (ADR 0043)
+#            none        neither; nothing can say when its episode began or ended
+#   prompts: hook        it hands the person's raw prompt to a command before the model runs
+#            none        it does not, and nothing this tool can do makes the prompt
+#                        observable. There is deliberately no `connection` here: an MCP
+#                        server is handed tool calls, never the prompt that produced them.
+#   episode_evidence, prompts_evidence
+#            where the value above was verified. A vendor documentation URL, or the
+#            statement that no such documentation exists and what was searched for it.
+#
+# **Why every cell carries a citation.** Until ADR 0043 the answer to "can this provider do
+# X" lived in two shell string tables in lib/capture.sh, and a provider absent from one was
+# silently unsupported. `majordomus capture status` enumerated the providers *in the table*
+# — one — and said nothing whatever about the five others this file declares, so the state
+# `unsupported` was unreachable for any provider a person could ask about. Worse, the
+# omission had become wrong: Codex and Gemini CLI both shipped full hook systems, and the
+# tool went on implying they had none by not mentioning them. A declaration whose cells
+# carry no evidence cannot be checked against the world, and this one is; the rule
+# `project.a-provider-capability-cites-its-evidence` refuses a cell without its citation.
+#
+# The capability is not the wiring. `capture status` reports both: what the provider can do
+# (here) and what this repository has done about it (the configuration and the shims). A
+# provider that documents an event this distribution ships no adapter for is `unadapted` —
+# a gap in the tool, named as one, never spelled `unsupported`.
 version: 1
 
 # The tool's own scratch roots: the operating system's temporary directory, where test
@@ -39,6 +70,14 @@ scratch_roots:
 providers:
   agents:
     title: Any tool that reads AGENTS.md
+    # Not a product: a class of tools, named by the convention they share. A class fires no
+    # events, because there is nothing there to fire them — whichever concrete tool is
+    # reading AGENTS.md has its own row here, and that row is the one that answers.
+    lifecycle:
+      episode: "none"
+      episode_evidence: "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do."
+      prompts: "none"
+      prompts_evidence: "as above: a convention hands nothing to anything."
   bb:
     title: bb
     # An orchestrator (getbb.app): it runs Claude Code, Codex and ACP agents as processes
@@ -47,16 +86,54 @@ providers:
     # (ADR 0024). Its managed worktrees live under its data directory, by thread id.
     scratch_roots:
       - ${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees
+    # bb does publish hooks, and they are not these: `.bb-env-setup.sh` and
+    # `.bb-env-teardown.sh` fire on worktree provisioning and removal, not on a
+    # conversation. Related, not equivalent — and the distinction is the whole point of
+    # writing the evidence down rather than the verdict alone.
+    lifecycle:
+      episode: "none"
+      episode_evidence: "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook."
+      prompts: "none"
+      prompts_evidence: "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
   claude-code:
     title: Claude Code
     client_config: .mcp.json
     scratch_roots:
       - <primary>/.claude/worktrees
+    lifecycle:
+      episode: "hooks"
+      episode_evidence: "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}."
+      prompts: "hook"
+      prompts_evidence: "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
   codex:
     title: Codex
     client_config: .codex/config.toml
+    # Codex shipped a hook system, and this distribution has no adapter for it: the state
+    # is `unadapted`, which is a gap in this tool and is reported as one. It is emphatically
+    # not `unsupported` — that word is reserved for a provider that cannot do the thing at
+    # all, and saying it here would be a statement about OpenAI that is not true.
+    lifecycle:
+      episode: "hooks"
+      episode_evidence: "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary."
+      prompts: "hook"
+      prompts_evidence: "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
   gemini:
     title: Gemini CLI
     client_config: .gemini/settings.json
+    lifecycle:
+      episode: "hooks"
+      episode_evidence: "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block."
+      prompts: "hook"
+      prompts_evidence: "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
   generic:
     title: A worker with no convention of its own
+    # The provider this whole design is for. It has no hooks by definition — that is what
+    # makes it generic — so the connection is the only boundary there is, and ADR 0043 makes
+    # it one. Raw prompt capture stays impossible and is declared impossible: a server that
+    # is handed tool calls has never seen the prompt that produced them, and a `connection`
+    # value under `prompts` would be this file telling a comfortable lie.
+    lifecycle:
+      episode: "connection"
+      episode_evidence: "ADR 0043 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh."
+      prompts: "none"
+      prompts_evidence: "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."

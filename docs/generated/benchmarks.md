@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 80 | 77 | 0 | 3 |
-| http | 80 | 77 | 0 | 3 |
-| mcp | 78 | 75 | 0 | 3 |
+| direct | 83 | 80 | 0 | 3 |
+| http | 83 | 80 | 0 | 3 |
+| mcp | 81 | 78 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 251 | 242 | 0 | 9 |
+| total | 260 | 251 | 0 | 9 |
 
 ## Capabilities
 
@@ -44,6 +44,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
+| `episodes.attach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.detach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.list` | episodes | query | — | covered | covered | covered | `default` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
 | `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
 | `executions.events` | executions | query | — | waived | waived | waived | — |

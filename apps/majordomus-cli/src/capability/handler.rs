@@ -100,6 +100,13 @@ pub struct Context {
     pub registry: Arc<CapabilityRegistry>,
     /// The peers attached to this process.
     pub peers: Arc<PeerBoard>,
+    /// The execution episodes this process holds: one per client that asked for one, keyed
+    /// by the client's own durable identity and driven by the connection (ADR 0043).
+    ///
+    /// Beside the peer board and not inside it, because a peer and an episode are not the
+    /// same thing: a connection holds zero or one episode, and an episode outlives the
+    /// connection that opened it so that a client which reconnects comes back to its own.
+    pub episodes: Arc<crate::episodes::EpisodeBoard>,
     /// The Why catalogue, derived from the index once when this context is composed and
     /// shared by every projection that reads it. A request never rebuilds it.
     pub why: Arc<crate::why::Catalogue>,
@@ -137,6 +144,7 @@ impl Context {
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
+        let index_root = std::path::PathBuf::from(&index.repository.root);
         let web = Arc::new(resolve_web(&index));
         let why = Arc::new(crate::why::Catalogue::build(&index, &registry));
         let product = Arc::new(crate::product::ProductModel::build(
@@ -148,6 +156,13 @@ impl Context {
             why,
             product,
             peers: Arc::new(PeerBoard::new()),
+            // The board drives the repository the index was read from: the episode a client
+            // opens here is an episode of *this* checkout, written by the same command a
+            // provider hook runs. A checkout whose tool cannot be found says so in every
+            // episode rather than recording nothing quietly.
+            episodes: Arc::new(crate::episodes::EpisodeBoard::for_repository(
+                index_root.clone(),
+            )),
             executor: Arc::new(CapabilityExecutor::new()),
             executions: Arc::new(crate::execution::ExecutionEngine::default()),
             progress: crate::execution::Progress::silent(),
@@ -190,6 +205,7 @@ impl Context {
             why: Arc::clone(&self.why),
             product: Arc::clone(&self.product),
             peers: Arc::clone(&self.peers),
+            episodes: Arc::clone(&self.episodes),
             executor: Arc::clone(&self.executor),
             executions: Arc::clone(&self.executions),
             progress: self.progress.clone(),

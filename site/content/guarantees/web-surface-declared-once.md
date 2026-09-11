@@ -1,7 +1,7 @@
 +++
 title = "Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected"
 description = "Everything this repository exposes over HTTP is one resolved object: an identity, a mount, a kind, a category, a visibility, the producer that made it, and the provenance of each of those values. The routes the executable answers itself come from the capability! declarations that already exist and are already projected to the CLI, MCP and OpenAPI. A generated directory — a test report, a benchmark report, the documentation build — declares itself beside its own output rather than in a list somewhere else. The application's site is read from the site generator's configuration. There is no central manifest of surfaces, and the resolved manifest written for diagnostics is disposable: nothing reads it as truth that could not be recomputed."
-weight = 155
+weight = 157
 [extra]
 claim_id = "web-surface-declared-once"
 status = "guaranteed"

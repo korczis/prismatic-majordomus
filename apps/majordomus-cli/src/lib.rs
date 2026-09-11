@@ -39,6 +39,7 @@ pub mod mcp;
 pub mod metadata;
 pub mod model;
 pub mod order;
+pub mod episodes;
 pub mod peers;
 pub mod perf;
 pub mod plan;

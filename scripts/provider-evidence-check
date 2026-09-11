@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# provider-evidence-check — the rule project.a-provider-capability-cites-its-evidence.
+#
+# A tool that says what somebody else's product can do is making a claim about a third
+# party. On 2026-09-11 this repository was making two of them wrong at once: `capture
+# status` reported one of the six providers it declares, so the state `unsupported` was
+# unreachable for any provider a person could name; and the omission had gone stale, because
+# Codex CLI and Gemini CLI had both shipped complete hook systems while a table that
+# mentioned neither went on implying they had none.
+#
+# Both failures have one cause — the declaration had nowhere to write down *where the answer
+# came from* — and this gate is the thing that would have caught them.
+#
+#   scripts/provider-evidence-check           report; exit 0 clean, 10 with findings
+#   scripts/provider-evidence-check --json    the findings as JSON
+#
+# WHAT IT DECIDES, from share/providers.yaml and from the tool's own output:
+#
+#   declaration   every declared provider carries a lifecycle block with both capabilities
+#   vocabulary    episode is hooks|connection|none and prompts is hook|none, and nothing else
+#   evidence      both citations are present and non-empty, for every value including `none`
+#   coverage      `majordomus capture status` reports every provider the declaration names,
+#                 for both aspects — the regression that started all of this
+#   honesty       a provider whose declared capability is not `none` is never reported
+#                 `unsupported`, which is a word about the provider and not about this tool;
+#                 the word for "we ship no adapter" is `unadapted`
+#
+# WHAT IT CANNOT DECIDE. Whether a citation is *true*. No gate can follow a URL and read a
+# vendor's page — and one that tried would fail on every offline machine and every CI runner
+# without network, which is the wrong trade for a blocking check
+# (project.blocking-checks-cheap). What it decides is that a human being had to write
+# something down, which is the whole of the difference between a verified answer and a
+# guess: a cell nobody can cite is a cell nobody should have written. Re-verification is a
+# person's job and the date in each citation is what tells them when it was last done.
+# pipefail beside `set -e`, because a gate whose pipeline fails silently in its middle
+# reports a pass it did not earn (project rule, scripts/ci/pipefail-check). Every pipeline
+# below whose components may legitimately exit non-zero — a grep that matches nothing, a
+# head that closes the pipe under sed — says so explicitly with `|| true`, so pipefail
+# catches the failures that are real and none that are not.
+set -eu
+set -o pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# The declaration of whichever distribution the tool would read, not this checkout's by
+# path: a gate that hardcoded the tree it lives in could not be pointed at a copy, and a
+# check nobody has ever seen fail is a check nobody knows the meaning of. The suite points
+# MAJORDOMUS_SHARE at a copy with one citation removed and requires exit 10.
+SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
+DECL="$SHARE/providers.yaml"
+JSON=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON=1; shift ;;
+    -h|--help) sed -n '2,36p' "$0"; exit 0 ;;
+    *) printf 'provider-evidence-check: unknown option %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
+[ -f "$DECL" ] || { printf 'provider-evidence-check: %s does not exist\n' "$DECL" >&2; exit 10; }
+
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj.provev.XXXXXX")"
+trap 'rm -rf "$TMP"' EXIT
+FINDINGS="$TMP/findings"
+: > "$FINDINGS"
+# provider<TAB>aspect<TAB>reason
+finding() { printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$FINDINGS"; }
+
+# The declaration, flattened by the tool's own YAML reader, so that a file this gate accepts
+# is a file the tool accepts. Anything else would be a second parser and a second opinion.
+"$ROOT/bin/majordomus" --repo "$ROOT" yaml flatten "$DECL" > "$TMP/flat" 2>"$TMP/flat.err" || {
+  # The tool has no public `yaml flatten`; fall back to the library directly, which is what
+  # every other shell reader in this repository does.
+  MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/common.sh"; mj_yaml_flatten "$2"' -- "$ROOT" "$DECL" \
+    > "$TMP/flat" 2>"$TMP/flat.err" || {
+      printf 'provider-evidence-check: %s does not parse:\n' "$DECL" >&2
+      sed 's/^/  /' "$TMP/flat.err" >&2
+      exit 10
+    }
+}
+
+providers="$(sed -n 's/^providers\.\([^.]*\)\..*$/\1/p' "$TMP/flat" | awk '!seen[$0]++' || true)"
+[ -n "$providers" ] || { printf 'provider-evidence-check: %s declares no providers\n' "$DECL" >&2; exit 10; }
+
+decl() { sed -n "s/^providers\.$1\.$2=//p" "$TMP/flat" | head -n 1 || true; }
+
+for p in $providers; do
+  for aspect in episode prompts; do
+    value="$(decl "$p" "lifecycle.$aspect")"
+    evidence="$(decl "$p" "lifecycle.${aspect}_evidence")"
+    if [ -z "$value" ]; then
+      finding "$p" "$aspect" "declares no lifecycle.$aspect; a provider whose capability nobody wrote down is reported as incapable, which is a claim about somebody else's product"
+      continue
+    fi
+    case "$aspect:$value" in
+      episode:hooks|episode:connection|episode:none) ;;
+      prompts:hook|prompts:none) ;;
+      *) finding "$p" "$aspect" "lifecycle.$aspect is '$value', which is outside the vocabulary" ;;
+    esac
+    # Non-empty, and not a placeholder standing in for one. A citation of two words is a
+    # cell nobody verified, and the point of the rule is that somebody had to.
+    if [ -z "$evidence" ]; then
+      finding "$p" "$aspect" "lifecycle.${aspect}_evidence is empty; a capability with no citation cannot be re-verified and rots in whichever direction the world moves"
+    elif [ "${#evidence}" -lt 24 ]; then
+      finding "$p" "$aspect" "lifecycle.${aspect}_evidence is ${#evidence} characters ('$evidence'); a citation names a document or says what was searched and when"
+    fi
+  done
+done
+
+# COVERAGE AND HONESTY. The declaration is one half; what the tool says is the other, and
+# the regression was entirely in the join between them.
+if "$ROOT/bin/majordomus" --repo "$ROOT" --json capture status > "$TMP/status.json" 2>"$TMP/status.err"; then
+  for p in $providers; do
+    for aspect in prompt session; do
+      declared_aspect=prompts; [ "$aspect" = session ] && declared_aspect=episode
+      # A provider the status does not report yields no line, and that absence is exactly
+      # the finding below — so it must not be read as a pipeline failure.
+      row="$(sed 's/},{/}\n{/g' "$TMP/status.json" \
+        | grep -F "\"provider\":\"$p\"" | grep -F "\"aspect\":\"$aspect\"" | head -n 1 || true)"
+      if [ -z "$row" ]; then
+        finding "$p" "$aspect" "the declaration names this provider and 'capture status' does not report it; a provider nobody reports is a provider a reader concludes nothing about"
+        continue
+      fi
+      state="$(printf '%s' "$row" | sed -n 's/.*"state":"\([^"]*\)".*/\1/p')"
+      value="$(decl "$p" "lifecycle.$declared_aspect")"
+      if [ "$state" = unsupported ] && [ -n "$value" ] && [ "$value" != none ]; then
+        finding "$p" "$aspect" "reported 'unsupported' while the declaration says '$value'; 'unsupported' is a statement about the provider, and the word for a capability this distribution ships no adapter for is 'unadapted'"
+      fi
+    done
+  done
+else
+  finding "-" "-" "majordomus capture status failed, so the coverage half of this gate decided nothing: $(tail -n 1 "$TMP/status.err")"
+fi
+
+n="$(grep -c . "$FINDINGS" 2>/dev/null || true)"; n="${n:-0}"
+if [ "$JSON" = 1 ]; then
+  printf '{"schema":"majordomus.provider-evidence/v1","providers":%s,"findings":[' \
+    "$(printf '%s\n' "$providers" | grep -c . || true)"
+  first=1
+  while IFS="$(printf '\t')" read -r p a why; do
+    [ -n "$p" ] || continue
+    [ "$first" = 1 ] || printf ','; first=0
+    printf '{"provider":"%s","aspect":"%s","reason":"%s"}' "$p" "$a" "$(printf '%s' "$why" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  done < "$FINDINGS"
+  printf ']}\n'
+else
+  while IFS="$(printf '\t')" read -r p a why; do
+    [ -n "$p" ] || continue
+    printf 'FAIL  %-14s %-8s %s\n' "$p" "$a" "$why"
+  done < "$FINDINGS"
+  if [ "$n" = 0 ]; then
+    printf 'provider-evidence-check: %s provider(s), every capability declared and cited, every one reported\n' \
+      "$(printf '%s\n' "$providers" | grep -c . || true)"
+  else
+    printf 'provider-evidence-check: %s finding(s)  [rule: project.a-provider-capability-cites-its-evidence]\n' "$n" >&2
+  fi
+fi
+[ "$n" = 0 ] || exit 10

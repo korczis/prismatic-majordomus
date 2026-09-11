@@ -289,6 +289,33 @@
         "status": "query"
       },
       {
+        "id": "capability:episodes.attach",
+        "kind": "capability",
+        "label": "episodes.attach",
+        "summary": "Attach this connection to an episode",
+        "route": "/cockpit/capabilities/episodes.attach",
+        "source": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:episodes.detach",
+        "kind": "capability",
+        "label": "episodes.detach",
+        "summary": "Close this connection's episode",
+        "route": "/cockpit/capabilities/episodes.detach",
+        "source": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:episodes.list",
+        "kind": "capability",
+        "label": "episodes.list",
+        "summary": "List episodes",
+        "route": "/cockpit/capabilities/episodes.list",
+        "source": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:executions.cancel",
         "kind": "capability",
         "label": "executions.cancel",
@@ -1204,6 +1231,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/episodes.rs",
+        "kind": "file",
+        "label": "episodes.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/episodes.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "file",
         "label": "engine.rs",
@@ -1809,6 +1844,14 @@
         "label": "obligations.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/obligations.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/providers.yaml",
+        "kind": "file",
+        "label": "providers.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/providers.yaml",
         "external": true
       },
       {
@@ -2978,6 +3021,36 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "label": "adr-0043",
+        "summary": "Every client gets an episode, and every provider capability cites its evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0043",
+        "source": ".ai/repo/adrs/0043-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md",
+            "claim:connection-episode",
+            "claim:provider-capability-evidence",
+            "rule:project.a-provider-capability-cites-its-evidence",
+            "file:share/providers.yaml",
+            "file:apps/majordomus-cli/src/episodes.rs",
+            "file:lib/capture.sh",
+            "file:test/cases/200_generic_mcp_episode.sh"
+          ],
+          "tags": [
+            "architecture",
+            "session",
+            "providers",
+            "mcp",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -3853,6 +3926,22 @@
           "responsibility": "doctor",
           "source": "docs/DYNAMICITY.md",
           "test": "test/cases/30_command_registry.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/connection-episode",
+        "kind": "claim",
+        "label": "connection-episode",
+        "summary": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fconnection-episode",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+          "implementation": "apps/majordomus-cli/src/episodes.rs",
+          "responsibility": "state",
+          "source": "docs/MCP.md",
+          "test": "test/cases/200_generic_mcp_episode.sh"
         }
       },
       {
@@ -5131,6 +5220,22 @@
           "responsibility": "policy",
           "source": "docs/DOCTRINE.md",
           "test": "test/cases/29_prompt_capture.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/provider-capability-evidence",
+        "kind": "claim",
+        "label": "provider-capability-evidence",
+        "summary": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fprovider-capability-evidence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+          "implementation": "share/providers.yaml",
+          "responsibility": "projection",
+          "source": "docs/CONCEPTS.md",
+          "test": "test/cases/200_generic_mcp_episode.sh"
         }
       },
       {
@@ -8348,6 +8453,14 @@
         "source": "docs/claims/command-surface.md"
       },
       {
+        "id": "majordomus://document/docs/claims/connection-episode.md",
+        "kind": "document",
+        "label": "docs/claims/connection-episode.md",
+        "summary": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fconnection-episode.md",
+        "source": "docs/claims/connection-episode.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/consistency-check.md",
         "kind": "document",
         "label": "docs/claims/consistency-check.md",
@@ -8978,6 +9091,14 @@
         "summary": "A provider hook captures the person's raw prompts below the model, as a record and a rendering, and doctor proves it by running it",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fprompt-capture.md",
         "source": "docs/claims/prompt-capture.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/provider-capability-evidence.md",
+        "kind": "document",
+        "label": "docs/claims/provider-capability-evidence.md",
+        "summary": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fprovider-capability-evidence.md",
+        "source": "docs/claims/provider-capability-evidence.md"
       },
       {
         "id": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
@@ -25185,6 +25306,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "kind": "rule",
+        "label": "project.a-provider-capability-cites-its-evidence@1",
+        "summary": "A provider capability is declared once, with the citation it was verified from",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-provider-capability-cites-its-evidence%401",
+        "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.interfaces-are-projections@1",
+            "project.empty-is-not-failure@1"
+          ],
+          "tags": [
+            "providers",
+            "session",
+            "capability",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -28207,6 +28350,13 @@
         "source": "test/cases/19_end_to_end.sh"
       },
       {
+        "id": "majordomus://test/test/cases/200_generic_mcp_episode.sh",
+        "kind": "test",
+        "label": "test/cases/200_generic_mcp_episode.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F200_generic_mcp_episode.sh",
+        "source": "test/cases/200_generic_mcp_episode.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/20_checkpoint.sh",
         "kind": "test",
         "label": "test/cases/20_checkpoint.sh",
@@ -30828,6 +30978,11 @@
         "label": "environment"
       },
       {
+        "id": "module:episodes",
+        "kind": "module",
+        "label": "episodes"
+      },
+      {
         "id": "module:executions",
         "kind": "module",
         "label": "executions"
@@ -31368,6 +31523,51 @@
       },
       {
         "source": "capability:environment.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.attach",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.attach",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.attach",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.detach",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.detach",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.detach",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.list",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.list",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:episodes.list",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33342,6 +33542,56 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0043",
+        "target": "file:apps/majordomus-cli/src/episodes.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "file:share/providers.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://adr/adr-0024",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://claim/connection-episode",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://claim/provider-capability-evidence",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://test/test/cases/200_generic_mcp_episode.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -33924,6 +34174,26 @@
       {
         "source": "majordomus://claim/command-surface",
         "target": "majordomus://test/test/cases/30_command_registry.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/connection-episode",
+        "target": "file:apps/majordomus-cli/src/episodes.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/connection-episode",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/connection-episode",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/connection-episode",
+        "target": "majordomus://test/test/cases/200_generic_mcp_episode.sh",
         "kind": "tested_by"
       },
       {
@@ -35494,6 +35764,26 @@
       {
         "source": "majordomus://claim/prompt-capture",
         "target": "majordomus://test/test/cases/29_prompt_capture.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/provider-capability-evidence",
+        "target": "file:share/providers.yaml",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/provider-capability-evidence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/provider-capability-evidence",
+        "target": "majordomus://document/docs/CONCEPTS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/provider-capability-evidence",
+        "target": "majordomus://test/test/cases/200_generic_mcp_episode.sh",
         "kind": "tested_by"
       },
       {
@@ -37357,6 +37647,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/connection-episode.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/consistency-check.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -37748,6 +38043,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/prompt-capture.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/provider-capability-evidence.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42617,6 +42917,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43808,6 +44123,11 @@
       },
       {
         "source": "majordomus://test/test/cases/19_end_to_end.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/200_generic_mcp_episode.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47052,6 +47372,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:episodes",
+        "target": "capability:episodes.attach",
+        "kind": "composes"
+      },
+      {
+        "source": "module:episodes",
+        "target": "capability:episodes.detach",
+        "kind": "composes"
+      },
+      {
+        "source": "module:episodes",
+        "target": "capability:episodes.list",
+        "kind": "composes"
+      },
+      {
         "source": "module:executions",
         "target": "capability:executions.cancel",
         "kind": "composes"
@@ -47328,8 +47663,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1464,
+      "edges": 3312,
       "acyclic": true,
       "truncated": false
     }

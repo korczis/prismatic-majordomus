@@ -1239,6 +1239,24 @@
       "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
     },
     {
+      "id": "claim:connection-episode",
+      "kind": "claim",
+      "label": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+      "status": "guaranteed",
+      "route": "/guarantees/connection-episode/",
+      "external": false,
+      "note": "The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0043."
+    },
+    {
+      "id": "claim:provider-capability-evidence",
+      "kind": "claim",
+      "label": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+      "status": "guaranteed",
+      "route": "/guarantees/provider-capability-evidence/",
+      "external": false,
+      "note": "share/providers.yaml carries a lifecycle block per provider - episode (hooks, connection, none), prompts (hook, none), and the citation each was verified from; a word outside either vocabulary fails the read of the file rather than degrading to none. share::ProviderDeclaration and product::ProductProvider carry it and every surface is a projection. `capture status` joins it with the tree and reports two facts per aspect, the vendor's capability and this checkout's state, over the union of the declared providers and the adapter tables; `unsupported` is reserved for a provider that cannot do the thing and `unadapted` names a gap in this distribution. scripts/provider-evidence-check is the gate and the case holds it to its own negative. ADR 0043, rule project.a-provider-capability-cites-its-evidence."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1422,6 +1440,13 @@
       "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/distribution/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/episodes.rs",
       "route": null,
       "external": false
     },
@@ -1874,6 +1899,13 @@
       "external": false
     },
     {
+      "id": "impl:share/providers.yaml",
+      "kind": "implementation",
+      "label": "share/providers.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:site/templates/index.html",
       "kind": "implementation",
       "label": "site/templates/index.html",
@@ -2250,6 +2282,13 @@
       "label": "test/cases/18_doctrine_wiring.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/18_doctrine_wiring.sh"
+    },
+    {
+      "id": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "test",
+      "label": "test/cases/200_generic_mcp_episode.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/200_generic_mcp_episode.sh"
     },
     {
       "id": "test:test/cases/20_checkpoint.sh",
@@ -3312,6 +3351,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -4017,6 +4066,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "impl:share/providers.yaml",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -4719,6 +4778,16 @@
     {
       "source": "claim:session-lifecycle",
       "target": "test:test/cases/54_session_lifecycle_hooks.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:connection-episode",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
       "kind": "proved_by"
     },
     {
