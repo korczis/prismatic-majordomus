@@ -469,6 +469,7 @@
       ],
       "writes": [
         ".ai/local/state/current.yaml",
+        ".ai/local/state/archive/",
         ".ai/local/state/ledger.jsonl"
       ],
       "exit_codes": [
@@ -684,6 +685,7 @@
       "tests": {
         "behaviour": [
           "130_lifecycle_survives_a_stale_task",
+          "136_changed_files_classifier",
           "15_command_surface",
           "20_checkpoint",
           "25_continuity_lifecycle",
@@ -781,6 +783,7 @@
         "behaviour": [
           "05_handover",
           "130_lifecycle_survives_a_stale_task",
+          "136_changed_files_classifier",
           "15_command_surface",
           "19_end_to_end",
           "25_continuity_lifecycle",
@@ -971,7 +974,7 @@
       ],
       "writes": [
         ".ai/local/state/current.yaml",
-        ".ai/local/state/archive/",
+        ".ai/local/state/completed/",
         ".ai/local/state/ledger.jsonl"
       ],
       "exit_codes": [
@@ -2414,6 +2417,7 @@
         "behaviour": [
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
+          "136_changed_files_classifier",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle",
@@ -2421,6 +2425,7 @@
         ],
         "negative": [
           "111_session_per_provider",
+          "136_changed_files_classifier",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle"
@@ -3158,6 +3163,145 @@
         ]
       },
       "doc_md": "\nMove a repository's project data from the pre-`.ai` layout under `.majordomus/` into the\nportable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,\n`doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.\n\n**Markers:** legacy is `.ai/repo/policy.yaml`; new is `.ai/manifest.yaml`; a\n`.majordomus/bin/majordomus` is a tool installation and never project data.\n\n**Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come\nfrom it), the tool's templates (to tell an unchanged template from a customised one).\n**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into\n`.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to\n`.ai/local/state/` and taken out of the index; the rest of the layer seeded from the\nskeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;\na byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,\nand of the legacy `providers/` under `.../providers/`, verified and printed, before\neither is touched; a `layout.migrated` ledger line; then `update --force` renders the\nprojections from the tool's thin bootstraps and `doctor` judges the result, each exit\nreported on its own line.\n\n**Behaviour:**\n- `--dry-run` prints the whole plan, one line per file with its action and destination,\n  and writes nothing. The same table drives the real run.\n- `templates/*.md` identical to the tool's own are dropped; a customised one moves to\n  `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.\n- `providers/` — the provider body and the monolithic templates that asked for it — is not\n  carried into `.ai/`. The body no longer exists anywhere and `update` renders none, so an\n  old template would leave a literal token in a generated file. The directory is copied\n  to the backup, removed from the index, and reported in one line: the bootstraps are now\n  the tool's thin adapters, a repository override goes under `.ai/repo/providers/<provider>.tmpl`\n  in the new format, and the body's rules belong under `.ai/repo/rules/project/` as rule\n  objects (`DOCTRINE.md` describes the format).\n- A file under `.majordomus/` this version does not know is never deleted. It is reported,\n  and `.majordomus/` is removed only when it is empty.\n- Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,\n  and names the safe manual step; refuses (`15`) when a destination under `.ai/` already\n  exists, listing each one. Nothing is written in either case.\n- A legacy policy that does not parse, or is not version 1, is refused (`10`) before\n  anything moves: fix it in place first.\n- Idempotent: on a repository already on the `.ai` layout it says so and exits `0`. With\n  neither layout present it exits `12` and names `init`.\n- The state stops being tracked: its durability is the checkout plus the backup, not the\n  branch. Commit the tracked half after reviewing `git status`.\n\n```\n$ majordomus migrate --dry-run\nmigrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)\n  move  .ai/repo/policy.yaml -> .ai/repo/policy.yaml\n  move  .ai/repo/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml\n  state .ai/local/state/current.yaml -> .ai/local/state/current.yaml\n  drop  .majordomus/templates/handover.md    (identical to the tool's template)\n  ...\ndry run: nothing written\n```"
+    },
+    {
+      "name": "recover",
+      "summary": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
+      "category": "system",
+      "stage": "setup",
+      "class": "state-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": false,
+      "syntax": "majordomus recover [status|episodes|records|orphans|all] [--check] [--older-than <duration>]",
+      "demo": "recovery-evidence",
+      "note": "Recurring maintenance, unlike migrate, which is the one-time move off the pre-.ai layout. Every subject is idempotent and every one has a --check that writes nothing. Nothing is deleted for being unknown - a candidate whose evidence cannot be read is reported, counted and left alone.",
+      "reads": [
+        ".ai/repo/policy.yaml",
+        ".ai/local/state/sessions-open/",
+        ".ai/local/state/ledger.jsonl",
+        ".ai/repo/sessions/",
+        ".ai/local/state/checkpoints/",
+        ".ai/local/state/handovers/"
+      ],
+      "writes": [
+        ".ai/repo/sessions/",
+        ".ai/local/state/sessions-open/",
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12
+      ],
+      "tests": {
+        "behaviour": [
+          "135_session_store_recovery"
+        ],
+        "negative": [
+          "135_session_store_recovery"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "recover",
+        "title": "An episode is closed by evidence, or not at all",
+        "intro": "A provider that is killed sends no end event, and the episode it opened stays open for ever. Recovery closes it — but only when the evidence says its client is gone, and never by guessing. Every subject has a --check that writes nothing, and the measurement that decided each verdict is printed before anything is done with it.",
+        "scenarios": [
+          {
+            "id": "check",
+            "title": "The plan, and the measurement behind it",
+            "given": {
+              "one episode stranded and one live": true
+            },
+            "setup": "session-stranded",
+            "run": [
+              "recover",
+              "episodes",
+              "--check"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "last seen 2020-01-01T00:00:00Z",
+                "stranded:",
+                "live: this process is inside it",
+                "check: 1 action"
+              ]
+            },
+            "explain": "Every candidate's last sign of life is printed, including the ones nothing will happen to, so a wrong predicate is visible in the output rather than in its consequences. The dry run writes nothing at all.",
+            "setup_sh": "# Installed, with two episodes open: one whose client is gone and one that is live.\n#\n# Both halves of the stranded episode's trail are aged, not only its open record. The last\n# sign of life is the later of started_at and the newest ledger line the episode stamped, so\n# an episode whose ledger is fresh is young however old its file claims to be — a fixture\n# that moved one half would demonstrate the command passing for the wrong reason.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --provider-session gone-client >/dev/null\n\"$MJ\" session start --provider-session this-client >/dev/null\n_S=.ai/local/state\n_dead=\"$(sed -n 's/^session_id: //p' \"$_S/sessions-open/gone-client.yaml\" | head -n 1)\"\nsed -i.bak 's/^started_at: .*/started_at: 2020-01-01T00:00:00Z/' \"$_S/sessions-open/gone-client.yaml\"\nrm -f \"$_S/sessions-open/gone-client.yaml.bak\"\nawk -v s=\"$_dead\" '{ if (index($0, \"\\\"session\\\":\\\"\" s \"\\\"\") > 0) sub(/\"ts\":\"[^\"]*\"/, \"\\\"ts\\\":\\\"2020-01-01T00:00:00Z\\\"\"); print }' \\\n  \"$_S/ledger.jsonl\" > \"$_S/ledger.mj-tmp\" && mv \"$_S/ledger.mj-tmp\" \"$_S/ledger.jsonl\"",
+            "stdin_body": null
+          },
+          {
+            "id": "recovers",
+            "title": "Closing the one whose client is gone",
+            "given": {
+              "one episode stranded and one live": true
+            },
+            "setup": "session-stranded",
+            "run": [
+              "recover",
+              "episodes"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                ".ai/repo/sessions/",
+                "recovered: 1 action"
+              ]
+            },
+            "explain": "The record carries what the open record and the episode's own ledger lines prove. Its commits and changed_files are the explicit empty list and it states no head: the working tree at recovery time belongs to whoever is working now, and stamping it onto an episode that stopped days ago would be a record that looks exactly like a true one.",
+            "setup_sh": "# Installed, with two episodes open: one whose client is gone and one that is live.\n#\n# Both halves of the stranded episode's trail are aged, not only its open record. The last\n# sign of life is the later of started_at and the newest ledger line the episode stamped, so\n# an episode whose ledger is fresh is young however old its file claims to be — a fixture\n# that moved one half would demonstrate the command passing for the wrong reason.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --provider-session gone-client >/dev/null\n\"$MJ\" session start --provider-session this-client >/dev/null\n_S=.ai/local/state\n_dead=\"$(sed -n 's/^session_id: //p' \"$_S/sessions-open/gone-client.yaml\" | head -n 1)\"\nsed -i.bak 's/^started_at: .*/started_at: 2020-01-01T00:00:00Z/' \"$_S/sessions-open/gone-client.yaml\"\nrm -f \"$_S/sessions-open/gone-client.yaml.bak\"\nawk -v s=\"$_dead\" '{ if (index($0, \"\\\"session\\\":\\\"\" s \"\\\"\") > 0) sub(/\"ts\":\"[^\"]*\"/, \"\\\"ts\\\":\\\"2020-01-01T00:00:00Z\\\"\"); print }' \\\n  \"$_S/ledger.jsonl\" > \"$_S/ledger.mj-tmp\" && mv \"$_S/ledger.mj-tmp\" \"$_S/ledger.jsonl\"",
+            "stdin_body": null
+          },
+          {
+            "id": "nothing-to-do",
+            "title": "With nothing degraded",
+            "given": {
+              "one episode stranded and one live": false
+            },
+            "setup": "installed",
+            "run": [
+              "recover"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to recover"
+              ]
+            },
+            "explain": "Absence is an answer. A clean store exits 0 and says so, rather than treating having nothing to do as a failure.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "unknown-subject",
+            "title": "A subject this command does not have",
+            "given": {
+              "one episode stranded and one live": false
+            },
+            "setup": "installed",
+            "run": [
+              "recover",
+              "everything"
+            ],
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "unknown subject"
+              ]
+            },
+            "explain": "A misspelled subject is refused rather than folded into the default. A recovery command that silently did something other than what was asked is the one that must not exist.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nBring this checkout's record stores back to what the contract describes: close episodes\nnobody ended, fold duplicate records of one episode into one, and classify the stray files\nthe stores accumulate. Recurring, idempotent maintenance — unlike `migrate`, which is the\none-time move off the pre-`.ai` layout and refuses to run twice.\n\n**Subjects:** `status` (the default, read-only), `episodes`, `records`, `orphans`, `all`.\n\n**Reads:** `.ai/local/state/sessions-open/`, `.ai/local/state/ledger.jsonl`, the closed\nrecord store, and the checkpoint and handover stores.\n**Writes:** a closed record per recovered episode under `.ai/repo/sessions/`, the folded\nrecord where duplicates existed, a `session.recovered` ledger line per action, and the\nremoval of the open records and stray temps it acted on.\n\n**Behaviour:**\n- `--check` prints the plan and the evidence behind it and writes nothing. The same\n  measurement drives the real run, so the plan is the action.\n- A stray file is judged by its age before its content: a publish temp seconds old belongs\n  to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a\n  `scripts/derive` running now. Both are reported as `live` and neither is touched; one\n  whose age cannot be read is skipped and counted.\n- An episode is *stranded* when its last sign of life — the later of its own `started_at`\n  and the newest ledger line it stamped — is older than `session.stranded_after`.\n  `--older-than <duration>` overrides the policy for one run.\n- Two guards stand between a live episode and the sweep, and neither is the other's\n  backstop. The episode this process resolves to is excluded before any predicate runs; and\n  a candidate whose evidence cannot be read as a timestamp is skipped and counted, never\n  treated as the oldest in the set (`project.destructive-sweeps-fail-closed`). An episode\n  belonging to another worktree is reported and never closed here.\n- A recovered record carries what the open record and the episode's own ledger lines prove.\n  `commits` and `changed_files` are the explicit empty list and `head` and `working_tree`\n  are absent: they describe a close that never happened, and the working tree at recovery\n  time belongs to whoever is working now. `outcome` is `interrupted`, which is what it was.\n- Duplicate records fold into the oldest by `created_at`, with the union of the lists the\n  others prove, and the superseded file names recorded in the survivor's body. Records that\n  disagree about the episode's identity or times are reported and nothing is folded.\n- Nothing is deleted for being unrecognised. A publish temp past the threshold holding the\n  only copy of a record is *published*; one whose episode is already published, or which is empty, is\n  removed; one holding content this version cannot classify is left exactly where it is and\n  counted. A directory somebody put in the checkpoint store is named, measured and left.\n- Idempotent. Running a subject twice takes its actions once, and running it after a crash\n  mid-run takes the ones that did not happen: the record is written before the open file is\n  removed, so an interruption between them costs nothing.\n\n```\n$ majordomus recover episodes --check\nepisodes — open episodes in .ai/local/state/sessions-open\n  s-20260910194205-72ea  key=187c9e1e-…  last seen 2026-09-10T19:42:05Z (ledger, 13h ago)\n    stranded: 13h ago, over the 12h threshold; close with outcome interrupted\n  s-20260911063532-b41b  key=c93d195f-…  last seen 2026-09-11T08:31:02Z (ledger, 0m ago)\n    live: this process is inside it; never a candidate\n\ncheck: 1 action(s) would be taken and nothing was written (run: majordomus recover all)\n```"
     },
     {
       "name": "bench",

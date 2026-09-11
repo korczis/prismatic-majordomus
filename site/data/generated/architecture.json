@@ -160,6 +160,46 @@
       "external": false
     },
     {
+      "id": "lib/changed.sh",
+      "kind": "module",
+      "label": "changed",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/scope.yaml",
+      "kind": "artifact",
+      "label": "repo/scope.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/checkpoints",
+      "kind": "artifact",
+      "label": "local/state/checkpoints",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/handovers",
+      "kind": "artifact",
+      "label": "local/state/handovers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -183,16 +223,6 @@
       "id": ".ai/local/state/current.yaml",
       "kind": "artifact",
       "label": "local/state/current.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/checkpoints",
-      "kind": "artifact",
-      "label": "local/state/checkpoints",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -360,16 +390,6 @@
       "external": false
     },
     {
-      "id": ".ai/local/state/handovers",
-      "kind": "artifact",
-      "label": "local/state/handovers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/deployment.sh",
       "kind": "module",
       "label": "deployment",
@@ -403,16 +423,6 @@
       "id": "lib/project.sh",
       "kind": "module",
       "label": "project",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/scope.yaml",
-      "kind": "artifact",
-      "label": "repo/scope.yaml",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -730,6 +740,26 @@
       "external": false
     },
     {
+      "id": "lib/recover.sh",
+      "kind": "module",
+      "label": "recover",
+      "command": "recover",
+      "summary": "bring this checkout's record stores back to what the contract describes",
+      "read_only": null,
+      "route": "/commands/recover/",
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/archive",
+      "kind": "artifact",
+      "label": "local/state/archive",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/search.sh",
       "kind": "module",
       "label": "search",
@@ -753,16 +783,6 @@
       "id": ".ai/local/state/sessions",
       "kind": "artifact",
       "label": "local/state/sessions",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/archive",
-      "kind": "artifact",
-      "label": "local/state/archive",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -811,6 +831,11 @@
     }
   ],
   "edges": [
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/repo/scope.yaml",
+      "kind": "reads"
+    },
     {
       "source": "lib/common.sh",
       "target": ".ai/local/state/current.yaml",
@@ -942,6 +967,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
       "source": "lib/rules.sh",
       "target": ".ai/repo/rules/vendor",
       "kind": "reads"
@@ -1058,6 +1088,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/recover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/rules.sh",
       "kind": "sources"
     },
@@ -1138,6 +1173,11 @@
     },
     {
       "source": "lib/check.sh",
+      "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
     },
@@ -1184,6 +1224,11 @@
     {
       "source": "lib/common.sh",
       "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": "lib/changed.sh",
       "kind": "sources"
     },
     {
@@ -1352,6 +1397,16 @@
       "kind": "sources"
     },
     {
+      "source": "lib/recover.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/session.sh",
       "target": "lib/project.sh",
       "kind": "sources"
@@ -1434,6 +1489,16 @@
     {
       "source": "lib/adr.sh",
       "target": ".ai/repo/adrs/.id.lock",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/local/state/handovers",
       "kind": "uses"
     },
     {
@@ -1759,6 +1824,36 @@
     {
       "source": "lib/question.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/archive",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/completed",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {

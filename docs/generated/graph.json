@@ -917,6 +917,13 @@
         "external": true
       },
       {
+        "id": "command:recover",
+        "kind": "command",
+        "label": "recover",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
         "id": "command:rules",
         "kind": "command",
         "label": "rules",
@@ -3118,7 +3125,8 @@
             "read-only-the-context-that-fits",
             "carry-a-blocker-across-a-handover",
             "let-the-provider-draw-the-episode-boundary",
-            "work-on-a-branch-in-its-canonical-worktree"
+            "work-on-a-branch-in-its-canonical-worktree",
+            "recover-an-episode-nobody-closed"
           ],
           "weight": 4
         }
@@ -6390,7 +6398,7 @@
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
-            ".ai/local/state/archive/",
+            ".ai/local/state/completed/",
             ".ai/local/state/ledger.jsonl"
           ]
         }
@@ -6708,6 +6716,46 @@
         }
       },
       {
+        "id": "majordomus://command/recover",
+        "kind": "command",
+        "label": "recover",
+        "summary": "recover",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcommand%2Frecover",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "system",
+          "class": "state-mutating",
+          "demo": "recovery-evidence",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12"
+          ],
+          "json": false,
+          "reads": [
+            ".ai/repo/policy.yaml",
+            ".ai/local/state/sessions-open/",
+            ".ai/local/state/ledger.jsonl",
+            ".ai/repo/sessions/",
+            ".ai/local/state/checkpoints/",
+            ".ai/local/state/handovers/"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "none",
+          "stage": "setup",
+          "summary": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
+          "syntax": "majordomus recover [status|episodes|records|orphans|all] [--check] [--older-than <duration>]",
+          "visibility": "public",
+          "writes": [
+            ".ai/repo/sessions/",
+            ".ai/local/state/sessions-open/",
+            ".ai/local/state/ledger.jsonl"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/rules",
         "kind": "command",
         "label": "rules",
@@ -6893,6 +6941,7 @@
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
+            ".ai/local/state/archive/",
             ".ai/local/state/ledger.jsonl"
           ]
         }
@@ -10750,6 +10799,13 @@
         "source": "lib/capture.sh"
       },
       {
+        "id": "majordomus://implementation/lib/changed.sh",
+        "kind": "implementation",
+        "label": "lib/changed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fchanged.sh",
+        "source": "lib/changed.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/check.sh",
         "kind": "implementation",
         "label": "lib/check.sh",
@@ -10944,6 +11000,13 @@
         "label": "lib/question.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fquestion.sh",
         "source": "lib/question.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/recover.sh",
+        "kind": "implementation",
+        "label": "lib/recover.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Frecover.sh",
+        "source": "lib/recover.sh"
       },
       {
         "id": "majordomus://implementation/lib/rules.sh",
@@ -24979,6 +25042,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.record-changed-files@1",
+        "kind": "rule",
+        "label": "majordomus.record-changed-files@1",
+        "summary": "A record's changed_files names the work, not the tool's exhaust",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.record-changed-files%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/record-changed-files.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.session-records@1",
+            "majordomus.handover-integrity@1"
+          ],
+          "tags": [
+            "records",
+            "session",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.retention-caps@1",
         "kind": "rule",
         "label": "majordomus.retention-caps@1",
@@ -28247,6 +28331,20 @@
         "source": "test/cases/132_health_sees_a_stopped_writer.sh"
       },
       {
+        "id": "majordomus://test/test/cases/135_session_store_recovery.sh",
+        "kind": "test",
+        "label": "test/cases/135_session_store_recovery.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F135_session_store_recovery.sh",
+        "source": "test/cases/135_session_store_recovery.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/136_changed_files_classifier.sh",
+        "kind": "test",
+        "label": "test/cases/136_changed_files_classifier.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F136_changed_files_classifier.sh",
+        "source": "test/cases/136_changed_files_classifier.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -30395,6 +30493,37 @@
           ],
           "summary": "Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write.",
           "target": "guaranteed"
+        }
+      },
+      {
+        "id": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "kind": "use-case",
+        "label": "recover-an-episode-nobody-closed",
+        "summary": "Close an episode whose client never came back",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Frecover-an-episode-nobody-closed",
+        "source": ".ai/repo/use-cases/recover-an-episode-nobody-closed.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "operator",
+            "agent"
+          ],
+          "applications": [
+            "long-running-work"
+          ],
+          "category": "continuity",
+          "claims": [],
+          "commands": [
+            "recover"
+          ],
+          "difficulty": "intermediate",
+          "doctrines": [],
+          "responsibilities": [
+            "state"
+          ],
+          "summary": "A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do.",
+          "target": "guaranteed",
+          "weight": 5
         }
       },
       {
@@ -36681,6 +36810,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/recover",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/rules",
         "target": "kind:command",
         "kind": "is_a"
@@ -38291,6 +38425,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/changed.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/check.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -38427,6 +38566,11 @@
       },
       {
         "source": "majordomus://implementation/lib/question.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/recover.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -42641,6 +42785,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "majordomus://rule/majordomus.session-records@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.retention-caps@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43952,6 +44111,16 @@
       },
       {
         "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/135_session_store_recovery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/136_changed_files_classifier.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46426,6 +46595,21 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "command:recover",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "majordomus://application/long-running-work",
+        "kind": "serves"
+      },
+      {
         "source": "majordomus://use-case/resume-from-a-prompt-asset",
         "target": "command:context",
         "kind": "runs"
@@ -47507,8 +47691,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1458,
-      "edges": 3294,
+      "nodes": 1466,
+      "edges": 3305,
       "acyclic": true,
       "truncated": false
     }
