@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 91,
-      "covered": 87,
+      "required": 94,
+      "covered": 90,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "http",
-      "required": 90,
-      "covered": 87,
+      "required": 93,
+      "covered": 90,
       "missing": 0,
       "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 88,
-      "covered": 85,
+      "required": 91,
+      "covered": 88,
       "missing": 0,
       "waived": 3
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 282,
-      "covered": 272,
+      "required": 291,
+      "covered": 281,
       "missing": 0,
       "waived": 10
     }
@@ -225,6 +225,46 @@
       "cases": [
         "all",
         "roles"
+      ]
+    },
+    {
+      "id": "devcontext.compile",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 16 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "no-seed",
+        "issue",
+        "milestone",
+        "intent"
+      ]
+    },
+    {
+      "id": "devcontext.explain",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 8 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "policy",
+        "absent"
+      ]
+    },
+    {
+      "id": "devcontext.policy",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {

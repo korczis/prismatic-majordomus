@@ -114,6 +114,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus executions events`](#majordomus-executions-events) | `/docs/cli/executions/events/` | One execution's retained events, oldest first |
 | [`majordomus executions cancel`](#majordomus-executions-cancel) | `/docs/cli/executions/cancel/` | Ask an execution to stop |
 | [`majordomus executions protocol`](#majordomus-executions-protocol) | `/docs/cli/executions/protocol/` | The live channel's contract: where it is, what it writes, and the schema of each message |
+| [`majordomus devcontext`](#majordomus-devcontext) | `/docs/cli/devcontext/` | The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget |
+| [`majordomus devcontext compile`](#majordomus-devcontext-compile) | `/docs/cli/devcontext/compile/` | Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget |
+| [`majordomus devcontext explain`](#majordomus-devcontext-explain) | `/docs/cli/devcontext/explain/` | Why one canonical identifier is or is not in the context a request compiles to |
+| [`majordomus devcontext policy`](#majordomus-devcontext-policy) | `/docs/cli/devcontext/policy/` | The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults |
 | [`majordomus evidence`](#majordomus-evidence) | `/docs/cli/evidence/` | What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened |
 | [`majordomus evidence show`](#majordomus-evidence-show) | `/docs/cli/evidence/show/` | Every claim against the evidence recorded for it |
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
@@ -125,7 +129,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus evidence`](#majordomus-evidence).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus evidence`](#majordomus-evidence).
 
 ```text
 majordomus <COMMAND>
@@ -3157,6 +3161,133 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events.
+
+<a id="majordomus-devcontext"></a>
+## `majordomus devcontext`
+
+The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
+
+Subcommands: [`majordomus devcontext compile`](#majordomus-devcontext-compile), [`majordomus devcontext explain`](#majordomus-devcontext-explain), [`majordomus devcontext policy`](#majordomus-devcontext-policy).
+
+```text
+majordomus devcontext [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-devcontext-compile"></a>
+## `majordomus devcontext compile`
+
+Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
+
+```text
+majordomus devcontext compile [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--issue` | `<ISSUE>` | — | An issue id (`I0301`) or its canonical identifier |
+| `--milestone` | `<MILESTONE>` | — | A milestone id or slug, or its canonical identifier |
+| `--intent` | `<INTENT>` | — | What the session is trying to do, in words; the only input the compiler infers from |
+| `--path` | `<PATHS>` | — | A repository-relative path the work touches; repeat for each |
+| `--uri` | `<URIS>` | — | A canonical identifier to seed with directly; repeat for each |
+| `--budget-tokens` | `<BUDGET_TOKENS>` | — | The ceiling in estimated tokens |
+| `--max-depth` | `<MAX_DEPTH>` | — | How far from a seed the walk goes |
+| `--floor` | `<FLOOR>` | — | Relevance below which an entry is reported rather than given, between 0 and 1 |
+| `--all-blocking-rules` | flag | — | Every blocking rule of the layer, not only the ones the work reaches |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The context a session working on one issue should be given** — The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.
+
+  ```console
+  $ majordomus devcontext compile --issue I0001
+  ```
+
+  Verified: exits 0; prints SELECTED, majordomus://issue/I0001, EXCLUDED.
+
+- **The same, as the structure every other surface answers with** — The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.
+
+  ```console
+  $ majordomus devcontext compile --issue I0001 --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /selected/0/uri, /selected/0/discovered_by/0/reason, /budget/limit_tokens, /fingerprint.
+
+<a id="majordomus-devcontext-explain"></a>
+## `majordomus devcontext explain`
+
+Why one canonical identifier is or is not in the context a request compiles to
+
+```text
+majordomus devcontext explain [OPTIONS] <URI>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<URI>` | `<URI>` | required | The canonical identifier, `majordomus://<kind>/<identity>` |
+| `--issue` | `<ISSUE>` | — | An issue id (`I0301`) or its canonical identifier |
+| `--milestone` | `<MILESTONE>` | — | A milestone id or slug, or its canonical identifier |
+| `--intent` | `<INTENT>` | — | What the session is trying to do, in words; the only input the compiler infers from |
+| `--path` | `<PATHS>` | — | A repository-relative path the work touches; repeat for each |
+| `--uri` | `<URIS>` | — | A canonical identifier to seed with directly; repeat for each |
+| `--budget-tokens` | `<BUDGET_TOKENS>` | — | The ceiling in estimated tokens |
+| `--max-depth` | `<MAX_DEPTH>` | — | How far from a seed the walk goes |
+| `--floor` | `<FLOOR>` | — | Relevance below which an entry is reported rather than given, between 0 and 1 |
+| `--all-blocking-rules` | flag | — | Every blocking rule of the layer, not only the ones the work reaches |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Why one thing is in the context** — The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.
+
+  ```console
+  $ majordomus devcontext explain majordomus://issue/I0001 --issue I0001
+  ```
+
+  Verified: exits 0; prints selected, majordomus://issue/I0001.
+
+<a id="majordomus-devcontext-policy"></a>
+## `majordomus devcontext policy`
+
+The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults
+
+```text
+majordomus devcontext policy [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The compiler's own rules** — The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.
+
+  ```console
+  $ majordomus devcontext policy
+  ```
+
+  Verified: exits 0; prints TIER, is_a, REFUSED.
 
 <a id="majordomus-evidence"></a>
 ## `majordomus evidence`
