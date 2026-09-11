@@ -34,6 +34,7 @@ pub mod graph;
 pub mod http;
 pub mod index;
 pub mod lease;
+pub(crate) mod lifecycle;
 pub mod logging;
 pub mod mcp;
 pub mod metadata;
