@@ -46,6 +46,7 @@ pub mod health;
 pub mod lifecycle;
 pub mod objects;
 pub mod obligations;
+pub(crate) mod episodes;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
@@ -97,7 +98,7 @@ pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use lifecycle::{
     Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
-    PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
+    PointerLayout, ProviderLifecycles, ProviderStanding, Recovery, RuntimeView, Stranded,
     EPISODES_URI, RECOVERY_URI,
 };
 pub use objects::{
@@ -109,6 +110,7 @@ pub use obligations::{
     Closure, Evidence, Obligation, ObligationClosure, ObligationState, Vocabulary, CLOSURE_URI,
     OBLIGATIONS_URI,
 };
+pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use peers::{AnnounceInput, PeerList};
 pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
@@ -144,6 +146,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         obligations,
         deploy,
         executions,
+        episodes,
         peers,
         server,
         perf,

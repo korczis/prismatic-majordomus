@@ -144,6 +144,31 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # nothing writes `-`, and its workers resolve through the pointer as everything did before.
 MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact CLAUDE_CODE_SESSION_ID'
 
+# ---------------------------------------------------------------- the connection episode
+# A provider whose declared episode source is `connection` has no adapter line above and
+# must not need one: it fires no event, so there is no vendor payload shape to version
+# against and nothing to install. What draws its boundary is the MCP connection itself
+# (ADR 0043), and the payload is this tool's own — written by the shared server, read here.
+#
+# The keys are the same three the hook adapters read, under the names the protocol side
+# already uses, so that one reader serves both and `capture session` stays one command. It
+# is deliberately a short list and not a candidate list: a vendor renames its fields on its
+# own schedule and this payload has no vendor.
+#
+#   7 session keys  8 start source keys  9 end reason keys  10 the reasons that mean the
+#   episode ended deliberately rather than being cut short
+MJ_LIFECYCLE_CONNECTION_KEYS='- - - - - - session_id source reason detach,shutdown'
+
+# The payload-shape column for one provider: the adapter's when it has one, the connection
+# defaults when its declared episode source is `connection`. Every reader of fields 7 to 10
+# goes through this, so a connection episode and a hook episode are read by one code path
+# and cannot drift into two.
+mj_lifecycle_keys() {
+  mj_lifecycle_adapter "$1" >/dev/null 2>&1 && { mj_lifecycle_field "$1" "$2"; return 0; }
+  [ "$(mj_provider_capability "$1" session)" = connection ] || return 0
+  printf '%s\n' "$MJ_LIFECYCLE_CONNECTION_KEYS" | awk -v n="$2" '{ print $n }'
+}
+
 # The events an adapter line describes: the kind this tool calls it, the column holding the
 # provider's own name for it, and the column holding the shim. Adding a fourth event is a
 # row here and two columns there, rather than another pair of positional branches in four
@@ -168,6 +193,84 @@ mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2
 # The environment variables in which some provider names the session a command is running
 # inside; `mj_provider_session_env` reads them to answer "which open episode is mine".
 mj_lifecycle_session_vars() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '$13 != "" && $13 != "-" { print $13 }'; }
+
+# ------------------------------------------------- the declared capability of a provider
+# What the vendor offers, read from share/providers.yaml, where every cell carries the
+# citation it was verified from (ADR 0043).
+#
+# This exists because `capture status` used to enumerate `mj_capture_providers` — the
+# providers with a line in the adapter table above, which is one — and therefore said
+# nothing whatever about the five others this distribution declares. The state
+# `unsupported` was in the vocabulary and unreachable: no provider a person could ask about
+# ever reported it, because a provider with no adapter was not asked about. Meanwhile the
+# omission had gone stale in the other direction: Codex and Gemini CLI both shipped
+# SessionStart/SessionEnd and a pre-model prompt hook, and a table that mentions neither
+# implies, to anyone reading it, that neither can do it.
+#
+# So the declaration is the list, the adapter table is one input to the state, and the two
+# are reported side by side. The flattening is the tool's own YAML subset, so a file the
+# rest of the tool refuses is refused here in the same words.
+mj_providers_file() { printf '%s/providers.yaml' "$MJ_SHARE_DIR"; }
+
+# Flattened on every read, deliberately, with no cache.
+#
+# The first version of this cached into $TMPDIR under a fixed name and compared mtimes. It
+# was wrong twice over and the tool caught it by reporting "no evidence for this cell" for a
+# citation that was on disk in front of it. Two worktrees, two distributions or two
+# repositories share one $TMPDIR, so a fixed name is a cross-tree channel of exactly the
+# MAJORDOMUS_SHARE kind; and an mtime comparison in whole seconds cannot tell "regenerated"
+# from "written in the same second". The second version scoped the file to the process and
+# leaked one per call instead, because every reader of this reaches it through `$(...)` and
+# a subshell cannot write the parent's variable.
+#
+# So there is no cache. The declaration is a few kilobytes, `capture status` reads it a
+# couple of dozen times in a diagnostic nobody waits behind, and `capture session` reads it
+# twice. A cache is what this file exists to declare, not something it needs.
+mj_providers_flat() {
+  local f
+  f="$(mj_providers_file)"
+  [ -f "$f" ] || return 1
+  mj_yaml_flatten "$f" 2>/dev/null
+}
+
+# Every provider the distribution declares, in file order. Empty (and not an error) when
+# there is no declarations file: an older distribution is a reason to fall back to the
+# adapter table, not a reason to fail in front of somebody's prompt.
+mj_providers_declared() {
+  mj_providers_flat 2>/dev/null | sed -n 's/^providers\.\([^.]*\)\..*$/\1/p' | awk '!seen[$0]++'
+}
+
+# One declared field of one provider: mj_provider_decl <provider> <key>
+#   key is one of: title, client_config,
+#                  lifecycle.episode, lifecycle.episode_evidence,
+#                  lifecycle.prompts, lifecycle.prompts_evidence
+mj_provider_decl() {
+  mj_providers_flat 2>/dev/null | sed -n "s/^providers\.$1\.$2=//p" | head -n 1
+}
+
+# The declared capability for one aspect, and the citation behind it. An aspect a
+# declaration does not carry reads as `none` with an empty citation, which is the one state
+# the capability rule refuses — so the gap is a finding rather than a silent "unsupported".
+mj_provider_capability() {
+  case "$2" in
+    prompt|prompts) mj_provider_decl "$1" lifecycle.prompts ;;
+    *)              mj_provider_decl "$1" lifecycle.episode ;;
+  esac
+}
+mj_provider_evidence() {
+  case "$2" in
+    prompt|prompts) mj_provider_decl "$1" lifecycle.prompts_evidence ;;
+    *)              mj_provider_decl "$1" lifecycle.episode_evidence ;;
+  esac
+}
+
+# The providers `capture status` reports: everything declared, plus any provider that has an
+# adapter and no declaration. The union and not either half, because a provider missing from
+# one of them is exactly the drift worth seeing.
+mj_capture_reported_providers() {
+  { mj_providers_declared; mj_capture_providers; mj_lifecycle_providers; } | sort -u
+}
+mj_lifecycle_providers() { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk '{ print $1 }'; }
 
 mj_capture_adapter()   { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_capture_providers() { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk '{ print $1 }'; }
@@ -740,8 +843,13 @@ mj_capture_session() {
     *" $event "*) ;;
     *) mj_err "capture session: --event must be one of $(mj_lifecycle_kinds | paste -sd' ' -)"; return "$MJ_EX_MISSING" ;;
   esac
-  mj_lifecycle_adapter "$provider" >/dev/null 2>&1 || {
-    mj_err "capture session: no lifecycle adapter for provider '$provider'"
+  # An adapter line, or a declaration saying the boundary is the connection. The second is
+  # not a weaker form of the first: a provider that fires no event has no payload shape to
+  # adapt to, and demanding a line for it was what made this command — the one generic entry
+  # point to the episode boundary — reachable only by Claude Code (ADR 0043).
+  mj_lifecycle_adapter "$provider" >/dev/null 2>&1 \
+    || [ "$(mj_provider_capability "$provider" session)" = connection ] || {
+    mj_err "capture session: no lifecycle adapter for provider '$provider' and no declared connection episode (have: $(mj_lifecycle_providers | paste -sd' ' -))"
     return "$MJ_EX_MISSING"; }
   mj_require_repo 2>/dev/null || { mj_err "capture session: not in a repository"; return "$MJ_EX_MISSING"; }
   # sourced here rather than at the top of this file: the prompt path is the one a person
@@ -757,9 +865,9 @@ mj_capture_session() {
     payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
     cat > "$payload"
     if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
-      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
-      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
-      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" 7)")")"
+      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" 8)")")"
+      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_keys "$provider" 9)")")"
     elif [ -s "$payload" ]; then
       mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
     fi
@@ -956,7 +1064,7 @@ mj_capture_session_compact() {
 # accumulation this design refuses.
 mj_capture_session_end() {
   local provider="$1" psession="$2" reason="$3" outcome=interrupted out
-  case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
+  case ",$(mj_lifecycle_keys "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
   # shellcheck source=handover.sh
   . "$MJ_LIB_DIR/handover.sh"
   # The same reasoning as the compaction event, with one difference: an end that cannot read
@@ -1117,7 +1225,10 @@ mj_capture_push_record() {
 # five different facts, and collapsing them into a generic pass is what makes a diagnostic
 # worthless.
 #
-#   unsupported   no adapter: no documented event hands a command the prompt before the model
+#   unsupported   the provider has no such event at all, and the declaration says where
+#                 that was verified. Nothing this tool can do changes it.
+#   unadapted     the provider documents the event and this distribution ships no adapter
+#                 line for it. A gap in the tool, named as one.
 #   unconfigured  an adapter exists, but this repository does not wire it
 #   named         the configuration declares a hook, but not the shim this tool wrote, so
 #                 what it runs has not been proven
@@ -1125,17 +1236,32 @@ mj_capture_push_record() {
 #                 no record
 #   verified      the shim is in place and a synthetic payload through it produced a record
 #
-# The same five words describe the other aspect a provider can be wired for — the episode
-# boundary — because the states are the same states: no event, not wired, wired to something
-# else, in place, proven by running it. A second vocabulary for the same five facts would
-# only have to be learnt twice.
+# The same words describe the other aspect a provider can be wired for — the episode
+# boundary — because the states are the same states: no event, no adapter, not wired, wired
+# to something else, in place, proven by running it. A second vocabulary for the same facts
+# would only have to be learnt twice.
+#
+# `unadapted` is the state ADR 0043 added, and it exists because collapsing it into
+# `unsupported` made this tool say something untrue about somebody else's product. Before
+# it, a provider was `unsupported` precisely when `lib/capture.sh` had no line for it — so
+# the day Codex and Gemini CLI shipped SessionStart, SessionEnd and a pre-model prompt hook,
+# this tool went on reporting an absence that had become its own. The declaration in
+# `share/providers.yaml` now says what the *provider* can do, with a citation per cell; the
+# adapter table says what *this tool* can read; and the two are different sentences.
 #
 # Prints: <state><tab><reason>
 # mj_capture_state <provider> [prompt|session]
 mj_capture_state() {
   [ "${2:-prompt}" = session ] && { mj_lifecycle_state "$1"; return 0; }
-  local p="$1" cfg shim rel event
-  mj_capture_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: no documented event delivers a prompt to a command before the model runs\n'; return 0; }
+  local p="$1" cfg shim rel event cap ev
+  cap="$(mj_provider_capability "$p" prompt)"; ev="$(mj_provider_evidence "$p" prompt)"
+  # The declaration decides `unsupported`, never the absence of a line in this file. A
+  # provider that hands nothing to anything cannot be wired by anybody, and the citation is
+  # what makes that a checkable statement rather than this tool's opinion.
+  [ "$cap" = none ] && { printf 'unsupported\t%s\n' "${ev:-the declaration carries no evidence for this cell; run: majordomus doctor}"; return 0; }
+  mj_capture_adapter "$p" >/dev/null 2>&1 || {
+    printf 'unadapted\tthe provider documents a prompt event and this distribution ships no adapter for it — %s\n' \
+      "${ev:-share/providers.yaml declares the capability and carries no evidence for it}"; return 0; }
   cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"; shim="$(mj_capture_shim "$p")"
   rel="$(mj_capture_shim_rel "$p")"; event="$(mj_capture_field "$p" 3)"
   [ -f "$cfg" ]                || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_capture_field "$p" 2)"; return 0; }
@@ -1171,8 +1297,18 @@ mj_capture_selftest() {
 # an end that is not wired leaves an episode open for ever and writes no continuation — so
 # every one is checked and the reason names whichever is missing.
 mj_lifecycle_state() {
-  local p="$1" cfg one rel
-  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: this provider has no documented event marking the start and end of a session\n'; return 0; }
+  local p="$1" cfg one rel cap ev
+  cap="$(mj_provider_capability "$p" session)"; ev="$(mj_provider_evidence "$p" session)"
+  case "$cap" in
+    none) printf 'unsupported\t%s\n' "${ev:-the declaration carries no evidence for this cell; run: majordomus doctor}"; return 0 ;;
+    # No hooks, but the client speaks MCP, so the connection is the boundary (ADR 0043).
+    # The wiring being checked here is a different wiring: not a shim the provider runs, but
+    # a client configuration that starts this repository's shared server.
+    connection) mj_lifecycle_connection_state "$p" "$ev"; return 0 ;;
+  esac
+  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || {
+    printf 'unadapted\tthe provider documents session events and this distribution ships no adapter for them — %s\n' \
+      "${ev:-share/providers.yaml declares the capability and carries no evidence for it}"; return 0; }
   cfg="$MJ_ROOT/$(mj_lifecycle_field "$p" 2)"
   [ -f "$cfg" ] || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)"; return 0; }
   for one in $(mj_lifecycle_kinds); do
@@ -1188,6 +1324,45 @@ mj_lifecycle_state() {
   local shims; shims="$(for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
   if mj_lifecycle_selftest "$p"; then printf 'verified\t%s are wired, and a synthetic payload through the end shim reached the command\n' "$shims"
   else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
+}
+
+# The episode a connection draws, as it stands here (ADR 0043). A different wiring is being
+# checked from the hook aspect's, and the words mean the same things: not the shims a
+# provider runs, but the client configuration that starts this repository's shared MCP
+# server, and the command the server drives when a client attaches.
+#
+# `generic` — a worker with no convention of its own — declares no client configuration,
+# because there is no file a convention-less worker reads. For it the launcher alone is the
+# wiring, which is the honest answer: any client that can be pointed at bin/majordomus-mcp
+# gets an episode, and this tool cannot know in advance where somebody points it from.
+mj_lifecycle_connection_state() {
+  local p="$1" ev="$2" cfg rel
+  rel="bin/majordomus-mcp"
+  [ -f "$MJ_ROOT/$rel" ] || { printf 'unconfigured\t%s does not exist, so no client can start the shared server whose connection is the boundary\n' "$rel"; return 0; }
+  [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so a client cannot run it\n' "$rel"; return 0; }
+  cfg="$(mj_provider_decl "$p" client_config)"
+  if [ -n "$cfg" ]; then
+    [ -f "$MJ_ROOT/$cfg" ] || { printf 'unconfigured\t%s does not exist, so this provider starts no shared server here\n' "$cfg"; return 0; }
+    grep -qF "$rel" "$MJ_ROOT/$cfg" || { printf 'named\t%s exists but does not start %s\n' "$cfg" "$rel"; return 0; }
+  fi
+  if mj_lifecycle_connection_selftest "$p"; then
+    printf 'verified\t%s is in place and a synthetic attach reached the episode boundary — %s\n' "${cfg:-$rel}" "$ev"
+  else
+    printf 'wired\t%s is in place but a synthetic attach did not reach the episode boundary\n' "${cfg:-$rel}"
+  fi
+}
+
+# Drive the connection episode the way the shared server does, with the mutation disabled.
+# The same bargain the hook self-test strikes: everything on the path is exercised — the
+# command resolving, the declaration admitting a provider with no adapter line, the payload
+# parsing, the episode key being read out of it — and the one thing left out is closing
+# somebody's open episode, which is not a price a diagnostic may charge.
+mj_lifecycle_connection_selftest() {
+  local p="$1" out rc=0
+  out="$(printf '{"session_id":"selftest-%s","reason":"detach"}' "$$" \
+    | MJ_SESSION_DRY_RUN=1 mj_capture_session --provider "$p" --event end 2>&1)" || rc=1
+  [ "$rc" = 0 ] && { printf '%s' "$out" | grep -qF "selftest-$$" || rc=1; }
+  return "$rc"
 }
 
 # Drive the end shim the way the provider would, and read what it says it would have done.
@@ -1371,17 +1546,29 @@ mj_capture_config() {
 }
 
 # ---------------------------------------------------------------- capture status
+# Every provider this distribution declares, both aspects, the capability and the state.
+#
+# **It used to report one.** The loop was over `mj_capture_providers` — the providers with a
+# line in the prompt adapter table — so five of the six providers in `share/providers.yaml`
+# were not merely reported as unsupported, they were not reported at all, and the state
+# `unsupported` was unreachable for any provider a person could name. A reader asking "can
+# Codex capture prompts here" got silence, which reads as no and was, by 2026-09-11, wrong.
+#
+# The capability column is the declaration's, with its citation in the reason; the state
+# column is this checkout's. Two facts, two columns, never folded into one word (ADR 0043).
 mj_capture_status() {
   [ $# = 0 ] || mj_die "$MJ_EX_USAGE" "capture status: unknown option $1"
   mj_require_installed
-  local p a line state reason first=1
+  local p a line state reason cap first=1
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":"%s","providers":[' "$MJ_CAPTURE_SCHEMA"
-    for p in $(mj_capture_providers); do
+    for p in $(mj_capture_reported_providers); do
       for a in prompt session; do
         line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
+        cap="$(mj_provider_capability "$p" "$a")"
         [ "$first" = 1 ] || printf ','; first=0
-        printf '{"provider":"%s","aspect":"%s","state":"%s","reason":"%s"}' "$p" "$a" "$state" "$(mj_json_esc "$reason")"
+        printf '{"provider":"%s","aspect":"%s","capability":"%s","state":"%s","reason":"%s","evidence":"%s"}' \
+          "$p" "$a" "${cap:-}" "$state" "$(mj_json_esc "$reason")" "$(mj_json_esc "$(mj_provider_evidence "$p" "$a")")"
       done
     done
     printf ']}\n'; return 0
@@ -1389,10 +1576,17 @@ mj_capture_status() {
   # The prompt aspect keeps the provider's own name in the first column and the lifecycle
   # aspect is suffixed, because they are two wirings of one provider and a reader looking
   # for "is claude-code capturing" must not have to know that there are now two answers.
-  for p in $(mj_capture_providers); do
+  for p in $(mj_capture_reported_providers); do
     for a in prompt session; do
       line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
-      printf '%-22s %-12s %s\n' "$([ "$a" = prompt ] && printf '%s' "$p" || printf '%s:session' "$p")" "$state" "$reason"
+      cap="$(mj_provider_capability "$p" "$a")"
+      # PROVIDER STATE CAPABILITY REASON, in that order. The state first because it is the
+      # answer a reader came for, and because `capture status` has been read that way since
+      # it existed: a column inserted between the provider and its state would break every
+      # eye and every grep already pointed at this output (test/cases/29_prompt_capture.sh).
+      printf '%-22s %-12s %-11s %s\n' \
+        "$([ "$a" = prompt ] && printf '%s' "$p" || printf '%s:session' "$p")" \
+        "$state" "${cap:--}" "$reason"
     done
   done
 }

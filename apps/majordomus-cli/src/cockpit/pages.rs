@@ -1854,16 +1854,14 @@ fn providers_card(p: &ProviderLifecycles) -> El {
         .map(|x| {
             row(vec![
                 cell(el("span").text(&x.title)),
-                cell(if x.lifecycle.is_empty() {
-                    el("span").text("(no lifecycle adapter)")
+                cell(if x.episode == "none" {
+                    el("span").text("(no episode boundary)")
                 } else {
-                    el("div")
-                        .class("mj-marks")
-                        .children(x.lifecycle.iter().map(|e| tag(e.clone())).collect::<Vec<_>>())
+                    el("div").class("mj-marks").children(vec![tag(x.episode.clone())])
                 }),
                 cell(badge(
-                    if x.prompt_capture { "ok" } else { "info" },
-                    if x.prompt_capture { "yes" } else { "no" },
+                    if x.prompts == "none" { "info" } else { "ok" },
+                    x.prompts.clone(),
                 )),
                 cell(if x.client_config.is_empty() {
                     el("span").text("—")

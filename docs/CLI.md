@@ -1127,11 +1127,15 @@ no cap to configure, the archive grows, `doctor` reports how many records and ho
 kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
 discovering that the hook meant to keep their prompts had been discarding them.
 
-**`capture status` reports five distinct states, and never a generic pass:**
+**`capture status` reports every provider the distribution declares, for both aspects, with
+two facts per row and never one word standing in for both.** The **capability** is the
+vendor's, read from `share/providers.yaml` where every cell carries the citation it was
+verified from; the **state** is this checkout's, computed from the tree.
 
 | state | what is true |
 |---|---|
-| `unsupported` | the provider has no documented event that hands a command the prompt before the model runs |
+| `unsupported` | the provider has no such event at all, and the declaration says where that was verified. Nothing this tool can do changes it. |
+| `unadapted` | the provider documents the event and this distribution ships no adapter for it. A gap in the tool, named as one. |
 | `unconfigured` | an adapter exists, but this repository does not wire it |
 | `named` | the configuration declares the hook, but not the shim this tool wrote |
 | `wired` | the shim is in place and executable, but a payload through it produced no record |
@@ -1140,12 +1144,23 @@ discovering that the hook meant to keep their prompts had been discarding them.
 A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
-Only Claude Code has an adapter today; every other provider the distribution declares
-(`docs/generated/providers.md`) is reported `unsupported` rather than assumed, and no other
-surface — the web, the desktop app, another machine — is observable from here at all. An
-orchestrator such as bb has no adapter by design: it hands no prompt to a command before the
-model, and the agent it runs keeps its own hooks, so a Claude Code thread under bb is
-captured as `claude-code` (ADR 0024).
+
+**Until ADR 0043 this paragraph said something untrue, and it is worth saying what.** It
+read: "Only Claude Code has an adapter today; every other provider the distribution declares
+is reported `unsupported` rather than assumed." Neither half held. The others were not
+reported `unsupported` — they were not reported at all, because the loop was over the
+providers with a line in an internal shell table and that table had one line; the state was
+unreachable for any provider a person could name. And `unsupported` had stopped being the
+right word for two of them: by 2026-09-11 Codex CLI and Gemini CLI had both shipped
+`SessionStart`, `SessionEnd`, a pre-compaction event and a prompt hook firing before the
+model. They are `unadapted` — this distribution ships no adapter — and the citations for all
+of it are in the declaration.
+
+Claude Code still has the only hook adapter. An orchestrator such as bb has none by design:
+it hands no prompt to a command before the model, and the agent it runs keeps its own hooks,
+so a Claude Code thread under bb is captured as `claude-code` (ADR 0024). `agents` is a class
+of tools rather than a product and fires nothing at all. No other surface — the web, the
+desktop app, another machine — is observable from here.
 
 ### `capture session` — the episode boundary
 
@@ -1197,8 +1212,12 @@ INFO  capture  .claude/hooks/majordomus-session-start  written and made executab
 INFO  capture  .claude/hooks/majordomus-session-end  written and made executable
 INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)
 $ majordomus capture status
-claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its renderings
-claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command
+agents                 unsupported  none        not a product but a class of tools defined by the file they read …
+bb:session             unsupported  none        no conversation-lifecycle hook is published. Searched 2026-09-11: …
+claude-code            verified     hook        .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering
+claude-code:session    verified     hooks       .claude/hooks/majordomus-session-start, …-end, …-compact are wired, and a synthetic payload through the end shim reached the command
+codex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks …
+generic:session        verified     connection  bin/majordomus-mcp is in place and a synthetic attach reached the episode boundary …
 $ majordomus capture render
 0 rendering(s) written into .ai/local/prompts
 ```

@@ -398,19 +398,25 @@ pub struct RuntimeView {
 /// One provider's lifecycle surface: what its adapter declares it can do, and what this
 /// repository has wired to it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct ProviderLifecycle {
+pub struct ProviderStanding {
     /// The provider id: the bootstrap template's file stem.
     pub id: String,
     /// The name a person knows it by.
     pub title: String,
-    /// The lifecycle events its adapter declares, in the provider's own vocabulary
-    /// (`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no
-    /// lifecycle adapter for it: such a provider loses the automation and none of the
-    /// model, because every command remains the same.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub lifecycle: Vec<String>,
-    /// Whether its adapter can archive the worker's prompts.
-    pub prompt_capture: bool,
+    /// How this provider's episode boundary is drawn, as the distribution declares it:
+    /// `hooks` when it fires its own session events, `connection` when it fires none but
+    /// its client attaches to the shared server, `none` when neither (ADR 0043). A
+    /// provider with `none` loses the automation and none of the model, because every
+    /// command remains the same.
+    pub episode: String,
+    /// Where `episode` was verified — the citation the declaration carries for that cell.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub episode_evidence: String,
+    /// Whether the worker's raw prompt can be captured below the model: `hook` or `none`.
+    pub prompts: String,
+    /// Where `prompts` was verified.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub prompts_evidence: String,
     /// The file it reads a project-scoped MCP client configuration from, when it has one.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub client_config: String,
@@ -427,8 +433,8 @@ pub struct ProviderLifecycle {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderLifecycles {
     /// The providers, in declaration order.
-    pub providers: Vec<ProviderLifecycle>,
-    /// How many of them declare a lifecycle adapter.
+    pub providers: Vec<ProviderStanding>,
+    /// How many of them can have an episode boundary drawn at all.
     pub with_lifecycle: usize,
     /// What a reader should know: a provider this repository wires but the distribution
     /// declares no lifecycle for, and the like.
@@ -908,43 +914,53 @@ fn providers(ctx: &Context, _: Empty) -> Result<ProviderLifecycles, CapabilityEr
     }
 
     let mut findings = Vec::new();
-    let providers: Vec<ProviderLifecycle> = ctx
+    let providers: Vec<ProviderStanding> = ctx
         .index
         .providers
         .providers
         .iter()
         .map(|d| {
             let w = wired.get(&d.id).cloned().unwrap_or_default();
-            let note = match (d.lifecycle.is_empty(), w.is_empty()) {
-                (true, true) => format!(
-                    "The distribution ships no lifecycle adapter for {}. A worker using it loses the automation and none of the model: every command is the same, and running them is again a matter of remembering.",
+            // What the provider *can* do about the boundary, in the declaration's own
+            // vocabulary. `none` is the one value that makes wiring a contradiction: the
+            // other two each name a mechanism this repository may or may not have asked for.
+            let can = d.lifecycle.episode != crate::share::EpisodeSource::None;
+            let how = match d.lifecycle.episode {
+                crate::share::EpisodeSource::Hooks => "its own session events, through a hook this tool installs",
+                crate::share::EpisodeSource::Connection => "the MCP connection to this repository's shared server",
+                crate::share::EpisodeSource::None => "",
+            };
+            let note = match (can, w.is_empty()) {
+                (false, true) => format!(
+                    "Nothing can say when {}'s episode began or ended: it fires no session event and its client draws no boundary from the connection. A worker using it loses the automation and none of the model — every command is the same, and running them is again a matter of remembering.",
                     d.title
                 ),
-                (true, false) => format!(
-                    "This repository wires {} to {}'s hook, and the distribution declares no lifecycle events for it. One of the two is wrong.",
+                (false, false) => format!(
+                    "This repository wires {} to {}'s hook, and the distribution declares that provider cannot draw an episode boundary at all. One of the two is wrong.",
                     w.join(", "),
                     d.title
                 ),
-                (false, true) => format!(
-                    "{} declares {}, and this repository's policy wires none of it. The adapter exists; nothing here asks it to run.",
-                    d.title,
-                    d.lifecycle.join(", ")
+                (true, true) => format!(
+                    "{} draws its episode from {}, and this repository's policy wires none of it. The mechanism exists; nothing here asks it to run.",
+                    d.title, how
                 ),
-                (false, false) => format!(
-                    "{} declares {}, and this repository wires {} to its hook.",
+                (true, false) => format!(
+                    "{} draws its episode from {}, and this repository wires {} to its hook.",
                     d.title,
-                    d.lifecycle.join(", "),
+                    how,
                     w.join(", ")
                 ),
             };
-            if d.lifecycle.is_empty() && !w.is_empty() {
+            if !can && !w.is_empty() {
                 findings.push(note.clone());
             }
-            ProviderLifecycle {
+            ProviderStanding {
                 id: d.id.clone(),
                 title: d.title.clone(),
-                lifecycle: d.lifecycle.clone(),
-                prompt_capture: d.prompt_capture,
+                episode: d.lifecycle.episode.as_str().to_string(),
+                episode_evidence: d.lifecycle.episode_evidence.clone(),
+                prompts: d.lifecycle.prompts.as_str().to_string(),
+                prompts_evidence: d.lifecycle.prompts_evidence.clone(),
                 client_config: d.client_config.clone().unwrap_or_default(),
                 wired: w,
                 note,
@@ -952,7 +968,7 @@ fn providers(ctx: &Context, _: Empty) -> Result<ProviderLifecycles, CapabilityEr
         })
         .collect();
 
-    let with_lifecycle = providers.iter().filter(|p| !p.lifecycle.is_empty()).count();
+    let with_lifecycle = providers.iter().filter(|p| p.episode != "none").count();
     Ok(ProviderLifecycles {
         providers,
         with_lifecycle,

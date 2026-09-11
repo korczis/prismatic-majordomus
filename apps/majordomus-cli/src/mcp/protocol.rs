@@ -145,6 +145,11 @@ impl Server {
     pub fn handle(&mut self, message: Value) -> Option<Reply> {
         if let Some(peer) = self.surface.peer() {
             self.surface.context().peers.touch(peer);
+            // ... and the same message is the heartbeat of whatever episode this connection
+            // holds. A client that is working never has to send anything it would not
+            // otherwise send in order to keep its episode alive, which is the difference
+            // between a lifecycle and a thing clients have to remember to do (ADR 0043).
+            self.surface.context().episodes.touch(peer);
         }
         match message {
             Value::Array(batch) => {

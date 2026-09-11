@@ -209,8 +209,10 @@ impl Share {
                         .unwrap_or_else(|| id.clone()),
                     client_config: decl.and_then(|d| d.client_config.clone()),
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
-                    lifecycle: decl.map(|d| d.lifecycle.clone()).unwrap_or_default(),
-                    prompt_capture: decl.map(|d| d.prompt_capture).unwrap_or(false),
+                    lifecycle: decl
+                        .and_then(|d| d.lifecycle.as_ref())
+                        .map(lifecycle_of)
+                        .unwrap_or_default(),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
                     id,
@@ -247,9 +249,143 @@ struct ProviderEntry {
     #[serde(default)]
     scratch_roots: Vec<String>,
     #[serde(default)]
-    lifecycle: Vec<String>,
+    lifecycle: Option<ProviderLifecycleEntry>,
+}
+
+/// The `lifecycle:` block of one provider entry, as written.
+///
+/// The two capability keys deserialise straight into their enums, so a word outside the
+/// vocabulary fails the read of the whole file with the path named rather than degrading
+/// to `none`. A typo that quietly means "this provider can do nothing" is the exact
+/// failure this file was written to end.
+#[derive(Debug, Default, Clone, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProviderLifecycleEntry {
     #[serde(default)]
-    prompt_capture: bool,
+    episode: Option<EpisodeSource>,
+    #[serde(default)]
+    episode_evidence: Option<String>,
+    #[serde(default)]
+    prompts: Option<PromptSource>,
+    #[serde(default)]
+    prompts_evidence: Option<String>,
+}
+
+fn lifecycle_of(e: &ProviderLifecycleEntry) -> ProviderLifecycle {
+    ProviderLifecycle {
+        episode: e.episode.unwrap_or_default(),
+        episode_evidence: e.episode_evidence.clone().unwrap_or_default(),
+        prompts: e.prompts.unwrap_or_default(),
+        prompts_evidence: e.prompts_evidence.clone().unwrap_or_default(),
+    }
+}
+
+/// How an episode boundary can be drawn for one provider.
+///
+/// Three words, because three things are true of different providers and collapsing them
+/// into "supported / not supported" is what let this tool report one provider and stay
+/// silent about five others. A provider that fires its own events is not the same as one
+/// that fires none but speaks MCP, and neither is the same as one that can do nothing.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum EpisodeSource {
+    /// The provider fires its own session events and a hook this tool installs draws the
+    /// boundary from them. The strongest form: it sees a window somebody closed.
+    Hooks,
+    /// The provider fires no session event, but its client attaches to this repository's
+    /// shared MCP server, and the connection is the boundary (ADR 0043).
+    Connection,
+    /// Neither. Nothing can say when this provider's episode began or ended, and the tool
+    /// reports that rather than implying a capability nobody has.
+    #[default]
+    None,
+}
+
+impl EpisodeSource {
+    /// The word as the declaration writes it.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EpisodeSource::Hooks => "hooks",
+            EpisodeSource::Connection => "connection",
+            EpisodeSource::None => "none",
+        }
+    }
+}
+
+/// Whether the person's raw prompt can be captured below the model for one provider.
+///
+/// There is no `connection` here and there must not be: an MCP server is handed tool calls,
+/// never the prompt that produced them. Prompt capture is provider-specific and the
+/// declaration says so rather than pretending the connection can stand in for it.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptSource {
+    /// The provider hands the raw prompt to a command before the model runs.
+    Hook,
+    /// It does not. Nothing this tool can do makes the prompt observable.
+    #[default]
+    None,
+}
+
+impl PromptSource {
+    /// The word as the declaration writes it.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            PromptSource::Hook => "hook",
+            PromptSource::None => "none",
+        }
+    }
+}
+
+/// What one provider can do about the session lifecycle, and where that was verified.
+///
+/// **Every cell carries its evidence.** A capability asserted with no citation is the defect
+/// this type exists to make impossible: before it, a provider absent from a shell table was
+/// silently unsupported and a provider present in one was silently capable, and no surface
+/// could tell a reader which vendor page either answer came from — `capture status`
+/// enumerated the one provider that had an adapter and said nothing whatever about the
+/// other five this distribution declares. The rule
+/// `project.a-provider-capability-cites-its-evidence` refuses a declaration without one.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+pub struct ProviderLifecycle {
+    /// How the episode boundary is drawn for this provider.
+    pub episode: EpisodeSource,
+    /// Where `episode` was verified: a vendor documentation URL, or the statement that no
+    /// such documentation exists and what was searched for it.
+    pub episode_evidence: String,
+    /// Whether the raw prompt can be captured below the model.
+    pub prompts: PromptSource,
+    /// Where `prompts` was verified, on the same terms as `episode_evidence`.
+    pub prompts_evidence: String,
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -276,17 +412,12 @@ pub struct ProviderDeclaration {
     /// The scratch roots it creates checkouts under, unexpanded.
     #[serde(default)]
     pub scratch_roots: Vec<String>,
-    /// The lifecycle events the tool's adapter for it declares, in the provider's own
-    /// vocabulary (`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships
-    /// no lifecycle adapter for it, which costs a worker the automation and none of the
-    /// model. Declared, because the two other ways to answer this question are both wrong:
-    /// reading `.claude/hooks/` reports an installation as a capability, and a list written
-    /// into a page is a second source of truth that goes stale the day an adapter changes.
+    /// What it can do about the session lifecycle, and where each answer was verified. A
+    /// provider with no `lifecycle:` block declares nothing, which reads as `none` with no
+    /// evidence — the state the capability rule refuses, so that the gap is a finding
+    /// rather than a silent "unsupported".
     #[serde(default)]
-    pub lifecycle: Vec<String>,
-    /// Whether the tool's adapter for it can archive the worker's prompts.
-    #[serde(default)]
-    pub prompt_capture: bool,
+    pub lifecycle: ProviderLifecycle,
     /// The distribution ships a template for it.
     pub template: bool,
     /// The distribution declares it.

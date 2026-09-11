@@ -254,11 +254,28 @@ fn the_endpoint_opens_reaps_and_closes_sessions() {
     let put = endpoint.handle(&Request::parse_target("PUT", "/mcp", vec![]));
     assert_eq!(put.status, 405);
     std::thread::sleep(Duration::from_millis(5));
-    assert_eq!(endpoint.reap_idle(Duration::from_secs(60)).len(), 0);
-    let gone = endpoint.reap_idle(Duration::ZERO);
+    assert_eq!(
+        endpoint
+            .reap_idle(Duration::from_secs(60), Duration::from_secs(60))
+            .len(),
+        0
+    );
+    // An episode this connection is carrying, so that the reaper's OTHER clock is exercised
+    // here rather than left to a constant nobody can move. Fifteen minutes is the real
+    // grace and no test may wait it out, which is exactly why `reap_idle` takes both bounds
+    // (ADR 0043): a reaper wired to a constant is a reaper nothing proves.
+    let peer = app.context.peers.list()[0].id.clone();
+    app.context.episodes.attach(&peer, "unit-episode", "generic");
+    assert_eq!(app.context.episodes.list().len(), 1);
+
+    let gone = endpoint.reap_idle(Duration::ZERO, Duration::ZERO);
     assert_eq!(gone.len(), 1, "an idle session expires");
     assert_eq!(endpoint.active(), 0);
     assert!(app.context.peers.is_empty(), "its peer is gone with it");
+    assert!(
+        app.context.episodes.list().is_empty(),
+        "and the episode it was carrying is closed, not left open for ever"
+    );
     let after = post(
         &json!({ "jsonrpc": "2.0", "id": 3, "method": "ping" }).to_string(),
         Some(&session),
