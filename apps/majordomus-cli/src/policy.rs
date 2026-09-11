@@ -79,6 +79,38 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+    /// `session:`.
+    #[serde(default)]
+    pub session: SessionPolicy,
+}
+
+/// `session:` — what the episode boundary does beyond drawing itself.
+///
+/// Only the half two entry paths both read is typed here. The rest of the block is carried
+/// through unread, as every other key is: the policy schema owns the full shape.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct SessionPolicy {
+    /// Whether entering the repository converges on a ready shared server.
+    ///
+    /// One switch, both entry paths: the provider's start event (ADR 0035) and the file a
+    /// shell evaluates on entry (ADR 0043). It defaults to `true` because that is what
+    /// this repository's policy and the skeleton a new one is written from both declare,
+    /// and because a policy that could not be read must not silently change behaviour —
+    /// an unreadable policy is `doctor`'s finding, not a reason to stop converging.
+    #[serde(default = "yes")]
+    pub ensure_server_on_start: bool,
+}
+
+impl Default for SessionPolicy {
+    fn default() -> Self {
+        SessionPolicy {
+            ensure_server_on_start: true,
+        }
+    }
+}
+
+fn yes() -> bool {
+    true
 }
 
 /// The policy as loaded: the typed value, where it came from, and the hash the stamps

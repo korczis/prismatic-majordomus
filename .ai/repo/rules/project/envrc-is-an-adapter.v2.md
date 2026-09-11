@@ -1,15 +1,35 @@
 ---
 id: project.envrc-is-an-adapter
-version: 1
+version: 2
 kind: rule
-title: The shell entry point is an adapter, and repository facts come from one typed source
-description: A file a shell evaluates on entering the repository resolves the tool, evaluates what the tool exports and asks it to render; it reads nothing about the repository itself, builds nothing, and reaches no network, so that entering a directory cannot be slow, cannot fail, and cannot become a second implementation of what the executable already knows.
-statement: A file a shell evaluates on entering the repository resolves the tool, evaluates what the tool exports and asks the tool to render; it does not itself read the repository, build anything, or reach the network.
+title: The shell entry point is an adapter, and it makes one call
+description: A file a shell evaluates on entering the repository resolves the tool and makes exactly one call to it — the bootstrap command — evaluating what that call exports; it reads nothing about the repository itself, builds nothing, and reaches no network of its own, so that entering a directory cannot be slow, cannot fail, and cannot become a second implementation of what the executable already knows.
+statement: A file a shell evaluates on entering the repository resolves the tool and makes exactly one call to it, the bootstrap command, and evaluates what that call exports; it does not itself read the repository, build anything, reach the network, or decide anything.
 status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.no-network-no-eval@1, project.hot-path-reads-once@1]
 tags: [environment, shell, performance]
 ---
+
+# What changed in version 2
+
+Version 1 listed what the entry point may do, and the list had a shape nobody had named:
+every item on it was a *call to the tool*, and the only thing that made them four items
+rather than one was that the tool had four small commands and no whole one. ADR 0043 gave
+it the whole one — `majordomus env enter`, which exports, draws the banner, refreshes the
+workflow bridge and ensures the runtime — and with it the list collapses to its real
+content: **one call, to the bootstrap command**, and nothing else but putting a directory
+on the path and declaring a file to watch.
+
+That is a narrowing, not a loosening. Everything version 1 forbade is still forbidden, word
+for word. What version 2 adds is that a *second* call to the tool is now a finding too —
+because two calls are two readings of the repository on the hot path of every `cd`, and
+because the moment the entry file chooses which of several commands to run, it has started
+deciding things, which is the failure this rule is entirely about.
+
+What that one call now *does* changed at the same time, and that half belongs to
+`project.entry-converges@2`: entering the repository brings its runtime up. This rule says
+nothing about that. It says the entry file does not do it — the executable does.
 
 # Rationale
 
@@ -43,18 +63,28 @@ tool reads — may:
 
 - put a directory on the path;
 - declare a file to watch, so the tool is asked again when what it reported changes;
-- `eval` the assignments the tool prints;
-- run the tool to render a banner;
-- assign a variable to a literal, or to a value the tool printed.
+- make **exactly one** call to the tool, which is the bootstrap command (`env enter`), and
+  `eval` what it printed on standard output;
+- source a machine-local file of the person's own, which the repository never sees and
+  never reads — a place for their secrets and overrides, last, so that a value there wins;
+- assign a variable to a literal, or to a value that one call printed.
 
 It may not:
 
+- call the tool a second time, whatever the second call is for: two calls are two readings
+  of the repository on every `cd`, and choosing between commands is a decision, which
+  belongs inside the executable where it is typed, benchmarked and tested;
 - run a version-control command, or any program that inspects the repository — `git`,
   `grep`, `sed`, `awk`, `find`, `jq`, `wc`, `cat` over a tracked file, `cargo metadata`;
 - build anything, or invoke a package manager or a compiler;
-- reach the network, in any form, including a loopback HTTP request;
+- reach the network itself, in any form, including a loopback HTTP request. What the one
+  call it makes does with a loopback address a server of this checkout already published is
+  the executable's business, and `project.entry-converges` is what bounds it;
 - carry a count, a version, a URL, a provider name, a branch or a workflow command as a
-  literal, when the tool can report it.
+  literal, when the tool can report it;
+- carry a port, a pid, a timeout, an idle life or any other parameter of the runtime: those
+  are the bootstrap command's own defaults, declared once in the command line's declaration
+  and changed there.
 
 The adapter it calls resolves the executable without building it: a checkout that has not
 built the executable yet prints one line naming the recipe that builds it and exits 0,
@@ -67,7 +97,8 @@ published, and reports what it could not resolve as unknown rather than as a def
 # Failure behaviour
 
 `test/cases/100_environment.sh` reads the entry point and fails, naming the line, when it
-carries a forbidden command or exceeds its complexity budget. It is a behavioural case, so
+carries a forbidden command, calls the tool more than once, or exceeds its complexity
+budget. It is a behavioural case, so
 the shell suite runs it on every change that selects the suite, and the `layer` and `shell`
 gate classes both select it.
 
@@ -77,10 +108,12 @@ every `cd`.
 
 # Verification
 
-`test/cases/100_environment.sh` holds the entry point to the list above, proves the
+`test/cases/100_environment.sh` holds the entry point to the list above, proves that it
+makes exactly one call to the tool and that the call is the bootstrap command, proves the
 adapter exits 0 and says what to run when the executable is absent, proves the exported
-script is assignments only, and proves that the check can fail by introducing a forbidden
-line into a copy and requiring the same check to reject it.
+script is assignments only, and proves that the check can fail: a forbidden line planted in
+one copy and a second call to the tool planted in another must both be rejected by the same
+reader.
 
 `apps/majordomus-cli/tests/environment.rs` proves the half the entry point delegates to:
 that the fast resolution builds no index, that a shell evaluates the exported script back

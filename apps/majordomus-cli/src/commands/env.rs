@@ -24,9 +24,10 @@
 //! parsed as variable assignments and would break every shell that entered the directory.
 
 use std::io::Write;
+use std::time::Duration;
 
 use crate::app::App;
-use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs};
+use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS, DEFAULT_PORT};
 use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
 use crate::environment::{
@@ -34,6 +35,7 @@ use crate::environment::{
     ServiceAvailability, TierState, ToolchainAvailability, VcsState,
 };
 use crate::error::{Error, Result};
+use crate::policy::LoadedPolicy;
 use crate::repository::Repository;
 use crate::share::Share;
 
@@ -51,6 +53,22 @@ pub fn run(args: EnvArgs) -> Result<u8> {
             mode,
             bridge,
         }) => export_command(&args.repo, &shell, banner, mode.as_deref(), bridge),
+        Some(EnvCommand::Enter {
+            shell,
+            mode,
+            no_banner,
+            no_bridge,
+            no_runtime,
+            wait,
+        }) => enter_command(
+            &args.repo,
+            &shell,
+            mode.as_deref(),
+            !no_banner,
+            !no_bridge,
+            !no_runtime,
+            Duration::from_secs(wait),
+        ),
     }
 }
 
@@ -63,6 +81,7 @@ fn resolve_full(repo: &RepoArgs) -> Result<RepositoryEnvironment> {
             share: Some(&app.share),
             index: Some(app.index()),
             registry: Some(app.registry()),
+            policy: None,
         },
         &EnvironmentQuery::full(),
     ))
@@ -74,24 +93,43 @@ fn resolve_full(repo: &RepoArgs) -> Result<RepositoryEnvironment> {
 /// read and a few path checks. What it deliberately does not do is call [`App::load`],
 /// which is where the seconds are.
 fn resolve_fast(repo: &RepoArgs) -> Result<(RepositoryEnvironment, Option<Share>)> {
+    let repository = discover(repo)?;
+    Ok(resolve_fast_in(repo, &repository, None))
+}
+
+/// Where a command that was given no `--repo` is standing.
+fn discover(repo: &RepoArgs) -> Result<Repository> {
     let start = match &repo.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
-    let repository = Repository::discover(&start)?;
+    Repository::discover(&start)
+}
+
+/// The same fast snapshot, for a caller that has already discovered the repository — and
+/// that may have already read the policy, which the provider projections need and which
+/// `enter` reads first for its own question. One invocation, one reading of a canonical
+/// file (`project.hot-path-reads-once`), on the one path where that is measured in the
+/// time a person waits for a prompt.
+fn resolve_fast_in(
+    repo: &RepoArgs,
+    repository: &Repository,
+    policy: Option<&LoadedPolicy>,
+) -> (RepositoryEnvironment, Option<Share>) {
     // A missing distribution is not fatal here: without it the provider projections are
     // listed from the policy and their state is reported unknown, which is honest.
     let share = Share::locate(repo.share.as_deref(), repository.root()).ok();
     let environment = resolve(
         &Inputs {
-            repository: &repository,
+            repository,
             share: share.as_ref(),
             index: None,
             registry: None,
+            policy,
         },
         &EnvironmentQuery::fast(),
     );
-    Ok((environment, share))
+    (environment, share)
 }
 
 fn status(repo: &RepoArgs, format: OutputFormat) -> Result<u8> {
@@ -416,6 +454,156 @@ fn export_command(
     Ok(0)
 }
 
+/// The environment variable that decides whether entering the repository ensures a
+/// runtime. `auto` (the default) ensures one; `off` does not and says nothing.
+///
+/// Named here because it is part of the command's contract, and read by the adapter as
+/// well: a checkout whose executable is older than its sources sets it to `off`, because a
+/// server started from stale code answers with a tree that is no longer there. That is the
+/// same refusal `lib/capture.sh` makes on the agent's entry path, for the same reason, and
+/// the staleness itself is decided in one place (`lib/rust_bin.sh`'s `mj_rust_stale`) for
+/// both paths rather than twice.
+pub const RUNTIME_ENV: &str = "MAJORDOMUS_RUNTIME";
+
+/// `majordomus env enter`: the whole of entering this repository, as one call.
+///
+/// # Why this is one command and not four
+///
+/// Until ADR 0043 the entry file evaluated `env export --banner --bridge` and the runtime
+/// was somebody's to remember: a person typed `serve ensure`, or an agent's provider fired
+/// a start event, or nothing happened and every surface of this repository — the Cockpit,
+/// the API, the MCP board the other workers are announcing on — was quietly absent. The
+/// operator's requirement was that none of it depend on a sequence anybody remembers, and
+/// the doctrine that stood in the way said a shell entering may not start a server because
+/// "a shell is not a client".
+///
+/// What resolved it is that the objection was about a *process without an owner*, not about
+/// who typed the `cd`: a server `ensure` starts is given [`DEFAULT_IDLE_SECONDS`] and ends
+/// when no peer has been attached for that long, so ADR 0003's line stays true in time.
+/// ADR 0043 records that, and the entry file's one call is this.
+///
+/// # What it does, in the order it does it
+///
+/// The policy is read once and the snapshot resolved from it, then the runtime is ensured
+/// from the same reading, then the assignments go to standard output, the banner to
+/// standard error and the bridge is refreshed if a declaration behind it moved. The
+/// snapshot comes before the ensure because on a warm entry the ensure changes nothing and
+/// on a cold one nothing it starts has published an address yet either way — and the entry
+/// file's `watch_file` over the lease is what brings that address in a moment later.
+///
+/// # What it never does
+///
+/// It never builds: a shell prompt is not the place to start a compiler, and the adapter
+/// that resolves the executable says so on standard error and exits 0
+/// (`project.entry-converges`). It never reaches a remote network: the only socket it opens
+/// is to a loopback address a server of this checkout already published. It never waits for
+/// a server it started to answer, unless a caller asks with `--wait`. And it never fails:
+/// every runtime outcome is at most one line on standard error, because a non-zero exit
+/// here makes direnv report that entering the directory failed and leaves a person with a
+/// broken shell in a repository that is fine.
+fn enter_command(
+    repo: &RepoArgs,
+    shell: &str,
+    mode: Option<&str>,
+    with_banner: bool,
+    with_bridge: bool,
+    with_runtime: bool,
+    wait: Duration,
+) -> Result<u8> {
+    // Both refused before anything is read, so an argument nobody can honour never costs a
+    // `git status` first — the same order `export` has always had.
+    let dialect = Dialect::parse(shell).ok_or_else(|| Error::Protocol {
+        reason: format!(
+            "'{shell}' is not a shell this writes for; one of direnv, bash, zsh, sh, ksh, fish"
+        ),
+    })?;
+    let mode = with_banner.then(|| requested_mode(mode)).transpose()?;
+
+    let repository = discover(repo)?;
+    // One reading, two questions: whether entry ensures a runtime here, and what the
+    // provider projections are. A policy that does not parse is not a reason to fail — the
+    // snapshot reports it and `doctor` refuses the commit — so the switch takes its
+    // default and the resolver is told nothing was read.
+    let policy = LoadedPolicy::load(&repository).ok();
+    let (environment, share) = resolve_fast_in(repo, &repository, policy.as_ref());
+
+    if with_runtime {
+        ensure_runtime(&repository, policy.as_ref(), wait);
+    }
+
+    let share = share.map(|s| s.dir().display().to_string());
+    let script = export(&environment, share.as_deref(), dialect);
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    write!(out, "{script}").map_err(Error::Transport)?;
+    if let Some(mode) = mode {
+        draw(&environment, mode, &Presentation::detect());
+    }
+    if with_bridge {
+        refresh_bridge(repo);
+    }
+    Ok(0)
+}
+
+/// Make sure a server of this repository is serving this checkout, and say at most one line
+/// about it.
+///
+/// Silent when it is already there, which is the case on every entry but the first: a person
+/// who enters this directory forty times a day is told nothing forty times, and that silence
+/// is the feature. Silent, too, when a server is still binding — the election keeps such a
+/// lease young and classifies an abandoned one as stale, so `starting` is a state that is
+/// always about to stop being true and is never worth a line at a prompt.
+///
+/// It never returns a failure. Nothing about the environment a shell is being handed depends
+/// on the runtime, and an entry that exited non-zero because a server did not come up would
+/// leave direnv reporting that the whole environment failed — over a process the next `cd`
+/// will start.
+fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: Duration) {
+    match std::env::var(RUNTIME_ENV).as_deref() {
+        Ok("off") => return,
+        // Anything else is `auto`: an unset variable, and a value nobody here understands.
+        // A typo in a shell profile must not silently turn the runtime off, and it must not
+        // fail the entry either.
+        _ => {}
+    }
+    if policy.is_some_and(|p| !p.policy.session.ensure_server_on_start) {
+        return;
+    }
+    let c = match crate::commands::serve::converge(
+        repository,
+        DEFAULT_PORT,
+        DEFAULT_IDLE_SECONDS,
+        wait,
+    ) {
+        Ok(c) => c,
+        Err(e) => {
+            // The lease could not be read or a process could not be started. One line, and
+            // the command it names is the one that says more.
+            eprintln!(
+                "majordomus: the runtime could not be ensured: {e}; `majordomus serve status` says where it stands"
+            );
+            return;
+        }
+    };
+    if c.ready() {
+        return;
+    }
+    if c.started {
+        eprintln!(
+            "majordomus: nothing was serving this checkout; a server is starting (log: {})",
+            c.log.display()
+        );
+        return;
+    }
+    if c.standing == crate::capability::builtin::server::ServerStanding::Starting {
+        return;
+    }
+    eprintln!(
+        "majordomus: the runtime did not converge: {}; `majordomus serve status` says where it stands",
+        c.reason.as_deref().unwrap_or("no reason was given")
+    );
+}
+
 /// The resolution each subcommand uses.
 ///
 /// Test-only, and honestly so: the dispatch above does not consult this — each of the four
@@ -431,7 +619,7 @@ use crate::environment::Resolution;
 pub fn resolution_of(subcommand: &str) -> Option<Resolution> {
     match subcommand {
         "status" | "explain" => Some(Resolution::Full),
-        "banner" | "export" => Some(Resolution::Fast),
+        "banner" | "export" | "enter" => Some(Resolution::Fast),
         _ => None,
     }
 }
@@ -475,6 +663,51 @@ mod tests {
         assert_eq!(resolution_of("explain"), Some(Resolution::Full));
         assert_eq!(resolution_of("banner"), Some(Resolution::Fast));
         assert_eq!(resolution_of("export"), Some(Resolution::Fast));
+        assert_eq!(
+            resolution_of("enter"),
+            Some(Resolution::Fast),
+            "entry runs on every `cd`; it may never build the index"
+        );
+    }
+
+    /// The one thing about `enter` that cannot be allowed to regress quietly: a shell it
+    /// cannot write for is refused before a repository is discovered, a policy read or a
+    /// runtime ensured. A caller that got an error here started nothing.
+    #[test]
+    fn entering_for_a_shell_this_does_not_write_for_is_refused_before_anything_is_read() {
+        let args = RepoArgs {
+            repo: Some("/nonexistent/majordomus/checkout".into()),
+            ..RepoArgs::default()
+        };
+        match enter_command(
+            &args,
+            "powershell",
+            None,
+            false,
+            false,
+            false,
+            Duration::ZERO,
+        ) {
+            // the repository does not exist, so reaching discovery would be a different
+            // error; this being the shell error is the assertion
+            Err(Error::Protocol { reason }) => assert!(reason.contains("powershell"), "{reason}"),
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// `MAJORDOMUS_RUNTIME=off` is the one value that turns the runtime half off. Anything
+    /// else is `auto`, including a typo: a misspelling in somebody's shell profile must not
+    /// silently stop this repository from coming up.
+    #[test]
+    fn only_off_turns_the_runtime_off() {
+        for (value, off) in [("off", true), ("auto", false), ("of", false), ("", false)] {
+            assert_eq!(
+                value == "off",
+                off,
+                "{value} is {}read as off",
+                if off { "not " } else { "" }
+            );
+        }
     }
 
     #[test]

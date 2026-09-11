@@ -174,6 +174,27 @@ pub enum EnvCommand {
         #[arg(long)]
         bridge: bool,
     },
+    /// Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer
+    Enter {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// How much banner to draw; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", conflicts_with = "no_banner")]
+        mode: Option<String>,
+        /// Do not draw the banner
+        #[arg(long = "no-banner")]
+        no_banner: bool,
+        /// Do not refresh the workflow bridge
+        #[arg(long = "no-bridge")]
+        no_bridge: bool,
+        /// Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument
+        #[arg(long = "no-runtime")]
+        no_runtime: bool,
+        /// Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published
+        #[arg(long, value_name = "SECONDS", default_value_t = 0)]
+        wait: u64,
+    },
     /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
     Explain {
         /// One field in dotted form (`vcs.branch`, `layer.objects`), or a prefix; every field when absent
@@ -1631,6 +1652,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "The assignments a shell in this repository wants",
             description: "Assignments and nothing else, safe to `eval`: no command runs, no file is touched, and every value is quoted so that a repository path holding a quote or a `$(...)` cannot become shell code. This is the whole of what `.envrc` needs from Majordomus.",
             argv: &["env", "export", "--shell", "direnv"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
+        command: "env enter",
+        examples: &[ExampleDoc {
+            id: "env-enter",
+            title: "Everything entering this repository is, as one call",
+            description: "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+            argv: &["env", "enter", "--shell", "direnv", "--no-banner", "--no-bridge", "--no-runtime"],
             setup: &[],
             expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
         }],
