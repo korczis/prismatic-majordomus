@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="1c73468b1437">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>devtask.issue — Prismatic Majordomus</title>
+<meta name="description" content="Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: &quot;&quot;` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/devtask-issue/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="devtask.issue — Prismatic Majordomus">
+<meta property="og:description" content="Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: &quot;&quot;` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/devtask-issue/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=05c8cab3ab2a36e3a8a9">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Method<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Method</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://majordomus.dev/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-9" data-dropdown-toggle="nav-menu-9" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-9" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-9">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">devtask.issue</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">devtask.issue</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: &quot;&quot;` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Identity, title, intent, status, milestone, acceptance criteria, dependencies, blockers, the commits its own evidence names and the commits git found, its branches, the sessions that worked on it, its readiness and everything wrong with its records — each field carrying whether a person authored it (`explicit`), a machine worked it out by a rule that cannot be wrong (`derived`), a machine worked it out by a rule that can (`inferred`, with the rule stated), or it is not available at all (`unknown`, with the reason). A key the record does not carry is `unknown`, never an empty string: `objective: &quot;&quot;` and a record with no objective are the same string and different facts. An id the model does not declare is answered, not refused. `git: false` answers from the records alone, which is what a comparison across machines wants.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/devtask/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module devtask</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#devtask</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#plan</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#issue</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#provenance</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#readiness</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#git</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_devtask</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-devtask-issue" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/devtask/issue</a> <span class="text-xs text-body-subtle">operationId devtask.issue</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus devtask issue</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · DevTaskInput</h3><p class="mt-1 break-words text-sm text-body">Which issue to read as a development task.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">git</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Consult git for the branches and commits that realised it. Default: yes. Set it to
+false for a deterministic answer that depends on the records alone — which is what a
+generated document or a comparison across machines wants.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The issue id, as the canonical model spells it (`I0901`). An id the model does not
+declare is answered with `declared: false` and every canonical field `unknown`,
+never refused and never answered with empty strings that read as authored.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which issue to read as a development task.&quot;,
+  &quot;properties&quot;: {
+    &quot;git&quot;: {
+      &quot;description&quot;: &quot;Consult git for the branches and commits that realised it. Default: yes. Set it to\nfalse for a deterministic answer that depends on the records alone — which is what a\ngenerated document or a comparison across machines wants.&quot;,
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;The issue id, as the canonical model spells it (`I0901`). An id the model does not\ndeclare is answered with `declared: false` and every canonical field `unknown`,\nnever refused and never answered with empty strings that read as authored.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;issue&quot;
+  ],
+  &quot;title&quot;: &quot;DevTaskInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · DevTask</h3><p class="mt-1 break-words text-sm text-body">One issue as an executable development task: what was authored, where it sits, what has
+happened to it, where its external projection stands, and whether a worker may start it.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">attestation</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">How much of the answer was authored and how much a machine worked out.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declaration</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What a person authored.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">declared</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the canonical model declares it. False is answered rather than refused, with
+every canonical field `unknown`: a typo that read as &quot;nothing has been authored&quot; is
+the one answer this must never give.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">diagnostics</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Everything wrong with its records.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">execution</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What happened locally.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The issue id, as asked for.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">position</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where the plan graph puts it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">readiness</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether it can be worked on, and what is in the way.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">record</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Repository-relative path of the canonical record, when there is one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">synchronisation</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where the external projection stands.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;AttestationTally&quot;: {
+      &quot;description&quot;: &quot;How much of one answer was authored, and how much a machine worked out.\n\nNot decoration: it is the measurement that makes the provenance discipline checkable\nfrom outside. A task whose declaration is mostly `unknown` is a placeholder however\ncomplete its derived half looks, and this is the number that says so.&quot;,
+      &quot;properties&quot;: {
+        &quot;derived&quot;: {
+          &quot;description&quot;: &quot;Fields worked out by a rule that cannot be wrong about a readable repository.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;explicit&quot;: {
+          &quot;description&quot;: &quot;Fields a person authored in the canonical record.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;inferred&quot;: {
+          &quot;description&quot;: &quot;Fields worked out by a rule that can be wrong.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;unknown&quot;: {
+          &quot;description&quot;: &quot;Fields not available at all.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;explicit&quot;,
+        &quot;derived&quot;,
+        &quot;inferred&quot;,
+        &quot;unknown&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;AttestedCount&quot;: {
+      &quot;description&quot;: &quot;A count with its provenance. Separate from [`AttestedText`] because a wave, a commit\ntally and an evidence count are numbers a caller does arithmetic on, and a number\nrendered as a string is a number every client has to parse back.&quot;,
+      &quot;properties&quot;: {
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
+          &quot;description&quot;: &quot;Where it came from.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The one place a reader goes to check it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The number, absent exactly when the provenance is `unknown`.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;provenance&quot;,
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;AttestedList&quot;: {
+      &quot;description&quot;: &quot;A list with its provenance. The distinction a bare `Vec` cannot make is the one that\nmatters here: `depends_on: []` in the record is an authored empty list, and a record with\nno `depends_on` key is unknown. Both are empty; only one is a statement.&quot;,
+      &quot;properties&quot;: {
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
+          &quot;description&quot;: &quot;Where they came from.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The one place a reader goes to check them.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;values&quot;: {
+          &quot;description&quot;: &quot;The items, in the order the record or the derivation produced them. Empty for an\nauthored empty list and for an unknown field alike; `provenance` tells them apart.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;values&quot;,
+        &quot;provenance&quot;,
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;AttestedText&quot;: {
+      &quot;description&quot;: &quot;One scalar with its provenance: the unit every field of a development task is made of.\n\nThe invariant the constructors enforce, and [`AttestedText::is_consistent`] states, is\nthat a value is present exactly when the provenance is not [`FieldProvenance::Unknown`].\nWithout it the shape can express \&quot;unknown, and here is the value\&quot;, which is the defect\nthis whole module exists to prevent.&quot;,
+      &quot;properties&quot;: {
+        &quot;provenance&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FieldProvenance&quot;,
+          &quot;description&quot;: &quot;Where it came from.&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why the provenance is what it is, when that is worth a sentence: always for\n`unknown` and for `inferred`, and omitted otherwise.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The one place a reader goes to check it: a repository-relative path with the key it\nwas read from, a capability id, or a command. Never a machine path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;value&quot;: {
+          &quot;description&quot;: &quot;The value, absent exactly when the provenance is `unknown`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;provenance&quot;,
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Blocker&quot;: {
+      &quot;description&quot;: &quot;One thing standing between a task and being startable, with what to do about it.&quot;,
+      &quot;properties&quot;: {
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line a person can act on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlockerKind&quot;,
+          &quot;description&quot;: &quot;What kind of thing it is.&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;The thing: an issue id, a milestone id, an evidence token.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;subject&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlockerKind&quot;: {
+      &quot;description&quot;: &quot;What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;issue&quot;,
+          &quot;description&quot;: &quot;An issue this one depends on that is not `DONE`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;milestone&quot;,
+          &quot;description&quot;: &quot;The milestone gate: an outcome this one&#39;s milestone requires is not `DONE`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;evidence&quot;,
+          &quot;description&quot;: &quot;A required evidence token the record does not carry, with completion recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;reference&quot;,
+          &quot;description&quot;: &quot;A dependency that resolves to nothing: the model has no such issue.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cycle&quot;,
+          &quot;description&quot;: &quot;A dependency cycle this task is in or downstream of, so it can never become ready.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;DevTaskDeclaration&quot;: {
+      &quot;description&quot;: &quot;What a person authored in the canonical record. Every field is [`FieldProvenance::Explicit`]\nor [`FieldProvenance::Unknown`] and nothing else: a value here was written down, or it\ndoes not exist.&quot;,
+      &quot;properties&quot;: {
+        &quot;acceptance_criteria&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;What must be true before it is finished.&quot;
+        },
+        &quot;cancelled&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Whether it was withdrawn.&quot;
+        },
+        &quot;completed_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When completion was recorded.&quot;
+        },
+        &quot;completion&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;What the author says about how far it got. Authored prose, never a status: the\nstatus is derived, and this is the one field where a person may disagree with it.&quot;
+        },
+        &quot;created_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When the record was created.&quot;
+        },
+        &quot;current_state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Where the repository stands before it.&quot;
+        },
+        &quot;depends_on&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The issues it declares a dependency on, exactly as declared — including one that\ndoes not exist, which is a diagnostic and not a silent omission.&quot;
+        },
+        &quot;desired_state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Where the repository stands once it is real.&quot;
+        },
+        &quot;evidence_commits&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The commits the record&#39;s own evidence entries name. Authored, and therefore a\ndifferent fact from the commits git finds on the branches — which are in\n[`DevTaskExecution::commits`] and are derived.&quot;
+        },
+        &quot;evidence_present&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The evidence tokens it actually carries.&quot;
+        },
+        &quot;evidence_required&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The evidence tokens it requires before it may be complete.&quot;
+        },
+        &quot;milestone&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The milestone it belongs to.&quot;
+        },
+        &quot;non_scope&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The paths it deliberately does not touch.&quot;
+        },
+        &quot;objective&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;What the issue is for.&quot;
+        },
+        &quot;owner&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Who owns it.&quot;
+        },
+        &quot;parallel_safe&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Whether it may run beside another issue of its wave.&quot;
+        },
+        &quot;priority&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;`p0` … `p3`.&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The execution profile it is worked under.&quot;
+        },
+        &quot;risk&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;What could go wrong.&quot;
+        },
+        &quot;scope&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The paths it may touch.&quot;
+        },
+        &quot;slug&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The slug.&quot;
+        },
+        &quot;started_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When execution began.&quot;
+        },
+        &quot;title&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;One line naming the outcome.&quot;
+        },
+        &quot;updated_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When it last moved.&quot;
+        },
+        &quot;validation&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The commands that check it.&quot;
+        },
+        &quot;verified_at&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;When implementation was declared finished.&quot;
+        },
+        &quot;why&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;Why it is worth doing.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;title&quot;,
+        &quot;objective&quot;,
+        &quot;why&quot;,
+        &quot;current_state&quot;,
+        &quot;desired_state&quot;,
+        &quot;completion&quot;,
+        &quot;milestone&quot;,
+        &quot;priority&quot;,
+        &quot;profile&quot;,
+        &quot;parallel_safe&quot;,
+        &quot;owner&quot;,
+        &quot;risk&quot;,
+        &quot;slug&quot;,
+        &quot;cancelled&quot;,
+        &quot;created_at&quot;,
+        &quot;updated_at&quot;,
+        &quot;started_at&quot;,
+        &quot;verified_at&quot;,
+        &quot;completed_at&quot;,
+        &quot;scope&quot;,
+        &quot;non_scope&quot;,
+        &quot;depends_on&quot;,
+        &quot;acceptance_criteria&quot;,
+        &quot;validation&quot;,
+        &quot;evidence_required&quot;,
+        &quot;evidence_present&quot;,
+        &quot;evidence_commits&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DevTaskDiagnostic&quot;: {
+      &quot;description&quot;: &quot;One thing wrong with this task&#39;s records, in the shape `project.finding-carries-reproduce`\nasks for.&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;description&quot;: &quot;The stable code a reader greps for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;level&quot;: {
+          &quot;description&quot;: &quot;`FAIL` or `WARN`, as the plan&#39;s own finding levels.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;message&quot;: {
+          &quot;description&quot;: &quot;What is wrong, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The one command that shows it again.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;level&quot;,
+        &quot;code&quot;,
+        &quot;message&quot;,
+        &quot;reproduce&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DevTaskExecution&quot;: {
+      &quot;description&quot;: &quot;Local execution state: what actually happened in this checkout&#39;s git history and session\nrecords. Derived where the relation was declared, inferred where it was not, and the\nfields say which.&quot;,
+      &quot;properties&quot;: {
+        &quot;branches&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The branches whose name carries this issue&#39;s id, local first.&quot;
+        },
+        &quot;commits&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;How many distinct commits those branches hold that the trunk did not.&quot;
+        },
+        &quot;commits_complete&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;True when every branch&#39;s commits could be derived. False when one reached the trunk\nwithout a merge commit of its own, so part of the work cannot be told from the\ntrunk&#39;s — reported rather than counted as zero.&quot;
+        },
+        &quot;git_consulted&quot;: {
+          &quot;description&quot;: &quot;Whether git was consulted at all. False makes every git-derived field below\n`unknown` rather than empty, which is the difference between \&quot;nothing realised this\&quot;\nand \&quot;nobody looked\&quot;.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;merged_branches&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;Of those, the ones that reached the trunk.&quot;
+        },
+        &quot;sessions&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The session records whose own `issues` key names this issue. Derived: the key is\nworked out from the episode&#39;s ledger events, not authored and not guessed.&quot;
+        },
+        &quot;sessions_by_branch&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The session records that reach this issue only through their branch name, and which\ntherefore may be wrong. Never overlaps [`DevTaskExecution::sessions`]: a session that\ndeclared the issue is reported there and not here, so the weaker relation never\nstands in for the stronger one.&quot;
+        },
+        &quot;trunk&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The trunk every branch was measured against.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;git_consulted&quot;,
+        &quot;branches&quot;,
+        &quot;merged_branches&quot;,
+        &quot;commits&quot;,
+        &quot;trunk&quot;,
+        &quot;commits_complete&quot;,
+        &quot;sessions&quot;,
+        &quot;sessions_by_branch&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DevTaskPosition&quot;: {
+      &quot;description&quot;: &quot;Where the task sits in the plan graph. Every field is derived; nothing here is authored,\nand nothing here is stored anywhere.&quot;,
+      &quot;properties&quot;: {
+        &quot;blocked_by&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The dependencies that are not `DONE`, plus the milestone gate when it applies.&quot;
+        },
+        &quot;dependents&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The issues that wait on this one.&quot;
+        },
+        &quot;evidence_have&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;How many evidence tokens it carries.&quot;
+        },
+        &quot;evidence_need&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;How many it needs.&quot;
+        },
+        &quot;milestone_blocked_by&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedList&quot;,
+          &quot;description&quot;: &quot;The outcomes that milestone still waits on.&quot;
+        },
+        &quot;milestone_rank&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;The milestone&#39;s layer in the milestone graph.&quot;
+        },
+        &quot;milestone_status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The status of the milestone it belongs to.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The canonical status, from the one derivation of it.&quot;
+        },
+        &quot;transitive_dependents&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;Every issue that waits on it, directly or through another. The measure of what\nfinishing it unblocks.&quot;
+        },
+        &quot;wave&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedCount&quot;,
+          &quot;description&quot;: &quot;The execution wave: one past the longest path to it. Unknown when a cycle prevents\nit from ever having one.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;status&quot;,
+        &quot;wave&quot;,
+        &quot;blocked_by&quot;,
+        &quot;dependents&quot;,
+        &quot;transitive_dependents&quot;,
+        &quot;milestone_status&quot;,
+        &quot;milestone_rank&quot;,
+        &quot;milestone_blocked_by&quot;,
+        &quot;evidence_have&quot;,
+        &quot;evidence_need&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DevTaskSynchronisation&quot;: {
+      &quot;description&quot;: &quot;The external projection. Nothing here is ever written by this executable, and the fields\nthat only the adapter can answer say so rather than reading as empty.&quot;,
+      &quot;properties&quot;: {
+        &quot;adapter&quot;: {
+          &quot;description&quot;: &quot;The adapter that owns the projection. The one thing that can answer the live state.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;external_id&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The external record&#39;s own identifier — a GitHub number — which GitHub assigns and\nnothing local records. Always `unknown`, for the same reason.&quot;
+        },
+        &quot;reconcile_with&quot;: {
+          &quot;description&quot;: &quot;The commands that answer the external half.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;repository&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The repository the projection targets, from `project.yaml`.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AttestedText&quot;,
+          &quot;description&quot;: &quot;The reconciliation state of the external record. Always `unknown` from here: it is a\nnetwork fact, and this executable makes none. The reason names the command.&quot;
+        },
+        &quot;writable&quot;: {
+          &quot;description&quot;: &quot;Whether this executable may write any of it. Always false; stated as a field so that\na client need not know the rule to respect it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;adapter&quot;,
+        &quot;repository&quot;,
+        &quot;state&quot;,
+        &quot;external_id&quot;,
+        &quot;reconcile_with&quot;,
+        &quot;writable&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;FieldProvenance&quot;: {
+      &quot;description&quot;: &quot;Where a value came from, and therefore how much weight a reader may put on it.\n\nThe four words are not degrees of confidence, they are four different relations to the\nrepository, and the distinction that matters most is the first from the last two: a\nperson wrote it, or a machine worked it out.\n\n```\nuse majordomus_cli::devtask::{AttestedText, FieldProvenance};\n\n// a value the record itself carried\nlet title = AttestedText::explicit(\&quot;Ship it\&quot;, \&quot;.ai/repo/project/issues/I0001.yaml#title\&quot;);\nassert_eq!(title.provenance, FieldProvenance::Explicit);\n\n// a key the record does not have is unknown, and unknown carries no value\nlet missing = AttestedText::unknown(\n    \&quot;.ai/repo/project/issues/I0001.yaml#objective\&quot;,\n    \&quot;the record declares no `objective`\&quot;,\n);\nassert_eq!(missing.provenance, FieldProvenance::Unknown);\nassert!(missing.value.is_none());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;explicit&quot;,
+          &quot;description&quot;: &quot;A person authored it, in the canonical record, under this key. The strongest thing\nthat can be said about a value, and the only one that survives a rewrite of every\nderivation in this repository.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;derived&quot;,
+          &quot;description&quot;: &quot;A machine worked it out from records or from git, by a rule that cannot be wrong\nabout a repository it can read: an issue&#39;s dependents are the issues that name it.\nRe-derived on every call and stored nowhere.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inferred&quot;,
+          &quot;description&quot;: &quot;A machine worked it out by a rule that *can* be wrong, because the relation it reads\nwas never declared: a session belongs to an issue because its branch name contains\nthe issue&#39;s id. Useful, and never to be mistaken for a declaration.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;Not available. Either the record does not carry the key, or the fact lives outside\nwhat this process may read — a live GitHub state, for one — and the field says which\nin its `reason`. An unknown field never carries a value.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReadinessVerdict&quot;: {
+      &quot;description&quot;: &quot;The readiness verdict, with everything it was derived from beside it.&quot;,
+      &quot;properties&quot;: {
+        &quot;blockers&quot;: {
+          &quot;description&quot;: &quot;Everything standing in the way, each with what to do about it.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/Blocker&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;canonical_status&quot;: {
+          &quot;description&quot;: &quot;The canonical status it refines, so the two can never be read apart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is in that state, in one line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;startable&quot;: {
+          &quot;description&quot;: &quot;May a worker pick it up right now?&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TaskReadiness&quot;,
+          &quot;description&quot;: &quot;Where the task stands, as work.&quot;
+        },
+        &quot;terminal&quot;: {
+          &quot;description&quot;: &quot;Is there nothing further to do?&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;canonical_status&quot;,
+        &quot;reason&quot;,
+        &quot;startable&quot;,
+        &quot;terminal&quot;,
+        &quot;blockers&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;TaskReadiness&quot;: {
+      &quot;description&quot;: &quot;Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \&quot;READY\&quot;);\nassert_eq!(TaskReadiness::Waiting.canonical(), \&quot;BLOCKED\&quot;);\nassert_eq!(TaskReadiness::Blocked.canonical(), \&quot;BLOCKED\&quot;);\nassert_eq!(TaskReadiness::Review.canonical(), \&quot;VERIFY\&quot;);\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \&quot;VERIFY\&quot;);\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;ready&quot;,
+          &quot;description&quot;: &quot;Nothing holds it back and nobody has started it. Canonical `READY`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;blocked&quot;,
+          &quot;description&quot;: &quot;At least one issue it depends on is not `DONE`. Canonical `BLOCKED`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;waiting&quot;,
+          &quot;description&quot;: &quot;Every issue dependency is satisfied; the milestone gate holds it. Canonical\n`BLOCKED`, and a distinct situation because it is resolved in another milestone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;in_progress&quot;,
+          &quot;description&quot;: &quot;Execution began: the record carries `started_at`. Canonical `ACTIVE`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;review&quot;,
+          &quot;description&quot;: &quot;Implementation is declared finished and completion has not been recorded: the record\ncarries `verified_at`. Canonical `VERIFY`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;completion_blocked&quot;,
+          &quot;description&quot;: &quot;Completion *was* recorded and the evidence the record itself requires is not all\nthere, so the plan refuses to call it `DONE`. Canonical `VERIFY`, and the case the\n`evidence_missing` finding is about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;complete&quot;,
+          &quot;description&quot;: &quot;Finished on its own terms: not cancelled, completion recorded, every required\nevidence token present. Canonical `DONE`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;Withdrawn. Canonical `CANCELLED`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;undeclared&quot;,
+          &quot;description&quot;: &quot;The canonical model does not declare this id. Not a status: the absence of a record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;One issue as an executable development task: what was authored, where it sits, what has\nhappened to it, where its external projection stands, and whether a worker may start it.&quot;,
+  &quot;properties&quot;: {
+    &quot;attestation&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/AttestationTally&quot;,
+      &quot;description&quot;: &quot;How much of the answer was authored and how much a machine worked out.&quot;
+    },
+    &quot;declaration&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskDeclaration&quot;,
+      &quot;description&quot;: &quot;What a person authored.&quot;
+    },
+    &quot;declared&quot;: {
+      &quot;description&quot;: &quot;Whether the canonical model declares it. False is answered rather than refused, with\nevery canonical field `unknown`: a typo that read as \&quot;nothing has been authored\&quot; is\nthe one answer this must never give.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;diagnostics&quot;: {
+      &quot;description&quot;: &quot;Everything wrong with its records.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DevTaskDiagnostic&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;execution&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskExecution&quot;,
+      &quot;description&quot;: &quot;What happened locally.&quot;
+    },
+    &quot;issue&quot;: {
+      &quot;description&quot;: &quot;The issue id, as asked for.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;position&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskPosition&quot;,
+      &quot;description&quot;: &quot;Where the plan graph puts it.&quot;
+    },
+    &quot;readiness&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReadinessVerdict&quot;,
+      &quot;description&quot;: &quot;Whether it can be worked on, and what is in the way.&quot;
+    },
+    &quot;record&quot;: {
+      &quot;description&quot;: &quot;Repository-relative path of the canonical record, when there is one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;synchronisation&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/DevTaskSynchronisation&quot;,
+      &quot;description&quot;: &quot;Where the external projection stands.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;issue&quot;,
+    &quot;declared&quot;,
+    &quot;declaration&quot;,
+    &quot;position&quot;,
+    &quot;execution&quot;,
+    &quot;synchronisation&quot;,
+    &quot;readiness&quot;,
+    &quot;diagnostics&quot;,
+    &quot;attestation&quot;
+  ],
+  &quot;title&quot;: &quot;DevTask&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-direct-records-only" class="break-all text-fg-brand hover:underline inline-block py-1">records-only</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-direct-with-git" class="break-all text-fg-brand hover:underline inline-block py-1">with-git</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-mcp-records-only" class="break-all text-fg-brand hover:underline inline-block py-1">records-only</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-mcp-with-git" class="break-all text-fg-brand hover:underline inline-block py-1">with-git</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-http-records-only" class="break-all text-fg-brand hover:underline inline-block py-1">records-only</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-devtask-issue-http-with-git" class="break-all text-fg-brand hover:underline inline-block py-1">with-git</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">devtask.issue</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/devtask.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devtask</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DevTaskInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">DevTask</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/devtask.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devtask.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">f544d8ce0c24f025a7d8cd1622f239ce3779ed97abad79c6850cd49819459069</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://majordomus.dev/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a47f93ef90b7c3fff349bc52178ee07c0bc0d680" class="font-mono underline">a47f93e</a> · inputs <span class="font-mono">2a3431e8bfa8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
