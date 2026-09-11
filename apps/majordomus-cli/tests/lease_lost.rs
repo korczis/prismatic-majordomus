@@ -83,7 +83,8 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
     let before = index(&url);
     assert_eq!(before["name"], "majordomus");
     assert_eq!(
-        before[LEASEHOLDER_KEY], json!(true),
+        before[LEASEHOLDER_KEY],
+        json!(true),
         "a server nothing has taken a lease from claims to be the one: {before}"
     );
     assert!(
@@ -110,7 +111,8 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
 
     let after = index(&url);
     assert_eq!(
-        after[LEASEHOLDER_KEY], json!(false),
+        after[LEASEHOLDER_KEY],
+        json!(false),
         "the one field that separates it from the current server: {after}"
     );
     assert_eq!(
