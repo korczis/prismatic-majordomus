@@ -18,6 +18,8 @@ on:
     branches: [master]
     paths:
       - .ai/**
+      - .ai/repo/evidence-baseline.txt
+      - .ai/repo/evidence/**
       - .envrc
       - .githooks/**
       - .github/workflows/pages.yml
@@ -35,7 +37,10 @@ on:
       - assets/**
       - bin/**
       - docs/**
+      - docs/CLAIMS.yaml
       - docs/DESIGN_SYSTEM.md
+      - docs/EVIDENCE.md
+      - docs/claims/**
       - docs/generated/**
       - examples/**
       - lib/**
@@ -44,6 +49,7 @@ on:
       - scripts/ci/design-check
       - scripts/cockpit-assets
       - scripts/cockpit-probe
+      - scripts/evidence-check
       - scripts/generate-site-data
       - scripts/github-sync
       - scripts/lib/**

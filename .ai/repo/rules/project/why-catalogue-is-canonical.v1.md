@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.derived-files-regenerated@1]
 tags: [why, catalogue, projections, documentation]
+
+x-majordomus:
+  tests: [test/cases/98_why_catalogue.sh]
 ---
 
 # Rationale

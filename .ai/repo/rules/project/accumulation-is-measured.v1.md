@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.worktree-topology@1, project.work-is-claimed-before-it-is-built@1]
 tags: [operations, git, worktree, safety, agents, coordination, ci]
+
+x-majordomus:
+  tests: [test/cases/131_backlog_hygiene.sh]
 ---
 
 # Rationale

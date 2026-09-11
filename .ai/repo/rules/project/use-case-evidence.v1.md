@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [majordomus.use-case-coverage@1, majordomus.catalogue-integrity@1]
 tags: [use-cases, evidence, documentation]
+
+x-majordomus:
+  tests: [test/cases/94_use_cases.sh, test/cases/28_catalogue.sh, test/cases/10_site_data.sh, test/cases/11_site_derivation.sh, scripts/site-check]
 ---
 
 # Rationale
