@@ -1,7 +1,7 @@
 +++
 title = "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares"
 description = "Reading the lifecycle back is two different questions with two different answers, and until this existed only one of them had a surface. A worker asks *what am I resuming from?* and continuity.state answers it: one episode — the one .ai/local/state/session-current.yaml resolves to — one handover, one checkpoint, the blockers. An operator asks *is this subsystem working?* and that question is structurally unanswerable from the first, because the pointer is a symlink that the most recent start event re-aims. lifecycle.episodes, lifecycle.recovery, lifecycle.runtime, lifecycle.providers and lifecycle.closed read the store rather than the pointer and answer the second question, over MCP, over GET /api/v1/lifecycle/<name>, and on the Cockpit's Continuity page, which holds no session model of its own and is a projection of exactly these five and continuity.state."
-weight = 151
+weight = 153
 [extra]
 claim_id = "session-observability"
 status = "guaranteed"

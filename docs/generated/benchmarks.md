@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 84 | 80 | 0 | 4 |
-| http | 83 | 80 | 0 | 3 |
-| mcp | 81 | 78 | 0 | 3 |
+| direct | 89 | 85 | 0 | 4 |
+| http | 88 | 85 | 0 | 3 |
+| mcp | 86 | 83 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 261 | 251 | 0 | 10 |
+| total | 276 | 266 | 0 | 10 |
 
 ## Capabilities
 
@@ -60,6 +60,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
+| `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
+| `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
