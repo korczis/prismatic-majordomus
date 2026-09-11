@@ -73,6 +73,11 @@ on:
 # serves that branch and needs no permission here.
 permissions:
   contents: write
+  # The second half of publishing, and the half this repository does not own: GitHub's own
+  # "pages build and deployment" of the branch pushed below. Its status is a fact with an API,
+  # and until 2026-09-11 this run could not read it — which is why an errored build was the one
+  # failure mode of the three that left a green tick.
+  pages: read
 
 # The site is a projection of the newest commit, so an older deployment of an older commit is
 # worth nothing the moment a newer push exists. A superseded run is cancelled rather than
@@ -197,6 +202,49 @@ jobs:
           MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 600
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
+
+      # The third way a deploy fails, and the only one that used to end in a green tick.
+      #
+      # The step above waits for the site to serve this commit and is deliberately a report:
+      # what it waits on is the Actions queue, GitHub's Pages build and a CDN, none of which
+      # this repository controls, and a gate on somebody else's latency is a gate that gets
+      # waived. But "slow" and "failed" are not the same fact, and the second one has an API.
+      # On 2026-09-10 at 17:35:10Z GitHub's build of gh-pages commit dfd9c989c errored with
+      # "Page build failed."; the push had succeeded, the branch carried the right tree, this
+      # workflow reported success, and the public site served the previous commit for 27
+      # minutes with nothing red anywhere. A person noticed by eye, again.
+      #
+      # So the errored case — and only the errored case — is a failure of this run, at the
+      # moment it happens, in the run that caused it. `scripts/pages built` separates the two:
+      # 10 is a build that errored, which is definite and is ours to report; 12 is a build that
+      # has not happened yet or could not be read, which is weather and stays a note. Nothing
+      # here waits longer than the probe above already did, so the run costs no extra minute
+      # when everything is well.
+      #
+      # `pages-live` in validate.yml still asks the same question on the next validation of
+      # master, because a run that is cancelled before reaching this step cannot report
+      # anything — but it no longer has to be the first to notice.
+      #
+      # Two minutes, and the wait inside them is sixty seconds, because the waiting was already
+      # done: the probe above spends up to ten minutes on the site serving this commit, and
+      # GitHub's build has either finished or errored long before that returns. This step is
+      # the reading, not the wait — which is also what keeps the sum of the step bounds below
+      # the job's own, the invariant test/cases/26_ci_wiring.sh holds this file to.
+      - name: GitHub's own build of what we pushed
+        if: always() && steps.publish.outcome == 'success'
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          scripts/pages built --branch gh-pages --wait 60 || rc=$?
+          case "$rc" in
+            0)  ;;
+            10) echo "::error title=GitHub's Pages build errored::gh-pages was pushed and GitHub could not build it; the site still serves an older commit"
+                exit 1 ;;
+            *)  echo "::notice title=Pages build not determined::GitHub's own build of gh-pages was not readable or not finished within the wait; pages-live will ask again"
+                ;;
+          esac
 
       # A cancelled run is not a failure, and on a cancelled run nothing above this line has a
       # conclusion anybody reads: `gh run list` says `cancelled` whether the branch was pushed
