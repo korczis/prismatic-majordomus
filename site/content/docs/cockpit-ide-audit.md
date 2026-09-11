@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit as a development surface: baseline, archaeology and gap matrix"
 description = "forensic finding, 2026-09-10: what the Cockpit would need in order to become a development surface — the governance preflight and its two defects, the two-program split, the system run end to end with every command and response recorded, the gap matrix, the drift audit, and the phased plan with the failures that must be fixed first"
-weight = 33
+weight = 34
 [extra]
 source = "docs/COCKPIT_IDE_AUDIT.md"
 +++
@@ -72,8 +72,8 @@ exported into every shell in this repository and points at the *primary* checkou
 script did not carry it and the pre-push hook refused:
 
 ```text
-majordomus: MAJORDOMUS_SHARE names /Users/korczis/dev/prismatic-majordomus/share, the
-distribution of /Users/korczis/dev/prismatic-majordomus — another worktree of this
+majordomus: MAJORDOMUS_SHARE names ~/dev/prismatic-majordomus/share, the
+distribution of ~/dev/prismatic-majordomus — another worktree of this
 repository, not this one … Run with: env -u MAJORDOMUS_SHARE
 error: failed to push some refs to 'github.com:korczis/prismatic-majordomus.git'
 ```
@@ -151,7 +151,7 @@ output:
 
 ```console
 $ ./bin/majordomus-cli serve status
-  outdated  /Users/korczis/dev/prismatic-majordomus (master)  http://127.0.0.1:8741  peers 5
+  outdated  ~/dev/prismatic-majordomus (master)  http://127.0.0.1:8741  peers 5
             the executable it was started from … has been replaced since
             (it is serving code that is no longer on disk)
   outdated  …/feature/swagger-offline           http://127.0.0.1:60204  peers 0

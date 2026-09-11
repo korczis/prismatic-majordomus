@@ -4,7 +4,7 @@ description = "The context a development session should be given, compiled from 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 97
+weight = 100
 [extra]
 route = "/docs/cli/devcontext/"
 command = "majordomus devcontext"

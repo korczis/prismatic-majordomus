@@ -307,6 +307,40 @@
       "tool": "majordomus_devcontext_policy"
     },
     {
+      "api_anchor": "/docs/api/#op-devtask-issue",
+      "claims": [],
+      "cli": "majordomus devtask issue",
+      "id": "devtask.issue",
+      "kind": "query",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-issue/",
+      "slug": "devtask-issue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "One issue as an executable development task",
+      "tool": "majordomus_devtask"
+    },
+    {
+      "api_anchor": "/docs/api/#op-devtask-milestone",
+      "claims": [],
+      "cli": "majordomus devtask milestone",
+      "id": "devtask.milestone",
+      "kind": "query",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-milestone/",
+      "slug": "devtask-milestone",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "One milestone as an executable dependency graph",
+      "tool": "majordomus_devtask_milestone"
+    },
+    {
       "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
@@ -441,6 +475,114 @@
       "tests": [],
       "title": "The repository environment",
       "tool": "majordomus_environment"
+    },
+    {
+      "api_anchor": "/docs/api/#op-evidence-claim",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence claim",
+      "id": "evidence.claim",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-claim/",
+      "slug": "evidence-claim",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "What proves this claim",
+      "tool": "majordomus_evidence_claim"
+    },
+    {
+      "api_anchor": null,
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence record",
+      "id": "evidence.record",
+      "kind": "command",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-record/",
+      "slug": "evidence-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Record a run that happened",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/#op-evidence-report",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence show",
+      "id": "evidence.report",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": "majordomus://evidence",
+      "route": "/registry/capabilities/evidence-report/",
+      "slug": "evidence-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Every claim against the evidence recorded for it",
+      "tool": "majordomus_evidence"
+    },
+    {
+      "api_anchor": "/docs/api/#op-evidence-test",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence proves",
+      "id": "evidence.test",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-test/",
+      "slug": "evidence-test",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "What this test proves",
+      "tool": "majordomus_evidence_test"
     },
     {
       "api_anchor": "/docs/api/#op-executions-cancel",
@@ -1619,6 +1761,27 @@
         "route": "/guarantees/product-projection-public-safe/",
         "status": "guaranteed",
         "test": "apps/majordomus-cli/tests/product.rs"
+      },
+      {
+        "id": "evidence-proof-is-an-execution",
+        "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
+        "route": "/guarantees/evidence-proof-is-an-execution/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
+      },
+      {
+        "id": "evidence-currency-is-not-collapsed",
+        "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
+        "route": "/guarantees/evidence-currency-is-not-collapsed/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
+      },
+      {
+        "id": "evidence-partial-run-preserves-the-rest",
+        "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+        "route": "/guarantees/evidence-partial-run-preserves-the-rest/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
       }
     ],
     "http": [
@@ -1676,9 +1839,9 @@
     ]
   },
   "counts": {
-    "capabilities": 81,
-    "claims": 36,
-    "modules": 27
+    "capabilities": 87,
+    "claims": 40,
+    "modules": 29
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -1852,6 +2015,27 @@
     {
       "capabilities": [
         {
+          "id": "devtask.issue",
+          "route": "/registry/capabilities/devtask-issue/",
+          "slug": "devtask-issue"
+        },
+        {
+          "id": "devtask.milestone",
+          "route": "/registry/capabilities/devtask-milestone/",
+          "slug": "devtask-milestone"
+        }
+      ],
+      "claims": [],
+      "id": "devtask",
+      "route": "/registry/modules/devtask/",
+      "slug": "devtask",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "title": "Executable development scopes"
+    },
+    {
+      "capabilities": [
+        {
           "id": "directories.list",
           "route": "/registry/capabilities/directories-list/",
           "slug": "directories-list"
@@ -1921,6 +2105,45 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
       "title": "Repository environment"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "evidence.claim",
+          "route": "/registry/capabilities/evidence-claim/",
+          "slug": "evidence-claim"
+        },
+        {
+          "id": "evidence.record",
+          "route": "/registry/capabilities/evidence-record/",
+          "slug": "evidence-record"
+        },
+        {
+          "id": "evidence.report",
+          "route": "/registry/capabilities/evidence-report/",
+          "slug": "evidence-report"
+        },
+        {
+          "id": "evidence.test",
+          "route": "/registry/capabilities/evidence-test/",
+          "slug": "evidence-test"
+        }
+      ],
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "id": "evidence",
+      "route": "/registry/modules/evidence/",
+      "slug": "evidence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "title": "Evidence"
     },
     {
       "capabilities": [

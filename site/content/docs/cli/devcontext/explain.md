@@ -1,7 +1,7 @@
 +++
 title = "majordomus devcontext explain"
 description = "Why one canonical identifier is or is not in the context a request compiles to"
-weight = 99
+weight = 102
 [extra]
 route = "/docs/cli/devcontext/explain/"
 command = "majordomus devcontext explain"
