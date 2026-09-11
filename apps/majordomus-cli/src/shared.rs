@@ -8,7 +8,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::capability::Context;
 use crate::error::Result;
 use crate::http::mcp::McpEndpoint;
 use crate::http::server::{self, Running};
@@ -32,7 +31,7 @@ impl SharedServer {
     /// port is replaced by a free one and said so; without it, a taken port is an error.
     #[allow(clippy::too_many_arguments)]
     pub fn start(
-        ctx: Arc<Context>,
+        live: Arc<crate::live::Live>,
         version: &'static str,
         host: &str,
         port: u16,
@@ -51,8 +50,8 @@ impl SharedServer {
             None => server::bind(host, port)?,
         };
         let url = bound.url();
-        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        let router = Router::new(ctx, version)
+        let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
+        let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
         lease.publish(&url)?;
