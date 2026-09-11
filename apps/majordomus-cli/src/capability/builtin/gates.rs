@@ -249,6 +249,38 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         );
     }
 
+    // The obligation half of the done invariant is `obligations.closure`'s judgement, asked
+    // for through the same executor MCP and the HTTP routes use, so this report cannot
+    // disagree with `majordomus check` about whether an obligation stands. Nothing is
+    // re-judged here; the state word comes back and is translated once.
+    let mut standing: BTreeMap<String, gates::ObligationStanding> = BTreeMap::new();
+    let mut closure_reachable = false;
+    match ctx.execute("obligations.closure", serde_json::json!({})) {
+        Ok(value) => match serde_json::from_value::<super::obligations::Closure>(value) {
+            Ok(closure) => {
+                closure_reachable = true;
+                for o in closure.obligations {
+                    standing.insert(
+                        o.id.clone(),
+                        gates::ObligationStanding {
+                            state: o.state.as_str().to_string(),
+                            detail: o.detail,
+                            reproduce: o.reproduce,
+                        },
+                    );
+                }
+            }
+            Err(e) => findings.push(format!(
+                "obligations.closure answered something this report cannot read, so every \
+                 obligation question is unknown rather than passing: {e}"
+            )),
+        },
+        Err(e) => findings.push(format!(
+            "obligations.closure could not be executed, so every obligation question is \
+             unknown rather than passing: {e}"
+        )),
+    }
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -256,6 +288,8 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         &vocab,
         &runs,
         &hashes,
+        &standing,
+        closure_reachable,
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,

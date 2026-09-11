@@ -234,6 +234,14 @@ mj_validate_completion_gates() {
       "majordomus start --requires $ob"
   done
 
+  # the done invariant, in one line rather than nineteen: what a reader must still settle,
+  # each question with the source that would answer it. `check` is read routinely and a
+  # nineteen-line block would be scrolled past; the whole set is in the JSON.
+  local owing
+  owing="$(printf '%s' "$out" | jq -r '[(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "\(.id)=\(.status)"] | join(" ")' 2>/dev/null)"
+  [ -z "$owing" ] || mj_doctrine_skip done "$id" "the done invariant is not yet answered: $owing" \
+    "$bin run gates.completion --input '{}' --format json | jq '.output.questions'"
+
   if [ -z "$blocking" ] && [ -z "$unverified" ]; then
     mj_doctrine_ok gate "$id" "every gate the change selects has reported over this tree ($(printf '%s' "$out" | jq -r '(.tallies.pass // 0)') passing, $(printf '%s' "$out" | jq -r '(.tallies.exempt // 0)') not applicable)"
   fi
