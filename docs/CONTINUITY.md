@@ -382,6 +382,124 @@ account of events the ledger already holds is what this design refuses.
 It is served and never published. Those records name this machine, so no generated document
 and no site page carries one, and a test proves it.
 
+### One episode, and then the rest of them
+
+`continuity.state` answers about **one** episode: the one `state/session-current.yaml`
+resolves to. That is the right answer for a briefing — a worker wants its own episode, not a
+census — and it is the wrong answer for anybody asking whether the subsystem is working,
+because the pointer is a symlink that the most recent start event re-aims. On 2026-09-11
+this repository held five open episodes in one checkout and no surface the tool has could
+name more than one of them. An episode nobody can see is an episode that never closes.
+
+So there is a second reading, `lifecycle.*`, which reads the **store** rather than the
+pointer and answers the operator's questions instead of the worker's:
+
+| Capability | Answers | Where the answer comes from |
+|---|---|---|
+| `lifecycle.episodes` | every open episode, its provider session, where it stands (`current`, `open`, `foreign`, `stranded`), the tasks it touched, and what the ledger last saw it do | `state/sessions-open/*.yaml`, `state/session-current.yaml`, `state/ledger.jsonl` |
+| `lifecycle.recovery` | episodes that can no longer close themselves, temporary files a killed close left in the tracked section, whether the pointer has been migrated, and whether every episode the ledger saw start is accounted for | the same store, plus the sessions section the manifest names |
+| `lifecycle.runtime` | the commit this process is answering about, against the commit the repository is on right now | the served index's git state, and `git` read on the call |
+| `lifecycle.providers` | which lifecycle events each provider's adapter declares, whether it can archive prompts, and which of this repository's enforcement entries are wired to its hook | `share/providers.yaml` and the policy's `enforcement` |
+| `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty | the object index, kind `session` |
+
+Each is exposed over MCP and over `GET /api/v1/lifecycle/<name>`, and the Cockpit's
+Continuity page is their projection. None of them writes: the lifecycle has one writer, and
+a second account of events the ledger already holds is what this design refuses.
+
+Two things are deliberately **not** among them.
+
+**No clock and no thresholds.** Nothing in `lifecycle.*` decides that a record is old. Age
+is `session.freshness` in the policy and `continuity.state`'s to judge; a second engine for
+it here would be the second source of truth that makes the numbers disagree. (`session.freshness`
+and the `fresh | aging | stale | unknown | invalid` labels are ADR 0041's and arrive with it;
+until they do, a record carries its divergence label and its recorded timestamp, and a reader
+does the arithmetic. The whole point of ADR 0041 is that a reader should not have to.)
+
+**No guess about attachment.** Whether the provider that opened an episode is still attached
+to its conversation is not a fact of this repository. The episode file records no process,
+the peer board records no episode, and a client that exits without firing its end event
+leaves a file identical to one a live worker is using. What `lifecycle.episodes` reports is
+what it can observe — where the file is, whose worktree it names, whether the pointer
+follows it, and when the ledger last saw it write — and `stranded` is reserved for the one
+case the repository can actually establish: the worktree the episode opened in is gone from
+disk, so nothing can compose its record.
+
+### The whole path, once
+
+Everything above is one path, and it is worth seeing whole. Every box is a thing that
+exists; the labels on the arrows are what has to be true for the next box to be reached.
+
+```text
+  a person runs a command                a provider starts a conversation
+  or opens an editor                     (Claude Code: SessionStart)
+            |                                          |
+            +--------------------+---------------------+
+                                 v
+                    ENTRY  bin/majordomus, .envrc, or the hook shim
+                                 |
+                                 v
+                    RUNTIME ENSURED   `serve ensure`: one shared server per
+                                 |    checkout, started if none answers, never built
+                                 v
+                    CLIENT ATTACHED   MCP over stdio or HTTP; the peer board
+                                 |    is what the other workers can see
+                                 v
+                    EPISODE OPENED    keyed by the provider session, not by the
+                                 |    checkout: `state/sessions-open/<provider session>.yaml`
+                                 |    and the pointer aimed at it. `--if-open keep`
+                                 |    returns this provider session's episode and no other.
+                                 v
+                    FRESHNESS VALIDATED   the resolved handover and checkpoint carry two
+                                 |        independent labels: divergence (where their commit
+                                 |        sits) and freshness (how old they are). A stale
+                                 |        record is shown as history; its `Next Action` is
+                                 |        not quoted as the thing to do now.  [ADR 0041]
+                                 v
+                    CONTEXT PROJECTED   the briefing, within `session.briefing_budget_lines`,
+                                 |      frozen into `local/session-contexts/` as the working
+                                 |      context — what this episode was told, never rewritten
+                                 v
+                    WORK AND EVENTS    every command appends one ledger line, stamped with
+                                 |     the episode that wrote it. A line with no episode
+                                 |     belongs to none: work outside a session is attributed
+                                 |     to nobody rather than to whoever was open nearby.
+                                 v
+                    CHECKPOINTS        written by hand, and derived on PreCompact — the
+                                 |     moment the conversation stops being a place anything
+                                 |     is kept. An artefact of the episode: no task required.
+                                 v
+                    CLOSE AND HANDOVER   SessionEnd closes the episode and, when work is
+                                 |       still open, writes the continuation record. The
+                                 |       envelope's reference lists are computed from the
+                                 |       ledger at close, never accumulated during the episode.
+                                 v
+                    .ai/repo/sessions/<stamp>--<episode>--<branch>--<head>--<digest>.md
+                                 |     TRACKED. The only half of this that survives a clone:
+                                 |     everything under .ai/local/ names this machine and
+                                 |     travels nowhere.
+                                 v
+                    A FUTURE RESUME    locally, the next episode's briefing resolves the
+                                       records of this worktree and branch; elsewhere, a
+                                       clone receives the closed records and reads them as
+                                       history, because a record is evidence and never
+                                       authority.
+
+  and, beside the path, watching it:
+                    lifecycle.episodes · lifecycle.recovery · lifecycle.runtime
+                    lifecycle.providers · lifecycle.closed · continuity.state
+                    projected together on the Cockpit's /cockpit/continuity
+```
+
+One box in that path is marked, because it is the newest and the one this repository most
+recently did without: **freshness validated** is a step, not a property of the record.
+Without it a handover that was `advanced` — a true statement about git topology, and
+identically true on the day it was written and a month later — was quoted into every new
+episode for six days after the work it described was finished. The decision, the thresholds
+and the labels are ADR 0041's, "The
+session lifecycle is the episode's, not the task's"; every other box in the path is behaviour this tree already has. And the **tracked** box is where the local
+half stops: a clone receives the closed records and nothing else, which is why no generated
+document and no site page may carry a briefing, a working context or an open episode.
+
 ## Where the lifecycle puts each piece
 
 ```

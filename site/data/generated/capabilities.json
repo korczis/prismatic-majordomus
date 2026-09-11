@@ -1776,6 +1776,19 @@
       "test_case": "54_session_lifecycle_hooks"
     },
     {
+      "id": "session-observability",
+      "claim": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+      "source": "docs/CONTINUITY.md",
+      "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "test": "test/cases/171_session_observability.sh",
+      "status": "guaranteed",
+      "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own.",
+      "responsibility": "state",
+      "source_route": "/docs/continuity/",
+      "command": null,
+      "test_case": "171_session_observability"
+    },
+    {
       "id": "adr-catalogue",
       "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
       "source": "docs/SCHEMAS.md",

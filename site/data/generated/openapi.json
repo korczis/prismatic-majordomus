@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 80,
-    "schemas": 373,
-    "tags": 27
+    "operations": 85,
+    "schemas": 387,
+    "tags": 28
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1279,6 +1279,62 @@
       "used_by_schemas": [
         "AudienceList",
         "CatalogueView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not.",
+      "is_enum": false,
+      "name": "Balance",
+      "properties": [
+        {
+          "description": "`session.started` lines in the ledger.",
+          "name": "started",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "`session.closed` lines.",
+          "name": "closed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Open records in the store.",
+          "name": "open",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary.",
+          "name": "unaccounted",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "Whether the three agree.",
+          "name": "agrees",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What the numbers mean, in words.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Recovery"
       ],
       "values": [],
       "variants": []
@@ -2773,6 +2829,120 @@
         "Announced",
         "Peer"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One closed episode of the tracked, durable projection.",
+      "is_enum": false,
+      "name": "ClosedSession",
+      "properties": [
+        {
+          "description": "The episode id.",
+          "name": "session_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`majordomus://session/<identity>`, for the object page.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it closed, as recorded.",
+          "name": "created_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The branch it closed on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it closed at.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The typed outcome the close recorded.",
+          "name": "outcome",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Its title, when the record carries one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ClosedSessions"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The tracked half of the subsystem: the records a clone receives.",
+      "is_enum": false,
+      "name": "ClosedSessions",
+      "properties": [
+        {
+          "description": "How many closed records the index holds. Exact.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of them closed on the branch this checkout is on.",
+          "name": "on_this_branch",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The newest [`CLOSED_WINDOW`], newest first.",
+          "name": "newest",
+          "refs": [
+            "ClosedSession"
+          ],
+          "required": false,
+          "type": "array of ClosedSession"
+        },
+        {
+          "description": "How many are carried in `newest`, against the total.",
+          "name": "window",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "lifecycle.closed"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -7034,6 +7204,222 @@
       ]
     },
     {
+      "description": "One open episode, as its file records it and as the ledger has seen it.",
+      "is_enum": false,
+      "name": "Episode",
+      "properties": [
+        {
+          "description": "The episode id the ledger stamps on every line this worker wrote.",
+          "name": "session_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path of the open record. The body is at the path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns.",
+          "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "That provider's own session identity: the file's stem, and the string the prompt\narchive stamps on the same worker's records.",
+          "name": "provider_session",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Who opened it.",
+          "name": "owner",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The worker identity, when one was supplied. Never inferred.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The worktree it opened in, absolute, as recorded.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The branch it opened on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit it opened at.",
+          "name": "start_head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "When it opened, as recorded.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "standing",
+          "refs": [
+            "EpisodeStanding"
+          ],
+          "required": true,
+          "type": "EpisodeStanding"
+        },
+        {
+          "description": "How many ledger lines carry this episode id. Zero for an episode that opened and did\nnothing, which is ordinary and not a fault.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none.",
+          "name": "last_activity",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "That line's event name.",
+          "name": "last_event",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes.",
+          "name": "tasks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Episodes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which.",
+      "is_enum": true,
+      "name": "EpisodeStanding",
+      "properties": [],
+      "type": "\"current\" | \"open\" | \"foreign\" | \"stranded\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Episode"
+      ],
+      "values": [
+        {
+          "description": "This checkout's pointer resolves to it. `continuity.state` is about this one.",
+          "value": "current"
+        },
+        {
+          "description": "Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at.",
+          "value": "open"
+        },
+        {
+          "description": "It names another worktree of this repository. Reported, never treated as this\ncheckout's — a record about somebody else's work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent.",
+          "value": "foreign"
+        },
+        {
+          "description": "The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in.",
+          "value": "stranded"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Every open episode of this checkout's store.",
+      "is_enum": false,
+      "name": "Episodes",
+      "properties": [
+        {
+          "description": "Whether the open-episode store exists. False in a fresh clone, which is not a fault.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The store, repository-relative.",
+          "name": "store",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This worktree, absolute. Every standing above is decided against it.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The episode id the pointer resolves to, when it resolves to one.",
+          "name": "current",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Every open episode, newest first by recorded start.",
+          "name": "episodes",
+          "refs": [
+            "Episode"
+          ],
+          "required": false,
+          "type": "array of Episode"
+        },
+        {
+          "description": "What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "lifecycle.episodes"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -7086,6 +7472,11 @@
         "graph.get",
         "graph.list",
         "health.report",
+        "lifecycle.closed",
+        "lifecycle.episodes",
+        "lifecycle.providers",
+        "lifecycle.recovery",
+        "lifecycle.runtime",
         "health.live",
         "objects.get",
         "objects.list",
@@ -12578,6 +12969,34 @@
       "variants": []
     },
     {
+      "description": "A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`.",
+      "is_enum": false,
+      "name": "Orphan",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its size in bytes, which is how a reader tells an empty stub from a lost record.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Recovery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "An operating system a target runs on.",
       "is_enum": true,
       "name": "Os",
@@ -13987,6 +14406,83 @@
       "variants": []
     },
     {
+      "description": "What the pointer is and whether it leads anywhere.",
+      "is_enum": false,
+      "name": "Pointer",
+      "properties": [
+        {
+          "description": "The layout.",
+          "name": "layout",
+          "refs": [
+            "PointerLayout"
+          ],
+          "required": true,
+          "type": "PointerLayout"
+        },
+        {
+          "description": "What the symlink names, as written, when it is one.",
+          "name": "target",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Whether reading through it yields an episode.",
+          "name": "resolves",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The episode it resolves to.",
+          "name": "session_id",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "What that means, in words.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Recovery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten.",
+      "is_enum": true,
+      "name": "PointerLayout",
+      "properties": [],
+      "type": "\"pointer\" | \"inline\" | \"absent\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Pointer"
+      ],
+      "values": [
+        {
+          "description": "A symlink into `sessions-open/`: the per-provider layout.",
+          "value": "pointer"
+        },
+        {
+          "description": "A regular file: the pre-migration layout, one episode per checkout.",
+          "value": "inline"
+        },
+        {
+          "description": "Nothing is there. No episode is open here, which is not a fault.",
+          "value": "absent"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one.",
       "is_enum": false,
       "name": "Port",
@@ -14739,6 +15235,106 @@
       "variants": []
     },
     {
+      "description": "One provider's lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it.",
+      "is_enum": false,
+      "name": "ProviderLifecycle",
+      "properties": [
+        {
+          "description": "The provider id: the bootstrap template's file stem.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person knows it by.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle events its adapter declares, in the provider's own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same.",
+          "name": "lifecycle",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether its adapter can archive the worker's prompts.",
+          "name": "prompt_capture",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The file it reads a project-scoped MCP client configuration from, when it has one.",
+          "name": "client_config",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it.",
+          "name": "wired",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "What the two together mean.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderLifecycles"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every provider the distribution ships an adapter for.",
+      "is_enum": false,
+      "name": "ProviderLifecycles",
+      "properties": [
+        {
+          "description": "The providers, in declaration order.",
+          "name": "providers",
+          "refs": [
+            "ProviderLifecycle"
+          ],
+          "required": true,
+          "type": "array of ProviderLifecycle"
+        },
+        {
+          "description": "How many of them declare a lifecycle adapter.",
+          "name": "with_lifecycle",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "lifecycle.providers"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Every provider.",
       "is_enum": false,
       "name": "ProviderList",
@@ -15305,6 +15901,70 @@
       "used_by_schemas": [
         "Continuity"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What this checkout's session store needs somebody to do.",
+      "is_enum": false,
+      "name": "Recovery",
+      "properties": [
+        {
+          "description": "Whether the local half exists at all.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The pointer and its layout.",
+          "name": "pointer",
+          "refs": [
+            "Pointer"
+          ],
+          "required": true,
+          "type": "Pointer"
+        },
+        {
+          "description": "Episodes that can no longer close themselves.",
+          "name": "stranded",
+          "refs": [
+            "Stranded"
+          ],
+          "required": false,
+          "type": "array of Stranded"
+        },
+        {
+          "description": "Temporary files left in the tracked sessions section.",
+          "name": "orphans",
+          "refs": [
+            "Orphan"
+          ],
+          "required": false,
+          "type": "array of Orphan"
+        },
+        {
+          "description": "The started/closed/open arithmetic.",
+          "name": "balance",
+          "refs": [
+            "Balance"
+          ],
+          "required": true,
+          "type": "Balance"
+        },
+        {
+          "description": "Everything above, said once, for a reader that wants the summary. Empty is the good\ncase and means there is nothing to recover.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "lifecycle.recovery"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -17211,6 +17871,97 @@
       "variants": []
     },
     {
+      "description": "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.",
+      "is_enum": false,
+      "name": "RuntimeView",
+      "properties": [
+        {
+          "description": "The repository root this process is serving.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the served index was built at.",
+          "name": "served_head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Its branch, or `DETACHED`.",
+          "name": "served_branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Whether the working tree was clean when the index was built.",
+          "name": "served_working_tree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The commit the repository is on, read on this call.",
+          "name": "repository_head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Its branch now.",
+          "name": "repository_branch",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The working tree now.",
+          "name": "repository_working_tree",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Whether the two agree on the commit and the branch.",
+          "name": "agree",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many objects the served index holds, and whether it was degraded.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "`ok` or `degraded`.",
+          "name": "index_state",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the comparison means, and what to do when it disagrees.",
+          "name": "note",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "lifecycle.runtime"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Two issues of one wave that cannot run together, and the path that stops them.",
       "is_enum": false,
       "name": "ScopeConflict",
@@ -18057,6 +18808,48 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \"stranded\" means are two definitions, and this repository has been bitten by that\nshape often enough to name it.",
+      "is_enum": false,
+      "name": "Stranded",
+      "properties": [
+        {
+          "description": "The episode id.",
+          "name": "session_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The open record, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it is stranded.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that clears it. A finding with no remedy is a complaint.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Recovery"
       ],
       "values": [],
       "variants": []
@@ -23075,6 +23868,278 @@
           "result_schema": "Readiness",
           "stability": "behaviorally_verified",
           "summary": "Readiness"
+        }
+      ]
+    },
+    {
+      "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.",
+      "name": "lifecycle",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=30",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/closed\"",
+          "description": "The tracked, durable projection of closed episodes: how many there are, how many closed on this branch, and the newest twenty. This is the only half of the subsystem that survives a clone; everything under .ai/local/ names this machine and travels nowhere.",
+          "id": "lifecycle.closed",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_lifecycle_closed",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/lifecycle/closed",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::lifecycle",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The records a clone receives: the result.",
+              "schema": "ClosedSessions",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ClosedSessions",
+          "stability": "behaviorally_verified",
+          "summary": "The records a clone receives"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/episodes\"",
+          "description": "Every open episode in this checkout's store, with the provider session that owns it, the worktree and branch it opened on, where it stands, and what the ledger last saw it do. `continuity.state` reports the one episode the pointer resolves to, which is right for a briefing and blind to every other window open on the same worktree.",
+          "id": "lifecycle.episodes",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "lifecycle-episodes",
+            "uri": "majordomus://lifecycle/episodes"
+          },
+          "mcp_tool": "majordomus_lifecycle_episodes",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/lifecycle/episodes",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::lifecycle",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every open episode: the result.",
+              "schema": "Episodes",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Episodes",
+          "stability": "behaviorally_verified",
+          "summary": "Every open episode"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/providers\"",
+          "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+          "id": "lifecycle.providers",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_lifecycle_providers",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/lifecycle/providers",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::lifecycle",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What each provider's adapter declares: the result.",
+              "schema": "ProviderLifecycles",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ProviderLifecycles",
+          "stability": "behaviorally_verified",
+          "summary": "What each provider's adapter declares"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/recovery\"",
+          "description": "Open records that can no longer close themselves, temporary files a killed close left in the tracked sessions section, whether the pointer has been migrated to the per-provider layout, and the arithmetic that says whether every episode the ledger has seen start is accounted for. Every finding carries the command that clears it.",
+          "id": "lifecycle.recovery",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "lifecycle-recovery",
+            "uri": "majordomus://lifecycle/recovery"
+          },
+          "mcp_tool": "majordomus_lifecycle_recovery",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/lifecycle/recovery",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::lifecycle",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the store needs somebody to do: the result.",
+              "schema": "Recovery",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Recovery",
+          "stability": "behaviorally_verified",
+          "summary": "What the store needs somebody to do"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/lifecycle/runtime\"",
+          "description": "The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell.",
+          "id": "lifecycle.runtime",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_lifecycle_runtime",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/lifecycle/runtime",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::lifecycle",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The commit this process is answering about: the result.",
+              "schema": "RuntimeView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RuntimeView",
+          "stability": "behaviorally_verified",
+          "summary": "The commit this process is answering about"
         }
       ]
     },

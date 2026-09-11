@@ -1239,6 +1239,15 @@
       "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
     },
     {
+      "id": "claim:session-observability",
+      "kind": "claim",
+      "label": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+      "status": "guaranteed",
+      "route": "/guarantees/session-observability/",
+      "external": false,
+      "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1380,6 +1389,13 @@
       "id": "impl:apps/majordomus-cli/src/bench/coverage.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/bench/coverage.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "route": null,
       "external": false
     },
@@ -2236,6 +2252,13 @@
       "label": "test/cases/14_wiring_dispatcher.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/14_wiring_dispatcher.sh"
+    },
+    {
+      "id": "test:test/cases/171_session_observability.sh",
+      "kind": "test",
+      "label": "test/cases/171_session_observability.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh"
     },
     {
       "id": "test:test/cases/17_doctrine_enforcement.sh",
@@ -3312,6 +3335,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -4017,6 +4045,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -4719,6 +4752,11 @@
     {
       "source": "claim:session-lifecycle",
       "target": "test:test/cases/54_session_lifecycle_hooks.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:session-observability",
+      "target": "test:test/cases/171_session_observability.sh",
       "kind": "proved_by"
     },
     {
