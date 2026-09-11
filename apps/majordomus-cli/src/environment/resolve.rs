@@ -95,6 +95,15 @@ pub struct Inputs<'a> {
     pub index: Option<&'a Index>,
     /// The registry, in a full resolution.
     pub registry: Option<&'a CapabilityRegistry>,
+    /// The policy, when the caller has already read it. The resolver reads it itself when
+    /// this is `None`, which is what every caller that needs nothing else from it does.
+    ///
+    /// It is here for the one caller that does: `majordomus env enter` asks the policy
+    /// whether entry ensures a runtime, and then resolves a snapshot whose provider
+    /// projections come out of the same file. Two reads of one canonical file inside one
+    /// invocation is what `project.hot-path-reads-once` is about, and this is the hot path
+    /// by definition — it runs on every `cd`.
+    pub policy: Option<&'a crate::policy::LoadedPolicy>,
 }
 
 /// Build a snapshot.
@@ -352,7 +361,8 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
     }
 
     // ---------------------------------------------------------------- providers
-    let (providers, provider_source) = provider_states(inputs.repository, inputs.share);
+    let (providers, provider_source) =
+        provider_states(inputs.repository, inputs.share, inputs.policy);
     provenance.push(FieldSource::exact(
         "providers",
         Some(format!("{} projection(s)", providers.len())),
@@ -492,15 +502,27 @@ fn summarise(index: &Index, registry: &CapabilityRegistry) -> LayerSummary {
 }
 
 /// The provider projections the policy declares, each against the file it renders to.
-fn provider_states(repository: &Repository, share: Option<&Share>) -> (Vec<ProviderState>, String) {
+fn provider_states(
+    repository: &Repository,
+    share: Option<&Share>,
+    already: Option<&crate::policy::LoadedPolicy>,
+) -> (Vec<ProviderState>, String) {
     let source = format!(
         "{}, projections[]",
         repository
             .section_path("policy")
             .unwrap_or_else(|| ".ai/repo/policy.yaml".into())
     );
-    let Ok(policy) = crate::policy::LoadedPolicy::load(repository) else {
-        return (Vec::new(), format!("{source} (unreadable)"));
+    let read;
+    let policy = match already {
+        Some(policy) => policy,
+        None => {
+            let Ok(loaded) = crate::policy::LoadedPolicy::load(repository) else {
+                return (Vec::new(), format!("{source} (unreadable)"));
+            };
+            read = loaded;
+            &read
+        }
     };
     // Rendering needs the templates, which live in the distribution. Without it the
     // projections are still known — the policy declares them — but whether each file is
@@ -641,6 +663,7 @@ mod tests {
                 share: None,
                 index: Some(&index),
                 registry: Some(&registry),
+                policy: None,
             },
             &EnvironmentQuery::full().sealed(),
         )
@@ -654,6 +677,7 @@ mod tests {
                 share: None,
                 index: None,
                 registry: None,
+                policy: None,
             },
             &query,
         )
@@ -704,6 +728,7 @@ mod tests {
                 share: None,
                 index: Some(&index),
                 registry: Some(&registry),
+                policy: None,
             },
             &EnvironmentQuery {
                 probe_services: false,

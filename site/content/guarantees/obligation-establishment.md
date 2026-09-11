@@ -1,7 +1,7 @@
 +++
 title = "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it"
 description = "Six of the eleven obligation tokens name a fact that lives outside the working tree:"
-weight = 144
+weight = 145
 [extra]
 claim_id = "obligation-establishment"
 status = "guaranteed"

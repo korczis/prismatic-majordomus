@@ -24,6 +24,16 @@
 #   $NAME              an environment variable; the root is skipped when it is unset
 # Nothing else is interpreted. A root that does not exist is not an error: the question is
 # only ever asked about a path that does.
+#
+# lifecycle / prompt_capture — what the tool's adapter for this provider can do, in the
+# provider's own vocabulary. Declared here because a surface that wants to say "Claude Code
+# fires SessionStart, SessionEnd and PreCompact, and archives prompts" had two ways to find
+# out and both were wrong: read `.claude/hooks/` and report an installation as a capability,
+# or hard-code the list in a page. The adapter table itself is `MJ_CAPTURE_LIFECYCLE` in
+# lib/capture.sh, which is where the shims, the env var and the JSON keys live; this is the
+# half of it a reader outside the shell needs, and test/cases/170 refuses the two lists
+# drifting apart. A provider with no `lifecycle` is one the tool ships no lifecycle adapter
+# for: it loses the automation and none of the model.
 version: 1
 
 # The tool's own scratch roots: the operating system's temporary directory, where test
@@ -50,6 +60,11 @@ providers:
   claude-code:
     title: Claude Code
     client_config: .mcp.json
+    lifecycle:
+      - SessionStart
+      - SessionEnd
+      - PreCompact
+    prompt_capture: true
     scratch_roots:
       - <primary>/.claude/worktrees
   codex:
