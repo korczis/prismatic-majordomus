@@ -1,7 +1,7 @@
 +++
 title = "Work on a branch in the one worktree it belongs to"
 description = "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact."
-weight = 11
+weight = 12
 [extra]
 id = "work-on-a-branch-in-its-canonical-worktree"
 source = ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md"

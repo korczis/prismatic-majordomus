@@ -1,7 +1,7 @@
 +++
 title = "Have the session opened and closed without anybody remembering to"
 description = "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope."
-weight = 37
+weight = 38
 [extra]
 id = "let-the-provider-draw-the-episode-boundary"
 source = ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md"
