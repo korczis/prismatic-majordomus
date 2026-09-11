@@ -154,7 +154,7 @@ Record that execution of an issue began (`start`), that implementation is comple
 | input | type | required | description |
 |---|---|---|---|
 | `issue` | string | yes | The issue to move, by its id — which is also its file name. |
-| `transition` | Transition | yes | Which move: `start`, `verify` or `done`. |
+| `transition` | PlanTransition | yes | Which move: `start`, `verify` or `done`. |
 
 Output: `PlanTransitionResult`.
 

@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 81,
-      "covered": 78,
+      "required": 95,
+      "covered": 91,
       "missing": 0,
-      "waived": 3
+      "waived": 4
     },
     {
       "scope": "http",
-      "required": 81,
-      "covered": 78,
+      "required": 94,
+      "covered": 91,
       "missing": 0,
       "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 79,
-      "covered": 76,
+      "required": 92,
+      "covered": 89,
       "missing": 0,
       "waived": 3
     },
@@ -33,10 +33,10 @@
     },
     {
       "scope": "total",
-      "required": 254,
-      "covered": 245,
+      "required": 294,
+      "covered": 284,
       "missing": 0,
-      "waived": 9
+      "waived": 10
     }
   ],
   "capabilities": [
@@ -228,6 +228,46 @@
       ]
     },
     {
+      "id": "devcontext.compile",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 16 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "no-seed",
+        "issue",
+        "milestone",
+        "intent"
+      ]
+    },
+    {
+      "id": "devcontext.explain",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "process, 8 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "policy",
+        "absent"
+      ]
+    },
+    {
+      "id": "devcontext.policy",
+      "module": "devcontext",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "devtask.issue",
       "module": "devtask",
       "kind": "query",
@@ -350,6 +390,53 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "evidence.claim",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-claim"
+      ]
+    },
+    {
+      "id": "evidence.record",
+      "module": "evidence",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
+      "id": "evidence.report",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "findings"
+      ]
+    },
+    {
+      "id": "evidence.test",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-test"
       ]
     },
     {
@@ -490,6 +577,66 @@
       "module": "health",
       "kind": "query",
       "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "lifecycle.closed",
+      "module": "lifecycle",
+      "kind": "query",
+      "cache": "process, 2 entries, 30s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "lifecycle.episodes",
+      "module": "lifecycle",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "lifecycle.providers",
+      "module": "lifecycle",
+      "kind": "query",
+      "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "lifecycle.recovery",
+      "module": "lifecycle",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "lifecycle.runtime",
+      "module": "lifecycle",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -872,6 +1019,30 @@
       "cases": [
         "repository",
         "this-checkout"
+      ]
+    },
+    {
+      "id": "session_domain.identity",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "session_domain.machine",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 1 entries, 600s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {

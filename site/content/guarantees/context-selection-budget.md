@@ -1,7 +1,7 @@
 +++
 title = "The assembled context obeys a line budget, and every section it drops is named with its reason"
 description = "context.builder_budget_lines caps what majordomus context prints. When the briefing would exceed it, sections are dropped — but never silently, and never the parts a worker cannot work without."
-weight = 63
+weight = 64
 [extra]
 claim_id = "context-selection-budget"
 status = "guaranteed"

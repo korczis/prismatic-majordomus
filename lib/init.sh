@@ -102,6 +102,12 @@ H
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
            "$MJ_AI_LOCAL_DIR/cache" "$MJ_AI_LOCAL_DIR/session-contexts"
+  # The prompt archive is the one store here whose *names* are private: a record is called
+  # after the opening of the prompt it holds, so a world-readable directory discloses what
+  # was asked even while it is empty. It is created 0700 by the command that creates it,
+  # rather than by the hook that writes the first record — the hook would be repairing a
+  # mode that had already been wrong for however long the repository went without a prompt.
+  chmod 700 "$MJ_AI_LOCAL_DIR/prompts" 2>/dev/null || true
   [ -f "$MJ_STATE_DIR/decisions.md" ]      || cp "$skel/templates/decisions.md" "$MJ_STATE_DIR/decisions.md"
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   mj_init_gitignore
@@ -142,11 +148,17 @@ mj_init_tree() {
   [ "$n" -gt 0 ] && MJ_INIT_CREATED="$MJ_INIT_CREATED $(mj_rel "$dst")/"
   return 0
 }
-# the ignore boundary: one line, added once, to a file whose other content is left alone
+# the ignore boundary: each line added once, to a file whose other content is left alone.
+#
+# Two lines, for two different reasons. The local section is this checkout's own state and is
+# never shared. The staging file of mj_publish_record is the opposite — it lives inside a
+# tracked section, because the hard link that publishes a record cannot cross a filesystem —
+# and this line is what keeps a leftover from one from ever reaching a commit.
 mj_init_gitignore() {
   local gi="$MJ_ROOT/.gitignore" line
-  line="$(mj_rel "$MJ_AI_LOCAL_DIR")/"
-  grep -qx "$line" "$gi" 2>/dev/null && return 0
-  { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
-  MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
+  for line in "$(mj_rel "$MJ_AI_LOCAL_DIR")/" "$(mj_rel "$MJ_AI_REPO_DIR")/**/.tmp.*"; do
+    grep -qxF "$line" "$gi" 2>/dev/null && continue
+    { [ -f "$gi" ] && [ -n "$(tail -c1 "$gi")" ] && printf '\n'; printf '%s\n' "$line"; } >> "$gi"
+    MJ_INIT_CREATED="$MJ_INIT_CREATED .gitignore:$line"
+  done
 }

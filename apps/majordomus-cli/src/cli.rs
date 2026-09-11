@@ -74,6 +74,10 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// The context a development session should be given, compiled from the repository: for an issue, a milestone, an intent or a set of paths, what is selected and why, what was left out and why, what collapsed into what, and the budget
+    Devcontext(DevcontextArgs),
+    /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
+    Evidence(EvidenceArgs),
 }
 
 #[derive(Debug, Args)]
@@ -177,6 +181,27 @@ pub enum EnvCommand {
         /// Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call
         #[arg(long)]
         bridge: bool,
+    },
+    /// Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer
+    Enter {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// How much banner to draw; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", conflicts_with = "no_banner")]
+        mode: Option<String>,
+        /// Do not draw the banner
+        #[arg(long = "no-banner")]
+        no_banner: bool,
+        /// Do not refresh the workflow bridge
+        #[arg(long = "no-bridge")]
+        no_bridge: bool,
+        /// Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument
+        #[arg(long = "no-runtime")]
+        no_runtime: bool,
+        /// Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published
+        #[arg(long, value_name = "SECONDS", default_value_t = 0)]
+        wait: u64,
     },
     /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
     Explain {
@@ -361,6 +386,127 @@ pub enum ExecutionsCommand {
     },
     /// The live channel's contract: where it is, what it writes, and the schema of each message
     Protocol,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus evidence`. The output shape is global, so it reads the way a person writes
+/// it — `evidence show --findings --format json` — and is declared once.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EvidenceArgs, EvidenceCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "evidence", "show", "--findings", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: EvidenceArgs = match cli.command {
+///     Command::Evidence(args) => args,
+///     other => panic!("expected `evidence`, parsed {other:?}"),
+/// };
+/// // `--format` is declared once and reaches every subcommand, so it parses where a
+/// // person writes it rather than only before the subcommand
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, EvidenceCommand::Show { findings: true, .. }));
+///
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "evidence"]).is_err());
+/// ```
+pub struct EvidenceArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
+    /// so that every runnable path here is one a capability declares
+    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    pub command: EvidenceCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, and
+/// the recorder.
+///
+/// `show`, `claim` and `proves` are the command line of `evidence.report`,
+/// `evidence.claim` and `evidence.test`; `record` is the command line of
+/// `evidence.record`, which is a command line and nothing else because it writes a tracked
+/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// `proves` — `test` is a word the fish completion adapter refuses, so the command line
+/// spells the relation with the verb rather than renaming the identity.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EvidenceCommand};
+///
+/// fn parse(args: &[&str]) -> EvidenceCommand {
+///     let cli = Cli::try_parse_from(args.iter().copied()).unwrap();
+///     let Command::Evidence(args) = cli.command else { panic!("evidence") };
+///     args.command
+/// }
+///
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "show", "--state", "stale"]),
+///     EvidenceCommand::Show { state: Some(s), check: false, .. } if s == "stale"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "claim", "evidence-both-directions"]),
+///     EvidenceCommand::Claim { id } if id == "evidence-both-directions"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "proves", "crate:why"]),
+///     EvidenceCommand::Proves { id } if id == "crate:why"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "test", "crate:why"]).is_err());
+///
+/// // recording reads a report a runner already wrote; it runs no test
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
+///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
+/// ```
+pub enum EvidenceCommand {
+    /// Every claim against the evidence recorded for it
+    Show {
+        /// Only claims in this proof state (proven, inputs_unchanged, stale, failing, not_run, unrunnable, no_test)
+        #[arg(long)]
+        state: Option<String>,
+        /// Only claims declaring this status (guaranteed, advisory, planned, rejected)
+        #[arg(long)]
+        status: Option<String>,
+        /// Only the claims whose declared status the evidence does not support
+        #[arg(long)]
+        findings: bool,
+        /// Exit 10 when a claim declares a guarantee the evidence does not support
+        #[arg(long)]
+        check: bool,
+    },
+    /// One claim: its proof state, the execution behind it, and how to reproduce it
+    Claim {
+        /// The claim id, as docs/CLAIMS.yaml spells it
+        id: String,
+    },
+    /// One test: its latest execution and every claim it proves
+    Proves {
+        /// `suite:<case>`, `crate:<binary>`, or the path a claim names it with
+        id: String,
+    },
+    /// Record a run that happened into the ledger
+    Record {
+        /// The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)
+        #[arg(long)]
+        suite: Option<PathBuf>,
+        /// A file holding `cargo test`'s output, for the crate's own integration tests
+        #[arg(long)]
+        crate_output: Option<PathBuf>,
+        /// Where the run happened: local (the default), ci or release
+        #[arg(long)]
+        origin: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -765,7 +911,7 @@ pub enum Transport {
 }
 
 /// Where and how the repository is read; shared by every command that reads it.
-#[derive(Debug, Args, Default)]
+#[derive(Debug, Args, Default, Clone)]
 pub struct RepoArgs {
     /// Start the search for the repository root here (default: the current directory)
     #[arg(long, value_name = "PATH", global = true)]
@@ -1359,6 +1505,72 @@ pub enum CompletionShell {
     Fish,
 }
 
+#[derive(Debug, Args)]
+/// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
+/// capability; the request flags are declared once and shared by `compile` and `explain`.
+pub struct DevcontextArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `compile`, `explain` or `policy`.
+    pub command: DevcontextCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// What to ask of the context compiler.
+pub enum DevcontextCommand {
+    /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
+    Compile(DevcontextRequest),
+    /// Why one canonical identifier is or is not in the context a request compiles to
+    Explain {
+        /// The canonical identifier, `majordomus://<kind>/<identity>`
+        uri: String,
+        #[command(flatten)]
+        /// The request to judge it under.
+        request: DevcontextRequest,
+    },
+    /// The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults
+    Policy,
+}
+
+#[derive(Debug, Clone, Args)]
+/// What to compile a context about; every flag is optional.
+pub struct DevcontextRequest {
+    /// An issue id (`I0301`) or its canonical identifier
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// A milestone id or slug, or its canonical identifier
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// What the session is trying to do, in words; the only input the compiler infers from
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// A repository-relative path the work touches; repeat for each
+    #[arg(long = "path")]
+    pub paths: Vec<String>,
+    /// A canonical identifier to seed with directly; repeat for each
+    #[arg(long = "uri")]
+    pub uris: Vec<String>,
+    /// The ceiling in estimated tokens
+    #[arg(long)]
+    pub budget_tokens: Option<u64>,
+    /// How far from a seed the walk goes
+    #[arg(long)]
+    pub max_depth: Option<usize>,
+    /// Relevance below which an entry is reported rather than given, between 0 and 1
+    #[arg(long)]
+    pub floor: Option<f64>,
+    /// Every blocking rule of the layer, not only the ones the work reaches
+    #[arg(long)]
+    pub all_blocking_rules: bool,
+}
+
 // ------------------------------------------------------------------ the command line as data
 //
 // clap is the one declaration of the command line: every command, argument, default and
@@ -1640,6 +1852,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "env enter",
+        examples: &[ExampleDoc {
+            id: "env-enter",
+            title: "Everything entering this repository is, as one call",
+            description: "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+            argv: &["env", "enter", "--shell", "direnv", "--no-banner", "--no-bridge", "--no-runtime"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
         command: "env explain",
         examples: &[ExampleDoc {
             id: "env-explain-field",
@@ -1670,6 +1893,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["executions"],
             setup: &[],
             expect: Expect::StdoutContains(&["execution"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence show",
+        examples: &[ExampleDoc {
+            id: "evidence-show-json",
+            title: "The whole join, as one document",
+            description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
+            argv: &["evidence", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "evidence claim",
+        examples: &[ExampleDoc {
+            id: "evidence-claim-absent",
+            title: "A claim the matrix does not declare",
+            description: "A claim id nothing declares is a not-found rather than an empty answer. A typo that read as `this claim has no evidence` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+            argv: &["evidence", "claim", "no-such-claim-exists"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence proves",
+        examples: &[ExampleDoc {
+            id: "evidence-proves-unknown",
+            title: "Something that names no test",
+            description: "A test is named by its identity (`suite:<case>`, `crate:<binary>`) or by the path a claim writes down, and the two resolve to the same thing. An argument that is neither is refused with the spellings it could have been, rather than answered with a test that proves nothing.",
+            argv: &["evidence", "proves", "not-a-test"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence record",
+        examples: &[ExampleDoc {
+            id: "evidence-record-missing",
+            title: "Recording a report that is not there",
+            description: "The recorder reads what a run already wrote — the suite's TSV report, `cargo test`'s output — and stamps it with the provenance the run did not carry. A report it cannot read is refused: recording nothing would leave every claim reading `not run` after a run that ran, which is a lie in the safe direction and still a lie.",
+            argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {
@@ -2672,5 +2939,48 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "devcontext compile",
+        examples: &[
+            ExampleDoc {
+                id: "devcontext-compile-issue",
+                title: "The context a session working on one issue should be given",
+                description: "The issue is the seed. Its milestone follows along the `belongs_to` edge of the composed graph, the code and the cases under the scope it declares follow from the paths, and the policy and the scope are governance every session is held to. Every selected line names the selector that reached it and why; everything left out is listed with the reason.",
+                argv: &["devcontext", "compile", "--issue", "I0001"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SELECTED", "majordomus://issue/I0001", "EXCLUDED"]),
+            },
+            ExampleDoc {
+                id: "devcontext-compile-json",
+                title: "The same, as the structure every other surface answers with",
+                description: "The canonical form: `GET /api/v1/devcontext` and the `majordomus_devcontext` tool return this document. Entries keep their canonical identifier, the index's provenance, every discovery path with its confidence, and the cost in estimated tokens; nothing is flattened to prose.",
+                argv: &["devcontext", "compile", "--issue", "I0001", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/selected/0/uri", "/selected/0/discovered_by/0/reason", "/budget/limit_tokens", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "devcontext explain",
+        examples: &[ExampleDoc {
+            id: "devcontext-explain-seed",
+            title: "Why one thing is in the context",
+            description: "The identifier is judged under the same request `compile` takes: selected, excluded with the reason, folded into another identifier, held by the index and never reached, or unknown.",
+            argv: &["devcontext", "explain", "majordomus://issue/I0001", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected", "majordomus://issue/I0001"]),
+        }],
+    },
+    CommandExamples {
+        command: "devcontext policy",
+        examples: &[ExampleDoc {
+            id: "devcontext-policy",
+            title: "The compiler's own rules",
+            description: "The tiers in the order the budget spends in, every edge kind the composed graph declares with the weight it is followed by or the reason it is refused, and which selectors infer rather than read.",
+            argv: &["devcontext", "policy"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["TIER", "is_a", "REFUSED"]),
+        }],
     },
 ];

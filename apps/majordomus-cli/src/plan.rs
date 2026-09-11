@@ -1425,6 +1425,9 @@ mod tests {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+// `session::state::Transition` already publishes the bare name, and one schema component
+// cannot mean two things: the move an issue makes is named for the plan it belongs to.
+#[schemars(rename = "PlanTransition")]
 pub enum Transition {
     /// Execution began. Refused unless the issue is READY.
     Start,

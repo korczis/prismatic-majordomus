@@ -32,6 +32,16 @@ gates:
     runs: scripts/ci/shell-lint
     summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
 
+  # The raw prompt archive is ignored and doctor refuses a repository that tracks it; neither
+  # covers a *derived* artefact that carries a prompt. One `find` in a site generator that
+  # forgot to exclude the local half would publish the archive with no prompt file committed
+  # anywhere for a reviewer to see. File reads only, so it belongs with the structure checks.
+  - id: prompt-privacy
+    job: structure
+    always: true
+    runs: scripts/ci/prompt-privacy
+    summary: no published or generated file is a prompt record, a rendering, or a copy of one; every site generator names the local half so it can exclude it
+
   - id: ui-check
     job: structure
     always: true
@@ -66,6 +76,12 @@ gates:
     always: true
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, every reference a document makes, the derived site data
+
+  - id: evidence-check
+    job: structure
+    always: true
+    runs: scripts/evidence-check
+    summary: every claim that declares a guarantee, against the run actually recorded for it; a ratchet over the claims no recorded execution yet supports
 
   - id: site-basepath
     job: structure
@@ -130,7 +146,7 @@ gates:
   - id: rust-coverage
     job: coverage
     runs: just coverage
-    summary: line coverage of the crate against scripts/rust-coverage-threshold
+    summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
 
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
@@ -170,6 +186,19 @@ gates:
     job: structure
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
+
+  # The quantities that grow on their own — open pull requests, linked worktrees, local
+  # branches, running servers. None shrinks by itself and none is visible from where a person
+  # looks, so each one's absence of a command is the defect. The runner has none of these
+  # quantities; what it holds together is that the commands still exist, that the reaper is
+  # safe by construction, that .gitattributes and the site generator still agree about which
+  # trees resolve on merge, and that no document sends a reader to a merge button this
+  # repository's merge policy cannot reach.
+  - id: backlog-hygiene
+    job: structure
+    always: true
+    runs: scripts/ci/backlog-check
+    summary: every self-accumulating quantity keeps its measuring command, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
 
   # The one structural gate that reads the remote. It needs a token (issues:read) and says
   # so rather than passing when it has none: a projection gate that skips quietly is the
@@ -300,7 +329,7 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
     gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
 
   # projections of the registry and the policy: generate --check decides whether they are
@@ -318,6 +347,13 @@ classes:
   - id: governance
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, test/cases/125_rule_proof.sh]
     gates: [rule-proof, shell-suite, rust-integration]
+
+  # the evidence fabric: the ledger of recorded executions, the join that reads it and the
+  # gate that ratchets it. A claim's proof is derived from the matrix and the ledger
+  # together, so a change to either is a change to what this repository says is proven.
+  - id: evidence
+    paths: [.ai/repo/evidence/**, .ai/repo/evidence-baseline.txt, scripts/evidence-check, docs/CLAIMS.yaml, docs/claims/**, docs/EVIDENCE.md]
+    gates: [evidence-check, core-check, shell-suite, site-build]
 
   # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
   # Read from disk by the served executable, so the crate's suites see them; the compiled
@@ -396,3 +432,10 @@ classes:
   - id: release
     paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
     gates: [release-check]
+
+  # The commands that keep the self-accumulating quantities bounded (rule
+  # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
+  # rather than the whole rules tree, so a change to one rule does not escalate every plan.
+  - id: backlog
+    paths: [scripts/reap-orphans, scripts/land, .ai/repo/rules/project/accumulation-is-measured.v1.md, test/cases/131_backlog_hygiene.sh]
+    gates: [backlog-hygiene, shell-lint, shell-suite]

@@ -171,3 +171,19 @@ events:
     requires: [adr, title]
     public: true
     note: Never emitted for an acceptance. The tool writes proposed and nothing else, so an accepted decision leaves no event here and the file's history is the record.
+
+  - id: prompts.reconciled
+    title: Prompt records reconciled to their episodes
+    summary: Every record in the prompt archive was re-examined and linked to the episode it belongs to, from evidence that still exists.
+    emitted_by: capture
+    requires: [records, linked, unlinked]
+    public: true
+    note: The unlinked count is the honest half of this line. A record whose episode no evidence can establish is marked as unlinked rather than attached to whichever episode was nearest in time, so this number is expected to stay above zero for every record written before the archive carried its own identity.
+
+  - id: prompts.pruned
+    title: Prompt bodies pruned under retention
+    summary: The prompt bodies over the declared age or size bound were replaced with a tombstone; every record, its identity and its provenance stayed.
+    emitted_by: capture
+    requires: [records, pruned, bytes_left]
+    public: true
+    note: A record is never deleted. What this event counts is bodies taken, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed.

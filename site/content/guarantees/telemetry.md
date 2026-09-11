@@ -1,7 +1,7 @@
 +++
 title = "Execution telemetry will be recorded once a provider exposes it honestly"
 description = "**Planned.** Per task: input, output and cached tokens, the model and effort actually used, elapsed time and tool-call count — recorded into the ledger next to what it already holds. Only from providers that expose these numbers; nothing estimated is ever labelled as measured."
-weight = 92
+weight = 93
 [extra]
 claim_id = "telemetry"
 status = "planned"

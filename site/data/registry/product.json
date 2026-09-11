@@ -5,17 +5,17 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "e5af1dc6b58a6cef4a15432fc8d926de4eda5f1844deb09d7361859c773b8057",
+  "fingerprint": "3844d9871c1a521ce134de4850bab3a3d4dd1aa547805c099b7728b60b2dc926",
   "route": "/features/",
   "counts": {
-    "features": 19,
-    "features_all": 20,
+    "features": 20,
+    "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 27,
-    "modules_covered": 17,
+    "modules": 31,
+    "modules_covered": 18,
     "commands": 29,
-    "commands_covered": 27,
+    "commands_covered": 28,
     "kinds": 25,
     "kinds_covered": 22
   },
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 18
+      "features": 19
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 13
+      "features": 14
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 17
+      "features": 18
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 14
+      "features": 15
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 19
+      "features": 20
     }
   ],
   "features": [
@@ -266,7 +266,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 20
+          "objects": 21
         },
         {
           "name": "command",
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 150
+          "objects": 157
         }
       ],
       "rule_refs": [
@@ -528,6 +528,7 @@
       "backlinks": [
         "benchmarks",
         "cockpit",
+        "evidence",
         "interfaces",
         "policy",
         "skills",
@@ -536,11 +537,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 204,
+        "mcp_resources": 212,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 200,
+        "objects": 208,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -823,7 +824,7 @@
         },
         {
           "id": "mcp-shared-server",
-          "claim": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+          "claim": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
           "status": "guaranteed"
         },
         {
@@ -833,7 +834,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1222,7 +1223,7 @@
         {
           "id": "peers",
           "title": "Peers",
-          "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+          "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
           "capabilities": [
@@ -1419,7 +1420,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1938,7 +1939,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -1952,7 +1953,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         },
         {
           "name": "prompt",
@@ -2285,11 +2286,11 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 17,
+        "mcp_resources": 27,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 16,
+        "objects": 26,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -2459,7 +2460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 39
+          "objects": 43
         },
         {
           "name": "knowledge",
@@ -2467,7 +2468,7 @@
         },
         {
           "name": "document",
-          "objects": 218
+          "objects": 227
         }
       ],
       "rule_refs": [
@@ -2716,11 +2717,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 259,
+        "mcp_resources": 272,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 258,
+        "objects": 271,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2885,7 +2886,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 121
+          "objects": 126
         }
       ],
       "rule_refs": [
@@ -3206,11 +3207,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 122,
+        "mcp_resources": 127,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 121,
+        "objects": 126,
         "rules": 5,
         "enforced_rules": 5,
         "docs": 2,
@@ -4419,7 +4420,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -4433,7 +4434,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         }
       ],
       "rule_refs": [
@@ -4659,11 +4660,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 12,
+        "mcp_resources": 22,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 12,
+        "objects": 22,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -5093,11 +5094,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 18
+          "objects": 19
         },
         {
           "name": "issue",
-          "objects": 203
+          "objects": 215
         }
       ],
       "rule_refs": [
@@ -5240,11 +5241,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 222,
+        "mcp_resources": 235,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 221,
+        "objects": 234,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5407,7 +5408,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 27
+          "objects": 28
         },
         {
           "name": "scope",
@@ -5687,11 +5688,11 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 31,
+        "mcp_resources": 32,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 28,
+        "objects": 29,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -6283,6 +6284,192 @@
       }
     },
     {
+      "id": "evidence",
+      "title": "A claim is proven by a run that happened, not by a file that exists",
+      "short_title": "Evidence",
+      "headline": "Every claim is joined to the execution recorded for its test — the outcome, the commit, the tree, the digest and the command that produces it again — and a run against this commit is never reported as the same thing as a run whose inputs merely have not changed.",
+      "summary": "The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.",
+      "status": "stable",
+      "weight": 175,
+      "featured": false,
+      "areas": [
+        "verification",
+        "governance"
+      ],
+      "audiences": [],
+      "modules": [
+        "evidence"
+      ],
+      "commands": [
+        "evidence"
+      ],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/EVIDENCE.md"
+      ],
+      "adrs": [
+        "adr-0041"
+      ],
+      "claims": [
+        "evidence-proof-is-an-execution",
+        "evidence-currency-is-not-collapsed",
+        "evidence-partial-run-preserves-the-rest",
+        "evidence-navigates-both-ways",
+        "evidence-unsupported-guarantee-is-reported"
+      ],
+      "use_cases": [],
+      "cockpit": [],
+      "web": [],
+      "related": [
+        "benchmarks",
+        "ci",
+        "declare-once"
+      ],
+      "tags": [
+        "evidence",
+        "claims",
+        "tests",
+        "verification",
+        "provenance"
+      ],
+      "route": "/features/evidence/",
+      "source": ".ai/repo/features/evidence.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "evidence",
+          "title": "Evidence",
+          "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "capabilities": [
+            {
+              "id": "evidence.claim",
+              "title": "What proves this claim",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_claim",
+              "route": "GET /api/v1/evidence/claim",
+              "cli": "majordomus evidence claim"
+            },
+            {
+              "id": "evidence.record",
+              "title": "Record a run that happened",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence record"
+            },
+            {
+              "id": "evidence.report",
+              "title": "Every claim against the evidence recorded for it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence",
+              "resource": "majordomus://evidence",
+              "route": "GET /api/v1/evidence",
+              "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.test",
+              "title": "What this test proves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_test",
+              "route": "GET /api/v1/evidence/test",
+              "cli": "majordomus evidence proves"
+            }
+          ]
+        }
+      ],
+      "command_refs": [
+        {
+          "id": "evidence",
+          "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+          "stage": "work",
+          "read_only": false
+        }
+      ],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/EVIDENCE.md",
+          "title": "Evidence — what ran, against which commit, and whether it still proves anything"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0041",
+          "title": "Proof is a recorded execution, and inputs unchanged is not proven",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "evidence-proof-is-an-execution",
+          "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-currency-is-not-collapsed",
+          "claim": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-partial-run-preserves-the-rest",
+          "claim": "Recording one test's result never erases the evidence recorded for any other test",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-navigates-both-ways",
+          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-unsupported-guarantee-is-reported",
+          "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 3,
+        "mcp_resources": 1,
+        "http_routes": 3,
+        "cli_paths": 4,
+        "commands": 1,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 5,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 5
+        },
+        "modules": {
+          "behaviorally_verified": 1
+        }
+      }
+    },
+    {
       "id": "benchmarks",
       "title": "Every claim about speed is a recorded measurement",
       "short_title": "Benchmarks",
@@ -6467,7 +6654,7 @@
         },
         {
           "id": "rust-coverage-floor",
-          "claim": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
           "status": "guaranteed"
         }
       ],
@@ -6519,7 +6706,8 @@
         }
       ],
       "backlinks": [
-        "ci"
+        "ci",
+        "evidence"
       ],
       "counts": {
         "capabilities": 1,
@@ -6828,7 +7016,8 @@
         }
       ],
       "backlinks": [
-        "benchmarks"
+        "benchmarks",
+        "evidence"
       ],
       "counts": {
         "capabilities": 0,
@@ -7312,6 +7501,26 @@
         ]
       },
       {
+        "id": "evidence",
+        "label": "Evidence",
+        "route": "/features/evidence/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "benchmarks",
         "label": "Benchmarks",
         "route": "/features/benchmarks/",
@@ -7405,6 +7614,11 @@
         "features": []
       },
       {
+        "id": "devcontext",
+        "title": "Development context",
+        "features": []
+      },
+      {
         "id": "devtask",
         "title": "Executable development scopes",
         "features": []
@@ -7429,6 +7643,13 @@
         "features": []
       },
       {
+        "id": "evidence",
+        "title": "Evidence",
+        "features": [
+          "evidence"
+        ]
+      },
+      {
         "id": "executions",
         "title": "Executions",
         "features": []
@@ -7447,6 +7668,11 @@
           "doctrine",
           "cockpit"
         ]
+      },
+      {
+        "id": "lifecycle",
+        "title": "Session lifecycle",
+        "features": []
       },
       {
         "id": "objects",
@@ -7510,6 +7736,11 @@
         "features": [
           "coordination"
         ]
+      },
+      {
+        "id": "session_domain",
+        "title": "The session domain",
+        "features": []
       },
       {
         "id": "trace",
@@ -7620,7 +7851,9 @@
       {
         "id": "evidence",
         "title": "evidence",
-        "features": []
+        "features": [
+          "evidence"
+        ]
       },
       {
         "id": "finish",
@@ -7761,7 +7994,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (39)",
+        "title": "adr (43)",
         "features": [
           "knowledge"
         ]
@@ -7789,7 +8022,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (150)",
+        "title": "claim (157)",
         "features": [
           "declare-once"
         ]
@@ -7803,7 +8036,7 @@
       },
       {
         "id": "context",
-        "title": "context (27)",
+        "title": "context (28)",
         "features": [
           "context"
         ]
@@ -7822,14 +8055,14 @@
       },
       {
         "id": "feature",
-        "title": "feature (20)",
+        "title": "feature (21)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (203)",
+        "title": "issue (215)",
         "features": [
           "planning"
         ]
@@ -7843,7 +8076,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (18)",
+        "title": "milestone (19)",
         "features": [
           "planning"
         ]
@@ -7883,7 +8116,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (121)",
+        "title": "rule (126)",
         "features": [
           "doctrine"
         ]
@@ -7897,7 +8130,7 @@
       },
       {
         "id": "session",
-        "title": "session (12)",
+        "title": "session (22)",
         "features": [
           "continuity",
           "provenance"
@@ -8660,49 +8893,49 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1257,
-    "builtin": 81,
-    "declarative": 1176,
-    "modules": 27,
-    "mcp_tools": 79,
-    "mcp_resources": 1204,
-    "http_routes": 81,
-    "cli_commands": 93,
+    "capabilities": 1342,
+    "builtin": 95,
+    "declarative": 1247,
+    "modules": 31,
+    "mcp_tools": 92,
+    "mcp_resources": 1281,
+    "http_routes": 94,
+    "cli_commands": 101,
     "shell_commands": 29,
     "kinds": 28,
-    "objects": 1176,
+    "objects": 1247,
     "by_kind": {
-      "adr": 39,
+      "adr": 43,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 150,
+      "claim": 157,
       "command": 30,
-      "context": 27,
+      "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 218,
-      "feature": 20,
+      "document": 227,
+      "feature": 21,
       "implementation": 46,
-      "issue": 203,
+      "issue": 215,
       "knowledge": 1,
-      "milestone": 18,
+      "milestone": 19,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 121,
+      "rule": 126,
       "scope": 1,
-      "session": 12,
+      "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 159,
+      "test": 180,
       "use-case": 44,
       "workspace": 1
     },
     "providers": 6,
-    "features": 19,
+    "features": 20,
     "web_surfaces": 9
   },
   "valid": true
