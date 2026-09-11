@@ -252,8 +252,9 @@ same type:</p>
 <li><strong>full</strong> reads everything, the index included, and writes the cache. <code>env status</code> and
 <code>env explain</code> resolve in full, because a person is waiting for them.</li>
 <li><strong>fast</strong> reads only what is cheap — one <code>git status</code>, one <code>just --dump</code>, a few file reads —
-and takes the rest from the cache the last full resolution wrote. <code>env banner</code> and
-<code>env export</code> resolve fast, because direnv runs them on every entry.</li>
+and takes the rest from the cache the last full resolution wrote. <code>env banner</code>,
+<code>env export</code> and <code>env enter</code> resolve fast, because direnv runs the last of them on every
+entry.</li>
 </ul>
 <p>What no cache can supply is reported as unknown, never guessed and never defaulted: every
 tier of the snapshot carries its state (<code>resolved</code>, <code>cached</code> or <code>unavailable</code>), and an
@@ -276,21 +277,28 @@ or MCP — never writes it: the cache is the command line's, and a <code>GET</co
 on the repository would be a defect.</p>
 <h2 id="the-shell-entry-point"><a class="zola-anchor" href="#the-shell-entry-point" aria-label="Anchor link for: the-shell-entry-point">The shell entry point</a></h2>
 <p><code>.envrc</code> is an adapter and nothing else. It puts <code>bin/</code> on the path, watches the lease so
-that the banner is re-evaluated when the shared server comes up or goes away, and
-evaluates one call: <code>bin/majordomus-env export --shell direnv --banner</code>. That one process
-writes the assignments — <code>MAJORDOMUS_ROOT</code>, <code>MAJORDOMUS_SHARE</code>, and <code>MAJORDOMUS_URL</code> when
-a server is running — on standard output, where direnv reads the environment it applies,
-and the banner on standard error. <code>bin/majordomus-env</code> finds the executable through
-<code>lib/rust_bin.sh</code> and never builds it: a missing executable is one line on standard error
-naming <code>just build</code>, and exit 0, because a non-zero exit on a <code>cd</code> makes direnv report
-that the whole environment failed.</p>
-<p>The rule that holds this shut is <code>project.envrc-is-an-adapter</code>
-(<a href="../.ai/repo/rules/project/envrc-is-an-adapter.v1.md"><code>.ai/repo/rules/project/envrc-is-an-adapter.v1.md</code></a>):
-a file a shell evaluates on entering the repository resolves the tool, evaluates what it
-exports and asks it to render; it reads nothing about the repository, builds nothing and
-reaches no network.</p>
-<p><code>MAJORDOMUS_BANNER</code> chooses <code>auto</code>, <code>full</code>, <code>compact</code> or <code>off</code>; <code>NO_COLOR</code> makes the output
-plain, and under <code>CI</code> there is no banner at all. The <code>env</code> group of the justfile
+that the environment and the banner are re-evaluated when the shared server comes up or goes
+away, and evaluates one call: <code>bin/majordomus-env enter --shell direnv</code>. That one process
+writes the assignments — <code>MAJORDOMUS_ROOT</code>, <code>MAJORDOMUS_SHARE</code>, and <code>MAJORDOMUS_URL</code> when a
+server is running — on standard output, where direnv reads the environment it applies, and
+the banner on standard error; it refreshes the workflow bridge when a declaration behind it
+moved; and it makes sure this repository's shared server is serving this checkout.
+<code>bin/majordomus-env</code> finds the executable through <code>lib/rust_bin.sh</code> and never builds it: a
+missing executable is one line on standard error naming <code>just build</code>, and exit 0, because a
+non-zero exit on a <code>cd</code> makes direnv report that the whole environment failed. An executable
+older than its sources gets that same line and no runtime — the adapter sets
+<code>MAJORDOMUS_RUNTIME=off</code> — because a server started from stale code answers with a tree that
+is no longer there.</p>
+<p>The rules that hold this shut are <code>project.envrc-is-an-adapter</code>
+(<a href="../.ai/repo/rules/project/envrc-is-an-adapter.v2.md"><code>.ai/repo/rules/project/envrc-is-an-adapter.v2.md</code></a>) —
+a file a shell evaluates on entering the repository resolves the tool and makes exactly one
+call to it, the bootstrap command, and evaluates what that call exports; it reads nothing
+about the repository, builds nothing, reaches no network and decides nothing — and
+<code>project.entry-converges</code>, which says what that one call must and must not do. ADR 0043 is
+the decision, and <code>docs/ENTRY.md</code> the operator's page.</p>
+<p><code>MAJORDOMUS_BANNER</code> chooses <code>auto</code>, <code>full</code>, <code>compact</code> or <code>off</code>; <code>MAJORDOMUS_RUNTIME=off</code>
+enters without bringing the runtime up; <code>NO_COLOR</code> makes the output plain, and under <code>CI</code>
+there is no banner at all. The <code>env</code> group of the justfile
 (<code>.just/env.just</code>) carries the recipes a person runs.</p>
 <h2 id="what-is-canonical-and-what-is-derived"><a class="zola-anchor" href="#what-is-canonical-and-what-is-derived" aria-label="Anchor link for: what-is-canonical-and-what-is-derived">What is canonical, and what is derived</a></h2>
 <div class="overflow-x-auto" tabindex="0">
@@ -326,7 +334,7 @@ anything but the loopback address the lease names — and only when asked to pro
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

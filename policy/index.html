@@ -348,6 +348,8 @@ benchmark:
   budget:
     doctor_ms: 3000
     watch_ms: 3000
+    enter_ms: 750                        # a `cd` into a checkout whose runtime is already up
+    enter_cold_ms: 1000                  # the one that starts a server — and returns, never waits
 
 # Use-case coverage: which gaps `doctor` reports and which it fails on. A fresh repository
 # has no use cases yet, so nothing is required until it says so.
@@ -401,7 +403,7 @@ projections:
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

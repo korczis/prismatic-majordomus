@@ -326,7 +326,9 @@ person runs:</p>
 <span class="giallo-l"><span>MJ_TEST_JOBS</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">4</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the behavioural suite, four cases at a time</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-ci</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every Rust gate but coverage, plus the benchmark check</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-integration</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the executable built and the registry checks only</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">just</span><span class="z-l-8 z-d-8"> coverage</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> line coverage against scripts/rust-coverage-threshold</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">just</span><span class="z-l-8 z-d-8"> coverage</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> coverage with test code out of the denominator, against</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">                                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> scripts/rust-coverage-threshold and, for the session/continuity</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">                                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> domain, scripts/session-coverage-threshold</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/site-build</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> scripts/site-check</span></span>
 <span class="giallo-l"><span>SITE_PROBE_JOBS</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">4</span><span class="z-l-1 z-d-3"> scripts/site-probe</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every route at three widths, four routes at a time</span></span></code></pre>
 <p><code>just ci-plan</code>, <code>just ci-structure</code>, <code>just ci-fast</code> and <code>just ci-full</code> are the recipes.</p>
@@ -406,6 +408,33 @@ this workflow is its own group and neither waits for nor cancels another, so a r
 a scarce runner does not hold up the next commit's evidence. Deployments are the opposite —
 <code>pages.yml</code> cancels a superseded deployment, because the site is a projection of the newest
 commit and finishing an older one would publish an older tree.</p>
+<h3 id="the-three-ways-a-deploy-fails-and-who-reports-each"><a class="zola-anchor" href="#the-three-ways-a-deploy-fails-and-who-reports-each" aria-label="Anchor link for: the-three-ways-a-deploy-fails-and-who-reports-each">The three ways a deploy fails, and who reports each</a></h3>
+<p>A deploy that does not put the intended commit in front of a reader has failed, and until
+2026-09-11 the three ways that happens were reported with three different volumes.</p>
+<p><strong>The build refuses.</strong> <code>scripts/pages build</code> establishes the committed derived data is current
+by fingerprint before rendering it, and refuses a stale tree. The run goes red and the
+<code>publication state</code> step writes <code>::error title=Not published</code> on it. This is the loud one, and
+it is also by far the most frequent: both failures of 2026-09-11 (runs 34549001300 and
+34550274563, the merges of #202 and #203) were this, and both merge parents were already stale
+before the merge — the pull request's own <code>site</code> gate had been red and the merge happened
+anyway, because <code>master</code> has no required status check.</p>
+<p><strong>The run is cancelled.</strong> <code>cancel-in-progress</code> is a push's privilege and a cancelled run is not
+a failure; <code>gh run list</code> says <code>cancelled</code> whether gh-pages was pushed or not. A run is only
+ever cancelled by a newer run of a newer commit starting, so the chain always ends in a run
+that publishes or one that goes red — a cancelled run cannot be made red from inside, so what
+acts on it is <code>pages-live</code> on the next validation of master.</p>
+<p><strong>GitHub's own build errors.</strong> This was the silent one. Publishing is two steps and the second
+is GitHub's: <code>pages build and deployment</code> turns the pushed branch into the served bytes, and it
+can error on a branch that was pushed perfectly. On 2026-09-10 at 17:35:10Z it errored on
+gh-pages commit <code>dfd9c989c</code> with <em>Page build failed.</em>; the push had succeeded, the branch was
+right, the workflow reported success, and the site served the previous commit for 27 minutes
+with nothing red anywhere. The publication probe above it is <code>continue-on-error</code> on purpose —
+it waits on a queue, a build and a CDN that this repository does not own, and a gate on
+somebody else's latency is a gate that gets waived — but <em>slow</em> and <em>failed</em> are different
+facts and the second one has an API. <code>scripts/pages built</code> reads it, in one place, for both
+callers: <code>pages.yml</code> fails the run on an errored build at the moment it happens, and
+<code>scripts/ci/pages-check</code> asks the same question afterwards through the same command. A build
+that has merely not finished stays a note; only <code>errored</code> is a failure.</p>
 <h2 id="where-a-gate-cannot-reach"><a class="zola-anchor" href="#where-a-gate-cannot-reach" aria-label="Anchor link for: where-a-gate-cannot-reach">Where a gate cannot reach</a></h2>
 <p>A gate that never fires is worse than one that fails, because the verdict still reads
 complete. Three ways that happens here, all measured on 2026-09-10 rather than reasoned
@@ -537,7 +566,7 @@ fixtures.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

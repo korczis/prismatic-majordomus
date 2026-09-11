@@ -391,14 +391,20 @@ argument a typed value has already said everything a completion needs.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .envrc</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">PATH_add</span><span class="z-l-8 z-d-8"> bin</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">watch_file</span><span class="z-l-8 z-d-8"> .ai/local/state/mcp/server.json</span></span>
-<span class="giallo-l"><span class="z-l-15 z-d-14">eval</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">bin/majordomus-env</span><span class="z-l-8 z-d-8"> export</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-shell</span><span class="z-l-8 z-d-8"> direnv</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-banner</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-bridge</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span></span></code></pre>
-<p>One call: the assignments on stdout for <code>eval</code>, the banner on stderr, and the bridge
-refreshed when a declaration behind it changed. Deciding whether a generated file is current
-is the tool's work — a staleness rule implemented in the shell entry point would be a second
-implementation running on every <code>cd</code> that nothing tests. The rule
-<code>project.envrc-is-an-adapter</code> holds that shut.</p>
-<p>Entering the repository never builds anything and never reaches the network. A checkout that
-has not built the executable yet prints one line naming the recipe that builds it and exits 0.</p>
+<span class="giallo-l"><span class="z-l-15 z-d-14">eval</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">bin/majordomus-env</span><span class="z-l-8 z-d-8"> enter</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-shell</span><span class="z-l-8 z-d-8"> direnv</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span></span></code></pre>
+<p>One call, and it is the whole of entering: the assignments on stdout for <code>eval</code>, the banner
+on stderr, the workflow bridge refreshed when a declaration behind it changed, and this
+repository's shared server ensured when nothing is serving this checkout. Which of those are
+worth doing, and when each may be skipped, is the tool's work — a staleness rule or a
+liveness check implemented in the shell entry point would be a second implementation running
+on every <code>cd</code> that nothing tests. The rules <code>project.envrc-is-an-adapter</code> and
+<code>project.entry-converges</code> hold that shut, and ADR 0043 is the decision.</p>
+<p>Entering the repository never builds anything, never reaches a remote network, and never
+waits for a server it started to answer: the entry returns and <code>watch_file</code> over the lease
+brings the published address in when the server publishes one. A checkout that has not built
+the executable yet prints one line naming the recipe that builds it and exits 0 — and
+ensures no runtime, because a server started from stale code answers with a tree that is no
+longer there.</p>
 <h2 id="adding-a-command"><a class="zola-anchor" href="#adding-a-command" aria-label="Anchor link for: adding-a-command">Adding a command</a></h2>
 <h3 id="to-the-rust-executable"><a class="zola-anchor" href="#to-the-rust-executable" aria-label="Anchor link for: to-the-rust-executable">To the Rust executable</a></h3>
 <ol>
@@ -544,7 +550,7 @@ cleverer would buy nothing at all.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

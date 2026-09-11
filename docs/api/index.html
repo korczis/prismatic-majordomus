@@ -253,7 +253,8 @@
         <ul class="ml-3 hidden lg:block"><li><a href="#op-quality-report" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/quality</a></li></ul></li><li><a href="#tag-release" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">release</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-release-changelog" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/changelog</a></li><li><a href="#op-release-version" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/release/version</a></li></ul></li><li><a href="#tag-repository" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">repository</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-repository-info" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/repository</a></li><li><a href="#op-repository-scope" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope</a></li><li><a href="#op-repository-scope_classify" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope/classify</a></li></ul></li><li><a href="#tag-server" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">server</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-server-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/server</a></li></ul></li><li><a href="#tag-trace" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">trace</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-server-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/server</a></li></ul></li><li><a href="#tag-session_domain" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">session_domain</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-session_domain-identity" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/session/identity</a></li><li><a href="#op-session_domain-machine" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/session/machine</a></li></ul></li><li><a href="#tag-trace" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">trace</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-trace-report" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/trace</a></li><li><a href="#op-trace-commit" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/trace/commit</a></li><li><a href="#op-trace-issue" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/trace/issue</a></li></ul></li><li><a href="#tag-web" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">web</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-web-surfaces" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/web/surfaces</a></li></ul></li><li><a href="#tag-why" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">why</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-why-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why</a></li><li><a href="#op-why-areas" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/areas</a></li><li><a href="#op-why-audiences" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/audiences</a></li><li><a href="#op-why-diagnose" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/diagnose</a></li><li><a href="#op-why-moment" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/moment</a></li><li><a href="#op-why-validate" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/validate</a></li></ul></li><li><a href="#tag-worktree" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">worktree</a>
@@ -4215,6 +4216,94 @@ nothing and failing on everything the next time it ran.</td>
                 <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ServerStatus" class="text-fg-brand hover:underline">ServerStatus</a></td>
                 <td class="px-3 py-2 text-body">The shared server, and every server of the repository: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article></section><section id="tag-session_domain" class="mt-12 scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">session_domain</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider&#39;s own session — each with the canonical value and each store&#39;s own spelling of it, because the stores spell six things as three words and nothing said so.</p><article id="op-session_domain-identity" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/session/identity</code>
+          <a href="#op-session_domain-identity" class="font-mono text-xs text-body-subtle hover:underline">session_domain.identity</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What identifies this checkout, and how each store spells it</h3>
+        <p class="mt-1 break-words text-sm text-body">The repository, the checkout, the open episode and the provider session, each with the canonical value this executable computes and each store&#39;s own spelling beside it. The stores record the repository sometimes as an absolute .git path and sometimes as a remote URL, the worktree as a path and as a digest, and the session as both an episode id and a provider UUID; this is the surface that says so, so that a reader never compares two spellings of different things and concludes they disagree.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=2)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_session_identity</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;session-identity&quot;, &quot;uri&quot;: &quot;majordomus://session/identity&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/session/identity&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-IdentityReport" class="text-fg-brand hover:underline">IdentityReport</a></td>
+                <td class="px-3 py-2 text-body">What identifies this checkout, and how each store spells it: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article><article id="op-session_domain-machine" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/session/machine</code>
+          <a href="#op-session_domain-machine" class="font-mono text-xs text-body-subtle hover:underline">session_domain.machine</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The episode lifecycle, as data</h3>
+        <p class="mt-1 break-words text-sm text-body">Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=1, ttl_seconds=600)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_session_machine</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;session-machine&quot;, &quot;uri&quot;: &quot;majordomus://session/machine&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/session/machine&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-MachineReport" class="text-fg-brand hover:underline">MachineReport</a></td>
+                <td class="px-3 py-2 text-body">The episode lifecycle, as data: the result.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -9595,7 +9684,25 @@ it names, and whether the pointer follows it — and <code>note</code> always sa
 windows of one provider on one worktree are two workers, and only one is pointed at.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">foreign</code><span class="min-w-0 text-body">It names another worktree of this repository. Reported, never treated as this
 checkout&#39;s — a record about somebody else&#39;s work quietly becoming yours is the
 failure the two-tier resolution rule exists to prevent.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stranded</code><span class="min-w-0 text-body">The worktree it names is gone from disk. Nothing can close it: the close path
-composes the record from git in the worktree the episode opened in.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Episode" class="font-mono text-fg-brand underline">Episode</a></p></article><article id="schema-Episodes" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+composes the record from git in the worktree the episode opened in.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Episode" class="font-mono text-fg-brand underline">Episode</a></p></article><article id="schema-EpisodeState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">EpisodeState</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;opening&quot; | &quot;open&quot; | &quot;detached&quot; | &quot;closed&quot;</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where an episode is: minted, open, detached from the connection that held it, or closed
+into the immutable record.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::EpisodeState;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert!(EpisodeState::Open.may_move_to(EpisodeState::Closed));</span></span>
+<span class="giallo-l"><span>assert!(!EpisodeState::Closed.may_move_to(EpisodeState::Open), &quot;a record is immutable&quot;);</span></span>
+<span class="giallo-l"><span>assert!(EpisodeState::Open.may_move_to(EpisodeState::Open), &quot;a resume is not a move&quot;);</span></span>
+<span class="giallo-l"><span>assert!(EpisodeState::Closed.is_final());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">opening</code><span class="min-w-0 text-body">An identity has been minted and nothing durable has been written yet. It exists so
+that a crash between minting an id and writing the open record is a state the model
+can name rather than an episode that never happened.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">open</code><span class="min-w-0 text-body">The open record stands. The worker is here, or was recently.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">detached</code><span class="min-w-0 text-body">The connection that held the episode went away, and the episode did not. A dropped
+socket is the most ordinary thing that happens to a session; an episode that closed
+itself on every disconnect would lose the work of every worker whose network
+hiccuped. It is still resumable, and it is still recoverable if nobody resumes it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">closed</code><span class="min-w-0 text-body">The immutable record has been published. Terminal, and terminal is the point: the
+four records of `s-20260909152316-024f` all exist because nothing in the previous
+representation could say this.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-StateView" class="font-mono text-fg-brand underline">StateView</a> <a href="#schema-TransitionView" class="font-mono text-fg-brand underline">TransitionView</a></p></article><article id="schema-Episodes" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Episodes</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -9649,7 +9756,7 @@ pointer that resolves to nothing. Empty is the good case.</td>
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-projections" class="font-mono text-fg-brand hover:underline">capabilities.projections</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-release-changelog" class="font-mono text-fg-brand hover:underline">release.changelog</a> <a href="#op-commands-get" class="font-mono text-fg-brand hover:underline">commands.get</a> <a href="#op-commands-list" class="font-mono text-fg-brand hover:underline">commands.list</a> <a href="#op-commands-graph" class="font-mono text-fg-brand hover:underline">commands.graph</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-design-system" class="font-mono text-fg-brand hover:underline">design.system</a> <a href="#op-design-contrast" class="font-mono text-fg-brand hover:underline">design.contrast</a> <a href="#op-design-explain" class="font-mono text-fg-brand hover:underline">design.explain</a> <a href="#op-design-tokens" class="font-mono text-fg-brand hover:underline">design.tokens</a> <a href="#op-devtask-issue" class="font-mono text-fg-brand hover:underline">devtask.issue</a> <a href="#op-devtask-milestone" class="font-mono text-fg-brand hover:underline">devtask.milestone</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a> <a href="#op-environment-status" class="font-mono text-fg-brand hover:underline">environment.status</a> <a href="#op-environment-explain" class="font-mono text-fg-brand hover:underline">environment.explain</a> <a href="#op-evidence-report" class="font-mono text-fg-brand hover:underline">evidence.report</a> <a href="#op-evidence-claim" class="font-mono text-fg-brand hover:underline">evidence.claim</a> <a href="#op-evidence-test" class="font-mono text-fg-brand hover:underline">evidence.test</a> <a href="#op-executions-list" class="font-mono text-fg-brand hover:underline">executions.list</a> <a href="#op-executions-cancel" class="font-mono text-fg-brand hover:underline">executions.cancel</a> <a href="#op-executions-demonstrate" class="font-mono text-fg-brand hover:underline">executions.demonstrate</a> <a href="#op-executions-events" class="font-mono text-fg-brand hover:underline">executions.events</a> <a href="#op-executions-get" class="font-mono text-fg-brand hover:underline">executions.get</a> <a href="#op-executions-protocol" class="font-mono text-fg-brand hover:underline">executions.protocol</a> <a href="#op-executions-start" class="font-mono text-fg-brand hover:underline">executions.start</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-lifecycle-closed" class="font-mono text-fg-brand hover:underline">lifecycle.closed</a> <a href="#op-lifecycle-episodes" class="font-mono text-fg-brand hover:underline">lifecycle.episodes</a> <a href="#op-lifecycle-providers" class="font-mono text-fg-brand hover:underline">lifecycle.providers</a> <a href="#op-lifecycle-recovery" class="font-mono text-fg-brand hover:underline">lifecycle.recovery</a> <a href="#op-lifecycle-runtime" class="font-mono text-fg-brand hover:underline">lifecycle.runtime</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-objects-verify" class="font-mono text-fg-brand hover:underline">objects.verify</a> <a href="#op-obligations-vocabulary" class="font-mono text-fg-brand hover:underline">obligations.vocabulary</a> <a href="#op-obligations-closure" class="font-mono text-fg-brand hover:underline">obligations.closure</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-plan-model" class="font-mono text-fg-brand hover:underline">plan.model</a> <a href="#op-plan-issues" class="font-mono text-fg-brand hover:underline">plan.issues</a> <a href="#op-plan-next" class="font-mono text-fg-brand hover:underline">plan.next</a> <a href="#op-plan-record" class="font-mono text-fg-brand hover:underline">plan.record</a> <a href="#op-plan-roadmap" class="font-mono text-fg-brand hover:underline">plan.roadmap</a> <a href="#op-plan-status" class="font-mono text-fg-brand hover:underline">plan.status</a> <a href="#op-plan-validate" class="font-mono text-fg-brand hover:underline">plan.validate</a> <a href="#op-plan-waves" class="font-mono text-fg-brand hover:underline">plan.waves</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-quality-report" class="font-mono text-fg-brand hover:underline">quality.report</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-release-version" class="font-mono text-fg-brand hover:underline">release.version</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-server-status" class="font-mono text-fg-brand hover:underline">server.status</a> <a href="#op-trace-report" class="font-mono text-fg-brand hover:underline">trace.report</a> <a href="#op-trace-commit" class="font-mono text-fg-brand hover:underline">trace.commit</a> <a href="#op-trace-issue" class="font-mono text-fg-brand hover:underline">trace.issue</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-projections" class="font-mono text-fg-brand hover:underline">capabilities.projections</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-release-changelog" class="font-mono text-fg-brand hover:underline">release.changelog</a> <a href="#op-commands-get" class="font-mono text-fg-brand hover:underline">commands.get</a> <a href="#op-commands-list" class="font-mono text-fg-brand hover:underline">commands.list</a> <a href="#op-commands-graph" class="font-mono text-fg-brand hover:underline">commands.graph</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-design-system" class="font-mono text-fg-brand hover:underline">design.system</a> <a href="#op-design-contrast" class="font-mono text-fg-brand hover:underline">design.contrast</a> <a href="#op-design-explain" class="font-mono text-fg-brand hover:underline">design.explain</a> <a href="#op-design-tokens" class="font-mono text-fg-brand hover:underline">design.tokens</a> <a href="#op-devtask-issue" class="font-mono text-fg-brand hover:underline">devtask.issue</a> <a href="#op-devtask-milestone" class="font-mono text-fg-brand hover:underline">devtask.milestone</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a> <a href="#op-environment-status" class="font-mono text-fg-brand hover:underline">environment.status</a> <a href="#op-environment-explain" class="font-mono text-fg-brand hover:underline">environment.explain</a> <a href="#op-evidence-report" class="font-mono text-fg-brand hover:underline">evidence.report</a> <a href="#op-evidence-claim" class="font-mono text-fg-brand hover:underline">evidence.claim</a> <a href="#op-evidence-test" class="font-mono text-fg-brand hover:underline">evidence.test</a> <a href="#op-executions-list" class="font-mono text-fg-brand hover:underline">executions.list</a> <a href="#op-executions-cancel" class="font-mono text-fg-brand hover:underline">executions.cancel</a> <a href="#op-executions-demonstrate" class="font-mono text-fg-brand hover:underline">executions.demonstrate</a> <a href="#op-executions-events" class="font-mono text-fg-brand hover:underline">executions.events</a> <a href="#op-executions-get" class="font-mono text-fg-brand hover:underline">executions.get</a> <a href="#op-executions-protocol" class="font-mono text-fg-brand hover:underline">executions.protocol</a> <a href="#op-executions-start" class="font-mono text-fg-brand hover:underline">executions.start</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-lifecycle-closed" class="font-mono text-fg-brand hover:underline">lifecycle.closed</a> <a href="#op-lifecycle-episodes" class="font-mono text-fg-brand hover:underline">lifecycle.episodes</a> <a href="#op-lifecycle-providers" class="font-mono text-fg-brand hover:underline">lifecycle.providers</a> <a href="#op-lifecycle-recovery" class="font-mono text-fg-brand hover:underline">lifecycle.recovery</a> <a href="#op-lifecycle-runtime" class="font-mono text-fg-brand hover:underline">lifecycle.runtime</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-objects-verify" class="font-mono text-fg-brand hover:underline">objects.verify</a> <a href="#op-obligations-vocabulary" class="font-mono text-fg-brand hover:underline">obligations.vocabulary</a> <a href="#op-obligations-closure" class="font-mono text-fg-brand hover:underline">obligations.closure</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-plan-model" class="font-mono text-fg-brand hover:underline">plan.model</a> <a href="#op-plan-issues" class="font-mono text-fg-brand hover:underline">plan.issues</a> <a href="#op-plan-next" class="font-mono text-fg-brand hover:underline">plan.next</a> <a href="#op-plan-record" class="font-mono text-fg-brand hover:underline">plan.record</a> <a href="#op-plan-roadmap" class="font-mono text-fg-brand hover:underline">plan.roadmap</a> <a href="#op-plan-status" class="font-mono text-fg-brand hover:underline">plan.status</a> <a href="#op-plan-validate" class="font-mono text-fg-brand hover:underline">plan.validate</a> <a href="#op-plan-waves" class="font-mono text-fg-brand hover:underline">plan.waves</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-quality-report" class="font-mono text-fg-brand hover:underline">quality.report</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-release-version" class="font-mono text-fg-brand hover:underline">release.version</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-server-status" class="font-mono text-fg-brand hover:underline">server.status</a> <a href="#op-session_domain-identity" class="font-mono text-fg-brand hover:underline">session_domain.identity</a> <a href="#op-session_domain-machine" class="font-mono text-fg-brand hover:underline">session_domain.machine</a> <a href="#op-trace-report" class="font-mono text-fg-brand hover:underline">trace.report</a> <a href="#op-trace-commit" class="font-mono text-fg-brand hover:underline">trace.commit</a> <a href="#op-trace-issue" class="font-mono text-fg-brand hover:underline">trace.issue</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -11720,7 +11827,85 @@ and live under [<code>HttpExposure::PREFIX</code>].</div><div class="mt-3 overfl
                 <td class="px-3 py-2 text-body">The social preview image, relative to the design directory.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DesignReport" class="font-mono text-fg-brand underline">DesignReport</a></p></article><article id="schema-InspectReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DesignReport" class="font-mono text-fg-brand underline">DesignReport</a></p></article><article id="schema-IdentityFacet" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">IdentityFacet</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One identity of this checkout, as this executable computes it and as each store spells
+it. What <code>session.identity</code> answers, and the direct projection of the audit's table.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::{identities, IdentityFacet};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let dir = tempfile::tempdir().unwrap();</span></span>
+<span class="giallo-l"><span>let facets: Vec&lt;IdentityFacet&gt; = identities(dir.path());</span></span>
+<span class="giallo-l"><span>let repository = facets.iter().find(|f| f.subject == &quot;repository&quot;).expect(&quot;a facet&quot;);</span></span>
+<span class="giallo-l"><span>assert!(repository.spellings.len() &gt;= 2, &quot;one word, two writers, two values&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">subject</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What is being identified: <code>repository</code>, <code>checkout</code>, <code>episode</code>, <code>provider_session</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">canonical</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The canonical value this executable computes, when it can compute one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">spellings</td>
+                <td class="px-3 py-2 font-mono text-body">array of RecordedSpelling <span class="text-body-subtle">→</span> <a href="#schema-RecordedSpelling" class="text-fg-brand underline">RecordedSpelling</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">How each store spells the same subject, in the order [<code>crate::order</code>] gives.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Why the subject needs its own type, in one line, for a reader meeting it in a
+projection rather than in this module.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-IdentityReport" class="font-mono text-fg-brand underline">IdentityReport</a></p></article><article id="schema-IdentityReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">IdentityReport</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The identities of this checkout: one facet per subject, with a standing note about what
+a reader must not do with them.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::IdentityReport;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::session::identities;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let dir = tempfile::tempdir().unwrap();</span></span>
+<span class="giallo-l"><span>let report = IdentityReport {</span></span>
+<span class="giallo-l"><span>    checkout: dir.path().display().to_string(),</span></span>
+<span class="giallo-l"><span>    facets: identities(dir.path()),</span></span>
+<span class="giallo-l"><span>    findings: Vec::new(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>let subjects: Vec&lt;&amp;str&gt; = report.facets.iter().map(|f| f.subject.as_str()).collect();</span></span>
+<span class="giallo-l"><span>assert_eq!(subjects, [&quot;repository&quot;, &quot;checkout&quot;, &quot;episode&quot;, &quot;provider_session&quot;]);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">checkout</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The checkout this answer is about. An absolute path, because this capability is
+served to the worker in front of this checkout and never published — the same
+exposure rule <code>continuity.state</code> follows and for the same reason (ADR 0014).</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">facets</td>
+                <td class="px-3 py-2 font-mono text-body">array of IdentityFacet <span class="text-body-subtle">→</span> <a href="#schema-IdentityFacet" class="text-fg-brand underline">IdentityFacet</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One entry per subject, in the order a reader meets them: repository, checkout,
+episode, provider session.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What a reader should know before comparing any two of these. Empty is not the good
+case here — the conflation is a property of the stores, not of this checkout — so
+the standing note is always present.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-session_domain-identity" class="font-mono text-fg-brand hover:underline">session_domain.identity</a></p></article><article id="schema-InspectReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">InspectReport</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -12134,7 +12319,47 @@ the signal.</td>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">LogStream</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;stdout&quot; | &quot;stderr&quot; | &quot;handler&quot;</span>
-        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which stream a log line came from.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stdout</code><span class="min-w-0 text-body">The standard output of a child process the handler ran.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stderr</code><span class="min-w-0 text-body">Its standard error.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">handler</code><span class="min-w-0 text-body">The handler itself, saying something it wants a reader to see.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a></p></article><article id="schema-Machines" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which stream a log line came from.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stdout</code><span class="min-w-0 text-body">The standard output of a child process the handler ran.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stderr</code><span class="min-w-0 text-body">Its standard error.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">handler</code><span class="min-w-0 text-body">The handler itself, saying something it wants a reader to see.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ExecutionEvent" class="font-mono text-fg-brand underline">ExecutionEvent</a></p></article><article id="schema-MachineReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">MachineReport</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The lifecycle machine, with the decision it implements, so that a reader meeting it in
+a projection can go and read why it is shaped this way.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::MachineReport;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::session::Machine;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// the report is the machine plus one citation; the machine itself is derived from the</span></span>
+<span class="giallo-l"><span>// types and carries no second list</span></span>
+<span class="giallo-l"><span>let report = MachineReport { machine: Machine::describe(), decision: &quot;adr-0047&quot;.into() };</span></span>
+<span class="giallo-l"><span>assert!(report.machine.transitions.iter().any(|t| !t.moves_state), &quot;a checkpoint is an event&quot;);</span></span>
+<span class="giallo-l"><span>assert!(report.decision.contains(&quot;0047&quot;));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">states</td>
+                <td class="px-3 py-2 font-mono text-body">array of StateView <span class="text-body-subtle">→</span> <a href="#schema-StateView" class="text-fg-brand underline">StateView</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every state, with what it means and whether it is terminal.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">transitions</td>
+                <td class="px-3 py-2 font-mono text-body">array of TransitionView <span class="text-body-subtle">→</span> <a href="#schema-TransitionView" class="text-fg-brand underline">TransitionView</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every transition, with the states it runs between.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">independent_of</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What the machine deliberately does not depend on, stated so that a reader does not
+have to infer an absence. One entry today: task state.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">decision</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The decision this machine is the implementation of, so a reader meeting it in a
+projection can go and read why it is shaped this way.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-session_domain-machine" class="font-mono text-fg-brand hover:underline">session_domain.machine</a></p></article><article id="schema-Machines" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Machines</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -15588,7 +15813,43 @@ to open the file.</div><div class="mt-3 overflow-x-auto rounded-base border bord
                 <td class="px-3 py-2 text-body">The section a resuming worker acts on, when the record has one. A handover's <code>Next Action</code>; empty for a record that carries no sections.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand underline">Continuity</a></p></article><article id="schema-Recovery" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand underline">Continuity</a></p></article><article id="schema-RecordedSpelling" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">RecordedSpelling</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One store's spelling of one subject.
+Which half of the layer wrote it, what wrote it, and the value it would have here.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::{RecordedSpelling, Spelling};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let local = RecordedSpelling {</span></span>
+<span class="giallo-l"><span>    spelling: Spelling::Local,</span></span>
+<span class="giallo-l"><span>    writer: &quot;mj_git_repo_id (lib/common.sh)&quot;.into(),</span></span>
+<span class="giallo-l"><span>    value: &quot;/src/repo/.git&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>// knowing which half a string came from is what stops a path being compared with a URL</span></span>
+<span class="giallo-l"><span>assert_eq!(local.spelling.as_str(), &quot;local&quot;);</span></span>
+<span class="giallo-l"><span>assert!(local.value.starts_with(&#39;/&#39;));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">spelling</td>
+                <td class="px-3 py-2 font-mono text-body">Spelling <span class="text-body-subtle">→</span> <a href="#schema-Spelling" class="text-fg-brand underline">Spelling</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Which half of the layer wrote it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">writer</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The writer, named so a reader can go and look at it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">value</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The value, as this checkout would have it written. Empty when nothing has written
+one here yet, which is a fresh clone and not a fault.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-IdentityFacet" class="font-mono text-fg-brand underline">IdentityFacet</a></p></article><article id="schema-Recovery" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Recovery</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -17286,7 +17547,23 @@ nothing else.</div><div class="mt-3 overflow-x-auto rounded-base border border-d
                 <td class="px-3 py-2 text-body">How many rules of it state a colour.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ContrastReport" class="font-mono text-fg-brand underline">ContrastReport</a></p></article><article id="schema-Stability" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ContrastReport" class="font-mono text-fg-brand underline">ContrastReport</a></p></article><article id="schema-Spelling" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Spelling</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;local&quot; | &quot;shared&quot; | &quot;canonical&quot;</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which store a recorded identity was read from, kept beside the value.</p>
+<p>The point is not to choose between <code>mj_git_repo_id</code> and <code>mj_repository_id</code>, or between
+<code>worktree:</code> and <code>worktree_id:</code>. It is to stop pretending they are one value. A reader
+that knows a string is the <em>local</em> spelling can compare it with other local spellings
+and can refuse to compare it with a shared one, which is precisely the comparison that
+produced "these two records are about different repositories" for records of the same
+repository written four minutes apart.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::Spelling;</span></span>
+<span class="giallo-l"><span>// the two halves are different answers to one question, and are never compared</span></span>
+<span class="giallo-l"><span>assert_ne!(Spelling::Local, Spelling::Shared);</span></span>
+<span class="giallo-l"><span>assert_eq!(Spelling::Canonical.as_str(), &quot;canonical&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">local</code><span class="min-w-0 text-body">The local half&#39;s spelling: a path, in `.ai/local/state/`. It names this disk and is
+never published.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">shared</code><span class="min-w-0 text-body">The shared half&#39;s spelling: a remote URL or a digest, in `.ai/repo/sessions/`. It
+names the repository and travels with a clone (ADR 0014).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">canonical</code><span class="min-w-0 text-body">This executable&#39;s own canonical digest, computed rather than read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RecordedSpelling" class="font-mono text-fg-brand underline">RecordedSpelling</a></p></article><article id="schema-Stability" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Stability</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;implemented&quot; | &quot;behaviorally_verified&quot; | &quot;experimental&quot; | &quot;planned&quot; | &quot;unsupported&quot;</span>
@@ -17321,7 +17598,38 @@ removed by the harness that made it. Reported; migrated only on request.</span><
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">State</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ok&quot; | &quot;degraded&quot;</span>
-        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether every discovered file became an object.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ok</code><span class="min-w-0 text-body">Every discovered file became an object.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">degraded</code><span class="min-w-0 text-body">At least one file could not be read; the diagnostics say which.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand underline">RepositoryReport</a></p></article><article id="schema-StatusReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether every discovered file became an object.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ok</code><span class="min-w-0 text-body">Every discovered file became an object.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">degraded</code><span class="min-w-0 text-body">At least one file could not be read; the diagnostics say which.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-RepositoryReport" class="font-mono text-fg-brand underline">RepositoryReport</a></p></article><article id="schema-StateView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">StateView</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One state of the machine: its word, whether an episode ever leaves it, and where it may
+go from there.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::{EpisodeState, Machine, StateView};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let m = Machine::describe();</span></span>
+<span class="giallo-l"><span>let closed: &amp;StateView =</span></span>
+<span class="giallo-l"><span>    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(&quot;a state&quot;);</span></span>
+<span class="giallo-l"><span>assert!(closed.terminal &amp;&amp; closed.may_move_to.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+                <td class="px-3 py-2 font-mono text-body">EpisodeState <span class="text-body-subtle">→</span> <a href="#schema-EpisodeState" class="text-fg-brand underline">EpisodeState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The state's word.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">terminal</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether an episode ever leaves it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">may_move_to</td>
+                <td class="px-3 py-2 font-mono text-body">array of EpisodeState <span class="text-body-subtle">→</span> <a href="#schema-EpisodeState" class="text-fg-brand underline">EpisodeState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The states an episode in this one may move to, in canonical order.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-MachineReport" class="font-mono text-fg-brand underline">MachineReport</a></p></article><article id="schema-StatusReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">StatusReport</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -18398,7 +18706,83 @@ nobody has started has no branch yet.</td>
                 <td class="px-3 py-2 text-body">Examined trunk commits more than one issue claims.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-TraceReport" class="font-mono text-fg-brand underline">TraceReport</a></p></article><article id="schema-Transport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-TraceReport" class="font-mono text-fg-brand underline">TraceReport</a></p></article><article id="schema-Transition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Transition</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;open&quot; | &quot;resume&quot; | &quot;checkpoint&quot; | &quot;detach&quot; | &quot;close&quot; | &quot;recover&quot;</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What moved an episode. The vocabulary the ADR 0041 audit needs: <code>open</code>, <code>resume</code>,
+<code>checkpoint</code>, <code>detach</code>, <code>close</code>, <code>recover</code>.</p>
+<p>One of them does not change the state, and it is a transition anyway. A checkpoint
+leaves an open episode open — but it is one of the two events whose <em>absence</em> is what
+the audit was looking for, and an event that is modelled as "nothing happened" cannot
+be counted. The six days of silence were six days in which <code>session.started</code> and
+<code>session.closed</code> kept arriving and the two events that produce the records a worker
+resumes from did not. A vocabulary in which those two are not events is a vocabulary in
+which that outage is invisible.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::{EpisodeState, Transition};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a checkpoint is a transition that does not move the state, and says so</span></span>
+<span class="giallo-l"><span>let c = Transition::Checkpoint;</span></span>
+<span class="giallo-l"><span>assert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));</span></span>
+<span class="giallo-l"><span>assert!(!c.moves_state());</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// a resume is canonically the return to a detached episode; a provider&#39;s start event</span></span>
+<span class="giallo-l"><span>// arriving at one that is already open is the same transition seen from `Open`, which</span></span>
+<span class="giallo-l"><span>// the machine allows without a move</span></span>
+<span class="giallo-l"><span>assert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));</span></span>
+<span class="giallo-l"><span>assert!(EpisodeState::Open.may_move_to(EpisodeState::Open));</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and every transition&#39;s own move is one the machine allows</span></span>
+<span class="giallo-l"><span>for t in Transition::ALL {</span></span>
+<span class="giallo-l"><span>    let (from, to) = t.from_to();</span></span>
+<span class="giallo-l"><span>    assert!(from.may_move_to(to), &quot;{} is not a legal move&quot;, t.as_str());</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">open</code><span class="min-w-0 text-body">The episode begins: an id is minted and the open record is written.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">resume</code><span class="min-w-0 text-body">The worker came back to a detached episode. A provider&#39;s start event also fires
+again on a resume and on a compaction against an episode that is still open; that
+is the same transition observed from `Open`, and the honest answer to &quot;your episode
+is already open&quot; is to keep it rather than to open a second one.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">checkpoint</code><span class="min-w-0 text-body">A progress note was recorded against the episode. An artefact of the episode and
+not of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a
+normal record, not a refusal.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">detach</code><span class="min-w-0 text-body">The connection went away without an end event.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">close</code><span class="min-w-0 text-body">The worker ended the episode and the immutable record was published.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">recover</code><span class="min-w-0 text-body">Nobody ended it and its last sign of life is older than the stranded threshold, so
+maintenance closed it. The record says so: an episode closed this way is
+`interrupted`, because a reader resuming from it needs to know it may be incomplete.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-TransitionView" class="font-mono text-fg-brand underline">TransitionView</a></p></article><article id="schema-TransitionView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">TransitionView</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One transition of the machine: its word, the states it runs between, and whether it
+moves the state at all.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::session::{Machine, Transition, TransitionView};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let m = Machine::describe();</span></span>
+<span class="giallo-l"><span>let close: &amp;TransitionView = m</span></span>
+<span class="giallo-l"><span>    .transitions</span></span>
+<span class="giallo-l"><span>    .iter()</span></span>
+<span class="giallo-l"><span>    .find(|t| t.transition == Transition::Close)</span></span>
+<span class="giallo-l"><span>    .expect(&quot;a transition&quot;);</span></span>
+<span class="giallo-l"><span>assert!(close.moves_state);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">transition</td>
+                <td class="px-3 py-2 font-mono text-body">Transition <span class="text-body-subtle">→</span> <a href="#schema-Transition" class="text-fg-brand underline">Transition</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The transition's word.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">from</td>
+                <td class="px-3 py-2 font-mono text-body">EpisodeState <span class="text-body-subtle">→</span> <a href="#schema-EpisodeState" class="text-fg-brand underline">EpisodeState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where it starts.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">to</td>
+                <td class="px-3 py-2 font-mono text-body">EpisodeState <span class="text-body-subtle">→</span> <a href="#schema-EpisodeState" class="text-fg-brand underline">EpisodeState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where it ends.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">moves_state</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">False for <code>resume</code> and <code>checkpoint</code>, which are events inside a state.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-MachineReport" class="font-mono text-fg-brand underline">MachineReport</a></p></article><article id="schema-Transport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Transport</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;stdio&quot; | &quot;http&quot;</span>
@@ -19008,7 +19392,7 @@ is inferred from similarity.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

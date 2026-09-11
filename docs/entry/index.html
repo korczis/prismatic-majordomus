@@ -233,13 +233,20 @@
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>What happens when a person or an agent enters a Majordomus-enabled repository, what
 converges on its own, what is deliberately left to be asked for, and what to do when
 something does not come up. <code>docs/ENTRY_AUDIT.md</code> is the forensic finding this document
-came out of; ADR 0035 is the decision; this is the operator's page.</p>
+came out of; ADR 0035 decided the agent's door and ADR 0043 the shell's; this is the
+operator's page.</p>
+<p>The short version: <strong>nothing here is a command anybody has to remember.</strong> Entering the
+directory is enough, by either door.</p>
 <h2 id="the-sequence"><a class="zola-anchor" href="#the-sequence" aria-label="Anchor link for: the-sequence">The sequence</a></h2>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>cd &lt;repository&gt;          direnv evaluates .envrc, which asks the tool for one snapshot:</span></span>
-<span class="giallo-l"><span>                         the variables a shell here benefits from on stdout, the banner on</span></span>
-<span class="giallo-l"><span>                         stderr. It reads nothing about the repository itself, builds</span></span>
-<span class="giallo-l"><span>                         nothing, starts nothing, and reaches no network beyond one</span></span>
-<span class="giallo-l"><span>                         connection attempt to an address a running server already published.</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>cd &lt;repository&gt;          direnv evaluates .envrc, which makes one call — `majordomus env</span></span>
+<span class="giallo-l"><span>                         enter` — and evaluates what it prints: the variables a shell here</span></span>
+<span class="giallo-l"><span>                         benefits from on stdout, the banner on stderr, the workflow bridge</span></span>
+<span class="giallo-l"><span>                         refreshed when a declaration behind it moved, and the repository&#39;s</span></span>
+<span class="giallo-l"><span>                         shared server ensured when nothing is serving this checkout. The</span></span>
+<span class="giallo-l"><span>                         file itself reads nothing about the repository, builds nothing and</span></span>
+<span class="giallo-l"><span>                         starts nothing; the executable does all of it. Nothing is waited</span></span>
+<span class="giallo-l"><span>                         for: a server this entry starts becomes ready beside the shell, and</span></span>
+<span class="giallo-l"><span>                         `watch_file` over the lease brings its address in when it lands.</span></span>
 <span class="giallo-l"></span>
 <span class="giallo-l"><span>an agent starts          the provider&#39;s start event opens the episode, makes sure the</span></span>
 <span class="giallo-l"><span>                         repository&#39;s shared server is serving this checkout, and writes a</span></span>
@@ -265,8 +272,10 @@ its server changes underneath it.</p>
 <span class="giallo-l"><span>                                            a ready server for this checkout, started if</span></span>
 <span class="giallo-l"><span>                                            there must be one</span></span>
 <span class="giallo-l"><span>majordomus serve stop [--wait S]            end the server this checkout&#39;s lease names</span></span></code></pre>
-<p><code>serve ensure</code> is what the start event runs. It reads the lease and probes the server it
-names, exactly as the election does, and converges: a ready server is reported and nothing
+<p><code>serve ensure</code> is what the start event runs, and <code>majordomus env enter</code> runs the same
+function — one convergence, three surfaces, so that an agent and a person cannot reach two
+different answers about whether a server is already there. It reads the lease and probes the
+server it names, exactly as the election does, and converges: a ready server is reported and nothing
 is started; one that is still binding is waited for; an absent or stale lease gets a server
 started as a process of its own, and the call waits until it answers. Run twice, it starts
 nothing the second time. Run by three shells at once, the election lets one bind and the
@@ -286,22 +295,52 @@ server before its first attach, and a checkout nobody works in does not keep one
 <tr><td><code>stale</code></td><td>the lease names a server that does not answer, or is not a lease at all</td><td>nothing: the next start takes it over and says which it was</td></tr>
 </tbody></table>
 </div>
+<h2 id="entering-as-a-shell"><a class="zola-anchor" href="#entering-as-a-shell" aria-label="Anchor link for: entering-as-a-shell">Entering as a shell</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus env enter [--shell SHELL] [--no-banner] [--no-bridge] [--no-runtime] [--wait S]</span></span></code></pre>
+<p>What <code>.envrc</code> calls, and the only call it makes. The file carries a <code>PATH_add</code>, a
+<code>watch_file</code> and that line; everything else — whether to ensure, on what port, with what
+idle life, when to stay silent, when to refuse — belongs to the executable, where it is
+typed, benchmarked and tested.</p>
+<p>Three things about it are contract rather than implementation:</p>
+<ul>
+<li><strong>It never waits.</strong> A cold entry finds that nothing answers, starts a server as a process
+of its own, and returns. Measured on a machine under a load average of 136, a cold entry
+cost 185–217 ms and a warm one 134–218 ms: the same, because starting the runtime is a
+fork and an exec and nothing else. The budgets are <code>benchmark.budget.enter_ms</code> and
+<code>benchmark.budget.enter_cold_ms</code> in the policy, and <code>test/cases/190</code> measures both on
+every run.</li>
+<li><strong>It never fails.</strong> Every runtime outcome is at most one line on standard error and an
+exit of 0. A non-zero exit here makes direnv report that the whole environment failed and
+leaves a person with a broken shell in a repository that is fine.</li>
+<li><strong>It is silent when there is nothing to say.</strong> Entering a healthy repository prints
+nothing about the runtime, changes no file under <code>.ai/local/</code>, and starts no process. A
+person who enters this directory forty times a day is told nothing forty times.</li>
+</ul>
+<p><strong>The switches.</strong> <code>session.ensure_server_on_start</code> in the policy governs both doors — one
+question, one answer, so the two cannot drift. <code>MAJORDOMUS_RUNTIME=off</code> is the same refusal
+for one person's shell, and only that exact value means it: a typo in a profile must not
+silently stop a repository coming up. <code>--no-runtime</code> is the same thing as an argument.</p>
+<p><strong>Until ADR 0043 this was the other way round</strong>, and the rule read "entry by a shell reports
+and does not serve". What that cost was the whole point of the design: a person who opened a
+terminal here got a banner and no runtime — no Cockpit, no API, no peer board, so no way to
+see that other workers were on the same machine — and the remedy was a command to remember.
+The objection ADR 0003 makes is about a process outliving its reason to exist, and the idle
+life answers it: a server nobody attaches to ends.</p>
 <h2 id="what-is-not-automatic-and-why"><a class="zola-anchor" href="#what-is-not-automatic-and-why" aria-label="Anchor link for: what-is-not-automatic-and-why">What is not automatic, and why</a></h2>
-<p><strong>A shell entering the repository is told, not served.</strong> The file a shell evaluates on entry
-may not start anything: it runs on every <code>cd</code>, on every machine, in whatever shell somebody
-happens to use, and a build or a server started there is started at the worst possible
-moment. The rule is <code>project.envrc-is-an-adapter</code>. An agent's entry is different — a client
-is arriving, and ADR 0003's "no process without a client" is satisfied — so the start event
-converges and the shell reports.</p>
-<p><strong>Nothing on entry builds the executable.</strong> A missing one, or one older than its sources, is
-one line on standard error naming the recipe that builds it, and the entry still exits
-zero. Everything a person sees here — the banner, the workflow bridge, the completion, the
-shared server — is a projection of that one file, so they go together and the line says so.
-A server started from stale code would answer with a tree that is no longer there, which is
-why the start event names it rather than starting one.</p>
-<p><strong>The switch.</strong> <code>session.ensure_server_on_start</code> in the policy turns the start event's half
-off; the briefing then says so instead of naming a server. The rest of the episode is
-unchanged.</p>
+<p><strong>Nothing on entry builds the executable, and nothing ensures from a stale one.</strong> A missing
+executable, or one older than its sources, is one line on standard error naming the recipe
+that builds it, and the entry still exits zero — with no runtime. Everything a person sees
+here — the banner, the workflow bridge, the completion, the shared server — is a projection
+of that one file, so they go together and the line says so. A server started from stale code
+would answer with a tree that is no longer there, to the Cockpit, to the API and to every
+other worker attached to it, none of whom can see that the process is older than the
+checkout it claims to serve. Both doors decide staleness with the same <code>mj_rust_stale</code> in
+<code>lib/rust_bin.sh</code>, so a checkout where they disagree cannot exist.</p>
+<p><strong>No remote network, ever.</strong> The only socket entry opens is to a loopback address a server
+of this checkout already published.</p>
+<p><strong>The briefing is still the agent's.</strong> A shell is handed an environment and a banner; the
+episode, the task and the last handover's next action are what a provider's start event
+composes, because there is no episode without a worker to have one.</p>
 <h2 id="when-it-does-not-converge"><a class="zola-anchor" href="#when-it-does-not-converge" aria-label="Anchor link for: when-it-does-not-converge">When it does not converge</a></h2>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>what you see</th><th>what it means</th><th>what to run</th></tr></thead><tbody>
@@ -311,6 +350,9 @@ unchanged.</p>
 <tr><td>the server answers, but with things the tree no longer has</td><td>the process is older than the code</td><td><code>majordomus serve status</code> says <code>outdated</code>; <code>serve stop</code> then <code>serve ensure</code></td></tr>
 <tr><td>a linked worktree reports no server while the primary checkout has one</td><td>a server serves the checkout it started in; each has its own lease</td><td><code>serve ensure</code> in that worktree; <code>serve status</code> lists both</td></tr>
 <tr><td><code>direnv: error .envrc is blocked</code></td><td>direnv approves by path and content, and a new worktree starts unapproved</td><td><code>majordomus worktree ensure &lt;branch&gt;</code> carries the primary's approval over</td></tr>
+<tr><td><code>majordomus: nothing was serving this checkout; a server is starting</code></td><td>the expected line on a first entry; the address arrives a moment later, when <code>watch_file</code> sees the lease</td><td>nothing</td></tr>
+<tr><td>that same line on every <code>cd</code></td><td>the server is started and then fails</td><td>read the log the line names, then <code>majordomus serve status</code></td></tr>
+<tr><td><code>majordomus: the executable is older than the sources</code>, and no server comes up</td><td>entry refuses to start a runtime from stale code</td><td><code>just build</code>; the next <code>cd</code> ensures one</td></tr>
 <tr><td>the peers board is empty although others are working</td><td>the board is one server's memory, and each checkout has its own server</td><td><code>majordomus serve status</code> names every server of the repository and what each holds</td></tr>
 </tbody></table>
 </div>
@@ -329,14 +371,24 @@ them.</p>
 <span class="giallo-l"><span>majordomus context                       what the next worker needs to know now</span></span>
 <span class="giallo-l"><span>majordomus doctor                        whether Majordomus itself is healthy and wired here</span></span></code></pre><h2 id="what-holds-it-shut"><a class="zola-anchor" href="#what-holds-it-shut" aria-label="Anchor link for: what-holds-it-shut">What holds it shut</a></h2>
 <p><code>project.entry-converges</code> is the rule, and <code>scripts/ci/entry-converges</code> the gate that
-decides it: entry by a shell starts nothing and builds nothing, the switch is declared in
-the policy, the skeleton, the allow list and the schema together, the start shim is wired
-where the policy says so that <code>doctor</code> reconciles it, the briefing forms no opinion of its
-own about where the server stands, and a server nobody owns has a bounded life. That the
+decides it: the entry file starts nothing itself, makes exactly one call, and that call is
+the bootstrap command with no <code>--wait</code>; the shell's door reads the same switch, honours
+<code>MAJORDOMUS_RUNTIME</code> and converges through the same function <code>serve ensure</code> does; the
+adapter refuses to ensure from a stale executable; neither door builds; the switch and the
+two entry budgets are each declared in the policy, the skeleton, the allow list and the
+schema together; the start shim is wired where the policy says so that <code>doctor</code> reconciles
+it; the briefing forms no opinion of its own about where the server stands; and a server
+nobody owns has a bounded life. That the
 lease itself has one reader is <code>project.the-lease-is-read-once</code>, decided for every file at
 once by <code>scripts/ci/lease-reader-check</code>. What no script can
-decide — that entry actually converges — is <code>test/cases/108_entry_converges_on_a_server.sh</code>,
-which drives the provider's own shim; <code>test/cases/118_entry_converges_by_rule.sh</code> proves the
+decide — that entry actually converges — is <code>test/cases/108_entry_converges_on_a_server.sh</code>
+for the agent's door, which drives the provider's own shim, and
+<code>test/cases/190_entry_is_automatic.sh</code> for the shell's;
+<code>test/cases/191_entry_races.sh</code> and <code>test/cases/192_entry_across_checkouts_and_clients.sh</code>
+hold the convergence under real concurrency — ten simultaneous entries, a dead pid in the
+lease, a live process that is not ours, an abandoned lease, a port a stranger holds, two
+worktrees entering at once, and ten clients on a runtime an entry started.
+<code>test/cases/118_entry_converges_by_rule.sh</code> proves the
 gate by planting each thing the rule forbids and watching it refused.</p>
 <h2 id="related"><a class="zola-anchor" href="#related" aria-label="Anchor link for: related">Related</a></h2>
 <p><code>docs/MCP.md</code> has the shared server's lifecycle and the election in full; <code>docs/ENVIRONMENT.md</code>
@@ -362,7 +414,7 @@ measured before any of this was built, and what is still owed.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/527270d8bd5e19fe6042caa61cb737951fc6bc39" class="font-mono underline">527270d</a> · inputs <span class="font-mono">24a9dd1d9d0a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
