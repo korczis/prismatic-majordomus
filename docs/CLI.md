@@ -1406,13 +1406,23 @@ and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
 $ majordomus rules list
 majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
 majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule
-project.english-only                       v1  blocking  project          no validator; see the rule
+project.english-only                       v1  blocking  project          proven by scripts/ci/english-only-check
+project.clean-room                         v1  blocking  project          review-enforced: the rule is about the provenance of what was written, which no program in this tree can read
 ```
 
 - `list [--json]` prints the effective set in resolved order: identity, class, provenance
-  (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
-  `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
-  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.
+  (`vendor:<name>` or `project`), and how it is enforced. Three modes, which
+  [`DOCTRINE.md`](DOCTRINE.md) describes: `enforced by <commands>` for a rule the dispatcher
+  runs, `proven by <paths>` for one a gate or a case holds, and `review-enforced: <reason>`
+  for one that carries a `reviewed_because` saying why no program can express it. A rule
+  with no `x-majordomus` block at all says `no validator; see the rule` rather than hiding
+  it: the rule is normative for whoever reads it, and nothing checks it by machine.
+
+  This command answers what the rules *are*. What *proves* each one — whether the case it
+  names is still in the tree, whether a runner drives it, whether anything ever ran it, and
+  whether that run is older than what it is about — is a different question, and the
+  executable answers it: `majordomus-cli rules report`, `rules show <id>`,
+  `rules proves <test>`.
 - `show <id>` prints one rule, front matter and body, with the repository-relative path it
   was read from as the first line. An id outside the effective set exits 12.
 - `vendor status` compares the vendored baseline with the package the running executable

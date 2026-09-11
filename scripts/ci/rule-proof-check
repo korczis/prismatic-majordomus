@@ -39,6 +39,9 @@
 #   scripts/ci/rule-proof-check --strict           fail on any finding, baseline ignored
 #
 # Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure. The counting
+# helper below pipes, and `grep -c` exits 1 when it counts none, so every pipeline that may
+# legitimately find nothing says `|| true` for itself.
 set -eu
 # pipefail, so a pipeline reports the failure of any stage rather than the success of its
 # last. Every counting pipeline below therefore ends in `|| echo 0` or `|| true`, because
@@ -63,20 +66,31 @@ files="$(find "$RULES" -name '*.md' ! -name 'README.md' | LC_ALL=C sort)"
 [ -n "$files" ] || { echo "rule-proof-check: the rules section holds no rule"; exit 12; }
 
 # One pass per file: the identity, the class, and the enforcement block flattened to
-#   <id>\t<class>\t<has-validator>\t<test-path>
+#   <id>\t<class>\t<has-validator>\t<declares-review>\t<test-path>
 # with one row per named test and a single row carrying "-" when the block names none.
+#
+# `declares-review` is the third mode, and it is not an absence dressed up. A rule may say,
+# in its own front matter, that nothing executable can express it, by carrying a
+# `reviewed_because:` giving the reason. The reason is the declaration; there is no matching
+# flag, because a flag can be set and a reason cannot be set without writing one, and an
+# exemption nobody had to justify is the debt this gate exists to hold. A rule that declares
+# it is reported as `reviewed` on every run and never fails, and it is counted apart, so
+# that this list growing is visible as governance getting weaker rather than as a shorter
+# baseline. An executable proof always wins over the declaration, which is why the reader
+# sets this flag and the caller checks the validator and the tests first.
 # Both YAML spellings of a list are read: the inline [a, b] the rules use and the block
 # form, because a rule written by hand may use either and a parser that knows one is a
 # parser that silently drops the other.
 read_rules() {
   awk '
-    FNR == 1 { id = ""; cls = ""; val = 0; nt = 0; inblk = 0; inlist = 0; fm = 0 }
+    FNR == 1 { id = ""; cls = ""; val = 0; rb = 0; nt = 0; inblk = 0; inlist = 0; fm = 0 }
     FNR == 1 && $0 == "---" { fm = 1; next }
     fm == 1 && $0 == "---" {
       fm = 2
       if (id != "") {
-        if (nt == 0) printf "%s\t%s\t%d\t-\n", id, cls, val
-        else for (i = 1; i <= nt; i++) printf "%s\t%s\t%d\t%s\n", id, cls, val, t[i]
+        rev = rb
+        if (nt == 0) printf "%s\t%s\t%d\t%d\t-\n", id, cls, val, rev
+        else for (i = 1; i <= nt; i++) printf "%s\t%s\t%d\t%d\t%s\n", id, cls, val, rev, t[i]
       }
       next
     }
@@ -86,6 +100,7 @@ read_rules() {
     /^x-majordomus:/ { inblk = 1; next }
     inblk && /^[^ \t]/ { inblk = 0; inlist = 0 }
     inblk && /^[ \t]+validator:[ \t]*[^ \t]/ { val = 1; inlist = 0; next }
+    inblk && /^[ \t]+reviewed_because:[ \t]*[^ \t]/ { rb = 1; inlist = 0; next }
     inblk && /^[ \t]+tests:/ {
       line = $0; sub(/^[ \t]+tests:[ \t]*/, "", line)
       if (line ~ /^\[/) {                       # inline: tests: [a, b]
@@ -118,7 +133,7 @@ rows="$(read_rules)"
 [ -n "$rows" ] || { echo "rule-proof-check: no rule front matter parsed; the reader is broken" >&2; exit 12; }
 
 # dangling: the block names a path the tree does not hold
-while IFS="	" read -r id cls val path; do
+while IFS="	" read -r id cls val rev path; do
   [ -n "$id" ] || continue
   [ "$path" = "-" ] && continue
   [ -e "$path" ] || add "$id" dangling "names $path, which is not in the tree"
@@ -126,12 +141,25 @@ done <<EOF
 $rows
 EOF
 
+# reviewed: the rule says a reader enforces it, and says why. Reported on every run and
+# never a failure; counted apart so the number is visible.
+while IFS="	" read -r id cls val rev path; do
+  [ -n "$id" ] || continue
+  [ "$rev" = 1 ] || continue
+  [ "$path" = "-" ] || continue
+  [ "$val" = 1 ] && continue
+  add "$id" reviewed "declares that a reader enforces it, with its reason"
+done <<EOF
+$rows
+EOF
+
 # unproven: a blocking rule names neither a validator nor a test
-while IFS="	" read -r id cls val path; do
+while IFS="	" read -r id cls val rev path; do
   [ -n "$id" ] || continue
   [ "$cls" = blocking ] || continue
   [ "$path" = "-" ] || continue
   [ "$val" = 1 ] && continue
+  [ "$rev" = 1 ] && continue
   add "$id" unproven "is blocking and names neither a validator nor a test that proves it"
 done <<EOF
 $rows
@@ -139,6 +167,7 @@ EOF
 
 dangling="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "dangling" { print $1 }' | LC_ALL=C sort -u || true)"
 unproven="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "unproven" { print $1 }' | LC_ALL=C sort -u || true)"
+reviewed="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "reviewed" { print $1 }' | LC_ALL=C sort -u || true)"
 
 if [ "$MODE" = write ]; then
   { echo "# Blocking rules that name no executable proof: enforced by review today."
@@ -156,8 +185,9 @@ known=""
 # A finding the baseline already excused is not a failure of this run, and printing it as
 # one is how a green gate comes to read as red. FAIL is what fails; KNOWN is the debt this
 # gate is holding flat. Under --strict nothing is excused, so everything is FAIL.
-label() { # id kind -> FAIL or KNOWN
+label() { # id kind -> FAIL, KNOWN or NOTE
   [ "$2" = dangling ] && { printf 'FAIL'; return; }
+  [ "$2" = reviewed ] && { printf 'NOTE'; return; }
   [ "$MODE" = strict ] && { printf 'FAIL'; return; }
   case "
 $known
@@ -196,4 +226,4 @@ if [ -n "$new" ]; then
   echo "  case in its x-majordomus block: tests: [test/cases/NN_name.sh]." >&2
   exit 10
 fi
-echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"
+echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"

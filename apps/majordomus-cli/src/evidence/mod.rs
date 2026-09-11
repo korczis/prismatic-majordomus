@@ -117,6 +117,22 @@
 //! process. This is about test runs, durable, committed and read long after the process
 //! that produced them exited. Two different subjects that share an English word.
 
+//! # Example
+//!
+//! The vocabulary, without a repository: a test is named by the path a claim writes down,
+//! a result word is a pass only when the runner said so, and the proof states rank.
+//!
+//! ```
+//! use majordomus_cli::evidence::{Outcome, ProofState, Runner, TestId};
+//!
+//! let t = TestId::of("test/cases/07_scope.sh").unwrap();
+//! assert_eq!(t.runner, Runner::Suite);
+//! assert_eq!(t.as_string(), "suite:07_scope");
+//! assert!(Outcome::parse("ok").proves());
+//! assert!(!Outcome::parse("FAIL").proves());
+//! assert!(ProofState::Proven < ProofState::Stale);
+//! ```
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -155,6 +171,13 @@ pub use record::{parse_crate_binaries, record, RecordOutcome, RecordRequest};
 )]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceRunner")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Runner;
+/// assert_eq!(Runner::Suite.prefix(), "suite");
+/// assert_eq!(Runner::Crate.prefix(), "crate");
+/// ```
 pub enum Runner {
     /// A behavioural case under `test/cases/`, run by `test/run.sh`.
     Suite,
@@ -204,6 +227,13 @@ impl Runner {
 )]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceOutcome")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Outcome;
+/// assert!(Outcome::parse("ok").proves());
+/// assert_eq!(Outcome::parse("wat"), Outcome::Error);
+/// ```
 pub enum Outcome {
     /// It passed.
     Pass,
@@ -278,6 +308,13 @@ impl Outcome {
 )]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceOrigin")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Origin;
+/// assert_eq!(Origin::parse("ci"), Some(Origin::Ci));
+/// assert_eq!(Origin::parse("nowhere"), None);
+/// ```
 pub enum Origin {
     /// Someone ran it on their own machine.
     Local,
@@ -332,6 +369,15 @@ impl Origin {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceTestId")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::TestId;
+/// let t = TestId::of("apps/majordomus-cli/tests/product.rs").unwrap();
+/// assert_eq!(t.as_string(), "crate:product");
+/// assert_eq!(t.reproduce(), "cargo test --test product");
+/// assert!(TestId::of("lib/nothing.sh").is_none());
+/// ```
 pub struct TestId {
     /// Which runner owns it.
     pub runner: Runner,
@@ -490,6 +536,28 @@ impl TestId {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceExecution")]
+/// # Example
+///
+/// One recorded run, with the provenance the runner did not carry: which commit, which
+/// tree state, the digest of the test's own source, when, and how to run it again.
+///
+/// ```
+/// use majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};
+/// let e = Execution {
+///     test: "suite:07_scope".into(),
+///     runner: Runner::Suite,
+///     source: "test/cases/07_scope.sh".into(),
+///     outcome: Outcome::Pass,
+///     seconds: 3,
+///     commit: "a04b65c9".into(),
+///     working_tree: "clean".into(),
+///     digest: "sha256:00".into(),
+///     at: "2026-09-11T00:00:00Z".into(),
+///     origin: Origin::Local,
+///     command: "bash test/run.sh 07_scope".into(),
+/// };
+/// assert!(e.outcome.proves());
+/// ```
 pub struct Execution {
     /// The test, in [`TestId::as_string`] form.
     pub test: String,
@@ -607,6 +675,14 @@ pub fn digest_of(bytes: &[u8]) -> String {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::ProofState;
+/// assert!(ProofState::Proven.passing());
+/// assert!(!ProofState::NotRun.passing());
+/// assert!(!ProofState::InputsUnchanged.meaning().is_empty());
+/// ```
 pub enum ProofState {
     /// A passing run, and nothing has changed since it — the diff against the execution's
     /// own commit is empty but for the ledger. Proof of the tree in front of you.
@@ -751,6 +827,20 @@ impl ProofState {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceClaimProof")]
+/// # Example
+///
+/// A `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its
+/// `meaning` is that answer in a sentence, worded once for every surface.
+///
+/// ```
+/// use majordomus_cli::evidence::{report, ClaimProof, Ledger};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report(&repo.index().unwrap(), &ledger);
+/// let proofs: &[ClaimProof] = &r.claims;
+/// assert!(proofs.is_empty(), "a synthetic tree declares no claims");
+/// ```
 pub struct ClaimProof {
     /// The claim's id, as `docs/CLAIMS.yaml` spells it.
     pub id: String,
@@ -814,6 +904,19 @@ pub struct ClaimProof {
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceFinding")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::{Finding, ProofState};
+/// let f = Finding {
+///     claim: "some-claim".into(),
+///     status: "guaranteed".into(),
+///     state: ProofState::NotRun,
+///     reason: "the claim names a test nobody has run".into(),
+///     reproduce: Some("bash test/run.sh 07_scope".into()),
+/// };
+/// assert_eq!(f.state, ProofState::NotRun);
+/// ```
 pub struct Finding {
     /// The claim.
     pub claim: String,
@@ -847,6 +950,19 @@ pub struct Finding {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceLedgerSummary")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::LedgerSummary;
+/// let s = LedgerSummary {
+///     path: ".ai/repo/evidence/ledger.json".into(),
+///     present: false,
+///     executions: 0,
+///     newest: None,
+///     commits: vec![],
+/// };
+/// assert!(!s.present, "a repository that recorded nothing says so");
+/// ```
 pub struct LedgerSummary {
     /// Where it lives, repository-relative.
     pub path: String,
@@ -935,6 +1051,19 @@ pub struct Subject {
 /// assert!(!report.satisfied());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// # Example
+///
+/// The whole matrix joined to the ledger. `satisfied` is true when no claim declares a
+/// guarantee the recorded evidence does not support.
+///
+/// ```
+/// use majordomus_cli::evidence::{report, EvidenceReport, Ledger};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r: EvidenceReport = report(&repo.index().unwrap(), &ledger);
+/// assert!(r.satisfied(), "no claim, so no unsupported guarantee");
+/// ```
 pub struct EvidenceReport {
     /// The commit the report was derived against.
     #[serde(skip_serializing_if = "Option::is_none")]

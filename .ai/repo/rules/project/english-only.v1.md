@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [language]
+
+x-majordomus:
+  tests: [scripts/ci/english-only-check]
 ---
 
 # Rationale
@@ -25,4 +28,10 @@ No command decides this rule; a reviewer does, and a change that violates it is 
 
 # Verification
 
-Review. 
+`scripts/ci/english-only-check` decides the part of this rule an alphabet can decide: a
+letter that occurs in Czech, Slovak or Polish and never in English, or a whole script —
+Cyrillic, Greek, CJK — in any authored file. It is deliberately partial and says so: English
+prose carrying a sentence of another language spelled in ASCII passes it, and always will.
+What it buys is that the common case here cannot arrive unnoticed. Proper nouns and files
+that use a foreign string as test data are declared, each with its reason, in
+`scripts/ci/english-only-allow.txt`; the rest is review.

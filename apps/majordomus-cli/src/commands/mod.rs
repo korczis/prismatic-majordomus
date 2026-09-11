@@ -46,6 +46,7 @@ pub(crate) mod models;
 pub(crate) mod product;
 pub(crate) mod quality;
 pub(crate) mod release;
+pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod web;
@@ -81,6 +82,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Mesh(args) => mesh::run(args),
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
+        Command::Rules(args) => rules::run(args),
     }
 }
 

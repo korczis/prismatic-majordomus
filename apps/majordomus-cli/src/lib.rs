@@ -54,6 +54,7 @@ pub mod providers;
 pub mod quality;
 pub mod release;
 pub mod repository;
+pub mod rules;
 pub mod scope;
 pub mod session;
 pub mod share;

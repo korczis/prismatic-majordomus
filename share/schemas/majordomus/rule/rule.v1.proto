@@ -81,6 +81,15 @@ message Enforcement {
   repeated string claims = 6;
   // The behavioural cases that prove it.
   repeated string tests = 7;
+  // Why nothing executable can express this rule, for a rule where nothing can.
+  //
+  // Its presence is the declaration: a rule carrying it and naming neither a validator nor
+  // a test is review-enforced, which is reported on every run and counted apart from every
+  // rule that has a gate. There is no matching boolean, because a flag can be set and a
+  // reason cannot be set without writing one — and an exemption nobody had to justify is
+  // the debt this field replaces. An executable proof always wins: a rule that acquires a
+  // case is proven by the case whether or not this is still here.
+  string reviewed_because = 8;
 }
 
 // The body: why the rule exists, what it requires, what happens when it is broken, and
