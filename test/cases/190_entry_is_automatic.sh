@@ -24,6 +24,8 @@
 #   4. the switch and MAJORDOMUS_RUNTIME=off each stop it, and say nothing when they do
 #   5. a stale executable is named and ensures nothing: a server started from stale code
 #      answers with a tree that is no longer there
+#   6. a server this entry starts inherits none of the caller's file descriptors, so a
+#      caller that waits on a pipe of its own is not held for the server's whole life
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
@@ -114,7 +116,10 @@ url="$("$RB" serve status --repo "$T" --checkouts this 2>/dev/null | sed -n 's/^
 # is easy to assert and easy to satisfy accidentally; "it changed no file" is the claim that
 # actually covers a fake episode, a ledger line, a rewritten cache and a touched lease at
 # once, and it is the one a person repeating `cd .. && cd repo` would notice breaking.
-fingerprint() { find .ai/local -type f -exec ls -ld {} \; 2>/dev/null | sort; }
+# LC_ALL=C, so that the order does not depend on the machine (project.canonical-order):
+# this is compared against itself across five entries, and a locale that collates differently
+# between two readings would report a change nobody made.
+fingerprint() { find .ai/local -type f -exec ls -ld {} \; 2>/dev/null | LC_ALL=C sort; }
 before="$(fingerprint)"
 pid_before="$(sed -n 's/.*"pid":\([0-9]*\).*/\1/p' "$lease")"
 
@@ -173,4 +178,47 @@ grep -q 'older than the sources' "$T/stale.err" || { echo "    a stale executabl
 no_lease_appears "a runtime was ensured from an executable older than its sources" || exit 1
 grep -qE '^export MAJORDOMUS_ROOT=' "$T/stale.out" || { echo "    a stale executable cost the environment too"; exit 1; }
 
-echo "    entering brings the runtime up without waiting for it, repeated entries change nothing, both stay in budget, and a stale executable is named rather than served from"
+# --- 7. the descriptors a caller holds are not inherited by the server it caused
+#
+# The row that cost 481 seconds. `Command` replaces standard input, output and error and
+# nothing else, so every other descriptor the caller had open is inherited by the child and
+# held for its whole idle life. direnv is where that stops being theoretical: it hands the
+# file it evaluates an extra descriptor of its own, and it does not return until that pipe
+# closes. On 2026-09-11 the first real `cd` into a checkout hung for eight minutes and only
+# returned when the server was killed by hand; `lsof` showed the server holding the other
+# end of direnv's pipe.
+#
+# Nothing here could see it before, because a case that captures output in a command
+# substitution passes the command no descriptor above two — which is the very thing direnv
+# does. So this row opens one deliberately, the way direnv does, and requires the pipe to be
+# closed once the entry has returned and this shell has let go of its own end.
+stop_server() { "$RB" serve stop --repo "$T" >/dev/null 2>&1 || true; rm -f "$lease"; }
+stop_server
+FIFO="$T/inherited.fifo"
+mkfifo "$FIFO" || { echo "    could not make a fifo; skipping the descriptor row"; FIFO=""; }
+if [ -n "$FIFO" ]; then
+  rm -f "$T/eof"
+  # a reader that touches a file when — and only when — every writer has let go
+  ( cat "$FIFO" >/dev/null 2>&1; : > "$T/eof" ) &
+  reader=$!
+  # fd 9 open on the pipe, exactly as direnv opens its own, and inherited by what runs next
+  exec 9> "$FIFO"
+  enter >/dev/null 2>"$T/fd.err" || { echo "    entry failed with a descriptor open"; cat "$T/fd.err"; exit 1; }
+  await_lease || { echo "    the descriptor row started no server, so it proves nothing"; exit 1; }
+  exec 9>&-      # this shell's end; the only end left open now would be the server's
+  # bounded, with a predicate and something to say when it does not happen
+  i=0; while [ ! -f "$T/eof" ] && [ "$i" -lt 100 ]; do i=$((i+1)); sleep 0.1; done
+  if [ ! -f "$T/eof" ]; then
+    echo "    a server this entry started inherited a descriptor the caller was waiting on:"
+    echo "    under direnv this is a shell that does not come back until the server's idle life ends"
+    ps -ax -o pid=,command= 2>/dev/null | grep -F -- "serve --repo $T" | grep -v grep | sed 's/^/    | /'
+    kill "$reader" 2>/dev/null || true
+    stop_server
+    exit 1
+  fi
+  kill "$reader" 2>/dev/null || true
+  echo "    a descriptor the caller held: closed as soon as entry returned, not held for the server's life"
+  stop_server
+fi
+
+echo "    entering brings the runtime up without waiting for it, repeated entries change nothing, both stay in budget, a stale executable is named rather than served from, and nothing the caller holds is inherited"

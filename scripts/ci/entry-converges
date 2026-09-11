@@ -48,7 +48,12 @@
 #   scripts/ci/entry-converges --no-suite      the structural findings only
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
+# pipefail beside set -e: since ADR 0043 this gate pipes (the entry-point scan, the builder
+# scan over the bootstrap command), and without it a pipeline's failure is reported as its
+# last command's success — a gate that quietly stops deciding. Every pipeline here that may
+# legitimately end in a non-match already carries its own `|| true`.
 set -eu
+set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 SUITE=1
@@ -244,6 +249,14 @@ SERVE='apps/majordomus-cli/src/commands/serve.rs'
 if [ -f "$SERVE" ]; then
   if grep -q -- '"--idle"' "$SERVE"; then ok "the server ensure starts is given its idle life"
   else fail "$SERVE spawns a server without --idle; a server no client owns would outlive its clients"; fi
+  # And it inherits none of the caller's descriptors. `Command` replaces standard input,
+  # output and error and nothing else; direnv hands the file it evaluates a descriptor of its
+  # own and does not return until that pipe closes, so a server holding it holds the shell for
+  # that whole idle life. On 2026-09-11 that was 481 seconds, measured.
+  # the call, not the word: the prose above it names `pre_exec` too, and a check that matched
+  # the word would keep passing over a tree where only the comment survived
+  if grep -qE 'cmd\.pre_exec\(' "$SERVE"; then ok "the spawned server closes the descriptors it inherited"
+  else fail "$SERVE spawns a server without closing the caller's descriptors; under direnv a cold entry hangs the shell for the server's idle life"; fi
 fi
 
 # ------------------------------------------------------------------ the behavioural half

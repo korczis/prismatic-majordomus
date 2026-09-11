@@ -88,6 +88,18 @@ pub struct Policy {
 ///
 /// Only the half two entry paths both read is typed here. The rest of the block is carried
 /// through unread, as every other key is: the policy schema owns the full shape.
+///
+/// ```
+/// use majordomus_cli::policy::SessionPolicy;
+/// // A policy that says nothing about it still converges. The default is what this
+/// // repository's policy and the skeleton a new one is written from both declare, and a
+/// // policy that could not be read must not silently change behaviour.
+/// assert!(SessionPolicy::default().ensure_server_on_start);
+/// // and a repository that has turned it off is read as having turned it off
+/// let off: SessionPolicy =
+///     serde_json::from_str(r#"{"ensure_server_on_start": false}"#).expect("a session block");
+/// assert!(!off.ensure_server_on_start);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SessionPolicy {
     /// Whether entering the repository converges on a ready shared server.

@@ -240,6 +240,13 @@ expect_exit 10 gate
 expect_grep 'spawns a server without --idle'
 restore apps/majordomus-cli/src/commands/serve.rs
 
+# the descriptors the caller held: a server that keeps them holds a direnv shell for the
+# whole idle life, which cost 481 seconds on 2026-09-11 and which no test could see
+sed 's/cmd\.pre_exec(/cmd.inherit_everything(/' "$T/pristine" > "$FX/apps/majordomus-cli/src/commands/serve.rs"
+expect_exit 10 gate
+expect_grep 'without closing the caller'
+restore apps/majordomus-cli/src/commands/serve.rs
+
 # ---------------------------------------------------------------- and clean again
 # Every restore put back what it took: if one did not, this is where it is seen.
 expect_exit 0 gate
