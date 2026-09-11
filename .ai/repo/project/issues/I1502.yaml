@@ -1,0 +1,34 @@
+id: I1502
+milestone: development-runtime
+title: A server serving code that no longer exists stops calling itself ready
+slug: stale-server-is-not-ready
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make a running server's own root and health documents carry the identity of the code it is serving, so that a stale server is detectable by the client reading it rather than only by an outside reader holding a newer executable."
+why: "F1 of the audit's failure table, and the audit names it the single most dangerous class it found, because every measurement anyone takes through such a server is quietly wrong — including measurements of what a development surface lacks. It was measured from both sides in one sitting: `serve status` in a fresh executable reported the primary checkout's server as outdated, with the reason that the executable it was started from has been replaced since, while the same server asked directly at /api/v1/server returned HTTP 200 and standing `ready`, with peers attached to it throughout. The asymmetry is structural: the lease reader in a fresh executable can tell, and the running server's own root document carries no identity to check against."
+current_state: "Four of the five servers running during the audit were outdated. A server reports `ready` from its own endpoint regardless of whether its executable still exists on disk, and its root document carries no HEAD, no build identity and no executable fingerprint for a reader to compare. This is the ghost-server class: a server that answers is not a server that is current."
+desired_state: "A client that reads a server's own documents can decide whether that server is current, without holding a second executable. A stale server says so where it is asked, in the same place it says it is ready."
+scope:
+  - apps/majordomus-cli/src/server
+  - apps/majordomus-cli/src/capability/builtin/server.rs
+  - apps/majordomus-cli/src/capability/builtin/health.rs
+  - docs/COCKPIT.md
+  - test/cases
+non_scope:
+  - Reaping the server register. The fleet listing enumerates every checkout it has ever seen, including long-gone scratch trees under /private/tmp, and nothing reaps it; that is a separate finding and not this issue.
+  - Killing or restarting another checkout's server. Several live sessions share this machine.
+depends_on: []
+acceptance_criteria:
+  - A server whose executable has been replaced reports that fact on the endpoint a client asks for its standing
+  - The check is answerable by a client holding no second executable
+  - A current server is not reported stale, proved by a fresh start
+validation:
+  - bin/majordomus-cli serve status
+  - bash test/run.sh
+evidence_required:
+  - stale_server_says_so
+  - current_server_is_not_flagged
+risk: "Low in mechanism, high in value. The risk worth naming is the opposite one: a check that flags a current server as stale would make every worker ignore the signal, which is worse than not having it."
+created_at: 2026-09-11
+updated_at: 2026-09-11

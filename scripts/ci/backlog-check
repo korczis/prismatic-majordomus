@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# backlog-check — the gate of project.accumulation-is-measured: the things that grow on
+# their own are measured by committed commands, and nothing tells a contributor to wait on
+# a merge button this repository cannot reach.
+#
+# A CI runner has no worktrees, no abandoned servers and no backlog of its own, so the
+# quantities themselves are not what this gate measures. What it can hold together is that
+# every accumulating quantity still has its command, that the reaper is safe by
+# construction, that the merge policy's two halves agree, and that no document advertises
+# the one path that provably cannot work here.
+#
+#   - `scripts/reap-orphans` exists, is executable, and matches processes by predicate —
+#     a `pkill`/`killall` by name would kill the servers live peers are attached to
+#   - `.gitattributes` declares `merge=derived` and the driver it names is committed and
+#     executable, and a recipe installs it (the declaration and its installer are one
+#     relation; checking only one side is how this class of defect survives)
+#   - the rule exists and names the forge constraint, so the reason is written down once
+#   - no document instructs a reader to merge a pull request on GitHub
+#   - the behavioural case exists
+#
+#   scripts/ci/backlog-check             the structural findings
+#   scripts/ci/backlog-check --remote    also measure the landable backlog (needs gh + a token)
+#   MJ_BACKLOG_MAX=8 ... --remote        the threshold (default 10)
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+REMOTE=0
+MAX="${MJ_BACKLOG_MAX:-10}"
+while [ $# -gt 0 ]; do case "$1" in
+  --remote) REMOTE=1; shift ;;
+  *) echo "backlog-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+findings=0
+fail() { printf 'FAIL backlog-check  %s\n' "$*"; findings=$((findings+1)); }
+ok()   { printf 'OK   backlog-check  %s\n' "$*"; }
+
+RULE=".ai/repo/rules/project/accumulation-is-measured.v1.md"
+REAPER="scripts/reap-orphans"
+CASE="test/cases/131_backlog_hygiene.sh"
+
+# 1. the reaper exists and is safe by construction
+if [ ! -f "$REAPER" ]; then
+  fail "$REAPER is missing: abandoned servers have no measuring command"
+elif [ ! -x "$REAPER" ]; then
+  fail "$REAPER is not executable"
+else
+  ok "the reaper is committed and executable"
+  if grep -nE '^[^#]*\b(pkill|killall)\b' "$REAPER" >/dev/null 2>&1; then
+    fail "$REAPER matches processes by name (pkill/killall): it would end the servers live peers are attached to"
+  else
+    ok "the reaper matches by predicate, not by name"
+  fi
+  for predicate in 'ESTABLISHED' 'ppid' 'MIN_AGE'; do
+    grep -q "$predicate" "$REAPER" || fail "$REAPER no longer tests '$predicate': its safety rests on all three"
+  done
+fi
+
+# 2. the merge policy's two halves agree — the declaration and its installer
+drivers="$(sed -n 's/.*merge=\([A-Za-z0-9_-]*\).*/\1/p' .gitattributes 2>/dev/null | sort -u)"
+if [ -z "$drivers" ]; then
+  ok "no custom merge driver is declared"
+else
+  for d in $drivers; do
+    script="scripts/merge-$d"
+    if [ ! -x "$script" ]; then
+      fail ".gitattributes declares merge=$d but $script is missing or not executable"
+    else
+      ok "merge=$d resolves to $script"
+    fi
+    if grep -rq "merge\.$d\.driver" .just/ justfile 2>/dev/null; then
+      ok "a recipe installs merge.$d.driver (it cannot be committed; every clone must declare it)"
+    else
+      fail "nothing installs merge.$d.driver: .gitattributes names a driver no clone is told to configure"
+    fi
+  done
+fi
+
+# 2b. every section the site generator rewrites is resolved on merge.
+# The generator deletes and regenerates whole trees under site/content; a tree it rewrites
+# but .gitattributes does not declare conflicts on every integration, over content no branch
+# owns. Thirteen of fourteen were undeclared when this was first measured. The list is read
+# out of the generator, never kept by hand here — a hand list falls behind the first time a
+# section is added, which is exactly how the omission survived.
+GEN='scripts/generate-site-data'
+if [ -f "$GEN" ]; then
+  missing=""
+  for d in $(grep -oE '\$CONTENT_ROOT/[a-z-]+' "$GEN" | sed 's#\$CONTENT_ROOT/##' | sort -u); do
+    [ -d "site/content/$d" ] || continue
+    attr="$(git check-attr merge -- "site/content/$d/probe.md" 2>/dev/null | sed 's/.*merge: //')"
+    [ "$attr" = "derived" ] || missing="$missing $d"
+  done
+  if [ -n "$missing" ]; then
+    fail "$GEN rewrites these site/content trees but .gitattributes does not resolve them on merge:$missing"
+  else
+    ok "every site/content tree the generator rewrites is declared merge=derived"
+  fi
+fi
+
+# 3. the reason is written down once
+if [ ! -f "$RULE" ]; then
+  fail "$RULE is missing: the constraint that makes landing local is not stated anywhere"
+else
+  ok "the rule is present"
+  grep -qi 'merge button' "$RULE" || fail "$RULE does not name the forge constraint it exists to explain"
+fi
+
+# 4. no document advertises the path that cannot work
+advertises="$(grep -rniE '(click|press|use|hit)[^.]{0,40}merge (button|pull request)' \
+  --include='*.md' docs .ai README.md AGENTS.md CLAUDE.md 2>/dev/null \
+  | grep -v "$RULE" | grep -vi 'never\|cannot\|not available\|structurally' || true)"
+if [ -n "$advertises" ]; then
+  fail "a document instructs a reader to merge on the forge, which this repository's merge policy cannot reach:"
+  echo "$advertises" | head -5 | sed 's/^/       /'
+else
+  ok "no document advertises the forge merge button"
+fi
+
+# 5b. the suite's own servers have a bounded life.
+# `scripts/ci/entry-converges` already holds this for the server `ensure` starts, and that
+# is the path a person takes. It is not the path that leaked: every server this repository
+# abandoned was spawned by a case, in the background, with the raw `serve` whose --idle
+# defaults to 0 — run until stopped. A case that is interrupted before its trap fires leaves
+# that server holding its port until the machine restarts. So the same contract is held here
+# for the half that gate cannot see.
+unbounded=""
+while IFS=: read -r f l rest; do
+  [ -n "$f" ] || continue
+  case "$rest" in *--idle*) continue ;; esac
+  unbounded="$unbounded$f:$l "
+done <<EOF
+$(grep -rnE '(serve|mcp)([[:space:]]|$)' test/cases/ --include='*.sh' 2>/dev/null | grep -E '&[[:space:]]*$|nohup' | grep -vE '^[^:]*:[0-9]*:[[:space:]]*#' || true)
+EOF
+if [ -n "$unbounded" ]; then
+  fail "a case backgrounds a server without --idle; interrupted, it outlives the run and holds its port:"
+  for site in $unbounded; do echo "       $site"; done
+else
+  ok "every server the suite backgrounds is given a bounded idle life"
+fi
+
+# 5. the behavioural case exists
+[ -f "$CASE" ] && ok "the behavioural case is present" || fail "$CASE is missing"
+
+# 6. the quantity itself, when asked and able
+if [ "$REMOTE" -eq 1 ]; then
+  if ! command -v gh >/dev/null 2>&1; then
+    fail "--remote was asked for but gh is not installed: the backlog cannot be measured, and a gate that skips quietly is the disease"
+  elif ! gh auth status >/dev/null 2>&1; then
+    fail "--remote was asked for but gh has no token: the backlog cannot be measured"
+  else
+    base="$(git rev-parse origin/master 2>/dev/null || git rev-parse HEAD)"
+    landable=0; total=0
+    for pr in $(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null); do
+      total=$((total+1))
+      br="$(gh pr view "$pr" --json headRefName -q .headRefName 2>/dev/null)" || continue
+      git fetch origin "$br" --quiet 2>/dev/null || continue
+      # The exit code, never a grep (see scripts/land).
+      if git merge-tree --write-tree "$base" FETCH_HEAD >/dev/null 2>&1; then
+        landable=$((landable+1))
+      fi
+    done
+    if [ "$landable" -gt "$MAX" ]; then
+      fail "$landable of $total open pull requests merge cleanly here and are still open (threshold $MAX): run scripts/land"
+    else
+      ok "$landable of $total open pull requests are landable, within the threshold of $MAX"
+    fi
+  fi
+fi
+
+echo
+if [ "$findings" -eq 0 ]; then
+  echo "backlog-check: clean"
+  exit 0
+fi
+echo "backlog-check: $findings finding(s)"
+exit 10

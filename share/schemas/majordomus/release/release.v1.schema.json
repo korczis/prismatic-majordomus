@@ -60,9 +60,11 @@
     "required_targets": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1
       },
-      "description": "The distribution targets this release was published against, snapshotted at publication rather than recomputed later. A target added to the model afterwards is a promise about the next release; it cannot retroactively make this one incomplete. Absent on records written before the field existed, which are judged on internal consistency alone."
+      "minItems": 1,
+      "description": "The target ids the distribution model published when this release was made — the set the release had to be complete over, recorded rather than recomputed, so that adding a platform later cannot make an older release retroactively incomplete. Written by scripts/release-record. Absent on records written before the field existed; those are judged on internal consistency alone."
     },
     "artifacts": {
       "type": "array",

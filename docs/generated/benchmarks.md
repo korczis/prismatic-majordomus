@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 91 | 87 | 0 | 4 |
-| http | 90 | 87 | 0 | 3 |
-| mcp | 88 | 85 | 0 | 3 |
+| direct | 94 | 90 | 0 | 4 |
+| http | 93 | 90 | 0 | 3 |
+| mcp | 91 | 88 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 282 | 272 | 0 | 10 |
+| total | 291 | 281 | 0 | 10 |
 
 ## Capabilities
 
@@ -34,6 +34,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
+| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent` |
+| `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
+| `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
 | `devtask.milestone` | devtask | query | — | covered | covered | covered | `first-milestone` |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
