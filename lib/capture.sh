@@ -942,8 +942,110 @@ mj_capture_session_end() {
     mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
     return 0; }
-  if [ -n "$out" ]; then mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
+  if [ -n "$out" ]; then
+    mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
+    mj_capture_publish_record "$out"
   else mj_err "capture session: no open episode here${psession:+ for provider session $psession}; nothing to close"; fi
+  return 0
+}
+
+# ---------------------------------------------------------------- the record reaches a reader
+# A record nobody committed reaches nobody. Every surface that reads session records — the
+# site's /sessions/ pages, the Rust index, the registry, `session list` in another clone —
+# reads the *tracked* tree, so a record left in the working tree is written, validated,
+# counted healthy, and invisible everywhere a reader would look. The lifecycle wrote a
+# record at every episode end and nothing committed it, which made the gap the default
+# rather than an accident: five records sat untracked in this checkout alone.
+#
+# Two things this must not do, and one it must.
+#
+# It must not run the commit hooks. `.githooks/pre-commit` runs `doctor`, the worktree guard
+# and the pages freshness check — together far longer than a provider allows an end hook,
+# which would kill the commit halfway. So the commit is made with plumbing: a tree composed
+# from HEAD plus this one path in a temporary index, a commit object on top of HEAD, and a
+# compare-and-swap of the ref. No hook has anything to run, because no porcelain runs.
+#
+# It must not commit anything else. Composing the tree from HEAD rather than from the index
+# means whatever the worker had staged stays staged and uncommitted — the record is the only
+# path in the commit, always, whatever state the tree was in when the window closed.
+#
+# And it must never make a failure the last thing that happens to somebody closing a window.
+# Every path returns 0. A record that could not be committed is exactly as committed as it
+# was before this function existed, and `doctor` still names it.
+mj_capture_publish_record() {
+  local abs="$1" rel idx tree parent new msg
+  [ -n "$abs" ] && [ -f "$abs" ] || return 0
+  [ "$(mj_pol session.commit_record_on_end)" != false ] || return 0
+  rel="$(mj_rel "$abs")"
+  case "$rel" in /*) return 0 ;; esac          # outside the repository: not ours to commit
+
+  # The publisher writes records 0600; a committed file in this repository is 0644, and the
+  # mode is part of the tree, so a record committed as 0600 would differ from the same
+  # record written by anybody else.
+  chmod 644 "$abs" 2>/dev/null || true
+
+  parent="$(mj_git rev-parse HEAD 2>/dev/null)" || return 0
+  [ -n "$parent" ] || return 0
+
+  # The real index gets the path too, so that after the ref moves the index still matches
+  # HEAD for it. Without this the record is in HEAD and not in the index, and `git status`
+  # reports the record this function just published as a staged deletion.
+  mj_git add -- "$rel" 2>/dev/null || return 0
+
+  idx="$(mktemp "${TMPDIR:-/tmp}/mj.cidx.XXXXXX")"; rm -f "$idx"
+  GIT_INDEX_FILE="$idx" mj_git read-tree "$parent" 2>/dev/null || { rm -f "$idx"; return 0; }
+  GIT_INDEX_FILE="$idx" mj_git add -- "$rel" 2>/dev/null || { rm -f "$idx"; return 0; }
+  tree="$(GIT_INDEX_FILE="$idx" mj_git write-tree 2>/dev/null)" || { rm -f "$idx"; return 0; }
+  rm -f "$idx"
+  [ -n "$tree" ] || return 0
+
+  msg="chore(session): record $(basename "$abs" .md)
+
+The episode's own record, committed by the lifecycle that wrote it: a record left in
+the working tree reaches no surface that reads session records.
+"
+  new="$(printf '%s' "$msg" | mj_git commit-tree "$tree" -p "$parent" 2>/dev/null)" || return 0
+  [ -n "$new" ] || return 0
+  mj_git update-ref -m "session record" HEAD "$new" "$parent" 2>/dev/null || return 0
+  mj_err "capture session: record committed as ${new:0:7}"
+
+  mj_capture_push_record "$new"
+  return 0
+}
+
+# Publishing the commit. A branch whose commits reach no remote is invisible to every other
+# worker and one disk away from being lost, and an episode record is precisely the thing
+# another worker reads. But a push is the one step here that can affect somebody else, so it
+# is the most conservative one available: only the current branch, only when the remote is
+# strictly behind it, never forced, never a hook, and never a failure that surfaces.
+mj_capture_push_record() {
+  local new="$1" branch remote upstream
+  [ "$(mj_pol session.push_record_on_end)" != false ] || return 0
+  branch="$(mj_git branch --show-current 2>/dev/null)" || return 0
+  [ -n "$branch" ] || return 0                 # detached: nothing to publish onto
+  remote="$(mj_git config "branch.$branch.remote" 2>/dev/null)" || remote=""
+  [ -n "$remote" ] || remote=origin
+  mj_git ls-remote --exit-code --heads "$remote" "$branch" >/dev/null 2>&1 || return 0
+  mj_git fetch -q "$remote" "$branch" 2>/dev/null || return 0
+  upstream="$(mj_git rev-parse "$remote/$branch" 2>/dev/null)" || return 0
+  # Only a fast-forward, decided here rather than left to the remote: a push that the remote
+  # rejects prints a wall of text at somebody who is closing a window, and a push that the
+  # remote *accepts* after a local merge would publish work this function never looked at.
+  mj_git merge-base --is-ancestor "$upstream" "$new" 2>/dev/null || {
+    mj_err "capture session: the record is committed but $remote/$branch has moved; it will go out with the next push"
+    return 0; }
+  # The push runs through `.githooks/pre-push` like any other, deliberately. That hook asks
+  # `majordomus finish --check` — whether the task may be published — and for most of a
+  # task's life the answer is no. So this push often will not go out, and that is the
+  # correct outcome rather than a limitation to engineer around: the record is already
+  # committed, it is already on the branch, and it travels with the worker's next push.
+  # Bypassing the hook to publish a record sooner would mean this path, alone in the tool,
+  # decides that a repository's own push contract does not apply to it.
+  if mj_git push -q "$remote" "HEAD:refs/heads/$branch" 2>/dev/null; then
+    mj_err "capture session: record pushed to $remote/$branch"
+  else
+    mj_err "capture session: the record is committed; the push contract did not admit it now, so it goes out with the next push"
+  fi
   return 0
 }
 
