@@ -4,11 +4,20 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
-//! Design, API. Those are concepts rather than
-//! entities, they change when the Cockpit's own shape changes, and deriving them from
-//! anything would be deriving them from a list of exactly themselves.
+//! What *is* written here is the areas, and they are written **once**: [`areas`] is the
+//! Cockpit's one table, and it carries the page each area is served by. The router asks it
+//! (`Cockpit::route`), the sidebar asks it, the product model asks it to resolve what a
+//! feature's `cockpit:` list names and to refuse a listed area no feature claims, and the
+//! site data projects it. An area is a concept rather than an entity — deriving the set
+//! from anything would be deriving it from a list of exactly itself — but there is one list
+//! of it and everything that needs the set reads that list.
+//!
+//! There used to be three. The sidebar listed twelve areas, the router served sixteen
+//! pages, and `.ai/repo/features/cockpit.md` named eleven; `/cockpit/activity` and
+//! `/cockpit/search` answered 200 and appeared in neither of the other two, and
+//! `/cockpit/executions` and `/cockpit/quality` were in this file's own module comment and
+//! not in its table. A page nobody can navigate to is a page nobody has; three lists of one
+//! set is how it happened.
 //!
 //! Every section is presented in the canonical order (`crate::order`). The order a section
 //! is *built* in is an accident of its source — the order the modules were composed in, the
@@ -24,6 +33,7 @@
 
 use crate::capability::registry::ModuleSource;
 use crate::capability::Context;
+use crate::cockpit::pages::{self, Page};
 use crate::graph;
 use crate::http::router::percent_encode;
 
@@ -59,23 +69,37 @@ pub enum Area {
     Design,
     /// The HTTP and MCP surfaces.
     Api,
-    /// A page that belongs to no area (search results, an error).
+    /// What the whole layer answers to one query.
+    Search,
+    /// What this checkout has been doing.
+    Activity,
+    /// A page that belongs to no area (an object's own page, an error).
     None,
 }
 
 /// One of the Cockpit's areas as data: what a person sees, where it goes, and the area it
 /// marks. The one list of areas there is; [`build`] reads it for the sidebar and the
 /// product model reads it to validate the areas a feature names.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct AreaInfo {
     /// The id a feature names it by: the last segment of its route.
     pub id: &'static str,
     /// What the reader sees.
     pub label: &'static str,
-    /// Where it goes.
+    /// Where it goes. Also the route it is served at: the router matches on this, so an
+    /// area cannot be navigable at one path and served at another.
     pub href: &'static str,
     /// The area it marks.
     pub area: Area,
+    /// The page that answers it. Written here so that being served and being reachable are
+    /// the same fact: `Cockpit::route` dispatches from this table and has no list of its
+    /// own, and an area added here is navigable, served and validated in one edit.
+    pub page: fn(&Context, &[(String, String)]) -> Page,
+    /// Whether the sidebar offers it. False for a destination that is only ever arrived at
+    /// — the search results, which answer a query the palette or the form asked — and for
+    /// nothing else: a page that answers and that nothing offers is the defect this field
+    /// exists to make deliberate rather than accidental.
+    pub listed: bool,
 }
 
 /// The areas. Written here because they are concepts rather than entities; every catalogue
@@ -85,80 +109,162 @@ pub struct AreaInfo {
 /// canonical order, so this sequence reaches no reader. It is the set the product model
 /// validates against, and nothing more.
 pub fn areas() -> &'static [AreaInfo] {
-    &[
-        AreaInfo {
-            id: "overview",
-            label: "Overview",
-            href: "/cockpit",
-            area: Area::Overview,
-        },
-        AreaInfo {
-            id: "capabilities",
-            label: "Capabilities",
-            href: "/cockpit/capabilities",
-            area: Area::Capabilities,
-        },
-        AreaInfo {
-            id: "commands",
-            label: "Commands",
-            href: "/cockpit/commands",
-            area: Area::Commands,
-        },
-        AreaInfo {
-            id: "objects",
-            label: "Objects",
-            href: "/cockpit/objects",
-            area: Area::Objects,
-        },
-        AreaInfo {
-            id: "directories",
-            label: "Directories",
-            href: "/cockpit/directories",
-            area: Area::Directories,
-        },
-        AreaInfo {
-            id: "graphs",
-            label: "Graphs",
-            href: "/cockpit/graphs",
-            area: Area::Graphs,
-        },
-        AreaInfo {
-            id: "continuity",
-            label: "Continuity",
-            href: "/cockpit/continuity",
-            area: Area::Continuity,
-        },
-        AreaInfo {
-            id: "worktrees",
-            label: "Worktrees",
-            href: "/cockpit/worktrees",
-            area: Area::Worktrees,
-        },
-        AreaInfo {
-            id: "health",
-            label: "Health",
-            href: "/cockpit/health",
-            area: Area::Health,
-        },
-        AreaInfo {
-            id: "artifacts",
-            label: "Artifacts",
-            href: "/cockpit/artifacts",
-            area: Area::Artifacts,
-        },
-        AreaInfo {
-            id: "design",
-            label: "Design",
-            href: "/cockpit/design",
-            area: Area::Design,
-        },
-        AreaInfo {
-            id: "api",
-            label: "API",
-            href: "/cockpit/api",
-            area: Area::Api,
-        },
-    ]
+    static AREAS: std::sync::OnceLock<Vec<AreaInfo>> = std::sync::OnceLock::new();
+    AREAS.get_or_init(|| {
+        vec![
+            area(
+                "overview",
+                "Overview",
+                "/cockpit",
+                Area::Overview,
+                |c, _| pages::overview(c),
+            ),
+            area(
+                "capabilities",
+                "Capabilities",
+                "/cockpit/capabilities",
+                Area::Capabilities,
+                pages::capabilities,
+            ),
+            area(
+                "commands",
+                "Commands",
+                "/cockpit/commands",
+                Area::Commands,
+                pages::commands,
+            ),
+            area(
+                "objects",
+                "Objects",
+                "/cockpit/objects",
+                Area::Objects,
+                pages::objects,
+            ),
+            area(
+                "directories",
+                "Directories",
+                "/cockpit/directories",
+                Area::Directories,
+                pages::directories,
+            ),
+            area(
+                "graphs",
+                "Graphs",
+                "/cockpit/graphs",
+                Area::Graphs,
+                |c, _| pages::graphs(c),
+            ),
+            area(
+                "executions",
+                "Executions",
+                "/cockpit/executions",
+                Area::Executions,
+                pages::executions,
+            ),
+            area(
+                "continuity",
+                "Continuity",
+                "/cockpit/continuity",
+                Area::Continuity,
+                |c, _| pages::continuity(c),
+            ),
+            area(
+                "activity",
+                "Activity",
+                "/cockpit/activity",
+                Area::Activity,
+                |c, _| pages::activity(c),
+            ),
+            area(
+                "worktrees",
+                "Worktrees",
+                "/cockpit/worktrees",
+                Area::Worktrees,
+                |c, _| pages::worktrees(c),
+            ),
+            area(
+                "health",
+                "Health",
+                "/cockpit/health",
+                Area::Health,
+                |c, _| pages::health(c),
+            ),
+            area(
+                "quality",
+                "Quality",
+                "/cockpit/quality",
+                Area::Quality,
+                |c, _| pages::quality(c),
+            ),
+            area(
+                "artifacts",
+                "Artifacts",
+                "/cockpit/artifacts",
+                Area::Artifacts,
+                |c, _| pages::artifacts(c),
+            ),
+            area(
+                "design",
+                "Design",
+                "/cockpit/design",
+                Area::Design,
+                |c, _| pages::design(c),
+            ),
+            area("api", "API", "/cockpit/api", Area::Api, |c, _| {
+                pages::api(c)
+            }),
+            // Arrived at, never offered: the results of a query the palette or the form asked.
+            AreaInfo {
+                id: "search",
+                label: "Search",
+                href: "/cockpit/search",
+                area: Area::Search,
+                page: pages::search,
+                listed: false,
+            },
+        ]
+    })
+}
+
+/// One area the sidebar offers, which is every area but the search results.
+fn area(
+    id: &'static str,
+    label: &'static str,
+    href: &'static str,
+    area: Area,
+    page: fn(&Context, &[(String, String)]) -> Page,
+) -> AreaInfo {
+    AreaInfo {
+        id,
+        label,
+        href,
+        area,
+        page,
+        listed: true,
+    }
+}
+
+/// Two entries are the same area when they name the same one. The page they are served by
+/// is not part of that: comparing function pointers is not meaningful (the same function can
+/// have two addresses, and two functions one), and an area is identified by what it is, not
+/// by which code answers it.
+impl PartialEq for AreaInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.label == other.label
+            && self.href == other.href
+            && self.area == other.area
+            && self.listed == other.listed
+    }
+}
+
+impl Eq for AreaInfo {}
+
+/// The area a path is served by, when one is. The router's whole table: a Cockpit page that
+/// is not an area is a detail route below one (an object, a capability, a graph), and those
+/// are matched by prefix rather than listed anywhere.
+pub fn area_at(path: &str) -> Option<&'static AreaInfo> {
+    areas().iter().find(|a| a.href == path)
 }
 
 /// One entry.
@@ -222,6 +328,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
         title: "Cockpit".into(),
         items: areas()
             .iter()
+            .filter(|a| a.listed)
             .map(|a| item(a.label, a.href, a.area, count(a.area), here))
             .collect(),
     };
