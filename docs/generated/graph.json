@@ -8332,10 +8332,18 @@
         "source": "docs/claims/ci-planned-gates.md"
       },
       {
+        "id": "majordomus://document/docs/claims/ci-verdict-is-required.md",
+        "kind": "document",
+        "label": "docs/claims/ci-verdict-is-required.md",
+        "summary": "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fci-verdict-is-required.md",
+        "source": "docs/claims/ci-verdict-is-required.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/ci-verdict.md",
         "kind": "document",
         "label": "docs/claims/ci-verdict.md",
-        "summary": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+        "summary": "The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fci-verdict.md",
         "source": "docs/claims/ci-verdict.md"
       },
@@ -37393,6 +37401,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/ci-verdict-is-required.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/ci-verdict.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -47409,8 +47422,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1454,
-      "edges": 3283,
+      "nodes": 1455,
+      "edges": 3284,
       "acyclic": true,
       "truncated": false
     }
