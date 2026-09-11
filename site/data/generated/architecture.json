@@ -70,6 +70,26 @@
       "external": false
     },
     {
+      "id": "lib/archive.sh",
+      "kind": "module",
+      "label": "archive",
+      "command": "archive",
+      "summary": "a snapshot of the tracked tree, for reading or checking elsewhere",
+      "read_only": null,
+      "route": "/commands/archive/",
+      "external": false
+    },
+    {
+      "id": ".ai/repo/archive.yaml",
+      "kind": "artifact",
+      "label": "repo/archive.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/bench.sh",
       "kind": "module",
       "label": "bench",
@@ -832,6 +852,11 @@
   ],
   "edges": [
     {
+      "source": "lib/archive.sh",
+      "target": ".ai/repo/archive.yaml",
+      "kind": "reads"
+    },
+    {
       "source": "lib/changed.sh",
       "target": ".ai/repo/scope.yaml",
       "kind": "reads"
@@ -984,6 +1009,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/adr.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/archive.sh",
       "kind": "sources"
     },
     {
