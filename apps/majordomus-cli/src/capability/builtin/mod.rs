@@ -43,6 +43,7 @@ pub mod environment;
 pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
+pub(crate) mod lifecycle;
 pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
@@ -151,6 +152,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         design,
         devtask,
         worktree,
+        lifecycle,
         trace,
         product
     ]
