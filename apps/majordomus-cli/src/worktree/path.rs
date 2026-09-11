@@ -22,6 +22,20 @@ pub const CONTAINER_SUFFIX: &str = "-wt";
 
 /// A branch name git would accept for `refs/heads/`, whose components are therefore safe
 /// directory names.
+///
+/// The type exists so that the validation happens once, at the edge, and everything
+/// downstream can join the name into a path without asking again whether it is one. There
+/// is no way to build one but [`BranchName::parse`], and no normalisation between the
+/// string that came in and the string that goes back out: the name a person typed is the
+/// name git is handed and the name a diagnostic quotes.
+///
+/// ```
+/// use majordomus_cli::worktree::BranchName;
+/// let b = BranchName::parse("feature/providers/openai-streaming").unwrap();
+/// assert_eq!(b.as_str(), "feature/providers/openai-streaming");
+/// assert_eq!(b.components().count(), 3, "the hierarchy is carried, not flattened");
+/// assert!(BranchName::parse("../../etc").is_err(), "a traversal is not a branch name");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BranchName(String);
 
@@ -49,7 +63,12 @@ impl BranchName {
         }
     }
 
-    /// The name.
+    /// The validated name, exactly as it was given to [`BranchName::parse`].
+    ///
+    /// Nothing is normalised on the way in or out — no case folding, no trimming, no
+    /// collapsing of separators — because this string is both what git is handed and what
+    /// a refusal quotes back to the person who typed it, and those two must be the same
+    /// text or the message is about a name nobody wrote.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -70,7 +89,19 @@ impl BranchName {
         p
     }
 
-    /// The components, in order.
+    /// The name split on `/`, in order: one component per directory level of the path
+    /// the worktree will live at.
+    ///
+    /// Every component is a legal directory name, because [`BranchName::parse`] refused
+    /// the names for which one would not be, so a caller may join them without checking
+    /// anything again. Borrowed from the name, so walking a hierarchy allocates nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::BranchName;
+    /// let b = BranchName::parse("fix/cockpit/reconnect").unwrap();
+    /// let parts: Vec<_> = b.components().collect();
+    /// assert_eq!(parts, ["fix", "cockpit", "reconnect"]);
+    /// ```
     pub fn components(&self) -> impl Iterator<Item = &str> {
         self.0.split('/')
     }

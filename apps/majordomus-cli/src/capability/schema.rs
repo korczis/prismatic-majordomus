@@ -60,6 +60,31 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// A JSON Schema with, when the type has one, a stable component name (the type's title).
+///
+/// Derived from the Rust type the handler deserialises, and therefore not a description
+/// that can disagree with the code: a field renamed in Rust is a field renamed in the MCP
+/// tool schema, in the OpenAPI component and in the Cockpit's form, in the same commit.
+/// The name is what makes the OpenAPI half possible at all, and it is `None` for an
+/// anonymous schema, which is then inlined rather than given a component nobody named.
+///
+/// ```
+/// use majordomus_cli::capability::CanonicalSchema;
+/// use schemars::JsonSchema;
+///
+/// /// A page of results.
+/// #[derive(JsonSchema)]
+/// struct Page {
+///     /// Which page.
+///     offset: u32,
+/// }
+///
+/// let named = CanonicalSchema::of::<Page>();
+/// assert_eq!(named.name.as_deref(), Some("Page"));
+/// assert!(named.schema.get("$schema").is_none(), "the dialect marker is stripped");
+///
+/// // the empty input is deliberately anonymous: there is no type to name
+/// assert_eq!(CanonicalSchema::empty().name, None);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CanonicalSchema {
     /// The component name projections use (`RepositoryInfo`); `None` for an anonymous
@@ -104,6 +129,20 @@ impl CanonicalSchema {
     }
 
     /// No input: an object with no properties and none allowed.
+    ///
+    /// The schema of a resource and of any capability whose input is `Empty`. It closes
+    /// `additionalProperties`, so a caller that passes an argument is told the capability
+    /// takes none instead of having it quietly ignored; and it is anonymous, because an
+    /// OpenAPI component named after the absence of an input would be one component every
+    /// such route pointed at.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// let empty = CanonicalSchema::empty();
+    /// let (properties, required) = empty.properties();
+    /// assert!(properties.is_empty() && required.is_empty());
+    /// assert_eq!(empty.schema["additionalProperties"], false);
+    /// ```
     pub fn empty() -> Self {
         CanonicalSchema {
             name: None,
@@ -113,6 +152,32 @@ impl CanonicalSchema {
 
     /// Top-level properties with their schemas, and which are required, for a schema that
     /// describes an object. Order is the schema's.
+    ///
+    /// The one reading of "what arguments does this capability take". A `GET` route binds
+    /// each of these from the query string, the command line derives a flag per property,
+    /// and the Cockpit renders a field per property — from this, so none of them can offer
+    /// an argument the handler will not read. A schema that describes something other than
+    /// an object yields two empty lists rather than an error, because the answer to "which
+    /// properties" is then genuinely "none".
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// use schemars::JsonSchema;
+    ///
+    /// /// A query with one optional bound.
+    /// #[derive(JsonSchema)]
+    /// struct Query {
+    ///     /// What to look for.
+    ///     text: String,
+    ///     /// At most this many hits.
+    ///     limit: Option<u32>,
+    /// }
+    ///
+    /// let (properties, required) = CanonicalSchema::of::<Query>().properties();
+    /// let names: Vec<&str> = properties.iter().map(|(n, _)| n.as_str()).collect();
+    /// assert_eq!(names, ["text", "limit"], "declaration order, not alphabetical");
+    /// assert_eq!(required, ["text"], "an Option is not required");
+    /// ```
     pub fn properties(&self) -> (Vec<(String, Value)>, Vec<String>) {
         let props = self
             .schema
@@ -142,6 +207,37 @@ impl CanonicalSchema {
     /// Split into the top-level schema and its named definitions with every `$ref`
     /// rewritten to `#/components/schemas/<name>`, for OpenAPI. A definition name that
     /// is already registered with different content is a conflict, reported by name.
+    ///
+    /// The conflict is the reason this returns a `Result`. OpenAPI's component namespace
+    /// is flat, so two Rust types that schemars gives one title are one component — and a
+    /// document that silently kept whichever was hoisted second would describe one of the
+    /// two payloads wrongly, forever, with nothing to notice it. Refusing at generation
+    /// time turns that into a build failure naming the component.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// use schemars::JsonSchema;
+    /// use std::collections::BTreeMap;
+    ///
+    /// /// How many.
+    /// #[derive(JsonSchema)]
+    /// struct Count { n: u32 }
+    /// /// What holds one.
+    /// #[derive(JsonSchema)]
+    /// struct Holder { count: Count }
+    ///
+    /// let mut components = BTreeMap::new();
+    /// let top = CanonicalSchema::of::<Holder>().for_openapi(&mut components).unwrap();
+    /// // the nested type was hoisted and the reference rewritten into OpenAPI's namespace
+    /// assert!(top.get("$defs").is_none());
+    /// assert_eq!(top["properties"]["count"]["$ref"], "#/components/schemas/Count");
+    /// assert!(components.contains_key("Count"));
+    ///
+    /// // and a different type already holding that name is refused by name
+    /// components.insert("Count".into(), serde_json::json!({ "type": "string" }));
+    /// let clash = CanonicalSchema::of::<Holder>().for_openapi(&mut components).unwrap_err();
+    /// assert!(clash.contains("Count"));
+    /// ```
     pub fn for_openapi(&self, components: &mut BTreeMap<String, Value>) -> Result<Value, String> {
         let mut top = self.schema.clone();
         let defs = match &mut top {
@@ -163,6 +259,31 @@ impl CanonicalSchema {
 
     /// Register this schema under its name and return a `$ref` to it; an anonymous schema
     /// is returned inline.
+    ///
+    /// What an OpenAPI operation's request and response bodies are built from. A named
+    /// type becomes one component that every operation using it points at, so the document
+    /// describes each payload once; an anonymous schema has no name to point at and is
+    /// written where it is used.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// use schemars::JsonSchema;
+    /// use std::collections::BTreeMap;
+    ///
+    /// /// A report.
+    /// #[derive(JsonSchema)]
+    /// struct Report { ok: bool }
+    ///
+    /// let mut components = BTreeMap::new();
+    /// let reference = CanonicalSchema::of::<Report>().openapi_ref(&mut components).unwrap();
+    /// assert_eq!(reference["$ref"], "#/components/schemas/Report");
+    /// assert_eq!(components["Report"]["properties"]["ok"]["type"], "boolean");
+    ///
+    /// // the empty input has no name to reference, so it arrives inline
+    /// let inline = CanonicalSchema::empty().openapi_ref(&mut components).unwrap();
+    /// assert!(inline.get("$ref").is_none());
+    /// assert_eq!(inline["type"], "object");
+    /// ```
     pub fn openapi_ref(&self, components: &mut BTreeMap<String, Value>) -> Result<Value, String> {
         let top = self.for_openapi(components)?;
         match &self.name {

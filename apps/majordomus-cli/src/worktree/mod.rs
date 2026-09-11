@@ -42,6 +42,28 @@
 //! taken before and after that the branch, the commit, the index, the staged and unstaged
 //! changes and the untracked files are the same on the other side. Every mutation holds one
 //! repository-scoped [`lock::WorktreeLock`], so two agents cannot half-register one path.
+//!
+//! # The derivation, end to end
+//!
+//! The whole topology follows from two pure functions, and this is all of it: no
+//! repository is opened, no subprocess is run, and nothing is written.
+//!
+//! ```
+//! use majordomus_cli::worktree::{container_root, expected_path, BranchName};
+//! use std::path::{Path, PathBuf};
+//!
+//! let container = container_root(Path::new("/src/acme/backend")).unwrap();
+//! assert_eq!(container, PathBuf::from("/src/acme/backend-wt"));
+//!
+//! let branch = BranchName::parse("feature/providers/openai-streaming").unwrap();
+//! assert_eq!(
+//!     expected_path(&container, &branch).unwrap(),
+//!     PathBuf::from("/src/acme/backend-wt/feature/providers/openai-streaming"),
+//! );
+//!
+//! // a name that could leave the container is refused before any path is derived from it
+//! assert!(BranchName::parse("../../etc").is_err());
+//! ```
 
 pub(crate) mod direnv;
 pub(crate) mod error;

@@ -31,6 +31,42 @@
 //! execution that outlives the process that accepted it. The store says so — its limits
 //! are typed and its behaviour at each limit is defined — and [`store::Limits`] is where a
 //! durable store would be substituted, because nothing above it names a `Mutex`.
+//!
+//! The layer's own lifecycle, without a capability or a transport in it: an execution is
+//! created, events are published against it, the snapshot and the stream are two readings
+//! of those events, and a final state is final.
+//!
+//! ```
+//! use majordomus_cli::execution::*;
+//! let store = ExecutionStore::new(Limits::default());
+//! let id = ExecutionId::fresh();
+//! store.create(id.clone(), "health.report", "Health", serde_json::json!({}), true,
+//!     Actor::of(ActorKind::Cli),
+//!     RepositoryRef { name: "majordomus".into(), id: "abc".into(), branch: None });
+//!
+//! let (_, events) = store.subscribe(Filter::Only(vec![id.clone()]));
+//! store.publish(&id, EventPayload::Started);
+//! store.publish(&id, EventPayload::Progress(ProgressView {
+//!     current: 1, total: Some(2), message: Some("reading the index".into()),
+//! }));
+//! store.publish(&id, EventPayload::Completed { output: serde_json::json!({ "score": 91 }) });
+//!
+//! let done = store.get(&id).unwrap();
+//! assert_eq!(done.state, ExecutionState::Succeeded);
+//! assert_eq!(done.percent(), Some(50), "the last progress the handler reported");
+//! assert_eq!(done.output, Some(serde_json::json!({ "score": 91 })));
+//! // a client watching saw the same three events, in order
+//! let seen: Vec<String> = events
+//!     .try_iter()
+//!     .filter_map(|d| match d {
+//!         Delivery::Event(e) => Some(e.type_name().to_string()),
+//!         Delivery::Lagged { .. } => None,
+//!     })
+//!     .collect();
+//! assert_eq!(seen, ["execution.started", "execution.progress", "execution.completed"]);
+//! // and nothing may be added after the end
+//! assert!(store.publish(&id, EventPayload::Started).is_none());
+//! ```
 
 pub mod engine;
 pub mod event;

@@ -29,6 +29,21 @@ use super::model::{DiagnosticCode, DirtyState, Severity, Standing, TopologyDiagn
 use super::service::{display, Detail, WorktreeService};
 
 /// How a step moves its worktree.
+///
+/// Decided while planning and reported before anything happens, because the three shapes
+/// carry very different risk and a person is entitled to know which one they are agreeing
+/// to. A rename is atomic and cannot lose work. Staging is two renames, needed only when
+/// the worktree occupies the container path itself. A copy-and-repair is the one that
+/// writes a second copy of the tree and then deletes the first, so it is never chosen
+/// implicitly — [`MigrationOptions::allow_copy`] has to ask for it.
+///
+/// ```
+/// use majordomus_cli::worktree::MigrationAction;
+/// let wire = serde_json::to_string(&MigrationAction::MoveViaStaging).unwrap();
+/// assert_eq!(wire, "\"move_via_staging\"");
+/// let blocked: MigrationAction = serde_json::from_str("\"none\"").unwrap();
+/// assert_eq!(blocked, MigrationAction::None, "a blocked step moves in no way at all");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MigrationAction {
@@ -42,7 +57,26 @@ pub enum MigrationAction {
     None,
 }
 
-/// What became of a step.
+/// What became of a step: not applied, refused, done and proved, or attempted and not.
+///
+/// Four outcomes, and the distinction that matters most is between the last two. `Moved`
+/// means the worktree is at its new path *and* the fingerprint taken there equals the one
+/// taken before, so nothing was lost; `Failed` covers both a move that did not happen and
+/// a move that happened without being verified, and the step's message says which. A
+/// migration that could not tell those apart could not be trusted with a dirty worktree,
+/// which is the only kind worth being careful about.
+///
+/// ```
+/// use majordomus_cli::worktree::StepOutcome;
+/// let all = [
+///     StepOutcome::Planned,
+///     StepOutcome::Blocked,
+///     StepOutcome::Moved,
+///     StepOutcome::Failed,
+/// ];
+/// let words: Vec<_> = all.iter().map(|o| serde_json::to_string(o).unwrap()).collect();
+/// assert_eq!(words, ["\"planned\"", "\"blocked\"", "\"moved\"", "\"failed\""]);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StepOutcome {
@@ -56,7 +90,38 @@ pub enum StepOutcome {
     Failed,
 }
 
-/// One worktree to bring home.
+/// One worktree to bring home, and everything known about the move before and after it.
+///
+/// The step is the unit of both planning and evidence: the same value describes what would
+/// be done, and then what was done and how it was proved. `dirty` is not a warning — a
+/// worktree with uncommitted work is the case this whole subsystem exists for — and the
+/// two fingerprints with the `differences` between them are what turn "git said the move
+/// succeeded" into a claim about the work itself. On a planned step all three are absent.
+///
+/// ```
+/// use majordomus_cli::worktree::{DirtyState, MigrationAction, MigrationStep, StepOutcome};
+/// let step = MigrationStep {
+///     branch: "feature/x".into(),
+///     from: "/tmp/stray".into(),
+///     to: "/a/foo-wt/feature/x".into(),
+///     head: Some("abc123".into()),
+///     action: MigrationAction::Move,
+///     dirty: DirtyState { untracked: 4, ..Default::default() },
+///     blockers: Vec::new(),
+///     outcome: StepOutcome::Planned,
+///     message: None,
+///     before: None,
+///     after: None,
+///     differences: Vec::new(),
+///     envrc: None,
+/// };
+/// assert!(step.blockers.is_empty(), "nothing stands in the way of this one");
+/// assert_eq!(step.dirty.untracked, 4, "four untracked files that must survive the move");
+///
+/// let wire = serde_json::to_value(&step).unwrap();
+/// assert_eq!(wire["action"], "move");
+/// assert!(wire.get("before").is_none(), "no fingerprint until the plan is applied");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MigrationStep {
     /// The branch it holds.
@@ -93,7 +158,36 @@ pub struct MigrationStep {
     pub envrc: Option<EnvrcApproval>,
 }
 
-/// A migration, planned or applied.
+/// A migration, planned or applied — one type for both, distinguished by `applied`.
+///
+/// Computing a plan changes nothing, so the same value can be shown to a person, agreed
+/// to, and then filled in as it is carried out. `steps` and `exceptions` are a deliberate
+/// pair: a step is something the migration will do, and an exception is a worktree it
+/// cannot address by design — detached, missing, or the primary checkout off the trunk —
+/// each carrying what a person does about it instead. A plan that silently omitted those
+/// would report a tidy repository while leaving the actual problems unnamed.
+///
+/// ```
+/// use majordomus_cli::worktree::{MigrationPlan, SCHEMA};
+/// let plan = MigrationPlan {
+///     schema: SCHEMA.to_string(),
+///     container: "/a/foo-wt".into(),
+///     steps: Vec::new(),
+///     exceptions: Vec::new(),
+///     movable: 0,
+///     blocked: 0,
+///     moved: 0,
+///     failed: 0,
+///     applied: false,
+///     moved_current: None,
+/// };
+/// assert!(!plan.applied, "planning is a read; nothing was changed to produce this");
+/// assert!(plan.steps.is_empty(), "every worktree is already where it belongs");
+///
+/// let wire = serde_json::to_value(&plan).unwrap();
+/// assert_eq!(wire["schema"], SCHEMA);
+/// assert!(wire.get("moved_current").is_none(), "nothing moved, so nothing to cd into");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MigrationPlan {
     /// [`SCHEMA`].
@@ -121,6 +215,22 @@ pub struct MigrationPlan {
 }
 
 /// What an apply may do beyond a rename.
+///
+/// The default is the conservative one, and every field widens it. Nothing here is read
+/// from configuration: a cross-device move copies a tree and then deletes the original,
+/// and moving a harness's scratch checkout takes a directory somebody else owns, so both
+/// are asked for at the call site by whoever is answerable for the consequence.
+///
+/// ```
+/// use majordomus_cli::worktree::MigrationOptions;
+/// let safe = MigrationOptions::default();
+/// assert!(!safe.allow_copy, "a copy-and-delete move is never implicit");
+/// assert!(!safe.include_ephemeral, "a session's scratch checkout is left to its owner");
+/// assert!(safe.only.is_empty(), "and by default every misplaced branch is in scope");
+///
+/// let one = MigrationOptions { only: vec!["feature/x".into()], ..Default::default() };
+/// assert_eq!(one.only, ["feature/x"]);
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct MigrationOptions {
     /// Fall back to copy, repair, verify and remove when a move crosses devices.

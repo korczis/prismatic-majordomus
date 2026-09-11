@@ -10,6 +10,29 @@
 //!
 //! The boundary this module defends: only a resolved surface's own directory is reachable,
 //! a request may not walk out of it, and only a closed set of media types is answered.
+//!
+//! ```
+//! use majordomus_cli::web::discover::{self, Runtime};
+//! use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+//! let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+//! let mut surfaces = discover::native(Runtime::full());
+//! let mut docs = discover::application(&repo)
+//!     .into_iter()
+//!     .find(|s| s.id == discover::DOCS)
+//!     .expect("this repository serves a documentation surface");
+//! // aimed at a directory this checkout certainly has, rather than at a build
+//! docs.artifact = Some("apps/majordomus-cli/src/web".into());
+//! surfaces.push(docs);
+//!
+//! let statics = StaticSurfaces::new(&Topology::new(surfaces), &repo);
+//! assert_eq!(statics.ids(), vec![discover::DOCS]);
+//! let answer = statics
+//!     .handle("GET", "/docs/tokens.css")
+//!     .expect("a static surface owns its own subtree");
+//! assert_eq!(answer.status, 200);
+//! // the executable's own routes are not dispatched here, whoever else claims the prefix
+//! assert!(statics.handle("GET", "/swagger").is_none());
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -36,6 +59,29 @@ const MEDIA_TYPES: &[(&str, &str)] = &[
 ///
 /// Built once at startup from the resolved topology: the router holds it and asks it before
 /// its own routes, so a mount that a surface owns is never shadowed by a later arm.
+///
+/// It also holds the mounts it must *not* answer. The application is mounted at `/` and so
+/// owns every path nothing else claims, the executable's own routes included; keeping the
+/// native mounts here is what stops a catch-all surface from swallowing them, rather than
+/// leaving it to the order the router consults its arms in.
+///
+/// ```
+/// use majordomus_cli::web::discover::{self, Runtime};
+/// use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let mut surfaces = discover::native(Runtime::full());
+/// let mut docs = discover::application(&repo)
+///     .into_iter()
+///     .find(|s| s.id == discover::DOCS)
+///     .unwrap();
+/// docs.artifact = Some("apps/majordomus-cli/src/web".into());
+/// surfaces.push(docs);
+/// let statics = StaticSurfaces::new(&Topology::new(surfaces), &repo);
+///
+/// assert!(!statics.is_empty());
+/// assert!(statics.owns("/docs/tokens.css"));
+/// assert!(!statics.owns("/swagger"), "the executable answers that one itself");
+/// ```
 #[derive(Debug)]
 pub struct StaticSurfaces {
     mounts: Vec<Mounted>,
@@ -59,6 +105,29 @@ impl StaticSurfaces {
     /// Take every static surface of `topology` whose directory exists, resolved against
     /// `root`. A surface whose producer has not run is not mounted: the validator is where
     /// that becomes a finding, and a router that answered 500 for it would be worse.
+    ///
+    /// Not mounted is not the same as free: an unbuilt surface's mount stays reserved, so
+    /// the application at `/` cannot answer `/docs` with a page of its own the moment the
+    /// documentation has not been generated. The router answers that mount itself, naming
+    /// the command that builds it.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+    /// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    /// let mut surfaces = discover::native(Runtime::full());
+    /// surfaces.extend(discover::application(&repo));
+    /// // resolved against a root where no producer has ever run
+    /// let statics = StaticSurfaces::new(
+    ///     &Topology::new(surfaces),
+    ///     std::path::Path::new("/nonexistent"),
+    /// );
+    /// assert!(statics.is_empty(), "nothing is mounted out of a directory that is not there");
+    /// assert!(
+    ///     statics.handle("GET", "/docs/").is_none(),
+    ///     "the unbuilt mount stays reserved rather than falling to the root application"
+    /// );
+    /// ```
     pub fn new(topology: &Topology, root: &Path) -> Self {
         let mut mounts = Vec::new();
         let mut native = Vec::new();
@@ -101,16 +170,56 @@ impl StaticSurfaces {
     }
 
     /// The ids mounted, in the order they are consulted.
+    ///
+    /// Most specific first, so a surface inside another's prefix is reached before the one
+    /// above it. The validator refuses that arrangement anyway; the order does not depend
+    /// on it having done so.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+    /// // a topology of nothing but the routes the executable computes mounts nothing here
+    /// let topology = Topology::new(discover::native(Runtime::full()));
+    /// let statics = StaticSurfaces::new(&topology, std::path::Path::new("/nonexistent"));
+    /// assert!(statics.ids().is_empty(), "a native route is not a directory of files");
+    /// ```
     pub fn ids(&self) -> Vec<&str> {
         self.mounts.iter().map(|m| m.id.as_str()).collect()
     }
 
     /// Is anything mounted?
+    ///
+    /// True in a checkout where no producer has run, which is the ordinary state of a fresh
+    /// clone rather than a fault: the reserved mounts are still held, and the router still
+    /// answers each one by saying what would build it.
     pub fn is_empty(&self) -> bool {
         self.mounts.is_empty()
     }
 
     /// Does a static surface own this path — and is it not one the executable answers?
+    ///
+    /// Both halves matter, and the second is the one that is easy to forget: the
+    /// application's catch-all mount owns `/swagger` by prefix and must not be allowed to
+    /// answer it, so a native mount of the topology wins over any surface that contains it.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+    /// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    /// let mut surfaces = discover::native(Runtime::full());
+    /// let mut docs = discover::application(&repo)
+    ///     .into_iter()
+    ///     .find(|s| s.id == discover::DOCS)
+    ///     .unwrap();
+    /// docs.artifact = Some("apps/majordomus-cli/src/web".into());
+    /// surfaces.push(docs);
+    /// let statics = StaticSurfaces::new(&Topology::new(surfaces), &repo);
+    ///
+    /// assert!(statics.owns("/docs/tokens.css"));
+    /// assert!(statics.owns("/docs"), "the mount itself belongs to the surface");
+    /// assert!(!statics.owns("/openapi.json"), "a document the executable renders");
+    /// assert!(!statics.owns("/nobody/claims/this"));
+    /// ```
     pub fn owns(&self, path: &str) -> bool {
         !self.reserved(path) && self.mounts.iter().any(|m| owns(m, path))
     }
@@ -129,6 +238,32 @@ impl StaticSurfaces {
     /// A directory answers with its index; a path that walks out of the surface's root, or
     /// names a media type the set does not hold, is a 404 rather than a hint about what is
     /// on the disk.
+    ///
+    /// `None` means "not mine": the path belongs to a route the executable answers itself,
+    /// or to no surface at all. That is different from a `Some(404)`, which means a surface
+    /// owns the path and has nothing to answer with.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// use majordomus_cli::web::{serve::StaticSurfaces, Topology};
+    /// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    /// let mut surfaces = discover::native(Runtime::full());
+    /// let mut docs = discover::application(&repo)
+    ///     .into_iter()
+    ///     .find(|s| s.id == discover::DOCS)
+    ///     .unwrap();
+    /// docs.artifact = Some("apps/majordomus-cli/src/web".into());
+    /// surfaces.push(docs);
+    /// let statics = StaticSurfaces::new(&Topology::new(surfaces), &repo);
+    ///
+    /// assert_eq!(statics.handle("GET", "/docs/tokens.css").map(|r| r.status), Some(200));
+    /// // a static surface answers reads and says so for anything else
+    /// assert_eq!(statics.handle("POST", "/docs/tokens.css").map(|r| r.status), Some(405));
+    /// // a walk out of the directory is refused, and says nothing about what is there
+    /// assert_eq!(statics.handle("GET", "/docs/../Cargo.toml").map(|r| r.status), Some(404));
+    /// // and a route of the executable is not this module's to answer
+    /// assert!(statics.handle("GET", "/mcp").is_none());
+    /// ```
     pub fn handle(&self, method: &str, path: &str) -> Option<Response> {
         if self.reserved(path) {
             return None; // the executable answers this one itself

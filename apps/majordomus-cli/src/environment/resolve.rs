@@ -20,6 +20,31 @@
 //! Unavailable is a real answer here, and the discipline the whole module is built on: a
 //! count that was not counted is absent, never zero, because a person reads a zero as a
 //! broken repository and acts on it.
+//!
+//! # The lifecycle
+//!
+//! A caller says what it may read ([`Inputs`]) and what it will pay for
+//! ([`EnvironmentQuery`]), and gets one snapshot. There is no second call to make and no
+//! step to remember: what could not be reached is in the value, as an absent field, a
+//! provenance entry that says what was tried, and a diagnostic.
+//!
+//! ```
+//! use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs, Resolution, TierState};
+//! # let dir = tempfile::tempdir().expect("a temporary directory");
+//! # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+//! # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+//! let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+//! let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+//! let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+//!
+//! assert_eq!(snapshot.resolution, Resolution::Fast);
+//! assert_eq!(snapshot.layer.state, TierState::Unavailable, "no index was built for this one");
+//! assert_eq!(snapshot.layer.objects, None, "so the count is absent, and never a zero");
+//! assert!(
+//!     snapshot.explain("layer.objects").is_some(),
+//!     "even a fact that resolved to nothing says what was tried"
+//! );
+//! ```
 
 use std::path::Path;
 
@@ -37,6 +62,22 @@ use super::{
 };
 
 /// What a caller wants resolved, and what it will pay for.
+///
+/// The four flags are separate because they buy different things and cost different
+/// things: the resolution decides whether the index may be built, the probe whether a
+/// socket may be opened, and the two cache flags whether an earlier answer may be read
+/// and whether this one is written back. A hosted request wants none of the three
+/// side-effecting ones; a shell prompt wants all but the index.
+///
+/// ```
+/// use majordomus_cli::environment::{EnvironmentQuery, Resolution};
+/// assert_eq!(EnvironmentQuery::fast().resolution, Resolution::Fast);
+/// assert!(EnvironmentQuery::fast().use_cache, "a prompt reads what an earlier command learnt");
+/// assert!(!EnvironmentQuery::full().use_cache, "a full resolution computes it instead");
+/// let sealed = EnvironmentQuery::full().sealed();
+/// assert!(!sealed.use_cache && !sealed.write_cache && !sealed.probe_services);
+/// assert_eq!(sealed.resolution, Resolution::Full, "sealing changes what may be touched only");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EnvironmentQuery {
     /// How much may be read.
@@ -53,6 +94,14 @@ pub struct EnvironmentQuery {
 impl EnvironmentQuery {
     /// What a shell prompt asks for: everything cheap, the cache for the rest, a bounded
     /// probe of the local address, and no write of tiers it did not compute.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::{EnvironmentQuery, Resolution};
+    /// let prompt = EnvironmentQuery::fast();
+    /// assert_eq!(prompt.resolution, Resolution::Fast, "the index is what it will not pay for");
+    /// assert!(prompt.use_cache, "everything expensive comes from the last full resolution");
+    /// assert!(prompt.probe_services, "one bounded connection attempt is affordable");
+    /// ```
     pub fn fast() -> Self {
         EnvironmentQuery {
             resolution: Resolution::Fast,
@@ -63,6 +112,18 @@ impl EnvironmentQuery {
     }
 
     /// What a person waiting on a command asks for: everything, written back.
+    ///
+    /// It reads no cache at all, which is the point: a person who typed `majordomus env
+    /// status` is waiting for the real numbers, and the write is what makes the next
+    /// hundred shell prompts cheap.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::{EnvironmentQuery, Resolution};
+    /// let waiting = EnvironmentQuery::full();
+    /// assert_eq!(waiting.resolution, Resolution::Full);
+    /// assert!(!waiting.use_cache, "nothing is taken from a cache when everything is computed");
+    /// assert!(waiting.write_cache, "and what it computed is what the next prompt reads");
+    /// ```
     pub fn full() -> Self {
         EnvironmentQuery {
             resolution: Resolution::Full,
@@ -74,6 +135,20 @@ impl EnvironmentQuery {
 
     /// The same, without touching anything outside this process: no probe, no cache read,
     /// no cache write. What a test and a hosted request use.
+    ///
+    /// It seals the three flags and leaves the resolution alone, so `fast().sealed()` and
+    /// `full().sealed()` are still two different amounts of work. A snapshot resolved this
+    /// way is reproducible: the same repository answers the same way twice, because
+    /// nothing it read was written by the last call.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::{EnvironmentQuery, Resolution};
+    /// let sealed = EnvironmentQuery::fast().sealed();
+    /// assert!(!sealed.probe_services, "no socket is opened, so no service can be `available`");
+    /// assert!(!sealed.use_cache && !sealed.write_cache, "and nothing on disk is read or written");
+    /// assert_eq!(sealed.resolution, Resolution::Fast, "how much to resolve is left as it was");
+    /// assert_eq!(sealed.sealed(), sealed, "sealing something sealed changes nothing");
+    /// ```
     pub fn sealed(self) -> Self {
         EnvironmentQuery {
             probe_services: false,
@@ -86,6 +161,29 @@ impl EnvironmentQuery {
 
 /// What the resolver may read. A fast resolution carries no index and no registry; a full
 /// one carries both, and the presence of the index is what makes it full.
+///
+/// The borrows are the contract: the resolver reads what the caller has already built and
+/// builds nothing itself, so nothing in a snapshot can cost the caller an index it did not
+/// mean to pay for. A [`Resolution::Full`] query with no index therefore still cannot
+/// count what the layer holds — the query says what may be spent, and this says what there
+/// is to spend.
+///
+/// ```
+/// use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs, TierState};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// assert!(inputs.index.is_none(), "which is what a fast resolution's caller carries");
+///
+/// let snapshot = resolve(&inputs, &EnvironmentQuery::full().sealed());
+/// assert_eq!(
+///     snapshot.layer.state,
+///     TierState::Unavailable,
+///     "a full query with nothing to count from counts nothing, rather than counting badly"
+/// );
+/// ```
 pub struct Inputs<'a> {
     /// The repository, already discovered.
     pub repository: &'a Repository,
@@ -102,6 +200,29 @@ pub struct Inputs<'a> {
 /// Never fails. Anything that cannot be read becomes a diagnostic and an absent value; a
 /// snapshot is the report of what could be learnt, and a resolver that refused to answer
 /// because one thing was missing would take the shell down with it.
+///
+/// There is no `Result` here on purpose, and the example is of the worst case rather than
+/// the good one: a directory that is a repository and nothing else — no git, no runner, no
+/// index, no server — still produces a whole snapshot, with a provenance entry for every
+/// fact it could not learn.
+///
+/// ```
+/// use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs, RepositoryEnvironment};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+///
+/// assert_eq!(snapshot.schema, RepositoryEnvironment::schema_id(), "it names its own contract");
+/// assert_eq!(snapshot.project.version, majordomus_cli::VERSION, "some facts cannot be missing");
+/// assert!(!snapshot.services.is_empty(), "what is served is known without a server running");
+/// assert!(
+///     snapshot.explain("vcs.branch").is_some(),
+///     "and the branch nobody could read still says who tried to read it"
+/// );
+/// ```
 pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvironment {
     let root = inputs.repository.root();
     let local_half = inputs.repository.local_path();

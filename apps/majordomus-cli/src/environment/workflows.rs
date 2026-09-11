@@ -20,6 +20,33 @@
 //! its command up the banner, and naming a recipe after its group is what publishes it.
 //! There is no metadata to invent, no annotation to remember, and no configuration file
 //! that can disagree with the justfile.
+//!
+//! # The lifecycle
+//!
+//! Ask the runner, read its document, keep what a person may run. The middle step is the
+//! only one with any judgement in it, and it is pure — which is what the example shows,
+//! because a repository without `just` installed must not fail a test about parsing.
+//!
+//! ```
+//! use majordomus_cli::environment::workflows::workflows_of;
+//! let document = serde_json::json!({
+//!     "recipes": {
+//!         "check": { "name": "check", "doc": "Every gate.", "private": false,
+//!                    "attributes": [{"group": "check"}], "parameters": [], "dependencies": [] },
+//!         "_stage": { "name": "_stage", "doc": null, "private": false,
+//!                     "attributes": [], "parameters": [], "dependencies": [] }
+//!     },
+//!     "modules": { "site": { "modules": {}, "recipes": {
+//!         "build": { "name": "build", "doc": null, "private": false,
+//!                    "attributes": [], "parameters": [], "dependencies": [] }
+//!     } } }
+//! });
+//! let found = workflows_of(&document);
+//! let names: Vec<&str> = found.iter().map(|w| w.name.as_str()).collect();
+//! assert_eq!(names, ["check", "site build"], "a leading underscore is as private as the attribute");
+//! assert_eq!(found[1].namespace.as_deref(), Some("site"), "a module's recipe keeps its module");
+//! assert_eq!(found[0].group.as_deref(), Some("check"));
+//! ```
 
 use std::path::Path;
 use std::process::Command;
@@ -47,6 +74,21 @@ pub const TIMEOUT: Duration = Duration::from_secs(2);
 /// Returns [`WorkflowCatalogue::unavailable`] when `just` is not installed, when the
 /// repository has no justfile, or when the runner refuses it — none of which is an error
 /// here: a repository is not obliged to have a workflow runner.
+///
+/// Two short subprocesses, both bounded by [`TIMEOUT`]: one for the recipes and one for
+/// the order the groups are declared in, which `--dump` does not carry. A repository whose
+/// justfile does not parse is `unavailable` as well — the runner's own refusal is the only
+/// judgement about that, since a second parser here would be a second answer.
+///
+/// ```
+/// use majordomus_cli::environment::workflows::resolve;
+/// use majordomus_cli::environment::TierState;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// let catalogue = resolve(dir.path());
+/// assert_eq!(catalogue.state, TierState::Unavailable, "no runner answered for this directory");
+/// assert!(catalogue.workflows.is_empty(), "and nothing is offered that cannot be run");
+/// assert_eq!(catalogue.source, None, "nothing produced it, so nothing is quoted as its source");
+/// ```
 pub fn resolve(root: &Path) -> WorkflowCatalogue {
     let Some(dump) = run(root, &["--dump", "--dump-format", "json"]) else {
         return WorkflowCatalogue::unavailable();

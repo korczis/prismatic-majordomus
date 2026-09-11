@@ -10,6 +10,40 @@
 //! Ignored content (build output, the checkout's own `.ai/local/` state) is attested by
 //! presence and size rather than by content: it moves with the directory as everything else
 //! does, and hashing a `target/` tree to prove a rename would cost minutes for nothing.
+//!
+//! The lifecycle is three steps and the third is the one that matters: capture, move,
+//! capture again, and refuse to report success while [`differences`] has anything to say.
+//! Comparing the two values directly would answer only whether they are equal; this module
+//! answers *what changed*, because a verification that fails without naming the loss leaves
+//! a person with two directories and no idea which one to trust.
+//!
+//! ```
+//! use majordomus_cli::worktree::fingerprint::{differences, WorktreeFingerprint};
+//!
+//! let before = WorktreeFingerprint {
+//!     branch: Some("feature/x".into()),
+//!     head: Some("abc123".into()),
+//!     index_digest: "i".into(),
+//!     staged_diff_digest: "s".into(),
+//!     unstaged_diff_digest: "u".into(),
+//!     untracked_manifest_digest: "m".into(),
+//!     untracked_files: 2,
+//!     ignored_manifest_digest: "g".into(),
+//!     in_progress: None,
+//!     tree_manifest_digest: None,
+//! };
+//!
+//! // the same worktree at its new path, with nothing lost
+//! let mut after = before.clone();
+//! assert!(differences(&before, &after).is_empty(), "a move that lost nothing is silent");
+//!
+//! // and the same move having dropped an untracked file
+//! after.untracked_files = 1;
+//! after.untracked_manifest_digest = "n".into();
+//! let lost = differences(&before, &after);
+//! assert_eq!(lost.len(), 1, "one loss, one line: {lost:?}");
+//! assert!(lost[0].contains("untracked"), "the line names what went missing");
+//! ```
 
 use std::path::Path;
 
@@ -21,6 +55,38 @@ use super::error::{Result, WorktreeError};
 use super::git;
 
 /// What a work tree held at one moment, reduced to digests.
+///
+/// Digests and not content, so that the value can be serialised into a report, compared
+/// across a move and kept in a log without carrying a copy of the work tree with it. The
+/// fields are deliberately several rather than one summary hash: a single digest would
+/// prove a move lossless and, when it was not, say nothing about which of the branch, the
+/// index, the staged diff or the untracked files went missing.
+///
+/// `untracked_files` is a count beside a digest of the same manifest, which is redundant
+/// on purpose — a digest that differs is unreadable, and "2 untracked before, 1 after" is
+/// the sentence a person needs. `tree_manifest_digest` is `None` for a move by rename,
+/// where the filesystem guarantees the tree; it is taken only when a copy is involved and
+/// that guarantee does not hold.
+///
+/// ```
+/// use majordomus_cli::worktree::WorktreeFingerprint;
+/// let f = WorktreeFingerprint {
+///     branch: Some("feature/x".into()),
+///     head: Some("abc123".into()),
+///     index_digest: "i".into(),
+///     staged_diff_digest: "s".into(),
+///     unstaged_diff_digest: "u".into(),
+///     untracked_manifest_digest: "m".into(),
+///     untracked_files: 2,
+///     ignored_manifest_digest: "g".into(),
+///     in_progress: None,
+///     tree_manifest_digest: None,
+/// };
+/// // it round-trips, because a verification is reported and not only performed
+/// let json = serde_json::to_string(&f).unwrap();
+/// assert_eq!(serde_json::from_str::<WorktreeFingerprint>(&json).unwrap(), f);
+/// assert!(!json.contains("tree_manifest_digest"), "a rename does not attest the tree");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorktreeFingerprint {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -64,6 +130,21 @@ fn hash_file(path: &Path) -> Result<String> {
 
 /// Take a fingerprint of `worktree`. `whole_tree` also walks the directory for the tree
 /// manifest, which a copy-based move needs and a rename does not.
+///
+/// Six git subprocesses and a hash of every modified and untracked file, so this is not
+/// cheap and is not meant to be: it is taken twice per migration and never on a read path.
+/// An IO failure is an error rather than a gap, because a fingerprint with a hole in it
+/// would let the comparison afterwards pass over exactly the file that was lost.
+///
+/// ```no_run
+/// use majordomus_cli::worktree::fingerprint::{capture, differences};
+/// use std::path::Path;
+///
+/// let before = capture(Path::new("/a/foo-wt/feature/x"), false).unwrap();
+/// // ... `git worktree move` happens here ...
+/// let after = capture(Path::new("/a/foo-wt/feature/renamed"), false).unwrap();
+/// assert!(differences(&before, &after).is_empty(), "the move lost nothing");
+/// ```
 pub fn capture(worktree: &Path, whole_tree: bool) -> Result<WorktreeFingerprint> {
     let branch = git::branch_of(worktree)?;
     let head = git::head_of(worktree)?;
@@ -158,6 +239,27 @@ pub fn capture(worktree: &Path, whole_tree: bool) -> Result<WorktreeFingerprint>
 
 /// Every entry below `root`, relative, sorted, with kind, size and link target. The `.git`
 /// file of a linked worktree is excluded: it is rewritten by the move on purpose.
+///
+/// Sorted, because the point of the manifest is that two walks of the same tree produce
+/// the same string, and directory order does not survive a copy between filesystems.
+/// Symlinks are recorded by their target and never followed, so a link that came out the
+/// other side pointing somewhere else is a difference rather than a silently identical
+/// hash. Sizes stand in for content here: this attests the shape of the whole tree,
+/// ignored output included, and hashing that would cost minutes.
+///
+/// ```
+/// use majordomus_cli::worktree::fingerprint::tree_manifest;
+/// let dir = tempfile::tempdir().unwrap();
+/// std::fs::create_dir(dir.path().join("src")).unwrap();
+/// std::fs::write(dir.path().join("src/lib.rs"), "fn main() {}").unwrap();
+/// std::fs::write(dir.path().join(".git"), "gitdir: /elsewhere").unwrap();
+///
+/// let manifest = tree_manifest(dir.path()).unwrap();
+/// let lines: Vec<_> = manifest.lines().collect();
+/// assert_eq!(lines.len(), 2, "the linked worktree's .git file is left out: {lines:?}");
+/// assert!(lines[0].starts_with("src"), "sorted, so the directory precedes what is in it");
+/// assert!(lines[1].contains("src/lib.rs") && lines[1].ends_with("12"));
+/// ```
 pub fn tree_manifest(root: &Path) -> Result<String> {
     let mut entries: Vec<String> = Vec::new();
     let mut stack = vec![root.to_path_buf()];

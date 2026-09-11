@@ -94,6 +94,29 @@ mod tests {
 /// This is not a fourth list. Every entry is a surface [`discover::native_all`] resolved
 /// from the constants that already declare it, so a prefix that moves moves here, and the
 /// description is the producer's own title rather than a sentence written beside it.
+///
+/// It is a flattened surface and not a surface: a document does not need a provenance map
+/// or an artifact directory, and a route that carried them would invite a consumer to read
+/// the topology through this type instead of through [`Topology`].
+///
+/// ```
+/// use majordomus_cli::web::{projection_routes, ProjectionRoute};
+/// let routes: Vec<ProjectionRoute> = projection_routes();
+/// let swagger = routes
+///     .iter()
+///     .find(|r| r.id == "swagger")
+///     .expect("the API console is a route of this projection");
+/// assert_eq!(swagger.path, "/swagger");
+/// // the line a document prints is the producer's own title, so it is never empty
+/// assert!(!swagger.what.trim().is_empty());
+/// // and every id is claimed once: a document with two rows for one route is a document
+/// // that cannot be read
+/// let mut ids: Vec<&str> = routes.iter().map(|r| r.id.as_str()).collect();
+/// let count = ids.len();
+/// ids.sort_unstable();
+/// ids.dedup();
+/// assert_eq!(ids.len(), count);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct ProjectionRoute {
     /// The surface's identity in the topology.
@@ -131,6 +154,22 @@ impl ProjectionRoute {
 /// index would be pointing at the landing page instead. Nothing here is narrowed to what
 /// one process offers — a document describes the projection, and [`discover::Runtime`]
 /// decides what a given server serves of it.
+///
+/// ```
+/// use majordomus_cli::web::projection_routes;
+/// let routes = projection_routes();
+/// // the producers' order, not a sort: the home page is declared first and stays first
+/// assert_eq!(routes.first().map(|r| r.path.as_str()), Some("/"));
+/// // the whole projection is described even though no process offers all of it at once
+/// assert!(routes.iter().any(|r| r.id == "mcp"));
+/// // and exactly one of these routes is a file a publication carries
+/// let linkable: Vec<&str> = routes
+///     .iter()
+///     .filter(|r| r.linkable())
+///     .map(|r| r.id.as_str())
+///     .collect();
+/// assert_eq!(linkable, vec!["openapi"]);
+/// ```
 pub fn projection_routes() -> Vec<ProjectionRoute> {
     discover::native_all()
         .into_iter()

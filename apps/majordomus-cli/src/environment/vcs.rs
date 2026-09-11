@@ -10,6 +10,18 @@
 //! Nothing here writes: `status` is read-only, `--no-optional-locks` keeps it from taking
 //! the index lock to refresh stat information, so a snapshot taken while a rebase is in
 //! flight cannot interfere with it.
+//!
+//! The lifecycle is one call and one value, and the value covers the case that has no
+//! answer: a directory git cannot report on is a state of the snapshot rather than a
+//! failure of it, because a shell prompt outside a work tree still has to draw.
+//!
+//! ```
+//! use majordomus_cli::environment::vcs::{self, VcsState};
+//! let dir = tempfile::tempdir().expect("a temporary directory");
+//! let state = vcs::inspect(dir.path());
+//! assert!(matches!(state, VcsState::Unavailable { .. }), "not a work tree, and not an error");
+//! assert!(state.tree().is_none(), "and nothing is invented in place of one");
+//! ```
 
 use std::path::Path;
 use std::process::Command;
@@ -22,6 +34,20 @@ use serde::{Deserialize, Serialize};
 pub const SOURCE: &str = "git status --porcelain=v2 --branch";
 
 /// What version control says about the checkout, or why it could not be asked.
+///
+/// Two variants and no third: either git answered, or it did not and the reason is
+/// carried. There is deliberately no "clean repository with nothing in it" variant that a
+/// missing `git` could be mistaken for — a reader that cannot tell "no changes" from "no
+/// answer" will report the first when it means the second.
+///
+/// ```
+/// use majordomus_cli::environment::vcs::{self, VcsState};
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// match vcs::inspect(dir.path()) {
+///     VcsState::Unavailable { reason } => assert!(!reason.is_empty(), "it says what happened"),
+///     VcsState::Git(tree) => panic!("a temporary directory is not a work tree: {tree:?}"),
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "state", rename_all = "snake_case")]
 pub enum VcsState {
@@ -36,6 +62,19 @@ pub enum VcsState {
 
 impl VcsState {
     /// The work tree, when git answered.
+    ///
+    /// The one way to read the branch and the counts, so that every caller is made to
+    /// handle the case where there are none. A surface that wants to say "clean" has to
+    /// pass through this `Option` first.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::vcs;
+    /// let dir = tempfile::tempdir().expect("a temporary directory");
+    /// assert!(
+    ///     vcs::inspect(dir.path()).tree().is_none(),
+    ///     "a directory git cannot report on has no work tree to read"
+    /// );
+    /// ```
     pub fn tree(&self) -> Option<&GitWorkingTree> {
         match self {
             VcsState::Git(t) => Some(t),
@@ -45,6 +84,31 @@ impl VcsState {
 }
 
 /// The state of one work tree, as porcelain v2 reports it.
+///
+/// The counts are kept apart because they mean different things to a person: a staged
+/// change is work that is ready, a modified file is work in progress, and an untracked
+/// file is often not work at all. `ahead` and `behind` are `Option` for the same reason —
+/// a branch with no upstream is not a branch that is level with one.
+///
+/// ```
+/// use majordomus_cli::environment::vcs;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// let init = std::process::Command::new("git")
+///     .args(["init", "--quiet"])
+///     .arg(dir.path())
+///     .status()
+///     .expect("git runs");
+/// assert!(init.success());
+/// std::fs::write(dir.path().join("note.txt"), "1").expect("a file nobody has added");
+///
+/// let tree: vcs::GitWorkingTree =
+///     vcs::inspect(dir.path()).tree().cloned().expect("git answered for a work tree");
+/// assert_eq!(tree.untracked, 1);
+/// assert_eq!(tree.dirty_files(), 0, "an untracked file is not a tracked file that changed");
+/// assert!(!tree.clean, "though it is still something a person has not dealt with");
+/// assert_eq!(tree.ahead, None, "a branch with no upstream is not zero commits ahead of one");
+/// assert_eq!(tree.changed_paths, vec!["note.txt".to_string()]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GitWorkingTree {
     /// The commit HEAD names, or `None` in a repository with no commits yet.
@@ -95,6 +159,22 @@ impl GitWorkingTree {
 /// large enough to exceed a shell prompt's patience is a fact worth feeling — but the
 /// call is the single most expensive thing in a fast resolution, which is why there is
 /// exactly one of it.
+///
+/// ```
+/// use majordomus_cli::environment::vcs;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// let init = std::process::Command::new("git")
+///     .args(["init", "--quiet"])
+///     .arg(dir.path())
+///     .status()
+///     .expect("git runs");
+/// assert!(init.success());
+///
+/// let tree = vcs::inspect(dir.path()).tree().cloned().expect("a fresh repository is a work tree");
+/// assert!(tree.clean, "nothing has been done in it yet");
+/// assert_eq!(tree.upstream, None, "and it tracks nothing");
+/// assert_eq!(tree.dirty_files(), 0);
+/// ```
 pub fn inspect(root: &Path) -> VcsState {
     let out = Command::new("git")
         .arg("-C")

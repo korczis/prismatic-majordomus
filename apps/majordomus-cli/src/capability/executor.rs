@@ -49,7 +49,31 @@ use crate::perf::{self, Counters, Phase, COUNTERS};
 use super::handler::{CapabilityError, Context};
 use super::model::CachePolicy;
 
-/// The executor of one registry.
+/// The one execution path of a process: counters, then the cache the capability asked
+/// for, then the handler.
+///
+/// Shared by `Arc` between every transport and every session, so what a benchmark
+/// measures and what a Cockpit button runs are the same code with the same cache behind
+/// it. It holds no registry and no index of its own — those arrive on the [`Context`] of
+/// each call — because the canonical state of a process is immutable and shared, and an
+/// executor that owned a copy would be a second opinion about the repository.
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityExecutor;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let executor = CapabilityExecutor::new();
+/// assert_eq!(executor.cached_entries(), 0);
+///
+/// // `capabilities.list` declares a process cache, so the second call is remembered —
+/// // and answers identically, which is the entire requirement placed on the cache
+/// let first = executor.execute(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+/// let second = executor.execute(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+/// assert_eq!(first, second);
+/// assert_eq!(executor.cached_entries(), 1);
+/// ```
 #[derive(Debug, Default)]
 pub struct CapabilityExecutor {
     cache: Mutex<Cache>,
@@ -77,11 +101,41 @@ struct CacheEntry {
 
 impl CapabilityExecutor {
     /// An executor with an empty cache.
+    ///
+    /// One per process, composed where the context is; there is no global to reach for.
+    /// Two executors over one registry would be two caches over one collection, which is
+    /// the second execution path this module exists to make impossible.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityExecutor;
+    /// assert_eq!(CapabilityExecutor::new().cached_entries(), 0);
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Execute a capability by id with a JSON input. The one place a handler runs.
+    ///
+    /// Every caller arrives here — a transport adapter, a subcommand, the execution
+    /// engine, a benchmark runner — so the counters and the capability's own cache policy
+    /// apply once and cannot be forgotten by whoever adds the next transport. An id
+    /// nothing declares is `NotFound` before any cache is consulted, because a cache
+    /// keyed by an id that does not exist would be a cache of a mistake.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityError, CapabilityExecutor};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let executor = CapabilityExecutor::new();
+    ///
+    /// let out = executor.execute(&ctx, "repository.info", serde_json::json!({})).unwrap();
+    /// assert_eq!(out["objects"], ctx.index.objects.len());
+    ///
+    /// let missing = executor.execute(&ctx, "no.such-capability", serde_json::json!({}));
+    /// assert!(matches!(missing, Err(CapabilityError::NotFound(_))));
+    /// ```
     pub fn execute(&self, ctx: &Context, id: &str, input: Value) -> Result<Value, CapabilityError> {
         let policy = ctx.registry.get(id).map(|c| c.cache);
         self.run(ctx, id, input, policy)
@@ -97,6 +151,25 @@ impl CapabilityExecutor {
     /// that did not occur. So an execution always runs the handler, and nothing it produces
     /// is put into the cache either, because the cache holds what calls returned and this
     /// call is a different kind of thing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityExecutor;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let executor = CapabilityExecutor::new();
+    ///
+    /// // a capability that declares a process cache, run the way an execution runs it:
+    /// // twice, and neither call read the cache or left anything in it
+    /// executor.execute_uncached(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+    /// executor.execute_uncached(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(executor.cached_entries(), 0);
+    ///
+    /// // the same capability through `execute` does store one
+    /// executor.execute(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(executor.cached_entries(), 1);
+    /// ```
     pub fn execute_uncached(
         &self,
         ctx: &Context,
@@ -172,11 +245,50 @@ impl CapabilityExecutor {
     }
 
     /// How many entries the cache holds, all capabilities together.
+    ///
+    /// For a diagnostic and for a test. Nothing in an answer says whether it was computed
+    /// or remembered — `project.cache-is-invisible` requires exactly that — so this is the
+    /// only way to observe that the cache did anything, and it is a count of what is
+    /// stored rather than of hits, which the counters in [`crate::perf`] hold.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityExecutor;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let executor = CapabilityExecutor::new();
+    ///
+    /// // `repository.info` declares no cache, so calling it leaves nothing behind
+    /// executor.execute(&ctx, "repository.info", serde_json::json!({})).unwrap();
+    /// assert_eq!(executor.cached_entries(), 0);
+    /// executor.execute(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(executor.cached_entries(), 1);
+    /// ```
     pub fn cached_entries(&self) -> usize {
         lock(&self.cache).entries.len()
     }
 
-    /// Drop every cached entry.
+    /// Drop every cached entry of every capability.
+    ///
+    /// Not a way of keeping the cache honest: an entry cannot go stale, because the
+    /// registry fingerprint is part of its key and a repository that changed produces a
+    /// different key rather than a wrong answer. It exists for the benchmark runner, which
+    /// clears between samples so that timing a cached capability measures its handler
+    /// rather than a `HashMap` lookup.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityExecutor;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let executor = CapabilityExecutor::new();
+    /// executor.execute(&ctx, "capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(executor.cached_entries(), 1);
+    /// executor.clear();
+    /// assert_eq!(executor.cached_entries(), 0);
+    /// ```
     pub fn clear(&self) {
         let mut cache = lock(&self.cache);
         cache.entries.clear();

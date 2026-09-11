@@ -19,6 +19,21 @@
 //! a cooperative cancellation flag. There is no durable queue, no retry and no scheduler,
 //! because nothing here is a background job system — it is a way to watch a call that
 //! takes longer than a request should be held open for.
+//!
+//! An engine that has been asked to run nothing runs nothing: no thread is started until
+//! something is submitted, and the store it will publish into exists from the beginning.
+//!
+//! ```
+//! use majordomus_cli::execution::{ExecutionEngine, Limits};
+//! let engine = ExecutionEngine::new(Limits::default());
+//! assert!(engine.accepting());
+//! assert_eq!(engine.queued(), 0);
+//! assert!(engine.store().is_empty(), "the store is there, and it holds nothing");
+//!
+//! // shutting down is what closes the door, and it is not reopened
+//! engine.shutdown(std::time::Duration::ZERO);
+//! assert!(!engine.accepting());
+//! ```
 
 use std::collections::{BTreeMap, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -35,6 +50,20 @@ use super::store::{ExecutionStore, Limits};
 
 /// Why an execution was not accepted. Refused before anything is created, so a client that
 /// is told no knows nothing started.
+///
+/// That is the whole reason this is separate from [`ExecutionError`]: a `SubmitError` means
+/// there is no execution and no id, and nothing will appear in a listing; an
+/// `ExecutionError` is how an execution that exists ended. A client that is told no can
+/// retry with a different input, and it never has to wonder whether something is running.
+///
+/// ```
+/// use majordomus_cli::execution::SubmitError;
+/// let refused = SubmitError::UnknownCapability("no.such.thing".into());
+/// // the message names what was asked for, so a client need not guess
+/// assert!(refused.to_string().contains("no.such.thing"), "{refused}");
+/// // and each reason has its own stable code for a transport to map
+/// assert_ne!(refused.code(), SubmitError::InvalidInput("x".into()).code());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum SubmitError {
     /// No capability of that id.
@@ -54,6 +83,20 @@ pub enum SubmitError {
 
 impl SubmitError {
     /// The stable code a transport maps to its own vocabulary.
+    ///
+    /// The code and not the message is what a program branches on: HTTP turns it into a
+    /// status, MCP into an error object, the command line into an exit code. The words are
+    /// this repository's own error vocabulary rather than one invented here, which is why
+    /// `NotExecutable` answers `action_unavailable` and not something only this module
+    /// says.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::SubmitError;
+    /// assert_eq!(SubmitError::UnknownCapability("x".into()).code(), "unknown_capability");
+    /// assert_eq!(SubmitError::InvalidInput("x".into()).code(), "validation_error");
+    /// assert_eq!(SubmitError::NotExecutable("x".into()).code(), "action_unavailable");
+    /// assert_eq!(SubmitError::Unavailable("x".into()).code(), "unavailable");
+    /// ```
     pub fn code(&self) -> &'static str {
         match self {
             SubmitError::UnknownCapability(_) => "unknown_capability",
@@ -84,6 +127,26 @@ struct Inner {
 ///
 /// One per process, held by [`crate::capability::Context`], so that the command line, an
 /// MCP session and every HTTP worker see the same executions.
+///
+/// It owns the workers and the queue; the [`ExecutionStore`] owns the state. That split is
+/// what lets every capability that reads executions — `executions.get`, `executions.events`
+/// and the WebSocket — read the store without being able to start or stop anything, and it
+/// is why [`ExecutionEngine::store`] hands out the store rather than proxying it.
+///
+/// ```
+/// use majordomus_cli::execution::*;
+/// let engine = ExecutionEngine::new(Limits { max_running: 2, ..Limits::default() });
+/// // the engine's limits are the store's limits: there is one set, not two
+/// assert_eq!(engine.store().limits().max_running, 2);
+///
+/// // an execution recorded in that store is the engine's to cancel
+/// let id = ExecutionId::fresh();
+/// engine.store().create(id.clone(), "demo.echo", "Echo", serde_json::json!({}), true,
+///     Actor::of(ActorKind::Internal),
+///     RepositoryRef { name: "r".into(), id: "i".into(), branch: None });
+/// assert_eq!(engine.cancel(&id, "a client"), CancelOutcome::Requested);
+/// assert_eq!(format!("{engine:?}"), "ExecutionEngine(0 active)");
+/// ```
 pub struct ExecutionEngine {
     store: Arc<ExecutionStore>,
     inner: Mutex<Inner>,
@@ -104,7 +167,24 @@ impl Default for ExecutionEngine {
 }
 
 impl ExecutionEngine {
-    /// An engine with these limits.
+    /// An engine with these limits, with no worker started and nothing remembered.
+    ///
+    /// The limits are the store's — this is where the two are tied together, so
+    /// `max_running` bounding the workers and `max_events` bounding the history are one
+    /// declaration rather than two that can disagree. Workers are started on demand by
+    /// [`ExecutionEngine::submit`] and not here: a process that never executes anything
+    /// pays for no thread.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ExecutionEngine, Limits};
+    /// let engine = ExecutionEngine::new(Limits { max_running: 1, ..Limits::default() });
+    /// assert!(engine.accepting());
+    /// assert_eq!(engine.queued(), 0);
+    /// assert!(engine.store().is_empty());
+    /// assert_eq!(engine.store().limits().max_running, 1);
+    /// // and the default is the store's own default, not a second set of numbers
+    /// assert_eq!(ExecutionEngine::default().store().limits(), Limits::default());
+    /// ```
     pub fn new(limits: Limits) -> Self {
         ExecutionEngine {
             store: Arc::new(ExecutionStore::new(limits)),
@@ -187,6 +267,33 @@ impl ExecutionEngine {
     /// `execution.queued`, whereupon the state machine refuses the queued event and the
     /// stream loses it. Acceptance is therefore recorded and read while the queue lock is
     /// held, before [`Self::dispatch`] can hand the pending to anybody.
+    ///
+    /// Everything that can be refused is refused before anything exists: an unknown
+    /// capability, one that is read rather than executed, one whose stability no projection
+    /// executes, an input the schema rejects, and a server that is shutting down. A
+    /// [`SubmitError`] therefore always means nothing started.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::capability::Context;
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionEngine, ExecutionState,
+    ///     SubmitError};
+    /// // compiled and not run: a real submit needs this process's own registry and index
+    /// fn start(ctx: &Context, engine: &ExecutionEngine) {
+    ///     let accepted = engine
+    ///         .submit(ctx, "health.report", serde_json::json!({}), Actor::of(ActorKind::Cli))
+    ///         .expect("health.report is an executable capability");
+    ///     // the answer is the execution as accepted, whatever a worker has since done
+    ///     assert_eq!(accepted.state, ExecutionState::Queued);
+    ///     assert_eq!(accepted.last_sequence, 2, "created, then queued");
+    ///     assert!(engine.store().get(&accepted.id).is_some());
+    ///
+    ///     let refused = engine
+    ///         .submit(ctx, "no.such.capability", serde_json::json!({}),
+    ///                 Actor::of(ActorKind::Cli))
+    ///         .unwrap_err();
+    ///     assert!(matches!(refused, SubmitError::UnknownCapability(_)));
+    /// }
+    /// ```
     pub fn submit(
         &self,
         ctx: &Context,
@@ -336,7 +443,31 @@ impl ExecutionEngine {
             .map(|c| c.execution.concurrency)
     }
 
-    /// Ask an execution to stop.
+    /// Ask an execution to stop, and say what asking achieved.
+    ///
+    /// The engine's own answer is the store's: it sets the flag and publishes, and the
+    /// handler decides when it stops. A handler that never looks at its flag finishes
+    /// normally, and the final state is what says so — which is why a capability's declared
+    /// `cancellable` policy is what a client should read before offering a button.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::*;
+    /// let engine = ExecutionEngine::new(Limits::default());
+    /// // nothing this engine has ever heard of
+    /// assert_eq!(engine.cancel(&ExecutionId::fresh(), "a client"), CancelOutcome::Unknown);
+    ///
+    /// let id = ExecutionId::fresh();
+    /// engine.store().create(id.clone(), "demo.echo", "Echo", serde_json::json!({}), true,
+    ///     Actor::of(ActorKind::Internal),
+    ///     RepositoryRef { name: "r".into(), id: "i".into(), branch: None });
+    /// assert_eq!(engine.cancel(&id, "a client"), CancelOutcome::Requested);
+    /// // a queued execution had no worker to notice, so asking ended it
+    /// assert_eq!(engine.store().get(&id).unwrap().state, ExecutionState::Cancelled);
+    /// assert_eq!(
+    ///     engine.cancel(&id, "a client"),
+    ///     CancelOutcome::AlreadyFinished(ExecutionState::Cancelled),
+    /// );
+    /// ```
     pub fn cancel(&self, id: &ExecutionId, by: &str) -> super::store::CancelOutcome {
         self.store.request_cancel(id, by)
     }
@@ -347,6 +478,25 @@ impl ExecutionEngine {
     /// A handler that does not look at its cancellation flag is not killed: this process
     /// is about to end, and interrupting a read half way leaves nothing behind that
     /// matters. What the wait buys is that a client watching gets the final event.
+    ///
+    /// It is one way: an engine that has been shut down accepts nothing further, and there
+    /// is no reopening it. `grace` bounds the wait and not the work — it returns as soon as
+    /// the workers are done, and at the deadline whatever is left is left.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::*;
+    /// let engine = ExecutionEngine::new(Limits::default());
+    /// // a queued execution, which nothing is holding
+    /// let id = ExecutionId::fresh();
+    /// engine.store().create(id.clone(), "demo.echo", "Echo", serde_json::json!({}), true,
+    ///     Actor::of(ActorKind::Internal),
+    ///     RepositoryRef { name: "r".into(), id: "i".into(), branch: None });
+    ///
+    /// engine.shutdown(std::time::Duration::ZERO);
+    /// assert!(!engine.accepting(), "the door does not reopen");
+    /// assert_eq!(engine.store().active(), 0, "nothing is left unfinished");
+    /// assert_eq!(engine.store().get(&id).unwrap().state, ExecutionState::Cancelled);
+    /// ```
     pub fn shutdown(&self, grace: std::time::Duration) {
         self.stopping.store(true, Ordering::SeqCst);
         for execution in self.store.list(None, None, usize::MAX) {
@@ -379,6 +529,21 @@ impl ExecutionEngine {
     }
 
     /// Is this engine still accepting executions?
+    ///
+    /// False from the moment [`ExecutionEngine::shutdown`] is called, and never true again.
+    /// It is what a health surface reports and what a transport checks before offering to
+    /// start something; [`ExecutionEngine::submit`] checks it too, so losing that race
+    /// costs a `SubmitError::Unavailable` rather than an execution nobody will run.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ExecutionEngine, Limits};
+    /// let engine = ExecutionEngine::new(Limits::default());
+    /// assert!(engine.accepting());
+    /// engine.shutdown(std::time::Duration::ZERO);
+    /// assert!(!engine.accepting());
+    /// engine.shutdown(std::time::Duration::ZERO);
+    /// assert!(!engine.accepting(), "shutting down twice is still shut down");
+    /// ```
     pub fn accepting(&self) -> bool {
         !self.stopping.load(Ordering::SeqCst)
     }

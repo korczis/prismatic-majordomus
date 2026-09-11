@@ -67,6 +67,22 @@ const FORMAT: &str = "--format=%H%x00%h%x00%an%x00%aI%x00%s";
 
 /// One commit, exactly as git names it. Nothing here is stored anywhere: the whole record
 /// is re-read from the object database on every call.
+///
+/// Both object names are kept. The full one is the identity, and the abbreviated one is
+/// what this repository abbreviates to *today* — an abbreviation is only unique against
+/// the object store that produced it, so it is carried as a rendering and never compared.
+/// The date is the string git recorded and is not parsed here: nothing in this module
+/// orders commits by date, git orders them by ancestry, and a parsed timestamp would
+/// invite somebody to.
+///
+/// ```
+/// use majordomus_cli::worktree::{parse_commit, CommitRef};
+/// let line = "abc123\0abc\0A Person\02026-09-09T10:00:00+02:00\0feat: a thing";
+/// let c: CommitRef = parse_commit(line).unwrap();
+/// assert_eq!(c.id, "abc123");
+/// assert_eq!(c.short, "abc", "the abbreviation is carried, never recomputed");
+/// assert_eq!(c.subject, "feat: a thing");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CommitRef {
     /// The full object name.
@@ -110,6 +126,19 @@ fn parse_commits(text: &str) -> Vec<CommitRef> {
 }
 
 /// How a branch stands to the trunk, which is what decides which commits are its own.
+///
+/// The four cases are not degrees of the same thing; they are four different derivations.
+/// An open branch's commits are what the trunk lacks. A merged branch's are what its merge
+/// commit brought in. An absorbed branch has none that can be told from the trunk's, and
+/// saying so is the honest answer rather than claiming the trunk's recent commits. And with
+/// no trunk there is nothing to measure against at all.
+///
+/// ```
+/// use majordomus_cli::worktree::Integration;
+/// assert_eq!(serde_json::to_string(&Integration::Absorbed).unwrap(), "\"absorbed\"");
+/// let unknown: Integration = serde_json::from_str("\"unknown\"").unwrap();
+/// assert_eq!(unknown, Integration::Unknown, "no trunk is a state, not a failure");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Integration {
@@ -126,6 +155,29 @@ pub enum Integration {
 }
 
 /// One branch that names an issue, with the commits it holds.
+///
+/// A ref rather than a branch, and `remote` says which: a branch deleted locally after its
+/// merge still exists as `origin/...`, and dropping it would lose the work it carried. The
+/// commit list is derived from `integration` and is empty for good reasons as often as for
+/// bad ones — an absorbed branch has nothing distinguishable to claim — so `note` carries
+/// the sentence that stops an empty list from reading as a defect.
+///
+/// ```
+/// use majordomus_cli::worktree::{BranchTrace, Integration};
+/// let absorbed = BranchTrace {
+///     name: "origin/feature/I1305-traceability".into(),
+///     remote: true,
+///     head: "abc123".into(),
+///     integration: Integration::Absorbed,
+///     merge_commit: None,
+///     note: Some("fast-forwarded onto the trunk; its commits are the trunk's".into()),
+///     commits: Vec::new(),
+/// };
+/// assert!(absorbed.remote, "only the remote still has this branch");
+/// assert!(absorbed.commits.is_empty() && absorbed.note.is_some(), "empty, and explained");
+/// let wire = serde_json::to_value(&absorbed).unwrap();
+/// assert!(wire.get("merge_commit").is_none(), "an absorbed branch has no merge commit");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BranchTrace {
     /// The ref, short: `feature/I1305-traceability`, or `origin/feature/I1305-traceability`
@@ -149,6 +201,31 @@ pub struct BranchTrace {
 }
 
 /// Everything git knows about one issue's realisation.
+///
+/// Three fields exist to keep apart the ways of knowing nothing, and they are the whole
+/// value of the type. `declared` separates "the project model has no such issue" from "it
+/// has one and nothing has started it". `complete` separates "these are all the commits"
+/// from "some of the work is absorbed into the trunk and cannot be told apart". And
+/// `milestone` is left for a caller that has the index, because git does not hold that
+/// edge and inventing it here would be a second source of truth.
+///
+/// ```
+/// use majordomus_cli::worktree::IssueTrace;
+/// let unstarted = IssueTrace {
+///     issue: "I1305".into(),
+///     declared: true,
+///     milestone: None,
+///     trunk: Some("master".into()),
+///     branches: Vec::new(),
+///     commits: 0,
+///     complete: true,
+/// };
+/// // declared and unrealised: not an error, and not the same as an unknown id
+/// assert!(unstarted.declared && unstarted.branches.is_empty());
+/// assert!(unstarted.complete, "nothing was derived, and nothing was lost either");
+/// let wire = serde_json::to_value(&unstarted).unwrap();
+/// assert!(wire.get("milestone").is_none(), "git does not hold this edge");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IssueTrace {
     /// The issue id, as the project model spells it.
@@ -177,6 +254,25 @@ pub struct IssueTrace {
 }
 
 /// What is known about the contract one commit served.
+///
+/// Three answers, and two of them are admissions. `Unattributed` is reported and never
+/// omitted, because a commit on the trunk that no issue's branch contains is exactly what
+/// a traceability report exists to make visible — usually a branch deleted after its merge
+/// took its own name with it. `Ambiguous` is the other admission: two issues' branches
+/// contain the commit, and picking one of them would be a guess dressed as a fact.
+///
+/// ```
+/// use majordomus_cli::worktree::Attribution;
+/// let words: Vec<_> = [
+///     Attribution::Attributed,
+///     Attribution::Unattributed,
+///     Attribution::Ambiguous,
+/// ]
+/// .iter()
+/// .map(|a| serde_json::to_string(a).unwrap())
+/// .collect();
+/// assert_eq!(words, ["\"attributed\"", "\"unattributed\"", "\"ambiguous\""]);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Attribution {
@@ -189,6 +285,30 @@ pub enum Attribution {
 }
 
 /// One commit and the contract it served, or the fact that none can be found.
+///
+/// `issue` and `issues` are not a duplication: the list is what was found, and the single
+/// field is filled only when the list holds exactly one, so a consumer cannot read an
+/// ambiguous verdict as an attribution by looking at the convenient field. `reason` is
+/// mandatory for the same purpose as the remedy on a topology diagnostic — a report that
+/// says a commit is unattributed without saying why sends the reader back to `git log`.
+///
+/// ```
+/// use majordomus_cli::worktree::{parse_commit, Attribution, CommitAttribution};
+/// let commit = parse_commit("abc123\0abc\0A Person\02026-09-09T10:00:00Z\0fix: a thing")
+///     .unwrap();
+/// let orphan = CommitAttribution {
+///     commit,
+///     attribution: Attribution::Unattributed,
+///     issue: None,
+///     milestone: None,
+///     issues: Vec::new(),
+///     branches: Vec::new(),
+///     reason: "no ref naming an issue contains it".into(),
+/// };
+/// assert!(orphan.issue.is_none() && orphan.issues.is_empty());
+/// assert!(!orphan.reason.is_empty(), "the verdict always carries its argument");
+/// assert_eq!(orphan.commit.short, "abc");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CommitAttribution {
     /// The commit.
@@ -212,6 +332,29 @@ pub struct CommitAttribution {
 
 /// The whole traceability answer: every issue git can say something about, and every commit
 /// of a stretch of the trunk with the contract it served or the fact that it has none.
+///
+/// Read in both directions at once, which is why one type holds both halves: `issues` is
+/// the plan seen from the work, `commits` is the work seen from the plan, and a discrepancy
+/// between them is the finding. `examined` is bounded — a report is about a stretch of the
+/// trunk and never about the whole history — so every count in the tallies is a count over
+/// that stretch and must not be read as a statement about the repository.
+///
+/// ```
+/// use majordomus_cli::worktree::{TraceReport, TraceTallies};
+/// let empty = TraceReport {
+///     trunk: Some("master".into()),
+///     examined: 0,
+///     issues: Vec::new(),
+///     without_branch: vec!["I1400".into()],
+///     commits: Vec::new(),
+///     tallies: TraceTallies { issues_declared: 1, ..Default::default() },
+/// };
+/// // an issue nobody has started is listed rather than counted as a problem
+/// assert_eq!(empty.without_branch, ["I1400"]);
+/// assert_eq!(empty.tallies.issues_with_branch, 0);
+/// let wire = serde_json::to_value(&empty).unwrap();
+/// assert_eq!(wire["trunk"], "master");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TraceReport {
     /// The trunk every branch and commit was measured against.
@@ -230,7 +373,31 @@ pub struct TraceReport {
     pub tallies: TraceTallies,
 }
 
-/// The counts of one report.
+/// The counts of one report, added up once so that no surface adds them up differently.
+///
+/// Every count is over that one report's own scope, and the scope is bounded: the three
+/// attribution counts are over the examined stretch of the trunk, so they sum to
+/// `examined` and say nothing about the commits before it. `issues_with_branch` is a subset
+/// of `issues_declared`, because the ids looked for in ref names are exactly the declared
+/// ones — a branch naming something the project model does not have is not an issue.
+///
+/// ```
+/// use majordomus_cli::worktree::TraceTallies;
+/// let t = TraceTallies {
+///     issues_declared: 12,
+///     issues_with_branch: 9,
+///     attributed: 40,
+///     unattributed: 8,
+///     ambiguous: 2,
+///     ..Default::default()
+/// };
+/// assert_eq!(
+///     t.attributed + t.unattributed + t.ambiguous,
+///     50,
+///     "every examined commit falls in exactly one of the three"
+/// );
+/// assert!(t.issues_with_branch <= t.issues_declared);
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TraceTallies {
     /// Issue ids the project model declares.
@@ -265,6 +432,22 @@ pub struct IssueRef {
 
 /// The reader. Opened from anywhere inside the repository; every question is answered by
 /// running git again, because the history changes outside this process.
+///
+/// It holds no cache and no index, and that is deliberate: the refs and the object database
+/// are the store, another process is committing to them while this one runs, and a cached
+/// answer would be a claim about a repository that no longer exists. What it does hold is
+/// the two things that are not git's — the work tree to run in and the issue ids to look
+/// for — so that every question is asked against one repository and one plan.
+///
+/// ```no_run
+/// use majordomus_cli::worktree::Tracer;
+/// use std::path::Path;
+///
+/// let tracer = Tracer::open(Path::new("/a/foo")).unwrap();
+/// let report = tracer.report(50).unwrap();
+/// assert_eq!(report.trunk.as_deref(), tracer.trunk(), "one trunk for the whole answer");
+/// assert_eq!(report.examined, report.commits.len());
+/// ```
 #[derive(Debug, Clone)]
 pub struct Tracer {
     root: PathBuf,
@@ -278,6 +461,19 @@ impl Tracer {
     /// them, so the answer does not depend on which one it is, while reading the project
     /// model from somewhere else would answer about a plan this checkout does not have.
     /// The trunk is the repository's, discovered the way the topology discovers it.
+    ///
+    /// A repository with no project model opens successfully with no issue ids: the branch
+    /// half of the derivation still works there, and refusing would make traceability a
+    /// feature only this repository has.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// // any work tree of the repository; the refs are the same from all of them
+    /// let tracer = Tracer::open(Path::new("/a/foo-wt/feature/x")).unwrap();
+    /// assert!(tracer.issues().iter().all(|id| !id.is_empty()));
+    /// ```
     pub fn open(start: &Path) -> Result<Self> {
         let identity = RepositoryIdentity::discover(start)?;
         let root = identity.current_worktree().path.clone();
@@ -295,6 +491,20 @@ impl Tracer {
     /// The issue ids to look for in branch names, from a caller that has already read the
     /// project model — the index, which parsed every issue record, rather than a second
     /// directory listing that could disagree with it.
+    ///
+    /// It replaces the ids rather than adding to them, which is the point: two lists of
+    /// declared issues is the defect this exists to remove, and merging them would keep an
+    /// id the project model has dropped.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let tracer = Tracer::open(Path::new("/a/foo"))
+    ///     .unwrap()
+    ///     .with_issues(vec!["I1305".into(), "I1400".into()]);
+    /// assert_eq!(tracer.issues(), ["I1305", "I1400"], "the caller's list, not a listing");
+    /// ```
     pub fn with_issues(mut self, issues: Vec<String>) -> Self {
         self.issues = issues;
         self
@@ -451,6 +661,22 @@ impl Tracer {
     }
 
     /// Every issue at least one ref names, in id order, each with its branches and commits.
+    ///
+    /// Only the issues something names. An id the project model declares and no ref
+    /// mentions is absent from this list rather than present and empty — the report puts
+    /// those in `without_branch`, where they read as work not started instead of as work
+    /// with no commits.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let traces = Tracer::open(Path::new("/a/foo")).unwrap().traces().unwrap();
+    /// assert!(
+    ///     traces.iter().all(|t| !t.branches.is_empty()),
+    ///     "an issue is here because something names it"
+    /// );
+    /// ```
     pub fn traces(&self) -> Result<Vec<IssueTrace>> {
         let refs = self.issue_refs(&self.issues)?;
         let mut by_issue: BTreeMap<String, Vec<BranchTrace>> = BTreeMap::new();
@@ -468,6 +694,20 @@ impl Tracer {
 
     /// One issue: its branches and their commits. An id no ref names is a trace with no
     /// branches, not an error — an issue nobody has started yet is a legitimate answer.
+    ///
+    /// Unlike [`Self::traces`], this asks about an id the caller names, so it also answers
+    /// for one the project model does not declare: `declared` is then false, which is a
+    /// different fact from an empty branch list and has to be readable separately.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let tracer = Tracer::open(Path::new("/a/foo")).unwrap();
+    /// let made_up = tracer.trace("I9999").unwrap();
+    /// assert_eq!(made_up.issue, "I9999");
+    /// assert!(!made_up.declared, "asked for, and the project model has no such issue");
+    /// ```
     pub fn trace(&self, issue: &str) -> Result<IssueTrace> {
         let ids = vec![issue.to_string()];
         let refs = self.issue_refs(&ids)?;
@@ -482,6 +722,21 @@ impl Tracer {
 
     /// Resolve a revision to the commit it names, with the fields a report shows. `None`
     /// when nothing in this repository answers to it.
+    ///
+    /// Any revision git understands — a branch, a tag, an abbreviation, `HEAD~3` — peeled
+    /// to a commit, so a tag pointing at a tag object still answers with the commit. An
+    /// unknown revision is `None` and not an error: a caller tracing a commit id somebody
+    /// pasted is asking whether this repository has it, and that is the answer.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let tracer = Tracer::open(Path::new("/a/foo")).unwrap();
+    /// let head = tracer.commit("HEAD").unwrap().expect("a checkout has a HEAD commit");
+    /// assert!(head.id.starts_with(&head.short), "the abbreviation is a prefix of the id");
+    /// assert!(tracer.commit("no-such-revision").unwrap().is_none());
+    /// ```
     pub fn commit(&self, rev: &str) -> Result<Option<CommitRef>> {
         let out = git::try_run(
             &self.root,
@@ -498,6 +753,22 @@ impl Tracer {
     /// The newest `limit` commits of the trunk, merges excluded: the work a report
     /// attributes. Merge commits are integration events rather than work, and each is
     /// already named as the `merge_commit` of the branch it brought in.
+    ///
+    /// `limit` is capped at [`MAX_REPORT_COMMITS`], because a report is about a stretch of
+    /// recent trunk and attributing an entire history is a different job. An unknown trunk,
+    /// or a trunk that exists only on the remote and not locally, answers with an empty
+    /// list rather than an error — there is nothing to attribute, which is not a failure.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let tracer = Tracer::open(Path::new("/a/foo")).unwrap();
+    /// let recent = tracer.trunk_commits(10).unwrap();
+    /// assert!(recent.len() <= 10, "never more than was asked for");
+    /// // and never more than MAX_REPORT_COMMITS, whatever was asked for
+    /// assert!(tracer.trunk_commits(usize::MAX).unwrap().len() <= 2000);
+    /// ```
     pub fn trunk_commits(&self, limit: usize) -> Result<Vec<CommitRef>> {
         let Some(trunk) = self.trunk.as_deref() else {
             return Ok(Vec::new());
@@ -525,6 +796,21 @@ impl Tracer {
     /// The whole answer: every issue with a branch, every issue without one, and the newest
     /// `limit` trunk commits each attributed to the issue whose branches contain it or
     /// reported as having none.
+    ///
+    /// The tallies are computed here, once, from the same values the report carries, so a
+    /// surface never has to add up the arrays and never reaches a different number. Every
+    /// commit examined lands in exactly one of the three attribution counts, which is what
+    /// makes the summary a partition of `examined` rather than three overlapping filters.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::Tracer;
+    /// use std::path::Path;
+    ///
+    /// let report = Tracer::open(Path::new("/a/foo")).unwrap().report(50).unwrap();
+    /// let t = &report.tallies;
+    /// assert_eq!(t.attributed + t.unattributed + t.ambiguous, report.examined);
+    /// assert!(report.examined <= 50, "no more than was asked for");
+    /// ```
     pub fn report(&self, limit: usize) -> Result<TraceReport> {
         let issues = self.traces()?;
         let named: BTreeSet<&str> = issues.iter().map(|t| t.issue.as_str()).collect();

@@ -6,11 +6,28 @@
 //! palette and the type stack are `tokens.css`, generated from `share/design/tokens.yaml`
 //! and compiled in, so a report renders in the same design as the site and the Cockpit
 //! without fetching anything. Layout below is this page's own; colour, type, radius and
-//! measure are tokens.
-//! It is
-//! mobile-first in the same sense the site is — one readable column at any width, tables
-//! that scroll inside their own box rather than pushing the page sideways — because these
-//! pages are this repository's own UI, not a third party's output.
+//! measure are tokens. It is mobile-first in the same sense the site is — one readable
+//! column at any width, tables that scroll inside their own box rather than pushing the
+//! page sideways — because these pages are this repository's own UI, not a third party's
+//! output.
+//!
+//! The lifecycle is one pass and no state: escape whatever came from evidence, assemble the
+//! pieces a report needs, and wrap them in the document.
+//!
+//! ```
+//! use majordomus_cli::web::html;
+//! let body = format!(
+//!     "{}{}",
+//!     html::summary(&[("cases", "2".to_string())]),
+//!     html::table(&["case", "result"], &[vec![html::escape("69_context"), "ok".into()]]),
+//! );
+//! let page = html::page("Test results", "Every case passed.", &body);
+//! assert!(page.contains("<title>Test results</title>"));
+//! assert!(page.contains("69_context"));
+//! // self-contained by rule: nothing is fetched and nothing runs
+//! assert!(!page.contains("<link"), "a report fetches no stylesheet");
+//! assert!(!page.contains("<script"), "a report runs no script");
+//! ```
 
 /// The design tokens, compiled in: `:root` custom properties for the palette and the type
 /// stack, with dark answered both by the media query — a report is often opened from the
@@ -45,6 +62,22 @@ pub fn escape(text: &str) -> String {
 /// The document around a report's body.
 ///
 /// `subtitle` is the one line under the title; `body` is already-escaped HTML.
+///
+/// The boundary is exactly there: this function escapes nothing it is handed as `body`,
+/// because a body is markup by the time it arrives, and everything that *was* evidence
+/// went through [`escape`] at the interpolation that produced it. The title and the
+/// subtitle are written by the producer rather than read from a run, so they are
+/// interpolated as they are too.
+///
+/// ```
+/// use majordomus_cli::web::html;
+/// let page = html::page("Benchmarks", "A recorded run.", "<p>evidence</p>");
+/// assert!(page.starts_with("<!DOCTYPE html>"));
+/// assert!(page.contains("name=\"viewport\""), "the page is read on a phone too");
+/// assert!(page.contains("<p>evidence</p>"), "a body is markup and is not re-escaped");
+/// // every link a report carries is relative, so the directory works at any mount
+/// assert!(!page.contains("href=\"/"));
+/// ```
 pub fn page(title: &str, subtitle: &str, body: &str) -> String {
     format!(
         r#"<!DOCTYPE html>
@@ -96,6 +129,23 @@ a {{ color: inherit; text-decoration: underline; }}
 }
 
 /// A table inside its own scrolling box: wide evidence never pushes the page sideways.
+///
+/// The box is focusable, because a region only a pointer can scroll is unreachable from a
+/// keyboard and the site's own audit refuses that (WCAG 2.1.1).
+///
+/// Headers are escaped here and cells are not: a cell is where a report puts the markup it
+/// built — a pass mark, a monospaced name — so a caller escapes the text inside it and
+/// this function does not escape the markup around it.
+///
+/// ```
+/// use majordomus_cli::web::html;
+/// let html = html::table(&["case"], &[vec![html::escape("a<b")]]);
+/// assert!(html.starts_with("<div class=\"scroll\" tabindex=\"0\">"));
+/// assert!(html.contains("a&lt;b"), "the caller escaped the text it put in the cell");
+/// // a cell is markup, so a report may style one
+/// let marked = html::table(&["r"], &[vec!["<span class=\"pass\">ok</span>".into()]]);
+/// assert!(marked.contains("<span class=\"pass\">ok</span>"));
+/// ```
 pub fn table(headers: &[&str], rows: &[Vec<String>]) -> String {
     // the box scrolls, so it is reachable from the keyboard: a scrollable region that only
     // a pointer can reach is the accessibility defect the site audit refuses (WCAG 2.1.1)
@@ -116,6 +166,20 @@ pub fn table(headers: &[&str], rows: &[Vec<String>]) -> String {
 }
 
 /// The summary tiles at the top of a report.
+///
+/// Both halves are escaped here, unlike a table's cells: a tile holds one measured figure
+/// and never markup, so nothing is lost by refusing it and a value out of a run cannot
+/// close a tag.
+///
+/// ```
+/// use majordomus_cli::web::html;
+/// let tiles = html::summary(&[("cases", "93".to_string()), ("failed", "0".to_string())]);
+/// assert!(tiles.starts_with("<dl class=\"summary\">"));
+/// assert!(tiles.contains("<dt>cases</dt><dd>93</dd>"));
+/// // a figure that arrived as markup is text by the time it is rendered
+/// let hostile = html::summary(&[("x", "</dd><script>".to_string())]);
+/// assert!(!hostile.contains("<script>"));
+/// ```
 pub fn summary(items: &[(&str, String)]) -> String {
     let mut out = String::from("<dl class=\"summary\">");
     for (label, value) in items {
@@ -130,6 +194,27 @@ pub fn summary(items: &[(&str, String)]) -> String {
 }
 
 /// The footer every report carries: where the evidence came from.
+///
+/// A page nobody can check is not evidence, so the footer says which executable rendered
+/// it, when, at which revision when git could say, and links the machine-readable results
+/// beside it. The links are relative because the report is read at whatever mount it is
+/// given, and the revision is optional because a report rendered outside a checkout is
+/// still a report.
+///
+/// ```
+/// use majordomus_cli::web::{html, report::Origin};
+/// let origin = Origin {
+///     revision: Some("08e4bb2".into()),
+///     rendered_at: "2026-09-10T12:00:00Z".into(),
+///     version: "0.5.0".into(),
+/// };
+/// let footer = html::origin(&origin, &[("results.json", "results.json")]);
+/// assert!(footer.contains("08e4bb2"));
+/// assert!(footer.contains("<a href=\"results.json\">results.json</a>"));
+/// // and a report with no revision to name simply does not name one
+/// let anonymous = Origin { revision: None, ..origin };
+/// assert!(!html::origin(&anonymous, &[]).contains("revision"));
+/// ```
 pub fn origin(origin: &super::report::Origin, evidence: &[(&str, &str)]) -> String {
     let mut out = String::from("<footer>");
     out.push_str(&format!(

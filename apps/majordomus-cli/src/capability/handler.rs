@@ -72,6 +72,28 @@ use super::registry::CapabilityRegistry;
 
 /// Why a call did not produce an output. Transport adapters map these to their own
 /// vocabularies; nothing here names a status code or a JSON-RPC code.
+///
+/// Four cases, because four things can go wrong and a caller does different things about
+/// each: fix the input, ask for something that exists, accept a refusal, or report a
+/// defect. A fifth would have to be a defect of the tool with a different name, and a
+/// transport would then have to guess where to map it.
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityError;
+/// // the prefix a reader sees is the case, so an error read out of a log or a JSON body
+/// // still says which of the four it was
+/// assert_eq!(
+///     CapabilityError::Refused("the query is blank".into()).to_string(),
+///     "refused: the query is blank"
+/// );
+/// assert!(CapabilityError::NotFound("rule x".into()).to_string().starts_with("not found:"));
+/// // and the whose-fault-is-it distinction survives comparison, which is what a test
+/// // asserting a refusal rather than a crash depends on
+/// assert_ne!(
+///     CapabilityError::Internal("io".into()),
+///     CapabilityError::InvalidInput("io".into())
+/// );
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum CapabilityError {
     #[error("invalid input: {0}")]
@@ -92,6 +114,31 @@ pub enum CapabilityError {
 /// board of peers attached to this process, and, when the call came through an MCP
 /// session, which peer made it. Index and registry are immutable for the life of a
 /// process; the board is the one thing that changes, and it lives in memory only.
+///
+/// It is also the whole of what a handler may know: there is no ambient state to reach
+/// for, no global registry and no way to ask which transport called. A capability that
+/// wants a fact about the repository reads it from the index it was handed, which is why
+/// two transports asking one question at one moment cannot get two answers.
+///
+/// Cloning is cheap and shares everything — every field is an `Arc` or a small value — so
+/// the narrowing methods ([`Context::for_caller`], [`Context::reporting`],
+/// [`Context::with_web`]) hand out a view rather than a copy.
+///
+/// ```
+/// use majordomus_cli::capability::Context;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+///
+/// // the index and the registry are one process's canonical state, shared by pointer
+/// let same: Context = ctx.as_ref().clone();
+/// assert!(std::sync::Arc::ptr_eq(&ctx.index, &same.index));
+/// assert!(std::sync::Arc::ptr_eq(&ctx.registry, &same.registry));
+///
+/// // a context built this way has no caller: nothing came through an MCP session
+/// assert!(ctx.caller.is_none());
+/// ```
 #[derive(Clone)]
 pub struct Context {
     /// The index of the repository's objects.
@@ -136,6 +183,31 @@ pub struct Context {
 impl Context {
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
+    ///
+    /// Composed once per process, and it is where the derived state of the process is
+    /// built: the Why catalogue and the product model are computed here, from the index and
+    /// the registry, and then shared. A request never rebuilds them, which is the reason
+    /// this constructor is expensive and the narrowing methods are not.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{builtin, CapabilityRegistry, Context};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let index = Arc::new(repo.index().unwrap());
+    /// let registry = Arc::new(
+    ///     CapabilityRegistry::builder()
+    ///         .with_modules(builtin::modules())
+    ///         .with_index(&index)
+    ///         .build()
+    ///         .unwrap(),
+    /// );
+    /// let ctx = Context::new(Arc::clone(&index), registry);
+    /// assert!(Arc::ptr_eq(&ctx.index, &index), "the index is shared, not copied");
+    /// assert_eq!(ctx.peers.len(), 0, "a fresh board");
+    /// assert_eq!(ctx.executor.cached_entries(), 0, "and a fresh cache");
+    /// ```
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
         let web = Arc::new(resolve_web(&index));
         let why = Arc::new(crate::why::Catalogue::build(&index, &registry));
@@ -157,6 +229,29 @@ impl Context {
     }
 
     /// The same context, seen from one peer: what a session hands its handlers.
+    ///
+    /// The only thing that changes is who is asking, and the only capabilities that read
+    /// it are the ones about the board itself — a peer announcing what it is working on
+    /// has to be told apart from the other peers. Every other handler behaves identically
+    /// whether or not a caller is set, because an answer that depended on who asked would
+    /// be a second implementation hiding inside the first.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::Transport;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let peer = ctx.peers.attach(Transport::Http);
+    /// let seen = ctx.for_caller(peer.clone());
+    ///
+    /// assert_eq!(seen.caller.as_ref(), Some(&peer));
+    /// assert!(ctx.caller.is_none(), "the original is untouched");
+    /// // and everything else is the same objects, not copies of them
+    /// assert!(Arc::ptr_eq(&seen.index, &ctx.index));
+    /// assert!(Arc::ptr_eq(&seen.peers, &ctx.peers), "one board, seen from one peer");
+    /// ```
     pub fn for_caller(&self, caller: PeerId) -> Self {
         Context {
             caller: Some(caller),
@@ -168,6 +263,23 @@ impl Context {
     ///
     /// Everything else is shared, the engine included, so a capability that reads the
     /// executions of this process sees its own while it runs.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::Progress;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// // a handler outside an execution reports into silence and never learns that it did
+    /// assert!(!ctx.progress.cancelled());
+    ///
+    /// let watched = ctx.reporting(Progress::silent());
+    /// // the engine is shared, so a capability run this way can still see the executions
+    /// // of its own process, its own among them
+    /// assert!(Arc::ptr_eq(&watched.executions, &ctx.executions));
+    /// assert!(Arc::ptr_eq(&watched.registry, &ctx.registry));
+    /// ```
     pub fn reporting(&self, progress: crate::execution::Progress) -> Self {
         Context {
             progress,
@@ -179,6 +291,21 @@ impl Context {
     ///
     /// The narrowing is a filter over the value this context already holds, never a second
     /// discovery: a projection cannot serve a surface the process did not resolve.
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// use majordomus_cli::web::Topology;
+    /// use std::sync::Arc;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // one projection serving nothing at all is still a narrowing of what was resolved
+    /// let narrowed = ctx.with_web(Arc::new(Topology::new(Vec::new())));
+    /// assert!(narrowed.web.surfaces.is_empty());
+    /// assert!(!Arc::ptr_eq(&narrowed.web, &ctx.web), "the topology is the one thing replaced");
+    /// assert!(Arc::ptr_eq(&narrowed.index, &ctx.index), "and it is the only one");
+    /// ```
     pub fn with_web(&self, web: Arc<Topology>) -> Self {
         Context { web, ..self.same() }
     }
@@ -199,6 +326,26 @@ impl Context {
     }
 
     /// Execute a capability by id: the one way anything calls a handler.
+    ///
+    /// Including a handler calling another. A capability that needs what a second one
+    /// answers asks for it here rather than calling the Rust function, so the composed
+    /// call is counted, cached and validated exactly as an external one is, and a
+    /// capability cannot be reached by a path the executor does not know about.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityError;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// let out = ctx.execute("repository.info", serde_json::json!({})).unwrap();
+    /// assert_eq!(out["objects"], ctx.index.objects.len());
+    ///
+    /// // an input the handler's type cannot read is the caller's fault, and says so
+    /// let bad = ctx.execute("capabilities.describe", serde_json::json!({ "id": 7 }));
+    /// assert!(matches!(bad, Err(CapabilityError::InvalidInput(_))));
+    /// ```
     pub fn execute(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
         self.executor.execute(self, id, input)
     }
@@ -207,6 +354,23 @@ impl Context {
     ///
     /// See [`CapabilityExecutor::execute_uncached`] for why watching something happen and
     /// being handed a remembered answer are not the same request.
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // a capability that declares a process cache, run the way an execution runs it:
+    /// // the same answer, and nothing kept
+    /// let observed = ctx.execute_observed("capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(ctx.executor.cached_entries(), 0);
+    ///
+    /// // asked as a plain call, the same input is remembered — and answers identically
+    /// let called = ctx.execute("capabilities.list", serde_json::json!({})).unwrap();
+    /// assert_eq!(observed, called);
+    /// assert_eq!(ctx.executor.cached_entries(), 1);
+    /// ```
     pub fn execute_observed(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
         self.executor.execute_uncached(self, id, input)
     }
@@ -234,8 +398,59 @@ fn resolve_web(index: &Index) -> Topology {
 }
 
 /// The JSON boundary of a handler.
+///
+/// One registry holds capabilities whose inputs and outputs are all different types, and
+/// this is how: behind this trait every handler has the same signature, and the typing is
+/// recovered on the way in and lost again on the way out by [`handler`]. Implemented once,
+/// for the wrapper that function returns; nothing else should implement it, because an
+/// implementation that did its own deserialisation would be a payload no canonical schema
+/// describes.
+///
+/// ```
+/// use majordomus_cli::capability::{handler::handler, CapabilityError, Context, Handler};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// use std::sync::Arc;
+///
+/// #[derive(serde::Deserialize)]
+/// struct In { n: u32 }
+/// #[derive(serde::Serialize)]
+/// struct Out { doubled: u32 }
+/// fn double(_: &Context, input: In) -> Result<Out, CapabilityError> {
+///     Ok(Out { doubled: input.n * 2 })
+/// }
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let boxed: Arc<dyn Handler> = handler::<In, Out, _>(double);
+///
+/// let out = boxed.call(&ctx, serde_json::json!({ "n": 21 })).unwrap();
+/// assert_eq!(out, serde_json::json!({ "doubled": 42 }));
+/// ```
 pub trait Handler: Send + Sync {
     /// Run the handler on a JSON input and answer with a JSON output.
+    ///
+    /// The typed function behind it decides what an acceptable input is, so a body the
+    /// type cannot read never reaches it and comes back as `InvalidInput` naming the
+    /// field. A transport therefore validates nothing of its own.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{handler::handler, CapabilityError, Context, Handler};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// #[derive(serde::Deserialize)]
+    /// struct In { n: u32 }
+    /// #[derive(serde::Serialize)]
+    /// struct Out { n: u32 }
+    /// fn echo(_: &Context, input: In) -> Result<Out, CapabilityError> { Ok(Out { n: input.n }) }
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let boxed = handler::<In, Out, _>(echo);
+    ///
+    /// assert_eq!(boxed.call(&ctx, serde_json::json!({ "n": 1 })).unwrap()["n"], 1);
+    /// let refused = boxed.call(&ctx, serde_json::json!({ "n": "one" }));
+    /// assert!(matches!(refused, Err(CapabilityError::InvalidInput(_))));
+    /// ```
     fn call(&self, ctx: &Context, input: Value) -> Result<Value, CapabilityError>;
 }
 
@@ -259,6 +474,42 @@ where
 }
 
 /// Wrap a typed function as a handler.
+///
+/// The one place the JSON boundary is crossed. Inside `f` the input is a Rust value that
+/// deserialised successfully and the output is a Rust value that will serialise; outside
+/// it, both are `Value`. A failure on the way in is the caller's fault and a failure on
+/// the way out is the tool's, and the two errors say so — which is the whole reason this
+/// is a function rather than something each capability writes for itself.
+///
+/// `capability!` calls it, so a declaration never mentions it.
+///
+/// ```
+/// use majordomus_cli::capability::{handler::handler, CapabilityError, Context};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// #[derive(serde::Deserialize)]
+/// struct In { n: u32 }
+/// #[derive(serde::Serialize)]
+/// struct Out { doubled: u32 }
+/// fn double(_: &Context, input: In) -> Result<Out, CapabilityError> {
+///     if input.n > 100 {
+///         return Err(CapabilityError::Refused("n is above the limit".into()));
+///     }
+///     Ok(Out { doubled: input.n * 2 })
+/// }
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let boxed = handler::<In, Out, _>(double);
+///
+/// // the handler's own refusal travels out unchanged
+/// let refused = boxed.call(&ctx, serde_json::json!({ "n": 1000 }));
+/// assert_eq!(refused, Err(CapabilityError::Refused("n is above the limit".into())));
+///
+/// // and an input the type cannot read never reached the handler at all
+/// let invalid = boxed.call(&ctx, serde_json::json!({}));
+/// assert!(matches!(invalid, Err(CapabilityError::InvalidInput(_))));
+/// ```
 pub fn handler<I, O, F>(f: F) -> Arc<dyn Handler>
 where
     I: DeserializeOwned + 'static,
@@ -273,6 +524,23 @@ where
 
 /// A descriptor with its behaviour and its benchmark cases: what the builtin source
 /// contributes.
+///
+/// Three things that must travel together and do, because `capability!` produces all
+/// three from one declaration: the descriptor every projection reads, the handler behind
+/// the JSON boundary, and the representative inputs taken from the input type. A
+/// capability cannot therefore be composed with a handler and no cases, or with cases that
+/// belong to a different input type — those are compile errors in the macro rather than
+/// coverage findings later.
+///
+/// ```
+/// use majordomus_cli::capability::builtin;
+/// use majordomus_cli::capability::handler::Executable;
+/// // the composition of the application, and every executable in it carries all three
+/// let module = builtin::repository::module();
+/// let first: &Executable = module.capabilities.first().unwrap();
+/// assert_eq!(first.capability.id.as_str(), "repository.info");
+/// assert!(first.capability.kind.is_executable(), "a descriptor with a handler");
+/// ```
 pub struct Executable {
     /// The descriptor.
     pub capability: Capability,

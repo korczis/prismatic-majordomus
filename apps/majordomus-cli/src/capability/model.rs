@@ -20,9 +20,10 @@
 //! # Declared against classified
 //!
 //! Two fields are *classified* rather than declared: [`Availability::classify`] and
-//! [`Visibility::classify`] compute their values from the kind and the exposures the
-//! declaration already carries. Asking each declaration to restate them would be the same
-//! knowledge written twice, and the second copy is the one that goes wrong. Both matches are
+//! [`Visibility::classify`] compute their values from what the declaration already carries
+//! — the kind for the first, the transports for the second. Asking each declaration to
+//! restate them would be the same knowledge written twice, and the second copy is the one
+//! that goes wrong. Both matches are
 //! exhaustive with no fallback arm on purpose, so a new kind or a new transport is a compile
 //! error here rather than a silent default in a page that then links to nothing.
 //!
@@ -69,6 +70,17 @@ use super::schema::CanonicalSchema;
 /// Grammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and
 /// carries no whitespace or control character, any other Unicode included, because it is
 /// opaque: a path, a versioned identity, or a name, as the kind's identity rule produced it.
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityId;
+/// // an executable's identity and a declarative object's identity are one grammar: only
+/// // the local part tells them apart, and nothing here reads the local part
+/// let executable = CapabilityId::parse("objects.get").unwrap();
+/// let object = CapabilityId::parse("document.docs/CLI.md").unwrap();
+/// assert_eq!(executable.namespace(), "objects");
+/// assert_eq!(object.namespace(), "document");
+/// assert_eq!(object.as_str(), "document.docs/CLI.md", "the local part is carried, not parsed");
+/// ```
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -76,7 +88,13 @@ use super::schema::CanonicalSchema;
 pub struct CapabilityId(String);
 
 impl CapabilityId {
-    /// Parse and validate.
+    /// Read an identity, or answer with the reason the text is not one.
+    ///
+    /// The namespace is held to the grammar; the local part is only required to be
+    /// non-empty and free of whitespace and control characters. That asymmetry is the
+    /// point: the local part belongs to whichever kind produced it — a repository-relative
+    /// path, a versioned rule identity, a name — and a validator that understood it here
+    /// would have to be taught every kind the repository ever grows.
     ///
     /// ```
     /// use majordomus_cli::capability::CapabilityId;
@@ -109,18 +127,44 @@ impl CapabilityId {
         Ok(CapabilityId(text.to_string()))
     }
 
-    /// For descriptors written in code (the `capability!` macro); validated when the
-    /// registry is built, never before.
+    /// An identity taken on trust, for a descriptor written in Rust.
+    ///
+    /// The `capability!` macro expands to a value, not to a `Result`, so a builtin's id is
+    /// not checked where it is written. [`super::registry::Builder::build`] checks every id
+    /// it is handed and refuses the whole registry with the offending id and its
+    /// provenance named, which turns a mistyped literal into one legible startup failure
+    /// instead of a panic from inside a macro expansion.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityId;
+    /// // it accepts what `parse` refuses; the registry is what says no, and later
+    /// let taken_on_trust = CapabilityId::unchecked("Repository.info");
+    /// assert_eq!(taken_on_trust.as_str(), "Repository.info");
+    /// assert!(CapabilityId::parse(taken_on_trust.as_str()).is_err(), "the grammar still refuses it");
+    /// ```
     pub fn unchecked(text: &str) -> Self {
         CapabilityId(text.to_string())
     }
 
-    /// The id as text.
+    /// The identity as text: what every projection prints, and what a resource URI, an
+    /// HTTP route's operation id and a generated reference entry are all derived from.
+    /// Borrowed from the identity, so printing one allocates nothing.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
-    /// The first segment.
+    /// The namespace: everything before the first dot.
+    ///
+    /// This is the module a builtin belongs to and the kind of a declarative object, which
+    /// is what lets the registry check that a capability was composed by the module it
+    /// claims without being told the module a second time. The *first* dot decides, so a
+    /// local part with dots of its own keeps every one of them.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityId;
+    /// let rule = CapabilityId::parse("rule.majordomus.scope-integrity@1").unwrap();
+    /// assert_eq!(rule.namespace(), "rule", "the first dot ends the namespace");
+    /// ```
     pub fn namespace(&self) -> &str {
         self.0.split('.').next().unwrap_or_default()
     }
@@ -135,6 +179,14 @@ impl fmt::Display for CapabilityId {
 /// A module identity: the namespace of every capability the module composes, matching
 /// `[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative
 /// object's module is its kind.
+///
+/// ```
+/// use majordomus_cli::capability::{CapabilityId, ModuleId};
+/// let module = ModuleId::parse("objects").unwrap();
+/// let id = CapabilityId::parse("objects.get").unwrap();
+/// assert_eq!(id.namespace(), module.as_str(), "a capability's namespace is its module");
+/// assert!(ModuleId::parse("objects.get").is_err(), "a module identity carries no dot");
+/// ```
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -142,7 +194,12 @@ impl fmt::Display for CapabilityId {
 pub struct ModuleId(String);
 
 impl ModuleId {
-    /// Parse and validate.
+    /// Read a module identity, or answer with the reason the text is not one.
+    ///
+    /// The grammar is the namespace grammar of [`CapabilityId`] and nothing more, which is
+    /// what makes "the namespace of every capability this module composes" a checkable
+    /// statement rather than a convention. The empty string fails here, because a module
+    /// with no name would stamp an empty namespace onto everything it carries.
     ///
     /// ```
     /// use majordomus_cli::capability::ModuleId;
@@ -161,12 +218,26 @@ impl ModuleId {
         }
     }
 
-    /// For descriptors written in code; validated when the registry is built.
+    /// A module identity taken on trust, for a module declared in Rust.
+    ///
+    /// [`crate::module!`] stamps this onto every executable it composes before anything is
+    /// validated, and the registry builder is where a malformed one is refused. The empty
+    /// identity that `capability!` leaves behind until a module claims the capability is
+    /// written this way too: an unclaimed capability is a value that exists and fails
+    /// validation, rather than one that cannot be constructed at all.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::ModuleId;
+    /// let stamped = ModuleId::unchecked("objects");
+    /// assert_eq!(stamped, ModuleId::parse("objects").unwrap(), "the same value, unvalidated");
+    /// assert!(ModuleId::parse(ModuleId::unchecked("Objects").as_str()).is_err());
+    /// ```
     pub fn unchecked(text: &str) -> Self {
         ModuleId(text.to_string())
     }
 
-    /// The id as text.
+    /// The module identity as text: the namespace every capability of the module carries,
+    /// and the segment the generated reference files them all under.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -181,6 +252,16 @@ impl fmt::Display for ModuleId {
 /// Why an executable capability is not benchmarked. Typed, so that a waiver is a
 /// reviewable statement and never a convenience; `not_executable` is the registry's own
 /// reason for resources and is never written by hand.
+///
+/// ```
+/// use majordomus_cli::capability::{BenchmarkPolicy, WaiverReason};
+/// // the reason travels with the policy and reads back as itself, so a coverage report
+/// // that says "waived" can always say what it was waived for
+/// let waived = BenchmarkPolicy::Waived { reason: WaiverReason::Destructive };
+/// let json = serde_json::to_string(&waived).unwrap();
+/// assert_eq!(json, r#"{"policy":"waived","reason":"destructive"}"#);
+/// assert_eq!(serde_json::from_str::<BenchmarkPolicy>(&json).unwrap(), waived);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -201,6 +282,18 @@ pub enum WaiverReason {
 /// Whether the capability is a benchmark target. `Required` is the default and the norm:
 /// every executable capability is timed directly and through every transport it is
 /// exposed on, with the cases its input type provides.
+///
+/// There is no way to say "not benchmarked" without saying why: the only alternative to
+/// `Required` carries a [`WaiverReason`], so a gap in the timings is always a statement
+/// somebody wrote and a reviewer can argue with.
+///
+/// ```
+/// use majordomus_cli::capability::{BenchmarkPolicy, WaiverReason};
+/// let required = BenchmarkPolicy::Required;
+/// assert_eq!(serde_json::to_string(&required).unwrap(), r#"{"policy":"required"}"#);
+/// let waived = BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency };
+/// assert_ne!(waived, required, "a waiver is never counted as coverage");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "policy", rename_all = "snake_case")]
 pub enum BenchmarkPolicy {
@@ -217,6 +310,15 @@ pub enum BenchmarkPolicy {
 /// executor and nowhere else, so MCP, HTTP and the command line share one; the key is the
 /// canonical id, the normalised input and the registry fingerprint, so a changed
 /// repository never answers from an old entry.
+///
+/// ```
+/// use majordomus_cli::capability::CachePolicy;
+/// // the bound is part of the declaration, not a constant hidden in the executor
+/// let policy = CachePolicy::Process { max_entries: 64, ttl_seconds: Some(30) };
+/// policy.validate().unwrap();
+/// assert!(policy.is_enabled());
+/// assert!(!CachePolicy::Disabled.is_enabled(), "the default keeps nothing");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "policy", rename_all = "snake_case")]
 pub enum CachePolicy {
@@ -254,7 +356,18 @@ impl CachePolicy {
         }
     }
 
-    /// Does the policy keep anything?
+    /// Does this policy keep anything at all?
+    ///
+    /// The executor asks before it builds a key. `Disabled` is not a cache of size zero:
+    /// it is a call that always reaches the handler, and holding the two apart is what
+    /// keeps a capability whose answer must be current out of a cache shared by every
+    /// transport of the process.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CachePolicy;
+    /// assert!(!CachePolicy::Disabled.is_enabled());
+    /// assert!(CachePolicy::Process { max_entries: 8, ttl_seconds: None }.is_enabled());
+    /// ```
     pub fn is_enabled(&self) -> bool {
         !matches!(self, CachePolicy::Disabled)
     }
@@ -268,6 +381,16 @@ impl CachePolicy {
 /// still a read, and the thing that makes it worth watching — that it reports as it goes
 /// and stops when it is asked to — is one property of its handler, declared with
 /// [`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].
+///
+/// ```
+/// use majordomus_cli::capability::CapabilityKind;
+/// // the kind answers two independent questions, and every projection reads the answers
+/// // rather than matching on the kind for itself
+/// let kinds = [CapabilityKind::Query, CapabilityKind::Command, CapabilityKind::Resource];
+/// assert_eq!(kinds.iter().filter(|k| k.is_executable()).count(), 2, "only a resource is read");
+/// assert_eq!(kinds.iter().filter(|k| k.is_read_only()).count(), 2, "only a command writes");
+/// assert_eq!(kinds.map(|k| k.as_str()), ["query", "command", "resource"]);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -306,7 +429,19 @@ impl CapabilityKind {
         !matches!(self, CapabilityKind::Command)
     }
 
-    /// The word as serialised.
+    /// The kind as the single word every projection serialises and renders.
+    ///
+    /// The same string the enum's serde representation produces, deliberately: an OpenAPI
+    /// enum, a site dataset and a table in the generated reference would otherwise be
+    /// three vocabularies for one field, and a reader comparing two of them would conclude
+    /// the surfaces disagree about the capability.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityKind;
+    /// let kind = CapabilityKind::Command;
+    /// assert_eq!(kind.as_str(), "command");
+    /// assert_eq!(serde_json::to_string(&kind).unwrap(), "\"command\"", "one vocabulary");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             CapabilityKind::Query => "query",
@@ -323,6 +458,18 @@ impl CapabilityKind {
 /// something — the Cockpit's confirmation is derived from it — instead of naming
 /// capabilities it must treat carefully, which is a list that goes stale the day after it
 /// is written.
+///
+/// ```
+/// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+/// // nothing in this executable classifies to `RepositoryMutation`, and that is the
+/// // doctrine rather than an omission: every kind there is reads, or touches this
+/// // process and nothing else
+/// for kind in [CapabilityKind::Query, CapabilityKind::Command, CapabilityKind::Resource] {
+///     let effect = ExecutionPolicy::classify(kind).effect;
+///     assert_ne!(effect, Effect::RepositoryMutation, "{kind:?} must not write to the repository");
+/// }
+/// assert_eq!(ExecutionPolicy::classify(CapabilityKind::Command).effect, Effect::ProcessState);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -345,6 +492,20 @@ pub enum Effect {
 }
 
 /// Whether two executions of one capability may overlap.
+///
+/// ```
+/// use majordomus_cli::capability::{CapabilityKind, Concurrency, ExecutionPolicy};
+/// // a read may overlap any number of other reads, because the index and the registry
+/// // cannot change under them; anything that touches this process's memory takes turns
+/// assert_eq!(
+///     ExecutionPolicy::classify(CapabilityKind::Query).concurrency,
+///     Concurrency::Unrestricted
+/// );
+/// assert_eq!(
+///     ExecutionPolicy::classify(CapabilityKind::Command).concurrency,
+///     Concurrency::Serial
+/// );
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -372,6 +533,17 @@ pub enum Concurrency {
 /// handler: whether it looks at its cancellation flag and stops. A handler that does says
 /// so with [`crate::capability::Executable::cancellable`], and a client is then told
 /// whether a Cancel button will achieve anything instead of being given one that lies.
+///
+/// ```
+/// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+/// // the whole policy comes from the kind, except cancellability, which the handler
+/// // claims for itself — and claiming it changes nothing else
+/// let derived = ExecutionPolicy::classify(CapabilityKind::Query);
+/// let claimed = derived.stoppable();
+/// assert!(!derived.cancellable && claimed.cancellable);
+/// assert_eq!(derived.effect, claimed.effect);
+/// assert_eq!(derived.concurrency, claimed.concurrency);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionPolicy {
     /// What it changes.
@@ -385,7 +557,13 @@ pub struct ExecutionPolicy {
 }
 
 impl ExecutionPolicy {
-    /// The policy of a kind.
+    /// The execution policy a kind implies.
+    ///
+    /// Two of the three fields are decided here and never restated in a declaration: what
+    /// a call of this kind changes, and whether two of them may overlap. Cancellability is
+    /// not decided here, because it is a fact about a handler's own code rather than about
+    /// what the call means, and a policy that guessed it would hand a client a Cancel
+    /// button that does nothing.
     ///
     /// ```
     /// use majordomus_cli::capability::{CapabilityKind, Concurrency, Effect, ExecutionPolicy};
@@ -445,6 +623,18 @@ impl ExecutionPolicy {
 /// Where a capability stands, in the repository's own vocabulary for claims. A capability
 /// that is `Planned` or `Unsupported` may be listed but is never executable through any
 /// projection; the registry refuses to build otherwise.
+///
+/// ```
+/// use majordomus_cli::capability::Stability;
+/// // five points on the scale, and one question a projection actually asks of them
+/// let listed_only = [Stability::Planned, Stability::Unsupported];
+/// assert!(listed_only.iter().all(|s| !s.executable()));
+/// assert!(Stability::BehaviorallyVerified.executable());
+/// assert_eq!(
+///     serde_json::to_string(&Stability::BehaviorallyVerified).unwrap(),
+///     "\"behaviorally_verified\""
+/// );
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -463,7 +653,19 @@ pub enum Stability {
 }
 
 impl Stability {
-    /// May this capability be exposed as executable through any projection?
+    /// May a capability standing here be offered as something a caller can run?
+    ///
+    /// The registry asks this of every declared exposure and refuses to build when the
+    /// answer is no, so a specified-but-unwritten capability cannot reach a client as a
+    /// tool, a route or a subcommand that then fails when it is called. It is still listed
+    /// — that is the point of having the two states at all.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::Stability;
+    /// assert!(Stability::Implemented.executable());
+    /// assert!(!Stability::Planned.executable(), "a specification is listed, never called");
+    /// assert!(!Stability::Unsupported.executable(), "and so is a refusal, with its reason");
+    /// ```
     pub fn executable(self) -> bool {
         matches!(
             self,
@@ -473,12 +675,23 @@ impl Stability {
 }
 
 /// Where a capability came from. Never an absolute path.
+///
+/// Both variants exist to answer one question — which file a reader should open — and the
+/// builtin's answer is computed from its Rust module path by [`Provenance::source_path`]
+/// rather than written down beside it, because a path written down beside a declaration is
+/// a path that survives the file being moved.
+///
+/// ```
+/// use majordomus_cli::capability::Provenance;
+/// let p = Provenance::Builtin { module: "majordomus_cli::capability::builtin::health".into() };
+/// assert_eq!(p.source_path(), "apps/majordomus-cli/src/capability/builtin/health.rs");
+/// assert_eq!(p.to_string(), "builtin majordomus_cli::capability::builtin::health");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "lowercase")]
 #[schemars(rename = "CapabilityProvenance")]
 pub enum Provenance {
     /// Written in Rust, in the named module of this executable.
-    /// Written in Rust, composed in `builtin.rs`.
     Builtin {
         /// The Rust module the descriptor was composed in.
         module: String,
@@ -549,6 +762,19 @@ impl fmt::Display for Provenance {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// An MCP resource: its URI and the short name a client lists.
+///
+/// The URI is the identity a client reads by and the registry refuses two capabilities
+/// claiming one of them; the name is only what a list shows, and nothing resolves it.
+///
+/// ```
+/// use majordomus_cli::capability::McpResource;
+/// let res = McpResource {
+///     uri: "majordomus://rule/project.worktree-topology@1".into(),
+///     name: "project.worktree-topology@1".into(),
+/// };
+/// assert!(res.uri.starts_with("majordomus://"), "the registry refuses any other scheme");
+/// assert!(res.uri.ends_with(&res.name), "the identity is the tail of its own URI");
+/// ```
 pub struct McpResource {
     /// `majordomus://<kind>/<identity>`, or `majordomus://repository`.
     pub uri: String,
@@ -557,6 +783,19 @@ pub struct McpResource {
 }
 
 /// How, if at all, a capability appears to an MCP client.
+///
+/// The tool and the resource are independent: a capability may be neither, either, or —
+/// as `repository.info` is — both, callable by name and readable at a URI. Either one
+/// makes it reachable by anything that can attach to the process, which is why
+/// [`Visibility::classify`] reads the presence of this and not its contents.
+///
+/// ```
+/// use majordomus_cli::capability::{Exposure, McpExposure, Visibility};
+/// let as_tool = McpExposure { tool: Some("majordomus_health".into()), ..Default::default() };
+/// assert!(as_tool.resource.is_none(), "absence is explicit, never inferred");
+/// let exposure = Exposure { mcp: Some(as_tool), ..Default::default() };
+/// assert_eq!(Visibility::classify(&exposure), Visibility::Public);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub struct McpExposure {
     /// As a tool with this name (`[a-z0-9_]+`).
@@ -572,6 +811,18 @@ pub struct McpExposure {
 )]
 #[serde(rename_all = "UPPERCASE")]
 /// The HTTP methods a capability may be bound to.
+///
+/// Two, because this projection serves two: a read whose input is the query string, and a
+/// call whose input is the body. Anything else is not a method the router has a binding
+/// for, so [`HttpMethod::parse`] answers `None` rather than growing a variant nothing can
+/// dispatch.
+///
+/// ```
+/// use majordomus_cli::capability::HttpMethod;
+/// assert_eq!(HttpMethod::parse(HttpMethod::Post.as_str()), Some(HttpMethod::Post));
+/// assert_eq!(HttpMethod::parse("get"), None, "the wire name is upper case");
+/// assert_eq!(HttpMethod::parse("DELETE"), None, "and this projection serves no other");
+/// ```
 pub enum HttpMethod {
     /// Read-only; the input is bound from the query string.
     Get,
@@ -581,6 +832,16 @@ pub enum HttpMethod {
 
 impl HttpMethod {
     /// The method as it appears on the wire.
+    ///
+    /// The inverse of [`HttpMethod::parse`], and the one string both the router's binding
+    /// and the OpenAPI operation are built from, so a route cannot be described with one
+    /// method and served under another.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::HttpMethod;
+    /// assert_eq!(HttpMethod::Get.as_str(), "GET");
+    /// assert_eq!(HttpMethod::parse(HttpMethod::Get.as_str()), Some(HttpMethod::Get));
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             HttpMethod::Get => "GET",
@@ -606,6 +867,18 @@ impl HttpMethod {
 /// How a capability appears over HTTP. `GET` binds every top-level input property as a
 /// query parameter; `POST` binds the input as the JSON request body. Paths are absolute
 /// and live under [`HttpExposure::PREFIX`].
+///
+/// ```
+/// use majordomus_cli::capability::{HttpExposure, HttpMethod};
+/// // the prefix is on the type rather than repeated in every declaration, and a path
+/// // that does not start with it is refused before the router ever sees it
+/// let route = HttpExposure {
+///     method: HttpMethod::Get,
+///     path: format!("{}health", HttpExposure::PREFIX),
+/// };
+/// route.validate().unwrap();
+/// assert_eq!(route.path, "/api/v1/health");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct HttpExposure {
     /// The method.
@@ -650,6 +923,18 @@ impl HttpExposure {
 }
 
 /// How a capability appears on the command line: the words after `majordomus`.
+///
+/// The words, not a line of text. The command tree is built by walking them, so a
+/// subcommand never has to be recovered by splitting a string, and two capabilities
+/// claiming one path are a registry error rather than whichever one clap saw last.
+///
+/// ```
+/// use majordomus_cli::capability::{CliExposure, Exposure, Visibility};
+/// let exposure = CliExposure { path: vec!["capabilities".into(), "list".into()] };
+/// assert_eq!(exposure.path.join(" "), "capabilities list");
+/// let only_cli = Exposure { cli: Some(exposure), ..Default::default() };
+/// assert_eq!(Visibility::classify(&only_cli), Visibility::Developer);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CliExposure {
     /// The words after `majordomus`, e.g. `["capabilities", "list"]`.
@@ -658,6 +943,20 @@ pub struct CliExposure {
 
 /// The projections a capability declares. Absence is explicit: `None` means not exposed
 /// there, and nothing infers an exposure a descriptor did not declare.
+///
+/// ```
+/// use majordomus_cli::capability::{Exposure, HttpExposure, HttpMethod};
+/// // the default is exposed nowhere, and it serialises to an empty object: a projection
+/// // reads absence instead of guessing from the id or the module
+/// let nowhere = Exposure::default();
+/// assert!(nowhere.is_empty());
+/// assert_eq!(serde_json::to_string(&nowhere).unwrap(), "{}");
+/// let over_http = Exposure {
+///     http: Some(HttpExposure { method: HttpMethod::Get, path: "/api/v1/health".into() }),
+///     ..Default::default()
+/// };
+/// assert!(!over_http.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 pub struct Exposure {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -672,7 +971,23 @@ pub struct Exposure {
 }
 
 impl Exposure {
-    /// Exposed nowhere?
+    /// Is this capability projected nowhere at all?
+    ///
+    /// True of a descriptor that exists, is listed as existing, and is offered by no
+    /// surface — which [`Visibility::classify`] then reports as `Internal`. Worth asking
+    /// separately from that, because the registry's summary counts what nothing offers,
+    /// and a capability that quietly fell off every transport is otherwise
+    /// indistinguishable from one that was never meant to be on any.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CliExposure, Exposure};
+    /// assert!(Exposure::default().is_empty());
+    /// let cli = Exposure {
+    ///     cli: Some(CliExposure { path: vec!["scope".into()] }),
+    ///     ..Default::default()
+    /// };
+    /// assert!(!cli.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.mcp.is_none() && self.http.is_none() && self.cli.is_none()
     }
@@ -691,6 +1006,18 @@ impl Exposure {
 /// this is and which transports it is projected through — are already on the descriptor,
 /// and asking each declaration to restate them would be the same knowledge written twice.
 /// [`Availability::classify`] is the one place the rule lives.
+///
+/// ```
+/// use majordomus_cli::capability::{Availability, CapabilityKind, Exposure};
+/// // the layer's own content is readable from a published page; anything with a handler
+/// // needs a process, whichever transport reaches it
+/// let nowhere = Exposure::default();
+/// assert_eq!(Availability::classify(CapabilityKind::Resource, &nowhere), Availability::Always);
+/// assert_eq!(Availability::classify(CapabilityKind::Command, &nowhere), Availability::Runtime);
+/// // the two environments nothing classifies to yet still have their word on the wire,
+/// // so a value captured at build time can be labelled as a capture when one arrives
+/// assert_eq!(serde_json::to_string(&Availability::BuildTime).unwrap(), "\"build_time\"");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -720,6 +1047,14 @@ pub enum Availability {
 impl Availability {
     /// Classify from what the descriptor already declares.
     ///
+    /// Today the kind decides alone, and the exposure is accepted without being read: the
+    /// layer's content is readable wherever the index is, and a handler needs a process
+    /// whichever transport reaches it. The parameter is taken all the same, because the
+    /// transports are the only other thing that could move the answer — a capability whose
+    /// caller had to be authenticated would be saying so in an exposure, not in a kind —
+    /// and a caller of this function never has to know which half of the descriptor
+    /// decided.
+    ///
     /// The match is exhaustive on purpose and has no fallback arm: a new kind, or a
     /// transport that changes what an environment can offer, is a compile error here
     /// rather than a silent `Always` in a page that then links to nothing.
@@ -747,6 +1082,23 @@ impl Availability {
 /// Internal is a statement, not an omission: a capability nothing projects is invisible
 /// either way, and the difference between deliberate and forgotten is exactly what this
 /// records.
+///
+/// ```
+/// use majordomus_cli::capability::{CliExposure, Exposure, HttpExposure, HttpMethod, Visibility};
+/// // reachable over a network, reachable by whoever runs the executable, or offered by
+/// // nothing — and the third is a statement rather than a gap
+/// let over_http = Exposure {
+///     http: Some(HttpExposure { method: HttpMethod::Get, path: "/api/v1/health".into() }),
+///     ..Default::default()
+/// };
+/// assert_eq!(Visibility::classify(&over_http), Visibility::Public);
+/// let cli = Exposure {
+///     cli: Some(CliExposure { path: vec!["doctor".into()] }),
+///     ..Default::default()
+/// };
+/// assert_eq!(Visibility::classify(&cli), Visibility::Developer);
+/// assert_eq!(Visibility::classify(&Exposure::default()), Visibility::Internal);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -782,6 +1134,44 @@ impl Visibility {
 }
 
 /// The canonical descriptor. Everything a projection may say about a capability is here.
+///
+/// It is plain data with no handler and no transport in it, which is the property the rest
+/// of the executable rests on: the same value the executor dispatches on round-trips
+/// through JSON, so the generated reference, the site dataset and the OpenAPI document are
+/// readings of it rather than second descriptions of the same capability.
+///
+/// ```
+/// use majordomus_cli::capability;
+/// use majordomus_cli::capability::{
+///     Availability, BenchmarkCases, Capability, CapabilityError, CapabilityKind, CaseContext,
+///     Context, Exposure, NamedCase, Stability, Visibility,
+/// };
+/// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+/// struct In {}
+/// impl BenchmarkCases for In {
+///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+///         vec![NamedCase::new("default", In {})]
+///     }
+/// }
+/// #[derive(serde::Serialize, schemars::JsonSchema)]
+/// struct Out { ok: bool }
+/// fn ping(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+///
+/// let descriptor: Capability = capability! {
+///     id: "demo.ping", title: "Ping", description: "Answers.", input: In, output: Out,
+///     stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+///     handler: ping,
+/// }.capability;
+///
+/// // three fields the declaration above never wrote: they follow from what it did write
+/// assert_eq!(descriptor.kind, CapabilityKind::Query);
+/// assert_eq!(descriptor.availability, Availability::Runtime);
+/// assert_eq!(descriptor.visibility, Visibility::Internal);
+///
+/// // and the descriptor survives the boundary every projection reads it across
+/// let json = serde_json::to_string(&descriptor).unwrap();
+/// assert_eq!(serde_json::from_str::<Capability>(&json).unwrap(), descriptor);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Capability {
     /// The canonical identity.
@@ -803,8 +1193,8 @@ pub struct Capability {
     pub provenance: Provenance,
     /// Where it is projected; absence is explicit.
     pub exposure: Exposure,
-    /// Where it means anything: classified from the kind and the transports above, so
-    /// that a projection reads a field instead of deciding for itself.
+    /// Where it means anything: classified from the kind, so that a projection reads a
+    /// field instead of deciding for itself.
     pub availability: Availability,
     /// Who it is for: classified from the same transports.
     pub visibility: Visibility,

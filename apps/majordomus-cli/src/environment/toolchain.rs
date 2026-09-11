@@ -12,6 +12,37 @@
 //!
 //! Asking a version costs a process spawn each, so it happens in a full resolution only;
 //! a fast resolution takes the answers from the cache and says `unknown` when it has none.
+//!
+//! The lifecycle is those two steps, in that order and never merged: what the repository
+//! declares is read from files, and only then is each declared toolchain asked what it
+//! has. Nothing undeclared is ever asked, which is what keeps a laptop's nine runtimes
+//! out of a repository's snapshot.
+//!
+//! ```
+//! use majordomus_cli::environment::toolchain;
+//! use majordomus_cli::environment::ToolchainAvailability;
+//! let dir = tempfile::tempdir().expect("a temporary directory");
+//! std::fs::write(dir.path().join("Cargo.toml"), "[package]\nrust-version = \"1.85\"\n")
+//!     .expect("a manifest");
+//!
+//! let declared = toolchain::declared(dir.path());
+//! assert_eq!(declared.len(), 1, "one marker file, one toolchain");
+//! assert_eq!(declared[0].id, "rust");
+//! assert_eq!(declared[0].declared.as_deref(), Some("1.85"));
+//! assert_eq!(declared[0].declared_by, "Cargo.toml", "and it names the file that said so");
+//! assert_eq!(
+//!     declared[0].availability,
+//!     ToolchainAvailability::Unknown,
+//!     "nothing has been asked yet, which is not the same as nothing being installed"
+//! );
+//!
+//! let resolved = toolchain::with_installed(declared);
+//! assert_ne!(
+//!     resolved[0].availability,
+//!     ToolchainAvailability::Unknown,
+//!     "after asking, the answer is either a version or its absence"
+//! );
+//! ```
 
 use std::path::Path;
 use std::process::Command;
@@ -22,6 +53,20 @@ use super::{ToolchainAvailability, ToolchainState};
 /// How a declared version is read out of the file that declares it. Small on purpose:
 /// three shapes cover every manifest here, and a fourth is a new variant rather than a
 /// parser.
+///
+/// [`Declares::Nothing`] is the variant that makes the set honest: a `justfile` or a
+/// `mix.exs` says the toolchain is relevant here and says nothing about which version, and
+/// a marker that could only carry a version would have to invent one.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::{read_text, Declares};
+/// assert_eq!(read_text("# a comment\n\n22.20.0\n", Declares::WholeFile).as_deref(), Some("22.20.0"));
+/// assert_eq!(
+///     read_text("channel = \"stable\"\n", Declares::KeyValue("channel")).as_deref(),
+///     Some("stable")
+/// );
+/// assert_eq!(read_text("anything at all", Declares::Nothing), None, "relevance, not a version");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Declares {
     /// The whole file is the version, comments and blank lines skipped (`.nvmrc`).
@@ -37,6 +82,20 @@ pub enum Declares {
 }
 
 /// One place a toolchain may be declared.
+///
+/// Markers are tried in the order they are listed and the first that exists wins, so the
+/// order in a detector is a statement about authority: a `rust-toolchain.toml` overrules
+/// a `Cargo.toml` because a person who wrote one meant it. The `*` is one directory name
+/// and one directory read; nothing here walks a tree, because this runs on every `cd`.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::{Marker, DETECTORS};
+/// let rust = DETECTORS.iter().find(|d| d.id == "rust").expect("Rust is recognised");
+/// let paths: Vec<&str> = rust.markers.iter().map(|m: &Marker| m.path).collect();
+/// assert_eq!(paths.first(), Some(&"rust-toolchain.toml"), "the most specific marker is first");
+/// assert!(paths.contains(&"apps/*/Cargo.toml"), "one segment may be a single wildcard");
+/// assert!(paths.iter().all(|p| p.matches('*').count() <= 1), "and never more than one");
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Marker {
     /// Repository-relative path. Exactly one segment may be `*`, resolved with a single
@@ -47,6 +106,20 @@ pub struct Marker {
 }
 
 /// One toolchain this executable knows how to recognise.
+///
+/// A detector is data and costs nothing when it does not apply: one `exists()` per marker
+/// for a repository that declares no Rust, and no subprocess at all. That is why adding
+/// one is cheap, and why the executable that asks for a version is named here rather than
+/// derived from the id — `python` is not `python3`.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::{Detector, DETECTORS};
+/// let rust: &Detector = DETECTORS.iter().find(|d| d.id == "rust").expect("Rust is recognised");
+/// assert_eq!(rust.executable, "rustc", "the program asked, not the toolchain's own name");
+/// assert_eq!(rust.version_args[0], "--version");
+/// assert!(!rust.markers.is_empty(), "a detector with nowhere to look would match every repository");
+/// assert!(DETECTORS.iter().all(|d| !d.title.is_empty()));
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Detector {
     /// A stable id, `[a-z][a-z0-9-]*`.
@@ -183,6 +256,23 @@ pub const VERSION_TIMEOUT: Duration = Duration::from_millis(1500);
 /// The toolchains this repository declares, without asking any of them their version.
 /// Cheap enough for the hot path: one `exists()` per marker, one directory read for a
 /// marker with a `*`, and one small file read for each that matched.
+///
+/// A toolchain that is installed here and declared nowhere is absent from the answer, and
+/// a toolchain that is declared and missing is present with no version. Both halves of
+/// that are deliberate: the snapshot is about this repository, and a version mismatch is
+/// only visible when the declaration is reported whether or not anything satisfies it.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::declared;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// assert!(declared(dir.path()).is_empty(), "an empty directory declares nothing");
+///
+/// std::fs::write(dir.path().join(".nvmrc"), "22.20.0\n").expect("a marker");
+/// let found = declared(dir.path());
+/// assert_eq!(found.iter().map(|t| t.id.as_str()).collect::<Vec<_>>(), ["node"]);
+/// assert_eq!(found[0].declared.as_deref(), Some("22.20.0"));
+/// assert!(found[0].installed.is_none(), "this call asks nobody for a version");
+/// ```
 pub fn declared(root: &Path) -> Vec<ToolchainState> {
     let mut out = Vec::new();
     for detector in DETECTORS {
@@ -205,6 +295,33 @@ pub fn declared(root: &Path) -> Vec<ToolchainState> {
 /// Ask every declared toolchain what is installed. One bounded subprocess each; a
 /// toolchain that is not on the path is [`ToolchainAvailability::Missing`], and one that
 /// does not answer within [`VERSION_TIMEOUT`] stays `Unknown`.
+///
+/// It takes what [`declared`] produced and refines it, rather than discovering anything
+/// of its own: a state whose id no detector claims is handed back exactly as it came,
+/// because there is nothing this function knows to ask about it.
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::with_installed;
+/// use majordomus_cli::environment::{ToolchainAvailability, ToolchainState};
+/// let stranger = ToolchainState {
+///     id: "majordomus-no-such-toolchain".into(),
+///     title: "Nothing".into(),
+///     declared: Some("1.0".into()),
+///     declared_by: "nowhere".into(),
+///     installed: None,
+///     availability: ToolchainAvailability::Unknown,
+/// };
+/// let out = with_installed(vec![stranger.clone()]);
+/// assert_eq!(out[0], stranger, "no detector claims it, so nothing was asked or changed");
+///
+/// let rust = ToolchainState { id: "rust".into(), title: "Rust".into(), ..stranger };
+/// let asked = with_installed(vec![rust]);
+/// assert_ne!(
+///     asked[0].availability,
+///     ToolchainAvailability::Unknown,
+///     "rustc was asked, and either answered or is not there"
+/// );
+/// ```
 pub fn with_installed(mut toolchains: Vec<ToolchainState>) -> Vec<ToolchainState> {
     for state in &mut toolchains {
         let Some(detector) = DETECTORS.iter().find(|d| d.id == state.id) else {

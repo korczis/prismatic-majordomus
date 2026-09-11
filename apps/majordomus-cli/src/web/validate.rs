@@ -5,6 +5,37 @@
 //! happened to insert its route first. Every finding names the surface, the value, where the
 //! value came from and what to do about it, because a convention-heavy system that reports
 //! "invalid topology" is a system nobody can maintain.
+//!
+//! The lifecycle is: resolve a topology, ask this module what is wrong with it, and refuse
+//! to serve or publish when anything that came back was an error.
+//!
+//! ```
+//! use majordomus_cli::web::{model::*, validate};
+//! # use std::collections::BTreeMap;
+//! # fn s(id: &str, mount: &str) -> Surface {
+//! #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+//! #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+//! #         mount: Mount::parse(mount).unwrap(), producer: "the x producer".into(),
+//! #         feature: None, artifact: Some("target/web/x".into()),
+//! #         index: Some("index.html".into()), availability: Availability::Both,
+//! #         built_from: None, provenance: BTreeMap::new() }
+//! # }
+//! let sound = Topology::new(vec![s("tests", "/tests"), s("benchmarks", "/benchmarks")]);
+//! let findings = validate::validate(
+//!     &sound, std::path::Path::new("/nonexistent"), validate::Artifacts::Ignore);
+//! assert!(findings.is_empty(), "{findings:?}");
+//! assert!(!validate::blocking(&findings));
+//!
+//! // two producers claiming one path is refused where it is discovered, not resolved by
+//! // whichever router inserted its route first
+//! let clash = Topology::new(vec![s("tests", "/tests"), s("also-tests", "/tests")]);
+//! let findings = validate::validate(
+//!     &clash, std::path::Path::new("/nonexistent"), validate::Artifacts::Ignore);
+//! assert!(validate::blocking(&findings));
+//! let first = &findings[0];
+//! assert_eq!(first.rule, "surface.mount-collision");
+//! assert!(!first.remedy.is_empty(), "a finding says what to do about it");
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -15,7 +46,23 @@ use serde::{Deserialize, Serialize};
 use super::discover::GENERATED_ROOT;
 use super::model::{Availability, SurfaceKind, Topology};
 
-/// How much a finding matters.
+/// How much a finding matters, and therefore whether the topology may be used.
+///
+/// Two values, and the line between them is not severity for a reader but permission: an
+/// `Error` stops the topology from being served or published ([`blocking`]), a `Warning` is
+/// something a person should read and decide about. Which of two colliding surfaces should
+/// move is intent, and a validator that refused to serve until somebody expressed it would
+/// be worse than one that says so.
+///
+/// The variants are declared least first, so `Ord` means the same thing here as it does for
+/// the index's own severity: greater is worse, and every comparator that wants the worst
+/// first reads `b.cmp(a)`.
+///
+/// ```
+/// use majordomus_cli::web::validate::Severity;
+/// assert!(Severity::Error > Severity::Warning, "greater is worse");
+/// assert_eq!(serde_json::to_value(Severity::Error).unwrap(), "error");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -34,6 +81,39 @@ pub enum Severity {
 }
 
 /// One thing wrong with a topology, said so a person can fix it without reading this file.
+///
+/// Every field is load-bearing. `rule` is stable enough to grep for and to write into a
+/// gate; `surface` says whose problem it is; `message` names the values that are actually
+/// in conflict rather than restating the rule; and `remedy` is what to do, because a
+/// convention-heavy system whose diagnostics stop at "invalid" is a system whose
+/// conventions nobody can learn.
+///
+/// ```
+/// use majordomus_cli::web::{model::*, validate};
+/// # use majordomus_cli::web::model::*;
+/// # use std::collections::BTreeMap;
+/// # fn s(id: &str, mount: &str) -> Surface {
+/// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+/// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+/// #         mount: Mount::parse(mount).unwrap(), producer: "the x producer".into(),
+/// #         feature: None, artifact: Some("target/web/x".into()),
+/// #         index: Some("index.html".into()), availability: Availability::Both,
+/// #         built_from: None, provenance: BTreeMap::new() }
+/// # }
+/// // the documentation's mount, claimed by a report that is not the documentation
+/// let topology = Topology::new(vec![s("tests", "/docs")]);
+/// let findings = validate::validate(
+///     &topology, std::path::Path::new("/nonexistent"), validate::Artifacts::Ignore);
+/// let finding: &validate::Finding = findings
+///     .iter()
+///     .find(|f| f.rule == "surface.reserved-namespace")
+///     .expect("a reserved mount taken by somebody else is a finding");
+/// assert_eq!(finding.severity, validate::Severity::Error);
+/// assert_eq!(finding.surface, "tests");
+/// // the message names both sides, so it can be acted on without reading the validator
+/// assert!(finding.message.contains("/docs"), "{}", finding.message);
+/// assert!(!finding.remedy.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "SurfaceFinding")]
 pub struct Finding {
@@ -89,6 +169,34 @@ pub fn validate(topology: &Topology, root: &Path, artifacts: Artifacts) -> Vec<F
 }
 
 /// Whether a static surface's generated directory must exist for the topology to be valid.
+///
+/// The same topology is valid before a build and invalid after a failed one, and this is
+/// the parameter that says which question is being asked. Everything else the validator
+/// checks — identities, mounts, reservations, where a directory is allowed to be — is a
+/// property of the declarations and is checked either way; only the existence of the output
+/// depends on when you ask.
+///
+/// ```
+/// use majordomus_cli::web::{model::*, validate};
+/// # use majordomus_cli::web::model::*;
+/// # use std::collections::BTreeMap;
+/// # fn s(id: &str, mount: &str) -> Surface {
+/// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+/// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+/// #         mount: Mount::parse(mount).unwrap(), producer: "the x producer".into(),
+/// #         feature: None, artifact: Some("target/web/x".into()),
+/// #         index: Some("index.html".into()), availability: Availability::Both,
+/// #         built_from: None, provenance: BTreeMap::new() }
+/// # }
+/// let topology = Topology::new(vec![s("tests", "/tests")]);
+/// let root = std::path::Path::new("/nonexistent");
+/// // before the build: the declarations are sound and nothing has been produced yet
+/// assert!(validate::validate(&topology, root, validate::Artifacts::Ignore).is_empty());
+/// // before serving: the same declarations, and the output is not there
+/// let findings = validate::validate(&topology, root, validate::Artifacts::Required);
+/// assert!(findings.iter().any(|f| f.rule == "surface.artifact-absent"), "{findings:?}");
+/// assert!(validate::blocking(&findings));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Artifacts {
     /// The directory must be there, with its index: what serving and publishing need.
@@ -485,6 +593,35 @@ fn provenance_of(surface: &super::model::Surface, field: &str) -> String {
 }
 
 /// Does this set of findings stop a topology from being served or published?
+///
+/// The one place the decision is made, so a command, the gate and the Cockpit cannot
+/// disagree about whether a topology is usable. A warning never blocks: it names something
+/// only a person can settle, and a validator that refused to serve until they had would
+/// stop a repository over a question of intent.
+///
+/// ```
+/// use majordomus_cli::web::{model::*, validate};
+/// # use majordomus_cli::web::model::*;
+/// # use std::collections::BTreeMap;
+/// # fn s(id: &str, mount: &str) -> Surface {
+/// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+/// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+/// #         mount: Mount::parse(mount).unwrap(), producer: "the x producer".into(),
+/// #         feature: None, artifact: Some("target/web/x".into()),
+/// #         index: Some("index.html".into()), availability: Availability::Both,
+/// #         built_from: None, provenance: BTreeMap::new() }
+/// # }
+/// let root = std::path::Path::new("/nonexistent");
+/// let sound = Topology::new(vec![s("tests", "/tests")]);
+/// assert!(!validate::blocking(&validate::validate(
+///     &sound, root, validate::Artifacts::Ignore)));
+///
+/// // a surface inside another's subtree: whichever answered would depend on the router
+/// let nested = Topology::new(vec![s("tests", "/tests"), s("ui", "/tests/ui")]);
+/// let findings = validate::validate(&nested, root, validate::Artifacts::Ignore);
+/// assert!(validate::blocking(&findings), "{findings:?}");
+/// assert!(findings.iter().all(|f| f.severity == validate::Severity::Error));
+/// ```
 pub fn blocking(findings: &[Finding]) -> bool {
     findings.iter().any(|f| f.severity == Severity::Error)
 }

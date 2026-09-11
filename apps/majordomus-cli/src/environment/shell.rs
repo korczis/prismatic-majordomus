@@ -21,12 +21,47 @@
 //! [`quote_posix`] and [`quote_fish`] are exercised against a corpus of hostile values in
 //! `nothing_in_a_value_can_escape_its_quotes`, and the emitted script is run through a
 //! real shell in the crate's integration tests.
+//!
+//! # The lifecycle
+//!
+//! One snapshot in, one script out, once per dialect. The module holds no state and reads
+//! nothing itself: everything the script says was already resolved by [`super::resolve`],
+//! so a variable can never name something the rest of the snapshot disagrees with.
+//!
+//! ```
+//! # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+//! # let dir = tempfile::tempdir().expect("a temporary directory");
+//! # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+//! # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+//! # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+//! # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+//! # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+//! use majordomus_cli::environment::shell::{export, Dialect};
+//! let posix = export(&snapshot, Some("/opt/majordomus/share"), Dialect::Posix);
+//! let fish = export(&snapshot, Some("/opt/majordomus/share"), Dialect::Fish);
+//! assert!(posix.contains("export MAJORDOMUS_SHARE='/opt/majordomus/share'"));
+//! assert!(fish.contains("set -gx MAJORDOMUS_SHARE '/opt/majordomus/share'"));
+//! assert!(!fish.contains("export "), "neither dialect is emitted in the other's syntax");
+//! ```
 
 use std::fmt::Write as _;
 
 use super::RepositoryEnvironment;
 
 /// The shell dialect an export is written for.
+///
+/// A dialect is a set of quoting rules and not a shell: `direnv`, `sh`, `bash`, `zsh` and
+/// `ksh` all read the same assignment, so they are one variant, and `fish` is the second
+/// only because its single quotes behave differently. A shell this module has no rule for
+/// is refused rather than approximated with the POSIX one.
+///
+/// ```
+/// use majordomus_cli::environment::shell::Dialect;
+/// assert_eq!(Dialect::parse("bash"), Dialect::parse("direnv"), "one syntax, one dialect");
+/// assert_eq!(Dialect::parse("fish"), Some(Dialect::Fish));
+/// assert_eq!(Dialect::default(), Dialect::Posix);
+/// assert_eq!(Dialect::parse("powershell"), None, "a shell with no rule here is refused");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Dialect {
     /// `export NAME='value'` — what `direnv`, `bash`, `zsh`, `sh` and `ksh` all read.
@@ -54,7 +89,19 @@ impl Dialect {
         }
     }
 
-    /// The name as written.
+    /// The dialect's own name, for a diagnostic or a provenance entry that has to say
+    /// which rules were applied.
+    ///
+    /// It is the name of the dialect and not the word the caller gave: five shells parse
+    /// to [`Dialect::Posix`], and quoting each of their scripts as `posix` is the whole
+    /// point of there being two variants rather than six.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::shell::Dialect;
+    /// assert_eq!(Dialect::parse("zsh").map(Dialect::as_str), Some("posix"));
+    /// assert_eq!(Dialect::parse("ksh").map(Dialect::as_str), Some("posix"));
+    /// assert_eq!(Dialect::Fish.as_str(), "fish");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Dialect::Posix => "posix",
@@ -64,6 +111,22 @@ impl Dialect {
 }
 
 /// One variable an export may set.
+///
+/// The name is `&'static str` on purpose: every variable this executable exports is
+/// decided here, at compile time, so nothing the repository contains can name a variable
+/// in a person's shell. The purpose is not decoration either — it is written into the
+/// script as a comment, so a reader of a `.envrc` can see why each assignment is there.
+///
+/// ```
+/// use majordomus_cli::environment::shell::{is_identifier, Variable};
+/// let variable = Variable {
+///     name: "MAJORDOMUS_ROOT",
+///     value: "/somewhere/prismatic-majordomus".into(),
+///     purpose: "the repository this shell is working in",
+/// };
+/// assert!(is_identifier(variable.name), "a name a shell would refuse is never emitted");
+/// assert!(!variable.purpose.is_empty(), "and every one says what it is for");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     /// The name, `[A-Za-z_][A-Za-z0-9_]*`.
@@ -79,6 +142,28 @@ pub struct Variable {
 /// Deliberately few. Every variable is a name a person's shell now carries everywhere,
 /// and one that is merely interesting is one more thing to unset; each of these is
 /// something a command in this repository actually reads.
+///
+/// A variable is omitted rather than emitted empty when the snapshot cannot support it:
+/// an address is exported only while a server holds the lease, because a script that
+/// finds `MAJORDOMUS_URL` set will use it.
+///
+/// ```
+/// # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+/// use majordomus_cli::environment::shell::variables;
+/// let names: Vec<&str> = variables(&snapshot, Some("/opt/majordomus/share"))
+///     .iter()
+///     .map(|v| v.name)
+///     .collect();
+/// assert_eq!(names.first(), Some(&"MAJORDOMUS_ROOT"), "the repository comes first");
+/// assert!(names.contains(&"MAJORDOMUS_SHARE"), "the share is exported when it was located");
+/// assert!(!names.contains(&"MAJORDOMUS_URL"), "nothing holds the lease of a fresh directory");
+/// ```
 pub fn variables(environment: &RepositoryEnvironment, share: Option<&str>) -> Vec<Variable> {
     let mut out = vec![Variable {
         name: "MAJORDOMUS_ROOT",
@@ -136,6 +221,26 @@ pub fn variables(environment: &RepositoryEnvironment, share: Option<&str>) -> Ve
 /// Has no side effects of any kind: it assigns variables and nothing else. It runs no
 /// command, changes no directory, defines no function and touches no file, so that
 /// evaluating it can do nothing but what reading it says.
+///
+/// That property is what the example asserts, and it is the one worth asserting: this
+/// text is `eval`ed by a person's shell on every entry into the repository, so a line
+/// that is not an assignment is a line nobody agreed to run.
+///
+/// ```
+/// # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+/// use majordomus_cli::environment::shell::{export, Dialect};
+/// let script = export(&snapshot, Some("/opt/majordomus/share"), Dialect::Posix);
+/// for line in script.lines().filter(|l| !l.starts_with('#')) {
+///     assert!(line.starts_with("export "), "{line:?} is not an assignment");
+/// }
+/// assert!(script.contains("export MAJORDOMUS_SHARE='/opt/majordomus/share'"));
+/// ```
 pub fn export(
     environment: &RepositoryEnvironment,
     share: Option<&str>,
@@ -175,6 +280,21 @@ pub fn export(
 }
 
 /// Is this a name a shell will accept as a variable?
+///
+/// The last gate before a name reaches a script. Quoting protects a *value*; nothing
+/// protects a name, because a name cannot be quoted at all — `export a;b=1` is two
+/// commands whatever the value is. So [`export`] drops a variable whose name fails this,
+/// and the debug build asserts on it, since every name here is a literal in this crate
+/// and a failure is a mistake rather than hostile input.
+///
+/// ```
+/// use majordomus_cli::environment::shell::is_identifier;
+/// assert!(is_identifier("MAJORDOMUS_ROOT"));
+/// assert!(is_identifier("_x1"));
+/// assert!(!is_identifier("1BAD"), "a leading digit is not a name");
+/// assert!(!is_identifier("a;b"), "and this is where a name would become a command");
+/// assert!(!is_identifier(""));
+/// ```
 pub fn is_identifier(name: &str) -> bool {
     let mut chars = name.chars();
     chars

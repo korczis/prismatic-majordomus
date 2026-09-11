@@ -33,6 +33,24 @@ pub const STALE_AFTER: Duration = Duration::from_secs(900);
 
 /// The held lock. Dropping it releases it; a panic or an early return therefore cannot leave
 /// the repository locked.
+///
+/// There is no `release` method, and that is the point: holding the lock is holding the
+/// value, so the only way to keep the repository locked is to keep the guard alive, and
+/// the only way to unlock it early is to drop it. `Drop` also refuses to remove a file it
+/// does not recognise, so a process whose lock was reclaimed as stale by somebody else
+/// cannot delete the new holder's lock on its way out.
+///
+/// ```
+/// use majordomus_cli::worktree::WorktreeLock;
+/// // stands in for a repository's common git directory
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = WorktreeLock::path_for(dir.path());
+/// {
+///     let _held = WorktreeLock::acquire(dir.path()).unwrap();
+///     assert!(path.exists(), "the lock is the file's existence");
+/// }
+/// assert!(!path.exists(), "leaving the scope released it");
+/// ```
 #[derive(Debug)]
 pub struct WorktreeLock {
     path: PathBuf,
@@ -41,6 +59,19 @@ pub struct WorktreeLock {
 
 impl WorktreeLock {
     /// The lock file for a repository, given its common git directory.
+    ///
+    /// Pure: it derives a path and does not create anything. The derivation is the whole
+    /// reason the lock is one per repository rather than one per checkout — the common
+    /// directory is shared by every linked worktree, so every worktree computes the same
+    /// path here and contends on the same file.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::WorktreeLock;
+    /// use std::path::{Path, PathBuf};
+    /// let p = WorktreeLock::path_for(Path::new("/a/foo/.git"));
+    /// assert_eq!(p, PathBuf::from("/a/foo/.git/majordomus/locks/worktrees.lock"));
+    /// assert!(!p.exists(), "deriving the path creates nothing");
+    /// ```
     pub fn path_for(git_common_dir: &Path) -> PathBuf {
         git_common_dir.join(LOCK_RELATIVE)
     }
@@ -51,12 +82,38 @@ impl WorktreeLock {
     /// exactly one caller creates the file. A file older than `STALE_AFTER` is removed and
     /// the attempt repeats, so a killed process is recovered from without a person being
     /// asked to delete anything.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::WorktreeLock;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let held = WorktreeLock::acquire(dir.path()).unwrap();
+    /// assert_eq!(held.path(), WorktreeLock::path_for(dir.path()));
+    /// drop(held);
+    /// // and the next caller gets it, because releasing is not deferred
+    /// WorktreeLock::acquire(dir.path()).unwrap();
+    /// ```
     pub fn acquire(git_common_dir: &Path) -> Result<Self> {
         Self::acquire_with(git_common_dir, WAIT)
     }
 
     /// The same, with the waiting time as an argument, so a test does not wait twenty
     /// seconds to prove that a held lock is held.
+    ///
+    /// The wait is the only difference. A caller that gives up names the holder rather
+    /// than the file: the token written into the lock is a process id and a timestamp, so
+    /// the refusal tells a person which process to look at instead of which file to
+    /// delete — deleting it by hand is what this whole mechanism exists to avoid.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::WorktreeLock;
+    /// use std::time::Duration;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let _held = WorktreeLock::acquire(dir.path()).unwrap();
+    /// let refused =
+    ///     WorktreeLock::acquire_with(dir.path(), Duration::from_millis(50)).unwrap_err();
+    /// assert_eq!(refused.code(), "LockUnavailable");
+    /// assert!(refused.to_string().contains("pid "), "the refusal names the holder");
+    /// ```
     pub fn acquire_with(git_common_dir: &Path, wait: Duration) -> Result<Self> {
         let path = Self::path_for(git_common_dir);
         if let Some(dir) = path.parent() {

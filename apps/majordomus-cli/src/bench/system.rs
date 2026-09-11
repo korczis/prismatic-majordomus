@@ -6,7 +6,27 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// One system target.
+/// One system target: an operation of a transport itself, not of any capability.
+///
+/// A client pays for these before it reaches a single capability — `initialize` and
+/// `tools/list` on MCP, the OpenAPI document and the Cockpit's pages over HTTP — so
+/// leaving them out would make the benchmark a measurement of handlers and not of the
+/// tool. They are declared here as data, once: the projection turns each into a target and
+/// the coverage into a requirement, and neither of those names any of them.
+///
+/// ```
+/// use majordomus_cli::bench::{SystemTarget, Transport};
+/// // the set is closed and every member is declared once
+/// let mut keys: Vec<&str> = SystemTarget::ALL.iter().map(|t| t.key()).collect();
+/// let declared = keys.len();
+/// keys.sort_unstable();
+/// keys.dedup();
+/// assert_eq!(keys.len(), declared, "a key is claimed twice");
+/// // the transports' own operations, and no capability among them
+/// assert!(SystemTarget::ALL.iter().all(|t| t.key().starts_with("system.")));
+/// assert_eq!(SystemTarget::McpPing.transport(), Transport::Mcp);
+/// assert_eq!(SystemTarget::HttpOpenApi.transport(), Transport::Http);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -59,6 +79,19 @@ impl SystemTarget {
     ];
 
     /// The stable key results and baselines use.
+    ///
+    /// Stable is the whole requirement: a result document, an accepted baseline and a
+    /// policy allowance all refer to a target by this string, so renaming one turns its
+    /// baseline into a stale line rather than into a regression. The shape is
+    /// `system.<transport>.<operation>`, which is what keeps it from colliding with a
+    /// capability target's `<id>|<transport>|<case>`.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::SystemTarget;
+    /// assert_eq!(SystemTarget::McpToolsList.key(), "system.mcp.tools_list");
+    /// // a system key never looks like a capability target's key
+    /// assert!(SystemTarget::ALL.iter().all(|t| !t.key().contains('|')));
+    /// ```
     pub fn key(self) -> &'static str {
         match self {
             SystemTarget::McpProcessCold => "system.mcp.process_cold",
@@ -78,6 +111,18 @@ impl SystemTarget {
     }
 
     /// The transport the target belongs to.
+    ///
+    /// Derived from the variant rather than read off the key, so the two cannot disagree —
+    /// and coverage tallies a system target under `system` rather than under this, which is
+    /// why no capability module may be called `system`.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::{SystemTarget, Transport};
+    /// assert_eq!(SystemTarget::McpProcessCold.transport(), Transport::Mcp);
+    /// assert_eq!(SystemTarget::HttpCockpitGraph.transport(), Transport::Http);
+    /// // nothing in this set is measured through the in-process executor
+    /// assert!(SystemTarget::ALL.iter().all(|t| t.transport() != Transport::Direct));
+    /// ```
     pub fn transport(self) -> super::Transport {
         match self {
             SystemTarget::McpProcessCold
@@ -96,7 +141,22 @@ impl SystemTarget {
         }
     }
 
-    /// One line of what is measured.
+    /// One line of what is measured, for a reader of a report.
+    ///
+    /// It says what the operation *is*, never how fast it was: a description is written
+    /// once here and a number belongs to a run. This is the text a generated benchmark
+    /// document renders, so a target's meaning is not restated beside every table.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::SystemTarget;
+    /// assert!(SystemTarget::McpPing.description().contains("ping"));
+    /// // every target says what it is, and each says something of its own
+    /// let mut lines: Vec<&str> = SystemTarget::ALL.iter().map(|t| t.description()).collect();
+    /// let declared = lines.len();
+    /// lines.sort_unstable();
+    /// lines.dedup();
+    /// assert_eq!(lines.len(), declared);
+    /// ```
     pub fn description(self) -> &'static str {
         match self {
             SystemTarget::McpProcessCold => {

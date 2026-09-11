@@ -5,6 +5,29 @@
 //! downstream may add a field, and nothing upstream may send a string a consumer has to
 //! parse. The schema every client validates against is derived from these types by
 //! `schemars`, exactly as a capability's input and output schemas are.
+//!
+//! One envelope, whatever happened: every event carries the protocol version, an identity,
+//! the execution it is about, its place in that execution's stream, a timestamp, and a
+//! payload tagged with `type` and carried under `data`.
+//!
+//! ```
+//! use majordomus_cli::execution::{EventPayload, ExecutionEvent, ExecutionId,
+//!     ExecutionState, PROTOCOL_VERSION};
+//! let id = ExecutionId::fresh();
+//! let event = ExecutionEvent::new(id.clone(), 7, EventPayload::Started);
+//!
+//! let wire = serde_json::to_value(&event).unwrap();
+//! assert_eq!(wire["schema_version"], PROTOCOL_VERSION);
+//! assert_eq!(wire["type"], "execution.started", "a client switches on one string");
+//! assert_eq!(wire["event_id"], format!("{id}#7"));
+//! assert_eq!(wire["sequence"], 7);
+//!
+//! // and it is one value, not a message shaped by whoever sent it
+//! let back: ExecutionEvent = serde_json::from_value(wire).unwrap();
+//! assert_eq!(back, event);
+//! assert_eq!(back.payload.implies_state(), Some(ExecutionState::Running));
+//! assert!(!back.payload.is_terminal());
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -28,6 +51,23 @@ pub const PROTOCOL_VERSION: &str = "1";
 /// `sequence` is dense and starts at 1 within an execution: a client that has seen
 /// sequence `n` knows it has missed something when the next event it reads is not `n + 1`,
 /// and asks for the gap by cursor rather than reloading the world.
+///
+/// `event_id` is that pair written down, so a client that deduplicates needs no composite
+/// key of its own — which is what lets the same event arrive over the socket and again in
+/// a history page without being counted twice.
+///
+/// ```
+/// use majordomus_cli::execution::{EventPayload, ExecutionEvent, ExecutionId};
+/// let id = ExecutionId::fresh();
+/// let first = ExecutionEvent::new(id.clone(), 1, EventPayload::Started);
+/// let same = ExecutionEvent::new(id.clone(), 1, EventPayload::Started);
+/// // the identity is the execution and the sequence, so the same event is the same event
+/// assert_eq!(first.event_id, same.event_id);
+/// // and a different position in the stream is a different event
+/// let next = ExecutionEvent::new(id, 2, EventPayload::Cancelled);
+/// assert_ne!(first.event_id, next.event_id);
+/// assert_eq!(first.type_name(), "execution.started");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionEvent {
     /// The protocol version, [`PROTOCOL_VERSION`].
@@ -48,6 +88,22 @@ pub struct ExecutionEvent {
 
 impl ExecutionEvent {
     /// The event for an execution at a sequence, stamped now.
+    ///
+    /// The sequence is the caller's, because only the store knows what an execution's next
+    /// one is — it is assigned under the lock that applies the event, so two events of one
+    /// execution can never be given the same position. Everything else is derived: the
+    /// protocol version, the composite identity and the timestamp.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{EventPayload, ExecutionEvent, ExecutionId,
+    ///     PROTOCOL_VERSION};
+    /// let id = ExecutionId::fresh();
+    /// let event = ExecutionEvent::new(id.clone(), 3, EventPayload::Cancelled);
+    /// assert_eq!(event.schema_version, PROTOCOL_VERSION);
+    /// assert_eq!(event.event_id, format!("{id}#3"));
+    /// assert_eq!(event.execution_id, id);
+    /// assert!(event.timestamp.ends_with('Z'), "stamped in UTC: {}", event.timestamp);
+    /// ```
     pub fn new(execution_id: ExecutionId, sequence: u64, payload: EventPayload) -> Self {
         ExecutionEvent {
             schema_version: PROTOCOL_VERSION.to_string(),
@@ -60,6 +116,9 @@ impl ExecutionEvent {
     }
 
     /// The discriminator on the wire, for a log line or a filter.
+    ///
+    /// The payload's own word, so an event and its payload can never be described
+    /// differently.
     pub fn type_name(&self) -> &'static str {
         self.payload.type_name()
     }
@@ -69,6 +128,28 @@ impl ExecutionEvent {
 ///
 /// The tag is `type` and the body is `data`, so every event on the wire has the same two
 /// members whatever it says, and a client switches on one string.
+///
+/// Closed, and yet extensible in one direction only: a client is required to ignore a
+/// payload type it does not know, so adding a variant does not increment
+/// [`PROTOCOL_VERSION`] while renaming or removing one does. That is why nothing here is a
+/// free-form message — a consumer that had to parse a string would break on exactly the
+/// change this design is meant to absorb.
+///
+/// ```
+/// use majordomus_cli::execution::{EventPayload, ExecutionState};
+/// // the payload's own name is what a client switches on, and it is on the wire
+/// let done = EventPayload::Completed { output: serde_json::json!({ "score": 91 }) };
+/// let wire = serde_json::to_value(&done).unwrap();
+/// assert_eq!(wire["type"], done.type_name());
+/// assert_eq!(wire["data"]["output"]["score"], 91);
+/// // an outcome carries the value it produced: a client cannot read "succeeded" and
+/// // find no result
+/// assert!(done.is_terminal());
+/// assert_eq!(done.implies_state(), Some(ExecutionState::Succeeded));
+/// // and something that only says how far along it is decides no state at all
+/// assert_eq!(EventPayload::StepStarted { name: "a".into(), title: "A".into() }
+///     .implies_state(), None);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", content = "data")]
 pub enum EventPayload {
@@ -154,12 +235,20 @@ pub enum EventPayload {
 }
 
 impl EventPayload {
-    /// The discriminator on the wire.
+    /// The discriminator on the wire: the one string a client switches on.
+    ///
+    /// The same word `serde` writes as the `type` member, so a log line, a filter and the
+    /// document a client validates cannot disagree about what an event is. The words are
+    /// dotted and prefixed `execution.` because they share a namespace with everything else
+    /// this process emits, and a client that filters by prefix gets this layer and only it.
     ///
     /// ```
     /// use majordomus_cli::execution::EventPayload;
     /// assert_eq!(EventPayload::Started.type_name(), "execution.started");
     /// assert_eq!(EventPayload::Cancelled.type_name(), "execution.cancelled");
+    /// // the word and the serialised tag are one word
+    /// let wire = serde_json::to_value(EventPayload::Started).unwrap();
+    /// assert_eq!(wire["type"], EventPayload::Started.type_name());
     /// ```
     pub fn type_name(&self) -> &'static str {
         match self {
@@ -193,6 +282,32 @@ impl EventPayload {
     }
 
     /// The state this event puts the execution into, when it decides one.
+    ///
+    /// This is where the event protocol and the state machine meet, and it is the only
+    /// place: the store asks this and then asks
+    /// [`ExecutionState::may_move_to`](crate::execution::ExecutionState::may_move_to),
+    /// so an event that would move an execution somewhere it may not go is refused rather
+    /// than applied. `None` means the event says nothing about where the execution is — a
+    /// log line, a step, a progress report, a diagnostic — and those are never refused.
+    ///
+    /// Note `Created` decides nothing: an execution is created *queued* by the store, and
+    /// the first event describes it rather than moving it.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{EventPayload, ExecutionState, LogStream};
+    /// assert_eq!(EventPayload::Started.implies_state(), Some(ExecutionState::Running));
+    /// assert_eq!(EventPayload::Cancelled.implies_state(), Some(ExecutionState::Cancelled));
+    /// // an event about progress moves nothing, so it can never be refused
+    /// let line = EventPayload::Log { stream: LogStream::Handler, message: "hi".into() };
+    /// assert_eq!(line.implies_state(), None);
+    /// // every terminal payload decides a final state, and only those do
+    /// for payload in [EventPayload::Cancelled,
+    ///                 EventPayload::Completed { output: serde_json::Value::Null }] {
+    ///     assert!(payload.is_terminal());
+    ///     assert!(payload.implies_state().is_some_and(ExecutionState::is_final));
+    /// }
+    /// assert!(!EventPayload::Started.implies_state().unwrap().is_final());
+    /// ```
     pub fn implies_state(&self) -> Option<ExecutionState> {
         match self {
             EventPayload::Queued { .. } => Some(ExecutionState::Queued),

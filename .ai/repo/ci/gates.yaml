@@ -116,6 +116,18 @@ gates:
     runs: just coverage
     summary: line coverage of the crate against scripts/rust-coverage-threshold
 
+  # Beside rust-coverage, not instead of it: the two measure different denominators. That
+  # one instruments every target and excludes nothing, so test code — which is covered
+  # because it runs — is a third of its denominator. This one measures the production code
+  # alone, classifying test code out per function from llvm-cov's own records rather than by
+  # any path exclusion, and holds a per-file ratchet so the debt can shrink and cannot grow.
+  # Same job, so it reuses the profiles that gate already collected.
+  - id: rust-coverage-honest
+    job: coverage
+    requires: rust-coverage
+    runs: scripts/ci/rust-coverage-check
+    summary: coverage of the crate's production code against the accepted debt in .ai/repo/rust-coverage-baseline.txt; test code is out of the denominator because it is test code, not because a path was excluded
+
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
   - id: rust-bench

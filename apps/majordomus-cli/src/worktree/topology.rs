@@ -15,6 +15,21 @@ use super::error::{Result, WorktreeError};
 use super::git;
 
 /// One work tree as git registered it.
+///
+/// A record is git's answer and not this crate's opinion: the path may no longer exist,
+/// the branch may be absent because HEAD is detached, and the first record of a bare
+/// repository is the git directory rather than a checkout. Every field here is therefore
+/// reported rather than repaired, and the judgements — where the worktree belongs, whether
+/// it is safe to move — are made from a record by the topology model, not inside one.
+///
+/// ```
+/// use majordomus_cli::worktree::{parse_porcelain, WorktreeRecord};
+/// let records: Vec<WorktreeRecord> =
+///     parse_porcelain("worktree /a/foo-wt/feature/x\nHEAD abc123\nbranch refs/heads/feature/x\n");
+/// let r = records.first().unwrap();
+/// assert_eq!(r.branch.as_deref(), Some("feature/x"), "the short branch, not the full ref");
+/// assert!(!r.detached && !r.bare && r.locked.is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorktreeRecord {
     /// The absolute path git holds for it. It may not exist on disk any more; that is what
@@ -60,6 +75,19 @@ pub fn parse_porcelain(text: &str) -> Vec<WorktreeRecord> {
 }
 
 /// The same, from the NUL-separated form, where a path may contain a newline.
+///
+/// This is the form [`read`] asks git for first, and the only one that is unambiguous: a
+/// path containing a newline is a legal path, and under `--porcelain` it would end a line
+/// and be read as the start of an attribute. The bytes are decoded lossily rather than
+/// refused, because a path this crate cannot name is still a path it must report.
+///
+/// ```
+/// use majordomus_cli::worktree::parse_porcelain_nul;
+/// let bytes = b"worktree /a/foo-wt/we\nird\0HEAD abc\0branch refs/heads/main\0\0";
+/// let r = parse_porcelain_nul(bytes);
+/// assert_eq!(r.len(), 1, "the newline is inside the path, not between records");
+/// assert_eq!(r[0].branch.as_deref(), Some("main"));
+/// ```
 pub fn parse_porcelain_nul(bytes: &[u8]) -> Vec<WorktreeRecord> {
     let text = String::from_utf8_lossy(bytes);
     parse_lines(text.split('\0'))

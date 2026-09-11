@@ -27,6 +27,43 @@
 //! A cache that cannot be read is a cache miss, never an error: a truncated write, a file
 //! from another version, a directory that is read-only. Writes are atomic — a temporary
 //! file and a rename — so a reader sees either the previous entry or the whole new one.
+//!
+//! # The lifecycle
+//!
+//! A full resolution computes a tier and stores it under the fingerprint of the inputs it
+//! read; a fast one loads the document and asks each tier whether that fingerprint still
+//! holds. An input that moved makes the tier a miss, which is the whole mechanism — there
+//! is no invalidation step for anybody to forget to call.
+//!
+//! ```
+//! use majordomus_cli::environment::cache::{fingerprint_of, Cache};
+//! use majordomus_cli::environment::{LayerSummary, TierState};
+//! let dir = tempfile::tempdir().expect("a temporary directory");
+//! std::fs::write(dir.path().join("justfile"), "build:\n  true\n").expect("an input");
+//!
+//! let counted = LayerSummary {
+//!     state: TierState::Resolved,
+//!     kinds: vec![],
+//!     objects: Some(902),
+//!     capabilities: Some(934),
+//!     invalid: Some(0),
+//!     degraded: Some(false),
+//! };
+//! let inputs = fingerprint_of(dir.path(), &["justfile".into()], &["layer"]);
+//! let mut cache = Cache::default();
+//! cache.tiers.layer = Some(Cache::entry(inputs.clone(), counted));
+//! cache.store(dir.path(), "local").expect("a writable checkout");
+//!
+//! let entry = Cache::load(dir.path(), "local")
+//!     .tiers
+//!     .layer
+//!     .expect("the tier that was written is the tier that is read");
+//! assert_eq!(entry.fresh(&inputs, None).and_then(|s| s.objects), Some(902));
+//!
+//! std::fs::write(dir.path().join("justfile"), "build:\n  false\n").expect("a changed input");
+//! let moved = fingerprint_of(dir.path(), &["justfile".into()], &["layer"]);
+//! assert!(entry.fresh(&moved, None).is_none(), "an input that changed expires its tier");
+//! ```
 
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
@@ -50,6 +87,21 @@ pub const SCHEMA: &str = "majordomus-environment-cache/v1";
 pub const TOOLCHAIN_LIFETIME: Duration = Duration::from_secs(6 * 3600);
 
 /// One cached answer with the fingerprint of the inputs it was computed from.
+///
+/// The fingerprint travels with the value rather than beside it, so a tier can never be
+/// read under somebody else's key: whatever is in the file, the only question asked of it
+/// is whether the inputs it names are still the inputs there are.
+///
+/// ```
+/// use majordomus_cli::environment::cache::{now_seconds, Entry};
+/// let entry = Entry {
+///     fingerprint: "the inputs as they were".to_string(),
+///     written_at: now_seconds(),
+///     value: 902usize,
+/// };
+/// assert_eq!(entry.fresh("the inputs as they were", None), Some(&902));
+/// assert_eq!(entry.fresh("anything else", None), None, "a key that does not match is a miss");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Entry<T> {
     /// The fingerprint of this tier's inputs when the value was computed.
@@ -63,6 +115,29 @@ pub struct Entry<T> {
 impl<T> Entry<T> {
     /// The value, when the fingerprint still matches and the entry has not outlived
     /// `lifetime`.
+    ///
+    /// Two independent ways of going stale, and a tier chooses which apply to it. Most
+    /// pass `None`: their inputs are files, so a fingerprint answers completely and an age
+    /// would only throw away a good answer. The toolchain tier passes a lifetime because
+    /// nothing in the repository changes when a person upgrades their compiler, and no
+    /// fingerprint over the checkout could ever notice that.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::environment::cache::{now_seconds, Entry};
+    /// let entry = Entry {
+    ///     fingerprint: "f".to_string(),
+    ///     written_at: now_seconds() - 7 * 3600,
+    ///     value: "1.90.0".to_string(),
+    /// };
+    /// assert_eq!(entry.fresh("f", None).map(String::as_str), Some("1.90.0"));
+    /// assert_eq!(
+    ///     entry.fresh("f", Some(Duration::from_secs(6 * 3600))),
+    ///     None,
+    ///     "seven hours old is beyond a six-hour lifetime, whatever the fingerprint says"
+    /// );
+    /// assert_eq!(entry.fresh("g", None), None);
+    /// ```
     pub fn fresh(&self, fingerprint: &str, lifetime: Option<Duration>) -> Option<&T> {
         if self.fingerprint != fingerprint {
             return None;
@@ -78,6 +153,23 @@ impl<T> Entry<T> {
 }
 
 /// What a fast resolution takes from an earlier full one.
+///
+/// Four independent slots rather than one snapshot, each with its own key: that is what
+/// lets editing the justfile expire the workflows and leave the counts alone. A tier that
+/// was never written is absent, and absent is what makes the resolver report `unavailable`
+/// rather than a zero it never counted.
+///
+/// ```
+/// use majordomus_cli::environment::cache::CachedTier;
+/// let empty = CachedTier::default();
+/// assert!(empty.layer.is_none(), "a fresh clone has computed nothing yet");
+/// assert!(empty.workflows.is_none() && empty.toolchains.is_none());
+/// assert_eq!(
+///     serde_json::to_string(&empty).expect("a tier serialises"),
+///     "{}",
+///     "an empty tier costs nothing on disk"
+/// );
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CachedTier {
     /// What the layer holds; expires when the layer changes.
@@ -97,6 +189,21 @@ pub struct CachedTier {
 }
 
 /// The cache file of one checkout.
+///
+/// It belongs to the checkout and to the build: the schema and the version travel in the
+/// document, and a document written by a different executable is not read, because two
+/// builds of this crate can disagree about the shape of a tier while agreeing about its
+/// name. A checkout with no cache and a checkout with an unreadable one are the same
+/// thing here — an empty cache — and neither is an error.
+///
+/// ```
+/// use majordomus_cli::environment::cache::{Cache, SCHEMA};
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// let cold = Cache::load(dir.path(), "local");
+/// assert_eq!(cold, Cache::default(), "a checkout with no cache reads as an empty one");
+/// assert_eq!(cold.schema, SCHEMA);
+/// assert!(cold.tiers.layer.is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cache {
     /// [`SCHEMA`].
@@ -121,12 +228,47 @@ impl Default for Cache {
 
 impl Cache {
     /// Where the cache of this checkout is.
+    ///
+    /// Under the local half the manifest declares, never under a directory chosen here:
+    /// a linked work tree has its own local half, and a cache written to a shared path
+    /// would answer one checkout's questions with another checkout's numbers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::cache::{Cache, CACHE_PATH};
+    /// let path = Cache::path(std::path::Path::new("/checkout"), ".ai/local");
+    /// assert_eq!(
+    ///     path,
+    ///     std::path::PathBuf::from("/checkout/.ai/local/state/environment/snapshot.json")
+    /// );
+    /// assert!(path.ends_with(CACHE_PATH), "the tail is the constant, not a second spelling");
+    /// ```
     pub fn path(root: &Path, local_half: &str) -> PathBuf {
         root.join(local_half).join(CACHE_PATH)
     }
 
     /// Read the cache, or a fresh empty one. Never fails: an unreadable, truncated,
     /// foreign or corrupt file is a miss, and the next write replaces it.
+    ///
+    /// This runs on the path a shell takes on every entry into the repository, so there is
+    /// no failure it may report: the worst a bad file can cost is the price of computing
+    /// the tiers again.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::cache::Cache;
+    /// let dir = tempfile::tempdir().expect("a temporary directory");
+    /// let path = Cache::path(dir.path(), "local");
+    /// std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+    ///
+    /// std::fs::write(&path, "{ half a document").expect("a truncated write");
+    /// assert_eq!(Cache::load(dir.path(), "local"), Cache::default(), "a corrupt cache is a miss");
+    ///
+    /// std::fs::write(&path, r#"{"schema":"something/else","version":"0.0.0"}"#).expect("a file");
+    /// assert_eq!(
+    ///     Cache::load(dir.path(), "local"),
+    ///     Cache::default(),
+    ///     "and so is a document written under another contract"
+    /// );
+    /// ```
     pub fn load(root: &Path, local_half: &str) -> Cache {
         let Ok(text) = std::fs::read_to_string(Self::path(root, local_half)) else {
             return Cache::default();
@@ -139,6 +281,25 @@ impl Cache {
 
     /// Write the cache atomically. A failure is reported to the caller and is never fatal:
     /// a read-only checkout must still produce a snapshot, just not a cheaper next one.
+    ///
+    /// A temporary file and a rename, and the temporary name carries this process's id:
+    /// two resolutions racing must not write the same temporary file, or one truncates the
+    /// other's and the rename publishes half a document. A reader therefore sees either
+    /// the previous cache or the whole new one, and never a partial write.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::cache::Cache;
+    /// let dir = tempfile::tempdir().expect("a temporary directory");
+    /// Cache::default().store(dir.path(), "local").expect("a writable checkout");
+    /// let path = Cache::path(dir.path(), "local");
+    /// assert!(path.is_file(), "the document is written where load looks for it");
+    ///
+    /// let left_behind = std::fs::read_dir(path.parent().expect("a parent"))
+    ///     .expect("the cache directory")
+    ///     .flatten()
+    ///     .any(|e| e.file_name().to_string_lossy().ends_with(".tmp"));
+    /// assert!(!left_behind, "the temporary file is renamed, never left behind");
+    /// ```
     pub fn store(&self, root: &Path, local_half: &str) -> std::io::Result<()> {
         let path = Self::path(root, local_half);
         if let Some(dir) = path.parent() {
@@ -159,6 +320,19 @@ impl Cache {
     }
 
     /// An entry for a value computed now.
+    ///
+    /// The one way to build an [`Entry`] that the resolver uses, so that the write time is
+    /// taken at the moment the value was computed rather than left to a caller to
+    /// remember: an entry stamped with the wrong moment is an entry that expires at the
+    /// wrong one.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::cache::{now_seconds, Cache};
+    /// let before = now_seconds();
+    /// let entry = Cache::entry("the inputs as they were".to_string(), 902usize);
+    /// assert!(entry.written_at >= before, "it is stamped now, not when it is stored");
+    /// assert_eq!(entry.fresh("the inputs as they were", None), Some(&902));
+    /// ```
     pub fn entry<T>(fingerprint: String, value: T) -> Entry<T> {
         Entry {
             fingerprint,
@@ -169,6 +343,18 @@ impl Cache {
 }
 
 /// Seconds since the Unix epoch, or 0 on a machine whose clock is before it.
+///
+/// Seconds, not a `SystemTime`, because the value is written into a JSON document that an
+/// older or newer build of this executable may read; and a clock before the epoch answers
+/// `0` rather than panicking, which makes every entry look infinitely old — a cache miss,
+/// which is the safe direction for a clock nobody can trust.
+///
+/// ```
+/// use majordomus_cli::environment::cache::now_seconds;
+/// let then = now_seconds();
+/// assert!(then > 1_700_000_000, "the clock is somewhere after 2023");
+/// assert!(now_seconds() >= then, "and it does not run backwards between two calls");
+/// ```
 pub fn now_seconds() -> u64 {
     SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)

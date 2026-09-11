@@ -30,6 +30,26 @@
 //! Everything here is a pure function of the registry and the clap tree. Nothing reads the
 //! repository, the environment or the network, so the whole check costs a walk of two
 //! in-memory structures and runs inside a unit test.
+//!
+//! ```
+//! use majordomus_cli::capability::{builtin, closure, CapabilityRegistry};
+//! use majordomus_cli::cli;
+//!
+//! let registry = CapabilityRegistry::builder()
+//!     .with_modules(builtin::modules())
+//!     .build()
+//!     .expect("the builtin registry builds");
+//! let matrix = closure::matrix(&registry, &cli::tree());
+//!
+//! // declared, and present: every claim this crate makes about its command line is
+//! // answered by the command line it actually declares
+//! assert!(matrix.findings.is_empty(), "{:?}", matrix.findings);
+//! assert!(matrix.rows.iter().all(|r| r.closed));
+//!
+//! // present, not declared: an inventory rather than a failure, and `serve` is in it
+//! // because starting a process is not a capability
+//! assert!(matrix.unbacked.contains(&"majordomus serve".to_string()));
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -41,6 +61,14 @@ use crate::cli::{CommandDoc, DECLARATION};
 /// today, because it is the only interface with a declaration of its own to compare
 /// against; the variant exists so that a surface which grows one later says which it is
 /// rather than being told apart by the text of its message.
+///
+/// ```
+/// use majordomus_cli::capability::closure::Projection;
+/// // one variant today, and a finding still says which interface it is about rather than
+/// // leaving a reader to infer it from the wording
+/// assert_eq!(Projection::Cli.name(), "cli");
+/// assert!(Projection::Cli.declaration().ends_with("cli.rs"));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Projection {
     /// The native command line, declared in clap in `cli.rs`.
@@ -48,7 +76,11 @@ pub enum Projection {
 }
 
 impl Projection {
-    /// The name a report prints.
+    /// The word a report prints for this interface.
+    ///
+    /// One spelling, used by the finding, by the JSON of the matrix and by the gate that
+    /// reads it, so that three renderings of one comparison cannot name the interface
+    /// three ways and read as three different problems.
     ///
     /// ```
     /// use majordomus_cli::capability::closure::Projection;
@@ -61,6 +93,18 @@ impl Projection {
     }
 
     /// The file the projection is declared in; where a reader goes to fix it.
+    ///
+    /// A finding is only actionable if it names both declarations. The capability's own
+    /// provenance says where the claim was made; this says where the surface that failed
+    /// to carry it is written. Repository-relative, like every path this executable
+    /// prints, so the finding means the same thing on another machine.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::closure::Projection;
+    /// let file = Projection::Cli.declaration();
+    /// assert!(file.ends_with("cli.rs"), "the clap declaration");
+    /// assert!(!file.starts_with('/'), "never a machine path");
+    /// ```
     pub fn declaration(self) -> &'static str {
         match self {
             Projection::Cli => DECLARATION,
@@ -73,6 +117,31 @@ impl Projection {
 /// The shape follows `project.finding-carries-reproduce@1` — a finding names the subject,
 /// what is wrong, where the claim was made, where the surface is declared, and the one
 /// command that shows it again.
+///
+/// ```
+/// use majordomus_cli::capability::closure::{Finding, Projection};
+/// let finding = Finding {
+///     code: "CLOSURE_CLI_ABSENT",
+///     capability: "demo.ping".into(),
+///     projection: Projection::Cli,
+///     claim: "majordomus demo ping".into(),
+///     detail: "the clap declaration has no command `demo ping`".into(),
+///     source: "apps/majordomus-cli/src/capability/builtin/demo.rs".into(),
+///     rule: "a capability is defined once and every external interface is derived from it",
+/// };
+/// // the rendering carries every part a reader needs, the reproduction included
+/// let text = finding.to_string();
+/// for part in [
+///     "CLOSURE_CLI_ABSENT",
+///     "demo.ping",
+///     "majordomus demo ping",
+///     "builtin/demo.rs",
+///     "cli.rs",
+///     "majordomus capabilities projections",
+/// ] {
+///     assert!(text.contains(part), "the finding never mentions {part}");
+/// }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Finding {
     /// The stable code a reader greps for.
@@ -117,6 +186,16 @@ const RULE: &str =
 /// (`generate`) and the lifecycle verbs that call a service directly are all legitimately
 /// hand-written today. It is the debt the rule is measured against, and the gate that reads
 /// it refuses growth rather than existence.
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, closure, CapabilityRegistry};
+/// let registry = CapabilityRegistry::builder().with_modules(builtin::modules()).build().unwrap();
+/// let debt: Vec<closure::Unbacked> = closure::unbacked(&registry, &majordomus_cli::cli::tree());
+/// let serve = debt.iter().find(|u| u.command == "majordomus serve").unwrap();
+/// // the words are exactly what a `CliExposure` would have to carry for this command to
+/// // stop being hand-written, which is what makes the inventory a to-do list
+/// assert_eq!(serve.path, ["serve"]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unbacked {
     /// The command as a person types it, `majordomus web list`.
@@ -131,6 +210,21 @@ pub struct Unbacked {
 /// This is the coverage matrix of the rule: a row per capability, a column per interface.
 /// It is derived, never written down — a capability that reaches nothing shows as a row of
 /// `false`, which is exactly the "exists but is invisible" case worth seeing.
+///
+/// A column shows a claim only when the surface answers it: a row that printed a command
+/// clap does not have would be the same untruth the findings exist to catch.
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, closure, CapabilityRegistry};
+/// let registry = CapabilityRegistry::builder().with_modules(builtin::modules()).build().unwrap();
+/// let matrix = closure::matrix(&registry, &majordomus_cli::cli::tree());
+/// let row: &closure::Row = matrix.rows.iter().find(|r| r.id == "repository.info").unwrap();
+/// assert_eq!(row.http.as_deref(), Some("GET /api/v1/repository"));
+/// assert_eq!(row.mcp_tool.as_deref(), Some("majordomus_repository"));
+/// // it claims no command, and claiming none is closed rather than broken
+/// assert_eq!(row.cli, None);
+/// assert!(row.closed);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
 pub struct Row {
     /// The canonical id.
@@ -161,6 +255,21 @@ pub struct Row {
 
 /// The whole matrix, with the findings and the debt beside it: one value that answers
 /// "where does each capability appear, and is any claim unmet".
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, closure, CapabilityRegistry};
+/// let registry = CapabilityRegistry::builder().with_modules(builtin::modules()).build().unwrap();
+/// let matrix: closure::Matrix = closure::matrix(&registry, &majordomus_cli::cli::tree());
+///
+/// // a row per capability, in id order, so a diff of the matrix is a diff of the change
+/// assert_eq!(matrix.rows.len(), registry.len());
+/// assert!(matrix.rows.windows(2).all(|w| w[0].id <= w[1].id));
+///
+/// // the two directions of the comparison, side by side: no unmet claim, and a
+/// // non-empty inventory of what the command line still declares by hand
+/// assert!(matrix.findings.is_empty());
+/// assert!(!matrix.unbacked.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, schemars::JsonSchema)]
 #[schemars(rename = "ClosureMatrix")]
 pub struct Matrix {
@@ -236,6 +345,25 @@ pub fn unbacked(registry: &CapabilityRegistry, tree: &CommandDoc) -> Vec<Unbacke
 }
 
 /// The matrix, the findings and the debt in one pass.
+///
+/// What every projection of this check reads: the command, the HTTP route, the MCP tool
+/// and the Cockpit page are handed this one value, so a report cannot show a row that
+/// disagrees with the finding printed beside it.
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, closure, CapabilityRegistry};
+/// let registry = CapabilityRegistry::builder().with_modules(builtin::modules()).build().unwrap();
+/// let tree = majordomus_cli::cli::tree();
+/// let matrix = closure::matrix(&registry, &tree);
+///
+/// // the three answers are one comparison, not three: asked separately, they agree
+/// assert_eq!(matrix.findings, closure::findings(&registry, &tree));
+/// let debt: Vec<String> = closure::unbacked(&registry, &tree)
+///     .into_iter()
+///     .map(|u| u.command)
+///     .collect();
+/// assert_eq!(matrix.unbacked, debt);
+/// ```
 pub fn matrix(registry: &CapabilityRegistry, tree: &CommandDoc) -> Matrix {
     let commands = index(tree);
     let mut rows: Vec<Row> = registry.iter().map(|c| row(c, &commands)).collect();

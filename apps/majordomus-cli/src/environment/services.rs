@@ -12,6 +12,43 @@
 //! Availability is decided by a connection attempt with a hard budget and no name
 //! resolution ([`super::probe`]); a service that did not answer in time is `unknown`,
 //! never "down".
+//!
+//! # The lifecycle
+//!
+//! What is served is known at compile time; where it can be reached is known only while a
+//! server runs. So the descriptors are always answered and the address is answered from
+//! the lease, which is why a cold repository still documents its surfaces instead of
+//! reporting nothing at all.
+//!
+//! ```
+//! use majordomus_cli::environment::services;
+//! use majordomus_cli::environment::ServiceAvailability;
+//! let dir = tempfile::tempdir().expect("a temporary directory");
+//!
+//! let cold = services::resolve(dir.path(), ".ai/local", false);
+//! assert!(!cold.is_empty(), "the surfaces are described whether or not one is serving");
+//! assert!(cold.iter().all(|s| s.url.is_none()), "and no address is invented for them");
+//! assert!(cold.iter().all(|s| s.availability == ServiceAvailability::NotRunning));
+//!
+//! let lease = dir.path().join(".ai/local").join(majordomus_cli::lease::LEASE_PATH);
+//! std::fs::create_dir_all(lease.parent().expect("a parent")).expect("a directory");
+//! std::fs::write(
+//!     &lease,
+//!     format!(
+//!         r#"{{"schema":"{}","url":"http://127.0.0.1:8741"}}"#,
+//!         majordomus_cli::lease::SCHEMA
+//!     ),
+//! )
+//! .expect("a lease");
+//! let warm = services::resolve(dir.path(), ".ai/local", false);
+//! let cockpit = warm.iter().find(|s| s.id == "cockpit").expect("the Cockpit is described");
+//! assert_eq!(cockpit.url.as_deref(), Some("http://127.0.0.1:8741/cockpit"));
+//! assert_eq!(
+//!     cockpit.availability,
+//!     ServiceAvailability::Unknown,
+//!     "this resolution did not probe, so it has not learnt that anything answers"
+//! );
+//! ```
 
 use std::path::Path;
 use std::time::Duration;
@@ -93,6 +130,20 @@ fn descriptors() -> [Descriptor; 8] {
 ///
 /// `probe` decides whether the address is contacted at all: a resolution that may not
 /// spend the time reports every service `unknown`, which is what it knows.
+///
+/// One answer covers every service, because they are one socket: seven attempts would
+/// cost seven times as much to learn the same thing. The paths, on the other hand, are
+/// each service's own and come from the constant the router already uses.
+///
+/// ```
+/// use majordomus_cli::environment::services;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// let services = services::resolve(dir.path(), ".ai/local", false);
+/// let index = services.iter().find(|s| s.id == "index").expect("the home page is a service");
+/// assert_eq!(index.path, "/");
+/// assert_eq!(index.url, None, "nothing published an address to build one from");
+/// assert!(services.iter().all(|s| s.path.starts_with('/')), "every path is absolute");
+/// ```
 pub fn resolve(root: &Path, local_half: &str, probe: bool) -> Vec<ServiceState> {
     let base = published_url(root, local_half);
     // One connection attempt for the whole server, not one per route: they are all the
@@ -117,6 +168,26 @@ pub fn resolve(root: &Path, local_half: &str, probe: bool) -> Vec<ServiceState> 
 /// The address the repository's shared server published, from its lease. Reads one small
 /// file and contacts nothing; [`crate::lease::probe`] is the version that checks whether
 /// the server is really there, and it costs an HTTP round trip.
+///
+/// A lease of another schema is not read at all rather than read hopefully: the file lives
+/// in a directory this executable shares with older and newer builds of itself, and a
+/// document whose shape is not this one may mean anything.
+///
+/// ```
+/// use majordomus_cli::environment::services::published_url;
+/// let dir = tempfile::tempdir().expect("a temporary directory");
+/// assert_eq!(published_url(dir.path(), ".ai/local"), None, "no lease, no address");
+///
+/// let lease = dir.path().join(".ai/local").join(majordomus_cli::lease::LEASE_PATH);
+/// std::fs::create_dir_all(lease.parent().expect("a parent")).expect("a directory");
+/// std::fs::write(&lease, r#"{"schema":"something/else","url":"http://127.0.0.1:1"}"#)
+///     .expect("a lease");
+/// assert_eq!(
+///     published_url(dir.path(), ".ai/local"),
+///     None,
+///     "a document of another schema is not read, however much it looks like one"
+/// );
+/// ```
 pub fn published_url(root: &Path, local_half: &str) -> Option<String> {
     crate::lease::LeaseFile::read(&crate::lease::lease_file(root, local_half))
         .document()?

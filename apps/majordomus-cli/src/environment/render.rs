@@ -17,6 +17,36 @@
 //! - Colour when it was not asked to. `NO_COLOR`, a pipe, and `CI` each turn it off.
 //! - Fail. A render error would take the shell down with it, so there is no path here
 //!   that can produce one.
+//!
+//! # The lifecycle
+//!
+//! Three things decide what a person sees, and none of them is discovered here: the
+//! snapshot, what the terminal can take ([`Presentation`]), and how much was asked for
+//! ([`BannerMode`]). The digest of the last banner shown is the fourth argument and the
+//! only memory in the whole module — it is what lets `auto` tell a first look from a
+//! re-entry without keeping a record of anybody's session.
+//!
+//! ```
+//! # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+//! # let dir = tempfile::tempdir().expect("a temporary directory");
+//! # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+//! # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+//! # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+//! # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+//! # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+//! use majordomus_cli::environment::render::{banner, BannerMode, Presentation};
+//! let terminal = Presentation { colour: false, unicode: true, columns: 78, interactive: true };
+//!
+//! let first = banner(&snapshot, BannerMode::Auto, &terminal, None).expect("a first look draws");
+//! assert!(first.contains("MAJORDOMUS"), "the whole box, on the way in");
+//!
+//! let again = banner(&snapshot, BannerMode::Auto, &terminal, Some(&snapshot.digest()))
+//!     .expect("a re-entry still says where you are");
+//! assert!(again.lines().count() < first.lines().count(), "but says it far more briefly");
+//!
+//! let piped = Presentation { interactive: false, ..terminal };
+//! assert_eq!(banner(&snapshot, BannerMode::Auto, &piped, None), None, "nobody is watching");
+//! ```
 
 use std::fmt::Write as _;
 
@@ -29,6 +59,20 @@ use super::{
 };
 
 /// How much of a snapshot to show.
+///
+/// The default is [`BannerMode::Auto`], and it is the only variant that decides anything:
+/// the other three are a person overruling it, which is why `MAJORDOMUS_BANNER=off` is a
+/// mode and not a separate switch. `off`, `none` and `silent` are all accepted for it,
+/// because a person who wants silence should not have to guess which word buys it.
+///
+/// ```
+/// use majordomus_cli::environment::render::BannerMode;
+/// assert_eq!(BannerMode::default(), BannerMode::Auto);
+/// assert_eq!(BannerMode::parse("full"), Some(BannerMode::Full));
+/// assert_eq!(BannerMode::parse("  COMPACT  "), Some(BannerMode::Compact), "trimmed, any case");
+/// assert_eq!(BannerMode::parse("silent"), BannerMode::parse("off"), "three words, one silence");
+/// assert_eq!(BannerMode::parse("loud"), None, "a word that is not a mode decides nothing");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BannerMode {
     /// Decide from the terminal and from whether this snapshot says anything new.
@@ -61,7 +105,19 @@ impl BannerMode {
         }
     }
 
-    /// The word as written.
+    /// The mode's canonical word: what a diagnostic quotes back when it has to say which
+    /// mode was in force.
+    ///
+    /// One word per mode, and not the word the caller used: `none` and `silent` both parse
+    /// to [`BannerMode::Off`] and both answer `off` here, so a message about the mode says
+    /// the same thing however the person spelled it.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::render::BannerMode;
+    /// assert_eq!(BannerMode::parse("silent").map(BannerMode::as_str), Some("off"));
+    /// assert_eq!(BannerMode::default().as_str(), "auto");
+    /// assert_eq!(BannerMode::parse(BannerMode::Compact.as_str()), Some(BannerMode::Compact));
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             BannerMode::Auto => "auto",
@@ -73,6 +129,35 @@ impl BannerMode {
 }
 
 /// What the terminal on the other end can take.
+///
+/// Four facts about the far end, and every one of them is a constraint rather than a
+/// preference: a box wider than the terminal is not a box, an escape sequence in a pipe is
+/// noise in somebody's log, and a glyph the locale cannot render is mojibake. The default
+/// is the cautious end of all four — no colour, not interactive — so a caller that has not
+/// looked at the terminal cannot accidentally claim it can take anything.
+///
+/// ```
+/// # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+/// use majordomus_cli::environment::render::{banner, BannerMode, Presentation, MIN_BOX_WIDTH};
+/// let wide = Presentation { colour: false, unicode: true, columns: 78, interactive: true };
+/// let boxed = banner(&snapshot, BannerMode::Full, &wide, None).expect("a banner");
+/// assert!(boxed.contains('╭'), "a terminal with the room for a box gets one");
+///
+/// let narrow = Presentation { columns: MIN_BOX_WIDTH - 1, ..wide };
+/// let plain = banner(&snapshot, BannerMode::Full, &narrow, None).expect("a banner");
+/// assert!(!plain.contains('╭'), "one without it gets the two-line form instead of a broken box");
+///
+/// let ascii = Presentation { unicode: false, ..wide };
+/// let drawn = banner(&snapshot, BannerMode::Full, &ascii, None).expect("a banner");
+/// assert!(!drawn.contains('╭'), "and a terminal whose locale cannot render a corner gets `+`");
+/// assert!(drawn.contains('+'));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Presentation {
     /// Whether escape sequences may be used.
@@ -114,6 +199,17 @@ impl Presentation {
     /// `NO_COLOR` — set to anything at all, including the empty string, per the
     /// convention — turns colour off. So does `CI`, and so does a standard error that is
     /// not a terminal.
+    ///
+    /// This is the only function in the module that reads anything outside its arguments,
+    /// and it is deliberately the whole of that: every other decision is taken from the
+    /// value it returns, so a caller can render for a terminal it is not attached to.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::render::Presentation;
+    /// let here = Presentation::detect();
+    /// assert!(here.columns > 0, "there is always some width to draw in");
+    /// assert!(!here.colour || here.interactive, "colour is never claimed off a terminal");
+    /// ```
     pub fn detect() -> Self {
         let interactive = is_terminal(libc::STDERR_FILENO);
         let ci = std::env::var_os("CI").is_some();
@@ -237,6 +333,29 @@ const ASCII: Glyphs = Glyphs {
 /// `seen_before` is the digest of the last snapshot shown to this person, which decides
 /// what `auto` does: a repository that has not changed since they last looked gets the
 /// two-line form, and a first look or a changed repository gets the box.
+///
+/// `None` is a real answer and the common one: on a shell prompt with nothing watching,
+/// the right amount of output is none. Whatever it does return is bounded by the
+/// presentation's width, so no caller has to wrap it.
+///
+/// ```
+/// # use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
+/// # let dir = tempfile::tempdir().expect("a temporary directory");
+/// # std::fs::create_dir_all(dir.path().join(".ai/repo")).expect("the tracked half");
+/// # std::fs::write(dir.path().join(".ai/manifest.yaml"), "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").expect("a manifest");
+/// # let repository = majordomus_cli::Repository::discover(dir.path()).expect("a repository");
+/// # let inputs = Inputs { repository: &repository, share: None, index: None, registry: None };
+/// # let snapshot = resolve(&inputs, &EnvironmentQuery::fast().sealed());
+/// use majordomus_cli::environment::render::{banner, BannerMode, Presentation};
+/// use majordomus_cli::environment::text::width;
+/// let terminal = Presentation { colour: false, unicode: true, columns: 60, interactive: true };
+///
+/// assert_eq!(banner(&snapshot, BannerMode::Off, &terminal, None), None, "off draws nothing");
+///
+/// let drawn = banner(&snapshot, BannerMode::Full, &terminal, None).expect("full always draws");
+/// assert!(drawn.lines().all(|l| width(l) <= 60), "nothing is drawn wider than the terminal");
+/// assert!(!drawn.contains('\u{1b}'), "and nothing is coloured that was not asked for");
+/// ```
 pub fn banner(
     environment: &RepositoryEnvironment,
     mode: BannerMode,

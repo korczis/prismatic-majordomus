@@ -9,6 +9,19 @@ use serde::{Deserialize, Serialize};
 pub const SCHEMA: &str = "majordomus/worktree-topology/v1";
 
 /// Whether a work tree is the repository's own checkout or one linked to it.
+///
+/// The distinction is not cosmetic: the two kinds are held to different rules. A linked
+/// work tree belongs at its branch's canonical path and can be moved or removed; the
+/// primary checkout is exempt from the path rule, hosts the trunk, and is never either.
+/// Keeping that as a kind rather than as a path comparison scattered through the callers
+/// is what lets the guard state its rule once.
+///
+/// ```
+/// use majordomus_cli::worktree::WorktreeKind;
+/// let wire = serde_json::to_string(&WorktreeKind::Linked).unwrap();
+/// assert_eq!(wire, "\"linked\"", "the wire form is the lowercase word");
+/// assert_eq!(WorktreeKind::Primary.as_str(), "primary");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum WorktreeKind {
@@ -19,7 +32,19 @@ pub enum WorktreeKind {
 }
 
 impl WorktreeKind {
-    /// The word this kind is reported under.
+    /// The word this kind is reported under, on every surface.
+    ///
+    /// The same string serde writes, deliberately: a human rendering that spelled a kind
+    /// differently from the JSON would make the command line and the API two vocabularies
+    /// for one fact, and a reader comparing them would conclude they disagree.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::WorktreeKind;
+    /// for kind in [WorktreeKind::Primary, WorktreeKind::Linked] {
+    ///     let wire = serde_json::to_string(&kind).unwrap();
+    ///     assert_eq!(wire, format!("\"{}\"", kind.as_str()), "one vocabulary, not two");
+    /// }
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             WorktreeKind::Primary => "primary",
@@ -29,6 +54,21 @@ impl WorktreeKind {
 }
 
 /// Where a work tree stands against the topology.
+///
+/// Six standings and not a boolean, because "not where it belongs" covers four situations
+/// with four different answers: a linked tree in the wrong place is migrated, a detached
+/// one has no canonical path to be moved to, an ephemeral one is a harness's scratch
+/// checkout that will remove itself, and a missing one is a registration to prune rather
+/// than a directory to move. [`Standing::is_acceptable`] is where those four collapse into
+/// the one bit a caller usually wants, and it collapses them in exactly one place.
+///
+/// ```
+/// use majordomus_cli::worktree::Standing;
+/// assert!(Standing::Canonical.is_acceptable());
+/// assert!(Standing::Primary.is_acceptable(), "the primary checkout is exempt");
+/// assert!(!Standing::Misplaced.is_acceptable());
+/// assert_eq!(serde_json::to_string(&Standing::Missing).unwrap(), "\"missing\"");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Standing {
@@ -49,7 +89,27 @@ pub enum Standing {
 }
 
 impl Standing {
-    /// The word this standing is reported under.
+    /// The word this standing is reported under, on every surface.
+    ///
+    /// Identical to what serde writes, so the table a person reads and the JSON a script
+    /// parses use one set of words. That parity is asserted rather than assumed, because
+    /// the two are written out separately and a new variant can be added to one of them.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::Standing;
+    /// let all = [
+    ///     Standing::Primary,
+    ///     Standing::Canonical,
+    ///     Standing::Misplaced,
+    ///     Standing::Detached,
+    ///     Standing::Ephemeral,
+    ///     Standing::Missing,
+    /// ];
+    /// for standing in all {
+    ///     let wire = serde_json::to_string(&standing).unwrap();
+    ///     assert_eq!(wire, format!("\"{}\"", standing.as_str()));
+    /// }
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Standing::Primary => "primary",
@@ -66,6 +126,24 @@ impl Standing {
     /// `Ephemeral` fails it — a branch is being worked on where it does not belong — while
     /// the topology as a whole stays valid, because the harness that made the checkout
     /// removes it.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::Standing;
+    /// let all = [
+    ///     Standing::Primary,
+    ///     Standing::Canonical,
+    ///     Standing::Misplaced,
+    ///     Standing::Detached,
+    ///     Standing::Ephemeral,
+    ///     Standing::Missing,
+    /// ];
+    /// let accepted: Vec<_> = all
+    ///     .into_iter()
+    ///     .filter(|s| s.is_acceptable())
+    ///     .map(|s| s.as_str())
+    ///     .collect();
+    /// assert_eq!(accepted, ["primary", "canonical", "detached"]);
+    /// ```
     pub fn is_acceptable(self) -> bool {
         !matches!(
             self,
@@ -82,6 +160,27 @@ pub use crate::model::Severity;
 /// The stable machine name of everything that can be wrong with the topology. One code per
 /// condition, reused by the command line, the API, MCP, the Cockpit, the tests and the
 /// documentation; the prose beside a code is rendered from the typed state.
+///
+/// The codes are namespaced under `worktree.` and are the part of the diagnostic that is
+/// promised to stay put. A script gates on the code, a test asserts the code, and the
+/// message beside it is free to be rewritten for a reader without breaking either — which
+/// is the whole reason the two are separate fields of [`TopologyDiagnostic`].
+///
+/// ```
+/// use majordomus_cli::worktree::DiagnosticCode;
+/// // the human string and the serialised string are the same string, for every code
+/// for code in DiagnosticCode::ALL {
+///     let wire = serde_json::to_string(code).unwrap();
+///     assert_eq!(wire, format!("\"{}\"", code.as_str()));
+///     assert!(code.as_str().starts_with("worktree."), "namespaced: {}", code.as_str());
+/// }
+/// // and no condition shares a code with another
+/// let mut names: Vec<_> = DiagnosticCode::ALL.iter().map(|c| c.as_str()).collect();
+/// let total = names.len();
+/// names.sort();
+/// names.dedup();
+/// assert_eq!(names.len(), total, "one code per condition, never reused");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -144,7 +243,13 @@ pub enum DiagnosticCode {
 }
 
 impl DiagnosticCode {
-    /// The dotted code, as serialised.
+    /// The dotted code, exactly as serde writes it.
+    ///
+    /// Written out by hand beside the `serde(rename)` attributes rather than derived from
+    /// them, because a `&'static str` is what a message, a table and a test all want and
+    /// serialising an enum to get one would be absurd. The cost is that the two lists can
+    /// drift, which is why the parity is asserted over [`DiagnosticCode::ALL`] instead of
+    /// being trusted.
     ///
     /// ```
     /// use majordomus_cli::worktree::DiagnosticCode;
@@ -197,6 +302,28 @@ impl DiagnosticCode {
 }
 
 /// One thing wrong with, or worth knowing about, the topology.
+///
+/// The shape is a contract with the reader: a stable code to gate on, a severity that says
+/// whether the topology is invalid while this stands, the paths and branch involved, one
+/// line of prose, and the command that fixes it. `remedy` is not optional, and that is the
+/// point — a diagnostic nobody can act on is a complaint, and this subsystem raises none.
+///
+/// ```
+/// use majordomus_cli::worktree::{DiagnosticCode, Severity, TopologyDiagnostic};
+/// let d = TopologyDiagnostic {
+///     code: DiagnosticCode::PathMismatch,
+///     severity: Severity::Error,
+///     path: Some("/tmp/stray".into()),
+///     branch: Some("feature/x".into()),
+///     expected: Some("/a/foo-wt/feature/x".into()),
+///     message: "this work tree is not at its branch's canonical path".into(),
+///     remedy: "majordomus worktree migrate".into(),
+/// };
+/// assert!(!d.remedy.is_empty(), "every diagnostic names what to do about it");
+/// let wire = serde_json::to_value(&d).unwrap();
+/// assert_eq!(wire["code"], "worktree.path_mismatch");
+/// assert_eq!(wire["expected"], "/a/foo-wt/feature/x");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TopologyDiagnostic {
     /// The stable code.
@@ -220,6 +347,26 @@ pub struct TopologyDiagnostic {
 
 /// Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked
 /// content counts: it is exactly what a careless move loses.
+///
+/// Four counts and not one, because the four are lost in different ways and a person
+/// deciding whether to allow a move needs to know which they are risking. `clean` is
+/// derived from all four and stored, so every surface agrees on the word; `in_progress`
+/// makes a work tree unclean even when the counts are zero, because a half-finished rebase
+/// is state no move should carry.
+///
+/// ```
+/// use majordomus_cli::worktree::DirtyState;
+/// let clean = DirtyState { clean: true, ..Default::default() };
+/// assert_eq!(clean.summary(), "clean");
+///
+/// let busy = DirtyState {
+///     staged: 1,
+///     untracked: 2,
+///     in_progress: Some("rebase".into()),
+///     ..Default::default()
+/// };
+/// assert_eq!(busy.summary(), "1 staged, 2 untracked, rebase in progress");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DirtyState {
     /// Entries with a change in the index.
@@ -238,7 +385,24 @@ pub struct DirtyState {
 }
 
 impl DirtyState {
-    /// Every count, in words, for a message.
+    /// Every count, in words, for a message: `"2 staged, 1 untracked"`, or `"clean"`.
+    ///
+    /// Only the non-zero counts appear, so the line is about what is there rather than
+    /// about what is not, and the operation in progress comes last because it is the part
+    /// that stops a move outright. `"clean"` is a word and not an empty string: a refusal
+    /// that quoted an empty summary would read as a refusal with no reason.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::DirtyState;
+    /// let d = DirtyState { unstaged: 3, ..Default::default() };
+    /// assert_eq!(d.summary(), "3 unstaged", "the zeroes are left out");
+    /// let mid = DirtyState {
+    ///     clean: true,
+    ///     in_progress: Some("merge".into()),
+    ///     ..Default::default()
+    /// };
+    /// assert_eq!(mid.summary(), "clean", "`clean` is the whole line when it is true");
+    /// ```
     pub fn summary(&self) -> String {
         if self.clean {
             return "clean".into();
@@ -265,6 +429,25 @@ impl DirtyState {
 
 /// A branch's upstream and how far the two have moved apart, from `for-each-ref` in one
 /// subprocess for every branch, never a fetch.
+///
+/// Because nothing fetches, the distances are against the remote-tracking refs this
+/// checkout already has, and they are as old as the last fetch. `ahead` and `behind` are
+/// optional so that "the upstream ref is gone, there is no distance to report" is a
+/// different answer from "the two are level" — the two mean opposite things to anyone
+/// deciding whether a branch can be cleaned up.
+///
+/// ```
+/// use majordomus_cli::worktree::UpstreamState;
+/// let vanished = UpstreamState {
+///     name: "origin/feature/x".into(),
+///     ahead: None,
+///     behind: None,
+///     gone: true,
+/// };
+/// let wire = serde_json::to_value(&vanished).unwrap();
+/// assert_eq!(wire["gone"], true);
+/// assert!(wire.get("ahead").is_none(), "a vanished upstream has no distance, not zero");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct UpstreamState {
     /// The upstream ref, short (`origin/master`).
@@ -280,6 +463,32 @@ pub struct UpstreamState {
 }
 
 /// One work tree, as the topology sees it.
+///
+/// Everything git said about the work tree, plus everything this subsystem derived from
+/// it, in one value that serde, JSON Schema, the command line and the Cockpit all render.
+/// The optional fields divide into two groups worth keeping apart: those absent because
+/// the work tree has no such thing (`branch` when detached) and those absent because
+/// nobody paid for them (`dirty`, which costs a subprocess per work tree and is skipped by
+/// a topology read). Both serialise as a missing key, so a consumer must not read a
+/// missing `dirty` as a clean tree.
+///
+/// ```
+/// use majordomus_cli::worktree::{Standing, WorktreeState};
+/// let s: WorktreeState = serde_json::from_value(serde_json::json!({
+///     "path": "/a/foo-wt/feature/x",
+///     "kind": "linked",
+///     "standing": "canonical",
+///     "label": "feature/x",
+///     "detached": false,
+///     "exists": true,
+///     "current": false,
+///     "diagnostics": []
+/// }))
+/// .unwrap();
+/// assert_eq!(s.standing, Standing::Canonical);
+/// assert!(s.diagnostics.is_empty(), "a canonical work tree has nothing wrong with it");
+/// assert!(s.dirty.is_none(), "uncommitted work is absent until something asks for it");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorktreeState {
     /// Absolute, as git holds it.
@@ -329,6 +538,25 @@ pub struct WorktreeState {
 }
 
 /// One local branch, with or without a work tree.
+///
+/// The branch half of the topology: every local branch is listed, whether or not a work
+/// tree holds it, because "this branch has nowhere to be worked on" is one of the facts
+/// the topology exists to report. `cleanup_eligible` is derived here and acted on nowhere
+/// — nothing in this subsystem deletes a branch — and `merged_into_trunk` is optional so
+/// that an unknown trunk cannot be mistaken for a branch that is not merged.
+///
+/// ```
+/// use majordomus_cli::worktree::BranchState;
+/// let b: BranchState = serde_json::from_value(serde_json::json!({
+///     "name": "feature/x",
+///     "head": "abc123",
+///     "trunk": false,
+///     "cleanup_eligible": false
+/// }))
+/// .unwrap();
+/// assert_eq!(b.merged_into_trunk, None, "absent means unknown, not `not merged`");
+/// assert!(b.worktree.is_none(), "a branch with nowhere to be worked on is still listed");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BranchState {
     /// The branch, short.
@@ -358,6 +586,24 @@ pub struct BranchState {
 }
 
 /// The repository's identity, as the topology reports it.
+///
+/// The common git directory is the identity: two paths belong to one repository exactly
+/// when it matches, which is what makes "is this worktree mine?" answerable without
+/// consulting a remote. The name is the primary checkout's directory name and nothing
+/// else — not the remote's, not anything configured — so two clones of one upstream into
+/// differently named directories are two repositories with two containers.
+///
+/// ```
+/// use majordomus_cli::worktree::RepositoryView;
+/// let r = RepositoryView {
+///     primary_worktree: "/src/acme/backend".into(),
+///     git_common_dir: "/src/acme/backend/.git".into(),
+///     name: "backend".into(),
+/// };
+/// assert!(r.primary_worktree.ends_with(&r.name), "the name is the directory's own");
+/// let wire = serde_json::to_value(&r).unwrap();
+/// assert_eq!(wire["git_common_dir"], "/src/acme/backend/.git");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryView {
     /// The primary checkout: what the container is named after.
@@ -369,6 +615,23 @@ pub struct RepositoryView {
 }
 
 /// The container, as the topology reports it.
+///
+/// The suffix travels with the path so that a reader can see the derivation rather than be
+/// told the result: the container is the primary checkout's name with that suffix appended,
+/// and nothing configures it. `exists` is false on a repository that has no linked work
+/// trees yet, which is a normal state and not a fault — the directory is created by the
+/// first worktree that needs it.
+///
+/// ```
+/// use majordomus_cli::worktree::{ContainerView, CONTAINER_SUFFIX};
+/// let c = ContainerView {
+///     path: "/a/foo-wt".into(),
+///     suffix: CONTAINER_SUFFIX.into(),
+///     exists: false,
+/// };
+/// assert!(c.path.ends_with(&c.suffix), "the derivation is visible in the value");
+/// assert!(!c.exists, "created by the first worktree that needs it, not before");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ContainerView {
     /// The derived path.
@@ -380,6 +643,20 @@ pub struct ContainerView {
 }
 
 /// The trunk, as the topology reports it.
+///
+/// Three facts, and the second is the one that makes the first arguable: the branch, how it
+/// was decided, and where it is checked out. A trunk that could not be determined is
+/// reported as an absent branch with an `unknown` source rather than as a conventional
+/// name, because inventing one would make the guard refuse work on a branch it merely
+/// guessed was not the trunk.
+///
+/// ```
+/// use majordomus_cli::worktree::{TrunkSource, TrunkView};
+/// let unknown = TrunkView { branch: None, source: TrunkSource::Unknown, checked_out_at: None };
+/// let wire = serde_json::to_value(&unknown).unwrap();
+/// assert_eq!(wire["source"], "unknown");
+/// assert!(wire.get("branch").is_none(), "no trunk is absent, never an invented name");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TrunkView {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -393,6 +670,28 @@ pub struct TrunkView {
 }
 
 /// How many work trees and branches are in each state.
+///
+/// A summary a person reads before the detail, and the numbers a gate compares. Every
+/// count is always serialised, zero included: a skipped field would read as "not measured"
+/// where a zero means "none", and those are different claims about a repository. The
+/// standings are counted from the same [`Standing`] the work trees carry, so a tally can
+/// never name a state the model does not have.
+///
+/// ```
+/// use majordomus_cli::worktree::TopologyTallies;
+/// let t = TopologyTallies {
+///     worktrees: 5,
+///     canonical: 2,
+///     misplaced: 1,
+///     detached: 1,
+///     errors: 1,
+///     ..Default::default()
+/// };
+/// // the primary checkout is one of the work trees and has no standing of its own here
+/// assert_eq!(t.canonical + t.misplaced + t.detached, t.worktrees - 1);
+/// let wire = serde_json::to_value(&t).unwrap();
+/// assert_eq!(wire["missing"], 0, "a zero is reported, not skipped");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct TopologyTallies {
     /// Every registered work tree, primary included.
@@ -425,6 +724,49 @@ pub struct TopologyTallies {
 
 /// The whole topology: what `worktree list`, the MCP resource, the HTTP route and the
 /// Cockpit all read.
+///
+/// One value, four surfaces, no second opinion. Nothing here is decided — the service
+/// decided it and this is where it was written down — so a surface that rendered a
+/// standing differently, or recomputed a tally, would be adding an opinion the model does
+/// not have. `valid` is the whole document reduced to the one bit a gate needs, and it is
+/// stored rather than derived at render time so that every surface answers the same.
+///
+/// ```
+/// use majordomus_cli::worktree::{
+///     ContainerView, RepositoryTopology, RepositoryView, TopologyTallies, TrunkSource,
+///     TrunkView, SCHEMA,
+/// };
+/// let t = RepositoryTopology {
+///     schema: SCHEMA.to_string(),
+///     repository: RepositoryView {
+///         primary_worktree: "/a/foo".into(),
+///         git_common_dir: "/a/foo/.git".into(),
+///         name: "foo".into(),
+///     },
+///     container: ContainerView {
+///         path: "/a/foo-wt".into(),
+///         suffix: "-wt".into(),
+///         exists: true,
+///     },
+///     trunk: TrunkView {
+///         branch: Some("master".into()),
+///         source: TrunkSource::RemoteHead,
+///         checked_out_at: Some("/a/foo".into()),
+///     },
+///     observed_from: "/a/foo-wt/feature/x".into(),
+///     worktrees: Vec::new(),
+///     branches: Vec::new(),
+///     diagnostics: Vec::new(),
+///     tallies: TopologyTallies::default(),
+///     valid: true,
+/// };
+///
+/// let wire = serde_json::to_value(&t).unwrap();
+/// assert_eq!(wire["schema"], SCHEMA, "every document says which contract it is");
+/// assert_eq!(wire["container"]["path"], "/a/foo-wt");
+/// // and it comes back unchanged, which is what makes the four surfaces one answer
+/// assert_eq!(serde_json::from_value::<RepositoryTopology>(wire).unwrap(), t);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryTopology {
     /// [`SCHEMA`].
@@ -450,6 +792,42 @@ pub struct RepositoryTopology {
 }
 
 /// The answer to "where am I, and is that where I belong".
+///
+/// One work tree in detail and the repository in one number. That asymmetry is the design:
+/// a person standing in a worktree wants to know about this worktree, and a repository
+/// error count beside it so that a clean answer here cannot be mistaken for a clean
+/// repository. Unlike a topology read, the uncommitted work of this one tree is counted,
+/// because there is exactly one subprocess to spend on it.
+///
+/// ```
+/// use majordomus_cli::worktree::{StatusReport, SCHEMA};
+/// let r: StatusReport = serde_json::from_value(serde_json::json!({
+///     "schema": SCHEMA,
+///     "repository": {
+///         "primary_worktree": "/a/foo",
+///         "git_common_dir": "/a/foo/.git",
+///         "name": "foo"
+///     },
+///     "container": { "path": "/a/foo-wt", "suffix": "-wt", "exists": true },
+///     "trunk": { "branch": "master", "source": "remote_head" },
+///     "worktree": {
+///         "path": "/a/foo-wt/feature/x",
+///         "kind": "linked",
+///         "standing": "canonical",
+///         "label": "feature/x",
+///         "detached": false,
+///         "exists": true,
+///         "current": true,
+///         "diagnostics": []
+///     },
+///     "canonical": true,
+///     "repository_errors": 2
+/// }))
+/// .unwrap();
+/// assert!(r.canonical, "this work tree is where its branch belongs");
+/// assert!(r.worktree.current, "and it is the one the call came from");
+/// assert_eq!(r.repository_errors, 2, "while the repository still has two problems");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StatusReport {
     /// [`SCHEMA`].
@@ -470,6 +848,28 @@ pub struct StatusReport {
 }
 
 /// What the guard decided, for a hook or a mutation that must not proceed out of place.
+///
+/// `ok` is the answer and everything beside it is the argument for it, which is what a
+/// hook needs: refusing a commit without saying which work tree, which branch, where it
+/// belongs and what to run instead leaves a person with a blocked commit and no move to
+/// make. `exempt` says the rule did not apply rather than that it was met — a detached
+/// work tree and a canonical one both pass, for different reasons.
+///
+/// ```
+/// use majordomus_cli::worktree::{GuardVerdict, Standing};
+/// let verdict = GuardVerdict {
+///     ok: true,
+///     path: "/a/foo".into(),
+///     branch: Some("master".into()),
+///     expected_path: None,
+///     standing: Standing::Primary,
+///     exempt: true,
+///     reason: None,
+/// };
+/// assert!(verdict.ok && verdict.exempt, "the trunk in the primary checkout is exempt");
+/// let wire = serde_json::to_value(&verdict).unwrap();
+/// assert!(wire.get("reason").is_none(), "a verdict that passes carries no diagnostic");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GuardVerdict {
     /// Proceed.
@@ -492,6 +892,28 @@ pub struct GuardVerdict {
 }
 
 /// One branch, inspected: where its work tree belongs and what is there.
+///
+/// The question asked before creating a worktree, and it is answered for a branch that
+/// does not exist yet as readily as for one that does: `expected_path` is derived from the
+/// name alone, so a caller learns where the worktree would go and what already stands
+/// there in one call. An empty `diagnostics` with `canonical` false is therefore a normal
+/// answer and not a contradiction — nothing is wrong, and nothing is there.
+///
+/// ```
+/// use majordomus_cli::worktree::InspectReport;
+/// let free = InspectReport {
+///     branch: "feature/x".into(),
+///     branch_exists: true,
+///     expected_path: "/a/foo-wt/feature/x".into(),
+///     destination_exists: false,
+///     worktree: None,
+///     canonical: false,
+///     diagnostics: Vec::new(),
+/// };
+/// assert!(free.diagnostics.is_empty(), "nothing stands in the way");
+/// assert!(!free.canonical && free.worktree.is_none(), "and nothing is there yet");
+/// assert_eq!(free.expected_path, "/a/foo-wt/feature/x");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct InspectReport {
     /// The branch asked about.
@@ -511,7 +933,24 @@ pub struct InspectReport {
     pub diagnostics: Vec<TopologyDiagnostic>,
 }
 
-/// What a repair did.
+/// What a repair did, or — when `applied` is false — what it would have done.
+///
+/// One type for the dry run and the real one, so the two cannot disagree about what the
+/// repair consists of: the only difference between them is the flag. `pruned` is the
+/// registrations dropped because their directory is gone, and `repaired` is what `git
+/// worktree repair` said about the ones whose metadata it re-pointed. Neither ever
+/// contains a directory that was deleted — a repair fixes registrations, not checkouts.
+///
+/// ```
+/// use majordomus_cli::worktree::RepairReport;
+/// let planned = RepairReport {
+///     pruned: vec!["/a/foo-wt/feature/gone".into()],
+///     repaired: Vec::new(),
+///     applied: false,
+/// };
+/// assert!(!planned.applied, "named what it would do, and did not do it");
+/// assert_eq!(planned.pruned.len(), 1);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepairReport {
     /// Registrations git dropped, or would drop, because their directory is gone.

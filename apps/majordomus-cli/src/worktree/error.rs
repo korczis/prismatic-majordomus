@@ -15,6 +15,31 @@ pub const EXIT_MISSING: u8 = 12;
 pub const EXIT_INTERNAL: u8 = 13;
 
 /// Everything that stops a worktree operation.
+///
+/// The variants divide into three outcomes and not one: a refusal, where the request was
+/// well formed and the state of the tree says no; a miss, where what was named does not
+/// exist; and an internal failure, where git or the filesystem did not answer. Which of
+/// the three a variant is comes from [`WorktreeError::exit_code`] and is not repeated
+/// anywhere, so a caller never has to classify a refusal by reading its prose.
+///
+/// Each variant carries the paths and branches involved, because a message that says a
+/// move was refused without saying which two directories were involved sends the reader
+/// back to `git worktree list`.
+///
+/// ```
+/// use majordomus_cli::worktree::WorktreeError;
+/// use std::path::PathBuf;
+///
+/// let e = WorktreeError::Misplaced {
+///     path: PathBuf::from("/tmp/stray"),
+///     branch: "feature/x".into(),
+///     expected: PathBuf::from("/a/foo-wt/feature/x"),
+/// };
+/// assert_eq!(e.code(), "Misplaced", "the machine name is the variant's own name");
+/// assert_eq!(e.exit_code(), 10, "a misplaced worktree is a refusal, not a miss");
+/// let shown = e.to_string();
+/// assert!(shown.contains("/tmp/stray") && shown.contains("/a/foo-wt/feature/x"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum WorktreeError {
     /// The start directory is not inside a git work tree.
@@ -360,7 +385,20 @@ impl WorktreeError {
         }
     }
 
-    /// An IO failure against a path.
+    /// Wrap a filesystem failure so that the path it happened to is part of the message.
+    ///
+    /// `std::io::Error` knows what went wrong and not what it went wrong to, and a bare
+    /// "permission denied" from inside a topology operation is unactionable. This is the
+    /// only way an IO failure enters this type, so every one of them names its path.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::WorktreeError;
+    /// let os = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "denied");
+    /// let e = WorktreeError::io("/a/foo-wt", &os);
+    /// assert_eq!(e.code(), "Io");
+    /// assert_eq!(e.exit_code(), 13, "the filesystem failing is internal, not a refusal");
+    /// assert!(e.to_string().starts_with("/a/foo-wt: "), "the path leads the message");
+    /// ```
     pub fn io(path: impl Into<PathBuf>, e: &std::io::Error) -> Self {
         WorktreeError::Io {
             path: path.into(),

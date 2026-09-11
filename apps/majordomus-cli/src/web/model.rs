@@ -6,6 +6,37 @@
 //! read many times. The kinds are behavioural rather than nominal: a test report and a
 //! benchmark report are both [`SurfaceKind::StaticDirectory`] and differ only in data, and
 //! nothing in this module knows the name of any surface this repository happens to have.
+//!
+//! The lifecycle is: describe a surface, normalise its mount on the way in, hold the set as
+//! a [`Topology`], and then read that one value as many times as there are consumers.
+//!
+//! ```
+//! use majordomus_cli::web::model::*;
+//! # use std::collections::BTreeMap;
+//! let report = Surface {
+//!     id: "tests".into(),
+//!     title: "The suite, as it last ran".into(),
+//!     category: Category::Report,
+//!     visibility: Visibility::Public,
+//!     kind: SurfaceKind::StaticDirectory,
+//!     mount: Mount::parse("/tests/").unwrap(),
+//!     producer: "scripts/test-report".into(),
+//!     feature: None,
+//!     artifact: Some("target/web/tests".into()),
+//!     index: Some("index.html".into()),
+//!     availability: Availability::Both,
+//!     built_from: None,
+//!     provenance: BTreeMap::new(),
+//! };
+//! // the mount was normalised when it was parsed, not repaired when it is read
+//! assert_eq!(report.mount.as_str(), "/tests");
+//!
+//! let topology = Topology::new(vec![report]);
+//! // one value, read as a router reads it and as a publication reads it
+//! assert_eq!(topology.owner("/tests/index.html").map(|s| s.id.as_str()), Some("tests"));
+//! assert!(topology.owner("/elsewhere").is_none(), "nothing here claims the root");
+//! assert_eq!(topology.published().ids(), vec!["tests"]);
+//! ```
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -19,6 +50,20 @@ use serde::{Deserialize, Serialize};
 /// Only what this repository serves: a directory of generated files, a path the executable
 /// answers itself, and a redirect. A new *kind* is a new behaviour, never a new name for
 /// the same behaviour with different data.
+///
+/// The kind decides who answers a request, and nothing else does: a consumer that wanted to
+/// know whether to open a file or call a handler asks this and never the mount.
+///
+/// ```
+/// use majordomus_cli::web::model::SurfaceKind;
+/// // a listing shows the short word; a document carries the variant's own name, and the
+/// // two are readings of one kind rather than two kinds
+/// assert_eq!(SurfaceKind::StaticDirectory.to_string(), "static");
+/// assert_eq!(
+///     serde_json::to_value(SurfaceKind::StaticDirectory).unwrap(),
+///     serde_json::json!("static-directory")
+/// );
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -47,6 +92,19 @@ impl fmt::Display for SurfaceKind {
 /// A category is the one piece of intent that a mount cannot carry: `/openapi.json` and
 /// `/swagger` sit beside each other and are a document and a viewer for it. Grouping is
 /// derived from this field and never from a list of paths kept somewhere else.
+///
+/// ```
+/// use majordomus_cli::web::model::Category;
+/// // every category reaches a heading, and no two share one: a duplicate title would
+/// // silently merge two groups into one section of a page
+/// let mut titles: Vec<&str> = Category::ALL.iter().map(|c| c.title()).collect();
+/// titles.sort_unstable();
+/// titles.dedup();
+/// assert_eq!(titles.len(), Category::ALL.len());
+/// // and the word a document carries is the word `Display` writes
+/// let report = serde_json::to_value(Category::Report).unwrap();
+/// assert_eq!(report, serde_json::json!(Category::Report.to_string()));
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -77,11 +135,18 @@ impl Category {
         Category::Report,
     ];
 
-    /// The heading a person reads.
+    /// The heading a person reads, which is the one place a category's name is written for
+    /// a human rather than for a machine.
+    ///
+    /// It is plural because it names a group and not a member, and it is not the
+    /// serialised word: `api` is what a document carries and "API" is what a reader sees.
+    /// A page renders this and never a heading of its own, so a category that is renamed
+    /// is renamed everywhere it appears.
     ///
     /// ```
     /// use majordomus_cli::web::model::Category;
     /// assert_eq!(Category::Api.title(), "API");
+    /// assert_ne!(Category::Api.title(), Category::Api.to_string());
     /// ```
     pub fn title(self) -> &'static str {
         match self {
@@ -112,6 +177,16 @@ impl fmt::Display for Category {
 /// part of the topology without being advertised. Both are always in the machine-readable
 /// answer — hiding a served route from introspection would only hide it from the people
 /// maintaining it.
+///
+/// ```
+/// use majordomus_cli::web::{discover, model::Visibility, Topology};
+/// // `Internal` narrows what a person is shown and never what a diagnostic can see: the
+/// // protocol routes are unlisted, and the topology still holds them
+/// let t = Topology::new(discover::native(discover::Runtime::full()));
+/// let mcp = t.get("mcp").expect("this process's MCP endpoint is a surface");
+/// assert_eq!(mcp.visibility, Visibility::Internal);
+/// assert_eq!(serde_json::to_value(Visibility::Internal).unwrap(), "internal");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -142,6 +217,15 @@ impl fmt::Display for Visibility {
 /// The registry describes the effective process, not the maximum one: a build or an
 /// invocation that answers no MCP has no MCP surface, and the home page cannot link to
 /// one. Stating the dependency as data is what keeps that automatic.
+///
+/// ```
+/// use majordomus_cli::web::discover::Runtime;
+/// use majordomus_cli::web::model::Feature;
+/// // the surface declares what it needs and the process declares what it has; neither
+/// // side carries a list of the other's names
+/// assert!(Runtime::full().has(Feature::Mcp));
+/// assert!(!Runtime::default().has(Feature::Mcp));
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -166,6 +250,24 @@ impl fmt::Display for Feature {
 ///
 /// Kept for every field a consumer can be surprised by, so that `web explain` can answer
 /// "why is this mounted here?" without anybody reading the discovery code.
+///
+/// The variants are the inference sources and not free text: a value came from the
+/// capability registry, from a producer's declaration, from a file being where the
+/// convention says, from the site's configuration, or from a documented default. There is
+/// no variant for "somebody wrote it down here", because that is what this type exists to
+/// make impossible.
+///
+/// ```
+/// use majordomus_cli::web::model::Provenance;
+/// let inferred = Provenance::Filesystem { path: "target/web/tests".into() };
+/// // the tag is the source and the payload is what that source needed to name
+/// let json = serde_json::to_value(&inferred).unwrap();
+/// assert_eq!(json["source"], "filesystem");
+/// assert_eq!(json["path"], "target/web/tests");
+/// assert_eq!(inferred.to_string(), "filesystem target/web/tests");
+/// // a source that names nothing carries nothing
+/// assert_eq!(serde_json::to_value(Provenance::Default).unwrap()["source"], "default");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "kebab-case")]
 pub enum Provenance {
@@ -228,6 +330,18 @@ pub struct Mount(String);
 
 impl Mount {
     /// The root mount, which owns everything no other surface owns.
+    ///
+    /// It is the fallback of the topology rather than a prefix within it: it is sorted last
+    /// so that every declared mount is consulted before it, and it composes into a
+    /// destination root rather than into a directory below one.
+    ///
+    /// ```
+    /// use majordomus_cli::web::model::Mount;
+    /// assert!(Mount::root().is_root());
+    /// assert_eq!(Mount::root(), Mount::parse("/").unwrap());
+    /// assert!(Mount::root().owns("/whatever/nobody/declared"));
+    /// assert_eq!(Mount::root().relative(), "", "the root composes into the destination");
+    /// ```
     pub fn root() -> Self {
         Mount("/".into())
     }
@@ -370,6 +484,20 @@ impl fmt::Display for Mount {
 
 /// Whether a surface is part of the static publication, served only while a process runs,
 /// or both.
+///
+/// The two worlds are what a link on a page can and cannot promise. A published page that
+/// linked a `ServedOnly` surface would be offering an address nothing answers, which is why
+/// this field and not a template decides what is offered as a link.
+///
+/// ```
+/// use majordomus_cli::web::model::Availability;
+/// // there is no fourth variant, because a surface nobody answers for is not a surface
+/// for a in [Availability::Both, Availability::ServedOnly, Availability::PublishedOnly] {
+///     assert!(a.is_served() || a.is_published(), "{a:?} answers in neither world");
+/// }
+/// assert!(!Availability::ServedOnly.is_published());
+/// assert!(!Availability::PublishedOnly.is_served());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 #[schemars(rename = "SurfaceAvailability")]
@@ -385,11 +513,33 @@ pub enum Availability {
 
 impl Availability {
     /// Does this surface contribute files to a static publication?
+    ///
+    /// This is the question a published page asks before offering a link, and the answer a
+    /// running server never needs.
+    ///
+    /// ```
+    /// use majordomus_cli::web::model::Availability;
+    /// assert!(Availability::PublishedOnly.is_published());
+    /// assert!(Availability::Both.is_published());
+    /// assert!(!Availability::ServedOnly.is_published());
+    /// ```
     pub fn is_published(&self) -> bool {
         matches!(self, Availability::Both | Availability::PublishedOnly)
     }
 
     /// Does the running server answer for this surface?
+    ///
+    /// Being served is necessary and not sufficient: a surface whose [`Feature`] this
+    /// process does not have is not answered either, which is what [`Surface::served_by`]
+    /// adds on top of this.
+    ///
+    /// ```
+    /// use majordomus_cli::web::model::Availability;
+    /// assert!(Availability::ServedOnly.is_served());
+    /// assert!(Availability::Both.is_served());
+    /// // the deployment is a tree of files somebody else hosts; this process never has it
+    /// assert!(!Availability::PublishedOnly.is_served());
+    /// ```
     pub fn is_served(&self) -> bool {
         matches!(self, Availability::Both | Availability::ServedOnly)
     }
@@ -397,6 +547,37 @@ impl Availability {
 
 /// One resolved surface: everything a consumer needs, with the provenance of what it could
 /// be surprised by.
+///
+/// A resolved surface is the end of inference and the beginning of use: by the time one
+/// exists, every default has been applied and every value that was inferred says where it
+/// came from. The invariant a consumer may rely on is that the fields agree — a surface
+/// that publishes has a directory to publish, and one that needs a runtime feature says
+/// which — so no consumer has to re-derive what discovery already decided.
+///
+/// ```
+/// use majordomus_cli::web::model::*;
+/// # use std::collections::BTreeMap;
+/// let mut benchmarks = Surface {
+///     id: "benchmarks".into(),
+///     title: "Recorded runs of the capability surface".into(),
+///     category: Category::Report,
+///     visibility: Visibility::Public,
+///     kind: SurfaceKind::StaticDirectory,
+///     mount: Mount::parse("/benchmarks").unwrap(),
+///     producer: "bench report".into(),
+///     feature: None,
+///     artifact: None,
+///     index: Some("index.html".into()),
+///     availability: Availability::Both,
+///     built_from: None,
+///     provenance: BTreeMap::new(),
+/// };
+/// // saying "published" is not enough: with no directory there are no files to publish,
+/// // so a publication would carry an empty promise
+/// assert!(!benchmarks.publishes());
+/// benchmarks.artifact = Some("target/web/benchmarks".into());
+/// assert!(benchmarks.publishes());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Surface {
     /// Identity, unique across the topology; the selector `--only` and `--exclude` use it.
@@ -464,6 +645,21 @@ impl Surface {
 ///
 /// The order is by mount, most specific first, then by id: the order a router must consult
 /// them in, computed rather than left to whoever inserted a route last.
+///
+/// Every reading of the topology — what a process serves, what a publication carries, what
+/// a person is shown — is a filter over this one value, so nothing can be served that was
+/// not discovered and no reading can hold a surface the whole does not.
+///
+/// ```
+/// use majordomus_cli::web::{discover, Topology};
+/// let t = Topology::new(discover::native(discover::Runtime::full()));
+/// // the specific mounts come first and the fallback last, whatever order they arrived in
+/// assert_eq!(t.ids().last(), Some(&discover::HOME));
+/// assert_eq!(t.owner("/swagger").map(|s| s.id.as_str()), Some("swagger"));
+/// // and every reading is a subset of the whole
+/// let served = t.served(discover::Runtime::default());
+/// assert!(served.ids().iter().all(|id| t.get(id).is_some()));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Topology {
     /// The resolved surfaces, in route-precedence order.
@@ -526,7 +722,22 @@ impl Topology {
         self.surfaces.iter().find(|s| s.mount.owns(path))
     }
 
-    /// One surface by id.
+    /// One surface by id, or none when *this* topology does not hold it.
+    ///
+    /// Identity and not path: a selector (`--only`, `--exclude`) and a diagnostic both
+    /// resolve through this, and the answer is relative to the reading it is asked of. A
+    /// narrowed topology says `None` for a surface the whole one holds, which is the
+    /// difference between "no such surface" and "not in this process" — a caller that needs
+    /// to tell those apart must ask the unnarrowed value.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, Topology};
+    /// let full = Topology::new(discover::native(discover::Runtime::full()));
+    /// assert!(full.get("mcp").is_some());
+    /// // absent from a process that answers no MCP, and still not an unknown name
+    /// assert!(full.served(discover::Runtime::default()).get("mcp").is_none());
+    /// assert!(full.get("no-such-surface").is_none());
+    /// ```
     pub fn get(&self, id: &str) -> Option<&Surface> {
         self.surfaces.iter().find(|s| s.id == id)
     }
@@ -535,6 +746,21 @@ impl Topology {
     ///
     /// Selection is by discovered id and nothing else, so a surface that did not exist when
     /// this code was written is selectable the day it is discovered.
+    ///
+    /// An empty `only` selects everything rather than nothing — the useful reading for a
+    /// flag nobody passed — and `exclude` is applied afterwards, so naming one id in both
+    /// selects nothing. An id that matches no surface is not an error here: it narrows to
+    /// less, and whoever cares that it matched nothing compares the ids.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, Topology};
+    /// let t = Topology::new(discover::native(discover::Runtime::full()));
+    /// assert_eq!(t.select(&["swagger".to_string()], &[]).ids(), vec!["swagger"]);
+    /// assert_eq!(t.select(&[], &[]).ids(), t.ids(), "no selector is every surface");
+    /// let both = t.select(&["swagger".to_string()], &["swagger".to_string()]);
+    /// assert!(both.ids().is_empty(), "exclusion is applied after selection");
+    /// assert!(t.select(&["nothing-is-called-this".to_string()], &[]).ids().is_empty());
+    /// ```
     pub fn select(&self, only: &[String], exclude: &[String]) -> Topology {
         Topology::new(
             self.surfaces
@@ -547,6 +773,16 @@ impl Topology {
     }
 
     /// The ids this topology holds, in precedence order.
+    ///
+    /// The order is the router's, so this is also the cheapest way to assert that a
+    /// narrowing changed what it was meant to change and left the rest alone.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, Topology};
+    /// let t = Topology::new(discover::native(discover::Runtime::full()));
+    /// assert_eq!(t.ids().len(), t.surfaces.len());
+    /// assert_eq!(t.ids().last(), Some(&discover::HOME), "the fallback is consulted last");
+    /// ```
     pub fn ids(&self) -> Vec<&str> {
         self.surfaces.iter().map(|s| s.id.as_str()).collect()
     }
@@ -575,6 +811,19 @@ impl Topology {
     }
 
     /// The topology as a publication holds it: every surface that contributes files.
+    ///
+    /// Contributing files is stricter than being published: a surface that declares itself
+    /// publishable and names no directory is dropped here rather than carried as an empty
+    /// mount, so a deployment cannot claim a path it has nothing to serve at.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, Topology};
+    /// // the routes the executable computes have no directory behind them, so a
+    /// // publication of nothing but them carries nothing at all
+    /// let native = Topology::new(discover::native(discover::Runtime::full()));
+    /// assert!(!native.ids().is_empty());
+    /// assert!(native.published().ids().is_empty());
+    /// ```
     pub fn published(&self) -> Topology {
         Topology::new(
             self.surfaces
@@ -586,6 +835,23 @@ impl Topology {
     }
 
     /// The public surfaces of one category, in precedence order: what a person is shown.
+    ///
+    /// This is the only reading that drops a surface for being unlisted, and it is a page's
+    /// question rather than a router's: an internal surface is served and introspectable
+    /// and simply not offered to a reader.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, model::Category, Topology};
+    /// let t = Topology::new(discover::native(discover::Runtime::full()));
+    /// let api: Vec<&str> = t
+    ///     .public_in(Category::Api)
+    ///     .iter()
+    ///     .map(|s| s.id.as_str())
+    ///     .collect();
+    /// assert!(api.contains(&"openapi"), "the document a reader can open is offered");
+    /// // the wire protocols are served and unadvertised, so a listing shows none of them
+    /// assert!(t.public_in(Category::Protocol).is_empty());
+    /// ```
     pub fn public_in(&self, category: Category) -> Vec<&Surface> {
         self.surfaces
             .iter()

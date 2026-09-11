@@ -10,6 +10,29 @@
 //! resolved path is then canonicalised and required to still be inside the canonical root,
 //! which closes the door a symlink inside the directory would otherwise open. There is no
 //! path concatenation of untrusted text anywhere in this file.
+//!
+//! The lifecycle is: resolve the directory once when the router is built, then answer each
+//! request from it. Nothing is re-resolved per request, which is why a directory that
+//! appears while the process runs does not become a surface until it restarts.
+//!
+//! ```
+//! use majordomus_cli::web::{discover, files::Files};
+//! let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+//! let mut surface = discover::application(&repo)
+//!     .into_iter()
+//!     .find(|s| s.id == discover::DOCS)
+//!     .expect("this repository serves a documentation surface");
+//! // aimed at a directory this checkout certainly has, rather than at a build
+//! surface.artifact = Some("apps/majordomus-cli/src/web".into());
+//!
+//! let files = Files::new(&surface, &repo);
+//! assert!(files.available());
+//! let css = files.respond("/docs/tokens.css");
+//! assert_eq!(css.status, 200);
+//! assert_eq!(css.content_type, "text/css; charset=utf-8");
+//! // and the boundary: a request may not walk out of the directory it was answered from
+//! assert_eq!(files.respond("/docs/../Cargo.toml").status, 400);
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -62,6 +85,26 @@ pub const CACHE_MAX_BYTES: usize = 512 * 1024;
 ///
 /// Built once, when the router is: the root is resolved and the surface's own metadata is
 /// kept, so answering a request costs one path check and one read at most.
+///
+/// One instance answers for exactly one surface and only inside its own mount. A request
+/// the mount does not own is refused here rather than resolved against somebody else's
+/// directory, because deciding ownership twice — once in the router and once here — is how
+/// two surfaces come to answer one path.
+///
+/// ```
+/// use majordomus_cli::web::{discover, files::Files};
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let mut surface = discover::application(&repo)
+///     .into_iter()
+///     .find(|s| s.id == discover::DOCS)
+///     .unwrap();
+/// surface.artifact = Some("apps/majordomus-cli/src/web".into());
+/// let files = Files::new(&surface, &repo);
+/// assert_eq!(files.surface().id, discover::DOCS);
+/// assert_eq!(files.respond("/docs/tokens.css").status, 200);
+/// // a path under somebody else's mount is not this surface's to answer
+/// assert_eq!(files.respond("/elsewhere/tokens.css").status, 400);
+/// ```
 #[derive(Debug)]
 pub struct Files {
     /// The surface this serves, for diagnostics and for the page that says it is missing.
@@ -85,6 +128,28 @@ impl Files {
     ///
     /// A surface whose directory is absent is not an error here: it is a surface whose
     /// producer has not run, and every request under it answers with what to run.
+    ///
+    /// The directory is canonicalised once, here, and that resolution is the process's for
+    /// good: it is what every later request is checked against, so no request can be made
+    /// to escape by changing what a path means afterwards.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, files::Files};
+    /// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    /// let surface = discover::application(&repo)
+    ///     .into_iter()
+    ///     .find(|s| s.id == discover::DOCS)
+    ///     .unwrap();
+    /// // the same surface, resolved against a root where its producer has never run
+    /// let unbuilt = Files::new(&surface, std::path::Path::new("/nonexistent"));
+    /// assert!(!unbuilt.available());
+    /// let answer = unbuilt.respond("/docs/");
+    /// assert_eq!(answer.status, 503, "not built is not the same as not found");
+    /// assert!(
+    ///     answer.body.text().contains(&surface.producer),
+    ///     "the answer names the command that would build it"
+    /// );
+    /// ```
     pub fn new(surface: &Surface, root: &Path) -> Self {
         let artifact = surface
             .artifact
@@ -102,16 +167,51 @@ impl Files {
     }
 
     /// Is the producer's output there?
+    ///
+    /// Decided once, when this was built, and never re-asked: this executable resolves its
+    /// index, its registry and its topology at start and holds them for the life of the
+    /// process, so a directory generated while the server runs does not become available
+    /// until it is restarted. An unavailable surface still answers — with what to run —
+    /// rather than falling through to whoever owns the prefix above it.
     pub fn available(&self) -> bool {
         self.root.is_some()
     }
 
-    /// The surface being served.
+    /// The surface being served, as discovery resolved it.
+    ///
+    /// Kept so that a diagnostic can name the producer, the artifact and the title rather
+    /// than a path on disk: a reader who gets a 404 needs to know which generator owes them
+    /// the file.
     pub fn surface(&self) -> &Surface {
         &self.surface
     }
 
     /// Answer a request whose path this surface owns.
+    ///
+    /// Four answers and no others: a redirect for the mount reached without its trailing
+    /// slash (relative links resolve one level too high otherwise), `400` for a path this
+    /// surface does not own or that is not a path at all, `404` for a file that is not
+    /// there or whose extension this server does not serve, and the document. A request is
+    /// never answered with a hint about what is on the disk.
+    ///
+    /// ```
+    /// use majordomus_cli::web::{discover, files::Files};
+    /// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    /// let mut surface = discover::application(&repo)
+    ///     .into_iter()
+    ///     .find(|s| s.id == discover::DOCS)
+    ///     .unwrap();
+    /// surface.artifact = Some("apps/majordomus-cli/src/web".into());
+    /// let files = Files::new(&surface, &repo);
+    ///
+    /// // the mount itself, without its slash, is sent to the canonical form
+    /// assert_eq!(files.respond("/docs").status, 308);
+    /// // a walk out of the surface is refused before the filesystem is touched
+    /// assert_eq!(files.respond("/docs/../Cargo.toml").status, 400);
+    /// // a file that is there, of a type this server does not serve, is still not served
+    /// assert_eq!(files.respond("/docs/files.rs").status, 404);
+    /// assert_eq!(files.respond("/docs/tokens.css").status, 200);
+    /// ```
     pub fn respond(&self, path: &str) -> Response {
         let Some(root) = &self.root else {
             return self.unavailable();

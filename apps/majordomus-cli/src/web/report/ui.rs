@@ -10,6 +10,26 @@
 //! conformance run is a test run, `/tests/ui` is where a reader looks for it, and the
 //! topology refuses a surface mounted inside another's subtree (`surface.nested-mount`), so
 //! the architecture has already answered where this belongs.
+//!
+//! The lifecycle is parse, then render into the enclosing surface: the audit's own results
+//! document becomes a [`Run`], and the run becomes `/tests/ui`.
+//!
+//! ```
+//! use majordomus_cli::web::report::ui;
+//! let run = ui::parse(
+//!     r#"{"schema":"ui-audit/v1","pages":2,"visits":8,"findings":[
+//!         {"route":"/","width":320,"rule":"layout.overflow","detail":"12px past 320"}]}"#,
+//! )
+//! .unwrap();
+//! assert!(!run.green());
+//! assert_eq!(run.by_rule(), vec![("layout.overflow".to_string(), 1)]);
+//!
+//! let tmp = tempfile::tempdir().unwrap();
+//! let dir = ui::render(tmp.path(), &run).unwrap();
+//! // a section of the test surface, not a surface of its own
+//! assert!(dir.ends_with("target/web/tests/ui"));
+//! assert!(dir.parent().unwrap().join("surface.json").is_file());
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -31,6 +51,21 @@ pub const SECTION: &str = "ui";
 /// The selector is the only field every rule produces; a rule that measured more — how far
 /// past the viewport an element reached, what its position was — carries it here rather
 /// than in prose, so the report can render it without knowing which rule it came from.
+///
+/// The extra measurements are flattened into the element rather than nested under a key,
+/// so a rule can add one without this executable being taught its name. That is also the
+/// boundary: whatever a rule measures arrives as data, and nothing here interprets it.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{self, Element};
+/// let run = ui::parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":1,"findings":[
+///     {"route":"/","width":320,"rule":"layout.overflow","detail":"x","elements":[
+///         {"selector":"table.wide","overflowBy":37}]}]}"#).unwrap();
+/// let element: &Element = &run.findings[0].elements[0];
+/// assert_eq!(element.selector, "table.wide");
+/// // a measurement this executable was never taught the name of still reaches the report
+/// assert_eq!(element.measured["overflowBy"], 37);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Element {
     /// A selector a person can paste into the browser's console.
@@ -41,6 +76,23 @@ pub struct Element {
 }
 
 /// One thing wrong on one page at one width.
+///
+/// The width is part of the identity, not a detail of it: a page that is fine at 1280 and
+/// broken at 320 has one finding and not none, and a report that dropped the width would
+/// make that finding unreproducible. `route`, `rule` and `detail` are always there;
+/// `elements` is empty for a rule that could not point at anything, which is a real
+/// outcome rather than missing data.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{self, Finding};
+/// let run = ui::parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":2,"findings":[
+///     {"route":"/why/","width":320,"rule":"contrast.text","detail":"2.1:1 on .lede"}]}"#)
+///     .unwrap();
+/// let finding: &Finding = &run.findings[0];
+/// assert_eq!((finding.route.as_str(), finding.width), ("/why/", 320));
+/// assert!(finding.elements.is_empty(), "a rule that named nothing named nothing");
+/// assert_eq!(run.routes_of("contrast.text"), vec!["/why/"]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Finding {
     /// The page.
@@ -130,7 +182,25 @@ pub struct Foreign {
     pub declares: String,
 }
 
-/// A whole audit run.
+/// A whole audit run: what was visited, what was skipped, and everything found.
+///
+/// Almost every field defaults, because a document written by an earlier version of the
+/// audit is still evidence and a report that refused to render it would throw away the
+/// history. Only the contract, the page count, the visit count and the findings are
+/// required — those are the four things without which the document says nothing.
+///
+/// `complete` is the field to read before quoting any of the others: a run narrowed for
+/// iteration measured a subset, and its numbers are a floor rather than a total.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{self, Run};
+/// // the smallest document this executable will accept
+/// let run: Run = ui::parse(r#"{"schema":"ui-audit/v1","pages":0,"visits":0,"findings":[]}"#)
+///     .unwrap();
+/// assert!(run.green());
+/// assert!(run.viewports.is_empty());
+/// assert!(!run.complete, "a document that did not say so did not claim to be whole");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Run {
     /// The contract of this document.
@@ -168,7 +238,22 @@ pub struct Run {
 }
 
 impl Run {
-    /// Did every page pass?
+    /// Did every page the run visited pass?
+    ///
+    /// Read from the findings and nothing else, so this cannot disagree with the list
+    /// underneath it. It is a claim about what was *visited*: a run whose `complete` is
+    /// false was narrowed for iteration, and green there means "nothing found in the
+    /// subset" rather than "the site conforms".
+    ///
+    /// ```
+    /// use majordomus_cli::web::report::ui;
+    /// let clean = ui::parse(r#"{"schema":"ui-audit/v1","pages":9,"visits":36,"findings":[]}"#)
+    ///     .unwrap();
+    /// assert!(clean.green());
+    /// let broken = ui::parse(r#"{"schema":"ui-audit/v1","pages":9,"visits":36,"findings":[
+    ///     {"route":"/","width":320,"rule":"layout.overflow","detail":"x"}]}"#).unwrap();
+    /// assert!(!broken.green());
+    /// ```
     pub fn green(&self) -> bool {
         self.findings.is_empty()
     }
@@ -200,6 +285,23 @@ impl Run {
     }
 
     /// The pages a rule was found on, deduplicated and ordered.
+    ///
+    /// One page broken at four widths is one page here, because the question this answers
+    /// is how widely a rule is broken rather than how many findings it produced —
+    /// [`Run::by_rule`] counts those. A rule nothing broke has no pages, which is why the
+    /// caller may ask about any rule name at all.
+    ///
+    /// ```
+    /// use majordomus_cli::web::report::ui;
+    /// let run = ui::parse(r#"{"schema":"ui-audit/v1","pages":2,"visits":4,"findings":[
+    ///     {"route":"/why/","width":320,"rule":"layout.overflow","detail":"a"},
+    ///     {"route":"/why/","width":768,"rule":"layout.overflow","detail":"b"},
+    ///     {"route":"/","width":320,"rule":"layout.overflow","detail":"c"}]}"#).unwrap();
+    /// // three findings on two pages, in a stable order
+    /// assert_eq!(run.by_rule(), vec![("layout.overflow".to_string(), 3)]);
+    /// assert_eq!(run.routes_of("layout.overflow"), vec!["/", "/why/"]);
+    /// assert!(run.routes_of("a.rule.nothing.broke").is_empty());
+    /// ```
     pub fn routes_of(&self, rule: &str) -> Vec<&str> {
         let mut routes: Vec<&str> = self
             .findings
@@ -214,6 +316,24 @@ impl Run {
 }
 
 /// Read a results document, refusing a contract this executable does not know.
+///
+/// The contract is checked after the parse and reported as its own failure, so a document
+/// from a future audit is answered with "this executable reads `ui-audit/v1`" rather than
+/// with a deserialisation error about a field. Both refusals name the contract, because the
+/// person reading them is usually holding a document from the wrong version of something.
+///
+/// ```
+/// use majordomus_cli::web::report::ui;
+/// assert!(ui::parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":1,"findings":[]}"#).is_ok());
+///
+/// // another version of the contract is refused rather than read hopefully
+/// let wrong = ui::parse(r#"{"schema":"ui-audit/v2","pages":1,"visits":1,"findings":[]}"#)
+///     .unwrap_err()
+///     .to_string();
+/// assert!(wrong.contains("ui-audit/v1"), "{wrong}");
+/// // and so is a document that is not one
+/// assert!(ui::parse("{}").is_err());
+/// ```
 pub fn parse(text: &str) -> Result<Run> {
     let run: Run = serde_json::from_str(text).map_err(|e| Error::InvalidSurface {
         surface: "ui".into(),
@@ -234,6 +354,16 @@ pub fn parse(text: &str) -> Result<Run> {
 }
 
 /// Read a results document from disk.
+///
+/// The read and the parse fail differently on purpose: a path that is not there names the
+/// path, and a document that is there and wrong names the contract. Rendering a report
+/// nobody ran is the mistake this distinction exists to make legible.
+///
+/// ```
+/// use majordomus_cli::web::report::ui;
+/// let missing = ui::read(std::path::Path::new("/nonexistent/results.json")).unwrap_err();
+/// assert!(missing.to_string().contains("/nonexistent/results.json"));
+/// ```
 pub fn read(path: &Path) -> Result<Run> {
     let text =
         std::fs::read_to_string(path).map_err(|e| Error::io(path.display().to_string(), e))?;
@@ -243,6 +373,25 @@ pub fn read(path: &Path) -> Result<Run> {
 /// Render the run into `/tests/ui`, inside the test surface.
 ///
 /// Returns the directory written.
+///
+/// The enclosing surface is declared only if nobody has declared it: this report is a
+/// section of the test surface and must be reachable, but the test report owns that
+/// directory's identity and this must not write over it. So a UI audit rendered on its own
+/// still produces a reachable page, and one rendered after the test report leaves the test
+/// report's declaration exactly as it was.
+///
+/// ```
+/// use majordomus_cli::web::report::ui;
+/// let tmp = tempfile::tempdir().unwrap();
+/// let run = ui::parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":4,"findings":[]}"#)
+///     .unwrap();
+/// let dir = ui::render(tmp.path(), &run).unwrap();
+/// assert!(dir.ends_with("target/web/tests/ui"));
+/// assert!(dir.join("index.html").is_file());
+/// assert!(dir.join("results.json").is_file(), "the evidence is kept beside the page");
+/// // the section declared the surface it needs, without owning it
+/// assert!(dir.parent().unwrap().join("surface.json").is_file());
+/// ```
 pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
     // the enclosing surface must exist for this section to be reachable, and belongs to the
     // test report: declared here only when nobody has declared it, never overwritten

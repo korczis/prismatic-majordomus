@@ -1292,6 +1292,34 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// Refuses rather than writes when the rendered document carries anything from
 /// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
 /// leak that regenerates.
+///
+/// ```
+/// use majordomus_cli::capability::{builtin, CapabilityRegistry, Context};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// use std::sync::Arc;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let index = Arc::new(repo.index().unwrap());
+/// let registry = Arc::new(
+///     CapabilityRegistry::builder()
+///         .with_modules(builtin::modules())
+///         .with_index(&index)
+///         .build()
+///         .unwrap(),
+/// );
+/// let ctx = Context::new(index, registry);
+///
+/// let rendered = majordomus_cli::generate::graph_document(&ctx, "0.5.0").unwrap();
+/// let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+/// // the graph is a field of the document, not a comment beside it, because JSON has no
+/// // comments and the provenance still has to survive being published
+/// assert!(doc["graph"]["nodes"].is_array(), "the artifact carries the composed graph");
+/// assert_eq!(doc["graph"]["id"], "composed");
+/// assert!(
+///     doc["generator"].as_str().unwrap().contains("0.5.0"),
+///     "the generator's version is recorded in the artifact it wrote"
+/// );
+/// ```
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
         Error::Http {
@@ -1319,6 +1347,25 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
 
 /// The schema of the composed graph, generated from the types that define it rather than
 /// written beside them.
+///
+/// A JSON Schema's own members are fixed by its specification, so the provenance this
+/// repository puts on every generated file cannot ride in a `generated` member of its own:
+/// it goes in `description` and in the `x-majordomus-*` extensions, which is why this
+/// function exists rather than the schema being serialised directly.
+///
+/// ```
+/// let rendered = majordomus_cli::generate::graph_schema_document("0.5.0");
+/// let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+/// assert_eq!(doc["$ref"], "#/definitions/Graph", "the document is the graph's schema");
+/// assert!(
+///     doc["definitions"]["Graph"]["properties"]["nodes"].is_object(),
+///     "the schema is derived from the Rust type, so the type's fields are in it"
+/// );
+/// assert!(
+///     doc["description"].as_str().unwrap().contains("0.5.0"),
+///     "the generator's version rides in the provenance a JSON Schema can carry"
+/// );
+/// ```
 pub fn graph_schema_document(version: &str) -> String {
     let schema = crate::capability::schema::CanonicalSchema::of::<crate::graph::Graph>();
     // a JSON Schema's own members are fixed by its specification, so the provenance rides

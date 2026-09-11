@@ -23,6 +23,25 @@
 //!     token: String,
 //! }
 //! ```
+//!
+//! and the value that reaches the store has already been through here:
+//!
+//! ```
+//! # use schemars::JsonSchema;
+//! use majordomus_cli::execution::redact::{redact, REDACTED};
+//! # #[derive(JsonSchema)]
+//! # struct Credentials {
+//! #     user: String,
+//! #     #[schemars(extend("format" = "password"))]
+//! #     token: String,
+//! # }
+//! let schema = serde_json::to_value(schemars::schema_for!(Credentials)).unwrap();
+//! let safe = redact(&schema, &serde_json::json!({ "user": "ada", "token": "hunter2" }));
+//! assert_eq!(safe["user"], "ada", "what is not sensitive is untouched");
+//! assert_eq!(safe["token"], REDACTED);
+//! // a marker and not an absence: a reader can tell withheld from never given
+//! assert!(safe["token"].is_string());
+//! ```
 
 use serde_json::{Map, Value};
 

@@ -1,0 +1,451 @@
+#!/usr/bin/env bash
+# rust-coverage-check — how much of what this crate SHIPS is exercised.
+#
+# The subject is the production code of apps/majordomus-cli: everything under its `src/`
+# that is not a test. The existing `rust` job measures something else and it is worth being
+# precise about the difference, because the two numbers look alike and only one of them
+# answers a question anybody has.
+#
+#   cargo llvm-cov --all-targets --fail-under-lines <floor>
+#
+# instruments the lib, the binary, every integration test and every benchmark, and excludes
+# nothing. Test code is ~100% covered by construction — it runs, that is what it is for — so
+# it sits in both the numerator and the denominator and drags the ratio towards 100%. When
+# this script was written the crate held 81,850 production lines in `src/`, 14,703 lines of
+# in-file `#[cfg(test)]` modules beside them, and a further 18,863 lines under `tests/` and
+# `benches/`: a third of the denominator was code that cannot fail to be covered. The
+# consequence is not a slightly optimistic number, it is a number that moves the right way
+# for the wrong reason — writing a test raises it whether or not the test covers a single
+# production line, and a branch that covers real code can be swamped either way. A floor
+# computed over a denominator that the act of testing inflates is worse than no floor,
+# because it reads as a guarantee.
+#
+# So this script recomputes coverage over the production functions only, from llvm-cov's own
+# export, and it does not exclude a single file by path. There is no ignore list, and
+# deliberately no place to add one: a function is out of the denominator only when it IS
+# test code, and that is decided from the DECLARATION rather than from the name —
+#   * its file is under `tests/` or `benches/`, or
+#   * it is declared inside a `#[cfg(test)]` item, whose exact line span is read from the
+#     source, or inside a file that a `#[cfg(test)] mod x;` pulls in whole.
+#
+# The name is not usable and would be wrong even if it were. llvm-cov's export carries v0
+# *mangled* symbols, in which `::tests::` does not appear at all; and this crate has a
+# production module called `tests` — `web::report::tests` models the /tests/ page — so a
+# rule that excluded a `tests` path segment would silently drop real production code out of
+# the denominator, which is the exact failure this gate exists to prevent. The span is
+# evidence; the name is a guess that happens to be right most of the time.
+#
+# Enforcement is a ratchet, for the reason `rust-command-check` and `rust-public-api-quality`
+# give: a blocking rule with no migration path is a rule that gets reverted. The baseline
+# records the uncovered PRODUCTION LINE COUNT per file, so debt can shrink and cannot grow.
+# Counts and not line numbers, so that adding a comment above an uncovered branch is not a
+# finding, and so that another session reformatting a file does not fail this gate.
+#
+# The target state is an empty baseline, which is what `--strict` measures: no uncovered
+# production line anywhere. Until then `--strict` is what a person runs to see the whole
+# remaining gap at once.
+#
+#   scripts/ci/rust-coverage-check                     report, and fail on new debt
+#   scripts/ci/rust-coverage-check --measure           collect the profiles first (slow)
+#   scripts/ci/rust-coverage-check --from cov.json     read an export somebody already made
+#   scripts/ci/rust-coverage-check --strict            fail on ANY uncovered line
+#   scripts/ci/rust-coverage-check --write-baseline    record today's debt (deliberate)
+#   MJ_ROOT=<dir> scripts/ci/rust-coverage-check       measure another tree (the case does)
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+CRATE="apps/majordomus-cli"
+BASELINE=".ai/repo/rust-coverage-baseline.txt"
+
+MODE="report"
+FROM=""
+MEASURE="no"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict)         MODE="strict"; shift ;;
+  --measure)        MEASURE="yes"; shift ;;
+  --from)           FROM="${2:-}"; [ -n "$FROM" ] || { echo "rust-coverage-check: --from needs a file" >&2; exit 2; }; shift 2 ;;
+  *) echo "rust-coverage-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+if [ ! -f "$CRATE/Cargo.toml" ]; then
+  echo "rust-coverage-check: no Rust crate here; nothing to measure"
+  exit 0
+fi
+
+# ---- the export
+EXPORT=""
+CLEANUP=""
+trap 'if [ -n "$CLEANUP" ]; then rm -f "$CLEANUP"; fi' EXIT INT TERM
+if [ -n "$FROM" ]; then
+  [ -f "$FROM" ] || { echo "rust-coverage-check: $FROM does not exist" >&2; exit 12; }
+  EXPORT="$FROM"
+else
+  command -v cargo >/dev/null 2>&1 || { echo "rust-coverage-check: cargo is not on PATH" >&2; exit 12; }
+  cargo llvm-cov --version >/dev/null 2>&1 || {
+    echo "rust-coverage-check: cargo-llvm-cov is not installed; run: cargo install cargo-llvm-cov" >&2
+    exit 12
+  }
+  if [ "$MEASURE" = yes ]; then
+    # --no-fail-fast on purpose: a coverage verdict must not depend on the suite being
+    # green. A single failing unit test otherwise aborts the run before the integration
+    # binaries execute and no report is produced at all, which is what master did the day
+    # this script was written.
+    ( cd "$CRATE" && env -u MAJORDOMUS_SHARE cargo llvm-cov --all-targets --no-fail-fast --no-report ) \
+      || echo "rust-coverage-check: the suite was not green; measuring what did run" >&2
+  fi
+  EXPORT="$(mktemp -t mj-cov)" || { echo "rust-coverage-check: cannot make a temporary file" >&2; exit 12; }
+  CLEANUP="$EXPORT"
+  ( cd "$CRATE" && env -u MAJORDOMUS_SHARE cargo llvm-cov report --json ) > "$EXPORT" 2>/dev/null || {
+    echo "rust-coverage-check: no coverage profiles to report on." >&2
+    echo "  Collect them first:  scripts/ci/rust-coverage-check --measure" >&2
+    exit 12
+  }
+fi
+
+# ---- the measurement
+# python3 rather than jq: the classification needs the crate's own source scanned for
+# `#[cfg(test)]` spans and then joined to llvm-cov's per-function region records. That is a
+# parse and a loop, not a projection. scripts/site-probe and lib/doctor.sh already use
+# python3, so this adds no dependency.
+command -v python3 >/dev/null 2>&1 || { echo "rust-coverage-check: python3 is not on PATH" >&2; exit 12; }
+MEASURED="$(mktemp -t mj-cov-out)" || { echo "rust-coverage-check: cannot make a temporary file" >&2; exit 12; }
+CLEANUP="$CLEANUP $MEASURED"
+trap 'for f in $CLEANUP; do rm -f "$f"; done' EXIT INT TERM
+
+EXPORT="$EXPORT" CRATE="$CRATE" python3 - > "$MEASURED" <<'PY'
+import json, os, re, sys, collections
+
+export = os.environ['EXPORT']
+crate = os.environ['CRATE']
+src = crate + '/src'
+
+test_path = re.compile(r'/(tests|benches)/')
+CFG_TEST = re.compile(r'#\[\s*cfg\s*\(\s*test\s*\)\s*\]')
+
+
+def strip_noncode(text):
+    """Blank comment and string bodies, keeping every byte offset and newline.
+
+    Brace matching must ignore a `{` inside a string or a comment, and this crate's test
+    fixtures are raw strings full of YAML and Rust.
+    """
+    out = list(text)
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        if c == '/' and i + 1 < n and text[i + 1] == '/':
+            while i < n and text[i] != '\n':
+                out[i] = ' '; i += 1
+        elif c == '/' and i + 1 < n and text[i + 1] == '*':
+            depth = 1; out[i] = out[i + 1] = ' '; i += 2
+            while i < n and depth:
+                if text.startswith('/*', i):
+                    depth += 1; out[i] = out[i + 1] = ' '; i += 2
+                elif text.startswith('*/', i):
+                    depth -= 1; out[i] = out[i + 1] = ' '; i += 2
+                else:
+                    if text[i] != '\n':
+                        out[i] = ' '
+                    i += 1
+        elif c == 'r' and i + 1 < n and text[i + 1] in '#"':
+            j = i + 1; hashes = 0
+            while j < n and text[j] == '#':
+                hashes += 1; j += 1
+            if j < n and text[j] == '"':
+                close = '"' + '#' * hashes
+                end = text.find(close, j + 1)
+                end = n if end < 0 else end + len(close)
+                for k in range(i, end):
+                    if text[k] != '\n':
+                        out[k] = ' '
+                i = end
+            else:
+                i += 1
+        elif c == '"':
+            out[i] = ' '; i += 1
+            while i < n:
+                if text[i] == '\\':
+                    out[i] = ' '
+                    if i + 1 < n and text[i + 1] != '\n':
+                        out[i + 1] = ' '
+                    i += 2; continue
+                if text[i] == '"':
+                    out[i] = ' '; i += 1; break
+                if text[i] != '\n':
+                    out[i] = ' '
+                i += 1
+        elif c == "'":
+            m = re.match(r"'(\\.|[^\\'])'", text[i:])
+            if m:
+                for k in range(i, i + m.end()):
+                    out[k] = ' '
+                i += m.end()
+            else:
+                i += 1
+        else:
+            i += 1
+    return ''.join(out)
+
+
+def spans_of(path):
+    """(cfg(test) line spans, files a `#[cfg(test)] mod x;` pulls in whole)."""
+    raw = open(path, encoding='utf-8', errors='replace').read()
+    code = strip_noncode(raw)
+    line_of = [0] * (len(code) + 1)
+    ln = 1
+    for i, ch in enumerate(code):
+        line_of[i] = ln
+        if ch == '\n':
+            ln += 1
+    line_of[len(code)] = ln
+    spans, included = [], []
+    for m in CFG_TEST.finditer(code):
+        i, n = m.end(), len(code)
+        while i < n and code[i] not in '{;':
+            i += 1
+        if i >= n:
+            continue
+        head = code[m.end():i]
+        if code[i] == ';':
+            mod = re.search(r'\bmod\s+([A-Za-z_][A-Za-z0-9_]*)', head)
+            if mod:
+                name = mod.group(1)
+                base = os.path.dirname(path)
+                stem = os.path.splitext(os.path.basename(path))[0]
+                cands = ([os.path.join(base, name + '.rs'),
+                          os.path.join(base, name, 'mod.rs')]
+                         if stem in ('mod', 'lib', 'main') else
+                         [os.path.join(base, stem, name + '.rs'),
+                          os.path.join(base, stem, name, 'mod.rs'),
+                          os.path.join(base, name + '.rs')])
+                for cand in cands:
+                    if os.path.exists(cand):
+                        included.append(os.path.normpath(cand)); break
+            continue
+        depth, j = 0, i
+        while j < n:
+            if code[j] == '{':
+                depth += 1
+            elif code[j] == '}':
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        spans.append((line_of[m.start()], line_of[min(j, n)]))
+    return spans, included
+
+
+# The crate's cfg(test) geography, keyed by path relative to the crate.
+SPANS, WHOLE = {}, set()
+if os.path.isdir(src):
+    for dirpath, _d, names in os.walk(src):
+        for name in names:
+            if not name.endswith('.rs'):
+                continue
+            full = os.path.normpath(os.path.join(dirpath, name))
+            sp, inc = spans_of(full)
+            rel = full.split(crate + '/', 1)[-1]
+            if sp:
+                SPANS[rel] = sp
+            for f in inc:
+                WHOLE.add(f.split(crate + '/', 1)[-1])
+else:
+    sys.stderr.write(f'rust-coverage-check: {src} is not a directory\n')
+    sys.exit(12)
+
+
+def is_test_code(rel, line):
+    if rel in WHOLE:
+        return True
+    for start, end in SPANS.get(rel, ()):
+        if start <= line <= end:
+            return True
+    return False
+
+try:
+    doc = json.load(open(export))
+except Exception as why:                                      # noqa: BLE001
+    sys.stderr.write(f'rust-coverage-check: {export} is not a coverage export ({why})\n')
+    sys.exit(12)
+try:
+    data = doc['data'][0]
+except (KeyError, IndexError):
+    sys.stderr.write(f'rust-coverage-check: {export} carries no coverage data\n')
+    sys.exit(12)
+
+fn_total = fn_cov = reg_total = reg_cov = 0
+lines = collections.defaultdict(dict)
+kinds = collections.Counter()
+
+for fn in data.get('functions', []):
+    names = fn.get('filenames') or []
+    if any(test_path.search(f) for f in names):
+        kinds['test-target'] += 1
+        continue
+    if not any(src in f for f in names):
+        kinds['not-this-crate'] += 1
+        continue
+    rel = names[0].split(crate + '/', 1)[-1]
+    regions = fn.get('regions') or []
+    declared_at = min((r[0] for r in regions if len(r) >= 5), default=0)
+    if is_test_code(rel, declared_at):
+        kinds['in-file-test'] += 1
+        continue
+    kinds['production'] += 1
+    fn_total += 1
+    hit = fn.get('count', 0) > 0
+    if hit:
+        fn_cov += 1
+    for r in fn.get('regions', []):
+        if len(r) < 5:
+            continue
+        start, end, count = r[0], r[2], r[4]
+        if len(r) > 7 and r[7] != 0:      # only code regions carry line coverage
+            continue
+        reg_total += 1
+        if count > 0:
+            reg_cov += 1
+        for ln in range(start, end + 1):
+            lines[rel][ln] = lines[rel].get(ln, False) or count > 0
+
+if fn_total == 0:
+    sys.stderr.write('rust-coverage-check: the export names no production function\n')
+    sys.exit(12)
+
+ln_total = sum(len(v) for v in lines.values())
+ln_cov = sum(1 for v in lines.values() for hit in v.values() if hit)
+
+def pct(a, b):
+    return 100.0 if b == 0 else a * 100.0 / b
+
+# stdout is read by the shell below: a header block of `# key value`, then one
+# `<uncovered>\t<path>` line per file that has any, sorted worst first then by path.
+print(f'# lines {ln_cov} {ln_total} {pct(ln_cov, ln_total):.4f}')
+print(f'# functions {fn_cov} {fn_total} {pct(fn_cov, fn_total):.4f}')
+print(f'# regions {reg_cov} {reg_total} {pct(reg_cov, reg_total):.4f}')
+print(f'# classified {kinds["production"]} {kinds["in-file-test"]} '
+      f'{kinds["test-target"]} {kinds["not-this-crate"]}')
+rows = []
+for rel, lv in lines.items():
+    unc = sum(1 for hit in lv.values() if not hit)
+    if unc:
+        rows.append((unc, rel))
+for unc, rel in sorted(rows, key=lambda r: (-r[0], r[1])):
+    print(f'{unc}\t{rel}')
+PY
+rc=$?
+[ "$rc" -eq 0 ] || exit "$rc"
+
+lines_pct="$(awk '$2=="lines"     {print $5}' "$MEASURED")"
+fns_pct="$(awk   '$2=="functions" {print $5}' "$MEASURED")"
+regs_pct="$(awk  '$2=="regions"   {print $5}' "$MEASURED")"
+lines_cov="$(awk '$2=="lines"     {print $3}' "$MEASURED")"
+lines_all="$(awk '$2=="lines"     {print $4}' "$MEASURED")"
+prod_fns="$(awk  '$2=="classified"{print $3}' "$MEASURED")"
+infile="$(awk    '$2=="classified"{print $4}' "$MEASURED")"
+targets="$(awk   '$2=="classified"{print $5}' "$MEASURED")"
+uncovered_total=$((lines_all - lines_cov))
+
+echo "rust-coverage-check: the production code of $CRATE"
+echo "  lines      ${lines_pct}%   ${lines_cov}/${lines_all}   (${uncovered_total} uncovered)"
+echo "  functions  ${fns_pct}%"
+echo "  regions    ${regs_pct}%"
+echo "  measured $prod_fns production functions; excluded $infile in-file test functions and $targets under tests/ or benches/"
+
+# the measured debt, one line per file
+grep -v '^#' "$MEASURED" > "$MEASURED.files" || : > "$MEASURED.files"
+CLEANUP="$CLEANUP $MEASURED.files"
+files_with_debt="$(wc -l < "$MEASURED.files" | tr -d ' ')"
+
+if [ "$MODE" = write ]; then
+  {
+    echo "# The uncovered production lines of $CRATE that this repository accepts today."
+    echo "#"
+    echo "# One per line: <uncovered production lines><TAB><path relative to the crate>."
+    echo "# A COUNT and not a set of line numbers, so that an edit above an uncovered branch"
+    echo "# is not a finding and a reformat is not a regression. The gate fails when a file's"
+    echo "# count rises above the one here, or when a file not named here has any uncovered"
+    echo "# line at all, so the debt can shrink and cannot grow."
+    echo "#"
+    echo "# Written only by: scripts/ci/rust-coverage-check --write-baseline"
+    echo "# This rule is not finished until this file is empty and removed."
+    sort -k2 "$MEASURED.files"
+  } > "$BASELINE"
+  echo "  wrote $BASELINE: $files_with_debt file(s), $uncovered_total uncovered line(s)"
+  exit 0
+fi
+
+if [ "$MODE" = strict ]; then
+  if [ "$uncovered_total" -eq 0 ]; then
+    echo "  every production line of $CRATE is exercised"
+    exit 0
+  fi
+  echo ""
+  echo "  $uncovered_total uncovered production line(s) in $files_with_debt file(s), worst first:"
+  head -40 "$MEASURED.files" | while IFS='	' read -r n f; do
+    printf '    %6s  %s\n' "$n" "$f"
+  done
+  [ "$files_with_debt" -gt 40 ] && echo "    ... and $((files_with_debt - 40)) more file(s)"
+  exit 10
+fi
+
+# ---- the ratchet
+if [ ! -f "$BASELINE" ]; then
+  echo ""
+  echo "  no $BASELINE, so there is nothing to compare against."
+  echo "  Record today's debt deliberately:  scripts/ci/rust-coverage-check --write-baseline"
+  exit 12
+fi
+grep -v '^#' "$BASELINE" | grep -v '^[[:space:]]*$' > "$MEASURED.base" || : > "$MEASURED.base"
+CLEANUP="$CLEANUP $MEASURED.base"
+
+# A finding is a file whose uncovered count exceeds the accepted one, or a file with any
+# uncovered line that the baseline does not name. Improvements are reported, never failed.
+worse="$MEASURED.worse"; better="$MEASURED.better"
+: > "$worse"; : > "$better"
+CLEANUP="$CLEANUP $worse $better"
+awk -F'	' '
+  FILENAME==ARGV[1] { accepted[$2] = $1; next }
+  {
+    was = ($2 in accepted) ? accepted[$2] : 0
+    if ($1 > was) printf "%s\t%d\t%d\n", $2, was, $1 > "'"$worse"'"
+    else if ($1 < was) printf "%s\t%d\t%d\n", $2, was, $1 > "'"$better"'"
+    seen[$2] = 1
+  }
+  END {
+    for (f in accepted) if (!(f in seen)) printf "%s\t%d\t%d\n", f, accepted[f], 0 > "'"$better"'"
+  }
+' "$MEASURED.base" "$MEASURED.files"
+
+improved="$(wc -l < "$better" | tr -d ' ')"
+regressed="$(wc -l < "$worse" | tr -d ' ')"
+
+if [ "$improved" -gt 0 ]; then
+  echo "  $improved file(s) improved since the baseline was recorded:"
+  sort "$better" | head -12 | while IFS='	' read -r f was now; do
+    printf '    %s: %s -> %s uncovered\n' "$f" "$was" "$now"
+  done
+  [ "$improved" -gt 12 ] && echo "    ... and $((improved - 12)) more"
+  echo "  Record the improvement:  scripts/ci/rust-coverage-check --write-baseline"
+fi
+
+if [ "$regressed" -eq 0 ]; then
+  echo "  no file is less covered than the baseline accepts"
+  exit 0
+fi
+
+echo ""
+echo "  $regressed file(s) carry uncovered production lines this repository has not accepted:"
+sort "$worse" | while IFS='	' read -r f was now; do
+  printf '    %s: %s accepted, %s now (+%s)\n' "$f" "$was" "$now" "$((now - was))"
+done
+echo ""
+echo "  Cover them with a test that asserts the behaviour, or — only if the code is"
+echo "  genuinely unreachable — remove it. If the debt was already there and the baseline"
+echo "  is simply out of date, record it deliberately:"
+echo "    scripts/ci/rust-coverage-check --write-baseline"
+exit 10

@@ -19,6 +19,23 @@ use super::system::SystemTarget;
 pub const COVERAGE_SCHEMA: &str = "majordomus/benchmark-coverage/v1";
 
 /// Where one requirement stands.
+///
+/// Three states, and the third is the reason there are not two: a waiver is *reported* and
+/// never counted as covered, so a capability whose descriptor excuses it from being
+/// benchmarked still appears in the denominator with its typed reason beside it. A
+/// requirement that quietly became covered by being waived is exactly what this
+/// distinction refuses.
+///
+/// ```
+/// use majordomus_cli::bench::CoverageState;
+/// // the three are distinct on the wire, so a document cannot blur them
+/// let words: Vec<String> = [CoverageState::Covered, CoverageState::Missing,
+///                           CoverageState::Waived]
+///     .iter()
+///     .map(|s| serde_json::to_value(s).unwrap().to_string())
+///     .collect();
+/// assert_eq!(words, ["\"covered\"", "\"missing\"", "\"waived\""]);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CoverageState {
@@ -31,6 +48,25 @@ pub enum CoverageState {
 }
 
 /// One requirement: a capability on a transport, or a system target.
+///
+/// The unit of the denominator is a *pair*, not a capability: a capability exposed over
+/// three transports is three requirements, because being fast in process says nothing
+/// about the socket. `cases` is carried so that a covered line says how much evidence is
+/// behind it, and `reason` is present only for a waiver — a line with a reason and any
+/// other state would be a document contradicting itself.
+///
+/// ```
+/// use majordomus_cli::bench::{CoverageLine, CoverageState, Transport};
+/// let line: CoverageLine = serde_json::from_value(serde_json::json!({
+///     "subject": "demo.echo", "module": "demo", "transport": "http",
+///     "state": "missing", "cases": 0, "reason": null
+/// })).unwrap();
+/// assert_eq!(line.transport, Transport::Http);
+/// assert_eq!(line.state, CoverageState::Missing);
+/// // required, and no case could be produced for this repository
+/// assert_eq!(line.cases, 0);
+/// assert!(line.reason.is_none(), "only a waiver carries a reason");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CoverageLine {
     /// The capability id, or the system target's key.
@@ -69,7 +105,31 @@ pub struct Tally {
 /// it shut.
 pub const SYSTEM_MODULE: &str = "system";
 
-/// The coverage document.
+/// The coverage document: every requirement, and the tallies derived from them.
+///
+/// The tallies are computed from the lines and never recorded beside them, so a count and
+/// a list that disagree is not a state this document can be in. There is one bucket per
+/// transport, one called `system` for the transports' own targets, and `total` — which is
+/// why no capability module may be called `system`: its lines would be tallied as transport
+/// targets and vanish from the per-transport denominators.
+///
+/// ```
+/// use majordomus_cli::bench::Coverage;
+/// let document: Coverage = serde_json::from_value(serde_json::json!({
+///     "schema": "majordomus/benchmark-coverage/v1",
+///     "lines": [{ "subject": "demo.echo", "module": "demo", "transport": "direct",
+///                 "state": "covered", "cases": 2, "reason": null },
+///               { "subject": "demo.echo", "module": "demo", "transport": "http",
+///                 "state": "missing", "cases": 0, "reason": null }],
+///     "tallies": { "direct": { "required": 1, "covered": 1, "missing": 0, "waived": 0 },
+///                  "http": { "required": 1, "covered": 0, "missing": 1, "waived": 0 },
+///                  "total": { "required": 2, "covered": 1, "missing": 1, "waived": 0 } }
+/// })).unwrap();
+/// // one capability over two transports is two requirements, not one
+/// assert_eq!(document.lines.len(), 2);
+/// assert_eq!(document.tallies["total"].required, 2);
+/// assert!(!document.has_no_missing(), "a transport with no target is a gap");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Coverage {
     /// `majordomus/benchmark-coverage/v1`.
@@ -81,7 +141,29 @@ pub struct Coverage {
 }
 
 impl Coverage {
-    /// Compute coverage for a context.
+    /// Compute coverage for a context: the denominator from the registry, the numerator
+    /// from the projection.
+    ///
+    /// Both halves are derived, which is the whole design. The requirements are every
+    /// executable entry crossed with the transports its own exposure declares — so a
+    /// capability that gains an HTTP route gains a requirement the same day — and a
+    /// requirement is covered when the projection actually holds a target for it. Nothing
+    /// is written down, so nothing can be forgotten from the denominator; a capability with
+    /// no case is `Missing` rather than absent.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::bench::{BenchmarkProjection, Coverage};
+    /// use majordomus_cli::capability::Context;
+    /// // compiled and not run: both halves are derived from this process's own registry
+    /// fn measure(ctx: &Context) {
+    ///     let projection = BenchmarkProjection::from_context(ctx);
+    ///     let coverage = Coverage::compute(ctx, &projection);
+    ///     // the tallies are derived from the lines, so they cannot disagree with them
+    ///     assert_eq!(coverage.tallies["total"].required, coverage.lines.len());
+    ///     // and the transports' own targets are covered by construction
+    ///     assert_eq!(coverage.tallies["system"].missing, 0);
+    /// }
+    /// ```
     pub fn compute(ctx: &Context, projection: &BenchmarkProjection) -> Self {
         let mut lines = Vec::new();
         for c in ctx.registry.iter() {
@@ -168,17 +250,84 @@ impl Coverage {
     }
 
     /// Nothing missing, nothing waived: the state the repository wants.
+    ///
+    /// Stricter than [`Coverage::has_no_missing`] on purpose, and the difference is the
+    /// whole reason both exist: a waiver is a decision somebody made, so a repository can
+    /// be *passing* with waivers and still not be *complete*. A gate uses the looser
+    /// question; a report that says whether the debt is gone uses this one.
+    ///
+    /// ```
+    /// # use majordomus_cli::bench::Coverage;
+    /// # fn document(missing: usize, waived: usize) -> Coverage {
+    /// #     serde_json::from_value(serde_json::json!({
+    /// #         "schema": "majordomus/benchmark-coverage/v1",
+    /// #         "lines": [],
+    /// #         "tallies": { "total": { "required": 3, "covered": 1,
+    /// #             "missing": missing, "waived": waived } }
+    /// #     })).unwrap()
+    /// # }
+    /// assert!(document(0, 0).is_complete());
+    /// // a waiver is reported, not absorbed: it is still not complete
+    /// let waived = document(0, 1);
+    /// assert!(!waived.is_complete());
+    /// assert!(waived.has_no_missing(), "and yet nothing is missing");
+    /// assert!(!document(1, 0).is_complete());
+    /// ```
     pub fn is_complete(&self) -> bool {
         let total = self.tallies.get("total").cloned().unwrap_or_default();
         total.missing == 0 && total.waived == 0
     }
 
     /// Nothing missing; waivers reported but not failing.
+    ///
+    /// The question a gate asks. A waiver was a deliberate decision recorded in a
+    /// descriptor and does not fail a build; a requirement nobody has produced a case for
+    /// is work that has not been done.
+    ///
+    /// A document with no tallies at all answers `true`, which is the honest reading of a
+    /// repository that requires nothing: there is no requirement to be missing.
+    ///
+    /// ```
+    /// # use majordomus_cli::bench::Coverage;
+    /// # fn document(missing: usize, waived: usize) -> Coverage {
+    /// #     serde_json::from_value(serde_json::json!({
+    /// #         "schema": "majordomus/benchmark-coverage/v1",
+    /// #         "lines": [],
+    /// #         "tallies": { "total": { "required": 3, "covered": 1,
+    /// #             "missing": missing, "waived": waived } }
+    /// #     })).unwrap()
+    /// # }
+    /// assert!(document(0, 0).has_no_missing());
+    /// assert!(document(0, 2).has_no_missing(), "a waiver does not fail a gate");
+    /// assert!(!document(1, 0).has_no_missing());
+    /// ```
     pub fn has_no_missing(&self) -> bool {
         self.tallies.get("total").is_none_or(|t| t.missing == 0)
     }
 
-    /// The human report.
+    /// The report a person reads: a line per bucket, the totals, and then every
+    /// requirement that is not covered.
+    ///
+    /// Only the uncovered lines are listed, because a list of everything that is fine is a
+    /// list nobody reads to the end — and the ones that are listed carry their waiver's
+    /// reason, so the report answers "why is this excused?" without anybody opening a
+    /// descriptor.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::Coverage;
+    /// let document: Coverage = serde_json::from_value(serde_json::json!({
+    ///     "schema": "majordomus/benchmark-coverage/v1",
+    ///     "lines": [{ "subject": "demo.echo", "module": "demo", "transport": "http",
+    ///                 "state": "waived", "cases": 0, "reason": "measured end to end" }],
+    ///     "tallies": { "http": { "required": 1, "covered": 0, "missing": 0, "waived": 1 },
+    ///                  "total": { "required": 1, "covered": 0, "missing": 0, "waived": 1 } }
+    /// })).unwrap();
+    /// let report = document.render();
+    /// // the totals, and the one line that is not covered, with the reason it is not
+    /// assert!(report.contains("total"), "{report}");
+    /// assert!(report.contains("WAIVED"), "{report}");
+    /// assert!(report.contains("measured end to end"), "{report}");
+    /// ```
     pub fn render(&self) -> String {
         let mut s = String::from("Benchmark coverage\n\n");
         for (name, t) in &self.tallies {

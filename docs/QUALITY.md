@@ -118,6 +118,93 @@ is the only thing that writes it, and it is a deliberate act. Run it when you ha
 debt, not when you have found new debt — the whole point is that new debt fails. The rule is
 finished when the file is empty and removed.
 
+## Coverage: what the crate ships
+
+There are two coverage numbers for this crate and they measure different denominators. The
+difference is not a rounding detail, so both are reported and only one of them can answer
+the question people mean.
+
+| | denominator | enforced by | what it answers |
+|---|---|---|---|
+| `just coverage` | every instrumented target: lib, bin, `tests/`, `benches/` | a percentage floor in `scripts/rust-coverage-threshold` | how much of everything that ran, ran |
+| `just coverage-honest` | the crate's production code alone | a per-file ratchet in `.ai/repo/rust-coverage-baseline.txt` | how much of what we ship is exercised |
+
+The first excludes nothing. Test code is covered by construction — running is what it is for
+— so it sits in the numerator and the denominator together, and when the second measurement
+was added the crate held 81,850 production lines under `src/`, 14,703 lines of in-file
+`#[cfg(test)]` modules beside them, and 18,863 more under `tests/` and `benches/`. A third
+of that denominator could not fail to be covered. The consequence is not a flattering
+figure, it is a figure that **moves the right way for the wrong reason**: writing a test
+raises it whether or not the test covers a single production line. Do not read a change in
+it as a change in how well the crate is tested.
+
+### Running it
+
+```sh
+just coverage-honest             # measure, and fail on debt the baseline does not accept
+just coverage-gap                # the whole remaining gap, worst file first, baseline ignored
+just test-rust web::             # one module's tests, no instrumentation, fast
+just test-shell 127_rust_coverage_honest    # one behavioural case
+```
+
+`coverage-honest` collects profiles itself, which takes as long as the suite does. Once they
+exist, `scripts/ci/rust-coverage-check` and `--strict` re-report from them in a second, so
+inspect the gap with `just coverage-gap` rather than re-measuring. To see the uncovered
+*regions* of one file rather than a count, use llvm-cov's own viewer against the same
+profiles:
+
+```sh
+cd apps/majordomus-cli && cargo llvm-cov report --html && open target/llvm-cov/html/index.html
+```
+
+### What is enforced
+
+Line, function and region coverage are all reported; the gate is on lines, per file. The
+accepted debt is `.ai/repo/rust-coverage-baseline.txt`, one line per file as
+`<uncovered production lines><TAB><path>`. A **count**, not a set of line numbers, so that
+editing a comment above an uncovered branch is not a finding and reformatting a file is not
+a regression. A file that carries more than its accepted count fails the gate with exit
+`10`; a file that carries fewer is reported and never failed. `--write-baseline` is the only
+thing that writes it, and — as with the quality ratchet — you run it when you have *paid*
+debt. The rule is finished when the file is empty and removed, which is what `--strict`
+measures.
+
+### How exclusions are governed
+
+There are none, and there is deliberately nowhere to put one. A function leaves the
+denominator only when it **is** test code, read from the declaration: its file is under
+`tests/` or `benches/`, or it is declared inside a `#[cfg(test)]` item — whose exact line
+span is scanned out of the source — or inside a file that a `#[cfg(test)] mod x;` pulls in
+whole. No path is excluded, and no configuration exists in which one can be: a list of
+excluded paths is a place to add a line, and the line that gets added is never a test file.
+
+Recognising a `tests::` segment in the symbol name would be cheaper and is wrong twice, so
+do not reintroduce it. llvm-cov's export carries v0-*mangled* symbols in which `::tests::`
+never appears, so the name rule classified nothing at all and inflated the denominator by
+1,046 in-file test functions; and it would still be wrong after demangling, because
+`web::report::tests` is a **production** module — it models this page's own `/tests/`
+surface — which a name rule would have dropped out of the denominator, hiding real uncovered
+code. You may therefore name an in-file test module whatever reads best; what matters is the
+`#[cfg(test)]` the compiler already requires.
+
+### The three gates do not agree, and that is worth knowing
+
+A new item can satisfy two of this repository's measurements and still read as dead code to
+the third:
+
+- A **doc example** satisfies `project.rust-public-api-quality` and is invisible to
+  coverage: `cargo llvm-cov --all-targets` does not instrument doc tests, and `--doctests`
+  is a separate flag its own author marks unstable.
+- A **`test/cases/*.sh` case** exercises a command end to end through the real binary and is
+  also invisible to coverage, because no profile is collected from that child process.
+
+So when you add an exported item or a command, it needs coverage from something the
+*instrumented build runs* — an in-file `#[cfg(test)]` test, or a test under `tests/` — in
+addition to the example the quality rule asks for. Both halves, every time. The answer is
+not to weaken the coverage measurement until it agrees with the others: it answers exactly
+one question, *is this line reached by something the instrumented build ran*, and the other
+two gates answer the rest.
+
 ## Adding a command: the golden path
 
 A command is the projection of a capability, or it says why it is not. Both are checked.
@@ -164,6 +251,10 @@ src/quality/model.rs    the vocabulary: codes, severities, the report's shape
 src/cli/local.rs        why a command is not a capability
 src/capability/builtin/quality.rs   the capability every projection reads
 tests/quality.rs        the ratchet, and one fixture per way of failing
+
+scripts/ci/rust-coverage-check      coverage over the production code, and its ratchet
+.ai/repo/rust-coverage-baseline.txt the uncovered production lines accepted today
+test/cases/127_rust_coverage_honest.sh  the classification and the ratchet, both directions
 ```
 
 The measurement is deterministic and needs no network: file reads are its only I/O, and two

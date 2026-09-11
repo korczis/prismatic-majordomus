@@ -24,7 +24,27 @@ use super::results::{BenchmarkResult, CacheMode};
 use super::stats::Statistics;
 use super::system::SystemTarget;
 
-/// How much to measure.
+/// How much to measure: the three questions a run can be asked.
+///
+/// Sample count is not a knob to be turned per invocation, because the regression policy
+/// gates on percentiles and a percentile is only meaningful over enough samples — a p99 of
+/// twenty samples is the slowest sample. So the counts are named profiles: `quick` is
+/// developer feedback and is not evidence, `full` is evidence, and `ci` is the compromise a
+/// gate can afford. The policy's own `minimum_samples` is what refuses to fail a run whose
+/// profile was too small for a metric.
+///
+/// ```
+/// use majordomus_cli::bench::Profile;
+/// // the profile a person reaches for first is not the one that produces evidence
+/// assert!(Profile::QUICK.samples < Profile::CI.samples);
+/// assert!(Profile::CI.samples < Profile::FULL.samples);
+/// // every profile warms up before it measures, so no sample is the first call
+/// for profile in [Profile::QUICK, Profile::CI, Profile::FULL] {
+///     assert!(profile.warmup > 0, "{}", profile.name);
+///     assert!(profile.cold_spawns > 0, "{}", profile.name);
+///     assert_eq!(Profile::parse(profile.name), Some(profile));
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Profile {
     /// The name (`quick`, `full`, `ci`).
@@ -60,7 +80,22 @@ impl Profile {
         cold_spawns: 3,
     };
 
-    /// By name.
+    /// The profile of a name, or nothing.
+    ///
+    /// Where `--profile` becomes a value. There is deliberately no default here and no
+    /// nearest match: a run whose sample count was decided by a typo would produce numbers
+    /// that look like evidence and are not, and the caller is better placed to say what to
+    /// do about an unknown name.
+    ///
+    /// ```
+    /// use majordomus_cli::bench::Profile;
+    /// assert_eq!(Profile::parse("quick"), Some(Profile::QUICK));
+    /// assert_eq!(Profile::parse("full"), Some(Profile::FULL));
+    /// assert_eq!(Profile::parse("ci"), Some(Profile::CI));
+    /// // the name a profile carries is the name it parses from
+    /// assert_eq!(Profile::parse(Profile::FULL.name), Some(Profile::FULL));
+    /// assert_eq!(Profile::parse("thorough"), None, "no nearest match, no default");
+    /// ```
     pub fn parse(name: &str) -> Option<Profile> {
         match name {
             "quick" => Some(Profile::QUICK),
@@ -71,7 +106,32 @@ impl Profile {
     }
 }
 
-/// Times targets against one context.
+/// Times targets against one context, through the transport each target names.
+///
+/// It measures the real thing on every transport: the executor in process, a real loopback
+/// socket for HTTP, and a real `majordomus mcp` child process over stdio. Nothing is
+/// simulated, which is why a number from this can be compared with what a client
+/// experiences — and why the socket and the child are started lazily and kept, rather than
+/// per sample. A run that never touches a transport never pays for it.
+///
+/// It is not reusable across repositories: the context, the repository root and the child's
+/// arguments are fixed when it is built, so every sample of a run measures the same thing.
+///
+/// ```no_run
+/// use std::sync::Arc;
+/// use majordomus_cli::bench::{BenchmarkProjection, Profile, Runner, Transport};
+/// use majordomus_cli::capability::Context;
+/// // compiled and not run: it starts a socket and a child process
+/// fn measure(ctx: Arc<Context>, root: &std::path::Path) {
+///     let projection = BenchmarkProjection::from_context(&ctx);
+///     let mut runner = Runner::new(ctx, Profile::QUICK, root);
+///     for target in projection.by_transport(Transport::Direct) {
+///         let results = runner.run(target).expect("the direct transport is in process");
+///         assert!(results.iter().all(|r| r.key == target.key));
+///     }
+///     runner.finish();
+/// }
+/// ```
 pub struct Runner {
     ctx: Arc<Context>,
     profile: Profile,
@@ -88,6 +148,28 @@ pub struct Runner {
 
 impl Runner {
     /// A runner over a context; the HTTP socket and the MCP child are started on first use.
+    ///
+    /// Lazily, and that is the contract: constructing a runner binds no port and spawns
+    /// nothing, so a run narrowed to the direct transport costs neither. The executable the
+    /// MCP child will be spawned from defaults to this one, which is what makes a
+    /// benchmark measure the build that is running rather than whatever is on the `PATH`.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // that this example runs at all is the laziness contract: constructing a runner
+    /// // over a real context binds no port and spawns no child, so a doctest can do it
+    /// let runner = Runner::new(Arc::clone(&ctx), Profile::CI, repo.root());
+    /// assert_eq!(Arc::strong_count(&ctx), 2, "the runner holds the context, it does not copy it");
+    ///
+    /// runner.finish();
+    /// assert_eq!(Arc::strong_count(&ctx), 1, "and finish released it; nothing was left running");
+    /// ```
     pub fn new(ctx: Arc<Context>, profile: Profile, repo_root: &std::path::Path) -> Self {
         Runner {
             ctx,
@@ -102,12 +184,55 @@ impl Runner {
     }
 
     /// Spawn this executable for the MCP transport instead of the running one.
+    ///
+    /// The default is the running executable, so a benchmark measures the build in hand.
+    /// This exists for the case where it cannot: a test binary is not a `majordomus`, so a
+    /// test that benchmarks the MCP transport has to say which executable to spawn.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // naming the executable spawns nothing: the child starts on first use, and this
+    /// // example never reaches one
+    /// let runner = Runner::new(Arc::clone(&ctx), Profile::QUICK, repo.root())
+    ///     .with_executable(repo.root().join("target/release/majordomus"));
+    /// assert_eq!(Arc::strong_count(&ctx), 2, "the builder returns the runner, not a new one");
+    ///
+    /// runner.finish();
+    /// assert_eq!(Arc::strong_count(&ctx), 1, "no child was ever spawned to wait for");
+    /// ```
     pub fn with_executable(mut self, path: std::path::PathBuf) -> Self {
         self.executable = path;
         self
     }
 
     /// The share directory the MCP child reads (`MAJORDOMUS_SHARE`); the parent's.
+    ///
+    /// The child has to read the same kinds and schemas the parent did, or it is a
+    /// different program and its numbers answer a different question. Passing the parent's
+    /// share explicitly is what stops the child inheriting whatever a stale environment
+    /// variable happened to point at.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// let runner = Runner::new(Arc::clone(&ctx), Profile::QUICK, repo.root())
+    ///     .with_share(repo.root().join("share"));
+    /// assert_eq!(Arc::strong_count(&ctx), 2, "the builder returns the runner, not a new one");
+    ///
+    /// runner.finish();
+    /// assert_eq!(Arc::strong_count(&ctx), 1, "the share is read by a child that never started");
+    /// ```
     pub fn with_share(mut self, share: std::path::PathBuf) -> Self {
         self.share = Some(share);
         self
@@ -115,12 +240,60 @@ impl Runner {
 
     /// Arguments the MCP child gets after `mcp --standalone`, so that it reads the
     /// repository the way the parent did (`--discovery filesystem`, `--strict`).
+    ///
+    /// The same reason as the share directory: a child that discovered the repository
+    /// differently is measuring a different index, and the difference would show up as a
+    /// transport cost. These are appended to the child's command line, so they are the
+    /// caller's to keep in step with the parent's own invocation.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // the parent discovered the repository this way, so the child is told to as well
+    /// let runner = Runner::new(Arc::clone(&ctx), Profile::QUICK, repo.root())
+    ///     .with_child_args(vec!["--discovery".into(), "filesystem".into(), "--strict".into()]);
+    /// assert_eq!(Arc::strong_count(&ctx), 2, "the builder returns the runner, not a new one");
+    ///
+    /// runner.finish();
+    /// assert_eq!(Arc::strong_count(&ctx), 1, "the arguments configured a child that never started");
+    /// ```
     pub fn with_child_args(mut self, args: Vec<String>) -> Self {
         self.child_args = args;
         self
     }
 
     /// Time one target: one result per cache mode it has.
+    ///
+    /// One target in, one result *per cache mode* out — a capability with a cache is
+    /// measured cold and warm, because those are two different questions and comparing one
+    /// against the other's baseline would report a regression that is not one. A target
+    /// without a cache yields a single result.
+    ///
+    /// Every sample is preceded by the profile's warm-up, so no measurement is of a first
+    /// call; the transport's own resources are started here on first use and kept until
+    /// [`Runner::finish`].
+    ///
+    /// ```no_run
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{BenchmarkProjection, Profile, Runner};
+    /// use majordomus_cli::capability::Context;
+    /// // compiled and not run: it makes real calls over real transports
+    /// fn measure(ctx: Arc<Context>, root: &std::path::Path) {
+    ///     let projection = BenchmarkProjection::from_context(&ctx);
+    ///     let target = &projection.targets[0];
+    ///     let mut runner = Runner::new(ctx, Profile::QUICK, root);
+    ///     let results = runner.run(target).expect("the target was measured");
+    ///     // every result is about the target that was asked for, one per cache mode
+    ///     assert!(!results.is_empty());
+    ///     assert!(results.iter().all(|r| r.key == target.key));
+    ///     runner.finish();
+    /// }
+    /// ```
     pub fn run(&mut self, target: &BenchmarkTarget) -> Result<Vec<BenchmarkResult>> {
         match &target.kind {
             TargetKind::Capability {
@@ -454,6 +627,29 @@ impl Runner {
     }
 
     /// Stop the socket and the child.
+    ///
+    /// It takes `self`, so a runner cannot be used after its transports are gone. It is
+    /// safe on a runner that started neither — the lazy resources are simply absent — which
+    /// is why every path out of a run can call it unconditionally rather than remembering
+    /// what it touched.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::bench::{Profile, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    ///
+    /// // nothing was measured, so neither transport was ever started — and finishing is
+    /// // still correct, which is the claim that lets every path out of a run call it
+    /// let runner = Runner::new(Arc::clone(&ctx), Profile::QUICK, repo.root());
+    /// runner.finish();
+    ///
+    /// // it took `self`, so the runner is gone and its handle on the context with it;
+    /// // a finish that leaked the runner would leave this at 2
+    /// assert_eq!(Arc::strong_count(&ctx), 1);
+    /// ```
     pub fn finish(mut self) {
         if let Some(child) = self.mcp.take() {
             child.close();

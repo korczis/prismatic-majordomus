@@ -10,6 +10,19 @@
 //! Width is the other half. A box drawn by counting bytes falls apart on the first
 //! non-ASCII character, and a box drawn by counting `char`s falls apart on the first
 //! combining mark or CJK name. [`width`] counts columns.
+//!
+//! The lifecycle is the order the banner uses: take the value, make it printable, then fit
+//! it to the space there is. The steps do not commute — measuring before sanitising
+//! measures characters that will never be drawn, and padding before truncating produces a
+//! cell wider than the terminal.
+//!
+//! ```
+//! use majordomus_cli::environment::text::{pad, sanitise, width};
+//! let branch = sanitise("feature/\u{1b}[31mpřehled\u{1b}[0m");
+//! assert_eq!(branch, "feature/přehled", "the colour a branch name asked for is not granted");
+//! assert_eq!(width(&branch), 15, "fifteen columns, not the sixteen bytes it occupies");
+//! assert_eq!(width(&pad(&branch, 20)), 20, "and it fills exactly the cell it was given");
+//! ```
 
 /// The replacement for a character that may not be printed. A space, so that a name with
 /// something nasty in it still lines up rather than shifting the layout.
@@ -85,6 +98,15 @@ pub fn sanitise(value: &str) -> String {
 /// a repository's metadata: the CJK and Hangul blocks, the fullwidth forms, and the emoji
 /// that terminals draw double. It is deliberately a table here rather than a dependency —
 /// the alternative is a crate with its own Unicode database for the sake of drawing a box.
+///
+/// ```
+/// use majordomus_cli::environment::text::char_width;
+/// assert_eq!(char_width('m'), 1);
+/// assert_eq!(char_width('ř'), 1, "two bytes, one column");
+/// assert_eq!(char_width('語'), 2, "an ideograph is drawn across two");
+/// assert_eq!(char_width('\u{0301}'), 0, "a combining accent belongs to the letter before it");
+/// assert_eq!(char_width('\u{7}'), 0, "a control character is not drawn at all");
+/// ```
 pub fn char_width(c: char) -> usize {
     match c {
         // combining marks, variation selectors, zero-width joiners: no column of their own
@@ -195,6 +217,17 @@ pub fn pad(value: &str, columns: usize) -> String {
 }
 
 /// [`pad`], with the truncation mark given explicitly.
+///
+/// Padding and truncation are one operation here rather than two, because a cell of a box
+/// owes the caller its exact width in both directions: a value shorter than the cell is
+/// filled and a longer one is cut, and the mark is measured as part of the cut.
+///
+/// ```
+/// use majordomus_cli::environment::text::{pad_with, width};
+/// assert_eq!(pad_with("ok", 5, "..."), "ok   ", "short values are filled");
+/// assert_eq!(pad_with("majordomus", 6, "..."), "maj...", "long ones are cut, mark included");
+/// assert_eq!(width(&pad_with("日本語です", 6, "...")), 6, "and a wide value still fits");
+/// ```
 pub fn pad_with(value: &str, columns: usize, ellipsis: &str) -> String {
     let cut = truncate_with(value, columns, ellipsis);
     let w = width(&cut);

@@ -28,6 +28,26 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// What became of the `.envrc` of a worktree that was just created, found, or moved.
+///
+/// Six outcomes and no boolean, because "not approved" is four different situations with
+/// four different next actions: there is no `.envrc`, direnv is not installed, the file
+/// differs from the one the person approved, or the primary checkout's own file was never
+/// approved either. Collapsing them would leave a person with a worktree that does not
+/// load its environment and no way to tell which of the four to fix.
+///
+/// None of them is a failure of the operation that produced them. A blocked worktree is
+/// still a worktree, and the value exists so that the report says so before the next `cd`
+/// does.
+///
+/// ```
+/// use majordomus_cli::worktree::EnvrcApproval;
+/// // the outcomes a person has to act on say what the action is
+/// assert!(EnvrcApproval::Differs.describe().contains("direnv allow"));
+/// assert!(EnvrcApproval::NotApprovedInPrimary.describe().contains("direnv allow"));
+/// // and the outcomes that need nothing ask for nothing
+/// assert!(!EnvrcApproval::Approved.describe().contains("allow"));
+/// assert!(!EnvrcApproval::NoEnvrc.describe().contains("allow"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "outcome")]
 pub enum EnvrcApproval {
@@ -52,6 +72,18 @@ pub enum EnvrcApproval {
 
 impl EnvrcApproval {
     /// One line for a person, after the path the worktree is at.
+    ///
+    /// Every line begins with the same `envrc` label and the same padding, so a report
+    /// listing several worktrees keeps one column and a reader scans it rather than
+    /// parsing it. The line is the whole message: nothing above this adds to it, which is
+    /// why the ones a person must act on carry the command instead of implying it.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::EnvrcApproval;
+    /// let failed = EnvrcApproval::Failed { message: "cannot write .direnv".into() };
+    /// assert_eq!(failed.describe(), "envrc   direnv refused: cannot write .direnv");
+    /// assert!(EnvrcApproval::DirenvAbsent.describe().starts_with("envrc   "));
+    /// ```
     pub fn describe(&self) -> String {
         match self {
             Self::Approved => {

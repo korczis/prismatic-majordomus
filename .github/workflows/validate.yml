@@ -261,11 +261,16 @@ jobs:
           retention-days: 14
 
   # ------------------------------------------------------------------ coverage
-  # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
+  # Two coverage measurements of the same crate, over different denominators, and the
+  # difference is the point. The first instruments every target and excludes nothing, so
+  # test code — which is covered because running is what it is for — sits in its denominator
+  # too. The second measures the production code alone. The first keeps the meaning and the
+  # threshold it has always had; the second is the one that can answer "is what we ship
+  # exercised", and it holds a per-file ratchet rather than a percentage floor.
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true'
-    timeout-minutes: 25
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -278,6 +283,15 @@ jobs:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
       - run: cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"
+      # `if: always()` and its own collection, deliberately. The step above aborts the whole
+      # run on the first failing test rather than measuring what else would have run, so on
+      # a red suite it produces no number at all — which is what master did the day this
+      # step was added. The production-code measurement must not inherit that: it collects
+      # with --no-fail-fast so its verdict is about coverage and about nothing else, and it
+      # reports even when the threshold above has already failed.
+      - if: always()
+        working-directory: .
+        run: scripts/ci/rust-coverage-check --measure
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "threshold=$(cat ../../scripts/rust-coverage-threshold)"
 

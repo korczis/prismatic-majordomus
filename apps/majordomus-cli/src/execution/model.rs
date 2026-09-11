@@ -1,6 +1,32 @@
 //! What an execution is: its identity, the states it may be in, and the snapshot every
 //! transport answers with. Plain data with no transport type in it and no handle to a
 //! running thread: a snapshot is taken under the store's lock and read afterwards.
+//!
+//! The vocabulary is one value's worth: an identity a client can pass back, a state that
+//! moves only where [`ExecutionState::may_move_to`] allows, and the views a handler
+//! reports through. Nothing here runs anything, so all of it can be read and asserted on
+//! its own.
+//!
+//! ```
+//! use majordomus_cli::execution::model::*;
+//! // an identity a client may hand back, and one it may not
+//! let id = ExecutionId::fresh();
+//! assert_eq!(ExecutionId::parse(id.as_str()).as_ref(), Some(&id));
+//! assert!(ExecutionId::parse("../../etc/passwd").is_none());
+//!
+//! // the lifecycle, as the store will enforce it
+//! let mut state = ExecutionState::Queued;
+//! for next in [ExecutionState::Running, ExecutionState::Succeeded] {
+//!     assert!(state.may_move_to(next), "{state:?} -> {next:?}");
+//!     state = next;
+//! }
+//! assert!(state.is_final());
+//! assert!(!state.may_move_to(ExecutionState::Running), "a final state is final");
+//!
+//! // and what a handler reported on the way
+//! let progress = ProgressView { current: 3, total: Some(4), message: None };
+//! assert_eq!(progress.percent(), Some(75));
+//! ```
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -15,6 +41,21 @@ use serde_json::Value;
 /// in a log, a URL or a browser tab is recognisable as this repository's without a
 /// dependency on a UUID crate. The timestamp orders ids by creation for a reader; the
 /// suffix, not the timestamp, is what makes two ids created in the same second differ.
+///
+/// It is a newtype and not a `String` because it arrives from a client and is then used to
+/// look something up: [`ExecutionId::parse`] is the only way in from text, and it is what
+/// keeps a path, a traversal or a wildcard out of a store lookup. It is not a credential —
+/// the suffix is not unguessable, and nothing is authorised by holding one.
+///
+/// ```
+/// use majordomus_cli::execution::ExecutionId;
+/// let id = ExecutionId::fresh();
+/// // the text form round-trips, and it is what a log line and a URL carry
+/// assert_eq!(id.to_string(), id.as_str());
+/// assert_eq!(ExecutionId::parse(id.as_str()).as_ref(), Some(&id));
+/// // and it is serialised as that text and nothing around it
+/// assert_eq!(serde_json::to_value(&id).unwrap(), serde_json::json!(id.as_str()));
+/// ```
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -22,7 +63,12 @@ use serde_json::Value;
 pub struct ExecutionId(String);
 
 impl ExecutionId {
-    /// A fresh id for now.
+    /// A fresh id, stamped with the current UTC second.
+    ///
+    /// Unique within a process by construction — a counter is mixed into the suffix — and
+    /// unlikely to collide across two processes over one repository, which is as much as
+    /// an id that is not a credential needs. The timestamp is for a reader's benefit and
+    /// is not what makes it unique.
     ///
     /// ```
     /// use majordomus_cli::execution::ExecutionId;
@@ -68,7 +114,11 @@ impl ExecutionId {
         (stamp_ok && suffix_ok).then(|| ExecutionId(text.to_string()))
     }
 
-    /// The id as text.
+    /// The id as text, which is the only form anything outside this layer holds.
+    ///
+    /// A log line, a URL, a browser tab and a correlation id all carry this. It is
+    /// identical to what `Display` writes and to how the id serialises, so those three
+    /// readings cannot drift apart.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -110,6 +160,26 @@ pub fn compact_utc(secs: u64) -> String {
 /// There is no `starting`. An in-process engine claims an execution and enters its handler
 /// in the same instant, so a state between the two would be one no client could ever
 /// observe and every client would have to handle.
+///
+/// ```
+/// use majordomus_cli::execution::ExecutionState::*;
+/// // the ordinary path, and the one a client draws a progress bar for
+/// assert!(Queued.may_move_to(Running) && Running.may_move_to(Succeeded));
+/// // cancellation is two moves and not one: a running handler is asked, and then it stops
+/// assert!(!Running.may_move_to(Cancelled));
+/// assert!(Running.may_move_to(Cancelling) && Cancelling.may_move_to(Cancelled));
+/// // a queued execution has no handler to ask, so it goes straight to cancelled
+/// assert!(Queued.may_move_to(Cancelled));
+/// // a handler that finished while being cancelled still succeeded
+/// assert!(Cancelling.may_move_to(Succeeded));
+/// // and nothing leaves a final state, in either direction
+/// for state in [Succeeded, Failed, Cancelled] {
+///     assert!(state.is_final() && !state.is_active());
+///     for next in [Queued, Running, Cancelling, Succeeded, Failed, Cancelled] {
+///         assert!(!state.may_move_to(next), "{state:?} moved to {next:?}");
+///     }
+/// }
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -130,7 +200,19 @@ pub enum ExecutionState {
 }
 
 impl ExecutionState {
-    /// The word as serialised.
+    /// The word this state is spelled with everywhere it is written down.
+    ///
+    /// The same word the value serialises to, so a log line, a JSON document, a CLI
+    /// listing and a page cannot disagree about what an execution is doing. It is not a
+    /// sentence for a reader: a surface that wants one writes it from the state.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ExecutionState;
+    /// assert_eq!(ExecutionState::Cancelling.as_str(), "cancelling");
+    /// // one spelling, whether it is written as text or as JSON
+    /// let json = serde_json::to_value(ExecutionState::Cancelling).unwrap();
+    /// assert_eq!(json, serde_json::json!(ExecutionState::Cancelling.as_str()));
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             ExecutionState::Queued => "queued",
@@ -189,6 +271,20 @@ impl ExecutionState {
 }
 
 /// Where a step of an execution stands.
+///
+/// Three values, and none of them is "queued": a step exists because a handler entered it,
+/// so there is no state for a phase that has not started. `Failed` here is about the phase
+/// and not the execution — a handler may report a failed step and still succeed.
+///
+/// ```
+/// use majordomus_cli::execution::StepState;
+/// assert_eq!(serde_json::to_value(StepState::Completed).unwrap(), "completed");
+/// // a step that failed is not an execution state and cannot be confused for one
+/// assert_ne!(
+///     serde_json::to_value(StepState::Failed).unwrap(),
+///     serde_json::to_value(majordomus_cli::execution::ExecutionState::Cancelled).unwrap(),
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StepState {
@@ -201,6 +297,27 @@ pub enum StepState {
 }
 
 /// One named phase of an execution, as the handler reported it.
+///
+/// `name` is the stable identity a client matches a completion against and `title` is the
+/// line a person reads; the absence of `finished_at` is how a reader knows a phase is
+/// still running. Nothing checks that a handler's steps are well formed — this is a report
+/// of what a handler said, not a schedule it was held to.
+///
+/// ```
+/// use majordomus_cli::execution::{StepState, StepView};
+/// let running = StepView {
+///     name: "scan".into(),
+///     title: "Scanning the index".into(),
+///     state: StepState::Running,
+///     started_at: "2026-09-10T12:00:00Z".into(),
+///     finished_at: None,
+///     detail: None,
+/// };
+/// // a step still running says nothing about when it ended, rather than saying nothing
+/// let json = serde_json::to_value(&running).unwrap();
+/// assert_eq!(json["state"], "running");
+/// assert!(json.get("finished_at").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StepView {
     /// A stable name, unique within the execution.
@@ -219,7 +336,22 @@ pub struct StepView {
     pub detail: Option<String>,
 }
 
-/// How far along an execution is.
+/// How far along an execution is, in whatever units its handler counts in.
+///
+/// The total is optional because a handler often does not know it, and an open-ended count
+/// is more honest than a denominator somebody invented: a client shows "3 done" rather
+/// than a bar that means nothing. The units are never stated — they are the handler's, and
+/// only [`ProgressView::percent`] turns them into something comparable.
+///
+/// ```
+/// use majordomus_cli::execution::ProgressView;
+/// let open = ProgressView { current: 3, total: None, message: Some("reading".into()) };
+/// assert_eq!(open.percent(), None, "no total, no percentage");
+/// // an absent total is absent from the document too, rather than being a zero
+/// let json = serde_json::to_value(&open).unwrap();
+/// assert!(json.get("total").is_none());
+/// assert_eq!(json["current"], 3);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProgressView {
     /// Units done.
@@ -256,6 +388,27 @@ impl ProgressView {
 /// A panic message and a backtrace are never in here. The engine catches a panicking
 /// handler and reports `internal` with the execution's correlation id; the panic itself is
 /// on the process's own error stream, where the operator running the server can read it.
+///
+/// The correlation id is always present and is the execution's own id, so a failure a
+/// person is looking at and a line in the server's log can be matched up without either
+/// side having invented an identifier.
+///
+/// ```
+/// use majordomus_cli::execution::{ExecutionError, ExecutionId};
+/// let id = ExecutionId::fresh();
+/// let error = ExecutionError {
+///     code: "internal".into(),
+///     message: "the handler panicked".into(),
+///     suggestion: None,
+///     correlation_id: id.to_string(),
+/// };
+/// let json = serde_json::to_value(&error).unwrap();
+/// // a program branches on the code; a person reads the message
+/// assert_eq!(json["code"], "internal");
+/// assert_eq!(json["correlation_id"], id.as_str());
+/// // and nothing is suggested when there is nothing to suggest
+/// assert!(json.get("suggestion").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionError {
     /// `invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.
@@ -270,6 +423,27 @@ pub struct ExecutionError {
 }
 
 /// A structured finding an execution reported on its way, distinct from its outcome.
+///
+/// The distinction is the point: an execution may report several of these and still
+/// succeed, and it may fail without reporting any. A diagnostic is something a handler
+/// noticed; an [`ExecutionError`] is how the call ended.
+///
+/// ```
+/// use majordomus_cli::execution::ExecutionDiagnostic;
+/// let finding = ExecutionDiagnostic {
+///     severity: majordomus_cli::model::Severity::Warning,
+///     code: "stale-artifact".into(),
+///     summary: "docs/generated is behind the registry".into(),
+///     detail: None,
+///     suggestion: Some("run majordomus generate".into()),
+/// };
+/// let json = serde_json::to_value(&finding).unwrap();
+/// assert_eq!(json["code"], "stale-artifact");
+/// assert_eq!(json["suggestion"], "run majordomus generate");
+/// // the severity is the repository's own vocabulary, not one invented for executions
+/// assert_eq!(json["severity"], serde_json::to_value(
+///     majordomus_cli::model::Severity::Warning).unwrap());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionDiagnostic {
     /// How bad.
@@ -287,6 +461,21 @@ pub struct ExecutionDiagnostic {
 }
 
 /// Which stream a log line came from.
+///
+/// Three, because a reader needs to tell a child process's output from the handler's own
+/// commentary: `stdout` and `stderr` belong to something this executable ran, `handler` is
+/// this executable talking. A client colours them differently and an audit trail can drop
+/// one without dropping the others.
+///
+/// ```
+/// use majordomus_cli::execution::LogStream;
+/// assert_eq!(serde_json::to_value(LogStream::Handler).unwrap(), "handler");
+/// // the handler's own line is not attributed to a process that never said it
+/// assert_ne!(
+///     serde_json::to_value(LogStream::Handler).unwrap(),
+///     serde_json::to_value(LogStream::Stdout).unwrap(),
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LogStream {
@@ -300,6 +489,26 @@ pub enum LogStream {
 
 /// Who asked for the execution. Not an authorisation decision — this server authenticates
 /// nobody — but a fact worth carrying into the audit line and the UI.
+///
+/// It says which door a request came through and nothing about what it was allowed to do.
+/// `Internal` is this executable's own tests and benchmarks, which is worth being able to
+/// tell apart from a person: a listing full of executions nobody asked for is otherwise
+/// hard to read.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind};
+/// let json = serde_json::to_value(Actor::of(ActorKind::Mcp)).unwrap();
+/// assert_eq!(json["kind"], "mcp");
+/// // four doors, each with its own word
+/// let kinds = [ActorKind::Http, ActorKind::Mcp, ActorKind::Cli, ActorKind::Internal];
+/// let mut words: Vec<String> = kinds
+///     .iter()
+///     .map(|k| serde_json::to_value(k).unwrap().to_string())
+///     .collect();
+/// words.sort();
+/// words.dedup();
+/// assert_eq!(words.len(), kinds.len());
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ActorKind {
@@ -314,6 +523,21 @@ pub enum ActorKind {
 }
 
 /// Who asked, and which peer they are when this process knows.
+///
+/// The peer is known only for a call that arrived through an MCP session, and its absence
+/// is not a gap to be filled in: an HTTP request and the command line have no peer
+/// identity, and inventing one would make an audit line say more than this process knows.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind};
+/// let anonymous = Actor::of(ActorKind::Http);
+/// assert!(anonymous.peer.is_none());
+/// // and it is absent from the document rather than present and null
+/// assert!(serde_json::to_value(&anonymous).unwrap().get("peer").is_none());
+///
+/// let attached = Actor { kind: ActorKind::Mcp, peer: Some("p2".into()) };
+/// assert_eq!(serde_json::to_value(&attached).unwrap()["peer"], "p2");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Actor {
     /// Where the request came from.
@@ -325,6 +549,17 @@ pub struct Actor {
 
 impl Actor {
     /// An actor of a kind, with no peer.
+    ///
+    /// The right constructor for every door but MCP: a peer identity exists only where a
+    /// session has one, so this is the ordinary case rather than a partial value waiting to
+    /// be completed.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind};
+    /// let cli = Actor::of(ActorKind::Cli);
+    /// assert_eq!(cli.kind, ActorKind::Cli);
+    /// assert_eq!(cli.peer, None, "the command line is not a peer of this process");
+    /// ```
     pub fn of(kind: ActorKind) -> Self {
         Actor { kind, peer: None }
     }
@@ -336,6 +571,24 @@ impl Actor {
 /// stamps the repository the index was read from, and a request that names a different one
 /// is refused. The path itself is not here — this value is served to whoever can reach the
 /// socket, and where the checkout sits on the host is of no use to them.
+///
+/// The `id` is the stable identity two processes over one checkout both compute, so a
+/// client can tell "the same repository" from "the same name", which matters on a machine
+/// carrying thirty worktrees of it.
+///
+/// ```
+/// use majordomus_cli::execution::RepositoryRef;
+/// let reference = RepositoryRef {
+///     name: "prismatic-majordomus".into(),
+///     id: "5f3a".into(),
+///     branch: Some("master".into()),
+/// };
+/// let json = serde_json::to_value(&reference).unwrap();
+/// assert_eq!(json["name"], "prismatic-majordomus");
+/// // no path is served: where the checkout sits is of no use to a client
+/// assert!(json.get("path").is_none());
+/// assert!(json.get("root").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryRef {
     /// The repository's name: the last component of its root.
@@ -353,6 +606,34 @@ pub struct RepositoryRef {
 /// a reader never sees a state and an output that disagree: an execution that says
 /// `succeeded` carries its output in the same snapshot, and one that says `failed` carries
 /// its error.
+///
+/// The fields that are absent carry as much meaning as the ones that are present: no
+/// `started_at` means nothing has picked it up, no `output` means it has not succeeded, and
+/// `events_truncated` says the retained history has lost its beginning — so a client can
+/// tell "not yet" from "not measured" without asking anything else.
+///
+/// ```
+/// use majordomus_cli::execution::*;
+/// let store = ExecutionStore::new(Limits::default());
+/// let id = ExecutionId::fresh();
+/// store.create(id.clone(), "health.report", "Health", serde_json::json!({}), true,
+///     Actor::of(ActorKind::Cli),
+///     RepositoryRef { name: "r".into(), id: "i".into(), branch: None });
+///
+/// let accepted: Execution = store.get(&id).unwrap();
+/// assert_eq!(accepted.state, ExecutionState::Queued);
+/// assert!(accepted.started_at.is_none() && accepted.output.is_none());
+/// assert_eq!(accepted.correlation_id, id.as_str(), "a log line and a UI agree");
+/// assert!(!accepted.events_truncated, "nothing has been dropped yet");
+///
+/// store.publish(&id, EventPayload::Started);
+/// store.publish(&id, EventPayload::Completed { output: serde_json::json!({ "score": 91 }) });
+/// let finished = store.get(&id).unwrap();
+/// // the state and the value it produced are one fact and arrive together
+/// assert_eq!(finished.state, ExecutionState::Succeeded);
+/// assert!(finished.output.is_some() && finished.error.is_none());
+/// assert!(finished.finished_at.is_some());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Execution {
     /// The identity.
@@ -410,6 +691,25 @@ pub struct Execution {
 
 impl Execution {
     /// The percentage a progress bar shows, when the handler said enough to compute one.
+    ///
+    /// `None` for an execution that has reported nothing and for one whose handler does not
+    /// know its own total, which is why a client shows a count or a spinner rather than
+    /// filling in a zero.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::*;
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let id = ExecutionId::fresh();
+    /// store.create(id.clone(), "demo.echo", "Echo", serde_json::json!({}), true,
+    ///     Actor::of(ActorKind::Internal),
+    ///     RepositoryRef { name: "r".into(), id: "i".into(), branch: None });
+    /// assert_eq!(store.get(&id).unwrap().percent(), None, "it has reported nothing");
+    ///
+    /// store.publish(&id, EventPayload::Progress(ProgressView {
+    ///     current: 1, total: Some(4), message: None,
+    /// }));
+    /// assert_eq!(store.get(&id).unwrap().percent(), Some(25));
+    /// ```
     pub fn percent(&self) -> Option<u64> {
         self.progress.as_ref().and_then(ProgressView::percent)
     }

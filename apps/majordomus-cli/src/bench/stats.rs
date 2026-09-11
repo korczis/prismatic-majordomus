@@ -8,6 +8,29 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The statistics of one set of samples, in microseconds.
+///
+/// A reduction of whatever samples it was given and no measurement of its own: the numbers
+/// mean something only together with the run's provenance, which is why a result document
+/// carries both. `samples` is part of the value for that reason — a percentile of twenty
+/// samples is one scheduler hiccup, and the regression policy refuses to gate on it.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::bench::Statistics;
+/// let reduced = Statistics::of(&[
+///     Duration::from_micros(10),
+///     Duration::from_micros(30),
+///     Duration::from_micros(20),
+/// ]);
+/// // order does not matter: the samples are sorted before anything is read off them
+/// assert_eq!(reduced.samples, 3);
+/// assert_eq!((reduced.min_us, reduced.max_us), (10.0, 30.0));
+/// assert_eq!(reduced.p50_us, 20.0);
+/// // an empty set is not a fast one: it is a set with nothing in it
+/// let nothing = Statistics::of(&[]);
+/// assert_eq!(nothing.samples, 0);
+/// assert_eq!(nothing.p99_us, 0.0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Statistics {
     /// How many samples.
@@ -85,6 +108,22 @@ impl Statistics {
     }
 
     /// One metric by name (`p50`, `p95`, `p99`, `mean`, `max`, `min`, `p90`).
+    ///
+    /// The regression policy is data — it names its metrics as strings in a YAML file — so
+    /// something has to turn a name into a number. `None` for a name this type does not
+    /// have is what makes a policy naming an unknown metric skip that comparison instead of
+    /// failing a run on a typo.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::bench::Statistics;
+    /// let stats = Statistics::of(&(1..=100).map(Duration::from_micros).collect::<Vec<_>>());
+    /// assert_eq!(stats.metric("p50"), Some(stats.p50_us));
+    /// assert_eq!(stats.metric("max"), Some(stats.max_us));
+    /// // a metric nobody defined is not silently something else
+    /// assert_eq!(stats.metric("p999"), None);
+    /// assert_eq!(stats.metric(""), None);
+    /// ```
     pub fn metric(&self, name: &str) -> Option<f64> {
         Some(match name {
             "min" => self.min_us,

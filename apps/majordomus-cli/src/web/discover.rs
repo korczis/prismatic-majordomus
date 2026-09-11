@@ -11,6 +11,26 @@
 //!
 //! Everything a consumer can be surprised by carries its [`Provenance`], so `web explain`
 //! answers "why is this here?" from data rather than from this module's source.
+//!
+//! Discovery is total and never fails on an absence: a producer that has not run is a
+//! surface that does not exist yet, not an error, and the whole of a repository that has
+//! generated nothing is still the routes the executable answers itself.
+//!
+//! ```
+//! use majordomus_cli::web::discover::{self, Runtime};
+//! // nothing has been generated here and there is no site: what is left is the executable
+//! let bare = discover::discover(std::path::Path::new("/nonexistent"), Runtime::full())
+//!     .expect("an absent producer is not an error");
+//! assert!(bare.ids().contains(&"swagger"));
+//! assert!(
+//!     bare.published().ids().is_empty(),
+//!     "a route the process computes contributes no files to a publication"
+//! );
+//! // and the same discovery narrowed to a process that offers neither feature
+//! let narrowed = discover::discover(std::path::Path::new("/nonexistent"), Runtime::default())
+//!     .unwrap();
+//! assert!(!narrowed.ids().contains(&"mcp"));
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -41,6 +61,19 @@ pub const DECLARATION_FILE: &str = "surface.json";
 ///
 /// The static surfaces do not depend on it; the native ones do, because a process that
 /// serves no MCP endpoint must not advertise one.
+///
+/// The default is the minimum — a process that offers neither — so a caller that has not
+/// said what it offers cannot accidentally advertise a feature it does not have. Saying
+/// more is deliberate.
+///
+/// ```
+/// use majordomus_cli::web::discover::{self, Runtime};
+/// use majordomus_cli::web::model::Feature;
+/// assert_eq!(Runtime::default(), Runtime { mcp: false, cockpit: false });
+/// assert!(!Runtime::default().has(Feature::Mcp));
+/// // and what a process offers decides what it may be asked about
+/// assert!(discover::native(Runtime::full()).len() > discover::native(Runtime::default()).len());
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Runtime {
     /// This process answers MCP over HTTP.
@@ -52,6 +85,20 @@ pub struct Runtime {
 impl Runtime {
     /// Everything the executable can offer: what `web list` describes when it is not the
     /// server itself, so a listing shows the topology rather than one process's slice.
+    ///
+    /// A document is about the projection and not about a process, so anything that
+    /// describes rather than serves asks with this; a server asks with what it actually
+    /// started.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// // every native surface is present under `full`, including the ones a bare process
+    /// // does not answer for
+    /// let described: Vec<String> =
+    ///     discover::native(Runtime::full()).iter().map(|s| s.id.clone()).collect();
+    /// assert_eq!(described.len(), discover::native_all().len());
+    /// assert!(described.contains(&"cockpit".to_string()));
+    /// ```
     pub fn full() -> Self {
         Runtime {
             mcp: true,
@@ -129,6 +176,20 @@ pub struct Declaration {
 /// Discovery never fails on an absent producer — a report that has not been generated is
 /// simply not a surface yet, and [`super::validate`] is where a *required* artifact being
 /// missing becomes a finding.
+///
+/// It *does* fail on a producer that declared itself wrongly: a declaration that does not
+/// parse, or that names a contract this executable does not read, is an error rather than
+/// a directory quietly left out of the topology.
+///
+/// ```
+/// use majordomus_cli::web::discover::{self, Runtime};
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let topology = discover::discover(&repo, Runtime::full()).unwrap();
+/// // the executable's own routes are always there, whatever a producer has done
+/// assert!(topology.get("swagger").is_some());
+/// // and this repository has a site, so its deployment is discovered too
+/// assert!(topology.get(discover::APPLICATION).is_some());
+/// ```
 pub fn discover(root: &Path, runtime: Runtime) -> Result<Topology> {
     let mut surfaces = native(runtime);
     surfaces.extend(application(root));
@@ -143,6 +204,19 @@ pub fn discover(root: &Path, runtime: Runtime) -> Result<Topology> {
 /// here too. It is the whole list — a process that does not offer a feature simply does
 /// not serve the surfaces that declare it, which [`Runtime`] decides and nothing here
 /// repeats.
+///
+/// ```
+/// use majordomus_cli::web::discover;
+/// let all = discover::native_all();
+/// // every entry is a route the executable answers itself, so none has a directory
+/// assert!(all.iter().all(|s| s.artifact.is_none()));
+/// // the mounts are the constants the rest of the executable already uses
+/// let mounts: Vec<&str> = all.iter().map(|s| s.mount.as_str()).collect();
+/// assert!(mounts.contains(&"/swagger"));
+/// assert!(mounts.contains(&"/openapi.json"));
+/// // and the list is whole: the feature-dependent surfaces are in it unconditionally
+/// assert!(all.iter().any(|s| s.feature.is_some()));
+/// ```
 pub fn native_all() -> Vec<Surface> {
     vec![
         Surface {
@@ -285,6 +359,30 @@ pub const SITE_PUBLIC: &str = "site/public";
 
 /// A mount whose meaning is fixed: the role it serves, the path it is at, and the id of the
 /// surface that must hold it.
+///
+/// A reservation is a claim about meaning and not a requirement that the surface exist:
+/// [`reserved`] says who owns a path *if* it is claimed, so a process without a Cockpit
+/// and a build without a site both stay valid. The two directions the validator checks are
+/// both here — somebody else holding the path, and the owner holding a different one — and
+/// neither is expressible without naming the owner beside the path.
+///
+/// ```
+/// use majordomus_cli::web::discover::{self, Reserved};
+/// use majordomus_cli::web::model::Mount;
+/// for reservation in discover::reserved() {
+///     let r: Reserved = reservation;
+///     // a reservation is only meaningful if the path is one a surface could be mounted at
+///     Mount::parse(r.path).unwrap_or_else(|e| panic!("{} reserves {}: {e}", r.role, r.path));
+///     assert!(!r.owner.is_empty(), "{} reserves a path for nobody", r.role);
+/// }
+/// // one role per path and one path per role: a name that meant two things is the defect
+/// // this type was introduced to close
+/// let mut paths: Vec<&str> = discover::reserved().iter().map(|r| r.path).collect();
+/// let count = paths.len();
+/// paths.sort_unstable();
+/// paths.dedup();
+/// assert_eq!(paths.len(), count);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Reserved {
     /// What the mount is for, in one word; the key the generated topology publishes it under.
@@ -351,6 +449,19 @@ pub fn reserved() -> Vec<Reserved> {
 }
 
 /// The routes the executable answers itself, narrowed to what this process offers.
+///
+/// A narrowing and never a second list: every surface here is one [`native_all`] produced,
+/// so a route cannot reach a server without also reaching the document that describes it.
+///
+/// ```
+/// use majordomus_cli::web::discover::{self, Runtime};
+/// let bare = discover::native(Runtime::default());
+/// // a process that answers no MCP does not offer the endpoint at all
+/// assert!(!bare.iter().any(|s| s.id == "mcp"));
+/// // and nothing appears out of a narrowing
+/// let all: Vec<String> = discover::native_all().iter().map(|s| s.id.clone()).collect();
+/// assert!(bare.iter().all(|s| all.contains(&s.id)));
+/// ```
 pub fn native(runtime: Runtime) -> Vec<Surface> {
     native_all()
         .into_iter()
@@ -366,6 +477,27 @@ pub fn native(runtime: Runtime) -> Vec<Surface> {
 /// is made for [`DOCS_MOUNT`] and is never published. Nothing about the site is assumed:
 /// its existence is read from its own configuration, and a repository without one has
 /// neither surface.
+///
+/// ```
+/// use majordomus_cli::web::discover;
+/// // a directory that is not a repository with a site has neither surface
+/// assert!(discover::application(std::path::Path::new("/nonexistent")).is_empty());
+///
+/// let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+/// let surfaces = discover::application(&repo);
+/// let deployed = surfaces
+///     .iter()
+///     .find(|s| s.id == discover::APPLICATION)
+///     .expect("this repository has a site");
+/// let served = surfaces
+///     .iter()
+///     .find(|s| s.id == discover::DOCS)
+///     .expect("and the same source built for this process's own mount");
+/// // two builds of one source, and neither is in the other's world
+/// assert!(deployed.mount.is_root() && !deployed.availability.is_served());
+/// assert_eq!(served.mount.as_str(), discover::DOCS_MOUNT);
+/// assert!(!served.availability.is_published());
+/// ```
 pub fn application(root: &Path) -> Vec<Surface> {
     let config = root.join(SITE_CONFIG);
     if !config.is_file() {
@@ -434,6 +566,19 @@ fn built_from(dir: &Path) -> Option<String> {
 /// A directory without a declaration is not a surface — it is somebody's scratch space, and
 /// serving it because it happened to be there is how a repository publishes what it did not
 /// mean to.
+///
+/// The absence of the generated root is likewise not a failure: nothing has been built yet.
+/// What *is* refused is a declaration this executable cannot trust — one that does not
+/// parse, one carrying a field nobody declared, or one written against another contract —
+/// because a producer that misdeclared itself is a producer whose output nobody should
+/// serve.
+///
+/// ```
+/// use majordomus_cli::web::discover;
+/// // nothing generated, and nothing wrong: the answer is empty rather than an error
+/// let found = discover::generated(std::path::Path::new("/nonexistent")).unwrap();
+/// assert!(found.is_empty());
+/// ```
 pub fn generated(root: &Path) -> Result<Vec<Surface>> {
     let dir = root.join(GENERATED_ROOT);
     let mut entries: Vec<PathBuf> = match std::fs::read_dir(&dir) {

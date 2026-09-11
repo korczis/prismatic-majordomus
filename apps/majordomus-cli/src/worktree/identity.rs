@@ -25,6 +25,20 @@ use super::git;
 use super::topology::{self, WorktreeRecord};
 
 /// A path as git names it and as the filesystem resolves it.
+///
+/// Both are needed and neither will do alone. The canonical form is the only one an
+/// equality or a containment question can be answered on, because a symlink gives one
+/// directory two names; the reported form is the only one a person recognises and the only
+/// one git will take back. Keeping them in one value is what stops a caller from comparing
+/// the wrong one — the mistake that lets a symlink outside the container read as inside it.
+///
+/// ```
+/// use majordomus_cli::worktree::ResolvedPath;
+/// let container = ResolvedPath { path: "/a/foo-wt".into(), real: "/a/foo-wt".into() };
+/// let link = ResolvedPath { path: "/a/foo-wt/x".into(), real: "/tmp/elsewhere".into() };
+/// assert!(!link.is_inside(&container), "the name says inside, the filesystem says no");
+/// assert_eq!(link.path, std::path::Path::new("/a/foo-wt/x"), "the name is still reported");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedPath {
     /// As reported: what a person reads and what git accepts back.
@@ -38,13 +52,50 @@ impl ResolvedPath {
     /// yet created) canonicalises to its lexically normalised self — with as much of its
     /// existing prefix resolved as exists — so a comparison still has something total to
     /// work with.
+    ///
+    /// Never fails, and that is the requirement: "is the path this worktree belongs at the
+    /// path it is registered at?" has to be decidable before either path exists, and an
+    /// error here would turn a question about a plan into a question about the filesystem.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::ResolvedPath;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let root = dir.path().canonicalize().unwrap();
+    ///
+    /// // an existing directory resolves to its canonical self
+    /// assert_eq!(ResolvedPath::of(dir.path()).real, root);
+    ///
+    /// // and a path that does not exist yet still gets a total answer, resolved through
+    /// // the parent that does exist — which on macOS is a symlink more often than not
+    /// let planned = ResolvedPath::of(dir.path().join("feature/x"));
+    /// assert_eq!(planned.real, root.join("feature/x"));
+    /// assert_eq!(planned.path, dir.path().join("feature/x"), "the name is kept as given");
+    /// ```
     pub fn of(path: impl Into<PathBuf>) -> Self {
         let path = path.into();
         let real = std::fs::canonicalize(&path).unwrap_or_else(|_| partial_canonical(&path));
         ResolvedPath { path, real }
     }
 
-    /// Is this path the same directory as `other`, whatever it is called?
+    /// Is this path the same directory as `other`, whatever either of them is called?
+    ///
+    /// Decided on the canonical forms only. Two paths that differ in every character name
+    /// one directory when a symlink stands between them, and a subsystem that decides
+    /// "this worktree is already registered" by comparing reported paths will register it
+    /// twice.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::ResolvedPath;
+    /// let via_link = ResolvedPath { path: "/tmp/foo".into(), real: "/private/tmp/foo".into() };
+    /// let direct = ResolvedPath {
+    ///     path: "/private/tmp/foo".into(),
+    ///     real: "/private/tmp/foo".into(),
+    /// };
+    /// assert!(via_link.same_as(&direct), "two names, one directory");
+    ///
+    /// let other = ResolvedPath { path: "/tmp/bar".into(), real: "/private/tmp/bar".into() };
+    /// assert!(!via_link.same_as(&other));
+    /// ```
     pub fn same_as(&self, other: &ResolvedPath) -> bool {
         self.real == other.real
     }
@@ -53,6 +104,20 @@ impl ResolvedPath {
     ///
     /// Decided on the canonical forms, so `foo-wt/link -> /tmp/elsewhere` is not under
     /// `foo-wt` however its name reads.
+    ///
+    /// Strictly below, because the container is not one of its own worktrees, and
+    /// component-wise, because `foo-wt2` shares a textual prefix with `foo-wt` and is a
+    /// different repository's container.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::ResolvedPath;
+    /// let at = |p: &str| ResolvedPath { path: p.into(), real: p.into() };
+    /// let container = at("/a/foo-wt");
+    ///
+    /// assert!(at("/a/foo-wt/feature/x").is_inside(&container));
+    /// assert!(!container.is_inside(&container), "the container is not below itself");
+    /// assert!(!at("/a/foo-wt2").is_inside(&container), "a name prefix is not containment");
+    /// ```
     pub fn is_inside(&self, root: &ResolvedPath) -> bool {
         self.real != root.real && self.real.starts_with(&root.real)
     }
@@ -104,6 +169,22 @@ fn lexical(p: &Path) -> PathBuf {
 }
 
 /// Where the trunk was learned from, in the order it is looked for.
+///
+/// The source is reported and not only used, because the four ways of learning a trunk are
+/// not equally trustworthy: the remote's own HEAD is the repository's answer, and the
+/// primary checkout's current branch is a guess that happens to be right most of the time.
+/// A diagnostic that says the trunk is `master` without saying which of the four said so
+/// cannot be argued with, and `Unknown` has to be a value rather than a default name for
+/// exactly that reason.
+///
+/// ```
+/// use majordomus_cli::worktree::TrunkSource;
+/// // the wire form every report, schema and transport carries
+/// let json = serde_json::to_string(&TrunkSource::RemoteHead).unwrap();
+/// assert_eq!(json, "\"remote_head\"");
+/// let back: TrunkSource = serde_json::from_str("\"conventional_name\"").unwrap();
+/// assert_eq!(back, TrunkSource::ConventionalName);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TrunkSource {
@@ -121,6 +202,21 @@ pub enum TrunkSource {
 
 /// The trunk branch and how it was decided. Discovered state, never domain logic: `master`
 /// here is a fact about this repository and `main` would be one about another.
+///
+/// The branch is optional and the source is not. A repository whose trunk could not be
+/// discovered has no trunk — not `main`, not the first branch that happens to exist — and
+/// every check built on the trunk has to report that it cannot decide rather than decide
+/// against a name it invented.
+///
+/// ```
+/// use majordomus_cli::worktree::{Trunk, TrunkSource};
+/// let found = Trunk { branch: Some("master".into()), source: TrunkSource::RemoteHead };
+/// assert!(found.is("master"));
+/// assert!(!found.is("main"), "a repository has one trunk, not both conventional names");
+///
+/// let unknown = Trunk { branch: None, source: TrunkSource::Unknown };
+/// assert!(!unknown.is("master"), "an unknown trunk matches nothing, not everything");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Trunk {
     /// The branch, short, when one was found.
@@ -130,7 +226,19 @@ pub struct Trunk {
 }
 
 impl Trunk {
-    /// Is `branch` the trunk?
+    /// Is `branch` the trunk of this repository?
+    ///
+    /// False for every branch when the trunk is unknown, which is the answer that makes
+    /// the guard safe: a repository whose trunk was not discovered must not have some
+    /// branch treated as the trunk by default, because the one thing the guard does with
+    /// the trunk is decide which branch is allowed to live in the primary checkout.
+    ///
+    /// ```
+    /// use majordomus_cli::worktree::{Trunk, TrunkSource};
+    /// let t = Trunk { branch: Some("master".into()), source: TrunkSource::PrimaryCheckout };
+    /// assert!(t.is("master"));
+    /// assert!(!t.is("feature/x"));
+    /// ```
     pub fn is(&self, branch: &str) -> bool {
         self.branch.as_deref() == Some(branch)
     }
@@ -140,6 +248,23 @@ impl Trunk {
 ///
 /// Built once per command and passed around. A handful of subprocesses go into it and no
 /// more: the identity questions, one `worktree list`, and the trunk lookups.
+///
+/// Every question it answers is about the repository and none is about the directory the
+/// command was run from, with one exception that is named: [`Self::current_worktree`],
+/// which is the only place the current directory decides anything. That asymmetry is the
+/// whole point of the type — a subsystem that asked git afresh in each function would
+/// answer "the linked worktree" to half of them and "the repository" to the other half.
+///
+/// ```no_run
+/// use majordomus_cli::worktree::RepositoryIdentity;
+/// use std::path::Path;
+///
+/// // run from deep inside a linked worktree, not from the primary checkout
+/// let repo = RepositoryIdentity::discover(Path::new("/a/foo-wt/feature/x/apps/cli")).unwrap();
+/// assert_eq!(repo.primary_worktree().path, Path::new("/a/foo"), "not where we stand");
+/// assert_eq!(repo.repository_name(), "foo", "what the container is named after");
+/// assert!(!repo.registered_worktrees().is_empty(), "the main work tree is always listed");
+/// ```
 #[derive(Debug, Clone)]
 pub struct RepositoryIdentity {
     git_common_dir: ResolvedPath,
@@ -151,6 +276,24 @@ pub struct RepositoryIdentity {
 
 impl RepositoryIdentity {
     /// Resolve the repository from any directory inside any of its work trees.
+    ///
+    /// The one entry point, and the only function here that runs git for identity. A bare
+    /// repository is refused by name rather than half-supported: the topology is defined
+    /// against a primary checkout, and a bare repository has none to name a container
+    /// after. A directory outside any work tree is refused too, with the directory in the
+    /// message, because "not a git repository" without saying which path was looked at is
+    /// the least useful thing this subsystem could say.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// // the central invariant: every directory of every work tree gives one answer
+    /// let deep = RepositoryIdentity::discover(Path::new("/a/foo-wt/feature/x/apps")).unwrap();
+    /// let top = RepositoryIdentity::discover(Path::new("/a/foo")).unwrap();
+    /// assert!(deep.git_common_dir().same_as(top.git_common_dir()));
+    /// assert!(deep.primary_worktree().same_as(top.primary_worktree()));
+    /// ```
     pub fn discover(start: &Path) -> Result<Self> {
         let probe = git::try_run(
             start,
@@ -206,6 +349,23 @@ impl RepositoryIdentity {
 
     /// Re-read the registered work trees. Under the lock, before a mutation, because the
     /// topology may have changed since discovery.
+    ///
+    /// Only the records are re-read. The identity itself — the common git directory, the
+    /// primary checkout, the work tree the command runs in — cannot change under a running
+    /// command, so re-deriving it would spend subprocesses to confirm what is already
+    /// known. What can change is the set of worktrees, and it changes because another agent
+    /// is working the same repository, which is why the call belongs after the lock is held
+    /// and not before.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::{RepositoryIdentity, WorktreeLock};
+    /// use std::path::Path;
+    ///
+    /// let mut repo = RepositoryIdentity::discover(Path::new("/a/foo")).unwrap();
+    /// let _lock = WorktreeLock::acquire(&repo.git_common_dir().path).unwrap();
+    /// repo.refresh().unwrap();
+    /// assert!(!repo.registered_worktrees().is_empty());
+    /// ```
     pub fn refresh(&mut self) -> Result<()> {
         self.records = topology::read(&self.primary.path)?;
         Ok(())
@@ -228,12 +388,28 @@ impl RepositoryIdentity {
         &self.current
     }
 
-    /// The trunk, as discovered.
+    /// The trunk this repository was found to have, together with which of the four
+    /// lookups found it. Discovered at construction and not re-asked: the trunk of a
+    /// repository does not change under a command, and the source travels with the name so
+    /// that a diagnostic can say why it believes what it says.
     pub fn trunk(&self) -> &Trunk {
         &self.trunk
     }
 
     /// The primary checkout's directory name: what the container is named after.
+    ///
+    /// The directory name, not the remote's name and not anything configured. Two clones of
+    /// one upstream into differently named directories are two repositories with two
+    /// containers, which is the behaviour a person expects from a name they chose.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::{container_root, RepositoryIdentity};
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo")).unwrap();
+    /// let container = container_root(&repo.primary_worktree().path).unwrap();
+    /// assert!(container.ends_with(format!("{}-wt", repo.repository_name())));
+    /// ```
     pub fn repository_name(&self) -> String {
         self.primary
             .path
@@ -249,21 +425,77 @@ impl RepositoryIdentity {
     }
 
     /// Is this record the primary checkout?
+    ///
+    /// Compared on the resolved paths, not on the reported ones, so a record git named
+    /// through a symlink is still recognised as the main work tree. Exactly one record of a
+    /// non-bare repository answers true, and it is the one the primary checkout is at —
+    /// never the one the command happens to be running in.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo-wt/feature/x")).unwrap();
+    /// let records = repo.registered_worktrees();
+    /// assert!(repo.is_primary(&records[0]), "git lists the main work tree first");
+    /// assert_eq!(records.iter().filter(|r| repo.is_primary(r)).count(), 1);
+    /// ```
     pub fn is_primary(&self, record: &WorktreeRecord) -> bool {
         ResolvedPath::of(&record.path).same_as(&self.primary)
     }
 
     /// Is the command running inside this record's work tree?
+    ///
+    /// The one question here whose answer depends on where the command was started. It is
+    /// path identity and not containment: the record whose work tree the current directory
+    /// belongs to, resolved through symlinks, so at most one record can answer true.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo-wt/feature/x")).unwrap();
+    /// let here = repo.registered_worktrees().iter().filter(|r| repo.is_current(r)).count();
+    /// assert!(here <= 1, "a directory is inside at most one work tree");
+    /// ```
     pub fn is_current(&self, record: &WorktreeRecord) -> bool {
         ResolvedPath::of(&record.path).same_as(&self.current)
     }
 
     /// The record of the work tree the command runs in, when git lists it.
+    ///
+    /// `None` is a real answer and not an error: a worktree can be removed from disk while
+    /// a shell still stands in it, and a command that reports the topology from there
+    /// should describe the repository rather than refuse to speak.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo-wt/feature/x")).unwrap();
+    /// let here = repo.current_record().expect("this work tree is registered");
+    /// assert!(repo.is_current(here));
+    /// ```
     pub fn current_record(&self) -> Option<&WorktreeRecord> {
         self.records.iter().find(|r| self.is_current(r))
     }
 
     /// The record holding a branch, when one does.
+    ///
+    /// At most one, because git refuses to check a branch out in two work trees, and that
+    /// refusal is what makes the branch-to-worktree mapping a function rather than a
+    /// convention. A detached work tree holds no branch and is never the answer.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo")).unwrap();
+    /// if let Some(r) = repo.record_of_branch("feature/x") {
+    ///     assert_eq!(r.branch.as_deref(), Some("feature/x"));
+    ///     assert!(!r.detached, "a record holding a branch is not detached");
+    /// }
+    /// ```
     pub fn record_of_branch(&self, branch: &str) -> Option<&WorktreeRecord> {
         self.records
             .iter()
@@ -271,6 +503,22 @@ impl RepositoryIdentity {
     }
 
     /// The record registered at a path, whatever the path is called.
+    ///
+    /// The lookup a destination check needs: "is anything already registered here?" has to
+    /// be answered about the directory and not about the spelling, or a worktree reached
+    /// through a symlinked parent looks like a free path and `git worktree add` fails half
+    /// way through instead of being refused up front.
+    ///
+    /// ```no_run
+    /// use majordomus_cli::worktree::RepositoryIdentity;
+    /// use std::path::Path;
+    ///
+    /// let repo = RepositoryIdentity::discover(Path::new("/a/foo")).unwrap();
+    /// let found = repo
+    ///     .record_at(repo.primary_worktree())
+    ///     .expect("the primary checkout is always registered");
+    /// assert!(repo.is_primary(found));
+    /// ```
     pub fn record_at(&self, path: &ResolvedPath) -> Option<&WorktreeRecord> {
         self.records
             .iter()
