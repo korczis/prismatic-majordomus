@@ -1,7 +1,7 @@
 +++
 title = "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed"
 description = "majordomus evidence show --check exits 10 when any claim declaring status: guaranteed"
-weight = 168
+weight = 173
 [extra]
 claim_id = "evidence-unsupported-guarantee-is-reported"
 status = "guaranteed"

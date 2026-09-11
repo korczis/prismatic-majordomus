@@ -1,7 +1,7 @@
 +++
 title = "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one"
 description = "Two passing runs can stand in very different relations to the tree in front of you, and"
-weight = 165
+weight = 170
 [extra]
 claim_id = "evidence-currency-is-not-collapsed"
 status = "guaranteed"

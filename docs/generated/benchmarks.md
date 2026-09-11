@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 80 | 77 | 0 | 3 |
-| http | 80 | 77 | 0 | 3 |
-| mcp | 78 | 75 | 0 | 3 |
+| direct | 87 | 83 | 0 | 4 |
+| http | 86 | 83 | 0 | 3 |
+| mcp | 84 | 81 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 251 | 242 | 0 | 9 |
+| total | 270 | 260 | 0 | 10 |
 
 ## Capabilities
 
@@ -44,6 +44,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
+| `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
+| `evidence.record` | evidence | command | — | waived | — | — | — |
+| `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |
+| `evidence.test` | evidence | query | — | covered | covered | covered | `first-test` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
 | `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
 | `executions.events` | executions | query | — | waived | waived | waived | — |
@@ -84,6 +88,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
+| `rules.report` | rules | query | — | covered | covered | covered | `all`, `findings`, `blocking` |
+| `rules.show` | rules | query | — | covered | covered | covered | `first` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |

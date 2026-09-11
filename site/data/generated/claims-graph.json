@@ -1365,6 +1365,51 @@
       "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
     },
     {
+      "id": "claim:rule-proof-is-named-and-resolves",
+      "kind": "claim",
+      "label": "Every blocking rule names what proves it, and every path it names is in the tree",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-proof-is-named-and-resolves/",
+      "external": false,
+      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for."
+    },
+    {
+      "id": "claim:rule-exemption-carries-its-reason",
+      "kind": "claim",
+      "label": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-exemption-carries-its-reason/",
+      "external": false,
+      "note": "Some rules genuinely have no machine expression: the provenance of what was written, whether a mechanism earns its cost. Before `reviewed_because` those sat in a debt list beside rules that merely had not been got round to, and the two were indistinguishable. The reason is the whole declaration — there is no flag beside it, because a flag can be set and a reason cannot be set without writing one. An executable proof always wins over it, so a rule that acquires a case stops being review-enforced without anyone remembering to delete anything."
+    },
+    {
+      "id": "claim:rule-state-is-derived-from-what-ran",
+      "kind": "claim",
+      "label": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-state-is-derived-from-what-ran/",
+      "external": false,
+      "note": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass."
+    },
+    {
+      "id": "claim:authored-files-are-english",
+      "kind": "claim",
+      "label": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+      "status": "guaranteed",
+      "route": "/guarantees/authored-files-are-english/",
+      "external": false,
+      "note": "The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one."
+    },
+    {
+      "id": "claim:a-finding-names-how-to-see-it-again",
+      "kind": "claim",
+      "label": "Every finding a command reports names the command that reproduces it",
+      "status": "guaranteed",
+      "route": "/guarantees/a-finding-names-how-to-see-it-again/",
+      "external": false,
+      "note": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded."
+    },
+    {
       "id": "claim:evidence-currency-is-not-collapsed",
       "kind": "claim",
       "label": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
@@ -1558,6 +1603,13 @@
       "id": "impl:apps/majordomus-cli/src/providers.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/providers.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/rules/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/rules/mod.rs",
       "route": null,
       "external": false
     },
@@ -1842,6 +1894,20 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/english-only-check",
+      "kind": "implementation",
+      "label": "scripts/ci/english-only-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/finding-reproduce-check",
+      "kind": "implementation",
+      "label": "scripts/ci/finding-reproduce-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/github-check",
       "kind": "implementation",
       "label": "scripts/ci/github-check",
@@ -1852,6 +1918,13 @@
       "id": "impl:scripts/ci/install-check",
       "kind": "implementation",
       "label": "scripts/ci/install-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/rule-proof-check",
+      "kind": "implementation",
+      "label": "scripts/ci/rule-proof-check",
       "route": null,
       "external": false
     },
@@ -2304,11 +2377,32 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh"
     },
     {
+      "id": "test:test/cases/125_rule_proof.sh",
+      "kind": "test",
+      "label": "test/cases/125_rule_proof.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/125_rule_proof.sh"
+    },
+    {
       "id": "test:test/cases/12_site_build.sh",
       "kind": "test",
       "label": "test/cases/12_site_build.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
+    },
+    {
+      "id": "test:test/cases/133_rule_graph.sh",
+      "kind": "test",
+      "label": "test/cases/133_rule_graph.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/133_rule_graph.sh"
+    },
+    {
+      "id": "test:test/cases/134_governance_gates.sh",
+      "kind": "test",
+      "label": "test/cases/134_governance_gates.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/134_governance_gates.sh"
     },
     {
       "id": "test:test/cases/13_region_projection.sh",
@@ -3469,6 +3563,31 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:evidence-currency-is-not-collapsed",
       "target": "source:docs/EVIDENCE.md",
       "kind": "specified_by"
@@ -4199,6 +4318,31 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "impl:scripts/ci/rule-proof-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "impl:scripts/ci/rule-proof-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "impl:apps/majordomus-cli/src/rules/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "impl:scripts/ci/english-only-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "impl:scripts/ci/finding-reproduce-check",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:evidence-currency-is-not-collapsed",
       "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
       "kind": "implemented_by"
@@ -4926,6 +5070,31 @@
     {
       "source": "claim:evidence-proof-is-an-execution",
       "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "test:test/cases/125_rule_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "test:test/cases/125_rule_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "test:test/cases/133_rule_graph.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "test:test/cases/134_governance_gates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "test:test/cases/134_governance_gates.sh",
       "kind": "proved_by"
     },
     {

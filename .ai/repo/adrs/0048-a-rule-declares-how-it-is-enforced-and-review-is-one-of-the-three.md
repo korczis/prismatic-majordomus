@@ -1,0 +1,180 @@
+---
+schema: adr/v1
+id: adr-0048
+kind: adr
+title: A rule declares how it is enforced, and review is one of the three ways
+status: proposed
+date: 2026-09-11
+tags:
+  - rules
+  - governance
+  - verification
+  - evidence
+related:
+  - rule:project.rule-is-a-doctrine
+  - rule:project.english-only
+  - rule:project.finding-carries-reproduce
+  - rule:project.clean-room
+  - rule:project.optional-complexity
+  - claim:rule-proof-is-named-and-resolves
+  - claim:rule-exemption-carries-its-reason
+  - claim:rule-state-is-derived-from-what-ran
+  - claim:authored-files-are-english
+  - claim:a-finding-names-how-to-see-it-again
+  - file:docs/DOCTRINE.md
+  - file:apps/majordomus-cli/src/rules/mod.rs
+  - file:apps/majordomus-cli/src/capability/builtin/rules.rs
+  - file:scripts/ci/rule-proof-check
+  - file:scripts/ci/english-only-check
+  - file:scripts/ci/finding-reproduce-check
+  - file:scripts/ci/english-only-allow.txt
+  - file:share/schemas/majordomus/rule/rule.v1.proto
+  - file:lib/rules.sh
+  - file:.ai/repo/rule-proof-baseline.txt
+  - test:test/cases/125_rule_proof.sh
+  - test:test/cases/133_rule_graph.sh
+  - test:test/cases/134_governance_gates.sh
+  - file:.ai/repo/adrs/0047-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md
+provenance:
+  origin: authored
+---
+
+# 48. A rule declares how it is enforced, and review is one of the three ways
+
+## Context
+
+A rule of this repository declares a `class`. `blocking` means a gate refuses work that
+violates it. That is a claim about the world, and it is either true or it is not.
+
+Until 2026-09-11 nothing decided which. `x-majordomus` was read by exactly one question —
+does the block exist? — and every surface asked that question and printed a badge from the
+answer. `product.rs` said it in one line: `enforced: o.metadata.get("x-majordomus")
+.is_some()`. A rule could name `test/cases/28_no_hardcoded_values.sh` in a `# Verification`
+section written for a human reader, that case could be renamed, and the rule went on
+reading as enforced everywhere. The relation ran one way, with the converse unowned — the
+shape this repository keeps rediscovering, most recently in `scripts/ci/reference-check`
+and in the claims matrix that ADR 0047 is about.
+
+`scripts/ci/rule-proof-check` closed the naming half: a rule names its proof in front
+matter, and a named path that is not in the tree fails outright. It landed with a baseline
+of ten blocking rules that named nothing at all.
+
+Measured when that baseline was worked through, which is where this decision comes from:
+
+- **Six of the ten already had executable proof.** `apps/majordomus-cli/tests/quality.rs`
+  proved `project.operation-transport-parity`; `test/cases/99_adr.sh` proved
+  `majordomus.decision-threshold`. The proof existed and was named in prose that nothing
+  reads. The migration for these six was moving a path from English into YAML.
+- **Two could have proof and did not.** `project.english-only` and
+  `project.finding-carries-reproduce` both said "Review." and nothing more.
+- **Four could not have proof, and will not be able to.** `project.clean-room` is about the
+  provenance of what was written — no program in this tree can read where a paragraph of
+  source came from. `project.optional-complexity` asks whether a mechanism earns its cost,
+  which is a judgement, and a check that pretended to make it would be worse than none.
+
+The baseline held all ten as one kind of thing: "blocking rules that name no executable
+proof: enforced by review today". The word *today* is the defect. It reads as work still to
+do, and for four of the ten it never was. A list that cannot distinguish *nobody can
+automate this* from *nobody got round to it* makes the second invisible by burying it in
+the first, and makes the first look like negligence.
+
+## Decision
+
+**A rule's enforcement block declares one of three modes, and the shape of the block is the
+declaration.** No mode word is written and none can be spelled wrong:
+
+| mode | the block names | who runs it |
+|---|---|---|
+| dispatched | `validator`, with `category`, `exit_code`, `enforced_by`, and a test | `mj_doctrine_dispatch`, at the commands `enforced_by` names |
+| gated | `tests`, and no validator | a CI gate, or the behavioural suite |
+| reviewed | `reviewed_because`, and neither of the above | a person |
+
+**`reviewed_because` carries the reason and nothing else carries the declaration.** There
+is deliberately no boolean beside it. A flag can be set; a reason cannot be set without
+writing one, so an exemption is always a sentence somebody had to defend and a reviewer can
+read. A block with one word and no reason is not a declaration — it falls through to
+`unproven`, which is the finding it was meant to replace.
+
+**An executable proof always wins.** The mode is decided in order: a validator makes it
+dispatched, a test makes it gated, and only then is a reason read. A rule that acquires a
+case stops being review-enforced whether or not the reason is still in its front matter, so
+a declaration cannot outlive its own need through anyone's forgetfulness.
+
+**A reviewed rule is counted apart, on every surface, always.** `rule-proof-check` prints
+each one as `NOTE` — never as a pass, never as a failure — and states the count beside the
+measured total. The typed report counts them in `review_only`, never in `passing` and never
+in `named_proof`. This number going up is governance getting weaker, and nothing folds it
+into a total that would hide that.
+
+**The proof graph is a separate question from the dispatcher, and the two are not merged.**
+`majordomus doctrine` asks whether the repository satisfies a rule right now — a question
+about the tree. `majordomus rules` asks whether the rule is in a state where it could be
+satisfied at all — a question about the rule. `crate::rules` answers the second by joining
+each rule to the tree and to the evidence ledger of ADR 0047, reusing that vocabulary
+rather than inventing a second one, and reports ten states of which three must never
+collapse into each other: `proven` (a passing run, nothing changed since), `gated` (a
+mechanism that refuses violations, with no verdict recorded), and `reviewed`.
+
+**A rule's state is the weakest of its parts.** One dangling case makes the rule dangling
+however many of its other cases pass, because the half that does not resolve is the half a
+reader would have trusted.
+
+## Consequences
+
+The rule-proof baseline is **empty**. Every blocking rule in this repository names
+executable proof or declares, with its reason, why a reader is the proof. The ratchet
+remains, so the next blocking rule that names nothing is new debt and fails the gate.
+
+Two rules gained real checks, both landing with empty baselines rather than as ratchets over
+their own first findings. `scripts/ci/english-only-check` is an alphabet test and says so —
+English prose carrying a sentence of another language spelled in ASCII passes it and always
+will, so the rule stays wider than the gate, which is the honest relation between the two.
+`scripts/ci/finding-reproduce-check` found nine real violations in `lib/doctor.sh` and
+`lib/watch.sh`; they are fixed rather than recorded, so it holds a line at zero.
+
+The relation is now readable in both directions. `rules proves <test>` names the rules a
+test proves **and the rules that would be left with no proof at all if it were deleted** —
+the question to ask before renaming a case, and the one the one-way relation could not
+answer.
+
+Four rules are now permanently and visibly review-enforced. That is the point, not a
+regression: the number is small, it is stated on every run, and it can only fall when
+someone writes a case. What it can no longer do is hide inside a list called debt.
+
+The cost is a schema change. `reviewed_because` is a new field of the rule proto, so
+`share/allow/rule.txt` and the JSON schema beside it are regenerated, and a rule using the
+key against an older executable is refused as an unknown front-matter key. That refusal is
+correct and is what the generation guard exists for; it is also why this change cannot be
+applied to a tree without regenerating first.
+
+## Alternatives rejected
+
+**Leave the four in the baseline.** The status quo. Rejected because the baseline's own
+header says "enforced by review today", and for these four there is no day on which that
+stops being true — so the list permanently misdescribes a third of its own contents, and
+the entries that *are* temporary are camouflaged by the ones that are not.
+
+**A boolean `review_enforced: true`.** Rejected precisely because it is cheap. The whole
+value of the mechanism is that claiming an exemption costs a sentence a reviewer will read;
+a flag makes the exemption free and the four would become forty within a quarter.
+
+**Make the class `advisory` instead.** Rejected because it changes what the rule *means* in
+order to fix how it is *tracked*. `project.clean-room` genuinely blocks — a violation is not
+merged — and demoting it to advisory to clear a list would be the fake green this
+repository's doctrine names outright.
+
+**Write weak checks for the four.** A grep for "provenance" would satisfy the gate and
+decide nothing. Rejected: a check that cannot fail is worse than no check, because it
+converts an honest absence into a dishonest pass.
+
+**Fold the proof graph into `majordomus doctrine`.** Rejected because they answer different
+questions and a merged command would answer both with one exit code. "The repository is
+fine" and "the rule is fine" are not the same sentence, and collapsing them is how a green
+badge stops meaning anything — the same reasoning by which ADR 0047 refuses to collapse
+`proven` and `inputs unchanged`.
+
+**Record a verdict for gates, so `gated` could reach `proven`.** Tempting, and rejected for
+now: this repository's ledger records suite cases and crate tests, and teaching it to record
+an arbitrary gate's exit code is a larger change than this decision needs. `gated` says
+exactly what is true — violations are refused, and no verdict is recorded here — and a state
+that states its own limit is not a gap.

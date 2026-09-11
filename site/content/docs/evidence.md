@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 48
+weight = 50
 [extra]
 source = "docs/EVIDENCE.md"
 +++

@@ -113,13 +113,22 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus executions events`](#majordomus-executions-events) | `/docs/cli/executions/events/` | One execution's retained events, oldest first |
 | [`majordomus executions cancel`](#majordomus-executions-cancel) | `/docs/cli/executions/cancel/` | Ask an execution to stop |
 | [`majordomus executions protocol`](#majordomus-executions-protocol) | `/docs/cli/executions/protocol/` | The live channel's contract: where it is, what it writes, and the schema of each message |
+| [`majordomus evidence`](#majordomus-evidence) | `/docs/cli/evidence/` | What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened |
+| [`majordomus evidence show`](#majordomus-evidence-show) | `/docs/cli/evidence/show/` | Every claim against the evidence recorded for it |
+| [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
+| [`majordomus evidence proves`](#majordomus-evidence-proves) | `/docs/cli/evidence/proves/` | One test: its latest execution and every claim it proves |
+| [`majordomus evidence record`](#majordomus-evidence-record) | `/docs/cli/evidence/record/` | Record a run that happened into the ledger |
+| [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
+| [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
+| [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
+| [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
 
 ```text
 majordomus <COMMAND>
@@ -3118,4 +3127,247 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events.
+
+<a id="majordomus-evidence"></a>
+## `majordomus evidence`
+
+What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
+
+Subcommands: [`majordomus evidence show`](#majordomus-evidence-show), [`majordomus evidence claim`](#majordomus-evidence-claim), [`majordomus evidence proves`](#majordomus-evidence-proves), [`majordomus evidence record`](#majordomus-evidence-record).
+
+```text
+majordomus evidence [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-evidence-show"></a>
+## `majordomus evidence show`
+
+Every claim against the evidence recorded for it
+
+```text
+majordomus evidence show [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--state` | `<STATE>` | — | Only claims in this proof state (proven, inputs_unchanged, stale, failing, not_run, unrunnable, no_test) |
+| `--status` | `<STATUS>` | — | Only claims declaring this status (guaranteed, advisory, planned, rejected) |
+| `--findings` | flag | — | Only the claims whose declared status the evidence does not support |
+| `--check` | flag | — | Exit 10 when a claim declares a guarantee the evidence does not support |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The whole join, as one document** — The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.
+
+  ```console
+  $ majordomus evidence show --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /claims, /totals, /ledger/path, /findings.
+
+<a id="majordomus-evidence-claim"></a>
+## `majordomus evidence claim`
+
+One claim: its proof state, the execution behind it, and how to reproduce it
+
+```text
+majordomus evidence claim [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The claim id, as docs/CLAIMS.yaml spells it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A claim the matrix does not declare** — A claim id nothing declares is a not-found rather than an empty answer. A typo that read as `this claim has no evidence` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.
+
+  ```console
+  $ majordomus evidence claim no-such-claim-exists
+  ```
+
+  Verified: exits 13.
+
+<a id="majordomus-evidence-proves"></a>
+## `majordomus evidence proves`
+
+One test: its latest execution and every claim it proves
+
+```text
+majordomus evidence proves [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | `suite:<case>`, `crate:<binary>`, or the path a claim names it with |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Something that names no test** — A test is named by its identity (`suite:<case>`, `crate:<binary>`) or by the path a claim writes down, and the two resolve to the same thing. An argument that is neither is refused with the spellings it could have been, rather than answered with a test that proves nothing.
+
+  ```console
+  $ majordomus evidence proves not-a-test
+  ```
+
+  Verified: exits 13.
+
+<a id="majordomus-evidence-record"></a>
+## `majordomus evidence record`
+
+Record a run that happened into the ledger
+
+```text
+majordomus evidence record [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--suite` | `<SUITE>` | — | The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`) |
+| `--crate-output` | `<CRATE_OUTPUT>` | — | A file holding `cargo test`'s output, for the crate's own integration tests |
+| `--origin` | `<ORIGIN>` | — | Where the run happened: local (the default), ci or release |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Recording a report that is not there** — The recorder reads what a run already wrote — the suite's TSV report, `cargo test`'s output — and stamps it with the provenance the run did not carry. A report it cannot read is refused: recording nothing would leave every claim reading `not run` after a run that ran, which is a lie in the safe direction and still a lie.
+
+  ```console
+  $ majordomus evidence record --suite target/no-such-run.tsv
+  ```
+
+  Verified: exits 13.
+
+<a id="majordomus-rules"></a>
+## `majordomus rules`
+
+Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
+
+Subcommands: [`majordomus rules report`](#majordomus-rules-report), [`majordomus rules show`](#majordomus-rules-show), [`majordomus rules proves`](#majordomus-rules-proves).
+
+```text
+majordomus rules [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-rules-report"></a>
+## `majordomus rules report`
+
+Every rule against the proof there is for it
+
+```text
+majordomus rules report [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--state` | `<STATE>` | — | Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven) |
+| `--class` | `<CLASS>` | — | Only rules of this class (blocking, advisory) |
+| `--namespace` | `<NAMESPACE>` | — | Only rules of this namespace (project, majordomus) |
+| `--findings` | flag | — | Only the rules whose declared class the proof does not support |
+| `--check` | flag | — | Exit 10 when a rule declares a class the proof does not support |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every rule against the proof there is for it** — The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.
+
+  ```console
+  $ majordomus rules report --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /rules, /states, /coverage/rules, /findings.
+
+<a id="majordomus-rules-show"></a>
+## `majordomus rules show`
+
+One rule: what proves it, what it depends on, and what is missing
+
+```text
+majordomus rules show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The rule id, with or without its version |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A rule the repository does not declare** — A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.
+
+  ```console
+  $ majordomus rules show project.no-such-rule
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-rules-proves"></a>
+## `majordomus rules proves`
+
+One test: every rule it proves, and the rules that would be left with none
+
+```text
+majordomus rules proves [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | `suite:<case>`, `crate:<binary>`, or the path a rule names it with |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a case proves, and what would lose its only proof** — The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.
+
+  ```console
+  $ majordomus rules proves test/cases/125_rule_proof.sh --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
 

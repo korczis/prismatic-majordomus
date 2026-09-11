@@ -1,0 +1,36 @@
+# What scripts/ci/english-only-check allows, and why. Two kinds, both declared with a
+# reason rather than by weakening the alphabet test.
+#
+#   name <word>
+#       A proper noun whose spelling is its own: a person, a place, an institution, an
+#       identifier of a foreign registry. Stripped wherever it appears, so a line of
+#       English prose naming one is English. A word that is not a name does not belong
+#       here: if a passage needs one, the passage needs rewriting in English.
+#
+#   fixture <path> <why>
+#       A file that uses a non-English string as data, to prove the program handles one.
+#       A doctest asserting that an identifier's local part is opaque bytes has to contain
+#       opaque bytes. The reason is required and is what a reviewer reads.
+#
+# Neither exempts a sentence written in another language. What the fixture kind says is
+# that this test cannot tell prose from data inside that file, which is a limit stated
+# rather than hidden.
+
+name Korčák
+name Tomáš
+
+fixture apps/majordomus-cli/src/capability/model.rs a doctest proving a capability identity's local part is opaque bytes and not an ASCII identifier
+fixture apps/majordomus-cli/src/cockpit/html.rs a doctest proving the HTML escaper passes multi-byte text through unchanged
+fixture apps/majordomus-cli/src/environment/text.rs a doctest proving the shell sanitiser leaves a multi-byte branch name intact
+fixture apps/majordomus-cli/src/scope.rs a doctest proving the text/binary sniffer reads multi-byte UTF-8 as text
+fixture apps/majordomus-cli/src/worktree/path.rs a doctest proving a branch name may carry multi-byte characters
+fixture apps/majordomus-cli/tests/metadata_contract.rs an integration test feeding a multi-byte document title through the metadata contract
+fixture apps/majordomus-cli/tests/worktree.rs an integration test creating a worktree for a multi-byte branch name
+fixture test/cases/64_knowledge_discovery.sh a case creating a file whose name carries spaces and multi-byte characters, to prove discovery finds it
+
+# The check, its documentation and its own case necessarily contain the letters they are
+# about. This is the self-reference every alphabet test has: the list of letters that are
+# not English cannot be written without them.
+fixture scripts/ci/english-only-check the check carries the list of letters it tests for; it cannot express the rule without containing what the rule refuses
+fixture docs/claims/authored-files-are-english.md the claim page names the letters the check looks for, so a reader knows what is decidable and what is not
+fixture test/cases/134_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language

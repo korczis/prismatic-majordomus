@@ -43,6 +43,7 @@ pub(crate) mod mcp;
 pub(crate) mod product;
 pub(crate) mod quality;
 pub(crate) mod release;
+pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod web;
@@ -75,6 +76,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Run(args) => executions::run(args),
         Command::Executions(args) => executions::executions(args),
         Command::Evidence(args) => evidence::run(args),
+        Command::Rules(args) => rules::run(args),
     }
 }
 

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [safety, tooling]
+
+x-majordomus:
+  reviewed_because: no deleting sweep in this tree is exercised by a case yet; when one is written the guard becomes a case and this declaration falls away
 ---
 
 # Rationale

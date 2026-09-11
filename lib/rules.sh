@@ -87,7 +87,15 @@ mj_rule_scan() {
             fail("x-majordomus names an enforcing command but no validator to dispatch")
           else if (first["x-majordomus.category"] != "" || first["x-majordomus.exit_code"] != "")
             fail("x-majordomus names a category or exit code but no validator to use them")
-          if (first["x-majordomus.tests.0"] == "") fail("x-majordomus names no test")
+          # The third mode. A rule may carry a reason why nothing executable can express it
+          # instead of naming a test, and the reason is the whole declaration: there is no
+          # flag beside it, because a flag can be set and a reason cannot be set without
+          # writing one. A block that names neither a test nor a reason is enforcement
+          # nobody can reproduce, which is what this refuses.
+          if (first["x-majordomus.tests.0"] == "" && first["x-majordomus.reviewed_because"] == "")
+            fail("x-majordomus names no test and gives no reviewed_because")
+          if (first["x-majordomus.reviewed_because"] != "" && first["x-majordomus.validator"] != "")
+            fail("x-majordomus gives a reviewed_because and a validator; a dispatched rule is not review-enforced")
         }
         # the flat record, in the order the registry is read in; @ is the resolved index
         nout = split("id version title description statement status class", out, " ")
@@ -218,6 +226,7 @@ mj_rules_render() {
       else if (f == "status") st[i] = v; else if (f == "provenance") prov[i] = v; else if (f == "file") file[i] = v
       else if (f == "enforced") enf[i] = v
       else if (f == "validator") val[i] = v
+      else if (f == "reviewed_because") rev[i] = v
       else if (f ~ /^tests\.[0-9]+$/) ts[i] = (i in ts ? ts[i] "," v : v)
       else if (f ~ /^enforced_by\.[0-9]+$/) eb[i] = (i in eb ? eb[i] "," v : v)
       else if (f ~ /^depends_on\.[0-9]+$/) dep[i] = (i in dep ? dep[i] ",\"" v "\"" : "\"" v "\"")
@@ -225,10 +234,10 @@ mj_rules_render() {
     END {
       if (json) {
         printf "{\"schema\":1,\"rules\":["
-        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : "gated"), jlist(ts[i]), dep[i]
+        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : ts[i] != "" ? "gated" : "reviewed"), jlist(ts[i]), dep[i]
         printf "]}\n"
       } else
-        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : "proven by " ts[i])
+        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : ts[i] != "" ? "proven by " ts[i] : "review-enforced: " rev[i])
     }' "$MJ_RULES_FLAT"
 }
 
@@ -358,6 +367,11 @@ usage: majordomus rules list [--json]           the effective set in resolved or
   vendor update is the only way the baseline changes: a newer executable reports it,
   never applies it. It refuses over a hand-edited vendor directory unless --force, and
   it never touches rules/project/.
+
+  This command answers what the rules ARE. What PROVES each one — whether the case it
+  names is in the tree, whether a runner drives it, whether anything ever ran it, and
+  whether that run is older than what it is about — is a different question, and the
+  executable answers it: majordomus-cli rules report, rules show <id>, rules proves <test>.
 H
 }
 
