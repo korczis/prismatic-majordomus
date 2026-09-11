@@ -1,7 +1,7 @@
 +++
 title = "The release"
 description = "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the two statements of the version and the one command that writes them; the bump the commits imply and the evidence for it; and every surface derived from both"
-weight = 23
+weight = 24
 [extra]
 source = "docs/RELEASE.md"
 +++
