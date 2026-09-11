@@ -79,6 +79,10 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+    /// `lifecycle:` — the ageing thresholds the work lifecycle judges against. Declared
+    /// here so that the one policy file remains the only place a threshold is written down.
+    #[serde(default)]
+    pub lifecycle: crate::lifecycle::LifecyclePolicy,
 }
 
 /// The policy as loaded: the typed value, where it came from, and the hash the stamps
