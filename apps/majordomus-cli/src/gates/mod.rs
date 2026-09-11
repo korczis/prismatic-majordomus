@@ -131,10 +131,7 @@ pub fn implied(
                 "the change exists, so it owes being in the branch's history".to_string(),
             )
         } else if is_declared {
-            (
-                true,
-                "the task's own `requires` declares it".to_string(),
-            )
+            (true, "the task's own `requires` declares it".to_string())
         } else if o.inputs.is_empty() {
             (
                 false,
@@ -158,7 +155,10 @@ pub fn implied(
             reason,
             because: hits,
             remediation: if o.discharged_by == "none" {
-                format!("majordomus evidence --covers {} --command '<what proved it>'", o.id)
+                format!(
+                    "majordomus evidence --covers {} --command '<what proved it>'",
+                    o.id
+                )
             } else {
                 format!(
                     "{} && majordomus evidence --covers {} --command '{}'",
@@ -443,16 +443,20 @@ classes:
     #[test]
     fn anything_changed_owes_being_committed() {
         let v = vocabulary();
-        assert!(implied(&v, &["apps/x.rs".into()], None)
-            .iter()
-            .find(|o| o.id == "commit")
-            .unwrap()
-            .applicable);
-        assert!(!implied(&v, &[], None)
-            .iter()
-            .find(|o| o.id == "commit")
-            .unwrap()
-            .applicable);
+        assert!(
+            implied(&v, &["apps/x.rs".into()], None)
+                .iter()
+                .find(|o| o.id == "commit")
+                .unwrap()
+                .applicable
+        );
+        assert!(
+            !implied(&v, &[], None)
+                .iter()
+                .find(|o| o.id == "commit")
+                .unwrap()
+                .applicable
+        );
     }
 
     #[test]

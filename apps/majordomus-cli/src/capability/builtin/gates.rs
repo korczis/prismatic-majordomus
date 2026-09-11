@@ -37,9 +37,9 @@ use crate::capability::module::ModuleDescriptor;
 use crate::gates::{self, judge, model, Completion};
 use crate::{capability, module};
 
+use super::get;
 use super::obligations::Obligation;
 use super::views::Empty;
-use super::get;
 
 /// The URI under which the CI model is read as an MCP resource.
 pub const GATES_URI: &str = "majordomus://gates";
@@ -135,14 +135,13 @@ fn vocabulary(ctx: &Context) -> Result<Vec<Obligation>, String> {
     let share = crate::share::Share::locate(ctx.index.share.as_deref(), &root)
         .map_err(|e| format!("no distribution to read the obligation vocabulary from: {e}"))?;
     let path = share.dir().join("obligations.yaml");
-    let text = std::fs::read_to_string(&path)
-        .map_err(|e| format!("{}: {e}", path.display()))?;
+    let text = std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
     #[derive(Deserialize)]
     struct File {
         obligations: Vec<Obligation>,
     }
-    let file: File = crate::metadata::yaml::parse_into(&text)
-        .map_err(|e| format!("{}: {e}", path.display()))?;
+    let file: File =
+        crate::metadata::yaml::parse_into(&text).map_err(|e| format!("{}: {e}", path.display()))?;
     Ok(file.obligations)
 }
 
