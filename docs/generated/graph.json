@@ -26313,7 +26313,7 @@
         "facts": {
           "class": "blocking",
           "depends_on": [],
-          "statement": "A rule the tool enforces is declared as a rule object with an x-majordomus block and a validator named mj_validate_<name>; no command selects checks by hand.",
+          "statement": "A rule the tool enforces declares an x-majordomus block — a validator named mj_validate_<name> when a command runs it, the tests that prove it when a gate does; no command selects checks by hand.",
           "tags": [
             "doctrine"
           ]
@@ -28228,6 +28228,13 @@
         "label": "test/cases/123_case_bound.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F123_case_bound.sh",
         "source": "test/cases/123_case_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/125_rule_proof.sh",
+        "kind": "test",
+        "label": "test/cases/125_rule_proof.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F125_rule_proof.sh",
+        "source": "test/cases/125_rule_proof.sh"
       },
       {
         "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
@@ -43957,6 +43964,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/125_rule_proof.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47568,8 +47580,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1462,
-      "edges": 3292,
+      "nodes": 1463,
+      "edges": 3293,
       "acyclic": true,
       "truncated": false
     }
