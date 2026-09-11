@@ -1682,6 +1682,81 @@ Exit `2` on a usage error, `12` when a named target is not a public command of t
 registry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit
 code it produced), `10`, `12` and `15` from `--check` as above.
 
+## `majordomus archive`
+
+Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+
+A repository leaves the machine more often than it looks: to a language model that will
+read all of it at once, to a reviewer who cannot clone, to an auditor who has to run the
+gates on a copy. Those were being done by hand, differently each time, and the hand-made
+version got two things wrong that only surface at the far end.
+
+**What travels is the git index and only the git index.** Nothing untracked is ever
+archived — not the build output, not the caches, and not `.ai/local/`, which is this
+checkout's own state and is never shared. That is one rule instead of a list of
+exclusions, and it is what makes the command safe to point at a repository nobody has
+read.
+
+**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the
+profiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that
+drops the derived paths reads `.gitattributes` — every projection in this repository is
+already marked `merge=derived` there, for a different reason — rather than keeping a
+second list of generated paths, which is the duplication
+`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.
+
+**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix
+mode, and the unpacked tree then has no executable in it: every script fails to run, and
+at the far end that is indistinguishable from the repository being broken. So the mode of
+each entry is read from the index — the authority, not the working tree — written into
+`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back
+and creates a local git index, because the checks here enumerate the repository with
+`git ls-files` and without an index they examine nothing and report that nothing is wrong.
+
+Every archive is read back before the command returns: the entry count must match what
+was staged, and if executables went in and none came out, that is a failure rather than a
+surprise for the recipient.
+
+**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,
+`.gitattributes`, and the git index.
+**Writes:** `tmp/archives/` — or wherever `--out` says.
+
+**The profiles shipped:**
+
+| Profile | For |
+|---|---|
+| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |
+| `audit` | Running the repository's own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |
+| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |
+
+```
+$ majordomus archive --dry-run
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         left out: 10 (binary)
+         left out: 443 (derived)
+         left out: 5 (excluded)
+         nothing written (--dry-run)
+
+$ majordomus archive
+OK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)
+```
+
+**Behaviour:**
+- `--list` prints the profiles with what each one is for, and marks the default.
+- `--dry-run` reports the selection and the reason every file was left out, and writes
+  nothing.
+- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.
+- An existing output file is refused with `15` unless `--force` is given, so an archive
+  someone is uploading cannot be replaced underneath them.
+- A path the index names and the working tree no longer has is counted and reported, not
+  silently absent.
+- `--json` emits one object with the counts, the reasons and the path.
+
+Exit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,
+`10` when a profile selects none of the tracked files, `15` when the output exists, `13`
+when the container could not be written or does not read back as what went in.
+
 ## `majordomus version`
 
 Print the version and exit. `--version` is accepted as a synonym, and `version` works

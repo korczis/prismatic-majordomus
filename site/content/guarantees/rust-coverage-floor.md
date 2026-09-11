@@ -1,7 +1,7 @@
 +++
 title = "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold"
 description = "The crate's coverage is a number with a committed floor, and a push that drops under the floor does not go green. Two floors, each one integer in a file of its own: scripts/rust-coverage-threshold over the whole executable, and scripts/session-coverage-threshold over the canonical session/continuity domain declared in scripts/session-coverage-domain. Both are read by every place that measures — the coverage job in CI, scripts/rust-check when cargo-llvm-cov is installed, and just coverage — so there is no second copy of either number to drift."
-weight = 119
+weight = 120
 [extra]
 claim_id = "rust-coverage-floor"
 status = "guaranteed"

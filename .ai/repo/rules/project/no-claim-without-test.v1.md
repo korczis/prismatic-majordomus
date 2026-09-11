@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [documentation, evidence]
+
+x-majordomus:
+  tests: [scripts/generate-site-data, test/cases/28_no_hardcoded_values.sh]
 ---
 
 # Rationale
