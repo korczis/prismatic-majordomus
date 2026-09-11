@@ -35,6 +35,7 @@
 //! ledger has one writer (ADR 0030); judging is here, because a judgement with two
 //! implementations is how `check` and a gate come to disagree.
 
+pub mod done;
 pub mod judge;
 pub mod model;
 
@@ -48,6 +49,7 @@ use crate::capability::builtin::obligations::Obligation;
 use crate::capability::builtin::ActiveTask;
 use crate::discovery::glob::Glob;
 
+pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
 pub use model::{GateModel, GatePlan, GatePlanMode};
 
@@ -203,6 +205,11 @@ pub struct Completion {
     /// Which obligations the change set implies, and whether the task promised them. The
     /// judgement of a declared one is `obligations.closure`'s, not this module's.
     pub obligations: Vec<ImpliedObligation>,
+    /// The done invariant: the questions a task must answer before anybody may call it
+    /// finished, each with the source that answered it and the evidence it read. Composed
+    /// from the obligation closure, the gates and the change set; a question nothing here
+    /// reaches is `unknown` and names the command that would answer it.
+    pub questions: Vec<DoneQuestion>,
     /// What could not be established, each as one line. Never empty when something was
     /// skipped: a gap is reported rather than left to be inferred.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -267,6 +274,8 @@ pub fn complete(
     vocabulary: &[Obligation],
     runs: &BTreeMap<String, GateRun>,
     hashes: &BTreeMap<String, Option<String>>,
+    standing: &BTreeMap<String, ObligationStanding>,
+    closure_reachable: bool,
     on_demand: bool,
     now: &str,
     mut findings: Vec<String>,
@@ -309,6 +318,8 @@ pub fn complete(
         }
     }
 
+    let questions = done::answer(standing, &obligations, &gates, changed, closure_reachable);
+
     Completion {
         present: task.is_some(),
         task: task.cloned(),
@@ -320,6 +331,7 @@ pub fn complete(
         tallies,
         gates,
         obligations,
+        questions,
         findings,
     }
 }
@@ -458,6 +470,8 @@ classes:
             &v,
             &BTreeMap::new(),
             &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
             false,
             "now",
             vec![],
@@ -487,6 +501,8 @@ classes:
             &v,
             &runs,
             &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
             false,
             "now",
             vec![],
@@ -523,6 +539,8 @@ classes:
             &v,
             &runs,
             &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
             false,
             "now",
             vec![],
@@ -538,6 +556,8 @@ classes:
             &v,
             &runs,
             &hashes(&m, "bbbb"),
+            &BTreeMap::new(),
+            false,
             false,
             "now",
             vec![],
@@ -561,6 +581,8 @@ classes:
             &v,
             &BTreeMap::new(),
             &hashes(&m, "aaaa"),
+            &BTreeMap::new(),
+            false,
             false,
             "now",
             vec![],
