@@ -43,6 +43,7 @@ mkchk() {
 }
 MINE="$T/mine"; THEIRS="$T/theirs"
 mkchk "$MINE"; mkchk "$THEIRS"
+# shellcheck source=../../lib/rust_bin.sh
 . "$RB"
 
 # --- it refuses when the build directory is somebody else's --------------------------------

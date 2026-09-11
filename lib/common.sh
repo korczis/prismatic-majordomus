@@ -806,8 +806,11 @@ mj_provider_session_env() {
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
     local n v
     for n in $(mj_lifecycle_session_vars); do
-      # the name comes from the adapter table, never from anything a payload carries
-      eval "v=\${$n:-}"
+      # the name comes from the adapter table, never from anything a payload carries, and
+      # it is expanded indirectly rather than evaluated: SECURITY.md forbids `eval` in this
+      # tool, and an indirect expansion reads the variable the name denotes without ever
+      # letting its contents be parsed as shell (test/cases/08_no_forbidden_constructs.sh).
+      v="${!n:-}"
       if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
     done
   fi
