@@ -118,6 +118,12 @@
           "command": "majordomus executions",
           "name": "executions",
           "route": "/docs/cli/executions/"
+        },
+        {
+          "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
         }
       ],
       "command": "majordomus",
@@ -16430,13 +16436,780 @@
       ],
       "route": "/docs/cli/executions/protocol/",
       "usage": "majordomus executions protocol [OPTIONS]"
+    },
+    {
+      "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every claim against the evidence recorded for it",
+          "command": "majordomus evidence show",
+          "name": "show",
+          "route": "/docs/cli/evidence/show/"
+        },
+        {
+          "about": "One claim: its proof state, the execution behind it, and how to reproduce it",
+          "command": "majordomus evidence claim",
+          "name": "claim",
+          "route": "/docs/cli/evidence/claim/"
+        },
+        {
+          "about": "One test: its latest execution and every claim it proves",
+          "command": "majordomus evidence proves",
+          "name": "proves",
+          "route": "/docs/cli/evidence/proves/"
+        },
+        {
+          "about": "Record a run that happened into the ledger",
+          "command": "majordomus evidence record",
+          "name": "record",
+          "route": "/docs/cli/evidence/record/"
+        }
+      ],
+      "command": "majordomus evidence",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "evidence",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "evidence"
+      ],
+      "route": "/docs/cli/evidence/",
+      "usage": "majordomus evidence [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every claim against the evidence recorded for it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only claims in this proof state (proven, inputs_unchanged, stale, failing, not_run, unrunnable, no_test)",
+          "long": "state",
+          "name": "state",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "STATE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only claims declaring this status (guaranteed, advisory, planned, rejected)",
+          "long": "status",
+          "name": "status",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "STATUS"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only the claims whose declared status the evidence does not support",
+          "long": "findings",
+          "name": "findings",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FINDINGS"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when a claim declares a guarantee the evidence does not support",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus evidence show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "evidence",
+            "show",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus evidence show --format json",
+          "description": "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
+          "expectation": "exits 0; prints one JSON document carrying /claims, /totals, /ledger/path, /findings",
+          "id": "evidence-show-json",
+          "setup": [],
+          "title": "The whole join, as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/evidence/",
+      "path": [
+        "majordomus",
+        "evidence",
+        "show"
+      ],
+      "route": "/docs/cli/evidence/show/",
+      "usage": "majordomus evidence show [OPTIONS]"
+    },
+    {
+      "about": "One claim: its proof state, the execution behind it, and how to reproduce it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The claim id, as docs/CLAIMS.yaml spells it",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus evidence claim",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "evidence",
+            "claim",
+            "no-such-claim-exists"
+          ],
+          "command": "majordomus evidence claim no-such-claim-exists",
+          "description": "A claim id nothing declares is a not-found rather than an empty answer. A typo that read as `this claim has no evidence` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+          "expectation": "exits 13",
+          "id": "evidence-claim-absent",
+          "setup": [],
+          "title": "A claim the matrix does not declare"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "claim",
+      "parent_route": "/docs/cli/evidence/",
+      "path": [
+        "majordomus",
+        "evidence",
+        "claim"
+      ],
+      "route": "/docs/cli/evidence/claim/",
+      "usage": "majordomus evidence claim [OPTIONS] <ID>"
+    },
+    {
+      "about": "One test: its latest execution and every claim it proves",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "`suite:<case>`, `crate:<binary>`, or the path a claim names it with",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus evidence proves",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "evidence",
+            "proves",
+            "not-a-test"
+          ],
+          "command": "majordomus evidence proves not-a-test",
+          "description": "A test is named by its identity (`suite:<case>`, `crate:<binary>`) or by the path a claim writes down, and the two resolve to the same thing. An argument that is neither is refused with the spellings it could have been, rather than answered with a test that proves nothing.",
+          "expectation": "exits 13",
+          "id": "evidence-proves-unknown",
+          "setup": [],
+          "title": "Something that names no test"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "proves",
+      "parent_route": "/docs/cli/evidence/",
+      "path": [
+        "majordomus",
+        "evidence",
+        "proves"
+      ],
+      "route": "/docs/cli/evidence/proves/",
+      "usage": "majordomus evidence proves [OPTIONS] <ID>"
+    },
+    {
+      "about": "Record a run that happened into the ledger",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A file holding `cargo test`'s output, for the crate's own integration tests",
+          "long": "crate-output",
+          "name": "crate_output",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CRATE_OUTPUT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where the run happened: local (the default), ci or release",
+          "long": "origin",
+          "name": "origin",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ORIGIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus evidence record",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "evidence",
+            "record",
+            "--suite",
+            "target/no-such-run.tsv"
+          ],
+          "command": "majordomus evidence record --suite target/no-such-run.tsv",
+          "description": "The recorder reads what a run already wrote — the suite's TSV report, `cargo test`'s output — and stamps it with the provenance the run did not carry. A report it cannot read is refused: recording nothing would leave every claim reading `not run` after a run that ran, which is a lie in the safe direction and still a lie.",
+          "expectation": "exits 13",
+          "id": "evidence-record-missing",
+          "setup": [],
+          "title": "Recording a report that is not there"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "record",
+      "parent_route": "/docs/cli/evidence/",
+      "path": [
+        "majordomus",
+        "evidence",
+        "record"
+      ],
+      "route": "/docs/cli/evidence/record/",
+      "usage": "majordomus evidence record [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 721,
-    "commands": 99,
-    "examples": 109,
-    "runnable": 93
+    "arguments": 755,
+    "commands": 104,
+    "examples": 113,
+    "runnable": 97
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.5.0",

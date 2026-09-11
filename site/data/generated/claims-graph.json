@@ -1365,6 +1365,51 @@
       "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository."
     },
     {
+      "id": "claim:evidence-proof-is-an-execution",
+      "kind": "claim",
+      "label": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-proof-is-an-execution/",
+      "external": false,
+      "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
+    },
+    {
+      "id": "claim:evidence-currency-is-not-collapsed",
+      "kind": "claim",
+      "label": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-currency-is-not-collapsed/",
+      "external": false,
+      "note": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate."
+    },
+    {
+      "id": "claim:evidence-partial-run-preserves-the-rest",
+      "kind": "claim",
+      "label": "Recording one test's result never erases the evidence recorded for any other test",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-partial-run-preserves-the-rest/",
+      "external": false,
+      "note": "The ledger is merged per test, not rewritten per run, so `bash test/run.sh 84_distribution_model` followed by a recording updates exactly that one entry. A whole-ledger write would turn a one-case run into a repository that has proven one thing, which is worse than one that has proven nothing because it looks deliberate."
+    },
+    {
+      "id": "claim:evidence-navigates-both-ways",
+      "kind": "claim",
+      "label": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-navigates-both-ways/",
+      "external": false,
+      "note": "`evidence claim` answers what proves a claim and `evidence proves` answers what a test proves, including the other claims that share it. Both read the same join, so the two directions cannot disagree; a relation that could only be walked one way is half a relation."
+    },
+    {
+      "id": "claim:evidence-unsupported-guarantee-is-reported",
+      "kind": "claim",
+      "label": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-unsupported-guarantee-is-reported/",
+      "external": false,
+      "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1389,6 +1434,13 @@
       "id": "impl:apps/majordomus-cli/src/bench/coverage.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/bench/coverage.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "route": null,
       "external": false
     },
@@ -1431,6 +1483,20 @@
       "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/distribution/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/ledger.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/mod.rs",
       "route": null,
       "external": false
     },
@@ -1820,6 +1886,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/evidence-check",
+      "kind": "implementation",
+      "label": "scripts/evidence-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/generate-site-data",
       "kind": "implementation",
       "label": "scripts/generate-site-data",
@@ -2013,6 +2086,13 @@
       "kind": "source",
       "label": "docs/DYNAMICITY.md",
       "route": "/docs/dynamicity/",
+      "external": false
+    },
+    {
+      "id": "source:docs/EVIDENCE.md",
+      "kind": "source",
+      "label": "docs/EVIDENCE.md",
+      "route": "/docs/evidence/",
       "external": false
     },
     {
@@ -2238,6 +2318,13 @@
       "label": "test/cases/103_obligations.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/103_obligations.sh"
+    },
+    {
+      "id": "test:test/cases/124_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/124_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh"
     },
     {
       "id": "test:test/cases/12_site_build.sh",
@@ -3412,6 +3499,31 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -4122,6 +4234,31 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "impl:scripts/evidence-check",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -4829,6 +4966,31 @@
     {
       "source": "claim:landing-page-is-a-projection",
       "target": "test:test/cases/12_site_build.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "test:test/cases/124_evidence.sh",
       "kind": "proved_by"
     }
   ]
