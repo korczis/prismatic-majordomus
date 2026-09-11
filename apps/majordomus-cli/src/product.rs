@@ -783,6 +783,8 @@ impl ProductModel {
         for (i, r) in m.features.iter().enumerate() {
             m.by_id.insert(r.feature.id.clone(), i);
         }
+        m.findings
+            .extend(Self::unclaimed_cockpit_areas(&m.features, areas));
         m.providers = providers(index);
         for decl in &index.providers.providers {
             if !decl.template {
@@ -829,6 +831,48 @@ impl ProductModel {
         });
         m.fingerprint = m.compute_fingerprint();
         m
+    }
+
+    /// Every Cockpit area the sidebar offers, checked the other way round: a feature that names
+    /// an area that does not exist is already refused above, and this refuses an area that
+    /// exists and that no feature names.
+    ///
+    /// The check has to be total in both directions or it is not a check. It was one-way, and
+    /// what the one direction allowed was exactly what happened: the Cockpit served sixteen
+    /// pages, offered twelve, and `.ai/repo/features/cockpit.md` named eleven — three lists of
+    /// one set, each of them internally consistent and none of them right. `/cockpit/activity`
+    /// answered 200 the whole time and appeared in neither of the other two.
+    ///
+    /// Scoped to a repository that declares Cockpit areas at all: a repository whose features
+    /// name none is not using the field, and telling it about an area of a Cockpit it does not
+    /// describe would be a finding about this tool rather than about that repository.
+    fn unclaimed_cockpit_areas(
+        features: &[ResolvedRefs],
+        areas: &[nav::AreaInfo],
+    ) -> Vec<ProductFinding> {
+        if features.iter().all(|f| f.feature.cockpit.is_empty()) {
+            return Vec::new();
+        }
+        let claimed: BTreeSet<&str> = features
+            .iter()
+            .flat_map(|f| f.feature.cockpit.iter().map(String::as_str))
+            .collect();
+        areas
+        .iter()
+        .filter(|a| a.listed && !claimed.contains(a.id))
+        .map(|a| ProductFinding {
+            severity: Severity::Error,
+            code: "cockpit_area_unclaimed".into(),
+            path: ".ai/repo/features/cockpit.md".into(),
+            id: Some(a.id.to_string()),
+            field: Some("cockpit".into()),
+            message: format!(
+                "the Cockpit serves '{}' at {} and offers it in the sidebar, and no feature names it in `cockpit:`; a page the product does not describe is a page the product does not have",
+                a.id, a.href
+            ),
+            did_you_mean: Some(format!("add '{}' to a feature's cockpit: list", a.id)),
+        })
+        .collect()
     }
 
     /// The area each capability module serves, derived rather than declared.

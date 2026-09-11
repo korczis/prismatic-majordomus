@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "29fb0066cee48e5f03297db24558afbe0c8f1c5a601d03f30926339ce7ccee7c",
+  "fingerprint": "5b9bdb7e0c4853b1dce476c03877ed657c42fcbbb5d43ae3d6f1cbba28a554de",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -4068,12 +4068,16 @@
       "cockpit": [
         "overview",
         "capabilities",
+        "commands",
         "objects",
         "directories",
         "graphs",
+        "executions",
         "continuity",
+        "activity",
         "worktrees",
         "health",
+        "quality",
         "artifacts",
         "design",
         "api"
@@ -4178,6 +4182,11 @@
           "route": "/cockpit/capabilities"
         },
         {
+          "id": "commands",
+          "title": "Commands",
+          "route": "/cockpit/commands"
+        },
+        {
           "id": "objects",
           "title": "Objects",
           "route": "/cockpit/objects"
@@ -4193,9 +4202,19 @@
           "route": "/cockpit/graphs"
         },
         {
+          "id": "executions",
+          "title": "Executions",
+          "route": "/cockpit/executions"
+        },
+        {
           "id": "continuity",
           "title": "Continuity",
           "route": "/cockpit/continuity"
+        },
+        {
+          "id": "activity",
+          "title": "Activity",
+          "route": "/cockpit/activity"
         },
         {
           "id": "worktrees",
@@ -4206,6 +4225,11 @@
           "id": "health",
           "title": "Health",
           "route": "/cockpit/health"
+        },
+        {
+          "id": "quality",
+          "title": "Quality",
+          "route": "/cockpit/quality"
         },
         {
           "id": "artifacts",
@@ -8624,9 +8648,19 @@
       "route": "/cockpit/graphs"
     },
     {
+      "id": "executions",
+      "title": "Executions",
+      "route": "/cockpit/executions"
+    },
+    {
       "id": "continuity",
       "title": "Continuity",
       "route": "/cockpit/continuity"
+    },
+    {
+      "id": "activity",
+      "title": "Activity",
+      "route": "/cockpit/activity"
     },
     {
       "id": "worktrees",
@@ -8637,6 +8671,11 @@
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
+    },
+    {
+      "id": "quality",
+      "title": "Quality",
+      "route": "/cockpit/quality"
     },
     {
       "id": "artifacts",
@@ -8652,20 +8691,25 @@
       "id": "api",
       "title": "API",
       "route": "/cockpit/api"
+    },
+    {
+      "id": "search",
+      "title": "Search",
+      "route": "/cockpit/search"
     }
   ],
   "telemetry": {
-    "capabilities": 1244,
+    "capabilities": 1245,
     "builtin": 80,
-    "declarative": 1164,
+    "declarative": 1165,
     "modules": 27,
     "mcp_tools": 78,
-    "mcp_resources": 1192,
+    "mcp_resources": 1193,
     "http_routes": 80,
     "cli_commands": 93,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1164,
+    "objects": 1165,
     "by_kind": {
       "adr": 39,
       "application": 5,
@@ -8692,7 +8736,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 154,
+      "test": 155,
       "use-case": 43,
       "workspace": 1
     },
