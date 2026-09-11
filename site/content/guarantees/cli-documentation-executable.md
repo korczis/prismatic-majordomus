@@ -1,7 +1,7 @@
 +++
 title = "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable"
 description = "A command of the native Rust command line cannot exist quietly. Whatever --help lists, the reference under /docs/cli/ lists too, with the same words, because both are projections of one declaration in apps/majordomus-cli/src/cli.rs. A command that runs on its own — as opposed to a parent that only groups the commands under it — must carry at least one example, and that example is not prose: it is an argument vector with a title, a description, whatever must have run before it, and a typed statement of what running it must produce. The command line a reader sees on the page is composed from that vector, so there is no second spelling of it to fall out of date."
-weight = 154
+weight = 155
 [extra]
 claim_id = "cli-documentation-executable"
 status = "guaranteed"
