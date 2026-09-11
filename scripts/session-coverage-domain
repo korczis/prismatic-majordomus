@@ -1,0 +1,34 @@
+# The canonical session/continuity domain of the Rust executable: the files
+# scripts/session-coverage-threshold is measured over. One repository-relative path per
+# line; blank lines and comments are ignored.
+#
+# WHY THIS IS ONE FILE TODAY, AND WHAT WAS CONSIDERED FOR IT.
+#
+# `capability/builtin/continuity.rs` is the whole of the session and continuity domain in
+# this executable, and that is a fact about where the domain lives rather than a choice made
+# here. The module says so in its own first paragraph — "It is read, never written. The
+# lifecycle is the shell tool's" — and ADR 0041 names that split as the structural cause of
+# the outage it was written after: the shell owns the writes and the state machine, this
+# crate owns the typed read model, and nothing spans both. The single canonical domain
+# service ADR 0041 settles on does not exist yet; it is staged work. When it lands, its files
+# belong on this list and the threshold follows them.
+#
+# Considered and left out, each for a reason:
+#
+#   src/policy.rs             holds no session key on this branch. `session.freshness` is
+#                             added by the ADR 0041 branch and is not here; adding the file
+#                             now would put four hundred lines of projection loading into a
+#                             session threshold and make the number say less, not more.
+#   builtin/obligations.rs    reads the ledger and shares `read_task` with continuity, but
+#                             what it models is a task's delivery obligations (ADR 0030),
+#                             not the episode lifecycle.
+#   builtin/health.rs         reports on the stores among many other things; the session
+#                             half of it is a handful of lines inside a different subject.
+#   devtask/task.rs           carries session records as evidence for an issue. The relation
+#                             is to the issue, not to the episode.
+#
+# The shell half of the lifecycle — lib/session.sh, capture.sh, checkpoint.sh, handover.sh,
+# derive.sh, common.sh, session_context.sh — is not measured by cargo-llvm-cov and is not on
+# this list. `scripts/shell-coverage` measures it instead, exactly for functions and as a
+# stated floor for lines, and reports rather than gates.
+apps/majordomus-cli/src/capability/builtin/continuity.rs

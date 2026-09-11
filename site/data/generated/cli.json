@@ -8496,6 +8496,12 @@
           "route": "/docs/cli/env/export/"
         },
         {
+          "about": "Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer",
+          "command": "majordomus env enter",
+          "name": "enter",
+          "route": "/docs/cli/env/enter/"
+        },
+        {
           "about": "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted",
           "command": "majordomus env explain",
           "name": "explain",
@@ -9000,6 +9006,222 @@
       ],
       "route": "/docs/cli/env/export/",
       "usage": "majordomus env export [OPTIONS]"
+    },
+    {
+      "about": "Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus env",
+          "name": "env",
+          "route": "/docs/cli/env/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "direnv"
+          ],
+          "global": false,
+          "help": "The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`",
+          "long": "shell",
+          "name": "shell",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SHELL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "How much banner to draw; MAJORDOMUS_BANNER decides without it",
+          "long": "mode",
+          "name": "mode",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not draw the banner",
+          "long": "no-banner",
+          "name": "no_banner",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_BANNER"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not refresh the workflow bridge",
+          "long": "no-bridge",
+          "name": "no_bridge",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_BRIDGE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Do not ensure the runtime: export, draw and refresh only. What MAJORDOMUS_RUNTIME=off says, as an argument",
+          "long": "no-runtime",
+          "name": "no_runtime",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_RUNTIME"
+        },
+        {
+          "defaults": [
+            "0"
+          ],
+          "global": false,
+          "help": "Wait this many seconds for a server this call started to answer. Zero — the default, and what a shell prompt asks for — returns as soon as one has been started, and the entry file's watch over the lease brings the address in when it is published",
+          "long": "wait",
+          "name": "wait",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus env enter",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "env",
+            "enter",
+            "--shell",
+            "direnv",
+            "--no-banner",
+            "--no-bridge",
+            "--no-runtime"
+          ],
+          "command": "majordomus env enter --shell direnv --no-banner --no-bridge --no-runtime",
+          "description": "What the file a shell evaluates on entry runs, and the only call it makes (ADR 0043): the assignments on standard output for `eval`, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the repository's shared server ensured when nothing is serving this checkout. It never builds, never ensures from an executable older than its sources, never waits for a server it started to answer, and never exits non-zero — a non-zero exit here would make direnv report that the whole environment failed. `--no-runtime` is what this example passes, because an example is not the place to start a server.",
+          "expectation": "exits 0; prints export MAJORDOMUS_ROOT=",
+          "id": "env-enter",
+          "setup": [],
+          "title": "Everything entering this repository is, as one call"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "enter",
+      "parent_route": "/docs/cli/env/",
+      "path": [
+        "majordomus",
+        "env",
+        "enter"
+      ],
+      "route": "/docs/cli/env/enter/",
+      "usage": "majordomus env enter [OPTIONS]"
     },
     {
       "about": "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted",
@@ -17206,10 +17428,10 @@
     }
   ],
   "counts": {
-    "arguments": 755,
-    "commands": 104,
-    "examples": 113,
-    "runnable": 97
+    "arguments": 766,
+    "commands": 105,
+    "examples": 114,
+    "runnable": 98
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.5.0",

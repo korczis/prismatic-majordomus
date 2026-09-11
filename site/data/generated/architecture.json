@@ -780,6 +780,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/locks",
+      "kind": "artifact",
+      "label": "local/state/locks",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/archive",
       "kind": "artifact",
       "label": "local/state/archive",
@@ -1824,6 +1834,11 @@
     {
       "source": "lib/search.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": ".ai/local/state/locks",
       "kind": "uses"
     },
     {

@@ -292,7 +292,14 @@ jobs:
           retention-days: 14
 
   # ------------------------------------------------------------------ coverage
-  # Line coverage of the crate, with the threshold scripts/rust-check enforces locally.
+  # Line, function and region coverage of the crate, measured over the code that is under
+  # test rather than over the code plus the tests, and held to two thresholds: the crate-wide
+  # floor in scripts/rust-coverage-threshold and the canonical session/continuity domain's in
+  # scripts/session-coverage-threshold. `cargo llvm-cov --summary-only` is not run directly
+  # here any more: it has no way to exclude a `#[cfg(test)] mod tests` that lives in the same
+  # file as the code it tests, so its denominator contained the tests and the number moved
+  # whenever a test was added or deleted. scripts/rust-coverage is the same measurement with
+  # that subtracted; it runs the same suite once and post-processes the JSON export.
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true'
@@ -308,9 +315,15 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - run: cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat ../../scripts/rust-coverage-threshold)"
+      - run: ../../scripts/rust-coverage --export ../../coverage.json
       - if: always()
-        run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "threshold=$(cat ../../scripts/rust-coverage-threshold)"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-coverage
+          path: coverage.json
+          retention-days: 14
+      - if: always()
+        run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
 
   # ------------------------------------------------------------------ bench
   # The benchmark check against the committed baseline of its platform (.ai/repo/benchmarks/

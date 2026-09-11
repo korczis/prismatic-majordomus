@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "76a5c756b27874e1c1b91ea8971d81cc27af7a9a2a2fdc16520ff5a7a353d980",
+  "fingerprint": "8df9c7f8f13e5deeb73ac3bab27cfe98a6db6256621b8b5148c5eb13298cb778",
   "route": "/features/",
   "counts": {
     "features": 20,
     "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 29,
+    "modules": 30,
     "modules_covered": 18,
     "commands": 29,
     "commands_covered": 28,
@@ -2460,7 +2460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 41
+          "objects": 43
         },
         {
           "name": "knowledge",
@@ -2717,11 +2717,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 269,
+        "mcp_resources": 271,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 268,
+        "objects": 270,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -6654,7 +6654,7 @@
         },
         {
           "id": "rust-coverage-floor",
-          "claim": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
           "status": "guaranteed"
         }
       ],
@@ -7733,6 +7733,11 @@
         ]
       },
       {
+        "id": "session_domain",
+        "title": "The session domain",
+        "features": []
+      },
+      {
         "id": "trace",
         "title": "Traceability",
         "features": [
@@ -7984,7 +7989,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (41)",
+        "title": "adr (43)",
         "features": [
           "knowledge"
         ]
@@ -8883,19 +8888,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1304,
-    "builtin": 89,
-    "declarative": 1215,
-    "modules": 29,
-    "mcp_tools": 86,
-    "mcp_resources": 1246,
-    "http_routes": 88,
-    "cli_commands": 97,
+    "capabilities": 1320,
+    "builtin": 91,
+    "declarative": 1229,
+    "modules": 30,
+    "mcp_tools": 88,
+    "mcp_resources": 1262,
+    "http_routes": 90,
+    "cli_commands": 98,
     "shell_commands": 29,
     "kinds": 28,
-    "objects": 1215,
+    "objects": 1229,
     "by_kind": {
-      "adr": 41,
+      "adr": 43,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8920,7 +8925,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 165,
+      "test": 177,
       "use-case": 44,
       "workspace": 1
     },
