@@ -118,7 +118,7 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
-    /// Every projection of the design system (see [`crate::design::render`]): the
+    /// Every projection of the design system (see `crate::design::render`, private): the
     /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
     /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.
@@ -1292,7 +1292,12 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// Refuses rather than writes when the rendered document carries anything from
 /// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
 /// leak that regenerates.
-pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+///
+/// Crate-internal: its only caller is the graph target below, and its `ctx` is a
+/// [`Context`] that only a running process composes — there is no example a reader outside
+/// this crate could run, because there is no way for them to call it. It was exported
+/// without one, which is what `project.rust-public-api-quality` reports.
+pub(crate) fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
         Error::Http {
             reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
@@ -1319,7 +1324,10 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
 
 /// The schema of the composed graph, generated from the types that define it rather than
 /// written beside them.
-pub fn graph_schema_document(version: &str) -> String {
+///
+/// Crate-internal, beside [`graph_document`] whose artifact it describes: the pair is the
+/// graph target's, and neither has ever had a consumer outside this crate.
+pub(crate) fn graph_schema_document(version: &str) -> String {
     let schema = crate::capability::schema::CanonicalSchema::of::<crate::graph::Graph>();
     // a JSON Schema's own members are fixed by its specification, so the provenance rides
     // in the extension the manifest validator reads beside `generated`

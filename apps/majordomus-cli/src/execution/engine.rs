@@ -186,7 +186,7 @@ impl ExecutionEngine {
     /// millisecond, and the same window would let a worker publish `execution.started` before
     /// `execution.queued`, whereupon the state machine refuses the queued event and the
     /// stream loses it. Acceptance is therefore recorded and read while the queue lock is
-    /// held, before [`Self::dispatch`] can hand the pending to anybody.
+    /// held, before `Self::dispatch` (private) can hand the pending to anybody.
     pub fn submit(
         &self,
         ctx: &Context,

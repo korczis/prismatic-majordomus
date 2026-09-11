@@ -650,7 +650,10 @@ pub fn measure(design: &DesignSystem, sources: &[(String, String)]) -> ContrastR
             });
         }
     }
-    pairs.sort_by(|a, b| {
+    // the report's rows in the order of their own values: this list is read as a diff
+    // against the last run rather than browsed, so it needs to be reproducible rather than
+    // reader-shaped, which is the distinction crate::order draws between its two orders
+    crate::order::byte_order_by(&mut pairs, |a, b| {
         (&a.theme, a.carries, &a.foreground, &a.ground).cmp(&(
             &b.theme,
             b.carries,

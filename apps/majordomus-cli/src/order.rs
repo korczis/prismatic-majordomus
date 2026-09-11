@@ -134,6 +134,64 @@ pub fn canonical<T: Ordered>(items: &mut [T]) {
     items.sort_by(|a, b| a.order_key().cmp(&b.order_key()));
 }
 
+/// Put a collection in the order of its own values, in place — the deterministic order of
+/// something no person reads.
+///
+/// [`canonical`] is the order of a projection: grouped, ranked, and folded the way a reader
+/// expects to find a label. A digest's inputs and a report's rows are not that. They need an
+/// order that is total, reproducible on every machine, and independent of the sequence the
+/// items were collected in, and they need it to be the values' own [`Ord`] — code-unit order
+/// — because folding case would make two paths that differ only in case compare equal, and a
+/// hash whose input order is ambiguous is not a hash.
+///
+/// It lives here rather than as a bare `.sort()` at each site for the reason the whole module
+/// exists (`project.canonical-order`): a comparator written beside its caller is an opinion
+/// about sequence held somewhere no one looks. This one is explicit about being the other
+/// kind of order, and about why.
+///
+/// ```
+/// use majordomus_cli::order::byte_order;
+///
+/// // total, and independent of arrival order
+/// let mut one = vec!["src/lib.rs", "Cargo.toml", "src/Lib.rs"];
+/// let mut other = vec!["src/Lib.rs", "src/lib.rs", "Cargo.toml"];
+/// byte_order(&mut one);
+/// byte_order(&mut other);
+/// assert_eq!(one, other);
+///
+/// // and it is code-unit order, so case is a difference rather than a tie
+/// assert_eq!(one, ["Cargo.toml", "src/Lib.rs", "src/lib.rs"]);
+/// ```
+pub fn byte_order<T: Ord>(items: &mut [T]) {
+    items.sort();
+}
+
+/// [`byte_order`], for a record whose deterministic order is some of its fields rather than
+/// the whole of it.
+///
+/// The comparison is given rather than a key, because the keys worth ordering by are tuples
+/// of the item's own borrowed fields, and a key that borrows from its item cannot be
+/// returned from the closure `sort_by_key` takes. Writing it here rather than at the call
+/// site is the point of the module: the sequence a collection is put in is decided in one
+/// file, and the caller says which of the two orders it is asking for.
+///
+/// ```
+/// use majordomus_cli::order::byte_order_by;
+///
+/// struct Row { theme: String, name: String }
+/// let mut rows = vec![
+///     Row { theme: "light".into(), name: "a".into() },
+///     Row { theme: "dark".into(), name: "b".into() },
+///     Row { theme: "dark".into(), name: "a".into() },
+/// ];
+/// byte_order_by(&mut rows, |a, b| (&a.theme, &a.name).cmp(&(&b.theme, &b.name)));
+/// let seen: Vec<_> = rows.iter().map(|r| (r.theme.as_str(), r.name.as_str())).collect();
+/// assert_eq!(seen, [("dark", "a"), ("dark", "b"), ("light", "a")]);
+/// ```
+pub fn byte_order_by<T>(items: &mut [T], cmp: impl FnMut(&T, &T) -> Ordering) {
+    items.sort_by(cmp);
+}
+
 /// Is this collection already in canonical order? What a validator asks of a projection it
 /// did not build, and what a test asks of an interface's output.
 pub fn is_canonical<T: Ordered>(items: &[T]) -> bool {

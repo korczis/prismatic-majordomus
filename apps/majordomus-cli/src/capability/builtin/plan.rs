@@ -136,7 +136,7 @@ pub struct PlanRecordInput {
 }
 
 impl BenchmarkCases for PlanRecordInput {
-    /// The fallback of [`case_milestone`], for the issue half too: a repository with no
+    /// The fallback of `case_milestone` (private), for the issue half too: a repository with no
     /// plan still has to be timed on this capability, and the refusal is the operation
     /// being measured there.
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {

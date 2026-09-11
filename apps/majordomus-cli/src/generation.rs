@@ -89,6 +89,10 @@ pub fn crate_generation(crate_dir: &Path) -> Option<String> {
     if files.is_empty() {
         return None;
     }
+    // `crate::order::byte_order` is this sort, named — but this file is compiled into
+    // build.rs through #[path] as well as into the crate, and a build script cannot use the
+    // crate it is building, so it may reach for nothing but std and sha2. scripts/ci/order-check
+    // excludes this file for that reason and says so.
     files.sort();
     let mut hasher = Sha256::new();
     for (rel, path) in &files {

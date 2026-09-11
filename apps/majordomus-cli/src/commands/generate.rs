@@ -114,6 +114,24 @@ fn refuse_foreign_generation(app: &App) -> Result<()> {
     if package_field(&text, "name").as_deref() != Some(CRATE_NAME) {
         return Ok(());
     }
+    // A tree that carries the manifest but not the crate root is not a checkout of this
+    // crate, and has no generation for this executable to be foreign to.
+    //
+    // The fixture repositories the test suite builds copy `Cargo.toml` beside the data
+    // directory precisely so the generator projects *this* tree's design, and they copy
+    // nothing else of the crate. Refusing them said "your executable is stale" about a
+    // directory that builds no executable at all — the same lie the refusal below exists to
+    // prevent, pointed the other way, and it made 109_design_system and 120_design_contrast
+    // red on master.
+    //
+    // The question is `src/lib.rs`, not `src/`: `generate design` writes its own projections
+    // into `src/web/`, `src/design/` and `src/cockpit/`, so after one run the fixture has a
+    // `src` directory that contains no Rust at all and a generation that moves with every
+    // projection it writes. The crate root is what distinguishes a tree that builds this
+    // executable from a tree this executable merely writes into.
+    if !crate_dir.join("src/lib.rs").is_file() {
+        return Ok(());
+    }
     if let Some(declared) = package_version(&text) {
         if declared != crate::VERSION {
             return Err(Error::Refused {
@@ -327,6 +345,62 @@ mod tests {
                 "the registry model declares {member}, which the comparison drops"
             );
         }
+    }
+
+    #[test]
+    fn a_fixture_carrying_only_the_manifest_is_not_a_tree_of_any_generation() {
+        // test/cases/109_design_system.sh and 120_design_contrast.sh build a repository that
+        // carries share/ and apps/majordomus-cli/Cargo.toml and nothing else of the crate,
+        // because the design generator projects only where the data directory and the
+        // manifest live. Such a tree has no sources, so it builds no executable and cannot
+        // be "a generation" that an executable is foreign to. Before this, the guard hashed
+        // the single manifest, found it unequal to every real generation, and refused both
+        // cases on master.
+        let tree = tempfile::tempdir().expect("a temporary directory");
+        let crate_dir = tree.path().join(super::CRATE_DIR);
+        std::fs::create_dir_all(&crate_dir).expect("the crate directory");
+        std::fs::write(
+            crate_dir.join("Cargo.toml"),
+            format!(
+                "[package]\nname = \"{CRATE_NAME}\"\nversion = \"{v}\"\n",
+                v = crate::VERSION
+            ),
+        )
+        .expect("the manifest");
+
+        // the manifest alone hashes to something, and it is nobody's generation
+        let manifest_only = crate::generation::crate_generation(&crate_dir);
+        assert!(
+            manifest_only.is_some(),
+            "a lone manifest is still an input, which is why the guard could see it"
+        );
+        assert_ne!(
+            manifest_only.as_deref(),
+            Some(crate::GENERATION),
+            "the fixture cannot share this executable's generation; that is the whole point"
+        );
+
+        // `generate design` then writes its projections under src/, so "has a src directory"
+        // is not the discriminator: the fixture acquires one and its generation moves again,
+        // which is why the first attempt at this fix left both design cases red.
+        std::fs::create_dir_all(crate_dir.join("src/design")).expect("the projection directory");
+        std::fs::write(
+            crate_dir.join("src/design/tokens.yaml"),
+            "# GENERATED FILE\n",
+        )
+        .expect("a projection");
+        assert!(crate_dir.join("src").is_dir(), "the generator made one");
+        assert_ne!(
+            crate::generation::crate_generation(&crate_dir).as_deref(),
+            manifest_only.as_deref(),
+            "a projection written under src moves the fixture's generation"
+        );
+
+        // the crate root is what a tree that builds this executable has, and it is absent
+        assert!(
+            !crate_dir.join("src/lib.rs").is_file(),
+            "a fixture carries no crate root, however much the generator writes under src"
+        );
     }
 
     #[test]

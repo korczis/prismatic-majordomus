@@ -140,14 +140,42 @@ mod tests {
     #[test]
     fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
         // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
-        // which fails in the browser and nowhere else
+        // which fails in the browser and nowhere else.
+        //
+        // The claim is about the two URLs the browser fetches, so it is made of those URLs
+        // and not of a count of mentions. The widget also names the distribution in
+        // `data-mj-foreign`, which is a declaration the audit reads and not a fetch. A count
+        // of mentions was not merely stale once that attribute landed: under a half-upgrade
+        // it counts the pinned version twice instead of three times and lands on the number
+        // it expects, so it passed the one defect it was written to catch and failed a
+        // correct page. Counting is the wrong evidence for "both of these name the same
+        // version".
         let shell = page();
+        let assets: Vec<&str> = shell
+            .split('"')
+            .filter(|token| token.starts_with("https://unpkg.com/swagger-ui-dist@"))
+            .collect();
         assert_eq!(
-            shell
-                .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
-                .count(),
+            assets.len(),
             2,
-            "the stylesheet and the bundle both come from the pinned version"
+            "the page fetches a stylesheet and a bundle from the distribution: {assets:?}"
         );
+        let prefix = format!("https://unpkg.com/swagger-ui-dist@{SWAGGER_UI_VERSION}/");
+        for asset in &assets {
+            assert!(
+                asset.starts_with(&prefix),
+                "{asset} is not served from the pinned version {SWAGGER_UI_VERSION}"
+            );
+        }
+        let files: Vec<&str> = assets
+            .iter()
+            .map(|asset| asset.trim_start_matches(&prefix))
+            .collect();
+        for wanted in ["swagger-ui.css", "swagger-ui-bundle.js"] {
+            assert!(
+                files.contains(&wanted),
+                "the shell loads {wanted} from the CDN; it loads {files:?}"
+            );
+        }
     }
 }
