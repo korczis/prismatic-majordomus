@@ -44,13 +44,12 @@ esac; done
 measured() {
   find scripts lib bin -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
     head -1 "$f" | grep -q '^#!.*sh' || continue
-    # The `set -e` has to be one the shell runs, not one a comment mentions. This file's own
-    # rationale says the words "set -e" nine times; so does any library that explains why a
-    # pipeline or an assignment is written the way it is. lib/recover.sh was measured, and
-    # reported as newly exposed, purely because its comments explain the errexit rule it was
-    # bitten by — a check that counts its own subject matter as evidence.
-    grep -vE '^[[:space:]]*#' "$f" | grep -q 'set -[a-z]*e' || continue
-    grep -vE '^[[:space:]]*#' "$f" | grep -q ' | ' || continue
+    # in command position, not in prose: `lib/context.sh` explains in a comment why a
+    # construct is written "an `if`, not `[ ] &&`: under set -e …" and carries no `set -e`
+    # of its own, and the gate read the sentence as the setting and asked the file to add
+    # pipefail to a `set -e` that is not there.
+    grep -qE '^[[:space:]]*set -[a-z]*e' "$f" || continue
+    grep -q ' | ' "$f" || continue
     printf '%s\n' "$f"
   done
 }

@@ -1,0 +1,36 @@
+id: I1506
+milestone: development-runtime
+title: The lifecycle commands become non-interactive capabilities
+slug: phase-c-the-lifecycle
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Move task start, checkpoint and finish, session open and close, handover and evidence into the pattern Phase A establishes, each one non-interactive, so that the exposure policy stops withholding them from every machine surface."
+why: "R4 of the audit's root causes: most tool nodes of the shell program are withheld because they ask the person something, and interactivity is not something a surface can work around. R3 compounds it — the command graph sees the shell tool only at its top level, so every tool node is a group, the exposure policy has nothing to judge, the completion engine has nothing to offer, and the withheld reason for each is a property of the group rather than of the operation. Together they are why the lifecycle is unreachable from MCP, from HTTP and from the Cockpit, which the audit records as the one gap-matrix row whose status is broken for a surface."
+current_state: "The transitions live in lib/start.sh, lib/session.sh, lib/checkpoint.sh, lib/handover.sh, lib/evidence.sh and lib/finish.sh. continuity.state reads the current task; the write half has no capability. Session context is lib/session_context.sh only, with no Rust owner and no capability."
+desired_state: "Each lifecycle transition has a typed input, a capability, and therefore a CLI path, an MCP tool and an HTTP route that were not written by hand. What still needs a person is an argument, not a prompt."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+  - lib
+  - share/commands.yaml
+  - test/cases
+non_scope:
+  - The compiled, budgeted context. It is Phase D of the audit's plan and belongs to the parallel context-compiler work, not here.
+  - Removing the shell tool. It stays as the person-facing front end and calls the capability.
+depends_on:
+  - I1504
+  - I1505
+acceptance_criteria:
+  - Each named transition is a capability with a typed input and no interactive prompt on its capability path
+  - The exposure policy withholds none of them for interactivity
+  - The command graph judges each operation rather than its group
+validation:
+  - bin/majordomus-cli commands
+  - bin/majordomus-cli capabilities validate
+  - bash test/run.sh
+evidence_required:
+  - lifecycle_is_reachable
+  - nothing_withheld_for_interactivity
+risk: "High. This is the largest surface in the milestone and the one most likely to be attempted before Phase A has proved the pattern. It depends on I1504 and I1505 for that reason and not for a technical one."
+created_at: 2026-09-11
+updated_at: 2026-09-11

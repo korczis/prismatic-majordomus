@@ -41,6 +41,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 4
+  - id: devcontext
+    title: Development context
+    description: "The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: devtask
     title: Executable development scopes
     description: "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it."
@@ -65,6 +71,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: evidence
+    title: Evidence
+    description: "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 4
   - id: executions
     title: Executions
     description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
@@ -83,6 +95,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: lifecycle
+    title: Session lifecycle
+    description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 5
   - id: objects
     title: Objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
@@ -97,7 +115,7 @@ modules:
     capabilities: 2
   - id: peers
     title: Peers
-    description: "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
+    description: "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes."
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
@@ -143,6 +161,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
+  - id: session_domain
+    title: The session domain
+    description: "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 2
   - id: trace
     title: Traceability
     description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
@@ -4715,6 +4739,1385 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: devcontext.compile
+    module: devcontext
+    kind: query
+    title: Compile the context for a piece of work
+    description: "The objects a session working on this issue, milestone, intent or set of paths should be given: each with its canonical identifier, the index's own provenance, every discovery path that reached it with the reason and the confidence, its version, its tier and its cost in estimated tokens — followed by everything reached and not given with the reason for each, everything that collapsed into one entry, every pair that does not agree, and the per-tier spend against the budget. Deterministic for a given tree and request; the index fingerprint it was compiled from is in the answer."
+    input:
+      name: DevContextInput
+      schema:
+        "$ref": "#/$defs/CompileInput"
+        description: "The input of `devcontext.compile`: what to compile a context about.\n\nA newtype over [`devcontext::CompileInput`] so that the schema component the OpenAPI\ndocument carries is named for the operation rather than for the domain type, the way\nevery other module's input is."
+        title: DevContextInput
+        "$defs":
+          CompileInput:
+            type: object
+            additionalProperties: false
+            properties:
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "A milestone id or slug, or its canonical identifier."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: "Repository-relative paths the work touches, added to whatever the seeds declare."
+              uris:
+                type: array
+                items:
+                  type: string
+                description: "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              budget_tokens:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+              max_depth:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+              floor:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+              all_blocking_rules:
+                type:
+                  - boolean
+                  - "null"
+                description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+            description: "What to compile a context about.\n\nEvery field is optional. A request that names nothing still gets an answer: the\ngovernance the layer applies to everything, and what the last session left — which is\nthe smallest true context there is."
+    output:
+      name: CompiledContext
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The format of this answer.
+          fingerprint:
+            type: string
+            description: "The index this was compiled from, over every object's path and content. Two answers\nwith the same fingerprint and the same request are the same answer; a different\nfingerprint is a different tree."
+          git:
+            "$ref": "#/$defs/GitContext"
+            description: The head the answer is true of.
+          seeds:
+            type: array
+            items:
+              "$ref": "#/$defs/Seed"
+            description: What was asked for.
+          selected:
+            type: array
+            items:
+              "$ref": "#/$defs/ContextEntry"
+            description: "What to give the session, in the order the budget spent: tier, then relevance, then\ncanonical identifier."
+          excluded:
+            type: array
+            items:
+              "$ref": "#/$defs/Excluded"
+            description: "What was reached and not given, with the reason for each."
+          deduplicated:
+            type: array
+            items:
+              "$ref": "#/$defs/Deduplicated"
+            description: What collapsed into what.
+          conflicts:
+            type: array
+            items:
+              "$ref": "#/$defs/Conflict"
+            description: What does not agree with what.
+          budget:
+            "$ref": "#/$defs/Budget"
+            description: The budget and its per-tier spend.
+          diagnostics:
+            type: array
+            items:
+              "$ref": "#/$defs/Diagnostic"
+            description: "What the compiler could not read: a knowledge source the layer names and does not\nhold, a session record that no longer describes this checkout. Never an error: an\nabsent source is an answer."
+        required:
+          - schema
+          - fingerprint
+          - git
+          - seeds
+          - selected
+          - excluded
+          - deduplicated
+          - conflicts
+          - budget
+          - diagnostics
+        description: "A compiled development context: what to give a session, what was left out, what\ncollapsed into what, and the budget it was all decided under.\n\nThis is the canonical form. Rendering it as a prompt is a downstream projection of this\nvalue and is not performed here — the structure is what lets a caller re-budget, re-order\nor explain the selection without recompiling it."
+        title: CompiledContext
+        "$defs":
+          GitContext:
+            type: object
+            properties:
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch, when the checkout is on one."
+              head:
+                type:
+                  - string
+                  - "null"
+                description: The head commit.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty`, or what git said."
+              commits:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommitReference"
+                description: "Commits the selected entries name as their own evidence, newest record first.\nDerived from the layer's records, never from a log walk."
+            required:
+              - working_tree
+            description: "The head this answer was compiled against. A compiled context is only true of one tree,\nand these three fields plus the index fingerprint are what say which."
+          CommitReference:
+            type: object
+            properties:
+              commit:
+                type: string
+                description: The commit as the record wrote it.
+              named_by:
+                type: string
+                description: The entry that named it.
+              covers:
+                type:
+                  - string
+                  - "null"
+                description: What the record says the commit was for.
+            required:
+              - commit
+              - named_by
+            description: "One commit the layer itself names, and the record that named it."
+          Seed:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier of the seed, or the literal the request gave for an\nintent or a path."
+              kind:
+                type: string
+                description: "`issue`, `milestone`, `path`, `intent`, or the kind of the object named."
+              from:
+                type: string
+                description: "Where it came from: which field of the request."
+              resolved:
+                type:
+                  - string
+                  - "null"
+                description: "What the compiler resolved it to, when the request named something by a short name."
+            required:
+              - uri
+              - kind
+              - from
+            description: What the request asked to compile a context about.
+          ContextEntry:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier: `majordomus://<kind>/<identity>`, unique in the answer."
+              kind:
+                type: string
+                description: The kind the layer declared for it.
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "Its title, when it has one."
+              provenance:
+                "$ref": "#/$defs/EntryProvenance"
+                description: Where it lives.
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: "Which tier's budget it is spent from."
+              relevance:
+                type: number
+                format: double
+                description: "0.0 to 1.0, deterministic for a given tree and request. The order within a tier."
+              confidence:
+                type: number
+                format: double
+                description: The highest confidence of any path that reached it.
+              discovered_by:
+                type: array
+                items:
+                  "$ref": "#/$defs/Discovery"
+                description: "Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The shortest number of hops from a seed.
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+              cost_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's bytes, the measured half of the cost."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version or date the object states about itself, when it states one: a rule's\nversion, an ADR's date, an issue's `updated_at`."
+              status:
+                type:
+                  - string
+                  - "null"
+                description: "The status word the object declares, when it declares one."
+              required:
+                type: boolean
+                description: "True when a blocking rule, a policy or the scope: never dropped for budget."
+              facts:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Facts worth carrying about this entry that are not the object's prose — a rule's\nclass, an issue's milestone, the commits an issue's evidence names."
+            required:
+              - uri
+              - kind
+              - provenance
+              - tier
+              - relevance
+              - confidence
+              - discovered_by
+              - depth
+              - cost_tokens
+              - cost_bytes
+              - required
+            description: "One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it."
+          EntryProvenance:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Repository-relative path, forward slashes."
+              directory:
+                type: string
+                description: The directory it sits in.
+              source_class:
+                type: string
+                description: "The `sources.yaml` class that discovered it."
+              section:
+                type:
+                  - string
+                  - "null"
+                description: "The manifest section it falls under, when it falls under one."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Size of the file in bytes.
+            required:
+              - path
+              - directory
+              - source_class
+              - bytes
+            description: "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          Discovery:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: What reached it.
+              reason:
+                type: string
+                description: "Why it was included, in words a person reads without this file."
+              via:
+                type:
+                  - string
+                  - "null"
+                description: "The entry this one was reached from, when it was reached from one."
+              edge:
+                type:
+                  - string
+                  - "null"
+                description: "The edge kind followed, for `Relation`."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Hops from a seed; a seed is 0.
+              confidence:
+                type: number
+                format: double
+                description: "1.0 when the repository declared this path, less when it was inferred."
+              weight:
+                type: number
+                format: double
+                description: "What this path contributes to the entry's relevance."
+            required:
+              - selector
+              - reason
+              - depth
+              - confidence
+              - weight
+            description: "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+          Excluded:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier, or the name the layer used when nothing resolves."
+              kind:
+                type:
+                  - string
+                  - "null"
+                description: "Its kind, when it resolved to something."
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier it would have been spent from.
+              reason:
+                "$ref": "#/$defs/ExclusionReason"
+                description: Why it is not in the answer.
+              detail:
+                type: string
+                description: "The same, in words."
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it would have cost, so that a reader can decide whether to raise the budget."
+              relevance:
+                type: number
+                format: double
+                description: What its relevance was.
+            required:
+              - uri
+              - tier
+              - reason
+              - detail
+              - cost_tokens
+              - relevance
+            description: "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing."
+          ExclusionReason:
+            oneOf:
+              - type: string
+                const: budget
+                description: The budget ran out before its tier was filled.
+              - type: string
+                const: relevance
+                description: Its relevance fell below the floor the request set.
+              - type: string
+                const: depth
+                description: It is beyond the depth the request allows.
+              - type: string
+                const: stale
+                description: The object says it is deprecated or superseded.
+              - type: string
+                const: superseded
+                description: A newer version of the same thing is in the answer.
+              - type: string
+                const: unresolved
+                description: The layer names it and holds nothing under that name.
+            description: Why something the compiler selected did not survive.
+          Deduplicated:
+            type: object
+            properties:
+              kept:
+                type: string
+                description: The entry that survived.
+              dropped:
+                type: array
+                items:
+                  type: string
+                description: "What was folded into it, or dropped for it."
+              key:
+                type: string
+                description: "What made them the same thing: `uri`, `path` or `identity`."
+              detail:
+                type: string
+                description: "The same, in words."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many discovery paths reached the surviving entry.
+            required:
+              - kept
+              - dropped
+              - key
+              - detail
+              - paths
+            description: "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line."
+          Conflict:
+            type: object
+            properties:
+              current:
+                type: string
+                description: The entry the compiler treats as current.
+              against:
+                type: string
+                description: The entry it stands against.
+              kind:
+                type: string
+                description: "What kind of disagreement: `supersedes` or `version`."
+              detail:
+                type: string
+                description: "The same, in words."
+            required:
+              - current
+              - against
+              - kind
+              - detail
+            description: "Two things in the answer that do not agree, named rather than silently ordered."
+          Budget:
+            type: object
+            properties:
+              limit_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The ceiling this answer was compiled under, in estimated tokens."
+              used_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What the survivors cost.
+              required_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep."
+              remaining_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`limit - used`, floored at zero."
+              over_budget:
+                type: boolean
+                description: True when the required entries alone exceed the limit.
+              bytes_per_token:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Bytes per token, the divisor the estimate uses."
+              tiers:
+                type: array
+                items:
+                  "$ref": "#/$defs/TierSpend"
+                description: "Per tier, in the order the budget spends in."
+            required:
+              - limit_tokens
+              - used_tokens
+              - required_tokens
+              - remaining_tokens
+              - over_budget
+              - bytes_per_token
+              - tiers
+            description: "The budget, and what became of it."
+          TierSpend:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              meaning:
+                type: string
+                description: What it is for.
+              selected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many entries survived in it.
+              excluded:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many were dropped from it for budget.
+              tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tokens the survivors cost.
+              required:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries in it that cannot be dropped.
+            required:
+              - tier
+              - meaning
+              - selected
+              - excluded
+              - tokens
+              - required
+            description: What one tier cost and what it was allowed.
+          Diagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/Severity"
+                description: How bad.
+              code:
+                type: string
+                description: "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+              path:
+                type:
+                  - string
+                  - "null"
+                description: "Repository-relative path of the file concerned, when there is one."
+              message:
+                type: string
+                description: "What is wrong, for a person; the code is for a program."
+            required:
+              - severity
+              - code
+              - message
+            description: "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+          Severity:
+            oneOf:
+              - type: string
+                const: info
+                description: Worth knowing; changes nothing.
+              - type: string
+                const: warning
+                description: Something to look at; the object is still served.
+              - type: string
+                const: error
+                description: The file is excluded and the index is degraded.
+            description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext
+      http:
+        method: GET
+        path: /api/v1/devcontext
+      cli:
+        path:
+          - devcontext
+          - compile
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - session
+      - planning
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 16
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
+  - id: devcontext.explain
+    module: devcontext
+    kind: query
+    title: Why one thing is or is not in a compiled context
+    description: "One canonical identifier judged under a request: whether it was selected, reached and excluded, folded into another identifier, held by the index and never reached, or unknown — with the entry, the exclusion or the collapse itself, and the budget the judgement was made under so that `excluded for budget` can be acted on without a second call."
+    input:
+      name: DevContextExplainInput
+      schema:
+        "$ref": "#/$defs/ExplainInput"
+        description: "The input of `devcontext.explain`: one identifier, and the request to judge it under."
+        title: DevContextExplainInput
+        "$defs":
+          ExplainInput:
+            type: object
+            additionalProperties: false
+            properties:
+              uri:
+                type: string
+                description: The canonical identifier to explain.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "An issue id (`I0301`) or its canonical identifier. Its milestone, its dependencies,\nits declared scope and the decisions over that scope follow from it."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "A milestone id or slug, or its canonical identifier."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What the session is trying to do, in words. The only input the compiler infers\nfrom, and every entry it produces says so and carries a confidence below one."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: "Repository-relative paths the work touches, added to whatever the seeds declare."
+              uris:
+                type: array
+                items:
+                  type: string
+                description: "Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone."
+              budget_tokens:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The ceiling in estimated tokens; [`DEFAULT_BUDGET_TOKENS`] when absent."
+              max_depth:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "How far from a seed the walk goes; [`DEFAULT_MAX_DEPTH`] when absent."
+              floor:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Relevance below which an entry is reported rather than given; [`DEFAULT_FLOOR`]\nwhen absent."
+              all_blocking_rules:
+                type:
+                  - boolean
+                  - "null"
+                description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+            required:
+              - uri
+            description: "The input of `devcontext.explain`: one identifier, and the request to judge it under."
+    output:
+      name: Explanation
+      schema:
+        type: object
+        properties:
+          uri:
+            type: string
+            description: What was asked about.
+          standing:
+            "$ref": "#/$defs/DevContextStanding"
+            description: Where it stands.
+          detail:
+            type: string
+            description: "The same, in words."
+          entry:
+            anyOf:
+              - "$ref": "#/$defs/ContextEntry"
+              - type: "null"
+            description: "The entry, when it is in the answer."
+          excluded:
+            anyOf:
+              - "$ref": "#/$defs/Excluded"
+              - type: "null"
+            description: "The exclusion, when it was reached and not given."
+          deduplicated:
+            anyOf:
+              - "$ref": "#/$defs/Deduplicated"
+              - type: "null"
+            description: "The collapse it was part of, when it was folded or dropped for another."
+          budget:
+            "$ref": "#/$defs/Budget"
+            description: "The budget the judgement was made under, so that \"excluded for budget\" can be acted\non without a second call."
+        required:
+          - uri
+          - standing
+          - detail
+          - budget
+        description: "Why one identifier is, or is not, in a compiled context."
+        title: Explanation
+        "$defs":
+          DevContextStanding:
+            oneOf:
+              - type: string
+                const: selected
+                description: In the answer.
+              - type: string
+                const: excluded
+                description: Reached and not given; the exclusion says why.
+              - type: string
+                const: deduplicated
+                description: "Folded into another identifier, or dropped for one."
+              - type: string
+                const: not_reached
+                description: The index holds it and this request never reached it.
+              - type: string
+                const: unknown
+                description: The index holds nothing under that identifier.
+            description: "What one identifier's standing in a compiled context is."
+          ContextEntry:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier: `majordomus://<kind>/<identity>`, unique in the answer."
+              kind:
+                type: string
+                description: The kind the layer declared for it.
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "Its title, when it has one."
+              provenance:
+                "$ref": "#/$defs/EntryProvenance"
+                description: Where it lives.
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: "Which tier's budget it is spent from."
+              relevance:
+                type: number
+                format: double
+                description: "0.0 to 1.0, deterministic for a given tree and request. The order within a tier."
+              confidence:
+                type: number
+                format: double
+                description: The highest confidence of any path that reached it.
+              discovered_by:
+                type: array
+                items:
+                  "$ref": "#/$defs/Discovery"
+                description: "Every path that reached it, best first. Length above one is the evidence that\ndeduplication happened."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The shortest number of hops from a seed.
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Estimated tokens: the file's bytes divided by [`BYTES_PER_TOKEN`], never fewer\nthan one. An estimate, said to be one."
+              cost_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The file's bytes, the measured half of the cost."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The version or date the object states about itself, when it states one: a rule's\nversion, an ADR's date, an issue's `updated_at`."
+              status:
+                type:
+                  - string
+                  - "null"
+                description: "The status word the object declares, when it declares one."
+              required:
+                type: boolean
+                description: "True when a blocking rule, a policy or the scope: never dropped for budget."
+              facts:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Facts worth carrying about this entry that are not the object's prose — a rule's\nclass, an issue's milestone, the commits an issue's evidence names."
+            required:
+              - uri
+              - kind
+              - provenance
+              - tier
+              - relevance
+              - confidence
+              - discovered_by
+              - depth
+              - cost_tokens
+              - cost_bytes
+              - required
+            description: "One thing the compiler decided a session should be given: what it is, how it was\nreached, what it costs, and how far the compiler trusts it."
+          EntryProvenance:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Repository-relative path, forward slashes."
+              directory:
+                type: string
+                description: The directory it sits in.
+              source_class:
+                type: string
+                description: "The `sources.yaml` class that discovered it."
+              section:
+                type:
+                  - string
+                  - "null"
+                description: "The manifest section it falls under, when it falls under one."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Size of the file in bytes.
+            required:
+              - path
+              - directory
+              - source_class
+              - bytes
+            description: "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          Discovery:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: What reached it.
+              reason:
+                type: string
+                description: "Why it was included, in words a person reads without this file."
+              via:
+                type:
+                  - string
+                  - "null"
+                description: "The entry this one was reached from, when it was reached from one."
+              edge:
+                type:
+                  - string
+                  - "null"
+                description: "The edge kind followed, for `Relation`."
+              depth:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Hops from a seed; a seed is 0.
+              confidence:
+                type: number
+                format: double
+                description: "1.0 when the repository declared this path, less when it was inferred."
+              weight:
+                type: number
+                format: double
+                description: "What this path contributes to the entry's relevance."
+            required:
+              - selector
+              - reason
+              - depth
+              - confidence
+              - weight
+            description: "One way an entry was reached: which selector, why, how far from a seed, and how much\nthe compiler trusts it. An entry keeps every one of these, because \"five discovery\npaths found the same ADR\" is the interesting fact, not a thing to hide."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+          Excluded:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "The canonical identifier, or the name the layer used when nothing resolves."
+              kind:
+                type:
+                  - string
+                  - "null"
+                description: "Its kind, when it resolved to something."
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier it would have been spent from.
+              reason:
+                "$ref": "#/$defs/ExclusionReason"
+                description: Why it is not in the answer.
+              detail:
+                type: string
+                description: "The same, in words."
+              cost_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it would have cost, so that a reader can decide whether to raise the budget."
+              relevance:
+                type: number
+                format: double
+                description: What its relevance was.
+            required:
+              - uri
+              - tier
+              - reason
+              - detail
+              - cost_tokens
+              - relevance
+            description: "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing."
+          ExclusionReason:
+            oneOf:
+              - type: string
+                const: budget
+                description: The budget ran out before its tier was filled.
+              - type: string
+                const: relevance
+                description: Its relevance fell below the floor the request set.
+              - type: string
+                const: depth
+                description: It is beyond the depth the request allows.
+              - type: string
+                const: stale
+                description: The object says it is deprecated or superseded.
+              - type: string
+                const: superseded
+                description: A newer version of the same thing is in the answer.
+              - type: string
+                const: unresolved
+                description: The layer names it and holds nothing under that name.
+            description: Why something the compiler selected did not survive.
+          Deduplicated:
+            type: object
+            properties:
+              kept:
+                type: string
+                description: The entry that survived.
+              dropped:
+                type: array
+                items:
+                  type: string
+                description: "What was folded into it, or dropped for it."
+              key:
+                type: string
+                description: "What made them the same thing: `uri`, `path` or `identity`."
+              detail:
+                type: string
+                description: "The same, in words."
+              paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many discovery paths reached the surviving entry.
+            required:
+              - kept
+              - dropped
+              - key
+              - detail
+              - paths
+            description: "Two names, one thing. The compiler keeps one entry and records the collapse here, so\nthat \"why is this ADR listed once when four things point at it\" has an answer that is\nstate rather than a log line."
+          Budget:
+            type: object
+            properties:
+              limit_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The ceiling this answer was compiled under, in estimated tokens."
+              used_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What the survivors cost.
+              required_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the entries that cannot be dropped cost. Above the limit, the answer is\nover-budget and says so rather than dropping what it must keep."
+              remaining_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`limit - used`, floored at zero."
+              over_budget:
+                type: boolean
+                description: True when the required entries alone exceed the limit.
+              bytes_per_token:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Bytes per token, the divisor the estimate uses."
+              tiers:
+                type: array
+                items:
+                  "$ref": "#/$defs/TierSpend"
+                description: "Per tier, in the order the budget spends in."
+            required:
+              - limit_tokens
+              - used_tokens
+              - required_tokens
+              - remaining_tokens
+              - over_budget
+              - bytes_per_token
+              - tiers
+            description: "The budget, and what became of it."
+          TierSpend:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              meaning:
+                type: string
+                description: What it is for.
+              selected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many entries survived in it.
+              excluded:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many were dropped from it for budget.
+              tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tokens the survivors cost.
+              required:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Entries in it that cannot be dropped.
+            required:
+              - tier
+              - meaning
+              - selected
+              - excluded
+              - tokens
+              - required
+            description: What one tier cost and what it was allowed.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext_explain
+      http:
+        method: GET
+        path: /api/v1/devcontext/explain
+      cli:
+        path:
+          - devcontext
+          - explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - provenance
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 8
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
+  - id: devcontext.policy
+    module: devcontext
+    kind: query
+    title: "The compiler's own rules"
+    description: "What the compiler decides and how: the tiers in the order the budget spends in with the kinds that land in each, every edge kind the composed graph declares with the relevance multiplier the compiler follows it by in each direction — or the reason it refuses to follow it at all — the selectors with which of them infer rather than read, and the defaults for the budget, the depth and the relevance floor. Read this rather than inferring the policy from an answer."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: CompilerPolicy
+      schema:
+        type: object
+        properties:
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The format of this answer.
+          graph:
+            type: string
+            description: The graph the relations are read from.
+          tiers:
+            type: array
+            items:
+              "$ref": "#/$defs/TierRule"
+            description: "The tiers, in the order the budget spends in."
+          edges:
+            type: array
+            items:
+              "$ref": "#/$defs/EdgeRule"
+            description: "Every edge kind the composed graph has, followed or refused."
+          selectors:
+            type: array
+            items:
+              "$ref": "#/$defs/SelectorRule"
+            description: "The selectors, and which of them infer."
+          default_budget_tokens:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The default ceiling in estimated tokens.
+          default_max_depth:
+            type: integer
+            format: uint
+            minimum: 0
+            description: The default depth limit.
+          default_floor:
+            type: number
+            format: double
+            description: The default relevance floor.
+          bytes_per_token:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Bytes per estimated token.
+        required:
+          - schema
+          - graph
+          - tiers
+          - edges
+          - selectors
+          - default_budget_tokens
+          - default_max_depth
+          - default_floor
+          - bytes_per_token
+        description: "The compiler's own rules, so that a caller reads the decision instead of inferring it\nfrom an answer."
+        title: CompilerPolicy
+        "$defs":
+          TierRule:
+            type: object
+            properties:
+              tier:
+                "$ref": "#/$defs/Tier"
+                description: The tier.
+              position:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Its position in the order the budget spends in; 1 is spent first.
+              meaning:
+                type: string
+                description: What it is for.
+              kinds:
+                type: array
+                items:
+                  type: string
+                description: The kinds of object that land in it.
+            required:
+              - tier
+              - position
+              - meaning
+              - kinds
+            description: "One tier, as the policy reports it."
+          Tier:
+            oneOf:
+              - type: string
+                const: task
+                description: "What was asked for: the issue, its milestone, the paths named, the intent. Never\ndropped — a context that lost the thing it was compiled about is not a smaller\nanswer, it is the wrong one."
+              - type: string
+                const: governance
+                description: "What the work will be judged against: the policy, the scope, the directory\ncontracts that reach the named paths, and the rules. A blocking rule is never\ndropped."
+              - type: string
+                const: source
+                description: The code and the cases the work touches.
+              - type: string
+                const: decision
+                description: The architectural decisions already in force over it.
+              - type: string
+                const: knowledge
+                description: "What a previous session left: handovers, session records, curated knowledge."
+              - type: string
+                const: history
+                description: "Supporting evidence: use cases, claims, features, and the rest of the layer."
+            description: "Where an entry sits in the order the budget spends in.\n\nThe order is this repository's own: `lib/context.sh` assembles its sections \"in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\" These six tiers are that\nsentence, applied to objects instead of to sections."
+          EdgeRule:
+            type: object
+            properties:
+              edge:
+                type: string
+                description: "The edge kind, as the composed graph names it."
+              means:
+                type: string
+                description: What the graph asserts by it.
+              forward:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The relevance multiplier when followed source to target; absent when refused.
+              reverse:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The multiplier when followed target to source; absent when refused.
+              reason:
+                type: string
+                description: "Why the target is context for the source, or why the edge is refused."
+              refused:
+                type: boolean
+                description: True when the compiler will not follow it in either direction.
+            required:
+              - edge
+              - means
+              - reason
+              - refused
+            description: "One edge of the composed graph, and what the compiler does with it."
+          SelectorRule:
+            type: object
+            properties:
+              selector:
+                "$ref": "#/$defs/Selector"
+                description: The selector.
+              declared:
+                type: boolean
+                description: "Declared by the repository, or inferred by the compiler."
+            required:
+              - selector
+              - declared
+            description: "One selector, and whether what it produces was declared or inferred."
+          Selector:
+            oneOf:
+              - type: string
+                const: seed
+                description: Named in the request.
+              - type: string
+                const: relation
+                description: Reached along a typed edge of the composed graph.
+              - type: string
+                const: scope_path
+                description: Its path lies under a path the request or a seed declares.
+              - type: string
+                const: contract
+                description: A directory contract that reaches one of those paths.
+              - type: string
+                const: governance
+                description: A rule or policy the layer applies to everything.
+              - type: string
+                const: session_state
+                description: "A recorded session of this branch or of these paths, the handover the resolver\nchose, the newest checkpoint."
+              - type: string
+                const: intent_match
+                description: "Inferred: the words of the intent occur in the object's own words."
+            description: "What reached an entry. This is the provenance of the *selection*, and it is a different\nfact from the provenance of the file: `Relation` says the compiler followed an edge the\nlayer declares, `IntentMatch` says it guessed from words. An answer that did not keep\nthem apart could not say which half of itself to trust."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::devcontext
+    exposure:
+      mcp:
+        tool: majordomus_devcontext_policy
+        resource:
+          uri: majordomus://devcontext/policy
+          name: devcontext-policy
+      http:
+        method: GET
+        path: /api/v1/devcontext/policy
+      cli:
+        path:
+          - devcontext
+          - policy
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - context
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/devcontext.rs
   - id: devtask.issue
     module: devtask
     kind: query
@@ -7416,6 +8819,987 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/environment.rs
+  - id: evidence.claim
+    module: evidence
+    kind: query
+    title: What proves this claim
+    description: "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give."
+    input:
+      name: EvidenceClaimInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          claim:
+            type: string
+            description: "The claim id, as `docs/CLAIMS.yaml` spells it."
+        required:
+          - claim
+        description: "One claim of the matrix, named by the id it is declared under.\n\nThe id is required, and there is no spelling of this input that means \"every claim\" —\nthat question belongs to `evidence.report`. An id the matrix does not declare is a\nnot-found from the handler rather than an empty proof.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;\n\nlet input: EvidenceClaimInput =\n    serde_json::from_str(r#\"{\"claim\": \"evidence-both-directions\"}\"#).unwrap();\nassert_eq!(input.claim, \"evidence-both-directions\");\n\n// no id is a usage error, never a request for all of them\nassert!(serde_json::from_str::<EvidenceClaimInput>(\"{}\").is_err());\n```"
+        title: EvidenceClaimInput
+    output:
+      name: ClaimEvidence
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "The claim's id, as `docs/CLAIMS.yaml` spells it."
+          claim:
+            type: string
+            description: The claim sentence.
+          status:
+            type: string
+            description: "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+          source:
+            type:
+              - string
+              - "null"
+            description: The document that defines the behaviour.
+          implementation:
+            type:
+              - string
+              - "null"
+            description: The file that implements it.
+          test_path:
+            type:
+              - string
+              - "null"
+            description: "The path the claim names as its test, verbatim."
+          test:
+            type:
+              - string
+              - "null"
+            description: "The test's stable identity, when a runner owns it."
+          state:
+            "$ref": "#/$defs/ProofState"
+            description: What the repository can say about the proof.
+          meaning:
+            type: string
+            description: "That state, in one sentence."
+          execution:
+            anyOf:
+              - "$ref": "#/$defs/EvidenceExecution"
+              - type: "null"
+            description: "The execution the state was derived from, when there is one."
+          changed:
+            type: array
+            items:
+              type: string
+            description: "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+          reproduce:
+            type:
+              - string
+              - "null"
+            description: "The command that produces the proof again, when a runner owns the test."
+          executions:
+            type: array
+            items:
+              "$ref": "#/$defs/EvidenceExecution"
+            description: "Every execution the ledger holds for this claim's test — today one, the latest, and\na list because the ledger's retention is a decision that may change and a client\nthat read a bare object would break when it did."
+          also_proves:
+            type: array
+            items:
+              type: string
+            description: "The other claims the same test proves. A test shared by twelve claims is a test\nwhose failure is twelve findings, and a reader of one of them should be able to see\nthe other eleven without searching."
+        required:
+          - id
+          - claim
+          - status
+          - state
+          - meaning
+          - changed
+          - executions
+          - also_proves
+        description: "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.\n\nThe proof is flattened in, so a client reads one claim rather than an evidence wrapper\naround one; the executions and the other claims the same test proves sit beside it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::ClaimEvidence;\nuse majordomus_cli::evidence::ClaimProof;\n\nlet proof: ClaimProof = serde_json::from_value(serde_json::json!({\n    \"id\": \"evidence-both-directions\",\n    \"claim\": \"a claim and its test answer for each other\",\n    \"status\": \"guaranteed\",\n    \"source\": null,\n    \"implementation\": null,\n    \"test_path\": \"test/cases/84_distribution_model.sh\",\n    \"test\": \"suite:84_distribution_model\",\n    \"state\": \"not_run\",\n    \"meaning\": \"no run of this test has been recorded\",\n    \"execution\": null,\n    \"changed\": [],\n    \"reproduce\": \"bash test/run.sh 84_distribution_model\"\n}))\n.unwrap();\n\nlet answer = ClaimEvidence {\n    proof,\n    executions: Vec::new(),\n    also_proves: vec![\"evidence-record-is-not-networked\".to_string()],\n};\nlet json = serde_json::to_value(&answer).unwrap();\nassert_eq!(json[\"id\"], \"evidence-both-directions\");\nassert!(json.get(\"proof\").is_none(), \"the claim is flattened in, not nested\");\nassert_eq!(json[\"also_proves\"], serde_json::json!([\"evidence-record-is-not-networked\"]));\n// a list even where the ledger keeps one: retention is a decision that may change,\n// and a client that read a bare object would break when it did\nassert_eq!(json[\"executions\"], serde_json::json!([]));\n```"
+        title: ClaimEvidence
+        "$defs":
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+          EvidenceExecution:
+            type: object
+            properties:
+              test:
+                type: string
+                description: "The test, in [`TestId::as_string`] form."
+              runner:
+                "$ref": "#/$defs/EvidenceRunner"
+                description: Which runner produced it.
+              source:
+                type: string
+                description: "The test's own source, repository-relative."
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: What it said.
+              seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it took, in whole seconds."
+              commit:
+                type: string
+                description: The full commit id the run was made against.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+              at:
+                type: string
+                description: "When it was recorded, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where the run happened.
+              command:
+                type: string
+                description: The exact command that runs this one test again.
+            required:
+              - test
+              - runner
+              - source
+              - outcome
+              - seconds
+              - commit
+              - working_tree
+              - digest
+              - at
+              - origin
+              - command
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+          EvidenceRunner:
+            oneOf:
+              - type: string
+                const: suite
+                description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+              - type: string
+                const: crate
+                description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+          EvidenceOutcome:
+            oneOf:
+              - type: string
+                const: pass
+                description: It passed.
+              - type: string
+                const: fail
+                description: It failed.
+              - type: string
+                const: skip
+                description: It declined to run and said so (an unmet precondition the case reports itself).
+              - type: string
+                const: timeout
+                description: The bound fired before it finished.
+              - type: string
+                const: error
+                description: The harness could not run it at all.
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+          EvidenceOrigin:
+            oneOf:
+              - type: string
+                const: local
+                description: Someone ran it on their own machine.
+              - type: string
+                const: ci
+                description: A continuous-integration run.
+              - type: string
+                const: release
+                description: A release run.
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::evidence
+    exposure:
+      mcp:
+        tool: majordomus_evidence_claim
+      http:
+        method: GET
+        path: /api/v1/evidence/claim
+      cli:
+        path:
+          - evidence
+          - claim
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - evidence
+      - claims
+      - verification
+      - provenance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - id: evidence.record
+    module: evidence
+    kind: command
+    title: Record a run that happened
+    description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing."
+    input:
+      name: EvidenceRecordInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          suite:
+            type:
+              - string
+              - "null"
+            description: "The runner's TSV report: `MJ_TEST_REPORT=<file> bash test/run.sh`."
+          crate_output:
+            type:
+              - string
+              - "null"
+            description: "A file holding `cargo test`'s output, for the crate's own integration tests."
+          origin:
+            type:
+              - string
+              - "null"
+            description: "Where the run happened: `local` (the default), `ci` or `release`."
+        description: "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, stamps each result with the provenance the run did not carry, and merges it.\nBoth reports are optional and may be given together; an absent origin is `local`.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```"
+        title: EvidenceRecordInput
+    output:
+      name: RecordReport
+      schema:
+        type: object
+        properties:
+          recorded:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many executions were written.
+          passed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them passed.
+          commit:
+            type: string
+            description: The commit they were recorded against.
+          working_tree:
+            type: string
+            description: "The tree's state at the time."
+          unknown:
+            type: array
+            items:
+              type: string
+            description: Results the run named that no runner in this repository owns.
+          ledger:
+            type: string
+            description: Where the ledger was written.
+        required:
+          - recorded
+          - passed
+          - commit
+          - working_tree
+          - unknown
+          - ledger
+        description: "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n```"
+        title: RecordReport
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::evidence
+    exposure:
+      cli:
+        path:
+          - evidence
+          - record
+    availability: runtime
+    visibility: developer
+    stability: behaviorally_verified
+    tags:
+      - evidence
+      - tests
+      - provenance
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - id: evidence.report
+    module: evidence
+    kind: query
+    title: Every claim against the evidence recorded for it
+    description: "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+    input:
+      name: EvidenceReportInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          state:
+            anyOf:
+              - "$ref": "#/$defs/ProofState"
+              - type: "null"
+            description: "Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `no_test`). Absent: every claim."
+          status:
+            type:
+              - string
+              - "null"
+            description: "Only claims declaring this status (`guaranteed`, `advisory`, `planned`, `rejected`).\nAbsent: every claim."
+          findings_only:
+            type: boolean
+            description: "Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined."
+        description: "Which part of the matrix to answer for.\n\nEvery field narrows, and they compose; saying nothing asks for the whole matrix. A key\nnothing recognises is refused rather than dropped, because a misspelled filter that read\nas \"no filter\" would answer a question nobody asked and look like a clean one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceReportInput;\nuse majordomus_cli::evidence::ProofState;\n\nlet all: EvidenceReportInput = serde_json::from_str(\"{}\").unwrap();\nassert!(all.state.is_none() && all.status.is_none() && !all.findings_only);\n\nlet narrowed: EvidenceReportInput =\n    serde_json::from_str(r#\"{\"state\": \"stale\", \"findings_only\": true}\"#).unwrap();\nassert_eq!(narrowed.state, Some(ProofState::Stale));\nassert!(narrowed.findings_only);\n\nassert!(serde_json::from_str::<EvidenceReportInput>(r#\"{\"states\": \"stale\"}\"#).is_err());\n```"
+        title: EvidenceReportInput
+        "$defs":
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+    output:
+      name: EvidenceReport
+      schema:
+        type: object
+        properties:
+          head:
+            type:
+              - string
+              - "null"
+            description: The commit the report was derived against.
+          working_tree:
+            type: string
+            description: "`clean`, `dirty` or `unknown`."
+          ledger:
+            "$ref": "#/$defs/EvidenceLedgerSummary"
+            description: The ledger this was joined against.
+          subject:
+            "$ref": "#/$defs/EvidenceSubject"
+            description: "What the report could reach. Read this before reading the tallies: they are counts\nover the claims the index held, and an index that dropped a file holds fewer."
+          claims:
+            type: array
+            items:
+              "$ref": "#/$defs/EvidenceClaimProof"
+            description: "Every claim, in the matrix's own order."
+          totals:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: How many claims are in each state.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/EvidenceFinding"
+            description: Claims whose declared status the evidence does not support.
+        required:
+          - working_tree
+          - ledger
+          - subject
+          - claims
+          - totals
+          - findings
+        description: "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```"
+        title: EvidenceReport
+        "$defs":
+          EvidenceLedgerSummary:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Where it lives, repository-relative."
+              present:
+                type: boolean
+                description: "Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it."
+              executions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many executions it holds.
+              newest:
+                type:
+                  - string
+                  - "null"
+                description: "The newest `at` in it, when it holds any."
+              commits:
+                type: array
+                items:
+                  type: string
+                description: "The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is."
+            required:
+              - path
+              - present
+              - executions
+              - commits
+            description: "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```"
+          EvidenceSubject:
+            type: object
+            properties:
+              examined:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many claims the index held, and this report therefore examined."
+              complete:
+                type: boolean
+                description: "Whether the index that produced them carried no error diagnostic. When this is\nfalse, every count and every absence below is about a smaller world than the\nrepository, and no verdict over it means what it says."
+              excluded:
+                type: array
+                items:
+                  type: string
+                description: "The diagnostics that excluded something, when any did: `<path>: <code>`."
+            required:
+              - examined
+              - complete
+              - excluded
+            description: "Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \"was this generated from this tree\" and cannot answer \"did the\ngenerator see everything in it\", so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\"docs/CLAIMS.yaml: unknown_key\".into()],\n};\nassert!(!partial.complete, \"a shrunken index must not report a clean verdict\");\n```"
+          EvidenceClaimProof:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The claim's id, as `docs/CLAIMS.yaml` spells it."
+              claim:
+                type: string
+                description: The claim sentence.
+              status:
+                type: string
+                description: "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+              source:
+                type:
+                  - string
+                  - "null"
+                description: The document that defines the behaviour.
+              implementation:
+                type:
+                  - string
+                  - "null"
+                description: The file that implements it.
+              test_path:
+                type:
+                  - string
+                  - "null"
+                description: "The path the claim names as its test, verbatim."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The test's stable identity, when a runner owns it."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: What the repository can say about the proof.
+              meaning:
+                type: string
+                description: "That state, in one sentence."
+              execution:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceExecution"
+                  - type: "null"
+                description: "The execution the state was derived from, when there is one."
+              changed:
+                type: array
+                items:
+                  type: string
+                description: "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: "The command that produces the proof again, when a runner owns the test."
+            required:
+              - id
+              - claim
+              - status
+              - state
+              - meaning
+              - changed
+            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+          EvidenceExecution:
+            type: object
+            properties:
+              test:
+                type: string
+                description: "The test, in [`TestId::as_string`] form."
+              runner:
+                "$ref": "#/$defs/EvidenceRunner"
+                description: Which runner produced it.
+              source:
+                type: string
+                description: "The test's own source, repository-relative."
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: What it said.
+              seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it took, in whole seconds."
+              commit:
+                type: string
+                description: The full commit id the run was made against.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+              at:
+                type: string
+                description: "When it was recorded, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where the run happened.
+              command:
+                type: string
+                description: The exact command that runs this one test again.
+            required:
+              - test
+              - runner
+              - source
+              - outcome
+              - seconds
+              - commit
+              - working_tree
+              - digest
+              - at
+              - origin
+              - command
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+          EvidenceRunner:
+            oneOf:
+              - type: string
+                const: suite
+                description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+              - type: string
+                const: crate
+                description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+          EvidenceOutcome:
+            oneOf:
+              - type: string
+                const: pass
+                description: It passed.
+              - type: string
+                const: fail
+                description: It failed.
+              - type: string
+                const: skip
+                description: It declined to run and said so (an unmet precondition the case reports itself).
+              - type: string
+                const: timeout
+                description: The bound fired before it finished.
+              - type: string
+                const: error
+                description: The harness could not run it at all.
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+          EvidenceOrigin:
+            oneOf:
+              - type: string
+                const: local
+                description: Someone ran it on their own machine.
+              - type: string
+                const: ci
+                description: A continuous-integration run.
+              - type: string
+                const: release
+                description: A release run.
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+          EvidenceFinding:
+            type: object
+            properties:
+              claim:
+                type: string
+                description: The claim.
+              status:
+                type: string
+                description: What the claim says it is.
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: What the evidence supports.
+              reason:
+                type: string
+                description: Why this is a finding.
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: "What to run, when running something would settle it."
+            required:
+              - claim
+              - status
+              - state
+              - reason
+            description: "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::evidence
+    exposure:
+      mcp:
+        tool: majordomus_evidence
+        resource:
+          uri: majordomus://evidence
+          name: evidence
+      http:
+        method: GET
+        path: /api/v1/evidence
+      cli:
+        path:
+          - evidence
+          - show
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - evidence
+      - claims
+      - tests
+      - verification
+      - provenance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - id: evidence.test
+    module: evidence
+    kind: query
+    title: What this test proves
+    description: "One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree."
+    input:
+      name: EvidenceTestInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          test:
+            type: string
+            description: "`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity."
+        required:
+          - test
+        description: "One test, by its stable identity or by the path a claim names it with.\n\nBoth spellings reach the same test. `docs/CLAIMS.yaml` names a path, the ledger keys on\nan identity, and a caller holding one of them should not have to know the other; the\nhandler resolves a path to the identity and reads the same derivation either way.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceTestInput;\nuse majordomus_cli::evidence::{Runner, TestId};\n\nlet by_path: EvidenceTestInput =\n    serde_json::from_str(r#\"{\"test\": \"test/cases/84_distribution_model.sh\"}\"#).unwrap();\nlet id = TestId::of(&by_path.test).unwrap();\nassert_eq!(id.as_string(), \"suite:84_distribution_model\");\nassert_eq!(id.runner, Runner::Suite);\n\n// an identity is not a path: `TestId::of` reads paths, and the handler parses the\n// `<runner>:<name>` form itself\nlet by_id: EvidenceTestInput = serde_json::from_str(r#\"{\"test\": \"crate:why\"}\"#).unwrap();\nassert!(TestId::of(&by_id.test).is_none());\n```"
+        title: EvidenceTestInput
+    output:
+      name: TestEvidence
+      schema:
+        type: object
+        properties:
+          test:
+            type: string
+            description: "The stable identity: `suite:<case>` or `crate:<binary>`."
+          runner:
+            "$ref": "#/$defs/EvidenceRunner"
+            description: Which runner owns it.
+          source:
+            type: string
+            description: "Its own source, repository-relative."
+          present:
+            type: boolean
+            description: Whether that source is in this checkout.
+          reproduce:
+            type: string
+            description: The command that runs this one test.
+          execution:
+            anyOf:
+              - "$ref": "#/$defs/EvidenceExecution"
+              - type: "null"
+            description: "The latest recorded execution, when there is one."
+          digest_matches:
+            type:
+              - boolean
+              - "null"
+            description: "Whether the test's source still hashes to what the execution recorded. `None` when\nthere is no execution, or the source is not there to hash."
+          proves:
+            type: array
+            items:
+              "$ref": "#/$defs/EvidenceClaimProof"
+            description: "Every claim that names this test, with the state each is in."
+        required:
+          - test
+          - runner
+          - source
+          - present
+          - reproduce
+          - proves
+        description: "One test, and what it proves.\n\nThe other direction of [`ClaimEvidence`], read from the test's end: its identity, its\nsource and whether that source is still the one that ran, the command that runs it\nagain, and every claim that names it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::TestEvidence;\nuse majordomus_cli::evidence::TestId;\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet answer = TestEvidence {\n    test: id.as_string(),\n    runner: id.runner,\n    source: id.source(),\n    present: true,\n    reproduce: id.reproduce(),\n    execution: None,\n    digest_matches: None,\n    proves: Vec::new(),\n};\nassert_eq!(answer.test, \"crate:why\");\nassert_eq!(answer.reproduce, \"cargo test --test why\");\n\n// nothing recorded: the two provenance keys are absent rather than null, so \"no\n// execution\" cannot be read as an execution that said nothing\nlet json = serde_json::to_value(&answer).unwrap();\nassert!(json.get(\"execution\").is_none() && json.get(\"digest_matches\").is_none());\nassert_eq!(json[\"proves\"], serde_json::json!([]));\n```"
+        title: TestEvidence
+        "$defs":
+          EvidenceRunner:
+            oneOf:
+              - type: string
+                const: suite
+                description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+              - type: string
+                const: crate
+                description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+          EvidenceExecution:
+            type: object
+            properties:
+              test:
+                type: string
+                description: "The test, in [`TestId::as_string`] form."
+              runner:
+                "$ref": "#/$defs/EvidenceRunner"
+                description: Which runner produced it.
+              source:
+                type: string
+                description: "The test's own source, repository-relative."
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: What it said.
+              seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it took, in whole seconds."
+              commit:
+                type: string
+                description: The full commit id the run was made against.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+              at:
+                type: string
+                description: "When it was recorded, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where the run happened.
+              command:
+                type: string
+                description: The exact command that runs this one test again.
+            required:
+              - test
+              - runner
+              - source
+              - outcome
+              - seconds
+              - commit
+              - working_tree
+              - digest
+              - at
+              - origin
+              - command
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+          EvidenceOutcome:
+            oneOf:
+              - type: string
+                const: pass
+                description: It passed.
+              - type: string
+                const: fail
+                description: It failed.
+              - type: string
+                const: skip
+                description: It declined to run and said so (an unmet precondition the case reports itself).
+              - type: string
+                const: timeout
+                description: The bound fired before it finished.
+              - type: string
+                const: error
+                description: The harness could not run it at all.
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+          EvidenceOrigin:
+            oneOf:
+              - type: string
+                const: local
+                description: Someone ran it on their own machine.
+              - type: string
+                const: ci
+                description: A continuous-integration run.
+              - type: string
+                const: release
+                description: A release run.
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+          EvidenceClaimProof:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The claim's id, as `docs/CLAIMS.yaml` spells it."
+              claim:
+                type: string
+                description: The claim sentence.
+              status:
+                type: string
+                description: "The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`."
+              source:
+                type:
+                  - string
+                  - "null"
+                description: The document that defines the behaviour.
+              implementation:
+                type:
+                  - string
+                  - "null"
+                description: The file that implements it.
+              test_path:
+                type:
+                  - string
+                  - "null"
+                description: "The path the claim names as its test, verbatim."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The test's stable identity, when a runner owns it."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: What the repository can say about the proof.
+              meaning:
+                type: string
+                description: "That state, in one sentence."
+              execution:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceExecution"
+                  - type: "null"
+                description: "The execution the state was derived from, when there is one."
+              changed:
+                type: array
+                items:
+                  type: string
+                description: "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: "The command that produces the proof again, when a runner owns the test."
+            required:
+              - id
+              - claim
+              - status
+              - state
+              - meaning
+              - changed
+            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::evidence
+    exposure:
+      mcp:
+        tool: majordomus_evidence_test
+      http:
+        method: GET
+        path: /api/v1/evidence/test
+      cli:
+        path:
+          - evidence
+          - proves
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - evidence
+      - tests
+      - verification
+      - provenance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/evidence.rs
   - id: executions.cancel
     module: executions
     kind: command
@@ -10231,6 +12615,632 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/health.rs
+  - id: lifecycle.closed
+    module: lifecycle
+    kind: query
+    title: The records a clone receives
+    description: "The tracked, durable projection of closed episodes: how many there are, how many closed on this branch, and the newest twenty. This is the only half of the subsystem that survives a clone; everything under .ai/local/ names this machine and travels nowhere."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ClosedSessions
+      schema:
+        type: object
+        properties:
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many closed records the index holds. Exact.
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them closed on the branch this checkout is on.
+          newest:
+            type: array
+            items:
+              "$ref": "#/$defs/ClosedSession"
+            description: "The newest [`CLOSED_WINDOW`], newest first."
+          window:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many are carried in `newest`, against the total."
+        required:
+          - total
+          - on_this_branch
+          - window
+        description: "The tracked half of the subsystem: the records a clone receives."
+        title: ClosedSessions
+        "$defs":
+          ClosedSession:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id.
+              uri:
+                type: string
+                description: "`majordomus://session/<identity>`, for the object page."
+              path:
+                type: string
+                description: Repository-relative path.
+              created_at:
+                type: string
+                description: "When it closed, as recorded."
+              branch:
+                type: string
+                description: The branch it closed on.
+              head:
+                type: string
+                description: The commit it closed at.
+              outcome:
+                type: string
+                description: The typed outcome the close recorded.
+              title:
+                type: string
+                description: "Its title, when the record carries one."
+            required:
+              - session_id
+              - uri
+              - path
+            description: "One closed episode of the tracked, durable projection."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_closed
+      http:
+        method: GET
+        path: /api/v1/lifecycle/closed
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - record
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 30
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.episodes
+    module: lifecycle
+    kind: query
+    title: Every open episode
+    description: "Every open episode in this checkout's store, with the provider session that owns it, the worktree and branch it opened on, where it stands, and what the ledger last saw it do. `continuity.state` reports the one episode the pointer resolves to, which is right for a briefing and blind to every other window open on the same worktree."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: Episodes
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: "Whether the open-episode store exists. False in a fresh clone, which is not a fault."
+          store:
+            type: string
+            description: "The store, repository-relative."
+          worktree:
+            type: string
+            description: "This worktree, absolute. Every standing above is decided against it."
+          current:
+            type: string
+            description: "The episode id the pointer resolves to, when it resolves to one."
+          episodes:
+            type: array
+            items:
+              "$ref": "#/$defs/Episode"
+            description: "Every open episode, newest first by recorded start."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know before trusting the above: a file that does not parse, a\npointer that resolves to nothing. Empty is the good case."
+        required:
+          - present
+          - store
+          - worktree
+        description: "Every open episode of this checkout's store."
+        title: Episodes
+        "$defs":
+          Episode:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id the ledger stamps on every line this worker wrote.
+              path:
+                type: string
+                description: Repository-relative path of the open record. The body is at the path.
+              provider:
+                type: string
+                description: "The provider whose event opened it, when one did. Empty for an episode opened by\nhand, which is the one episode no provider session owns."
+              provider_session:
+                type: string
+                description: "That provider's own session identity: the file's stem, and the string the prompt\narchive stamps on the same worker's records."
+              owner:
+                type: string
+                description: Who opened it.
+              worker:
+                type: string
+                description: "The worker identity, when one was supplied. Never inferred."
+              worktree:
+                type: string
+                description: "The worktree it opened in, absolute, as recorded."
+              branch:
+                type: string
+                description: The branch it opened on.
+              start_head:
+                type: string
+                description: The commit it opened at.
+              started_at:
+                type: string
+                description: "When it opened, as recorded."
+              standing:
+                "$ref": "#/$defs/EpisodeStanding"
+                description: Where it stands.
+              events:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many ledger lines carry this episode id. Zero for an episode that opened and did\nnothing, which is ordinary and not a fault."
+              last_activity:
+                type: string
+                description: "The timestamp of the newest ledger line carrying this episode id, as recorded.\nEmpty when it has written none."
+              last_event:
+                type: string
+                description: "That line's event name."
+              tasks:
+                type: array
+                items:
+                  type: string
+                description: "The tasks this episode's ledger lines name, in the order it first touched each.\n\nA relation, not a container. An episode may touch three tasks or none, and a task may\nspan three episodes; the two are joined here by what the ledger recorded rather than\nby either one owning the other. An episode with no task is ordinary — work outside a\ntask is permitted — and it is emphatically not a reason for the episode's own records\nto go unwritten, which is the premise ADR 0041 removes."
+              note:
+                type: string
+                description: "Why it stands where it does, in words. Never empty: a standing a reader cannot act\non is the failure this subsystem is being corrected for."
+            required:
+              - session_id
+              - path
+              - standing
+              - events
+              - note
+            description: "One open episode, as its file records it and as the ledger has seen it."
+          EpisodeStanding:
+            oneOf:
+              - type: string
+                const: current
+                description: "This checkout's pointer resolves to it. `continuity.state` is about this one."
+              - type: string
+                const: open
+                description: "Open, and it names this worktree, but the pointer names a different episode. Two\nwindows of one provider on one worktree are two workers, and only one is pointed at."
+              - type: string
+                const: foreign
+                description: "It names another worktree of this repository. Reported, never treated as this\ncheckout's — a record about somebody else's work quietly becoming yours is the\nfailure the two-tier resolution rule exists to prevent."
+              - type: string
+                const: stranded
+                description: "The worktree it names is gone from disk. Nothing can close it: the close path\ncomposes the record from git in the worktree the episode opened in."
+            description: "Where an open episode stands, as far as the repository can observe it.\n\nIt is worth being precise about what is *not* here. Whether the provider that opened an\nepisode is still attached to its conversation is not a fact of this repository: the\nepisode file records no pid, the peer board records no episode id, and a client that\nexits without firing its end event leaves a file identical to one a live worker is using.\nGuessing would produce exactly the confident-and-wrong answer this subsystem exists to\navoid, so the vocabulary below is the observable one — where the file is, whose worktree\nit names, and whether the pointer follows it — and `note` always says which."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_episodes
+        resource:
+          uri: majordomus://lifecycle/episodes
+          name: lifecycle-episodes
+      http:
+        method: GET
+        path: /api/v1/lifecycle/episodes
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - episode
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.providers
+    module: lifecycle
+    kind: query
+    title: "What each provider's adapter declares"
+    description: "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ProviderLifecycles
+      schema:
+        type: object
+        properties:
+          providers:
+            type: array
+            items:
+              "$ref": "#/$defs/ProviderLifecycle"
+            description: "The providers, in declaration order."
+          with_lifecycle:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them declare a lifecycle adapter.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know: a provider this repository wires but the distribution\ndeclares no lifecycle for, and the like."
+        required:
+          - providers
+          - with_lifecycle
+        description: Every provider the distribution ships an adapter for.
+        title: ProviderLifecycles
+        "$defs":
+          ProviderLifecycle:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The provider id: the bootstrap template's file stem."
+              title:
+                type: string
+                description: The name a person knows it by.
+              lifecycle:
+                type: array
+                items:
+                  type: string
+                description: "The lifecycle events its adapter declares, in the provider's own vocabulary\n(`SessionStart`, `SessionEnd`, `PreCompact`). Empty means the tool ships no\nlifecycle adapter for it: such a provider loses the automation and none of the\nmodel, because every command remains the same."
+              prompt_capture:
+                type: boolean
+                description: "Whether its adapter can archive the worker's prompts."
+              client_config:
+                type: string
+                description: "The file it reads a project-scoped MCP client configuration from, when it has one."
+              wired:
+                type: array
+                items:
+                  type: string
+                description: "The enforcement entries of *this repository's* policy that name this provider's hook\nin `wired_by`. Declared wiring, not a file on disk: whether a shim is installed is a\nquestion for `majordomus capture status`, which is the command that owns it."
+              note:
+                type: string
+                description: What the two together mean.
+            required:
+              - id
+              - title
+              - prompt_capture
+              - note
+            description: "One provider's lifecycle surface: what its adapter declares it can do, and what this\nrepository has wired to it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_providers
+      http:
+        method: GET
+        path: /api/v1/lifecycle/providers
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - provider
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.recovery
+    module: lifecycle
+    kind: query
+    title: What the store needs somebody to do
+    description: "Open records that can no longer close themselves, temporary files a killed close left in the tracked sessions section, whether the pointer has been migrated to the per-provider layout, and the arithmetic that says whether every episode the ledger has seen start is accounted for. Every finding carries the command that clears it."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: Recovery
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: Whether the local half exists at all.
+          pointer:
+            "$ref": "#/$defs/Pointer"
+            description: The pointer and its layout.
+          stranded:
+            type: array
+            items:
+              "$ref": "#/$defs/Stranded"
+            description: Episodes that can no longer close themselves.
+          orphans:
+            type: array
+            items:
+              "$ref": "#/$defs/Orphan"
+            description: Temporary files left in the tracked sessions section.
+          balance:
+            "$ref": "#/$defs/Balance"
+            description: The started/closed/open arithmetic.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "Everything above, said once, for a reader that wants the summary. Empty is the good\ncase and means there is nothing to recover."
+        required:
+          - present
+          - pointer
+          - balance
+        description: "What this checkout's session store needs somebody to do."
+        title: Recovery
+        "$defs":
+          Pointer:
+            type: object
+            properties:
+              layout:
+                "$ref": "#/$defs/PointerLayout"
+                description: The layout.
+              target:
+                type: string
+                description: "What the symlink names, as written, when it is one."
+              resolves:
+                type: boolean
+                description: Whether reading through it yields an episode.
+              session_id:
+                type: string
+                description: The episode it resolves to.
+              note:
+                type: string
+                description: "What that means, in words."
+            required:
+              - layout
+              - resolves
+              - note
+            description: What the pointer is and whether it leads anywhere.
+          PointerLayout:
+            oneOf:
+              - type: string
+                const: pointer
+                description: "A symlink into `sessions-open/`: the per-provider layout."
+              - type: string
+                const: inline
+                description: "A regular file: the pre-migration layout, one episode per checkout."
+              - type: string
+                const: absent
+                description: "Nothing is there. No episode is open here, which is not a fault."
+            description: "The layout of the pointer, which is how far the per-provider migration has got here.\n\nBefore the episode was keyed by its provider session, `session-current.yaml` *was* the\nopen record: one regular file, one episode per checkout. Seven concurrent sessions on\n2026-09-09 produced one record between them under that layout. A regular file here today\nis a checkout that has not run the migration, and its episodes are being overwritten."
+          Stranded:
+            type: object
+            properties:
+              session_id:
+                type: string
+                description: The episode id.
+              path:
+                type: string
+                description: "The open record, repository-relative."
+              reason:
+                type: string
+                description: Why it is stranded.
+              remedy:
+                type: string
+                description: The command that clears it. A finding with no remedy is a complaint.
+            required:
+              - session_id
+              - path
+              - reason
+              - remedy
+            description: "An open episode that cannot close itself, and what to do about it.\n\nThe remedy here is the mechanical one — remove the file — because it is correct in every\ncheckout and needs nothing that is not already installed. `lib/recover.sh` on\n`feature/session-store-recovery` is the same three degradations seen from the writing\nside: it classifies each candidate by reading it, prints the evidence before acting, and\ncloses a stranded episode into a real record rather than deleting it. When that lands,\nthe remedy a finding carries should become `majordomus recover episodes` and the two\ndetections should become one — a reader and a writer that each decide for themselves\nwhat \"stranded\" means are two definitions, and this repository has been bitten by that\nshape often enough to name it."
+          Orphan:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative path.
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Its size in bytes, which is how a reader tells an empty stub from a lost record."
+            required:
+              - path
+              - bytes
+            description: "A temporary file left in a record directory by a close that did not finish.\n\nThe close path writes the durable record to `.tmp.XXXX` in the destination directory and\nrenames it, so that no reader ever sees half a record. A process killed between the two\nleaves the temporary file behind, where it is untracked, invisible to every reader of the\nsection, and — because the directory is tracked — offered to the next `git add .`."
+          Balance:
+            type: object
+            properties:
+              started:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "`session.started` lines in the ledger."
+              closed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "`session.closed` lines."
+              open:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Open records in the store.
+              unaccounted:
+                type: integer
+                format: int64
+                description: "`started - closed - open`. Zero is the good case; negative means the ledger was\nrotated under the records, which is ordinary."
+              agrees:
+                type: boolean
+                description: Whether the three agree.
+              note:
+                type: string
+                description: "What the numbers mean, in words."
+            required:
+              - started
+              - closed
+              - open
+              - unaccounted
+              - agrees
+              - note
+            description: "What the ledger says about episode lifecycle against what the store holds.\n\nThe invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode\nthat started either closed or is still open. When `started` exceeds `closed + open`, the\ndifference is episodes whose close was never recorded — the shape of the outage that ADR\ndescribes, where events kept arriving and the records they should have produced did not."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_recovery
+        resource:
+          uri: majordomus://lifecycle/recovery
+          name: lifecycle-recovery
+      http:
+        method: GET
+        path: /api/v1/lifecycle/recovery
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - recovery
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: lifecycle.runtime
+    module: lifecycle
+    kind: query
+    title: The commit this process is answering about
+    description: "The commit the served index was built at, against the commit the repository is on, read on this call. A server that froze its index at start-up answers every question about a commit from hours ago with nothing in the answer saying so; this is the reading that can tell."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: RuntimeView
+      schema:
+        type: object
+        properties:
+          root:
+            type: string
+            description: The repository root this process is serving.
+          served_head:
+            type: string
+            description: The commit the served index was built at.
+          served_branch:
+            type: string
+            description: "Its branch, or `DETACHED`."
+          served_working_tree:
+            type: string
+            description: Whether the working tree was clean when the index was built.
+          repository_head:
+            type: string
+            description: "The commit the repository is on, read on this call."
+          repository_branch:
+            type: string
+            description: Its branch now.
+          repository_working_tree:
+            type: string
+            description: The working tree now.
+          agree:
+            type: boolean
+            description: Whether the two agree on the commit and the branch.
+          objects:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many objects the served index holds, and whether it was degraded."
+          index_state:
+            type: string
+            description: "`ok` or `degraded`."
+          note:
+            type: string
+            description: "What the comparison means, and what to do when it disagrees."
+        required:
+          - root
+          - agree
+          - objects
+          - index_state
+          - note
+        description: "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out."
+        title: RuntimeView
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::lifecycle
+    exposure:
+      mcp:
+        tool: majordomus_lifecycle_runtime
+      http:
+        method: GET
+        path: /api/v1/lifecycle/runtime
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - continuity
+      - session
+      - server
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
   - id: objects.get
     module: objects
     kind: query
@@ -11301,6 +14311,11 @@ capabilities:
               - "$ref": "#/$defs/Announcement"
               - type: "null"
             description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+          checkout:
+            anyOf:
+              - "$ref": "#/$defs/PeerCheckout"
+              - type: "null"
+            description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
           overlaps:
             type: array
             items:
@@ -11375,6 +14390,28 @@ capabilities:
               - scope
               - at
             description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+          PeerCheckout:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+            required:
+              - id
+              - worktree
+              - this_checkout
+            description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
           Overlap:
             type: object
             properties:
@@ -11392,6 +14429,11 @@ capabilities:
                 items:
                   "$ref": "#/$defs/OverlapPath"
                 description: "The claims that meet: one line per pair, `yours` and `theirs`."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board."
             required:
               - peer
               - attached
@@ -11439,14 +14481,28 @@ capabilities:
     module: peers
     kind: query
     title: List peers
-    description: "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process."
+    description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
     input:
-      name: Empty
+      name: PeerListInput
       schema:
         type: object
-        additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          checkouts:
+            "$ref": "#/$defs/Checkouts"
+            description: "Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back."
+            default: repository
+        description: "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n[`super::server::ServerStatusInput`], because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\n```\nuse majordomus_cli::capability::builtin::peers::PeerListInput;\nuse majordomus_cli::capability::builtin::server::Checkouts;\nlet asked_nothing: PeerListInput = serde_json::from_str(\"{}\").unwrap();\nassert_eq!(asked_nothing.checkouts, Checkouts::Repository, \"the board is the repository's\");\nlet narrow: PeerListInput = serde_json::from_str(r#\"{\"checkouts\":\"this\"}\"#).unwrap();\nassert_eq!(narrow.checkouts, Checkouts::This);\n```"
+        title: PeerListInput
+        "$defs":
+          Checkouts:
+            oneOf:
+              - type: string
+                const: repository
+                description: "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+              - type: string
+                const: this
+                description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+            description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
     output:
       name: PeerList
       schema:
@@ -11456,26 +14512,36 @@ capabilities:
             type: integer
             format: uint
             minimum: 0
-            description: "How many peers are attached, the caller included."
+            description: "How many peers are attached across every board that was read, the caller included."
           caller:
             anyOf:
               - "$ref": "#/$defs/PeerId"
               - type: "null"
-            description: "The caller's own peer id, when the call came through an MCP session."
+            description: "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and [`Peer::checkout`] is the half of a worker's identity that is not."
           peers:
             type: array
             items:
               "$ref": "#/$defs/Peer"
-            description: "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+            description: "The peers, this checkout's board first and then the siblings in the order git\nregisters them, each in its own board's attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`."
           overlaps:
             type: array
             items:
               "$ref": "#/$defs/Overlap"
-            description: "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
+            description: "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
+          boards:
+            type: array
+            items:
+              "$ref": "#/$defs/BoardView"
+            description: "One entry per checkout the answer covers, reached or not."
+          complete:
+            type: boolean
+            description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and [`BoardView::reason`] says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
         required:
           - count
           - peers
-        description: "The answer of `peers.list`: every client attached to this shared server."
+          - boards
+          - complete
+        description: "The answer of `peers.list`: every worker of this repository, from every checkout's board."
         title: PeerList
         "$defs":
           PeerId:
@@ -11514,6 +14580,11 @@ capabilities:
                   - "$ref": "#/$defs/Announcement"
                   - type: "null"
                 description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
             required:
               - id
               - client
@@ -11573,6 +14644,28 @@ capabilities:
               - scope
               - at
             description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+          PeerCheckout:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+            required:
+              - id
+              - worktree
+              - this_checkout
+            description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
           Overlap:
             type: object
             properties:
@@ -11590,6 +14683,11 @@ capabilities:
                 items:
                   "$ref": "#/$defs/OverlapPath"
                 description: "The claims that meet: one line per pair, `yours` and `theirs`."
+              checkout:
+                anyOf:
+                  - "$ref": "#/$defs/PeerCheckout"
+                  - type: "null"
+                description: "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board."
             required:
               - peer
               - attached
@@ -11609,6 +14707,66 @@ capabilities:
               - yours
               - theirs
             description: One pair of claims that contain one another.
+          BoardView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+              standing:
+                "$ref": "#/$defs/ServerStanding"
+                description: "Where its server stands, by the same reading `server.status` reports."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The address its lease names, when it has one."
+              attached:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many of this board's peers are attached."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why this board is not in the answer. `None` when it is."
+            required:
+              - id
+              - worktree
+              - this_checkout
+              - standing
+              - attached
+            description: "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here."
+          ServerStanding:
+            oneOf:
+              - type: string
+                const: absent
+                description: "No lease: nothing serves this checkout."
+              - type: string
+                const: starting
+                description: "A lease without an address, young enough that its owner is still binding."
+              - type: string
+                const: ready
+                description: "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+              - type: string
+                const: outdated
+                description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+              - type: string
+                const: stale
+                description: "The lease names a server that does not answer, or is not a lease at all."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::peers
@@ -16966,6 +20124,271 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/server.rs
+  - id: session_domain.identity
+    module: session_domain
+    kind: query
+    title: "What identifies this checkout, and how each store spells it"
+    description: "The repository, the checkout, the open episode and the provider session, each with the canonical value this executable computes and each store's own spelling beside it. The stores record the repository sometimes as an absolute .git path and sometimes as a remote URL, the worktree as a path and as a digest, and the session as both an episode id and a provider UUID; this is the surface that says so, so that a reader never compares two spellings of different things and concludes they disagree."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: IdentityReport
+      schema:
+        type: object
+        properties:
+          checkout:
+            type: string
+            description: "The checkout this answer is about. An absolute path, because this capability is\nserved to the worker in front of this checkout and never published — the same\nexposure rule `continuity.state` follows and for the same reason (ADR 0014)."
+          facets:
+            type: array
+            items:
+              "$ref": "#/$defs/IdentityFacet"
+            description: "One entry per subject, in the order a reader meets them: repository, checkout,\nepisode, provider session."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know before comparing any two of these. Empty is not the good\ncase here — the conflation is a property of the stores, not of this checkout — so\nthe standing note is always present."
+        required:
+          - checkout
+          - facets
+          - findings
+        description: "The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec<&str> = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\"repository\", \"checkout\", \"episode\", \"provider_session\"]);\n```"
+        title: IdentityReport
+        "$defs":
+          IdentityFacet:
+            type: object
+            properties:
+              subject:
+                type: string
+                description: "What is being identified: `repository`, `checkout`, `episode`, `provider_session`."
+              canonical:
+                type: string
+                description: "The canonical value this executable computes, when it can compute one."
+              spellings:
+                type: array
+                items:
+                  "$ref": "#/$defs/RecordedSpelling"
+                description: "How each store spells the same subject, in the order [`crate::order`] gives."
+              note:
+                type: string
+                description: "Why the subject needs its own type, in one line, for a reader meeting it in a\nprojection rather than in this module."
+            required:
+              - subject
+              - note
+            description: "One identity of this checkout, as this executable computes it and as each store spells\nit. What `session.identity` answers, and the direct projection of the audit's table.\n\n```\nuse majordomus_cli::session::{identities, IdentityFacet};\n\nlet dir = tempfile::tempdir().unwrap();\nlet facets: Vec<IdentityFacet> = identities(dir.path());\nlet repository = facets.iter().find(|f| f.subject == \"repository\").expect(\"a facet\");\nassert!(repository.spellings.len() >= 2, \"one word, two writers, two values\");\n```"
+          RecordedSpelling:
+            type: object
+            properties:
+              spelling:
+                "$ref": "#/$defs/Spelling"
+                description: Which half of the layer wrote it.
+              writer:
+                type: string
+                description: "The writer, named so a reader can go and look at it."
+              value:
+                type: string
+                description: "The value, as this checkout would have it written. Empty when nothing has written\none here yet, which is a fresh clone and not a fault."
+            required:
+              - spelling
+              - writer
+            description: "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+          Spelling:
+            oneOf:
+              - type: string
+                const: local
+                description: "The local half's spelling: a path, in `.ai/local/state/`. It names this disk and is\nnever published."
+              - type: string
+                const: shared
+                description: "The shared half's spelling: a remote URL or a digest, in `.ai/repo/sessions/`. It\nnames the repository and travels with a clone (ADR 0014)."
+              - type: string
+                const: canonical
+                description: "This executable's own canonical digest, computed rather than read."
+            description: "Which store a recorded identity was read from, kept beside the value.\n\nThe point is not to choose between `mj_git_repo_id` and `mj_repository_id`, or between\n`worktree:` and `worktree_id:`. It is to stop pretending they are one value. A reader\nthat knows a string is the *local* spelling can compare it with other local spellings\nand can refuse to compare it with a shared one, which is precisely the comparison that\nproduced \"these two records are about different repositories\" for records of the same\nrepository written four minutes apart.\n\n```\nuse majordomus_cli::session::Spelling;\n// the two halves are different answers to one question, and are never compared\nassert_ne!(Spelling::Local, Spelling::Shared);\nassert_eq!(Spelling::Canonical.as_str(), \"canonical\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::session_domain
+    exposure:
+      mcp:
+        tool: majordomus_session_identity
+        resource:
+          uri: majordomus://session/identity
+          name: session-identity
+      http:
+        method: GET
+        path: /api/v1/session/identity
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - session
+      - identity
+      - continuity
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/session_domain.rs
+  - id: session_domain.machine
+    module: session_domain
+    kind: query
+    title: "The episode lifecycle, as data"
+    description: "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MachineReport
+      schema:
+        type: object
+        properties:
+          states:
+            type: array
+            items:
+              "$ref": "#/$defs/StateView"
+            description: "Every state, with what it means and whether it is terminal."
+          transitions:
+            type: array
+            items:
+              "$ref": "#/$defs/TransitionView"
+            description: "Every transition, with the states it runs between."
+          independent_of:
+            type: array
+            items:
+              type: string
+            description: "What the machine deliberately does not depend on, stated so that a reader does not\nhave to infer an absence. One entry today: task state."
+          decision:
+            type: string
+            description: "The decision this machine is the implementation of, so a reader meeting it in a\nprojection can go and read why it is shaped this way."
+        required:
+          - states
+          - transitions
+          - independent_of
+          - decision
+        description: "The lifecycle machine, with the decision it implements, so that a reader meeting it in\na projection can go and read why it is shaped this way.\n\n```\nuse majordomus_cli::capability::builtin::MachineReport;\nuse majordomus_cli::session::Machine;\n\n// the report is the machine plus one citation; the machine itself is derived from the\n// types and carries no second list\nlet report = MachineReport { machine: Machine::describe(), decision: \"adr-0047\".into() };\nassert!(report.machine.transitions.iter().any(|t| !t.moves_state), \"a checkpoint is an event\");\nassert!(report.decision.contains(\"0047\"));\n```"
+        title: MachineReport
+        "$defs":
+          StateView:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/EpisodeState"
+                description: "The state's word."
+              terminal:
+                type: boolean
+                description: Whether an episode ever leaves it.
+              may_move_to:
+                type: array
+                items:
+                  "$ref": "#/$defs/EpisodeState"
+                description: "The states an episode in this one may move to, in canonical order."
+            required:
+              - state
+              - terminal
+              - may_move_to
+            description: "One state of the machine: its word, whether an episode ever leaves it, and where it may\ngo from there.\n\n```\nuse majordomus_cli::session::{EpisodeState, Machine, StateView};\n\nlet m = Machine::describe();\nlet closed: &StateView =\n    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(\"a state\");\nassert!(closed.terminal && closed.may_move_to.is_empty());\n```"
+          EpisodeState:
+            oneOf:
+              - type: string
+                const: opening
+                description: "An identity has been minted and nothing durable has been written yet. It exists so\nthat a crash between minting an id and writing the open record is a state the model\ncan name rather than an episode that never happened."
+              - type: string
+                const: open
+                description: "The open record stands. The worker is here, or was recently."
+              - type: string
+                const: detached
+                description: "The connection that held the episode went away, and the episode did not. A dropped\nsocket is the most ordinary thing that happens to a session; an episode that closed\nitself on every disconnect would lose the work of every worker whose network\nhiccuped. It is still resumable, and it is still recoverable if nobody resumes it."
+              - type: string
+                const: closed
+                description: "The immutable record has been published. Terminal, and terminal is the point: the\nfour records of `s-20260909152316-024f` all exist because nothing in the previous\nrepresentation could say this."
+            description: "Where an episode is: minted, open, detached from the connection that held it, or closed\ninto the immutable record.\n\n```\nuse majordomus_cli::session::EpisodeState;\n\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Closed));\nassert!(!EpisodeState::Closed.may_move_to(EpisodeState::Open), \"a record is immutable\");\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open), \"a resume is not a move\");\nassert!(EpisodeState::Closed.is_final());\n```"
+          TransitionView:
+            type: object
+            properties:
+              transition:
+                "$ref": "#/$defs/Transition"
+                description: "The transition's word."
+              from:
+                "$ref": "#/$defs/EpisodeState"
+                description: Where it starts.
+              to:
+                "$ref": "#/$defs/EpisodeState"
+                description: Where it ends.
+              moves_state:
+                type: boolean
+                description: "False for `resume` and `checkpoint`, which are events inside a state."
+            required:
+              - transition
+              - from
+              - to
+              - moves_state
+            description: "One transition of the machine: its word, the states it runs between, and whether it\nmoves the state at all.\n\n```\nuse majordomus_cli::session::{Machine, Transition, TransitionView};\n\nlet m = Machine::describe();\nlet close: &TransitionView = m\n    .transitions\n    .iter()\n    .find(|t| t.transition == Transition::Close)\n    .expect(\"a transition\");\nassert!(close.moves_state);\n```"
+          Transition:
+            oneOf:
+              - type: string
+                const: open
+                description: "The episode begins: an id is minted and the open record is written."
+              - type: string
+                const: resume
+                description: "The worker came back to a detached episode. A provider's start event also fires\nagain on a resume and on a compaction against an episode that is still open; that\nis the same transition observed from `Open`, and the honest answer to \"your episode\nis already open\" is to keep it rather than to open a second one."
+              - type: string
+                const: checkpoint
+                description: "A progress note was recorded against the episode. An artefact of the episode and\nnot of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a\nnormal record, not a refusal."
+              - type: string
+                const: detach
+                description: The connection went away without an end event.
+              - type: string
+                const: close
+                description: The worker ended the episode and the immutable record was published.
+              - type: string
+                const: recover
+                description: "Nobody ended it and its last sign of life is older than the stranded threshold, so\nmaintenance closed it. The record says so: an episode closed this way is\n`interrupted`, because a reader resuming from it needs to know it may be incomplete."
+            description: "What moved an episode. The vocabulary the ADR 0041 audit needs: `open`, `resume`,\n`checkpoint`, `detach`, `close`, `recover`.\n\nOne of them does not change the state, and it is a transition anyway. A checkpoint\nleaves an open episode open — but it is one of the two events whose *absence* is what\nthe audit was looking for, and an event that is modelled as \"nothing happened\" cannot\nbe counted. The six days of silence were six days in which `session.started` and\n`session.closed` kept arriving and the two events that produce the records a worker\nresumes from did not. A vocabulary in which those two are not events is a vocabulary in\nwhich that outage is invisible.\n\n```\nuse majordomus_cli::session::{EpisodeState, Transition};\n\n// a checkpoint is a transition that does not move the state, and says so\nlet c = Transition::Checkpoint;\nassert_eq!(c.from_to(), (EpisodeState::Open, EpisodeState::Open));\nassert!(!c.moves_state());\n\n// a resume is canonically the return to a detached episode; a provider's start event\n// arriving at one that is already open is the same transition seen from `Open`, which\n// the machine allows without a move\nassert_eq!(Transition::Resume.from_to(), (EpisodeState::Detached, EpisodeState::Open));\nassert!(EpisodeState::Open.may_move_to(EpisodeState::Open));\n\n// and every transition's own move is one the machine allows\nfor t in Transition::ALL {\n    let (from, to) = t.from_to();\n    assert!(from.may_move_to(to), \"{} is not a legal move\", t.as_str());\n}\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::session_domain
+    exposure:
+      mcp:
+        tool: majordomus_session_machine
+        resource:
+          uri: majordomus://session/machine
+          name: session-machine
+      http:
+        method: GET
+        path: /api/v1/session/machine
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - session
+      - continuity
+      - lifecycle
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 1
+      ttl_seconds: 600
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/session_domain.rs
   - id: trace.commit
     module: trace
     kind: query

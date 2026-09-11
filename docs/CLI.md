@@ -1105,12 +1105,63 @@ nothing loads it into a context, no command retrieves from it, and `doctor` fail
 anything under it is tracked by Git. The writer emits a closed set of fields, so the
 model's half of the exchange cannot arrive through it.
 
-**Nothing deletes a record.** The ledger, the checkpoints and the handovers rotate under a
-policy cap because each restates state that is still available elsewhere; a prompt is not —
-it existed once, was derived from nothing, and no other file can reconstruct it. So there is
-no cap to configure, the archive grows, `doctor` reports how many records and how many
-kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
-discovering that the hook meant to keep their prompts had been discarding them.
+**A record carries the episode it belongs to.** It used to carry the provider's own session
+identifier and nothing else, and turning that into the canonical episode id needed
+`state/sessions-open/<provider session>.yaml` — a file that closing the episode deletes. So
+the instant an episode ended, nothing could say which episode its prompts had belonged to.
+Measured in this repository on 2026-09-11: 974 records, 80 provider sessions, 713 prompts
+with no surviving path to an episode.
+
+Every record now carries `episode`, `episode_link`, `repository_id` and `worktree_id`,
+written while the mapping is still there, using the identity the rest of the tool computes.
+`episode_link` says how the episode was determined, and the distinction is the point:
+
+| value | what it means |
+|---|---|
+| `open` | the episode was open under that provider session when the prompt arrived — an observation |
+| `session-context` | linked afterwards, from the frozen working context that names the provider session |
+| `ledger` | linked afterwards, because exactly one closed episode's window could contain that provider session's prompts |
+| `orphan` | no episode was open under that provider session; none was invented |
+| `unlinked-legacy` | written before records carried an episode, and nothing survives to link it |
+
+`orphan` and `unlinked-legacy` carry no episode. Nothing attaches a prompt to the episode
+nearest it in time: a prompt attributed to the wrong episode is worse than one attributed to
+none, because the second is visibly missing and the first is quietly false.
+
+`capture reconcile` applies those three kinds of evidence, in that order, to an archive
+written before the field existed, and `--dry-run` says what it would do. It refuses the
+moment two episodes could both be the answer, so a repository whose evidence is gone keeps a
+count of unlinked records rather than an invented attribution — and `doctor` reports that
+count rather than rounding it to zero.
+
+**Credential material never reaches the disk.** People paste keys into prompts, and a
+record is the one file here whose content nobody vetted before it was written. The known
+credential shapes — provider API keys, GitHub tokens, AWS key ids, Slack and Stripe tokens,
+PEM headers, bearer tokens, and an assignment of a long opaque value to something called a
+key, a token or a password — are replaced on the way to the record, before the bytes are
+anywhere but a variable. Nothing downstream sees the original: not the record, not either
+rendering, not the file name, not the log, which prints a payload's key names and never a
+value. What was replaced is recorded in `redacted`, so "nothing was found" and "the secret
+is gone" are statements a reader can tell apart.
+
+**The archive is mode 0600, directory included.** It was 0644 for its whole life, readable
+by every account on the machine — including the file names, which are the openings of the
+prompts. `capture render`, which is the archive's repair command, sets the mode over the
+whole directory on every run.
+
+**Retention takes the body and keeps the record.** The old rule was that nothing may ever be
+removed, on the argument that a prompt is derived from nothing and no other file can
+reconstruct it. That argument is about the *record* — that it happened, when, in which
+episode, under which head — and it was being applied to the bytes of the text, which is the
+part that carries the credentials and whose risk does not decay with its value. The archive
+reached 20 MB unbounded.
+
+So the policy declares `prompts.retention_max_days` and `prompts.retention_max_bytes`, and
+`majordomus capture prune` applies them: age first, then size, oldest body first. A pruned
+record keeps every field, including the provenance of its episode link, and gains a tombstone
+saying when the body went, how long it was, and its digest. A record is still never deleted,
+`doctor` reports an archive over either bound, and nothing prunes as a side effect of the
+hook that was supposed to be keeping them.
 
 **`capture status` reports five distinct states, and never a generic pass:**
 

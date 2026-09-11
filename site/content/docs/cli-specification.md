@@ -1128,12 +1128,68 @@ nothing loads it into a context, no command retrieves from it, and `doctor` fail
 anything under it is tracked by Git. The writer emits a closed set of fields, so the
 model's half of the exchange cannot arrive through it.
 
-**Nothing deletes a record.** The ledger, the checkpoints and the handovers rotate under a
-policy cap because each restates state that is still available elsewhere; a prompt is not —
-it existed once, was derived from nothing, and no other file can reconstruct it. So there is
-no cap to configure, the archive grows, `doctor` reports how many records and how many
-kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
-discovering that the hook meant to keep their prompts had been discarding them.
+**A record carries the episode it belongs to.** It used to carry the provider's own session
+identifier and nothing else, and turning that into the canonical episode id needed
+`state/sessions-open/<provider session>.yaml` — a file that closing the episode deletes. So
+the instant an episode ended, nothing could say which episode its prompts had belonged to.
+Measured in this repository on 2026-09-11: 974 records, 80 provider sessions, 713 prompts
+with no surviving path to an episode.
+
+Every record now carries `episode`, `episode_link`, `repository_id` and `worktree_id`,
+written while the mapping is still there, using the identity the rest of the tool computes.
+`episode_link` says how the episode was determined, and the distinction is the point:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| value | what it means |
+|---|---|
+| `open` | the episode was open under that provider session when the prompt arrived — an observation |
+| `session-context` | linked afterwards, from the frozen working context that names the provider session |
+| `ledger` | linked afterwards, because exactly one closed episode's window could contain that provider session's prompts |
+| `orphan` | no episode was open under that provider session; none was invented |
+| `unlinked-legacy` | written before records carried an episode, and nothing survives to link it |
+
+</div>
+
+
+`orphan` and `unlinked-legacy` carry no episode. Nothing attaches a prompt to the episode
+nearest it in time: a prompt attributed to the wrong episode is worse than one attributed to
+none, because the second is visibly missing and the first is quietly false.
+
+`capture reconcile` applies those three kinds of evidence, in that order, to an archive
+written before the field existed, and `--dry-run` says what it would do. It refuses the
+moment two episodes could both be the answer, so a repository whose evidence is gone keeps a
+count of unlinked records rather than an invented attribution — and `doctor` reports that
+count rather than rounding it to zero.
+
+**Credential material never reaches the disk.** People paste keys into prompts, and a
+record is the one file here whose content nobody vetted before it was written. The known
+credential shapes — provider API keys, GitHub tokens, AWS key ids, Slack and Stripe tokens,
+PEM headers, bearer tokens, and an assignment of a long opaque value to something called a
+key, a token or a password — are replaced on the way to the record, before the bytes are
+anywhere but a variable. Nothing downstream sees the original: not the record, not either
+rendering, not the file name, not the log, which prints a payload's key names and never a
+value. What was replaced is recorded in `redacted`, so "nothing was found" and "the secret
+is gone" are statements a reader can tell apart.
+
+**The archive is mode 0600, directory included.** It was 0644 for its whole life, readable
+by every account on the machine — including the file names, which are the openings of the
+prompts. `capture render`, which is the archive's repair command, sets the mode over the
+whole directory on every run.
+
+**Retention takes the body and keeps the record.** The old rule was that nothing may ever be
+removed, on the argument that a prompt is derived from nothing and no other file can
+reconstruct it. That argument is about the *record* — that it happened, when, in which
+episode, under which head — and it was being applied to the bytes of the text, which is the
+part that carries the credentials and whose risk does not decay with its value. The archive
+reached 20 MB unbounded.
+
+So the policy declares `prompts.retention_max_days` and `prompts.retention_max_bytes`, and
+`majordomus capture prune` applies them: age first, then size, oldest body first. A pruned
+record keeps every field, including the provenance of its episode link, and gains a tombstone
+saying when the body went, how long it was, and its digest. A record is still never deleted,
+`doctor` reports an archive over either bound, and nothing prunes as a side effect of the
+hook that was supposed to be keeping them.
 
 **`capture status` reports five distinct states, and never a generic pass:**
 
@@ -1780,6 +1836,86 @@ run b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200
 Exit `2` on a usage error, `12` when a named target is not a public command of the
 registry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit
 code it produced), `10`, `12` and `15` from `--check` as above.
+
+## `majordomus archive`
+
+Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+
+A repository leaves the machine more often than it looks: to a language model that will
+read all of it at once, to a reviewer who cannot clone, to an auditor who has to run the
+gates on a copy. Those were being done by hand, differently each time, and the hand-made
+version got two things wrong that only surface at the far end.
+
+**What travels is the git index and only the git index.** Nothing untracked is ever
+archived — not the build output, not the caches, and not `.ai/local/`, which is this
+checkout's own state and is never shared. That is one rule instead of a list of
+exclusions, and it is what makes the command safe to point at a repository nobody has
+read.
+
+**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the
+profiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that
+drops the derived paths reads `.gitattributes` — every projection in this repository is
+already marked `merge=derived` there, for a different reason — rather than keeping a
+second list of generated paths, which is the duplication
+`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.
+
+**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix
+mode, and the unpacked tree then has no executable in it: every script fails to run, and
+at the far end that is indistinguishable from the repository being broken. So the mode of
+each entry is read from the index — the authority, not the working tree — written into
+`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back
+and creates a local git index, because the checks here enumerate the repository with
+`git ls-files` and without an index they examine nothing and report that nothing is wrong.
+
+Every archive is read back before the command returns: the entry count must match what
+was staged, and if executables went in and none came out, that is a failure rather than a
+surprise for the recipient.
+
+**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,
+`.gitattributes`, and the git index.
+**Writes:** `tmp/archives/` — or wherever `--out` says.
+
+**The profiles shipped:**
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Profile | For |
+|---|---|
+| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |
+| `audit` | Running the repository's own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |
+| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |
+
+</div>
+
+
+```
+$ majordomus archive --dry-run
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         left out: 10 (binary)
+         left out: 443 (derived)
+         left out: 5 (excluded)
+         nothing written (--dry-run)
+
+$ majordomus archive
+OK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable
+archive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content
+         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)
+```
+
+**Behaviour:**
+- `--list` prints the profiles with what each one is for, and marks the default.
+- `--dry-run` reports the selection and the reason every file was left out, and writes
+  nothing.
+- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.
+- An existing output file is refused with `15` unless `--force` is given, so an archive
+  someone is uploading cannot be replaced underneath them.
+- A path the index names and the working tree no longer has is counted and reported, not
+  silently absent.
+- `--json` emits one object with the counts, the reasons and the path.
+
+Exit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,
+`10` when a profile selects none of the tracked files, `15` when the output exists, `13`
+when the container could not be written or does not read back as what went in.
 
 ## `majordomus version`
 

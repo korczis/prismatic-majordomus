@@ -279,7 +279,7 @@ fn front(path: &Path) -> Option<BTreeMap<String, String>> {
 /// itself rather than a document about it — so reading them with the front-matter splitter
 /// finds nothing and reports an absent episode in a checkout that has one. Two shapes, two
 /// readers, and the difference stated here rather than discovered.
-fn document(path: &Path) -> Option<BTreeMap<String, String>> {
+pub(crate) fn document(path: &Path) -> Option<BTreeMap<String, String>> {
     let text = std::fs::read_to_string(path).ok()?;
     Some(scalars(yaml::parse_mapping(&text).ok()?))
 }
@@ -633,6 +633,354 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
+
+    /// A repository with two commits, so that the three answers `is_ancestor` can give are
+    /// all reachable. `git` itself, because the thing under test is what this module asks
+    /// git and what it does with the reply; a fake would be testing the fake.
+    struct Repo(tempfile::TempDir);
+    impl Repo {
+        fn new() -> Self {
+            let dir = tempfile::tempdir().expect("a temporary directory");
+            let r = Repo(dir);
+            r.git(&["init", "-q", "."]);
+            r.git(&["config", "user.email", "t@example.com"]);
+            r.git(&["config", "user.name", "t"]);
+            r.git(&["commit", "-q", "--allow-empty", "-m", "one"]);
+            r
+        }
+        fn root(&self) -> &Path {
+            self.0.path()
+        }
+        fn git(&self, args: &[&str]) -> String {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(self.root())
+                .args(args)
+                .output()
+                .expect("git");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        }
+        fn head(&self) -> String {
+            self.git(&["rev-parse", "HEAD"])
+        }
+        fn write(&self, rel: &str, body: &str) -> PathBuf {
+            let p = self.root().join(rel);
+            std::fs::create_dir_all(p.parent().expect("a parent")).expect("mkdir");
+            std::fs::write(&p, body).expect("write");
+            p
+        }
+    }
+
+    /// The front matter of a local record, as the lifecycle writes it.
+    fn record(created: &str, head: &str, branch: &str, worktree: &str, next: &str) -> String {
+        format!(
+            "---\nschema_version: 1\ncreated_at: {created}\ntask_id: t-1\nprofile: implementation\n\
+             repository_id: x\nworktree: {worktree}\nbranch: {branch}\nhead: {head}\n\
+             working_tree: clean\nchanged_files:\n---\n\n# Next Action\n\n{next}\n"
+        )
+    }
+
+    // ------------------------------------------------------------------ vocabulary
+
+    /// Every word, in both directions. The serialised form is the shell tool's, and a
+    /// rename here would be a second vocabulary for the same four facts.
+    #[test]
+    fn every_divergence_word_is_the_shell_tools_and_says_whether_it_may_be_trusted() {
+        let all = [
+            (Divergence::Exact, "exact", true),
+            (Divergence::Advanced, "advanced", true),
+            (Divergence::Diverged, "diverged", false),
+            (Divergence::DifferentContext, "different_context", false),
+            (Divergence::Unknown, "unknown", false),
+        ];
+        for (d, word, trust) in all {
+            assert_eq!(d.as_str(), word);
+            assert_eq!(d.trustworthy(), trust, "{word}");
+            assert_eq!(serde_json::to_value(d).expect("json"), serde_json::json!(word));
+        }
+        // and the two tiers, which have no third
+        assert_eq!(
+            serde_json::to_value(Match::SameWorktreeSameBranch).expect("json"),
+            serde_json::json!("same_worktree_same_branch")
+        );
+        assert_eq!(
+            serde_json::to_value(Match::SameBranch).expect("json"),
+            serde_json::json!("same_branch")
+        );
+    }
+
+    // ------------------------------------------------------------------ divergence
+
+    /// The four reachable answers and the two ways of reaching `unknown`. `unknown` is the
+    /// one that matters: a reader told `exact` because git could not answer would act on a
+    /// record nothing had checked.
+    #[test]
+    fn divergence_answers_unknown_rather_than_guessing_when_git_cannot_say() {
+        let repo = Repo::new();
+        let first = repo.head();
+        repo.git(&["commit", "-q", "--allow-empty", "-m", "two"]);
+        let second = repo.head();
+
+        assert_eq!(divergence(repo.root(), &first, Some(&first)), Divergence::Exact);
+        assert_eq!(
+            divergence(repo.root(), &first, Some(&second)),
+            Divergence::Advanced
+        );
+        // a commit this history has never seen is not a yes, and not an unknown either
+        assert_eq!(
+            divergence(repo.root(), "0000000000000000000000000000000000000000", Some(&second)),
+            Divergence::Diverged
+        );
+        // this checkout has no head at all
+        assert_eq!(divergence(repo.root(), &first, None), Divergence::Unknown);
+        // the record names no commit
+        assert_eq!(divergence(repo.root(), "", Some(&second)), Divergence::Unknown);
+    }
+
+    // ------------------------------------------------------------------ reading
+
+    /// A record that cannot be read yields `None` and is counted, never a failed call. The
+    /// three ways a file in that directory can fail to be one are all here, because the
+    /// resolver's `skipped` count is what becomes the finding a reader is shown.
+    #[test]
+    fn a_file_that_is_not_a_record_is_none_rather_than_an_error() {
+        let repo = Repo::new();
+        assert!(front(&repo.root().join("nothing.md")).is_none());
+        assert!(front(&repo.write("plain.md", "just prose, no front matter\n")).is_none());
+        assert!(front(&repo.write("broken.md", "---\n: : :\n---\nbody\n")).is_none());
+        let good = repo.write("good.md", &record("2026-01-01T00:00:00Z", "abc", "main", "/w", "Go"));
+        let f = front(&good).expect("a record");
+        assert_eq!(f.get("branch").map(String::as_str), Some("main"));
+        // a list is not a scalar and is dropped rather than stringified
+        assert!(!f.contains_key("changed_files"));
+    }
+
+    /// The two records of the local half that are not Markdown carry no `---` fences, so
+    /// they are read whole. Reading one with the front-matter splitter finds nothing and
+    /// reports an absent episode in a checkout that has one.
+    #[test]
+    fn a_fenceless_document_is_read_whole_and_a_missing_one_is_none() {
+        let repo = Repo::new();
+        assert!(document(&repo.root().join("nothing.yaml")).is_none());
+        let p = repo.write("session.yaml", "session_id: s-1\nstarted_at: t\nowner: \"me\"\n");
+        let d = document(&p).expect("a document");
+        assert_eq!(d.get("session_id").map(String::as_str), Some("s-1"));
+        assert_eq!(d.get("owner").map(String::as_str), Some("me"));
+        // and one that does not parse is absence, not a failure
+        assert!(document(&repo.write("bad.yaml", "\t: [unclosed\n")).is_none());
+    }
+
+    /// The section a resuming worker acts on: found, absent, surrounded by blank lines, and
+    /// in a file that is not there. Trimming both ends matters because the value is quoted
+    /// into a briefing, where a leading blank line is a paragraph break that changes what it
+    /// looks like it is saying.
+    #[test]
+    fn one_section_is_lifted_whole_and_trimmed_at_both_ends() {
+        let repo = Repo::new();
+        assert_eq!(section(&repo.root().join("nothing.md"), "Next Action"), "");
+        let p = repo.write(
+            "r.md",
+            "# Objective\n\nSomething.\n\n# Next Action\n\n\nDo the thing.\nThen the other.\n\n\n# After\n\nNo.\n",
+        );
+        assert_eq!(section(&p, "Next Action"), "Do the thing.\nThen the other.");
+        assert_eq!(section(&p, "Objective"), "Something.");
+        assert_eq!(section(&p, "Nothing Like This"), "");
+        // a heading with trailing whitespace is the same heading
+        let q = repo.write("s.md", "# Next Action   \n\nHere.\n");
+        assert_eq!(section(&q, "Next Action"), "Here.");
+        // a section that is only blank lines trims to nothing rather than to whitespace
+        let e = repo.write("e.md", "# Next Action\n\n\n\n");
+        assert_eq!(section(&e, "Next Action"), "");
+    }
+
+    /// The store's own documentation declares its line format inside an HTML comment. A
+    /// reader that does not skip the comment reports a blocker that does not exist in every
+    /// fresh checkout — and a phantom blocker is worse than a missed one, because it refuses
+    /// work nobody can unblock.
+    #[test]
+    fn only_unresolved_entries_outside_the_comment_are_blockers() {
+        let repo = Repo::new();
+        assert!(blockers(&repo.root().join("nothing.md")).is_empty());
+        let p = repo.write(
+            "q.md",
+            "# Open questions\n\n<!--\n- [unresolved] the template's own example\n-->\n\n\
+             - [unresolved] can we ship it\n- [resolved] we could not\n- [unresolved]   spaced   \n\
+             not a list line at all\n",
+        );
+        assert_eq!(
+            blockers(&p),
+            vec!["can we ship it".to_string(), "spaced".to_string()]
+        );
+        // a comment opened and closed on one line does not swallow the rest of the file
+        let q = repo.write("q2.md", "<!-- a note -->\n- [unresolved] still counted\n");
+        assert_eq!(blockers(&q), vec!["still counted".to_string()]);
+    }
+
+    /// How many records a directory holds, and none when there is no directory. Not "how
+    /// many files": the store legitimately holds its own README.md and a staging file.
+    #[test]
+    fn only_markdown_is_counted_and_a_missing_directory_is_zero() {
+        let repo = Repo::new();
+        assert_eq!(count(&repo.root().join("nowhere")), 0);
+        repo.write("d/a.md", "x");
+        repo.write("d/b.md", "x");
+        repo.write("d/c.yaml", "x");
+        repo.write("d/.tmp.abcdef", "x");
+        assert_eq!(count(&repo.root().join("d")), 2);
+    }
+
+    // ------------------------------------------------------------------ the resolver
+
+    /// Two tiers and no third, and the ordering inside a tier is by the time the record
+    /// asserts. The record from another worktree on this branch is offered *only* when this
+    /// worktree has none: a briefing that is quietly about somebody else's work is worse
+    /// than no briefing, and the tier is what the reader is told so it can weigh it.
+    #[test]
+    fn the_nearer_tier_wins_and_the_newer_record_wins_inside_one() {
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        let dir = repo.root().join("h");
+
+        // nothing at all, and not even a directory
+        let (none, skipped) = resolve(repo.root(), &dir, "main", Some(&head));
+        assert!(none.is_none() && skipped == 0);
+
+        repo.write("h/elsewhere.md", &record("2026-01-03T00:00:00Z", &head, "main", "/other", "Theirs"));
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        let r = r.expect("the other worktree's record, for want of one here");
+        assert_eq!(r.matched, Match::SameBranch);
+        assert_eq!(r.next_action, "Theirs");
+
+        // ...and it stops being offered the moment this worktree has one, even an older one
+        repo.write("h/mine.md", &record("2026-01-01T00:00:00Z", &head, "main", &root, "Mine"));
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        let r = r.expect("this worktree's record");
+        assert_eq!(r.matched, Match::SameWorktreeSameBranch);
+        assert_eq!(r.next_action, "Mine");
+        assert_eq!(r.divergence, Divergence::Exact);
+        assert_eq!(r.task_id, "t-1");
+        assert_eq!(r.working_tree, "clean");
+        assert!(r.path.starts_with("h/"), "the path is repository-relative: {}", r.path);
+
+        // newer wins inside the tier
+        repo.write("h/newer.md", &record("2026-01-02T00:00:00Z", &head, "main", &root, "Newer"));
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        assert_eq!(r.expect("a record").next_action, "Newer");
+
+        // another branch is never offered, however new
+        repo.write("h/other-branch.md", &record("2026-09-09T00:00:00Z", &head, "topic", &root, "No"));
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        assert_eq!(r.expect("a record").next_action, "Newer");
+    }
+
+    /// A detached HEAD has no branch to match on, so tier 1 is unreachable: "the same
+    /// branch" is not a relation a detached checkout has with anything.
+    #[test]
+    fn a_detached_checkout_is_offered_no_other_worktrees_record() {
+        let repo = Repo::new();
+        let head = repo.head();
+        repo.write("h/theirs.md", &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"));
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "DETACHED", Some(&head));
+        assert!(r.is_none(), "a detached checkout was handed another worktree's record");
+        assert_eq!(skipped, 0, "a record that does not match is not a record that is broken");
+    }
+
+    /// Each way a file in the store can fail to be a record, counted rather than ignored —
+    /// the count is what becomes the finding `majordomus doctor` is recommended from. A
+    /// version this executable does not read is in that list: it parsed, and reading its
+    /// fields under a contract that no longer describes them is the silent accept that is
+    /// the twin of a silent skip.
+    #[test]
+    fn every_unreadable_file_is_counted_and_a_future_version_is_one_of_them() {
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        repo.write("h/prose.md", "no front matter here\n");
+        repo.write("h/no-created.md", "---\nschema_version: 1\nhead: abc\n---\n");
+        repo.write("h/no-head.md", "---\nschema_version: 1\ncreated_at: x\n---\n");
+        repo.write(
+            "h/future.md",
+            &record("2026-01-01T00:00:00Z", &head, "main", &root, "No").replace("schema_version: 1", "schema_version: 2"),
+        );
+        // not a record at all, and not counted as a broken one either
+        repo.write("h/README.md.yaml", "x\n");
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head));
+        assert!(r.is_none(), "an unreadable file was offered as a record");
+        assert_eq!(skipped, 4);
+    }
+
+    /// A record that names no task is a record of work done outside one, and the field says
+    /// `none` rather than being absent. Work outside a task is the ordinary case since
+    /// ADR 0041 — a checkpoint written when no task is open records `task: none` — so the
+    /// fallback here is on the normal path and not an edge.
+    #[test]
+    fn a_record_with_no_task_says_none_rather_than_leaving_the_field_empty() {
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        let body = record("2026-01-01T00:00:00Z", &head, "main", &root, "Go")
+            .replace("task_id: t-1\n", "");
+        repo.write("h/no-task.md", &body);
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head));
+        let r = r.expect("a record without a task is still a record");
+        assert_eq!(r.task_id, "none");
+        assert_eq!(skipped, 0);
+    }
+
+    /// Two records written in the same second resolve the same way twice. The directory
+    /// walk is sorted for exactly this: `read_dir` order is the filesystem's, and a briefing
+    /// that changes between two runs over an unchanged store is one nobody can reason about.
+    #[test]
+    fn two_records_in_one_second_resolve_the_same_way_every_time() {
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        for name in ["b", "a", "c"] {
+            repo.write(
+                &format!("h/{name}.md"),
+                &record("2026-01-01T00:00:00Z", &head, "main", &root, name),
+            );
+        }
+        let first = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head)).0;
+        for _ in 0..5 {
+            let again = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head)).0;
+            assert_eq!(first, again);
+        }
+    }
+
+    // ------------------------------------------------------------------ the active task
+
+    /// The task is read whole rather than through the scalar flattening, because `scope` and
+    /// `requires` are lists and a task without its scope is a task whose claim nobody can
+    /// check. A record with no id is no task: several things create the file before anything
+    /// is in it.
+    #[test]
+    fn a_task_is_read_with_its_lists_and_a_file_without_an_id_is_no_task() {
+        let repo = Repo::new();
+        assert!(read_task(&repo.root().join("nothing.yaml")).is_none());
+        assert!(read_task(&repo.write("empty.yaml", "")).is_none());
+        assert!(read_task(&repo.write("broken.yaml", "\t: [unclosed\n")).is_none());
+        assert!(read_task(&repo.write("idless.yaml", "task: something\nprofile: x\n")).is_none());
+        let p = repo.write(
+            "current.yaml",
+            "id: t-1\ntask: do it\nprofile: implementation\noutcome: active\n\
+             started_at: 2026-01-01T00:00:00Z\nhead: abc\nscope:\n  - lib\n  - test\n\
+             requires:\n  - committed\n",
+        );
+        let t = read_task(&p).expect("a task");
+        assert_eq!(t.id, "t-1");
+        assert_eq!(t.outcome, "active");
+        assert_eq!(t.scope, vec!["lib".to_string(), "test".to_string()]);
+        assert_eq!(t.requires, vec!["committed".to_string()]);
+        assert_eq!(t.head, "abc");
+        // a task that declares neither is a task with empty lists, never a missing one
+        let q = repo.write("bare.yaml", "id: t-2\n");
+        let t = read_task(&q).expect("a task");
+        assert!(t.scope.is_empty() && t.requires.is_empty() && t.profile.is_empty());
+    }
+
 
     /// The declaration is the only place the id, the tool name, the resource URI and the
     /// route exist. A refactor that dropped one of them would still compile, and every

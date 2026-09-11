@@ -33,8 +33,9 @@ same type:
 - **full** reads everything, the index included, and writes the cache. `env status` and
   `env explain` resolve in full, because a person is waiting for them.
 - **fast** reads only what is cheap — one `git status`, one `just --dump`, a few file reads —
-  and takes the rest from the cache the last full resolution wrote. `env banner` and
-  `env export` resolve fast, because direnv runs them on every entry.
+  and takes the rest from the cache the last full resolution wrote. `env banner`,
+  `env export` and `env enter` resolve fast, because direnv runs the last of them on every
+  entry.
 
 What no cache can supply is reported as unknown, never guessed and never defaulted: every
 tier of the snapshot carries its state (`resolved`, `cached` or `unavailable`), and an
@@ -63,23 +64,30 @@ on the repository would be a defect.
 ## The shell entry point
 
 `.envrc` is an adapter and nothing else. It puts `bin/` on the path, watches the lease so
-that the banner is re-evaluated when the shared server comes up or goes away, and
-evaluates one call: `bin/majordomus-env export --shell direnv --banner`. That one process
-writes the assignments — `MAJORDOMUS_ROOT`, `MAJORDOMUS_SHARE`, and `MAJORDOMUS_URL` when
-a server is running — on standard output, where direnv reads the environment it applies,
-and the banner on standard error. `bin/majordomus-env` finds the executable through
-`lib/rust_bin.sh` and never builds it: a missing executable is one line on standard error
-naming `just build`, and exit 0, because a non-zero exit on a `cd` makes direnv report
-that the whole environment failed.
+that the environment and the banner are re-evaluated when the shared server comes up or goes
+away, and evaluates one call: `bin/majordomus-env enter --shell direnv`. That one process
+writes the assignments — `MAJORDOMUS_ROOT`, `MAJORDOMUS_SHARE`, and `MAJORDOMUS_URL` when a
+server is running — on standard output, where direnv reads the environment it applies, and
+the banner on standard error; it refreshes the workflow bridge when a declaration behind it
+moved; and it makes sure this repository's shared server is serving this checkout.
+`bin/majordomus-env` finds the executable through `lib/rust_bin.sh` and never builds it: a
+missing executable is one line on standard error naming `just build`, and exit 0, because a
+non-zero exit on a `cd` makes direnv report that the whole environment failed. An executable
+older than its sources gets that same line and no runtime — the adapter sets
+`MAJORDOMUS_RUNTIME=off` — because a server started from stale code answers with a tree that
+is no longer there.
 
-The rule that holds this shut is `project.envrc-is-an-adapter`
-([`.ai/repo/rules/project/envrc-is-an-adapter.v1.md`](../.ai/repo/rules/project/envrc-is-an-adapter.v1.md)):
-a file a shell evaluates on entering the repository resolves the tool, evaluates what it
-exports and asks it to render; it reads nothing about the repository, builds nothing and
-reaches no network.
+The rules that hold this shut are `project.envrc-is-an-adapter`
+([`.ai/repo/rules/project/envrc-is-an-adapter.v2.md`](../.ai/repo/rules/project/envrc-is-an-adapter.v2.md)) —
+a file a shell evaluates on entering the repository resolves the tool and makes exactly one
+call to it, the bootstrap command, and evaluates what that call exports; it reads nothing
+about the repository, builds nothing, reaches no network and decides nothing — and
+`project.entry-converges`, which says what that one call must and must not do. ADR 0043 is
+the decision, and `docs/ENTRY.md` the operator's page.
 
-`MAJORDOMUS_BANNER` chooses `auto`, `full`, `compact` or `off`; `NO_COLOR` makes the output
-plain, and under `CI` there is no banner at all. The `env` group of the justfile
+`MAJORDOMUS_BANNER` chooses `auto`, `full`, `compact` or `off`; `MAJORDOMUS_RUNTIME=off`
+enters without bringing the runtime up; `NO_COLOR` makes the output plain, and under `CI`
+there is no banner at all. The `env` group of the justfile
 (`.just/env.just`) carries the recipes a person runs.
 
 ## What is canonical, and what is derived

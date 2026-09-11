@@ -18,11 +18,11 @@
   </dl>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.problem }}</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ ms.problem }}</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.outcome }}</p>
-  {%- if ms.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.current_state }}</p>{% endif %}
-  {%- if ms.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.desired_state }}</p>{% endif %}
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ ms.outcome }}</p>
+  {%- if ms.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ ms.current_state }}</p>{% endif %}
+  {%- if ms.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">{{ ms.desired_state }}</p>{% endif %}
 
   {{ <plan_list title="Scope" items={ms.scope} mono="1" /> }}
   {{ <plan_list title="Out of scope" items={ms.non_scope} /> }}

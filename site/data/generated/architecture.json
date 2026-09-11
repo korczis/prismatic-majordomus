@@ -70,6 +70,26 @@
       "external": false
     },
     {
+      "id": "lib/archive.sh",
+      "kind": "module",
+      "label": "archive",
+      "command": "archive",
+      "summary": "a snapshot of the tracked tree, for reading or checking elsewhere",
+      "read_only": null,
+      "route": "/commands/archive/",
+      "external": false
+    },
+    {
+      "id": ".ai/repo/archive.yaml",
+      "kind": "artifact",
+      "label": "repo/archive.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/bench.sh",
       "kind": "module",
       "label": "bench",
@@ -107,6 +127,26 @@
       "summary": "open, inspect and close one execution episode",
       "read_only": null,
       "route": "/commands/session/",
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/sessions-open",
+      "kind": "artifact",
+      "label": "local/state/sessions-open",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/session-contexts",
+      "kind": "artifact",
+      "label": "local/session-contexts",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -157,6 +197,16 @@
       "summary": "write an append-only continuation record (body on stdin)",
       "read_only": null,
       "route": "/commands/handover/",
+      "external": false
+    },
+    {
+      "id": ".ai/repo/policy.yaml",
+      "kind": "artifact",
+      "label": "repo/policy.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -310,29 +360,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/policy.yaml",
-      "kind": "artifact",
-      "label": "repo/policy.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/providers",
       "kind": "artifact",
       "label": "repo/providers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/sessions-open",
-      "kind": "artifact",
-      "label": "local/state/sessions-open",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -650,16 +680,6 @@
       "external": false
     },
     {
-      "id": ".ai/local/session-contexts",
-      "kind": "artifact",
-      "label": "local/session-contexts",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/knowledge/sources.yaml",
       "kind": "artifact",
       "label": "repo/knowledge/sources.yaml",
@@ -790,6 +810,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/locks",
+      "kind": "artifact",
+      "label": "local/state/locks",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/update.sh",
       "kind": "module",
       "label": "update",
@@ -831,6 +861,11 @@
     }
   ],
   "edges": [
+    {
+      "source": "lib/archive.sh",
+      "target": ".ai/repo/archive.yaml",
+      "kind": "reads"
+    },
     {
       "source": "lib/changed.sh",
       "target": ".ai/repo/scope.yaml",
@@ -984,6 +1019,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/adr.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/archive.sh",
       "kind": "sources"
     },
     {
@@ -1257,6 +1297,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/context.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/derive.sh",
       "target": "lib/decision.sh",
       "kind": "sources"
@@ -1487,6 +1532,21 @@
       "kind": "uses"
     },
     {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/session-contexts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/sessions-open",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "uses"
+    },
+    {
       "source": "lib/changed.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "uses"
@@ -1604,11 +1664,6 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/cache",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".ai/local/prompts",
       "kind": "uses"
     },
     {
@@ -1878,6 +1933,11 @@
     },
     {
       "source": "lib/session.sh",
+      "target": ".ai/local/state/locks",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/session.sh",
       "target": ".ai/local/state/session-current.yaml",
       "kind": "uses"
     },
@@ -1968,6 +2028,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/local/prompts",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/local/state/handovers",
       "kind": "writes"
     },
@@ -1994,6 +2059,11 @@
     {
       "source": "lib/start.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".ai/local/prompts",
       "kind": "writes"
     },
     {
