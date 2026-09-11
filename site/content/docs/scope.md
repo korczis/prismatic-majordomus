@@ -1,7 +1,7 @@
 +++
 title = "The repository scope"
 description = "the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope`"
-weight = 37
+weight = 39
 [extra]
 source = "docs/SCOPE.md"
 +++
