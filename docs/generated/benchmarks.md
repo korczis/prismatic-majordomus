@@ -71,7 +71,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
 | `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
-| `plan.transition` | plan | command | — | covered | covered | covered | `refused-unknown-issue`, `refused-not-ready` |
+| `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |

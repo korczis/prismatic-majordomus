@@ -666,7 +666,31 @@ pub fn module() -> ModuleDescriptor {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// The input of `plan.transition`.
+/// The input of `plan.transition`: which issue to move, and which way.
+///
+/// Two fields and no third. There is no timestamp — the move is stamped with the moment it
+/// happened, never with one the caller supplies, because a lifecycle a caller can backdate
+/// is not a record of what happened. There is no force or reason field either: a transition
+/// the model refuses is refused, and the way to make it legal is to satisfy the guard rather
+/// than to ask past it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanTransitionInput;
+/// use majordomus_cli::plan::Transition;
+///
+/// // The wire form an MCP client or an HTTP POST sends.
+/// let input: PlanTransitionInput =
+///     serde_json::from_str(r#"{"issue":"I0001","transition":"done"}"#).unwrap();
+/// assert_eq!(input.issue, "I0001");
+/// assert_eq!(input.transition, Transition::Done);
+/// assert_eq!(input.transition.field(), "completed_at");
+/// assert_eq!(input.transition.event(), "plan_done");
+///
+/// // Unknown fields are refused rather than ignored: a caller that misspells `transition`
+/// // is told so instead of having its move silently dropped.
+/// assert!(serde_json::from_str::<PlanTransitionInput>(
+///     r#"{"issue":"I0001","transition":"done","force":true}"#).is_err());
+/// ```
 pub struct PlanTransitionInput {
     /// The issue to move, by its id — which is also its file name.
     pub issue: String,
@@ -681,6 +705,24 @@ pub struct PlanTransitionInput {
 /// reported rather than assumed because the move does not determine the status on its own:
 /// `done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is
 /// told that rather than told it succeeded.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::plan::PlanTransitionResult;
+///
+/// // What a `done` looks like when the record's required evidence is not all present: the
+/// // call succeeded, the field was written, and the issue is still in VERIFY. A caller that
+/// // read only the absence of an error would report this as finished; a caller that reads
+/// // `to` knows better, which is why the field is here.
+/// let held: PlanTransitionResult = serde_json::from_str(r#"{
+///     "issue":"I0001","transition":"done","from":"VERIFY","to":"VERIFY",
+///     "field":"completed_at","at":"2026-09-11T12:00:00Z","event":"plan_done"
+/// }"#).unwrap();
+/// assert_eq!(held.to, "VERIFY", "the status is derived from the record, not from the move");
+///
+/// // `next_ready` is absent when the plan has none left to hand out, which is ordinary
+/// // rather than an error, so it is omitted rather than spelled as an empty string.
+/// assert!(held.next_ready.is_none());
+/// ```
 pub struct PlanTransitionResult {
     /// The issue that moved.
     pub issue: String,
@@ -713,32 +755,49 @@ pub struct PlanTransitionResult {
 /// measure"*, and only `Internal` is fatal. The refusal path is also the honest thing to
 /// time: it builds the plan, resolves the issue and evaluates the guard, which is everything
 /// the write path does except the two syscalls at the end.
+/// The benchmark cases of the one capability here that writes.
+///
+/// Every case is a refusal, and that is deliberate rather than a gap. A case is *executed* —
+/// by `majordomus bench` against this repository, and by the HTTP and MCP suites against a
+/// fixture — so a case that moved an issue would change the plan every time the suite ran,
+/// and a measurement whose cost is a changed record is not a measurement. The runner states
+/// the principle that makes this sound: *"a refusal is an answer, and answering is the work
+/// a benchmark exists to measure"*, and only `Internal` is fatal.
+///
+/// The refusal path is also the honest thing to time: it builds the plan, resolves the issue
+/// and evaluates the guard, which is everything the write path does except the two syscalls
+/// at the end.
+///
+/// The refusal must be a *refusal* and not a lookup miss. An earlier version named an issue
+/// that could not exist, which answered 404 rather than 422, and `tests/http_serve.rs` holds
+/// every route to answering its own cases — 200, or 422 for a command that turns a caller
+/// down. Choosing the move from the record keeps the case inside that contract.
 impl BenchmarkCases for PlanTransitionInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let plan = Plan::build(ctx.index);
-        let mut cases = vec![NamedCase::new(
-            "refused-unknown-issue",
-            PlanTransitionInput {
-                // An id no record can carry: issue ids are `I` and four digits, and the
-                // loader refuses a record whose id disagrees with its file name, so this
-                // cannot come to exist and the case cannot start writing later.
-                issue: "no-such-issue".into(),
-                transition: Transition::Start,
-            },
-        )];
-        // A real issue that is not READY, when the plan holds one: the guard then runs
-        // against a record rather than against a lookup miss. Absent such an issue the
-        // repository's plan is entirely startable, and the case above is the whole set.
-        if let Some(i) = plan.issues.iter().find(|i| i.status != "READY") {
-            cases.push(NamedCase::new(
-                "refused-not-ready",
-                PlanTransitionInput {
-                    issue: i.id.clone(),
-                    transition: Transition::Start,
-                },
-            ));
-        }
-        cases
+        // The move that this issue's own status refuses. Every issue has one: a READY issue
+        // cannot be verified, and an issue in any other status cannot be started. So the
+        // case is chosen from the record rather than from a status this repository happens
+        // to hold today, and it stays a refusal whatever the plan looks like when it runs.
+        let refused_move = |i: &PlanIssue| {
+            if i.status == "READY" {
+                Transition::Verify
+            } else {
+                Transition::Start
+            }
+        };
+        plan.issues
+            .first()
+            .map(|i| {
+                vec![NamedCase::new(
+                    "refused-by-status",
+                    PlanTransitionInput {
+                        issue: i.id.clone(),
+                        transition: refused_move(i),
+                    },
+                )]
+            })
+            .unwrap_or_default()
     }
 }
 

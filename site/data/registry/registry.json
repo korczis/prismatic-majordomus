@@ -6,7 +6,7 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "01a6db0ef93827aaa8f31df32e3359b2aa36a7151060f65bfb5516d1be488970",
+    "fingerprint": "09ac33246c25eb0678a27646ea815f75a09b0d13ce43e1b9786a46322298f794",
     "summary": {
       "total": 1257,
       "builtin": 81,
@@ -18295,7 +18295,7 @@
               "issue",
               "transition"
             ],
-            "description": "The input of `plan.transition`.",
+            "description": "The input of `plan.transition`: which issue to move, and which way.\n\nTwo fields and no third. There is no timestamp — the move is stamped with the moment it\nhappened, never with one the caller supplies, because a lifecycle a caller can backdate\nis not a record of what happened. There is no force or reason field either: a transition\nthe model refuses is refused, and the way to make it legal is to satisfy the guard rather\nthan to ask past it.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionInput;\nuse majordomus_cli::plan::Transition;\n\n// The wire form an MCP client or an HTTP POST sends.\nlet input: PlanTransitionInput =\n    serde_json::from_str(r#\"{\"issue\":\"I0001\",\"transition\":\"done\"}\"#).unwrap();\nassert_eq!(input.issue, \"I0001\");\nassert_eq!(input.transition, Transition::Done);\nassert_eq!(input.transition.field(), \"completed_at\");\nassert_eq!(input.transition.event(), \"plan_done\");\n\n// Unknown fields are refused rather than ignored: a caller that misspells `transition`\n// is told so instead of having its move silently dropped.\nassert!(serde_json::from_str::<PlanTransitionInput>(\n    r#\"{\"issue\":\"I0001\",\"transition\":\"done\",\"force\":true}\"#).is_err());\n```",
             "title": "PlanTransitionInput",
             "$defs": {
               "Transition": {
@@ -18316,7 +18316,7 @@
                     "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
                   }
                 ],
-                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks."
+                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
               }
             }
           }
@@ -18371,7 +18371,7 @@
               "at",
               "event"
             ],
-            "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.",
+            "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionResult;\n\n// What a `done` looks like when the record's required evidence is not all present: the\n// call succeeded, the field was written, and the issue is still in VERIFY. A caller that\n// read only the absence of an error would report this as finished; a caller that reads\n// `to` knows better, which is why the field is here.\nlet held: PlanTransitionResult = serde_json::from_str(r#\"{\n    \"issue\":\"I0001\",\"transition\":\"done\",\"from\":\"VERIFY\",\"to\":\"VERIFY\",\n    \"field\":\"completed_at\",\"at\":\"2026-09-11T12:00:00Z\",\"event\":\"plan_done\"\n}\"#).unwrap();\nassert_eq!(held.to, \"VERIFY\", \"the status is derived from the record, not from the move\");\n\n// `next_ready` is absent when the plan has none left to hand out, which is ordinary\n// rather than an error, so it is omitted rather than spelled as an empty string.\nassert!(held.next_ready.is_none());\n```",
             "title": "PlanTransitionResult",
             "$defs": {
               "Transition": {
@@ -18392,7 +18392,7 @@
                     "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
                   }
                 ],
-                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks."
+                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
               }
             }
           }
@@ -29846,7 +29846,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4363dcdb05664a9cff1727ca7c596fb2723e424cc6e5fc191f438bf2324f972b",
+    "fingerprint": "a967f8e6a503da67ddfea9b65a2dbee58011c945256eb7b8194da175c3d4a31f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -61013,60 +61013,31 @@
         "route": "GET /api/v1/plan/status"
       },
       {
-        "key": "plan.transition|direct|refused-unknown-issue",
+        "key": "plan.transition|direct|refused-by-status",
         "kind": "capability",
         "transport": "direct",
         "id": "plan.transition",
         "module": "plan",
-        "case": "refused-unknown-issue",
+        "case": "refused-by-status",
         "cached": false
       },
       {
-        "key": "plan.transition|direct|refused-not-ready",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-not-ready",
-        "cached": false
-      },
-      {
-        "key": "plan.transition|mcp|refused-unknown-issue",
+        "key": "plan.transition|mcp|refused-by-status",
         "kind": "capability",
         "transport": "mcp",
         "id": "plan.transition",
         "module": "plan",
-        "case": "refused-unknown-issue",
+        "case": "refused-by-status",
         "cached": false,
         "tool": "majordomus_plan_transition"
       },
       {
-        "key": "plan.transition|mcp|refused-not-ready",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-not-ready",
-        "cached": false,
-        "tool": "majordomus_plan_transition"
-      },
-      {
-        "key": "plan.transition|http|refused-unknown-issue",
+        "key": "plan.transition|http|refused-by-status",
         "kind": "capability",
         "transport": "http",
         "id": "plan.transition",
         "module": "plan",
-        "case": "refused-unknown-issue",
-        "cached": false,
-        "route": "POST /api/v1/plan/transition"
-      },
-      {
-        "key": "plan.transition|http|refused-not-ready",
-        "kind": "capability",
-        "transport": "http",
-        "id": "plan.transition",
-        "module": "plan",
-        "case": "refused-not-ready",
+        "case": "refused-by-status",
         "cached": false,
         "route": "POST /api/v1/plan/transition"
       },
@@ -63446,21 +63417,21 @@
           "module": "plan",
           "transport": "direct",
           "state": "covered",
-          "cases": 2
+          "cases": 1
         },
         {
           "subject": "plan.transition",
           "module": "plan",
           "transport": "mcp",
           "state": "covered",
-          "cases": 2
+          "cases": 1
         },
         {
           "subject": "plan.transition",
           "module": "plan",
           "transport": "http",
           "state": "covered",
-          "cases": 2
+          "cases": 1
         },
         {
           "subject": "plan.validate",

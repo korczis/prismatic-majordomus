@@ -13810,7 +13810,7 @@
       "variants": []
     },
     {
-      "description": "The input of `plan.transition`.",
+      "description": "The input of `plan.transition`: which issue to move, and which way.\n\nTwo fields and no third. There is no timestamp — the move is stamped with the moment it\nhappened, never with one the caller supplies, because a lifecycle a caller can backdate\nis not a record of what happened. There is no force or reason field either: a transition\nthe model refuses is refused, and the way to make it legal is to satisfy the guard rather\nthan to ask past it.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionInput;\nuse majordomus_cli::plan::Transition;\n\n// The wire form an MCP client or an HTTP POST sends.\nlet input: PlanTransitionInput =\n    serde_json::from_str(r#\"{\"issue\":\"I0001\",\"transition\":\"done\"}\"#).unwrap();\nassert_eq!(input.issue, \"I0001\");\nassert_eq!(input.transition, Transition::Done);\nassert_eq!(input.transition.field(), \"completed_at\");\nassert_eq!(input.transition.event(), \"plan_done\");\n\n// Unknown fields are refused rather than ignored: a caller that misspells `transition`\n// is told so instead of having its move silently dropped.\nassert!(serde_json::from_str::<PlanTransitionInput>(\n    r#\"{\"issue\":\"I0001\",\"transition\":\"done\",\"force\":true}\"#).is_err());\n```",
       "is_enum": false,
       "name": "PlanTransitionInput",
       "properties": [
@@ -13840,7 +13840,7 @@
       "variants": []
     },
     {
-      "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.",
+      "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionResult;\n\n// What a `done` looks like when the record's required evidence is not all present: the\n// call succeeded, the field was written, and the issue is still in VERIFY. A caller that\n// read only the absence of an error would report this as finished; a caller that reads\n// `to` knows better, which is why the field is here.\nlet held: PlanTransitionResult = serde_json::from_str(r#\"{\n    \"issue\":\"I0001\",\"transition\":\"done\",\"from\":\"VERIFY\",\"to\":\"VERIFY\",\n    \"field\":\"completed_at\",\"at\":\"2026-09-11T12:00:00Z\",\"event\":\"plan_done\"\n}\"#).unwrap();\nassert_eq!(held.to, \"VERIFY\", \"the status is derived from the record, not from the move\");\n\n// `next_ready` is absent when the plan has none left to hand out, which is ordinary\n// rather than an error, so it is omitted rather than spelled as an empty string.\nassert!(held.next_ready.is_none());\n```",
       "is_enum": false,
       "name": "PlanTransitionResult",
       "properties": [
@@ -19664,7 +19664,7 @@
       "variants": []
     },
     {
-      "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.",
+      "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```",
       "is_enum": true,
       "name": "Transition",
       "properties": [],
@@ -24208,12 +24208,8 @@
           "benchmark_reason": "",
           "body_examples": [
             {
-              "case": "refused-not-ready",
+              "case": "refused-by-status",
               "json": "{\"issue\":\"I0001\",\"transition\":\"start\"}"
-            },
-            {
-              "case": "refused-unknown-issue",
-              "json": "{\"issue\":\"no-such-issue\",\"transition\":\"start\"}"
             }
           ],
           "body_schema": "PlanTransitionInput",

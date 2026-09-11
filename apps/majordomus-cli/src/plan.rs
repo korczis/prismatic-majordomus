@@ -452,6 +452,18 @@ impl Plan {
     ///
     /// Nothing is read from disk and nothing is written: this is the projection of a write,
     /// and [`transition`] is what performs one.
+    ///
+    /// ```no_run
+    /// # use majordomus_cli::index::Index;
+    /// use majordomus_cli::plan::{Plan, Transition};
+    /// # fn demo(index: &Index) {
+    /// let before = Plan::build(index);
+    /// let after = Plan::after(index, "I0001", Transition::Done, "2026-09-11T12:00:00Z");
+    /// // The status is derived both times, so an issue whose evidence is incomplete is
+    /// // still VERIFY afterwards and the caller can see that before writing anything.
+    /// assert_eq!(before.issue("I0001").is_some(), after.issue("I0001").is_some());
+    /// # }
+    /// ```
     pub fn after(index: &Index, id: &str, transition: Transition, now: &str) -> Plan {
         let (header, milestones, mut issues) = raws(index);
         if let Some(r) = issues.iter_mut().find(|r| r.id == id) {
@@ -1391,6 +1403,26 @@ mod tests {
 ///
 /// Three, not four: `evidence` appends a record rather than moving an issue, and it belongs
 /// with the record it proves rather than with the moves it unblocks.
+///
+/// ```
+/// use majordomus_cli::plan::Transition;
+///
+/// // The wire spelling is the one a caller types on the command line.
+/// let t: Transition = serde_json::from_str("\"done\"").unwrap();
+/// assert_eq!(t, Transition::Done);
+/// assert_eq!(serde_json::to_string(&Transition::Start).unwrap(), "\"start\"");
+///
+/// // Each move owns the field it stamps and the event it records; nothing else decides
+/// // either, so a new move cannot be added without saying both.
+/// for (t, field, event) in [
+///     (Transition::Start, "started_at", "plan_start"),
+///     (Transition::Verify, "verified_at", "plan_verify"),
+///     (Transition::Done, "completed_at", "plan_done"),
+/// ] {
+///     assert_eq!(t.field(), field);
+///     assert_eq!(t.event(), event);
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Transition {
@@ -1404,7 +1436,16 @@ pub enum Transition {
 }
 
 impl Transition {
-    /// The field this move stamps.
+    /// The record field this move stamps, and the only field it writes besides `updated_at`.
+    ///
+    /// The status is never stored: an issue records what happened to it and the status
+    /// follows. So a move owns a timestamp, not a state, and this names which one.
+    ///
+    /// ```
+    /// use majordomus_cli::plan::Transition;
+    /// assert_eq!(Transition::Start.field(), "started_at");
+    /// assert_eq!(Transition::Done.field(), "completed_at");
+    /// ```
     pub fn field(self) -> &'static str {
         match self {
             Self::Start => "started_at",
@@ -1414,6 +1455,16 @@ impl Transition {
     }
 
     /// The event `share/events.yaml` declares for it.
+    ///
+    /// The four plan events are spelled with an underscore rather than the dot the rest of
+    /// the vocabulary uses. They are registered as written, because the ledger of this
+    /// repository already holds dozens of them and a rename would orphan every one.
+    ///
+    /// ```
+    /// use majordomus_cli::plan::Transition;
+    /// assert_eq!(Transition::Verify.event(), "plan_verify");
+    /// assert!(Transition::Done.event().starts_with("plan_"));
+    /// ```
     pub fn event(self) -> &'static str {
         match self {
             Self::Start => "plan_start",
@@ -1428,6 +1479,20 @@ impl Transition {
 /// Each variant carries what the caller needs to act, never only that it failed: which
 /// status the issue is actually in, which dependency holds it, which evidence token is
 /// missing. The messages are the shell's messages.
+///
+/// ```
+/// use majordomus_cli::plan::TransitionError;
+///
+/// // A refusal says what is in the way, because that is the thing the caller can change.
+/// let refused = TransitionError::Refused("I0001 is DONE, not READY".into());
+/// assert_eq!(refused.to_string(), "I0001 is DONE, not READY");
+///
+/// // A missing issue is a different answer from an illegal move, and callers map them to
+/// // different statuses: not_found rather than refused.
+/// let missing = TransitionError::NoSuchIssue("I9999".into());
+/// assert_eq!(missing.to_string(), "no issue 'I9999'");
+/// assert_ne!(missing, refused);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransitionError {
     /// No issue of that id.
@@ -1461,6 +1526,25 @@ impl std::error::Error for TransitionError {}
 /// Separate from the write so that a surface can offer or withhold a control without
 /// performing it: the Cockpit disables a button by asking this, and never by reimplementing
 /// the rule.
+///
+/// ```no_run
+/// # use majordomus_cli::index::Index;
+/// use majordomus_cli::plan::{check, Plan, Transition, TransitionError};
+/// # fn demo(index: &Index) {
+/// let plan = Plan::build(index);
+/// let now = "2026-09-11T12:00:00Z";
+/// // Offer the control only when the model would accept it, and show the reason when not.
+/// let offered = check(index, &plan, "I0001", Transition::Start, now).is_ok();
+///
+/// // An issue the plan does not hold is not found, never merely refused: the two are
+/// // different answers and a surface maps them to different statuses.
+/// let missing = check(index, &plan, "no-such-issue", Transition::Start, now);
+/// assert_eq!(missing, Err(TransitionError::NoSuchIssue("no-such-issue".into())));
+///
+/// // Asking twice never changes anything: this is the question, not the move.
+/// assert_eq!(offered, check(index, &plan, "I0001", Transition::Start, now).is_ok());
+/// # }
+/// ```
 pub fn check(
     index: &Index,
     plan: &Plan,
@@ -1531,6 +1615,23 @@ pub fn check(
 /// derived from the id here, because the index already knows where every record lives and a
 /// second convention for locating one is how two readers come to disagree about which file
 /// is the record.
+///
+/// ```no_run
+/// # use std::path::Path;
+/// # use majordomus_cli::index::Index;
+/// # use majordomus_cli::git::GitState;
+/// use majordomus_cli::ledger::{self, Vocabulary};
+/// use majordomus_cli::plan::{transition, Plan, Transition};
+/// # fn demo(index: &Index, root: &Path, record: &Path, git: &GitState) {
+/// let plan = Plan::build(index);
+/// let vocabulary = Vocabulary::load(&root.join("share/events.yaml")).unwrap();
+/// let at = ledger::now();
+/// // The guard runs first, the record is rewritten, and only then is the event appended:
+/// // a ledger line never describes a change that did not reach the file.
+/// transition(root, record, index, &plan, "I0001", Transition::Start, &at, &vocabulary, git)
+///     .expect("a READY issue may start");
+/// # }
+/// ```
 #[allow(clippy::too_many_arguments)]
 pub fn transition(
     root: &std::path::Path,

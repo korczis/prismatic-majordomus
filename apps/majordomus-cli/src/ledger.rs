@@ -21,6 +21,34 @@
 //! issue through each engine and compares the envelope and the key order of the lines they
 //! append. Where they disagree the shell is the incumbent and is right; this file is the one
 //! that changes.
+//!
+//! ```
+//! use majordomus_cli::git::{GitInfo, GitState};
+//! use majordomus_cli::ledger::{self, Vocabulary};
+//! # let dir = std::env::temp_dir().join(format!("mj-ledger-doc-{}", std::process::id()));
+//! # let _ = std::fs::remove_dir_all(&dir);
+//! # std::fs::create_dir_all(&dir).unwrap();
+//! # std::fs::write(dir.join("events.yaml"),
+//! #   "version: 1\nevents:\n  - id: plan_start\n    requires: [issue]\n").unwrap();
+//! let vocabulary = Vocabulary::load(&dir.join("events.yaml")).unwrap();
+//! let git = GitState::Available(GitInfo {
+//!     toplevel: dir.clone(), head: Some("a".repeat(40)),
+//!     branch: Some("master".into()), working_tree: "clean".into(),
+//! });
+//!
+//! // One line, appended; the envelope is composed in a fixed order and the payload follows.
+//! let line = ledger::append(&dir, &vocabulary, &git, "2026-09-11T12:00:00Z",
+//!                           "plan_start", &[("issue", "I0001".into())]).unwrap();
+//! assert!(line.starts_with(r#"{"ts":"2026-09-11T12:00:00Z","event":"plan_start""#));
+//!
+//! // A name nothing declares never reaches the file, which is why the vocabulary exists.
+//! assert!(ledger::append(&dir, &vocabulary, &git, "2026-09-11T12:00:00Z",
+//!                        "plan_strat", &[("issue", "I0001".into())]).is_err());
+//!
+//! let (entries, skipped) = ledger::read(&dir);
+//! assert_eq!((entries.len(), skipped), (1, 0));
+//! # std::fs::remove_dir_all(&dir).unwrap();
+//! ```
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -44,6 +72,12 @@ const SESSION_POINTER: &str = "session-current.yaml";
 ///
 /// Every variant is a refusal to corrupt the record, never a partial write: the line is
 /// composed and validated in full before the file is opened.
+///
+/// ```
+/// use majordomus_cli::ledger::LedgerError;
+/// let e = LedgerError::MissingField { event: "plan_evidence".into(), field: "covers".into() };
+/// assert_eq!(e.to_string(), "event 'plan_evidence' is missing the required field 'covers'");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LedgerError {
     /// The event name is not declared in `share/events.yaml`.
@@ -117,6 +151,15 @@ struct EventsFile {
 }
 
 /// The event vocabulary, read once and shared.
+///
+/// ```
+/// use majordomus_cli::ledger::Vocabulary;
+/// // The default is empty, and an empty vocabulary accepts nothing: a writer that could
+/// // not read the declaration refuses every name rather than allowing any.
+/// let v = Vocabulary::default();
+/// assert!(v.ids().is_empty());
+/// assert!(v.requires("plan_start").is_none());
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct Vocabulary {
     events: BTreeMap<String, Vec<String>>,
@@ -128,6 +171,19 @@ impl Vocabulary {
     ///
     /// The file ships with the tool, so a repository never carries its own: a name this
     /// executable does not know is a name nothing in the distribution writes.
+    ///
+    /// ```
+    /// use majordomus_cli::ledger::Vocabulary;
+    /// # let f = std::env::temp_dir().join(format!("mj-voc-{}.yaml", std::process::id()));
+    /// # std::fs::write(&f, "version: 1\nevents:\n  - id: plan_done\n    requires: [issue]\n").unwrap();
+    /// let v = Vocabulary::load(&f).unwrap();
+    /// assert_eq!(v.ids(), ["plan_done"]);
+    /// assert_eq!(v.requires("plan_done"), Some(&["issue".to_string()][..]));
+    /// # std::fs::remove_file(&f).unwrap();
+    ///
+    /// // A file that is not there is an error, never an empty vocabulary that accepts all.
+    /// assert!(Vocabulary::load(std::path::Path::new("/nonexistent/events.yaml")).is_err());
+    /// ```
     pub fn load(events_yaml: &Path) -> Result<Self, LedgerError> {
         let text = fs::read_to_string(events_yaml).map_err(|e| LedgerError::Vocabulary {
             path: events_yaml.to_path_buf(),
@@ -153,6 +209,14 @@ impl Vocabulary {
     }
 
     /// The keys a line of this event must carry, or `None` when the name is not declared.
+    ///
+    /// `None` and `Some(&[])` are different answers: the first is a name nothing declares,
+    /// the second a declared event whose envelope is all it needs.
+    ///
+    /// ```
+    /// use majordomus_cli::ledger::Vocabulary;
+    /// assert!(Vocabulary::default().requires("nothing").is_none());
+    /// ```
     pub fn requires(&self, event: &str) -> Option<&[String]> {
         self.events.get(event).map(|v| v.as_slice())
     }
@@ -170,6 +234,32 @@ pub type Field<'a> = (&'a str, String);
 /// The line is composed in full, validated against the vocabulary, and only then appended.
 /// `now` is passed in rather than read here so that a test can write a line whose timestamp
 /// it knows; every caller in the executable passes [`now`].
+///
+/// ```
+/// use majordomus_cli::git::GitState;
+/// use majordomus_cli::ledger::{self, Vocabulary};
+/// # let dir = std::env::temp_dir().join(format!("mj-append-{}", std::process::id()));
+/// # let _ = std::fs::remove_dir_all(&dir);
+/// # std::fs::create_dir_all(&dir).unwrap();
+/// # std::fs::write(dir.join("events.yaml"),
+/// #   "version: 1\nevents:\n  - id: plan_done\n    requires: [issue]\n").unwrap();
+/// let vocabulary = Vocabulary::load(&dir.join("events.yaml")).unwrap();
+/// let git = GitState::Unavailable { reason: "not a work tree".into() };
+///
+/// let line = ledger::append(&dir, &vocabulary, &git, "2026-09-11T12:00:00Z",
+///                           "plan_done", &[("issue", "I0001".into())]).unwrap();
+/// // Where git cannot answer, the two fields are spelled with the literals the shell uses,
+/// // so a reader never meets a second spelling of "unknown".
+/// assert!(line.contains(r#""head":"NONE""#), "{line}");
+/// assert!(line.contains(r#""branch":"DETACHED""#), "{line}");
+///
+/// // A declared event whose payload omits a required key writes nothing at all.
+/// let err = ledger::append(&dir, &vocabulary, &git, "2026-09-11T12:00:00Z",
+///                          "plan_done", &[]).unwrap_err();
+/// assert_eq!(err.to_string(), "event 'plan_done' is missing the required field 'issue'");
+/// assert_eq!(ledger::read(&dir).0.len(), 1, "the refusal appended nothing");
+/// # std::fs::remove_dir_all(&dir).unwrap();
+/// ```
 pub fn append(
     root: &Path,
     vocabulary: &Vocabulary,
@@ -249,6 +339,12 @@ pub fn append(
 ///
 /// [`crate::peers::rfc3339`] already renders that spelling for the peer board; a second
 /// clock in this file would be a second answer to what time it is.
+///
+/// ```
+/// let t = majordomus_cli::ledger::now();
+/// assert_eq!(t.len(), 20, "{t}");
+/// assert!(t.ends_with('Z') && t.contains('T'), "{t}");
+/// ```
 pub fn now() -> String {
     crate::peers::rfc3339(std::time::SystemTime::now())
 }
@@ -311,6 +407,17 @@ fn open_session_id(root: &Path) -> Option<String> {
 ///
 /// The envelope is typed and the payload is left as it was written: a reader of one event
 /// knows its own keys, and this type may not grow a field every time an event does.
+///
+/// ```
+/// use majordomus_cli::ledger::Entry;
+/// let e: Entry = serde_json::from_str(
+///     r#"{"ts":"2026-09-11T12:00:00Z","event":"plan_done","head":"abc","branch":"master",
+///         "by":"majordomus/0.5.0","issue":"I0001"}"#).unwrap();
+/// assert_eq!(e.event, "plan_done");
+/// assert!(e.session.is_none(), "no episode was open when this was written");
+/// // Everything the envelope does not name stays in the payload, whatever the event is.
+/// assert_eq!(e.payload["issue"], "I0001");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Entry {
     /// When it happened.
@@ -337,6 +444,13 @@ pub struct Entry {
 /// survives every version of every writer that ever appended to it, so a reader that
 /// refused the whole file over one malformed line would lose the history it exists to show.
 /// The count of skipped lines is returned beside the entries so the loss is never silent.
+///
+/// ```
+/// // A checkout that has never written one has no record, which is an empty answer rather
+/// // than an error: absence is a state the lifecycle has, not a failure to read.
+/// let (entries, skipped) = majordomus_cli::ledger::read(std::path::Path::new("/nonexistent"));
+/// assert!(entries.is_empty() && skipped == 0);
+/// ```
 pub fn read(root: &Path) -> (Vec<Entry>, usize) {
     let path = root.join(STATE_DIR).join(LEDGER);
     let Ok(text) = fs::read_to_string(path) else {
