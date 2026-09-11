@@ -1,0 +1,155 @@
+---
+schema: adr/v1
+id: adr-0043
+kind: adr
+title: Entering the repository brings its runtime up, through one bootstrap command the entry file calls
+status: proposed
+date: 2026-09-11
+tags:
+  - entry
+  - mcp
+  - environment
+  - doctrine
+provenance:
+  origin: extracted
+  derived_from:
+    - decision:adr-0003
+    - decision:adr-0035
+    - file:docs/ENTRY.md
+    - file:.ai/repo/rules/project/entry-converges.v2.md
+---
+
+# 43. Entering the repository brings its runtime up, through one bootstrap command the entry file calls
+
+## Context
+
+ADR 0035 and the slice that implemented it made entry converge **for an agent**: the
+provider's start event opens the episode and calls `serve ensure`, so a worker arriving
+through Claude Code, Codex or Gemini finds the repository's shared server already serving
+its checkout. `docs/ENTRY.md` is the operator's page for it and `project.entry-converges`
+is the rule.
+
+The same rule closed the other half deliberately. "Entry by a shell reports and does not
+serve": the file a shell evaluates on entering the directory may not start a server,
+because ADR 0003 says there is no process without a client and a shell is not a client.
+`scripts/ci/entry-converges` enforces it by shape — a `serve` or `mcp` subcommand anywhere
+in `.envrc` or `bin/majordomus-env` is a finding — and `test/cases/118` proves the refusal
+by planting exactly that line.
+
+The operator's requirement is that this system work **without a person or an agent
+remembering a sequence of commands**, and against that requirement the closed half is the
+defect. What a person entering this repository in a terminal gets today is a banner, a
+`PATH`, a workflow bridge and, if nobody has started one, no runtime at all: no Cockpit, no
+HTTP API, no Swagger, no peer board — so no way for the other workers on this machine to
+see that they are not alone, which is the failure
+`project.work-is-claimed-before-it-is-built` exists to prevent and which this repository
+has paid for more than once. The remedy was a command to remember, which is the thing the
+design is against.
+
+Two things had to be told apart before this could be decided, because the old rule ran them
+together.
+
+**The objection ADR 0003 actually makes is about an unowned process, not about who typed
+the `cd`.** "No process without a client" is a statement about a server outliving the
+reason it exists. It was answered in time rather than at every instant when `serve ensure`
+was given `DEFAULT_IDLE_SECONDS`: a server nobody attaches to ends by itself. A shell that
+enters a repository, reads its environment and leaves is exactly as much — and exactly as
+little — of a client as an agent whose session the provider opened and closed. Both are
+covered by the same idle life, and neither leaves a process behind.
+
+**The objection to shell pipelines in `.envrc` is about the file, not about the effect.**
+`project.envrc-is-an-adapter` is right and stays: a `git rev-parse` there, a `curl` there, a
+pid read out of a lease with `sed` there, is a second implementation of something the
+executable already knows, running on the hot path of every `cd`, that nothing tests. None of
+that changes if the entry file calls one command whose whole behaviour is owned, typed,
+benchmarked and tested inside the executable.
+
+## Decision
+
+**Entering the repository is one call, and that call brings the runtime up.**
+
+- `.envrc` evaluates exactly one command of the tool, `majordomus env enter`, and contains
+  nothing else but a `PATH_add` and a `watch_file`. It carries no git, no `grep`, `sed`,
+  `awk` or `jq`, no pid, no port, no `curl`, no control flow and no business rule. That it
+  may now cause a server to exist does not loosen any of this; `project.envrc-is-an-adapter`
+  keeps its word list and gains the positive half — **one** call to the tool, and the
+  bootstrap one.
+- The **executable** owns the whole of entry: the environment it exports, the banner it
+  draws, the workflow bridge it refreshes when a declaration behind it moved, and the
+  runtime it ensures. `env enter` reads the policy once, resolves the snapshot from that
+  reading, and converges on a server through the same `converge` function `serve ensure`
+  calls — one implementation, two surfaces, per `project.interfaces-are-projections`.
+- **Entry never waits for readiness.** A cold entry reads the lease, finds that nothing
+  answers, starts a server as a process of its own and *returns*. The server becomes ready
+  beside the shell rather than in front of it, and `watch_file` over the lease is what
+  brings the published address into the environment a moment later. `--wait` exists for a
+  caller that wants the other behaviour; the entry file does not pass it.
+- **Entry never builds, and never ensures from a stale executable.** A missing executable
+  is one line on standard error and exit 0, as before. One that is older than its sources
+  is that same line *and no runtime*: the adapter sets `MAJORDOMUS_RUNTIME=off`, because a
+  server started from stale code answers with a tree that is no longer there — to the
+  Cockpit, to the API, and to every other worker attached to it, none of whom can see that
+  the process is older than the checkout it claims to serve. This is the refusal
+  `lib/capture.sh` already makes on the agent's path, decided by the same `mj_rust_stale`,
+  so a checkout where the two entry paths disagree cannot exist.
+- **Entry never fails.** Every runtime outcome is at most one line on standard error and an
+  exit of 0. A non-zero exit here makes direnv report that the whole environment failed and
+  leaves a person with a broken shell in a repository that is fine.
+- **One switch, both entry paths.** `session.ensure_server_on_start` is the repository's
+  answer to "does entering here bring the runtime up", and it now governs the shell as well
+  as the start event. No second key is added: a repository that answers that question twice
+  is a repository where the two answers drift. `MAJORDOMUS_RUNTIME=off` is the same refusal
+  for one person's shell rather than for the repository.
+- **Entry has a budget, and it is a policy key like any other.**
+  `benchmark.budget.enter_ms` and `benchmark.budget.enter_cold_ms` are declared in the
+  policy, the skeleton, the allow list and the schema, and `test/cases/190` measures both
+  and fails over either. Entering a directory is something a person does dozens of times a
+  day and never chose to wait for.
+
+**What is superseded.** The clause of `project.entry-converges` that reads "entry by a shell
+reports and does not serve", and the gate check that refused a server subcommand anywhere in
+the entry path. Both become: the entry file starts nothing *itself* — no builder, no
+background job, no `serve`, no `mcp` — and makes exactly one call to the bootstrap command,
+which is where starting anything is decided. The rule goes to version 2, and so does
+`project.envrc-is-an-adapter`.
+
+## Consequences
+
+**Good.** The requirement is met without anything to remember: a terminal in this repository
+has a Cockpit, an API and a peer board within a second of the `cd`, and the second worker on
+this machine can see the first. Both entry paths run one function, so an agent and a person
+converge on the same server rather than on two readings of the question. The stale-executable
+refusal now covers the path that had no opinion about it. The measured cost of the runtime
+half, warm, is inside the noise of what entry already cost: at a load average of 100, warm
+entry ran 166–241 ms against 166–287 ms for the old export-only entry.
+
+**Bad, and accepted.** A `cd` can now start a process. That is the whole decision, and what
+bounds it is the idle life: a server nobody attaches to ends. Ten shells entering a cold
+checkout at the same instant can each spawn a server before any of them has written a lease;
+the election — one `O_EXCL` create of the lease file — lets one of them serve and the rest
+exit 0 within milliseconds, so the outcome is one authoritative server and a few processes
+that lived for a moment. `test/cases/191` holds that, with real concurrent processes, for
+ten simultaneous entries, a dead pid in the lease, an occupied port, a server that crashes
+during startup, and two worktrees at once.
+
+**Watch for.** An entry that grows a second reason to be slow. The budget is the thing that
+notices, and it is a policy key so that raising it is a change a reviewer sees.
+
+## Alternatives considered
+
+**Leave it to the provider's start event.** It is what exists, and it serves agents only. A
+person in a terminal — and a generic MCP client that never sources `.envrc` — still had a
+command to remember.
+
+**Let `.envrc` call `serve ensure` directly.** One line, and it is the line the old rule was
+written against — for a good reason that survives this decision: it puts a *decision* in the
+entry file. Whether to ensure, with what idle life, on which port, when to stay silent, when
+to refuse because the executable is stale, are all things that then live in a shell file
+nothing tests. The bootstrap command exists precisely so that the entry file carries none of
+it.
+
+**Wait for readiness on a cold entry.** It would make the address available in the first
+shell rather than the second, and it would make the first `cd` into a repository a wait of
+seconds. `watch_file` already closes that gap without anybody waiting.
+
+**A second policy key for the shell path.** Rejected: one question, one switch. See above.

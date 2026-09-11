@@ -7,25 +7,34 @@
 # proved. What this gate holds together is everything that would have to be quietly undone
 # first, each of which is a file comparison:
 #
-#   1. entry by a shell starts nothing and builds nothing. The file a shell evaluates on
-#      entry (.envrc) and the adapter it calls (bin/majordomus-env) may not run the tool's
-#      server subcommands, invoke a builder, or background a process. ADR 0003 refuses a
-#      process without a client and a shell is not one; project.envrc-is-an-adapter already
-#      forbids reading the repository there, and test/cases/100 holds that half — this is
-#      the half that rule's word list never covered.
-#   2. the switch is declared wherever a key of the policy must be. `session.ensure_server_on_start`
-#      in this repository's policy, in the skeleton a new repository is written from, in the
-#      allow list and in the schema: a key the schema does not know is refused at run time
-#      (project.unknown-keys-are-errors), and one the skeleton lacks exists only here.
-#   3. the start event is where entry converges, and it is wired where the policy says. The
+#   1. entry by a shell starts nothing *itself* and builds nothing. Since ADR 0043 entering
+#      the repository does bring its runtime up — but through one bootstrap command of the
+#      executable, not through anything the shell file does. So .envrc and the adapter it
+#      calls may still not run the tool's server subcommands, invoke a builder or background
+#      a process; .envrc must make exactly one call to the tool; that call must be the
+#      bootstrap command; and it must not carry a `--wait`, which would turn entering a
+#      directory into a wait for a server to bind. project.envrc-is-an-adapter forbids
+#      reading the repository there and test/cases/100 holds that half — this is the half
+#      that rule's word list never covered.
+#   2. the shell's door ensures the way the agent's door does: it reads the same switch, it
+#      honours MAJORDOMUS_RUNTIME, the adapter turns the runtime off rather than ensuring
+#      from an executable older than its sources, and the convergence is the one function
+#      `serve ensure` calls rather than a second implementation of it.
+#   3. the switch and the budgets are declared wherever a key of the policy must be.
+#      `session.ensure_server_on_start`, `benchmark.budget.enter_ms` and
+#      `benchmark.budget.enter_cold_ms` in this repository's policy, in the skeleton a new
+#      repository is written from, in the allow list and in the schema: a key the schema does
+#      not know is refused at run time (project.unknown-keys-are-errors), and one the
+#      skeleton lacks exists only here.
+#   4. the start event is the agent's door, and it is wired where the policy says. The
 #      provider's start shim dispatches `capture session --event start`; the policy's
 #      enforcement list declares that shim, which is what makes `majordomus doctor` reconcile
 #      the wiring; and the start path asks the executable's `serve ensure` rather than
 #      starting or building a server itself.
-#   4. what a worker is told on entry has one author. The briefing composer takes the server
+#   5. what a worker is told on entry has one author. The briefing composer takes the server
 #      line as an argument from the event that ensured it and forms no opinion of its own:
 #      two readings of one state are two answers waiting to disagree.
-#   5. a server nobody owns has a bounded life: the idle life is one constant, greater than
+#   6. a server nobody owns has a bounded life: the idle life is one constant, greater than
 #      zero, and the server `ensure` starts is given it.
 #
 # What this gate deliberately does not check: that the lease has one reader. That is
@@ -93,28 +102,90 @@ entry_check() {
 
 for f in .envrc bin/majordomus-env; do
   if [ ! -f "$f" ]; then fail "$f is missing; it is what a shell evaluates on entry"; continue; fi
-  if entry_check "$f"; then ok "$f starts nothing and builds nothing"
-  else fail "$f starts something on entry (the lines above); entry by a shell reports and does not serve"; fi
+  if entry_check "$f"; then ok "$f starts nothing itself and builds nothing"
+  else fail "$f starts something on entry (the lines above); the entry file calls the bootstrap command and starts nothing itself"; fi
 done
-# The adapter names a stale executable rather than rebuilding it: the check above proves it
-# runs no builder, this proves it still looks.
+
+# ---------------------------------------------------------------- 1b. one call, and which
+#
+# ADR 0043: the entry file makes exactly one call to the tool, and it is the bootstrap
+# command. Two calls are two readings of the repository on the hot path of every `cd`; a
+# call that is not the bootstrap one means the entry file has started choosing between
+# commands, which is a decision, and decisions belong inside the executable where they are
+# typed and tested (project.envrc-is-an-adapter@2).
+#
+# Counted over the executable text, so that a command named inside a comment or a quoted
+# message is not mistaken for a call.
+ENVRC_STRIPPED="$(mktemp "${TMPDIR:-/tmp}/entry-converges.XXXXXX")"
+executable_text < .envrc > "$ENVRC_STRIPPED" 2>/dev/null || :
+CALLS="$(grep -cE '(^|[|;&(){]|\$\()[[:space:]]*(bin/)?majordomus[a-z-]*[[:space:]]' "$ENVRC_STRIPPED" 2>/dev/null || echo 0)"
+if [ "$CALLS" = 1 ]; then ok ".envrc makes exactly one call to the tool"
+else fail ".envrc makes $CALLS call(s) to the tool; entering the repository is one call (ADR 0043)"; fi
+if grep -Eq '(^|[|;&(){]|\$\()[[:space:]]*(bin/)?majordomus[a-z-]*[[:space:]]+enter([[:space:]]|"|$)' "$ENVRC_STRIPPED" 2>/dev/null; then
+  ok ".envrc's one call is the bootstrap command"
+else
+  fail ".envrc's one call is not the bootstrap command (\`majordomus env enter\`); whatever else it calls, the entry file is deciding something"
+fi
+# A wait here would make entering a directory a wait for a server to bind, which is the one
+# cost ADR 0043 refused to accept in exchange for the runtime.
+if grep -Eq -- '--wait' "$ENVRC_STRIPPED" 2>/dev/null; then
+  fail ".envrc passes --wait; entry never waits for a server it started to become ready"
+else ok ".envrc passes no --wait; entry starts a server and returns"; fi
+rm -f "$ENVRC_STRIPPED"
+
+# ------------------------------------------------- 2. the shell's door ensures like the agent's
+ENV_CMD='apps/majordomus-cli/src/commands/env.rs'
+if [ -f "$ENV_CMD" ]; then
+  if grep -q 'ensure_server_on_start' "$ENV_CMD"; then ok "the shell entry path reads session.ensure_server_on_start"
+  else fail "$ENV_CMD does not read session.ensure_server_on_start; the switch would govern one door only"; fi
+  if grep -q 'MAJORDOMUS_RUNTIME' "$ENV_CMD"; then ok "the shell entry path honours MAJORDOMUS_RUNTIME"
+  else fail "$ENV_CMD does not honour MAJORDOMUS_RUNTIME; a person could not enter without bringing the runtime up"; fi
+  # One implementation for both doors. A second one here is two answers to 'is a server
+  # already serving this checkout', at the one moment where disagreeing means two servers.
+  if grep -q 'serve::converge' "$ENV_CMD"; then ok "the shell entry path converges through the function serve ensure calls"
+  else fail "$ENV_CMD does not call commands::serve::converge; a second implementation of the convergence is two answers waiting to disagree"; fi
+  if executable_text < "$ENV_CMD" | grep -Eq '(Command::new\("cargo"\)|cargo build)'; then
+    fail "$ENV_CMD builds; nothing on entry may build the executable"
+  else ok "$ENV_CMD builds nothing"; fi
+else
+  fail "$ENV_CMD is missing; it carries the bootstrap command"
+fi
+# The adapter still looks for a stale executable — and since ADR 0043 it must also refuse to
+# ensure a runtime from one, because a server started from stale code answers with a tree
+# that is no longer there.
 if grep -q 'mj_rust_stale' bin/majordomus-env 2>/dev/null; then ok "bin/majordomus-env names a stale executable rather than rebuilding it"
 else fail "bin/majordomus-env does not consult mj_rust_stale; a stale executable would go unnamed"; fi
+if grep -Eq 'MAJORDOMUS_RUNTIME=off' bin/majordomus-env 2>/dev/null; then
+  ok "bin/majordomus-env ensures no runtime from a stale executable"
+else
+  fail "bin/majordomus-env does not turn the runtime off for a stale executable; entry would start a server from code that is no longer in the tree"
+fi
 
-# ------------------------------------------------------------------ 2. the switch is declared
-SWITCH='ensure_server_on_start'
-while IFS='|' read -r file what; do
-  [ -n "$file" ] || continue
-  if [ -f "$file" ] && grep -q "$SWITCH" "$file"; then ok "$what declares session.$SWITCH"
-  else fail "$what ($file) does not declare session.$SWITCH"; fi
-done <<'SITES'
+# --------------------------------------------- 3. the switch and the budgets are declared
+#
+# A key of the policy is declared in four places or in none. The budgets joined the switch
+# with ADR 0043: entering a directory is something a person does dozens of times a day and
+# never chose to wait for, and a budget that lives only in somebody's memory of how fast it
+# used to be is not a budget.
+for KEY in ensure_server_on_start enter_ms enter_cold_ms; do
+  while IFS='|' read -r file what; do
+    [ -n "$file" ] || continue
+    # the key, not a mention of it: a budget deleted from the policy while the comment above
+    # it still names the key is exactly the half-done state this check exists to refuse, and
+    # a bare substring match calls that clean. `enter_ms:` in a YAML, `"enter_ms":` in the
+    # schema, `...enter_ms$` in the allow list's anchored regex.
+    if [ -f "$file" ] && grep -qE "${KEY}\"?(:|[\$]|\$)" "$file"; then ok "$what declares $KEY"
+    else fail "$what ($file) does not declare $KEY"; fi
+  done <<'SITES'
 .ai/repo/policy.yaml|this repository's policy
 share/skeleton/policy.yaml|the policy a new repository is written from
 share/allow/policy.txt|the policy allow list
 share/schemas/majordomus/policy/policy.v1.schema.json|the policy schema
 SITES
+done
+SWITCH='ensure_server_on_start'
 
-# ------------------------------------------------------------------ 3. the start event is wired
+# ------------------------------------------------------------------ 4. the start event is wired
 SHIM='.claude/hooks/majordomus-session-start'
 if [ -f "$SHIM" ]; then
   if grep -Eq 'capture[[:space:]]+session' "$SHIM"; then ok "$SHIM dispatches 'capture session'"
@@ -147,7 +218,7 @@ else
   fail "$CAPTURE is missing; it carries the provider's start event"
 fi
 
-# ------------------------------------------------------------------ 4. one author for the briefing
+# ------------------------------------------------------------------ 5. one author for the briefing
 #
 # The briefing is handed where the server stands by the event that ensured it. That it does
 # not open the lease is `project.the-lease-is-read-once`'s to decide, for every file at once;
@@ -161,7 +232,7 @@ else
   fail "$DERIVE is missing; it composes the briefing"
 fi
 
-# ------------------------------------------------------------------ 5. a bounded life
+# ------------------------------------------------------------------ 6. a bounded life
 CLI='apps/majordomus-cli/src/cli.rs'
 if [ -f "$CLI" ]; then
   idle="$(sed -n 's/^pub const DEFAULT_IDLE_SECONDS: u64 = \([0-9]*\);$/\1/p' "$CLI")"
@@ -188,4 +259,4 @@ if [ "$findings" -gt 0 ]; then
   echo "entry-converges: $findings finding(s); the rule is project.entry-converges" >&2
   exit 10
 fi
-echo "entry-converges: entry starts nothing, the start event ensures where the policy says, the briefing has one author, and a server nobody owns ends"
+echo "entry-converges: the entry file starts nothing itself and makes one call, both doors ensure through one function and one switch, neither builds nor ensures from a stale executable, the switch and the budgets are declared in four places, the briefing has one author, and a server nobody owns ends"

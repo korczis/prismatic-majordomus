@@ -2978,6 +2978,24 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "label": "adr-0043",
+        "summary": "Entering the repository brings its runtime up, through one bootstrap command the entry file calls",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0043",
+        "source": ".ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "tags": [
+            "entry",
+            "mcp",
+            "environment",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -25580,36 +25598,38 @@
         }
       },
       {
-        "id": "majordomus://rule/project.entry-converges@1",
+        "id": "majordomus://rule/project.entry-converges@2",
         "kind": "rule",
-        "label": "project.entry-converges@1",
-        "summary": "Entering as an agent converges on a server; entering as a shell reports",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%401",
-        "source": ".ai/repo/rules/project/entry-converges.v1.md",
+        "label": "project.entry-converges@2",
+        "summary": "Entering the repository converges on a server, by either door, without anything to remember",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%402",
+        "source": ".ai/repo/rules/project/entry-converges.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [
-            "project.envrc-is-an-adapter@1",
+            "project.envrc-is-an-adapter@2",
             "project.shared-server-resilience@1",
             "project.interfaces-are-projections@1",
-            "project.the-lease-is-read-once@1"
+            "project.the-lease-is-read-once@1",
+            "project.every-wait-is-bounded@1"
           ],
           "tags": [
             "entry",
             "mcp",
             "environment",
-            "enforcement"
+            "enforcement",
+            "performance"
           ]
         }
       },
       {
-        "id": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "id": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "rule",
-        "label": "project.envrc-is-an-adapter@1",
-        "summary": "The shell entry point is an adapter, and repository facts come from one typed source",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.envrc-is-an-adapter%401",
-        "source": ".ai/repo/rules/project/envrc-is-an-adapter.v1.md",
+        "label": "project.envrc-is-an-adapter@2",
+        "summary": "The shell entry point is an adapter, and it makes one call",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.envrc-is-an-adapter%402",
+        "source": ".ai/repo/rules/project/envrc-is-an-adapter.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -28198,6 +28218,27 @@
         "label": "test/cases/18_doctrine_wiring.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F18_doctrine_wiring.sh",
         "source": "test/cases/18_doctrine_wiring.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/190_entry_is_automatic.sh",
+        "kind": "test",
+        "label": "test/cases/190_entry_is_automatic.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F190_entry_is_automatic.sh",
+        "source": "test/cases/190_entry_is_automatic.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/191_entry_races.sh",
+        "kind": "test",
+        "label": "test/cases/191_entry_races.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F191_entry_races.sh",
+        "source": "test/cases/191_entry_races.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
+        "kind": "test",
+        "label": "test/cases/192_entry_across_checkouts_and_clients.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F192_entry_across_checkouts_and_clients.sh",
+        "source": "test/cases/192_entry_across_checkouts_and_clients.sh"
       },
       {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
@@ -33340,6 +33381,11 @@
         "source": "majordomus://adr/adr-0040",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
         "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "kind:adr",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -42832,47 +42878,52 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
-        "target": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.entry-converges@2",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.shared-server-resilience@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.entry-converges@1",
+        "source": "majordomus://rule/project.entry-converges@2",
         "target": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "source": "majordomus://rule/project.envrc-is-an-adapter@2",
         "target": "majordomus://rule/project.no-network-no-eval@1",
         "kind": "depends_on"
       },
@@ -43803,6 +43854,21 @@
       },
       {
         "source": "majordomus://test/test/cases/18_doctrine_wiring.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/190_entry_is_automatic.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/191_entry_races.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/192_entry_across_checkouts_and_clients.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47328,8 +47394,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1455,
+      "edges": 3281,
       "acyclic": true,
       "truncated": false
     }

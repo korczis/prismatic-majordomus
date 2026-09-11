@@ -281,7 +281,40 @@ fn server_log(repo: &Repository) -> PathBuf {
     lease::lease_path(repo).with_file_name("server.log")
 }
 
-/// `serve ensure`: converge on a ready server for this checkout.
+/// Where a checkout's runtime stands after a call that tried to make it stand somewhere,
+/// and which arm of the loop the call left by.
+///
+/// This is the value both entry paths share. `serve ensure` renders it for a person and
+/// turns it into an exit code; `majordomus env enter` reads it on the shell-prompt path
+/// and says at most one line about it. Neither of them re-decides any of it, because two
+/// readings of one state are two answers waiting to disagree — the claim
+/// `project.interfaces-are-projections` makes of every other surface, and the reason the
+/// convergence itself is one function rather than one per caller.
+#[derive(Debug)]
+pub struct Convergence {
+    /// Where this checkout's server stands now.
+    pub standing: ServerStanding,
+    /// The lease it stands on, when there is one.
+    pub document: Option<LeaseDocument>,
+    /// Why the standing is not `ready`, in the words the standing itself gave.
+    pub reason: Option<String>,
+    /// Whether this call is what started the server that now stands there.
+    pub started: bool,
+    /// Whether the call ran out of `wait` rather than reaching a decision.
+    pub timed_out: bool,
+    /// Where a server this call started writes its log.
+    pub log: PathBuf,
+}
+
+impl Convergence {
+    /// Is the runtime there and answering for this checkout?
+    pub fn ready(&self) -> bool {
+        self.standing == ServerStanding::Ready
+    }
+}
+
+/// Converge on a ready server for this checkout: the whole of what `serve ensure` does,
+/// as a function, so that every entry path runs this one and not a copy of it.
 ///
 /// The loop reads the lease and probes the server it names on every round, exactly as the
 /// election does, and decides from the standing: `ready` ends it; `starting` waits;
@@ -289,14 +322,16 @@ fn server_log(repo: &Repository) -> PathBuf {
 /// that process takes a stale lease over itself; `outdated` starts one only when the
 /// election would take the lease over — the same executable, replaced on disk — and is
 /// otherwise reported with the remedy, because a server of another build that answers is
-/// not this command's to end. The whole call is bounded by `wait`.
-fn ensure(
-    repo: &Repository,
-    port: u16,
-    idle: u64,
-    wait: Duration,
-    format: OutputFormat,
-) -> Result<u8> {
+/// not this command's to end. The whole call is bounded by `wait`
+/// (`project.every-wait-is-bounded`).
+///
+/// `wait` of zero is a real value and not a degenerate one: it means *start what must be
+/// started and return*, which is what a shell prompt asks for. The server then becomes
+/// ready beside the shell rather than in front of it, and the entry file's `watch_file`
+/// over the lease is what brings the published address into the environment a moment
+/// later. Nothing is lost by not waiting: the election in the started process is what
+/// decides who serves, and it decides that whether or not anybody is watching.
+pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Result<Convergence> {
     let path = lease::lease_path(repo);
     let log = server_log(repo);
     let deadline = Instant::now() + wait;
@@ -310,8 +345,19 @@ fn ensure(
             crate::VERSION,
         );
         let doc = file.document().cloned();
+        // A function of `started` rather than a closure over it: the loop assigns to
+        // `started` in the arms below, and a closure that borrowed it would make that
+        // assignment a borrow-check error.
+        let settle = |started: bool, timed_out: bool| Convergence {
+            standing,
+            document: doc.clone(),
+            reason: reason.clone(),
+            started,
+            timed_out,
+            log: log.clone(),
+        };
         match standing {
-            ServerStanding::Ready => return report(standing, doc, None, started, &log, format),
+            ServerStanding::Ready => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 spawn_server(repo, port, idle, &log)?;
@@ -330,25 +376,50 @@ fn ensure(
                     spawn_server(repo, port, idle, &log)?;
                     started = true;
                 } else if !started || Instant::now() >= deadline {
-                    let remedy = format!(
-                        "{}; `majordomus serve stop` ends it, and `serve ensure` then starts one from this executable",
-                        reason.unwrap_or_default()
-                    );
-                    return report(standing, doc, Some(remedy), started, &log, format);
+                    return Ok(settle(started, false));
                 }
             }
         }
         if Instant::now() >= deadline {
-            let why = format!(
-                "{}no server became ready within {} second(s); the log is {}",
-                reason.map(|r| format!("{r}; ")).unwrap_or_default(),
-                wait.as_secs(),
-                log.display()
-            );
-            return report(standing, doc, Some(why), started, &log, format);
+            return Ok(settle(started, true));
         }
         std::thread::sleep(Duration::from_millis(200));
     }
+}
+
+/// `serve ensure`: converge on a ready server for this checkout, and say where it stands.
+///
+/// The convergence is [`converge`]'s; what belongs to the command is the phrasing of a
+/// standing that is not `ready` and the exit code that follows from it.
+fn ensure(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    wait: Duration,
+    format: OutputFormat,
+) -> Result<u8> {
+    let c = converge(repo, port, idle, wait)?;
+    let reason = if c.ready() {
+        None
+    } else if c.timed_out {
+        Some(format!(
+            "{}no server became ready within {} second(s); the log is {}",
+            c.reason
+                .as_ref()
+                .map(|r| format!("{r}; "))
+                .unwrap_or_default(),
+            wait.as_secs(),
+            c.log.display()
+        ))
+    } else if c.standing == ServerStanding::Outdated {
+        Some(format!(
+            "{}; `majordomus serve stop` ends it, and `serve ensure` then starts one from this executable",
+            c.reason.clone().unwrap_or_default()
+        ))
+    } else {
+        c.reason.clone()
+    };
+    report(c.standing, c.document, reason, c.started, &c.log, format)
 }
 
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,

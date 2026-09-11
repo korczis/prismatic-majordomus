@@ -60,6 +60,8 @@ benchmark:
   budget:
     doctor_ms: 3000
     watch_ms: 3000
+    enter_ms: 750                        # a `cd` into a checkout whose runtime is already up
+    enter_cold_ms: 1000                  # the one that starts a server — and returns, never waits
 
 # Use-case coverage: which gaps `doctor` reports and which it fails on. A fresh repository
 # has no use cases yet, so nothing is required until it says so.

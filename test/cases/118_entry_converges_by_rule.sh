@@ -8,6 +8,14 @@
 # for the server's standing beside the line the start event was handed — each is one
 # reasonable line, and each quietly removes a piece of it while every other gate stays green.
 #
+# ADR 0043 widened what the rule protects rather than narrowing it. Entry by a shell now
+# converges too, through one bootstrap command, so the things that can be quietly undone now
+# also include: a second call in the entry file, a `--wait` that turns entering a directory
+# into a wait for a bind, a shell entry path that stops reading the switch or stops honouring
+# MAJORDOMUS_RUNTIME, an adapter that ensures a runtime from an executable older than its
+# sources, a second implementation of the convergence beside the one `serve ensure` uses, and
+# a budget dropped from any of the four places a policy key lives.
+#
 # A gate that cannot be shown to fail is decoration, so each half is planted in a fixture
 # tree — a copy of the files the gate reads, never this checkout — and the same gate must
 # refuse it, naming the cause; then the fixture unmutated must be accepted. The fixture is
@@ -37,7 +45,7 @@ else
 fi
 
 # ---------------------------------------------------------------- the rule resolves
-RULE="$ROOT/.ai/repo/rules/project/entry-converges.v1.md"
+RULE="$ROOT/.ai/repo/rules/project/entry-converges.v2.md"
 expect_grep '^id: project\.entry-converges' "$RULE"
 expect_grep '^class: blocking' "$RULE"
 expect_grep 'scripts/ci/entry-converges' "$RULE"
@@ -56,7 +64,7 @@ for p in .envrc bin/majordomus-env lib/capture.sh lib/derive.sh \
          .ai/repo/policy.yaml share/skeleton/policy.yaml share/allow/policy.txt \
          share/schemas/majordomus/policy/policy.v1.schema.json \
          apps/majordomus-cli/src/cli.rs apps/majordomus-cli/src/lease.rs \
-         apps/majordomus-cli/src/commands/serve.rs; do
+         apps/majordomus-cli/src/commands/serve.rs apps/majordomus-cli/src/commands/env.rs; do
   [ -f "$ROOT/$p" ] || { echo "    the checkout has no $p; the gate reads it"; exit 1; }
   mkdir -p "$FX/$(dirname "$p")"
   cp "$ROOT/$p" "$FX/$p"
@@ -66,7 +74,7 @@ gate() { MJ_ROOT="$FX" "$GATE" --no-suite; }
 
 # the fixture as copied is this repository, so it passes
 expect_exit 0 gate
-expect_grep 'entry-converges: entry starts nothing'
+expect_grep 'entry-converges: the entry file starts nothing itself and makes one call'
 expect_no_grep '^FAIL'
 
 # one restorer for every mutation: keep a pristine copy, put it back afterwards
@@ -80,7 +88,29 @@ save .envrc
 printf 'bin/majordomus-cli serve ensure --idle 900\n' >> "$FX/.envrc"
 expect_exit 10 gate
 expect_grep 'starts a server on entry'
-expect_grep 'entry by a shell reports and does not serve'
+expect_grep 'the entry file calls the bootstrap command and starts nothing itself'
+restore .envrc
+
+# ------------------------------------------------- 1b. one call, the bootstrap one, no wait
+# A second call is two readings of the repository on every `cd`, and a file that chooses
+# between commands has started deciding things (project.envrc-is-an-adapter@2).
+printf 'eval "$(bin/majordomus-env banner)"\n' >> "$FX/.envrc"
+expect_exit 10 gate
+expect_grep 'makes 2 call\(s\) to the tool'
+restore .envrc
+
+# the one call being something other than the bootstrap command is the same failure, one
+# step earlier: whatever else it is, the file is deciding what entering means
+sed 's/enter --shell direnv/export --shell direnv --banner --bridge/' "$T/pristine" > "$FX/.envrc"
+expect_exit 10 gate
+expect_grep 'is not the bootstrap command'
+restore .envrc
+
+# and a wait turns entering a directory into a wait for a server to bind, which is the one
+# cost ADR 0043 refused to accept in exchange for the runtime
+sed 's/enter --shell direnv/enter --shell direnv --wait 20/' "$T/pristine" > "$FX/.envrc"
+expect_exit 10 gate
+expect_grep 'passes --wait'
 restore .envrc
 
 # a build on the hot path of every `cd`
@@ -100,14 +130,59 @@ expect_exit 10 gate
 expect_grep 'backgrounds a process'
 restore bin/majordomus-env
 
-# ---------------------------------------------------------------- 2. the switch is declared
+# an adapter that names a stale executable and then ensures a runtime from it anyway: the
+# server would answer with a tree that is no longer there, to every worker attached to it
+sed 's/export MAJORDOMUS_RUNTIME=off//' "$T/pristine" > "$FX/bin/majordomus-env"
+expect_exit 10 gate
+expect_grep 'does not turn the runtime off for a stale executable'
+restore bin/majordomus-env
+
+# ------------------------------------------------- 1c. the shell's door ensures like the agent's
+save apps/majordomus-cli/src/commands/env.rs
+sed 's/ensure_server_on_start/some_other_key/g' "$T/pristine" > "$FX/apps/majordomus-cli/src/commands/env.rs"
+expect_exit 10 gate
+expect_grep 'does not read session.ensure_server_on_start'
+restore apps/majordomus-cli/src/commands/env.rs
+
+sed 's/MAJORDOMUS_RUNTIME/MAJORDOMUS_SOMETHING/g' "$T/pristine" > "$FX/apps/majordomus-cli/src/commands/env.rs"
+expect_exit 10 gate
+expect_grep 'does not honour MAJORDOMUS_RUNTIME'
+restore apps/majordomus-cli/src/commands/env.rs
+
+# a second implementation of the convergence, which is two answers to 'is a server already
+# serving this checkout' at the one moment where disagreeing means two servers
+sed 's/serve::converge/my_own_converge/g' "$T/pristine" > "$FX/apps/majordomus-cli/src/commands/env.rs"
+expect_exit 10 gate
+expect_grep 'does not call commands::serve::converge'
+restore apps/majordomus-cli/src/commands/env.rs
+
+printf 'fn build() { Command::new("cargo").arg("build"); }\n' >> "$FX/apps/majordomus-cli/src/commands/env.rs"
+expect_exit 10 gate
+expect_grep 'builds; nothing on entry may build'
+restore apps/majordomus-cli/src/commands/env.rs
+
+# ------------------------------------------------- 2. the switch and the budgets are declared
 # A key in the policy the schema does not know is refused at run time, so the policy stops
 # parsing for everybody: the four sites are declared together or not at all.
 save share/schemas/majordomus/policy/policy.v1.schema.json
 sed 's/ensure_server_on_start/renamed_key/g' "$T/pristine" > "$FX/share/schemas/majordomus/policy/policy.v1.schema.json"
 expect_exit 10 gate
-expect_grep 'the policy schema .* does not declare session.ensure_server_on_start'
+expect_grep 'the policy schema .* does not declare ensure_server_on_start'
 restore share/schemas/majordomus/policy/policy.v1.schema.json
+
+# the budgets are keys of the policy like any other, and joined the switch with ADR 0043: a
+# budget that lives in one place only is a budget nothing can be held to
+save share/schemas/majordomus/policy/policy.v1.schema.json
+sed 's/enter_cold_ms/renamed_budget/g' "$T/pristine" > "$FX/share/schemas/majordomus/policy/policy.v1.schema.json"
+expect_exit 10 gate
+expect_grep 'the policy schema .* does not declare enter_cold_ms'
+restore share/schemas/majordomus/policy/policy.v1.schema.json
+
+save .ai/repo/policy.yaml
+sed 's/^    enter_ms:.*$//' "$T/pristine" > "$FX/.ai/repo/policy.yaml"
+expect_exit 10 gate
+expect_grep "this repository's policy .* does not declare enter_ms"
+restore .ai/repo/policy.yaml
 
 save share/skeleton/policy.yaml
 sed 's/ensure_server_on_start/renamed_key/g' "$T/pristine" > "$FX/share/skeleton/policy.yaml"

@@ -63,6 +63,29 @@ benchmark:
   budget:
     doctor_ms: 3000
     watch_ms: 3000
+    # Entering the repository (ADR 0043). `enter_ms` is a `cd` into a checkout whose runtime
+    # is already up, which is every entry but one; `enter_cold_ms` is the entry that finds
+    # nothing serving, starts a server and returns without waiting for it.
+    #
+    # The two are nearly the same number on purpose. Starting the runtime costs a fork and an
+    # exec and nothing else, because entry never waits for readiness — the entry file's
+    # `watch_file` over the lease is what brings the published address in a moment later. If
+    # these two ever drift apart, something on the cold path has started waiting.
+    #
+    # Measured, not guessed (test/cases/190 measures both on every run): on 2026-09-11, with
+    # this machine under a load average of 100–136 and a debug build, warm entry ran 134–241
+    # ms and a cold entry that started a server 185–217 ms. They are set above the worst of
+    # those rather than at the median, because what they must refuse is a change that makes
+    # entry structurally slower — an index build, a network call, a wait for readiness — and
+    # not a busy afternoon.
+    #
+    # What is deliberately outside both: the very first entry into a checkout nobody has
+    # entered yet, which was 1407 ms on the same machine. That is the fast resolver writing
+    # its cache for the first time; it cost the same before ADR 0043 as after, the runtime
+    # half contributes nothing to it, and a budget over it would be a budget over
+    # `environment::resolve` wearing entry's name.
+    enter_ms: 750
+    enter_cold_ms: 1000
 
 # Use-case coverage: every public command must be named and run by an active use case
 # (required); a guaranteed claim or an MCP tool without one is reported (advisory).
