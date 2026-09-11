@@ -106,6 +106,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in both places at once, to the bump the commits imply or to one you name |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
+| [`majordomus landing`](#majordomus-landing) | `/docs/cli/landing/` | What is preventing this repository from being completely landed and delivered: every stage of delivery with its verdict, the capability that decided it, and the remedy |
 | [`majordomus run`](#majordomus-run) | `/docs/cli/run/` | Run a capability as an execution and follow it: its steps, its progress and its output as they happen |
 | [`majordomus executions`](#majordomus-executions) | `/docs/cli/executions/` | The executions of the server serving this repository: what has run, what is running, and what each one said |
 | [`majordomus executions list`](#majordomus-executions-list) | `/docs/cli/executions/list/` | Every execution the server remembers, newest first |
@@ -119,7 +120,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus landing`](#majordomus-landing), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
 
 ```text
 majordomus <COMMAND>
@@ -2917,6 +2918,34 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /measured, /passes, /report/schema.
+
+<a id="majordomus-landing"></a>
+## `majordomus landing`
+
+What is preventing this repository from being completely landed and delivered: every stage of delivery with its verdict, the capability that decided it, and the remedy
+
+```text
+majordomus landing [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--all` | flag | — | Show every finding of every stage, not the first few of each |
+
+Examples:
+
+- **What is preventing this repository from being delivered** — Twelve stages of delivery, each answered by the capability that already owns the fact, with what it read and the command that would settle it. Exits 10 when any stage refuses or goes unanswered: a stage nothing answered is not a stage that passed.
+
+  ```console
+  $ majordomus landing --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /landed, /verdict, /stages.
 
 <a id="majordomus-run"></a>
 ## `majordomus run`

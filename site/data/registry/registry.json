@@ -6,26 +6,26 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "8bbc42f00422a1959c0fb06b731717bc0f0fd24a18092e17b73bf611c613d413",
+    "fingerprint": "deae3d084cc346aaf98d19a868637cc5b160d065f4ec9b9ec2f1c74891bf12cd",
     "summary": {
-      "total": 1249,
-      "builtin": 82,
-      "declarative": 1167,
+      "total": 1252,
+      "builtin": 83,
+      "declarative": 1169,
       "by_kind": {
         "command": 3,
-        "query": 79,
-        "resource": 1167
+        "query": 80,
+        "resource": 1169
       },
       "by_stability": {
-        "behaviorally_verified": 77,
-        "implemented": 1172
+        "behaviorally_verified": 78,
+        "implemented": 1174
       },
-      "mcp_tools": 80,
-      "mcp_resources": 1197,
-      "http_routes": 82,
-      "cli_commands": 34,
-      "modules": 56,
-      "benchmark_required": 79,
+      "mcp_tools": 81,
+      "mcp_resources": 1200,
+      "http_routes": 83,
+      "cli_commands": 35,
+      "modules": 57,
+      "benchmark_required": 80,
       "benchmark_waived": 3,
       "cached": 25
     },
@@ -15048,6 +15048,239 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
+        "id": "landing.closure",
+        "module": "landing",
+        "kind": "query",
+        "title": "What is preventing this repository from being landed",
+        "description": "Every stage of delivery with its verdict, the evidence that decided it, the capability that owns that evidence, the specific things standing in the way and the command that would settle each. `landed` is true only when every stage is answered and clear: a stage nothing answered leaves the repository unlanded, because absence of a refusal is not delivery.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "LandingClosure",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "[`SCHEMA`]."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit the verdict was taken over."
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The branch it was taken from."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk this repository lands on, as the topology decided it."
+              },
+              "landed": {
+                "type": "boolean",
+                "description": "True only when every stage passed or was exempt. A single unknown keeps it false:\na verdict that has not arrived is not a verdict that said yes."
+              },
+              "verdict": {
+                "type": "string",
+                "description": "The verdict in one line, naming the counts it is made of."
+              },
+              "stages": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/LandingStage"
+                },
+                "description": "Every stage, in the order delivery happens in."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many stages stand where, by status word."
+              },
+              "blocking": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The stages known to be wrong."
+              },
+              "unverified": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The stages nothing answered."
+              },
+              "at": {
+                "type": "string",
+                "description": "When the verdict was taken."
+              }
+            },
+            "required": [
+              "schema",
+              "landed",
+              "verdict",
+              "stages",
+              "tallies",
+              "blocking",
+              "unverified",
+              "at"
+            ],
+            "description": "```\nuse majordomus_cli::capability::builtin::landing::LandingClosure;\n\nlet c: LandingClosure = serde_json::from_value(serde_json::json!({\n    \"schema\": \"majordomus/landing-closure/v1\",\n    \"landed\": false,\n    \"verdict\": \"NOT LANDED — 0 stage(s) refusing, 1 unverified, 11 clear, of 12\",\n    \"stages\": [],\n    \"tallies\": { \"pass\": 11, \"queued\": 1 },\n    \"blocking\": [],\n    \"unverified\": [\"published\"],\n    \"at\": \"2026-01-01T00:00:00Z\"\n}))\n.unwrap();\n// nothing refuses and the repository is still not landed: a stage nothing answered is\n// not a stage that passed, which is the whole reason this document exists\nassert!(!c.landed);\nassert!(c.blocking.is_empty());\nassert_eq!(c.unverified, [\"published\"]);\n```\nWhether this repository is landed, and if not, what is holding it.",
+            "title": "LandingClosure",
+            "$defs": {
+              "LandingStage": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The stage's identity, stable across reports."
+                  },
+                  "question": {
+                    "type": "string",
+                    "description": "The question, as a person would ask it."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/GateStatus",
+                    "description": "The answer, in the vocabulary every gate of this repository is reported in."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "What was actually read. Never a restatement of the status."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "The capability that decided it."
+                  },
+                  "remediation": {
+                    "type": "string",
+                    "description": "What would settle it, as a command. Specific to this stage and this repository."
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The individual things standing in the way, each named."
+                  }
+                },
+                "required": [
+                  "id",
+                  "question",
+                  "status",
+                  "evidence",
+                  "source",
+                  "remediation"
+                ],
+                "description": "```\nuse majordomus_cli::capability::builtin::landing::LandingStage;\nuse majordomus_cli::gates::GateStatus;\n\nlet stage = LandingStage {\n    id: \"push\".into(),\n    question: \"Do the commits of every branch reach a remote?\".into(),\n    status: GateStatus::Fail,\n    evidence: \"2 of 9 branch(es) hold commits no remote has\".into(),\n    source: \"worktree.topology\".into(),\n    remediation: \"git push -u origin <branch>\".into(),\n    findings: vec![\"feature/x — 3 commit(s) not pushed\".into()],\n};\n// a stage that refuses names the engine that decided it, what that engine read, and the\n// individual things in the way: a verdict a reader cannot act on is the \"not ready\" this\n// type exists instead of\nassert!(stage.status.refuses());\nassert!(!stage.source.is_empty() && !stage.remediation.is_empty());\nassert_eq!(stage.findings.len(), 1);\n```\nOne stage of delivery, and what the engine that owns it said."
+              },
+              "GateStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pass",
+                    "description": "It ran over these inputs and succeeded. The only word that discharges anything."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "It ran over these inputs and failed. Completion is refused."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "Something it cannot run without has not passed, so its own silence means nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "queued",
+                    "description": "The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exempt",
+                    "description": "The plan does not select it: nothing the task changed can make it true or false."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass."
+                  }
+                ],
+                "description": "```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \"a run that failed refuses\");\nassert!(GateStatus::Queued.unverified(), \"asked and unanswered is a debt\");\nassert!(!GateStatus::Exempt.refuses() && !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \"stale\");\n```\nWhat is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::landing"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_landing",
+            "resource": {
+              "uri": "majordomus://landing",
+              "name": "landing"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/landing"
+          },
+          "cli": {
+            "path": [
+              "landing"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "landing",
+          "completion",
+          "delivery",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/landing.rs"
+      },
+      {
         "id": "objects.get",
         "module": "objects",
         "kind": "query",
@@ -29878,7 +30111,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 40,
         "capability_ids": []
       },
       {
@@ -30179,6 +30412,18 @@
         "capability_ids": []
       },
       {
+        "id": "landing",
+        "title": "Landing closure",
+        "description": "What is preventing this repository from being completely landed and delivered, right now. Twelve stages of delivery — implementation, tests, documentation, generated projections, commit, push, integration, CI, deployment, publication, project model, workspace cleanup — each answered by the capability that already owns the fact, translated into one status vocabulary, and folded into one verdict. Nothing here measures anything of its own: a stage is a question put to `plan.status`, `health.report`, `artifacts.list`, `worktree.topology`, `gates.completion`, `deploy.check` or `distribution.status`, and a stage whose owner could not answer is reported as unknown rather than as clear.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "landing.closure"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/landing.rs"
+      },
+      {
         "id": "milestone",
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
@@ -30410,7 +30655,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 155,
+        "capabilities": 156,
         "capability_ids": []
       },
       {
@@ -30490,7 +30735,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2104a741cd3066a8cd70daccca83f6114dd46200d9b933e15101a32f877c8430",
+    "fingerprint": "d4c4aa644ec3129a0c0dbf59dfd26785ce6745424db3385cf3f7bd6a40cdaa27",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -30513,7 +30758,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 39,
+      "adr": 40,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -30538,7 +30783,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 155,
+      "test": 156,
       "use-case": 43,
       "workspace": 1
     },
@@ -31173,6 +31418,22 @@
           "cockpit",
           "runtime",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0045",
+        "kind": "adr",
+        "identity": "adr-0045",
+        "title": "A repository is landed only when every stage of delivery says so",
+        "description": "A repository is landed only when every stage of delivery says so",
+        "path": ".ai/repo/adrs/0045-a-repository-is-landed-only-when-every-stage-of-delivery-says-so.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5268,
+        "tags": [
+          "architecture",
+          "governance",
+          "process"
         ]
       },
       {
@@ -41941,6 +42202,14 @@
         "bytes": 13112
       },
       {
+        "uri": "majordomus://test/test/cases/137_landing_closure.sh",
+        "kind": "test",
+        "identity": "test/cases/137_landing_closure.sh",
+        "path": "test/cases/137_landing_closure.sh",
+        "source_class": "case",
+        "bytes": 7728
+      },
+      {
         "uri": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "identity": "test/cases/13_region_projection.sh",
@@ -43314,7 +43583,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 40
     },
     {
       "name": "application",
@@ -43569,7 +43838,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 155
+      "objects": 156
     },
     {
       "name": "use-case",
@@ -56950,6 +57219,132 @@
       {
         "path": [
           "majordomus",
+          "landing"
+        ],
+        "route": "/docs/cli/landing/",
+        "executable": true,
+        "usage": "majordomus landing [OPTIONS]",
+        "about": "What is preventing this repository from being completely landed and delivered: every stage of delivery with its verdict, the capability that decided it, and the remedy",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          },
+          {
+            "name": "all",
+            "long": "all",
+            "positional": false,
+            "help": "Show every finding of every stage, not the first few of each",
+            "value_name": "ALL",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "landing-closure",
+            "title": "What is preventing this repository from being delivered",
+            "description": "Twelve stages of delivery, each answered by the capability that already owns the fact, with what it read and the command that would settle it. Exits 10 when any stage refuses or goes unanswered: a stage nothing answered is not a stage that passed.",
+            "argv": [
+              "landing",
+              "--format",
+              "json"
+            ],
+            "command": "majordomus landing --format json",
+            "setup": [],
+            "expectation": "exits 0; prints one JSON document carrying /landed, /verdict, /stages"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "run"
         ],
         "route": "/docs/cli/run/",
@@ -58241,6 +58636,16 @@
         "output": "Health"
       },
       {
+        "name": "majordomus_landing",
+        "id": "landing.closure",
+        "title": "What is preventing this repository from being landed",
+        "description": "Every stage of delivery with its verdict, the evidence that decided it, the capability that owns that evidence, the specific things standing in the way and the command that would settle each. `landed` is true only when every stage is answered and clear: a stage nothing answered leaves the repository unlanded, because absence of a refusal is not delivery.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "LandingClosure"
+      },
+      {
         "name": "majordomus_get",
         "id": "objects.get",
         "title": "Get one object",
@@ -58764,6 +59169,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://landing",
+        "name": "landing",
+        "id": "landing.closure",
+        "title": "What is preventing this repository from being landed",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://obligations/closure",
         "name": "obligation-closure",
         "id": "obligations.closure",
@@ -59119,6 +59531,12 @@
         "method": "GET",
         "path": "/api/v1/health",
         "id": "health.report",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/landing",
+        "id": "landing.closure",
         "kind": "query"
       },
       {
@@ -61089,6 +61507,35 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/health"
+      },
+      {
+        "key": "landing.closure|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "landing.closure",
+        "module": "landing",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "landing.closure|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "landing.closure",
+        "module": "landing",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_landing"
+      },
+      {
+        "key": "landing.closure|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "landing.closure",
+        "module": "landing",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/landing"
       },
       {
         "key": "objects.get|direct|first-object",
@@ -63856,6 +64303,27 @@
           "cases": 1
         },
         {
+          "subject": "landing.closure",
+          "module": "landing",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "landing.closure",
+          "module": "landing",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "landing.closure",
+          "module": "landing",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "objects.get",
           "module": "objects",
           "transport": "direct",
@@ -64852,20 +65320,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 82,
-          "covered": 79,
+          "required": 83,
+          "covered": 80,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 82,
-          "covered": 79,
+          "required": 83,
+          "covered": 80,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 80,
-          "covered": 77,
+          "required": 81,
+          "covered": 78,
           "missing": 0,
           "waived": 3
         },
@@ -64876,8 +65344,8 @@
           "waived": 0
         },
         "total": {
-          "required": 257,
-          "covered": 248,
+          "required": 260,
+          "covered": 251,
           "missing": 0,
           "waived": 9
         }

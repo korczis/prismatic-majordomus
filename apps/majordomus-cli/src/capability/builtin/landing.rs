@@ -47,6 +47,19 @@
 //! capability that answers it; a stage this repository cannot answer is reported as such
 //! rather than given a rule of its own. ADR 0045.
 
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::landing::module;
+//!
+//! // one declaration, and every surface is a projection of it
+//! let m = module();
+//! let c = &m.capabilities[0].capability;
+//! assert_eq!(c.id.as_str(), "landing.closure");
+//! assert_eq!(c.exposure.http.as_ref().unwrap().path, "/api/v1/landing");
+//! assert_eq!(c.exposure.cli.as_ref().unwrap().path, vec!["landing".to_string()]);
+//! assert!(c.exposure.mcp.is_some());
+//! ```
+
 use std::collections::BTreeMap;
 
 use schemars::JsonSchema;
@@ -72,6 +85,26 @@ pub const SCHEMA: &str = "majordomus/landing-closure/v1";
 
 // ---------------------------------------------------------------- the document
 
+/// ```
+/// use majordomus_cli::capability::builtin::landing::LandingStage;
+/// use majordomus_cli::gates::GateStatus;
+///
+/// let stage = LandingStage {
+///     id: "push".into(),
+///     question: "Do the commits of every branch reach a remote?".into(),
+///     status: GateStatus::Fail,
+///     evidence: "2 of 9 branch(es) hold commits no remote has".into(),
+///     source: "worktree.topology".into(),
+///     remediation: "git push -u origin <branch>".into(),
+///     findings: vec!["feature/x — 3 commit(s) not pushed".into()],
+/// };
+/// // a stage that refuses names the engine that decided it, what that engine read, and the
+/// // individual things in the way: a verdict a reader cannot act on is the "not ready" this
+/// // type exists instead of
+/// assert!(stage.status.refuses());
+/// assert!(!stage.source.is_empty() && !stage.remediation.is_empty());
+/// assert_eq!(stage.findings.len(), 1);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One stage of delivery, and what the engine that owns it said.
 pub struct LandingStage {
@@ -92,6 +125,26 @@ pub struct LandingStage {
     pub findings: Vec<String>,
 }
 
+/// ```
+/// use majordomus_cli::capability::builtin::landing::LandingClosure;
+///
+/// let c: LandingClosure = serde_json::from_value(serde_json::json!({
+///     "schema": "majordomus/landing-closure/v1",
+///     "landed": false,
+///     "verdict": "NOT LANDED — 0 stage(s) refusing, 1 unverified, 11 clear, of 12",
+///     "stages": [],
+///     "tallies": { "pass": 11, "queued": 1 },
+///     "blocking": [],
+///     "unverified": ["published"],
+///     "at": "2026-01-01T00:00:00Z"
+/// }))
+/// .unwrap();
+/// // nothing refuses and the repository is still not landed: a stage nothing answered is
+/// // not a stage that passed, which is the whole reason this document exists
+/// assert!(!c.landed);
+/// assert!(c.blocking.is_empty());
+/// assert_eq!(c.unverified, ["published"]);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Whether this repository is landed, and if not, what is holding it.
 pub struct LandingClosure {

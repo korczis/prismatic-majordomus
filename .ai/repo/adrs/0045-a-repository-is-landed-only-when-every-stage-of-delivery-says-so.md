@@ -10,8 +10,8 @@ tags:
   - governance
   - process
 related:
-  - adr:adr-0004
-  - adr:adr-0030
+  - file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md
+  - file:.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md
   - rule:majordomus.completion-gates
   - rule:majordomus.obligation-closure
   - rule:project.never-reported-is-not-green

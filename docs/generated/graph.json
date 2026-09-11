@@ -415,6 +415,15 @@
         "status": "query"
       },
       {
+        "id": "capability:landing.closure",
+        "kind": "capability",
+        "label": "landing.closure",
+        "summary": "What is preventing this repository from being landed",
+        "route": "/cockpit/capabilities/landing.closure",
+        "source": "apps/majordomus-cli/src/capability/builtin/landing.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:objects.get",
         "kind": "capability",
         "label": "objects.get",
@@ -1091,6 +1100,14 @@
         "label": "health.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/landing.rs",
+        "kind": "file",
+        "label": "landing.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/landing.rs",
         "external": true
       },
       {
@@ -2992,6 +3009,32 @@
             "cockpit",
             "runtime",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0045",
+        "kind": "adr",
+        "label": "adr-0045",
+        "summary": "A repository is landed only when every stage of delivery says so",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0045",
+        "source": ".ai/repo/adrs/0045-a-repository-is-landed-only-when-every-stage-of-delivery-says-so.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+            "file:.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md",
+            "rule:majordomus.completion-gates",
+            "rule:majordomus.obligation-closure",
+            "rule:project.never-reported-is-not-green",
+            "file:apps/majordomus-cli/src/capability/builtin/landing.rs",
+            "file:test/cases/137_landing_closure.sh"
+          ],
+          "tags": [
+            "architecture",
+            "governance",
+            "process"
           ]
         }
       },
@@ -28211,6 +28254,13 @@
         "source": "test/cases/131_completion_gates.sh"
       },
       {
+        "id": "majordomus://test/test/cases/137_landing_closure.sh",
+        "kind": "test",
+        "label": "test/cases/137_landing_closure.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F137_landing_closure.sh",
+        "source": "test/cases/137_landing_closure.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -30901,6 +30951,11 @@
         "label": "health"
       },
       {
+        "id": "module:landing",
+        "kind": "module",
+        "label": "landing"
+      },
+      {
         "id": "module:objects",
         "kind": "module",
         "label": "objects"
@@ -31656,6 +31711,26 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:landing.closure",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:landing.closure",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:landing.closure",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:landing.closure",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33427,6 +33502,46 @@
       {
         "source": "majordomus://adr/adr-0040",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/landing.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://adr/adr-0004",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://adr/adr-0030",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://rule/majordomus.obligation-closure@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0045",
+        "target": "majordomus://test/test/cases/137_landing_closure.sh",
         "kind": "put_in_force"
       },
       {
@@ -43885,6 +44000,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/137_landing_closure.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/13_region_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47230,6 +47350,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:landing",
+        "target": "capability:landing.closure",
+        "kind": "composes"
+      },
+      {
         "source": "module:objects",
         "target": "capability:objects.get",
         "kind": "composes"
@@ -47446,8 +47571,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1457,
-      "edges": 3288,
+      "nodes": 1462,
+      "edges": 3302,
       "acyclic": true,
       "truncated": false
     }

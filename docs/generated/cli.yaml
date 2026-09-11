@@ -9917,6 +9917,98 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - landing
+      route: /docs/cli/landing/
+      executable: true
+      usage: "majordomus landing [OPTIONS]"
+      about: "What is preventing this repository from being completely landed and delivered: every stage of delivery with its verdict, the capability that decided it, and the remedy"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+        - name: all
+          long: all
+          positional: false
+          help: "Show every finding of every stage, not the first few of each"
+          value_name: ALL
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+      examples:
+        - id: landing-closure
+          title: What is preventing this repository from being delivered
+          description: "Twelve stages of delivery, each answered by the capability that already owns the fact, with what it read and the command that would settle it. Exits 10 when any stage refuses or goes unanswered: a stage nothing answered is not a stage that passed."
+          argv:
+            - landing
+            - "--format"
+            - json
+          command: majordomus landing --format json
+          setup: []
+          expectation: "exits 0; prints one JSON document carrying /landed, /verdict, /stages"
+      subcommands: []
+    - path:
+        - majordomus
         - run
       route: /docs/cli/run/
       executable: true
