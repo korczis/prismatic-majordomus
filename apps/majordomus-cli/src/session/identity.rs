@@ -39,7 +39,7 @@
 //! use majordomus_cli::session::{CheckoutId, EpisodeId, ProviderSessionId, TaskId};
 //! use std::path::Path;
 //!
-//! let checkout = CheckoutId::of(Path::new("/Users/x/dev/repo-wt/feature/y"));
+//! let checkout = CheckoutId::of(Path::new("/src/repo-wt/feature/y"));
 //! let episode = EpisodeId::parse("s-20260910205542-e2a6").expect("an episode id");
 //! let provider = ProviderSessionId::new("01Bv2gJsfAoYrXnpfC9uJ4uv");
 //!
@@ -604,7 +604,7 @@ pub struct IdentityFacet {
 /// let local = RecordedSpelling {
 ///     spelling: Spelling::Local,
 ///     writer: "mj_git_repo_id (lib/common.sh)".into(),
-///     value: "/Users/x/dev/repo/.git".into(),
+///     value: "/src/repo/.git".into(),
 /// };
 /// // knowing which half a string came from is what stops a path being compared with a URL
 /// assert_eq!(local.spelling.as_str(), "local");

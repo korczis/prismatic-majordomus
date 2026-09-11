@@ -26179,7 +26179,7 @@
                 "spelling",
                 "writer"
               ],
-              "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/Users/x/dev/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+              "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
             },
             "Spelling": {
               "oneOf": [
