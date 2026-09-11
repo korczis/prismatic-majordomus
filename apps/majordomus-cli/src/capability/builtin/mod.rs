@@ -231,12 +231,15 @@ mod tests {
     /// tool's alone.
     #[test]
     fn the_capabilities_that_write_the_repository_are_these() {
-        let mut writers: Vec<String> = all()
+        // A BTreeSet rather than a Vec and a sort: the set is ordered by construction, and
+        // `order-check` counts every sort site in the crate against a baseline it may not
+        // exceed. A test that reached for one would spend that budget on itself.
+        let executables = all();
+        let writers: std::collections::BTreeSet<&str> = executables
             .iter()
             .filter(|e| e.capability.execution.effect == Effect::RepositoryMutation)
-            .map(|e| e.capability.id.to_string())
+            .map(|e| e.capability.id.as_str())
             .collect();
-        writers.sort();
-        assert_eq!(writers, ["plan.transition"]);
+        assert_eq!(writers.into_iter().collect::<Vec<_>>(), ["plan.transition"]);
     }
 }

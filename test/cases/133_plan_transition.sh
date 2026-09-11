@@ -58,8 +58,10 @@ note() { printf '    %s\n' "$1"; fail=1; }
 # only difference between the records afterwards is which engine wrote them. Plus the three
 # shapes every guard must refuse: a blocked issue, a cancelled one, and one whose evidence
 # its own record requires and does not have.
-cd "$S"
-git init -q . && git commit -q --allow-empty -m init
+# The harness's own scratch repository ($T, already `git init`ed with a committed identity
+# by test/run.sh) rather than one made here. A case that inits its own has no user.name and
+# no user.email, and every commit in it fails with "empty ident name not allowed" — which
+# CI reports and a developer's machine, carrying a global git identity, never sees.
 "$MJ" init >/dev/null 2>&1
 pj_init
 pj_milestone M000 0
@@ -135,14 +137,14 @@ refuses() { # <label> <issue> <transition> <expected substring>
 
 refuses "start on an ACTIVE issue"        I0002 start  "not READY"
 refuses "verify on an issue never started" I0003 verify "only an ACTIVE issue"
-refuses "done while a dependency is open" I0003 done   "cannot be DONE while"
+refuses "done while a dependency is open" I0003 'done' "cannot be DONE while"
 refuses "start on an unknown issue"       I9999 start  "no issue"
 
 # `done` on an ACTIVE issue whose own record requires evidence it does not carry. The guard
 # for this one is not a count — a record may carry two entries covering one token and none
 # covering another — so it asks what the plan would say and refuses when the answer is not
 # DONE. This assertion is the reason that indirection exists.
-refuses "done with required evidence absent" I0004 done "evidence"
+refuses "done with required evidence absent" I0004 'done' "evidence"
 
 # ---------------------------------------------------------------- 4. a refusal writes nothing
 # The property the whole design rests on: the guard runs before the record is opened, and
@@ -163,7 +165,7 @@ move I0002 verify > "$S/verify.json" || note "verify failed"
 # here is that the capability reads the result and stops refusing.
 "$MJ" plan evidence I0002 --covers proof --type test --command "bash test/run.sh 133_plan_transition" \
   --result "the transition is proved in two engines" >/dev/null 2>&1 || note "attaching evidence failed"
-move I0002 done > "$S/done.json" || note "done failed"
+move I0002 'done' > "$S/done.json" || note "done failed"
 [ "$(jq -r .to < "$S/done.json")" = DONE ] || note "done did not report DONE"
 
 # And the dependency that was blocked is now startable: the graph moved, and it moved in the
