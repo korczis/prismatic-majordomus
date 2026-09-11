@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/web-topology.schema.json",
+  "title": "Web surface topology",
+  "description": "docs/generated/web.json and web.yaml: every web surface this repository serves, resolved into one topology \u2014 the generated root, the mounts reserved by the executable itself, and one entry per surface with what produces it, where it is mounted, and whether it is available. Written by `majordomus generate`; validated by `majordomus web validate`.",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "generator",
+    "generated_root",
+    "reserved",
+    "surfaces"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus/web-topology/v1"
+    },
+    "generated": {
+      "type": "string",
+      "pattern": "^GENERATED FILE"
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reserved": {
+      "description": "The mounts the executable claims before any surface is placed. A surface may not collide with one.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "category",
+          "mount",
+          "producer",
+          "provenance",
+          "availability",
+          "visibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mount": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "producer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance": {
+            "description": "Where each field of this surface was decided, one entry per field the topology did not invent: the source that supplied it and, where a file supplied it, that file.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "enum": [
+                    "default",
+                    "filesystem",
+                    "registry",
+                    "site-config"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "availability": {
+            "type": "string",
+            "minLength": 1
+          },
+          "visibility": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
