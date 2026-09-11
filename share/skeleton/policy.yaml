@@ -34,6 +34,26 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The prompt archive under .ai/local/prompts/. Nothing used to bound it: the ledger, the
+# handovers and the checkpoints each rotate under a cap because each restates state that is
+# still available elsewhere, and a prompt restates nothing — so the archive grew without
+# limit, 20 MB of raw prompts in this repository before anyone measured it.
+#
+# What is bounded is the *body*, never the record. Pruning replaces the prompt text with a
+# tombstone and keeps every other field, including how the record came to be linked to its
+# episode: the archive stays a complete index of what was asked and when, and only the bytes
+# nobody can be held responsible for keeping go. A record is still never deleted.
+#
+# Two bounds, because they fail differently. `retention_max_days` is about exposure — raw
+# prompts carry credentials and customer names, and age is the only thing that reliably
+# reduces what they are worth to someone who should not have them. `retention_max_bytes` is
+# about the disk, and prunes oldest-first until the archive's bodies fit. Either alone is a
+# bound; both is the usual configuration. `majordomus capture prune` applies them, doctor
+# reports an archive over either, and nothing prunes behind a person's back.
+prompts:
+  retention_max_days: 90                 # a prompt body older than this is pruned
+  retention_max_bytes: 8388608           # 8 MiB of bodies; the oldest are pruned first
+
 # The provider's episode events do three things beyond drawing the boundary. The start event
 # hands the worker a briefing on standard output, which the provider adds to the context it
 # is about to build; the compaction event records a derived checkpoint, because a compaction
@@ -51,7 +71,7 @@ session:
   # (exact/advanced/diverged/different_context) is a fact about git topology and says
   # nothing about age; a record can be `advanced` and six days dead at the same time, and
   # that combination is what carried a finished instruction into every new episode for a
-  # week (ADR 0041). Declared once and read by every surface.
+  # week (ADR 0052). Declared once and read by every surface.
   freshness:
     fresh_minutes: 720                   # 12h: within a working day either side, current
     stale_minutes: 2880                  # 48h: beyond this it is history, never current
@@ -70,6 +90,8 @@ benchmark:
   budget:
     doctor_ms: 3000
     watch_ms: 3000
+    enter_ms: 750                        # a `cd` into a checkout whose runtime is already up
+    enter_cold_ms: 1000                  # the one that starts a server — and returns, never waits
 
 # Use-case coverage: which gaps `doctor` reports and which it fails on. A fresh repository
 # has no use cases yet, so nothing is required until it says so.

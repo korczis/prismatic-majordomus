@@ -726,6 +726,33 @@
       "source": "share/standard/majordomus/rules/prompt-capture.v1.md"
     },
     {
+      "id": "majordomus.prompt-continuity",
+      "slug": "prompt-continuity",
+      "title": "A prompt record carries its own identity, is bounded, and is private",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A prompt record carries the canonical episode, provider session, repository and worktree it was captured in, or records explicitly that no episode could be resolved; the archive is mode 0600, bounded by prompts.retention_max_days and prompts.retention_max_bytes, and obvious credential material is replaced before it is persisted.",
+      "summary": "Every captured prompt names the episode it belongs to or says why it cannot; the archive is readable by its owner alone, bounded by a declared retention policy, and never holds credential material verbatim.",
+      "validator": "prompt_continuity",
+      "validator_function": "mj_validate_prompt_continuity",
+      "defined_in": "lib/capture.sh",
+      "category": "prompts",
+      "enforced_by": [
+        "doctor",
+        "watch"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [
+        "prompt-continuity"
+      ],
+      "test": "test/cases/140_prompt_continuity.sh",
+      "depends_on": [
+        "majordomus.prompt-capture@1"
+      ],
+      "source": "share/standard/majordomus/rules/prompt-continuity.v1.md"
+    },
+    {
       "id": "majordomus.prompt-integrity",
       "slug": "prompt-integrity",
       "title": "Prompt integrity",
@@ -1140,8 +1167,8 @@
     }
   ],
   "counts": {
-    "declared": 41,
-    "blocking": 37,
+    "declared": 42,
+    "blocking": 38,
     "advisory": 4
   },
   "index": {
@@ -1171,20 +1198,21 @@
     "majordomus.context-budget": 23,
     "majordomus.deployment-contract": 24,
     "majordomus.prompt-capture": 25,
-    "majordomus.prompt-integrity": 26,
-    "majordomus.questions-store-integrity": 27,
-    "majordomus.retention-caps": 28,
-    "majordomus.roadmap-integrity": 29,
-    "majordomus.rule-package-integrity": 30,
-    "majordomus.schema-integrity": 31,
-    "majordomus.scope-integrity": 32,
-    "majordomus.session-records": 33,
-    "majordomus.session-lifecycle": 34,
-    "majordomus.skill-integrity": 35,
-    "majordomus.state-consistency": 36,
-    "majordomus.task-continuity": 37,
-    "majordomus.use-case-coverage": 38,
-    "majordomus.verification-integrity": 39,
-    "majordomus.obligation-closure": 40
+    "majordomus.prompt-continuity": 26,
+    "majordomus.prompt-integrity": 27,
+    "majordomus.questions-store-integrity": 28,
+    "majordomus.retention-caps": 29,
+    "majordomus.roadmap-integrity": 30,
+    "majordomus.rule-package-integrity": 31,
+    "majordomus.schema-integrity": 32,
+    "majordomus.scope-integrity": 33,
+    "majordomus.session-records": 34,
+    "majordomus.session-lifecycle": 35,
+    "majordomus.skill-integrity": 36,
+    "majordomus.state-consistency": 37,
+    "majordomus.task-continuity": 38,
+    "majordomus.use-case-coverage": 39,
+    "majordomus.verification-integrity": 40,
+    "majordomus.obligation-closure": 41
   }
 }

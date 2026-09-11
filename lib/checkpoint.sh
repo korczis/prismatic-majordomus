@@ -12,7 +12,7 @@
 # progress records for every episode after it — on 2026-09-05 that refusal stopped this
 # repository writing checkpoints for six days while doctor stayed green. A task is an
 # optional relation a checkpoint carries and names when it has one; it is not a permission
-# to exist (ADR 0041).
+# to exist (ADR 0052).
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
 # shellcheck source=derive.sh

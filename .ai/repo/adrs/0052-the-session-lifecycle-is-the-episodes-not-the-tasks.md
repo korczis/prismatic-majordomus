@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0041
+id: adr-0052
 kind: adr
 title: The session lifecycle is the episode's, not the task's
 status: proposed

@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 50
+weight = 53
 [extra]
 source = "docs/CI.md"
 +++
@@ -124,7 +124,9 @@ scripts/ci/worktree-check              # one constant, the guard wired, every do
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
 scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
 scripts/rust-check --integration       # the executable built and the registry checks only
-just coverage                          # line coverage against scripts/rust-coverage-threshold
+just coverage                          # coverage with test code out of the denominator, against
+                                      # scripts/rust-coverage-threshold and, for the session/continuity
+                                      # domain, scripts/session-coverage-threshold
 scripts/site-build && scripts/site-check
 SITE_PROBE_JOBS=4 scripts/site-probe   # every route at three widths, four routes at a time
 ```
@@ -228,6 +230,38 @@ this workflow is its own group and neither waits for nor cancels another, so a r
 a scarce runner does not hold up the next commit's evidence. Deployments are the opposite —
 `pages.yml` cancels a superseded deployment, because the site is a projection of the newest
 commit and finishing an older one would publish an older tree.
+
+### The three ways a deploy fails, and who reports each
+
+A deploy that does not put the intended commit in front of a reader has failed, and until
+2026-09-11 the three ways that happens were reported with three different volumes.
+
+**The build refuses.** `scripts/pages build` establishes the committed derived data is current
+by fingerprint before rendering it, and refuses a stale tree. The run goes red and the
+`publication state` step writes `::error title=Not published` on it. This is the loud one, and
+it is also by far the most frequent: both failures of 2026-09-11 (runs 34549001300 and
+34550274563, the merges of #202 and #203) were this, and both merge parents were already stale
+before the merge — the pull request's own `site` gate had been red and the merge happened
+anyway, because `master` has no required status check.
+
+**The run is cancelled.** `cancel-in-progress` is a push's privilege and a cancelled run is not
+a failure; `gh run list` says `cancelled` whether gh-pages was pushed or not. A run is only
+ever cancelled by a newer run of a newer commit starting, so the chain always ends in a run
+that publishes or one that goes red — a cancelled run cannot be made red from inside, so what
+acts on it is `pages-live` on the next validation of master.
+
+**GitHub's own build errors.** This was the silent one. Publishing is two steps and the second
+is GitHub's: `pages build and deployment` turns the pushed branch into the served bytes, and it
+can error on a branch that was pushed perfectly. On 2026-09-10 at 17:35:10Z it errored on
+gh-pages commit `dfd9c989c` with *Page build failed.*; the push had succeeded, the branch was
+right, the workflow reported success, and the site served the previous commit for 27 minutes
+with nothing red anywhere. The publication probe above it is `continue-on-error` on purpose —
+it waits on a queue, a build and a CDN that this repository does not own, and a gate on
+somebody else's latency is a gate that gets waived — but *slow* and *failed* are different
+facts and the second one has an API. `scripts/pages built` reads it, in one place, for both
+callers: `pages.yml` fails the run on an errored build at the moment it happens, and
+`scripts/ci/pages-check` asks the same question afterwards through the same command. A build
+that has merely not finished stays a note; only `errored` is a failure.
 
 ## Where a gate cannot reach
 

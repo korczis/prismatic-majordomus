@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.derived-once@1, project.interfaces-are-projections@1]
 tags: [web, architecture, projections]
+
+x-majordomus:
+  tests: [test/cases/84_web_surfaces.sh]
 ---
 
 # Rationale

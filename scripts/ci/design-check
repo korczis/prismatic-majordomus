@@ -53,11 +53,18 @@
 #       anybody: it is the implementation, never a surface. What holds it honest is that
 #       every value it emits for a surface comes from share/design/tokens.yaml through
 #       `generate --check`, which compares bytes.
-#   share/cockpit/graph.js
-#       computes a hue per node kind from the number of kinds. That is a categorical scale
-#       over data, generated at run time; there is no literal palette to share.
 #   scripts/lib/ui-contrast.mjs, scripts/lib/ui.test.mjs, scripts/lib/cockpit-probe.mjs
 #       colour arithmetic and colour measurement, not colour choice.
+#
+# share/cockpit/graph.js was on this list and is not any more. Its reason was that a hue per
+# node kind is "a categorical scale over data, generated at run time; there is no literal
+# palette to share" - and the second half was simply untrue: a categorical scale is exactly
+# the kind of thing a declaration can hold, the rule says an exemption is a reason rather
+# than a path, and the rotation it computed moved every kind's colour whenever one kind was
+# added. share/design/tokens.yaml now declares the series as eight roles, the viewer reads
+# `--mj-series-<n>` like any other token, and this gate reads the file like any other
+# surface. An exemption that can be removed by making the declaration bigger was never a
+# reason; it was a place the rule did not reach.
 #
 # `color-mix()` is deliberately not a literal: it composes values that are already tokens.
 #
@@ -83,7 +90,6 @@ first_party() { # the files a person writes that can put something on a screen
     -e '^share/design/[^/]+\.css$' -e '^apps/majordomus-cli/src/web/tokens\.css$' \
     -e '^apps/majordomus-cli/src/design/.*\.rs$' \
     -e '/vendor/' -e '^share/cockpit/cockpit\.css$' -e '^site/static/app\.css$' -e '^node_modules/' \
-    -e '^share/cockpit/graph\.js$' \
     -e '^scripts/lib/ui-contrast\.mjs$' -e '^scripts/lib/ui\.test\.mjs$' -e '^scripts/lib/cockpit-probe\.mjs$' \
     -e '^scripts/ci/design-check$' || true
 }
@@ -152,6 +158,19 @@ for file in $(printf '%s\n' "$tracked" | grep -E '\.(js|mjs|css|rs|html|tera)$' 
     # carries; `--mj-status-` and `--mj-design` are therefore declared by construction
     case "$token" in --mj-status-fg|--mj-status-bg|--mj-status-line|--mj-design) continue ;; esac
     printf '%s\n' "$declared" | grep -qx -- "$token" && continue
+    # A read that ends in `-` names a *family* rather than one token: share/cockpit/graph.js
+    # asks for `--mj-series-1`, `--mj-series-2` and so on until the page stops answering,
+    # because how many colours the categorical series has is the declaration's decision and
+    # not a number in a script. The question is the same one, asked of the family: the
+    # declaration must emit at least one member of it. A surface cannot invent a family, and
+    # the day `series` is removed from tokens.yaml this still fails.
+    case "$token" in
+      *-)
+        printf '%s\n' "$declared" | grep -q -- "^${token}[0-9a-z]" && continue
+        fail "$file  reads the family $token*, of which the declaration emits nothing"
+        continue
+        ;;
+    esac
     fail "$file  reads $token, which the declaration does not emit"
   done
 done

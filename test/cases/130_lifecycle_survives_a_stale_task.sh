@@ -15,7 +15,7 @@
 # continue work that had been finished for six days.
 #
 # The seed below is that state, to the day. Everything after it asserts that the lifecycle
-# now runs anyway (ADR 0041). A failure here is not a style regression; it is the same
+# now runs anyway (ADR 0052). A failure here is not a style regression; it is the same
 # outage returning.
 . "$ROOT/test/lib.sh"
 

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.no-claim-without-test@1, project.interfaces-are-projections@1]
 tags: [rust, command, testing]
+
+x-majordomus:
+  tests: [test/cases/88_rust_command_tested.sh, scripts/ci/rust-command-check]
 ---
 
 # Rationale

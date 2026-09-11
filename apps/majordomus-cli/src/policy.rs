@@ -82,14 +82,6 @@ pub struct FreshnessPolicy {
     pub stale_minutes: Option<i64>,
 }
 
-/// `session:` of the policy, the part the readers of the local half need.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
-pub struct SessionPolicy {
-    /// `session.freshness:`.
-    #[serde(default)]
-    pub freshness: FreshnessPolicy,
-}
-
 /// The policy, typed to what the projections consume. Every other key is carried through
 /// unread: the policy schema under `share/schemas/majordomus/policy/policy.v1.schema.json` owns the full shape.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
@@ -109,6 +101,53 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+}
+
+/// `session:` — what the episode boundary does beyond drawing itself.
+///
+/// Only the half two entry paths both read is typed here. The rest of the block is carried
+/// through unread, as every other key is: the policy schema owns the full shape.
+///
+/// ```
+/// use majordomus_cli::policy::SessionPolicy;
+/// // A policy that says nothing about it still converges. The default is what this
+/// // repository's policy and the skeleton a new one is written from both declare, and a
+/// // policy that could not be read must not silently change behaviour.
+/// assert!(SessionPolicy::default().ensure_server_on_start);
+/// // and a repository that has turned it off is read as having turned it off
+/// let off: SessionPolicy =
+///     serde_json::from_str(r#"{"ensure_server_on_start": false}"#).expect("a session block");
+/// assert!(!off.ensure_server_on_start);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct SessionPolicy {
+    /// `session.freshness:` — how old a continuation record may be before it stops being
+    /// current. A separate question from divergence, which is about git topology and says
+    /// nothing about age.
+    #[serde(default)]
+    pub freshness: FreshnessPolicy,
+    /// Whether entering the repository converges on a ready shared server.
+    ///
+    /// One switch, both entry paths: the provider's start event (ADR 0035) and the file a
+    /// shell evaluates on entry (ADR 0043). It defaults to `true` because that is what
+    /// this repository's policy and the skeleton a new one is written from both declare,
+    /// and because a policy that could not be read must not silently change behaviour —
+    /// an unreadable policy is `doctor`'s finding, not a reason to stop converging.
+    #[serde(default = "yes")]
+    pub ensure_server_on_start: bool,
+}
+
+impl Default for SessionPolicy {
+    fn default() -> Self {
+        SessionPolicy {
+            freshness: FreshnessPolicy::default(),
+            ensure_server_on_start: true,
+        }
+    }
+}
+
+fn yes() -> bool {
+    true
 }
 
 /// The policy as loaded: the typed value, where it came from, and the hash the stamps

@@ -8,7 +8,7 @@ mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
 
 # no task — the record is the episode's, so it is written, and the task field says `none`
 #
-# This asserted `exit 12, no active task` until ADR 0041. The refusal was the defect: it
+# This asserted `exit 12, no active task` until ADR 0052. The refusal was the defect: it
 # meant that finishing a task turned progress records off for every episode after it, and
 # between 2026-09-05 and 2026-09-11 this repository wrote no checkpoint at all while every
 # health check passed. A checkpoint belongs to the episode; a task is an optional relation
@@ -93,7 +93,7 @@ expect_exit 0 "$MJ" checkpoint --list
 
 # A handed-over task does not refuse a checkpoint.
 #
-# This asserted `exit 15, handed_over` until ADR 0041, and that refusal is the whole of the
+# This asserted `exit 15, handed_over` until ADR 0052, and that refusal is the whole of the
 # 2026-09-05 outage in one line: a task marked `handed_over` on the 5th and never replaced
 # silenced this repository's progress records for six days, while episodes kept opening and
 # closing and every health check passed. The episode that goes on working after a task is

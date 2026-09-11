@@ -40,7 +40,7 @@
           ".ai/local/state/checkpoints/"
         ]
       },
-      "explain": "A checkpoint belongs to the episode, not to a task. The record is written and its `task_id` is `none`, which is a fact a later reader can place; the ledger event it emits carries no `task_id` at all, because every reader of that event collects the field's distinct values as task identifiers. This scenario expected exit 12 until ADR 0041: refusing here meant that finishing a task silenced progress records for every episode after it, which is exactly what happened to this repository for six days from 2026-09-05."
+      "explain": "A checkpoint belongs to the episode, not to a task. The record is written and its `task_id` is `none`, which is a fact a later reader can place; the ledger event it emits carries no `task_id` at all, because every reader of that event collects the field's distinct values as task identifiers. This scenario expected exit 12 until ADR 0052: refusing here meant that finishing a task silenced progress records for every episode after it, which is exactly what happened to this repository for six days from 2026-09-05."
     }
   ]
 }

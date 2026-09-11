@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.5.0
 coverage:
   - scope: direct
-    required: 80
-    covered: 77
+    required: 94
+    covered: 90
     missing: 0
-    waived: 3
+    waived: 4
   - scope: http
-    required: 80
-    covered: 77
+    required: 93
+    covered: 90
     missing: 0
     waived: 3
   - scope: mcp
-    required: 78
-    covered: 75
+    required: 91
+    covered: 88
     missing: 0
     waived: 3
   - scope: system
@@ -26,10 +26,10 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 251
-    covered: 242
+    required: 291
+    covered: 281
     missing: 0
-    waived: 9
+    waived: 10
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -173,6 +173,37 @@ capabilities:
     cases:
       - all
       - roles
+  - id: devcontext.compile
+    module: devcontext
+    kind: query
+    cache: "process, 16 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - no-seed
+      - issue
+      - milestone
+      - intent
+  - id: devcontext.explain
+    module: devcontext
+    kind: query
+    cache: "process, 8 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - policy
+      - absent
+  - id: devcontext.policy
+    module: devcontext
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: devtask.issue
     module: devtask
     kind: query
@@ -268,6 +299,42 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: evidence.claim
+    module: evidence
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-claim
+  - id: evidence.record
+    module: evidence
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
+  - id: evidence.report
+    module: evidence
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - findings
+  - id: evidence.test
+    module: evidence
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-test
   - id: executions.cancel
     module: executions
     kind: command
@@ -375,6 +442,51 @@ capabilities:
     module: health
     kind: query
     cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: lifecycle.closed
+    module: lifecycle
+    kind: query
+    cache: "process, 2 entries, 30s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: lifecycle.episodes
+    module: lifecycle
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: lifecycle.providers
+    module: lifecycle
+    kind: query
+    cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: lifecycle.recovery
+    module: lifecycle
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: lifecycle.runtime
+    module: lifecycle
+    kind: query
+    cache: "process, 2 entries, 2s"
     direct: covered
     mcp: covered
     http: covered
@@ -658,6 +770,24 @@ capabilities:
     cases:
       - repository
       - this-checkout
+  - id: session_domain.identity
+    module: session_domain
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: session_domain.machine
+    module: session_domain
+    kind: query
+    cache: "process, 1 entries, 600s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: trace.commit
     module: trace
     kind: query

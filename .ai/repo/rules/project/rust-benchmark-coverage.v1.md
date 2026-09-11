@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [rust, performance, testing]
+
+x-majordomus:
+  tests: [test/cases/91_canonical_architecture.sh]
 ---
 
 # Rationale

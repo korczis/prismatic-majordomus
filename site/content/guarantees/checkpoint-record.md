@@ -1,7 +1,7 @@
 +++
 title = "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated"
 description = "majordomus checkpoint writes what is true right now — a few lines, inside an active task — with its git identity computed. It is written often. A handover is written rarely, has required sections, and is the package another worker resumes from. The two are different objects, and the cap is what keeps them different."
-weight = 63
+weight = 65
 [extra]
 claim_id = "checkpoint-record"
 status = "guaranteed"

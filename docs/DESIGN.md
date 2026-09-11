@@ -267,7 +267,15 @@ Design rules for this schema:
 - **No provider capability lives in the canonical layer.** Model names, tool grants,
   and vendor flags belong in projections.
 
-## Session Model
+## Task Model and Episode Model
+
+These are two models, and this document called them one until 2026-09-11. The confusion is
+not academic: making the second depend on the first is what let an ordinary finished task
+silently disable continuity for every conversation after it, for six days, while every
+diagnostic reported health; ADR 0052, "The session lifecycle is the episode's, not the
+task's", records the audit and the decision.
+
+A **task** is a unit of intended work that a person opens and closes.
 
 ```
 majordomus start <task>
@@ -290,13 +298,42 @@ majordomus check          --> state consistent? scope respected? blockers?
 majordomus finish         --> finish contract evaluated; refuses if unmet
 ```
 
-A session is bounded by `start` and either `finish` or `handover`. There is no
-"still open from Tuesday" state that Majordomus recognises as healthy. `watch`
-reports any task record whose last update predates its declared checkpoint interval.
+A task is bounded by `start` and either `finish` or `handover`. There is no "still open
+from Tuesday" state that Majordomus recognises as healthy; `watch` reports any task record
+whose last update predates its declared checkpoint interval.
 
-Majordomus does not hook the worker's runtime in v0.1. It is invoked by the person, by
-a git hook, or by the worker following its projected instructions. This is a known
-limitation and is stated as such.
+An **episode** is a provider's conversation boundary. It begins when a client attaches and
+ends when it detaches, whether or not anybody declared a task and whether or not the last
+task anybody declared was finished a week ago.
+
+```
+provider fires SessionStart --> session start --if-open keep   (keyed by the provider
+      |                                                         session, not the checkout)
+      |                                                         briefing to stdout
+      v
+   work happens, every command stamping its own episode id onto its ledger line
+      |
+provider fires PreCompact   --> checkpoint --derive            (a checkpoint is an artefact
+      |                                                         of the episode; no task
+      |                                                         is required)
+      v
+provider fires SessionEnd   --> handover, then session close   (the envelope's references
+                                                                computed from the ledger)
+```
+
+`task != session` in both directions: a task spanning two sittings is named by both
+episodes, and an episode that touches three tasks names all three. Task outcome may change
+what a continuation record *says*; it may never decide whether one is *written*.
+
+Majordomus does hook the worker's runtime, where the provider offers hooks to run.
+`majordomus capture install` writes the shims and names the configuration entries it will
+not rewrite for you; which events a provider's adapter drives is declared in
+`share/providers.yaml` and reported by `lifecycle.providers`. A provider with no adapter
+loses the automation and none of the model — every command below is unchanged, and running
+them is again a matter of remembering.
+
+[`CONTINUITY.md`](CONTINUITY.md) carries the whole path, from entry through the episode to
+the tracked record and a future resume, and the reading that lets a person watch it.
 
 ## Context Model
 

@@ -1398,7 +1398,7 @@ Events and their extra fields:
 | event | extra fields |
 |---|---|
 | `task.started` | `profile`, `scope[]`, `owner` |
-| `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved; `task_id` when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0041) |
+| `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved; `task_id` when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0052) |
 | `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`); `task_id` when a task was open, absent otherwise |

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [rust, testing, documentation]
+
+x-majordomus:
+  tests: [test/cases/77_rust_evidence.sh, scripts/rust-check]
 ---
 
 # Rationale

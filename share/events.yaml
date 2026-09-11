@@ -35,7 +35,7 @@ events:
     emitted_by: checkpoint
     requires: []
     public: true
-    note: "Written by checkpoint, and by check --checkpoint, which records one after its checks run. The checkpoint_path key is absent when the body was empty. task_id was required until ADR 0041: a checkpoint is an episode's record and an episode need not have a task, so the key is now absent rather than written as a literal none, which every reader of this event would otherwise collect as a task by that name."
+    note: "Written by checkpoint, and by check --checkpoint, which records one after its checks run. The checkpoint_path key is absent when the body was empty. task_id was required until ADR 0052: a checkpoint is an episode's record and an episode need not have a task, so the key is now absent rather than written as a literal none, which every reader of this event would otherwise collect as a task by that name."
 
   - id: task.handed_over
     title: Handover written
@@ -43,7 +43,7 @@ events:
     emitted_by: handover
     requires: [handover_path, closed]
     public: true
-    note: "task_id is present when a task was open and absent otherwise. Until ADR 0041 a handover written outside a task emitted nothing at all, so the one record a future worker resumes from could be written without leaving any trace in the ledger that reports on it — which is how six days of silence went unreported. The name is kept as written because it is already in every ledger that exists."
+    note: "task_id is present when a task was open and absent otherwise. Until ADR 0052 a handover written outside a task emitted nothing at all, so the one record a future worker resumes from could be written without leaving any trace in the ledger that reports on it — which is how six days of silence went unreported. The name is kept as written because it is already in every ledger that exists."
 
   - id: task.finished
     title: Task finished
@@ -187,3 +187,19 @@ events:
     requires: [adr, title]
     public: true
     note: Never emitted for an acceptance. The tool writes proposed and nothing else, so an accepted decision leaves no event here and the file's history is the record.
+
+  - id: prompts.reconciled
+    title: Prompt records reconciled to their episodes
+    summary: Every record in the prompt archive was re-examined and linked to the episode it belongs to, from evidence that still exists.
+    emitted_by: capture
+    requires: [records, linked, unlinked]
+    public: true
+    note: The unlinked count is the honest half of this line. A record whose episode no evidence can establish is marked as unlinked rather than attached to whichever episode was nearest in time, so this number is expected to stay above zero for every record written before the archive carried its own identity.
+
+  - id: prompts.pruned
+    title: Prompt bodies pruned under retention
+    summary: The prompt bodies over the declared age or size bound were replaced with a tombstone; every record, its identity and its provenance stayed.
+    emitted_by: capture
+    requires: [records, pruned, bytes_left]
+    public: true
+    note: A record is never deleted. What this event counts is bodies taken, and the record left behind still says when the prompt happened, in which episode, and the digest and length of what was removed.

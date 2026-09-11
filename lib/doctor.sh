@@ -513,7 +513,7 @@ mj_validate_prompts() {
 # the files and found them under the cap. `layout` found the directories present.
 # `resolver` found a record and reported its divergence label. All three passed, every day,
 # for the six days in which this repository wrote no checkpoint and no handover at all
-# (ADR 0041) — because a store that nothing writes to is perfectly reachable, perfectly
+# (ADR 0052) — because a store that nothing writes to is perfectly reachable, perfectly
 # well-formed and perfectly under its retention cap.
 #
 # The invariant here is the one that spans both halves: *if lifecycle events are arriving,

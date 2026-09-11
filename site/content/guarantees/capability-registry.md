@@ -1,7 +1,7 @@
 +++
 title = "Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties"
 description = "The Rust executable has one place where a capability exists: the registry composed in apps/majordomus-cli/src/app.rs from the executables listed in capability/builtin.rs and from every object of the repository's layer. Two definitions claiming one canonical id, two capabilities claiming one MCP tool name or resource URI, one HTTP method and path, or one CLI path, a route outside /api/v1/, a tool name outside [a-z0-9_]+, or an executable exposure on a planned capability: the registry does not build, every violation is listed with the provenance of both parties, and no interface is served."
-weight = 107
+weight = 109
 [extra]
 claim_id = "capability-registry"
 status = "guaranteed"

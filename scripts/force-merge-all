@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# force-merge-all — merge every local branch into one integration branch, bypassing hooks.
+#
+# It never moves master, never pushes, never deletes anything. Everything it does is
+# recoverable from the tag it writes before it starts.
+#
+#   env:
+#     BASE=master            branch the integration starts from
+#     PREFER=ours|theirs     conflict bias (ours = keep the integration side, default)
+#     INCLUDE_SCRATCH=1      also checkpoint detached worktrees under /tmp (peer sessions!)
+#     DRY_RUN=1              print the plan, touch nothing
+#     OUT=<dir>              where the tree and the report go
+set -uo pipefail
+
+REPO="${REPO:-$(cd "$(dirname "$0")/.." && pwd)}"
+BASE="${BASE:-master}"
+PREFER="${PREFER:-ours}"
+INCLUDE_SCRATCH="${INCLUDE_SCRATCH:-0}"
+DRY_RUN="${DRY_RUN:-0}"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+OUT="${OUT:-/tmp/force-merge-$STAMP}"
+BRANCH="int/force-merge-$STAMP"
+WT="$OUT/tree"
+LOG="$OUT/report.txt"
+GITLOG="$OUT/git.log"
+
+mkdir -p "$OUT"
+: > "$LOG"; : > "$GITLOG"
+say() { printf '%s\n' "$*" | tee -a "$LOG"; }
+
+say "force-merge-all  base=$BASE prefer=$PREFER dry_run=$DRY_RUN"
+say "repo=$REPO"
+say "out=$OUT"
+say ""
+
+# ---------------------------------------------------------------- safety net
+SAFETY="force-merge/base-$STAMP"
+if [ "$DRY_RUN" = 0 ]; then
+  git -C "$REPO" tag -f "$SAFETY" "$BASE" >/dev/null 2>&1 &&
+    say "safety tag: $SAFETY -> $(git -C "$REPO" rev-parse --short "$BASE")"
+else
+  say "would tag: $SAFETY -> $(git -C "$REPO" rev-parse --short "$BASE")"
+fi
+say ""
+
+# ------------------------------------------------- 1. checkpoint dirty worktrees
+say "== worktree checkpoint =="
+git -C "$REPO" worktree list --porcelain | awk '/^worktree /{print substr($0,10)}' |
+while IFS= read -r p; do
+  [ -d "$p" ] || { say "gone      $p"; continue; }
+  br="$(git -C "$p" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+  untracked="$(git -C "$p" ls-files --others --exclude-standard 2>/dev/null | grep -c . || true)"
+  if git -C "$p" diff --quiet 2>/dev/null && git -C "$p" diff --cached --quiet 2>/dev/null; then
+    [ "$untracked" -gt 0 ] && say "clean     ${br:-DETACHED}  ($untracked untracked, left alone)"
+    continue
+  fi
+  if [ "$br" = "$BASE" ]; then
+    say "SKIP      $BASE in $p — trunk is never committed to by this script"
+    continue
+  fi
+  if [ -z "$br" ]; then
+    case "$p" in
+      /tmp/*|/private/tmp/*)
+        if [ "$INCLUDE_SCRATCH" != 1 ]; then
+          say "SKIP      detached scratch $p (dirty; set INCLUDE_SCRATCH=1 to salvage)"
+          continue
+        fi ;;
+    esac
+    slug="$(printf '%s' "$p" | tr -c 'A-Za-z0-9' '-' | sed 's/-\{1,\}/-/g;s/^-//;s/-$//')"
+    br="salvage/force-merge-$STAMP-$slug"
+    if [ "$DRY_RUN" = 0 ]; then
+      git -C "$p" checkout -q -b "$br" >>"$GITLOG" 2>&1 || { say "FAIL      branch $br in $p"; continue; }
+    fi
+  fi
+  if [ "$DRY_RUN" = 1 ]; then
+    say "would     checkpoint $br ($p)"
+    continue
+  fi
+  git -C "$p" add -u >>"$GITLOG" 2>&1
+  if git -C "$p" commit --no-verify -q -m "chore(force-merge): checkpoint tracked changes on $br" >>"$GITLOG" 2>&1; then
+    say "committed $br  $(git -C "$p" rev-parse --short HEAD)  ($untracked untracked left alone)"
+  else
+    say "FAIL      commit in $p"
+  fi
+done
+say ""
+
+# ------------------------------------------------------ 2. integration worktree
+if [ "$DRY_RUN" = 0 ]; then
+  git -C "$REPO" worktree add -b "$BRANCH" "$WT" "$BASE" >>"$GITLOG" 2>&1 ||
+    { say "FATAL: cannot create worktree $WT"; exit 1; }
+  say "integration branch $BRANCH in $WT"
+else
+  say "would create $BRANCH in $WT"
+fi
+say ""
+
+BRANCHES="$(git -C "$REPO" for-each-ref --sort=committerdate --format='%(refname:short)' refs/heads/ |
+            grep -v -x "$BASE" | grep -v -x "$BRANCH")"
+say "== merging $(printf '%s\n' "$BRANCHES" | grep -c .) branches (oldest first) =="
+
+if [ "$DRY_RUN" = 1 ]; then
+  printf '%s\n' "$BRANCHES" | sed 's/^/would merge /' | tee -a "$LOG"
+  say ""
+  say "dry run only. report: $LOG"
+  exit 0
+fi
+
+g() { git -C "$WT" -c rerere.enabled=false "$@"; }
+clean=0; biased=0; forced=0; skipped=0; ancestor=0
+
+printf '%s\n' "$BRANCHES" | while IFS= read -r b; do
+  [ -n "$b" ] || continue
+  if g merge-base --is-ancestor "$b" HEAD 2>/dev/null; then
+    say "ancestor  $b"; continue
+  fi
+  if g merge --no-verify --no-edit -m "merge $b into $BRANCH" "$b" >>"$GITLOG" 2>&1; then
+    say "clean     $b"; continue
+  fi
+  files="$(g diff --name-only --diff-filter=U | tr '\n' ' ')"
+  g merge --abort >>"$GITLOG" 2>&1
+  if g merge --no-verify --no-edit -X "$PREFER" -m "merge $b into $BRANCH (-X $PREFER)" "$b" >>"$GITLOG" 2>&1; then
+    say "$PREFER      $b  [$files]"; continue
+  fi
+  # add/add, delete/modify and friends: resolve every remaining path to $PREFER by hand
+  for f in $(g diff --name-only --diff-filter=U); do
+    if [ "$PREFER" = theirs ]; then
+      g checkout --theirs -- "$f" >>"$GITLOG" 2>&1 || g rm -q -f -- "$f" >>"$GITLOG" 2>&1
+    else
+      g checkout --ours -- "$f" >>"$GITLOG" 2>&1 || g rm -q -f -- "$f" >>"$GITLOG" 2>&1
+    fi
+    g add -- "$f" >>"$GITLOG" 2>&1 || true
+  done
+  if g commit --no-verify -q -m "merge $b into $BRANCH (forced $PREFER)" >>"$GITLOG" 2>&1; then
+    say "forced    $b  [$files]"
+  else
+    g merge --abort >>"$GITLOG" 2>&1
+    g reset -q --hard >>"$GITLOG" 2>&1
+    say "SKIPPED   $b  [$files]"
+  fi
+done
+
+say ""
+say "== result =="
+say "branch  $BRANCH"
+say "tree    $WT"
+say "head    $(git -C "$WT" rev-parse --short HEAD)"
+say "commits ahead of $BASE: $(git -C "$WT" rev-list --count "$BASE..HEAD")"
+say ""
+say "report  $LOG"
+say "git log $GITLOG"
+say ""
+say "undo:   git -C $REPO worktree remove --force $WT; git -C $REPO branch -D $BRANCH"
+say "        (master untouched; pre-merge state also tagged $SAFETY)"

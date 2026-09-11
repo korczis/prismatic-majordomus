@@ -64,7 +64,7 @@ H
     mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   fi
   # The event is written whether or not a task was open. A continuation record is the one
-  # thing a future worker resumes from, and until ADR 0041 one written outside a task
+  # thing a future worker resumes from, and until ADR 0052 one written outside a task
   # emitted nothing — so the ledger that health is read from could not see that the writer
   # had stopped. task_id is omitted rather than written as "none", because every reader of
   # this event collects the field's distinct values as task identifiers.

@@ -26,6 +26,11 @@ use crate::worktree::{
     WorktreeState,
 };
 
+use crate::capability::builtin::lifecycle::{
+    ClosedSessions, EpisodeStanding, Episodes, PointerLayout, ProviderLifecycles, Recovery,
+    RuntimeView,
+};
+
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
@@ -1638,7 +1643,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
 ///
 /// Freshness is a second badge beside it and not a shade of the first, because the two
 /// answer different questions and their disagreement is the interesting case. This page
-/// showed one badge until ADR 0041, so a handover that was `advanced` and six days dead
+/// showed one badge until ADR 0052, so a handover that was `advanced` and six days dead
 /// rendered as a calm blue `advanced` with its `Next action` printed underneath in full.
 fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     let Some(r) = r else {
@@ -1711,6 +1716,332 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
                     .child(pre(r.next_action.clone()))
             }),
     )
+}
+
+
+/// Every open episode of this checkout's store, and not only the one the pointer follows.
+///
+/// The card above this one is `continuity.state`'s: the episode `session-current.yaml`
+/// resolves to, which is the episode the briefing is about and the only one that surface can
+/// name. This table is the store. On 2026-09-11 this repository held five open episodes in
+/// one checkout, four of which no surface could see, and an episode nobody can see is an
+/// episode that never closes.
+///
+/// The standing is a word beside a badge because the difference between `open` and
+/// `stranded` is the difference between "another window is using this" and "nothing can ever
+/// close this", and a reader must not have to infer that from a colour.
+fn episodes_card(e: &Episodes) -> El {
+    if e.episodes.is_empty() {
+        return card(
+            "Every open episode",
+            nothing(if e.present {
+                "The store is here and holds no open episode. Nothing is open in this repository."
+            } else {
+                "This checkout has no open-episode store yet. That is a fresh clone, not a fault: the first start event creates it."
+            }),
+        );
+    }
+    let rows: Vec<El> = e
+        .episodes
+        .iter()
+        .map(|x| {
+            let level = match x.standing {
+                EpisodeStanding::Current => "ok",
+                EpisodeStanding::Open => "info",
+                EpisodeStanding::Foreign => "warn",
+                EpisodeStanding::Stranded => "fail",
+            };
+            row(vec![
+                cell(mono(x.session_id.clone())),
+                cell(badge(level, x.standing.as_str())),
+                cell(
+                    el("span").text(if x.provider.is_empty() {
+                        "(opened by hand)"
+                    } else {
+                        &x.provider
+                    }),
+                ),
+                cell(mono(x.branch.clone())),
+                text_cell(x.started_at.clone()),
+                cell(if x.last_activity.is_empty() {
+                    el("span").text("(has written nothing)")
+                } else {
+                    el("span")
+                        .text(format!("{} · {}", x.last_activity, x.last_event))
+                }),
+                cell(if x.tasks.is_empty() {
+                    el("span").text("—")
+                } else {
+                    el("div")
+                        .class("mj-marks")
+                        .children(x.tasks.iter().map(|t| mono(t.clone())).collect::<Vec<_>>())
+                }),
+                text_cell(x.events.to_string()),
+            ])
+        })
+        .collect();
+    card_with(
+        "Every open episode",
+        badge(
+            if e.episodes.len() > 1 { "info" } else { "ok" },
+            format!("{} open", e.episodes.len()),
+        ),
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "One episode per provider window, read from the store rather than from the pointer. Only the one marked `current` is the episode the briefing above is about; the others are other workers, and their ledger lines are stamped with their own ids.",
+            ))
+            .child(table(
+                &[
+                    "Episode",
+                    "Standing",
+                    "Provider",
+                    "Branch",
+                    "Opened",
+                    "Last seen in the ledger",
+                    "Tasks it touched",
+                    "Events",
+                ],
+                rows,
+            ))
+            .children(
+                e.findings
+                    .iter()
+                    .map(|f| alert("info", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+    )
+}
+
+/// The commit this process is answering about, against the commit the repository is on.
+///
+/// A server that built its index once and held it answered every question — the API, MCP,
+/// this page — about a commit from whenever it started, and said nothing about it. There is
+/// no way to notice that from inside an answer, so the comparison is put on the page.
+fn runtime_card(r: &RuntimeView) -> El {
+    let short = |h: &str| h[..7.min(h.len())].to_string();
+    card_with(
+        "This process against the repository",
+        badge(if r.agree { "ok" } else { "fail" }, if r.agree { "current" } else { "behind" }),
+        el("div")
+            .child(facts(vec![
+                ("Serving", Node::Element(mono(short(&r.served_head)))),
+                ("Repository is on", Node::Element(mono(short(&r.repository_head)))),
+                ("Branch served", Node::Element(mono(r.served_branch.clone()))),
+                ("Branch now", Node::Element(mono(r.repository_branch.clone()))),
+                (
+                    "Working tree now",
+                    Node::Element(el("span").text(&r.repository_working_tree)),
+                ),
+                (
+                    "Objects in the served index",
+                    Node::Element(el("span").text(r.objects.to_string())),
+                ),
+                ("Index", Node::Element(el("span").text(&r.index_state))),
+            ]))
+            .child(alert(if r.agree { "ok" } else { "fail" }, r.note.clone())),
+    )
+}
+
+/// What each provider's adapter declares it can do, and what this repository wires to it.
+///
+/// Declared, never guessed. The obvious implementation reads `.claude/hooks/` and reports
+/// what it finds, which answers a different question — whether somebody ran the installer —
+/// and answers it as though it were a statement about the provider.
+fn providers_card(p: &ProviderLifecycles) -> El {
+    let rows: Vec<El> = p
+        .providers
+        .iter()
+        .map(|x| {
+            row(vec![
+                cell(el("span").text(&x.title)),
+                cell(if x.lifecycle.is_empty() {
+                    el("span").text("(no lifecycle adapter)")
+                } else {
+                    el("div")
+                        .class("mj-marks")
+                        .children(x.lifecycle.iter().map(|e| tag(e.clone())).collect::<Vec<_>>())
+                }),
+                cell(badge(
+                    if x.prompt_capture { "ok" } else { "info" },
+                    if x.prompt_capture { "yes" } else { "no" },
+                )),
+                cell(if x.client_config.is_empty() {
+                    el("span").text("—")
+                } else {
+                    mono(x.client_config.clone())
+                }),
+                cell(if x.wired.is_empty() {
+                    el("span").text("—")
+                } else {
+                    el("div")
+                        .class("mj-marks")
+                        .children(x.wired.iter().map(|w| tag(w.clone())).collect::<Vec<_>>())
+                }),
+            ])
+        })
+        .collect();
+    card_with(
+        "Providers",
+        badge(
+            "info",
+            format!("{} of {} with a lifecycle adapter", p.with_lifecycle, p.providers.len()),
+        ),
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "What the distribution declares each adapter can do, in the provider's own vocabulary, beside the enforcement entries this repository's policy wires to its hook. Whether a shim is installed in this checkout is a different question, and `majordomus capture status` is the command that owns it.",
+            ))
+            .child(table(
+                &["Provider", "Lifecycle events", "Prompt capture", "Client configuration", "Wired here"],
+                rows,
+            ))
+            .children(
+                p.findings
+                    .iter()
+                    .map(|f| alert("warn", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+    )
+}
+
+/// What the store needs somebody to do: stranded episodes, orphan temporary files, the
+/// migration status of the pointer, and the started-against-closed arithmetic.
+///
+/// Every row carries the command that clears it. A finding with no remedy is a complaint,
+/// and a page full of complaints teaches a reader to stop reading it.
+fn recovery_card(r: &Recovery) -> El {
+    let clean = r.stranded.is_empty() && r.orphans.is_empty() && r.balance.agrees
+        && r.pointer.layout != PointerLayout::Inline;
+    let body = el("div")
+        .child(facts(vec![
+            (
+                "Pointer",
+                Node::Element(badge(
+                    match r.pointer.layout {
+                        PointerLayout::Pointer if r.pointer.resolves => "ok",
+                        PointerLayout::Absent => "info",
+                        _ => "warn",
+                    },
+                    r.pointer.layout.as_str(),
+                )),
+            ),
+            (
+                "Episodes accounted for",
+                Node::Element(badge(
+                    if r.balance.agrees { "ok" } else { "warn" },
+                    format!(
+                        "{} started · {} closed · {} open",
+                        r.balance.started, r.balance.closed, r.balance.open
+                    ),
+                )),
+            ),
+        ]))
+        .child(alert("info", r.pointer.note.clone()))
+        .child(alert(
+            if r.balance.agrees { "info" } else { "warn" },
+            r.balance.note.clone(),
+        ))
+        .when(!r.stranded.is_empty(), |d| {
+            d.child(el("h3").class("mj-card-title").text("Cannot close themselves"))
+                .child(table(
+                    &["Episode", "Why", "Clears it"],
+                    r.stranded
+                        .iter()
+                        .map(|x| {
+                            row(vec![
+                                cell(mono(x.session_id.clone())),
+                                cell(el("span").text(&x.reason)),
+                                cell(mono(x.remedy.clone())),
+                            ])
+                        })
+                        .collect(),
+                ))
+        })
+        .when(!r.orphans.is_empty(), |d| {
+            d.child(el("h3").class("mj-card-title").text("Temporary files left behind"))
+                .child(table(
+                    &["Path", "Bytes"],
+                    r.orphans
+                        .iter()
+                        .map(|o| row(vec![cell(mono(o.path.clone())), text_cell(o.bytes.to_string())]))
+                        .collect(),
+                ))
+        })
+        .when(clean, |d| {
+            d.child(nothing(
+                "Nothing to recover: every open record names a worktree that exists, no close left a temporary file behind, and the ledger's arithmetic adds up.",
+            ))
+        });
+    card_with(
+        "Recovery",
+        badge(
+            if clean { "ok" } else { "warn" },
+            if clean {
+                "clean".to_string()
+            } else {
+                format!("{} to look at", r.findings.len())
+            },
+        ),
+        body,
+    )
+}
+
+/// The tracked records a clone receives — the only half of this subsystem that travels.
+fn closed_card(c: &ClosedSessions) -> El {
+    if c.total == 0 {
+        return card(
+            "Closed episodes",
+            nothing("No episode has closed into the layer's sessions section yet."),
+        );
+    }
+    let rows: Vec<El> = c
+        .newest
+        .iter()
+        .map(|x| {
+            row(vec![
+                cell(link(
+                    format!("/cockpit/object?uri={}", percent_encode(&x.uri)),
+                    x.session_id.clone(),
+                )),
+                text_cell(x.created_at.clone()),
+                cell(mono(x.branch.clone())),
+                cell(if x.outcome.is_empty() {
+                    el("span").text("—")
+                } else {
+                    word_badge(&x.outcome)
+                }),
+                cell(el("span").text(&x.title)),
+            ])
+        })
+        .collect();
+    card_with(
+        "Closed episodes",
+        badge("info", format!("{} tracked", c.total)),
+        el("div")
+            .child(
+                el("div").class("mj-stats").children(vec![
+                    statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                    statistic(
+                        c.on_this_branch.to_string(),
+                        "on this branch",
+                        ".ai/repo/sessions",
+                    ),
+                    statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+                ]),
+            )
+            .child(table(
+                &["Episode", "Closed", "Branch", "Outcome", "Title"],
+                rows,
+            )),
+    )
+}
+
+/// One section that could not be read, as a card rather than as a dead page.
+///
+/// The continuity page asks six capabilities now. Failing the whole page because one of them
+/// could not answer would hide the five that could, and the one a reader most needs is the
+/// one most likely to fail: a store nothing has written yet.
+fn section_error(title: &str, e: String) -> El {
+    card(title, alert("fail", e))
 }
 
 /// What this checkout's lifecycle is holding.
@@ -1863,9 +2194,29 @@ pub fn continuity(ctx: &Context) -> Page {
                 "No checkpoint resolves here yet.",
             ))
             .child(blockers)
+            .child(match ask::<Episodes>(ctx, "lifecycle.episodes", json!({})) {
+                Ok(e) => episodes_card(&e),
+                Err(e) => section_error("Every open episode", e),
+            })
+            .child(match ask::<RuntimeView>(ctx, "lifecycle.runtime", json!({})) {
+                Ok(r) => runtime_card(&r),
+                Err(e) => section_error("This process against the repository", e),
+            })
+            .child(match ask::<Recovery>(ctx, "lifecycle.recovery", json!({})) {
+                Ok(r) => recovery_card(&r),
+                Err(e) => section_error("Recovery", e),
+            })
+            .child(match ask::<ProviderLifecycles>(ctx, "lifecycle.providers", json!({})) {
+                Ok(p) => providers_card(&p),
+                Err(e) => section_error("Providers", e),
+            })
+            .child(match ask::<ClosedSessions>(ctx, "lifecycle.closed", json!({})) {
+                Ok(c) => closed_card(&c),
+                Err(e) => section_error("Closed episodes", e),
+            })
             .node(findings),
     )
-    .subtitle("What this checkout's lifecycle is holding. Local to this machine, served here and published nowhere.")
+    .subtitle("What this checkout's lifecycle is holding, and what the subsystem around it is doing. Local to this machine, served here and published nowhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Continuity", None)])
 }
 

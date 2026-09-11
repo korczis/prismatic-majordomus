@@ -4,7 +4,7 @@ description = "Completion for any surface, answered from the command graph: the 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 60
+weight = 61
 [extra]
 route = "/docs/cli/completion/"
 command = "majordomus completion"

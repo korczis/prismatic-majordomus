@@ -236,7 +236,7 @@ mj_derive_gather() {
   fi
 
   # The newest checkpoint on this worktree and branch, whether or not a task named it: a
-  # checkpoint is the episode's record (ADR 0041), and an episode working outside a task
+  # checkpoint is the episode's record (ADR 0052), and an episode working outside a task
   # still wrote the ones it wrote.
   local want_task=""; [ "$MJ_DV_TASK_ID" != none ] && want_task="$MJ_DV_TASK_ID"
   if mj_resolve_latest "$MJ_STATE_DIR/checkpoints" "$want_task"; then
@@ -369,7 +369,7 @@ mj_derive_briefing_body() {
     # record's commit sits relative to HEAD; mj_freshness says how old it is. A record can
     # be `advanced` — its commit an ancestor of HEAD, which sounds like agreement — and six
     # days dead at the same time. That combination carried a finished instruction into
-    # every new episode here for a week (ADR 0041).
+    # every new episode here for a week (ADR 0052).
     local fresh; mj_freshness "$MJ_RES_CREATED" >/dev/null; fresh="$MJ_FRESH_STATE"
     if mj_freshness_is_history "$fresh"; then
       printf 'Historical handover %s (%s, %s).\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" \

@@ -4,7 +4,7 @@
 # relative to HEAD. It is a true statement about git topology and it says nothing at all
 # about age — a record is `advanced` on the day it is written and still `advanced` a month
 # later. On 2026-09-05 that word carried a finished instruction into every new episode in
-# this repository for six days (ADR 0041).
+# this repository for six days (ADR 0052).
 #
 # So there is a second judgement beside it, in five words, decided against thresholds
 # declared once in the policy. The clock is injected rather than waited on: the thresholds

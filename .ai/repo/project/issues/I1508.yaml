@@ -1,0 +1,34 @@
+id: I1508
+milestone: development-runtime
+title: The navigation is derived from the dispatcher, not kept beside it
+slug: phase-f-navigation-is-derived
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Reconcile the Cockpit's area list against the routes the dispatcher actually answers, and derive or check the route table in docs/COCKPIT.md, so that a routed page cannot be invisible."
+why: "F5 of the audit's failure table, and it is independent of every other issue here, which is why it is cheap and should not wait. The literal area list in nav.rs is already behind the dispatcher — Executions and Quality are declared in the Area enum, rendered by pages and routed, and absent from the list — and three surfaces read the stale list: the sidebar, the product model's area validation, and the site's cockpit-areas dataset. The public route table in docs/COCKPIT.md is missing five routes the dispatcher answers. The compounding failure is that the Cockpit probe crawls out of the navigation, so a page absent from the navigation is a page nothing checks: new pages are invisible by default and the mechanism that would notice cannot see them."
+current_state: "nav.rs::areas() is a hand-kept literal. docs/COCKPIT.md's route table is missing commands, continuity, directories, artifacts and quality. Page URLs and API endpoints are written as literals throughout pages.rs, including a hand-written mirror of the navigation on the 404 page."
+desired_state: "One declaration decides which areas exist. The sidebar, the product model, the site dataset and the documented route table are projections of it, and a routed page that no area names is a reported failure rather than an unreachable page."
+scope:
+  - apps/majordomus-cli/src/cockpit
+  - docs/COCKPIT.md
+  - test/cases
+non_scope:
+  - Adding any page. This issue makes the existing ones reachable and checkable.
+  - The design of the sidebar. Nothing here changes how it looks.
+depends_on: []
+acceptance_criteria:
+  - A route the dispatcher answers and no area names is a reported failure
+  - The sidebar, the product model's area validation and the site dataset read one declaration
+  - The route table in docs/COCKPIT.md is generated or checked against the dispatcher
+  - The probe reaches every routed page
+validation:
+  - bash test/run.sh
+  - bin/majordomus-cli product validate
+  - bin/majordomus-cli generate --check
+evidence_required:
+  - no_unlisted_route
+  - route_table_is_checked
+risk: "Low. The one trap is that the route table lives in a file that is currently hand-written and public; deriving it changes who may edit it, and that must be said in the file itself."
+created_at: 2026-09-11
+updated_at: 2026-09-11

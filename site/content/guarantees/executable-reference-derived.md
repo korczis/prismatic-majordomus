@@ -1,7 +1,7 @@
 +++
 title = "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone"
 description = "Nobody writes a page for a capability, a module, an MCP tool or a benchmark target. The executable generates a manifest of its registry (docs/generated/registry.json) and a dataset for the site (site/data/registry/registry.json); the site generator turns the manifest's ids into routes and links, and the templates lay the dataset out. Add a capability to the registry and run just derive: it has a page under /registry/capabilities/, a row on its module's page and on the capabilities index, an anchor on the API reference, a row on the MCP page and on the benchmarks page, and a link to the file it was composed in. Remove it: every one of those goes, and no page is left behind."
-weight = 139
+weight = 141
 [extra]
 claim_id = "executable-reference-derived"
 status = "guaranteed"
