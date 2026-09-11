@@ -44,6 +44,7 @@ pub mod evidence;
 pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
+pub mod lifecycle;
 pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
@@ -95,6 +96,11 @@ pub use executions::{
 };
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
+pub use lifecycle::{
+    Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
+    PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
+    EPISODES_URI, RECOVERY_URI,
+};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
     ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
@@ -135,6 +141,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        lifecycle,
         obligations,
         deploy,
         evidence,

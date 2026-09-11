@@ -1,7 +1,7 @@
 +++
 title = "A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them"
 description = "A lease changes hands while the process that held it is still running and still healthy. The usual cause is a rebuild: the election reads the lease's recorded executable, sees that the file it names has been replaced, and treats a server running code that is no longer on disk as stale. The superseded process is not killed — a client mid-answer should not lose its server because somebody ran cargo build — so it keeps its socket, its peer board, its execution history and the generation of the layer it loaded hours ago."
-weight = 115
+weight = 116
 [extra]
 claim_id = "mcp-lease-lost"
 status = "guaranteed"

@@ -91,8 +91,14 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
         None => (args.host.clone(), args.port),
     };
-    let shared = SharedServer::start(
+    // The server outlives many commits. It follows the repository rather than freezing
+    // the picture it started with: `crate::live` says what that costs and why.
+    let live = std::sync::Arc::new(crate::live::Live::watching(
+        args.repo.clone(),
         app.context.clone(),
+    ));
+    let shared = SharedServer::start(
+        live,
         crate::VERSION,
         &host,
         port,

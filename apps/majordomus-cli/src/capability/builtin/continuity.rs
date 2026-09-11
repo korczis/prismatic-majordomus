@@ -279,7 +279,7 @@ fn front(path: &Path) -> Option<BTreeMap<String, String>> {
 /// itself rather than a document about it — so reading them with the front-matter splitter
 /// finds nothing and reports an absent episode in a checkout that has one. Two shapes, two
 /// readers, and the difference stated here rather than discovered.
-fn document(path: &Path) -> Option<BTreeMap<String, String>> {
+pub(crate) fn document(path: &Path) -> Option<BTreeMap<String, String>> {
     let text = std::fs::read_to_string(path).ok()?;
     Some(scalars(yaml::parse_mapping(&text).ok()?))
 }
