@@ -867,23 +867,62 @@ pub struct LedgerSummary {
     pub commits: Vec<String>,
 }
 
+/// Whether the report could see its whole subject.
+///
+/// A verdict over a matrix the index silently shrank is the failure this repository met
+/// four times in one day: an object is excluded, every projection of the smaller index is a
+/// faithful projection, and each check prints a true statement about the half it can see.
+/// A freshness check answers "was this generated from this tree" and cannot answer "did the
+/// generator see everything in it", so the answer has to carry its own denominator.
+///
+/// ```
+/// use majordomus_cli::evidence::Subject;
+/// let whole = Subject { examined: 149, complete: true, excluded: vec![] };
+/// assert!(whole.complete);
+///
+/// let partial = Subject {
+///     examined: 148,
+///     complete: false,
+///     excluded: vec!["docs/CLAIMS.yaml: unknown_key".into()],
+/// };
+/// assert!(!partial.complete, "a shrunken index must not report a clean verdict");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidenceSubject")]
+pub struct Subject {
+    /// How many claims the index held, and this report therefore examined.
+    pub examined: usize,
+    /// Whether the index that produced them carried no error diagnostic. When this is
+    /// false, every count and every absence below is about a smaller world than the
+    /// repository, and no verdict over it means what it says.
+    pub complete: bool,
+    /// The diagnostics that excluded something, when any did: `<path>: <code>`.
+    pub excluded: Vec<String>,
+}
+
 /// The whole joined picture: every claim of the matrix against every execution recorded.
 ///
 /// What the capability answers, what the gate judges and what the site renders are this one
 /// value; the totals and the findings are derived from the claims, never counted twice.
 ///
 /// ```
-/// use majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState};
+/// use majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};
 ///
 /// let mut report = EvidenceReport {
 ///     head: None,
 ///     working_tree: "unknown".into(),
 ///     ledger: Ledger::empty().summary(),
+///     subject: Subject { examined: 0, complete: true, excluded: vec![] },
 ///     claims: vec![],
 ///     totals: Default::default(),
 ///     findings: vec![],
 /// };
 /// assert!(report.satisfied(), "nothing claimed, so nothing unsupported");
+///
+/// // and the same report over a subject it could not wholly read is not a pass
+/// let mut partial = report.clone();
+/// partial.subject.complete = false;
+/// assert!(!partial.satisfied(), "an absent answer is not a clean one");
 ///
 /// report.findings.push(Finding {
 ///     claim: "scope-integrity".into(),
@@ -904,6 +943,9 @@ pub struct EvidenceReport {
     pub working_tree: String,
     /// The ledger this was joined against.
     pub ledger: LedgerSummary,
+    /// What the report could reach. Read this before reading the tallies: they are counts
+    /// over the claims the index held, and an index that dropped a file holds fewer.
+    pub subject: Subject,
     /// Every claim, in the matrix's own order.
     pub claims: Vec<ClaimProof>,
     /// How many claims are in each state.
@@ -914,8 +956,36 @@ pub struct EvidenceReport {
 
 impl EvidenceReport {
     /// Does the evidence support every claim that declares a guarantee?
+    ///
+    /// False when the index was incomplete, whatever the findings say. An empty finding
+    /// list over a matrix that lost entries is not a pass — it is the absence of an
+    /// answer, and the two must never be spelled the same way.
+    ///
+    /// ```
+    /// # use majordomus_cli::evidence::{EvidenceReport, LedgerSummary, Subject};
+    /// # use std::collections::BTreeMap;
+    /// let mut r = EvidenceReport {
+    ///     head: None,
+    ///     working_tree: "clean".into(),
+    ///     ledger: LedgerSummary {
+    ///         path: ".ai/repo/evidence/ledger.json".into(),
+    ///         present: false,
+    ///         executions: 0,
+    ///         newest: None,
+    ///         commits: vec![],
+    ///     },
+    ///     subject: Subject { examined: 0, complete: true, excluded: vec![] },
+    ///     claims: vec![],
+    ///     totals: BTreeMap::new(),
+    ///     findings: vec![],
+    /// };
+    /// assert!(r.satisfied(), "no findings over a whole subject is a pass");
+    ///
+    /// r.subject.complete = false;
+    /// assert!(!r.satisfied(), "no findings over a partial subject is not a pass");
+    /// ```
     pub fn satisfied(&self) -> bool {
-        self.findings.is_empty()
+        self.subject.complete && self.findings.is_empty()
     }
 }
 
@@ -1182,10 +1252,29 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
         });
     }
 
+    // What the index could not read is what this report cannot be a verdict over. An
+    // excluded file takes its objects out of the index, and every count below is then a
+    // count over what survived.
+    let excluded: Vec<String> = index
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == crate::Severity::Error)
+        .map(|d| match &d.path {
+            Some(p) => format!("{p}: {}", d.code),
+            None => d.code.clone(),
+        })
+        .collect();
+    let subject = Subject {
+        examined: claims.len(),
+        complete: excluded.is_empty(),
+        excluded,
+    };
+
     EvidenceReport {
         head,
         working_tree,
         ledger: ledger.summary(),
+        subject,
         claims,
         totals,
         findings,
@@ -1268,6 +1357,55 @@ mod tests {
         assert_eq!(Outcome::parse("TIMEOUT"), Outcome::Timeout);
         assert_eq!(Outcome::parse("wat"), Outcome::Error);
         assert!(!Outcome::parse("").proves());
+    }
+
+    /// A verdict over a subject the reader could not wholly see is not a verdict. This is
+    /// the property the gate and `--check` both depend on: an empty finding list over an
+    /// index that dropped a file must not spell the same as a pass.
+    #[test]
+    fn an_incomplete_subject_is_never_satisfied() {
+        let base = EvidenceReport {
+            head: None,
+            working_tree: "clean".into(),
+            ledger: LedgerSummary {
+                path: LEDGER_PATH.into(),
+                present: false,
+                executions: 0,
+                newest: None,
+                commits: vec![],
+            },
+            subject: Subject {
+                examined: 3,
+                complete: true,
+                excluded: vec![],
+            },
+            claims: vec![],
+            totals: BTreeMap::new(),
+            findings: vec![],
+        };
+        assert!(
+            base.satisfied(),
+            "no findings over a whole subject is a pass"
+        );
+
+        let mut partial = base.clone();
+        partial.subject.complete = false;
+        partial.subject.excluded = vec!["docs/CLAIMS.yaml: unknown_key".into()];
+        assert!(
+            !partial.satisfied(),
+            "an empty finding list over a shrunken index read as a pass"
+        );
+
+        // and a whole subject with a finding is still not satisfied, for the ordinary reason
+        let mut failing = base;
+        failing.findings.push(Finding {
+            claim: "x".into(),
+            status: "guaranteed".into(),
+            state: ProofState::NotRun,
+            reason: "never run".into(),
+            reproduce: None,
+        });
+        assert!(!failing.satisfied());
     }
 
     /// Only a guarantee is judged against the evidence; the other three statuses already

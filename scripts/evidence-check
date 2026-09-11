@@ -83,6 +83,17 @@ if [ "$JSON" = 1 ]; then
   exit 0
 fi
 
+# The denominator, before anything is counted. An index that excluded a file holds fewer
+# claims, every tally below is then over a smaller matrix, and an empty finding list is the
+# absence of an answer rather than a pass. A ratchet is especially vulnerable to this: the
+# set can only shrink, and a subject that shrank makes it shrink for free.
+if [ "$(jq -r '.subject.complete' "$TMP")" != "true" ]; then
+  echo "evidence-check: the index could not read the whole matrix, so no verdict is available"
+  jq -r '.subject.excluded[] | "      " + .' "$TMP"
+  echo "      reproduce: majordomus evidence show --format json | jq .subject"
+  exit 12
+fi
+
 jq -r '.findings[].claim' "$TMP" | LC_ALL=C sort > "$TMP.now"
 total="$(wc -l < "$TMP.now" | tr -d ' ')"
 claims="$(jq -r '.claims | length' "$TMP")"

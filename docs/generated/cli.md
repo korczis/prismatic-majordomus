@@ -49,6 +49,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus why areas`](#majordomus-why-areas) | `/docs/cli/why/areas/` | Every operational area, with the moments that fall under it |
 | [`majordomus why diagnose`](#majordomus-why-diagnose) | `/docs/cli/why/diagnose/` | What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them |
 | [`majordomus why validate`](#majordomus-why-validate) | `/docs/cli/why/validate/` | Every finding over the catalogue; exit 10 when any is an error |
+| [`majordomus devtask`](#majordomus-devtask) | `/docs/cli/devtask/` | One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value |
+| [`majordomus devtask issue`](#majordomus-devtask-issue) | `/docs/cli/devtask/issue/` | One issue as an executable development task, every field carrying where it came from |
+| [`majordomus devtask milestone`](#majordomus-devtask-milestone) | `/docs/cli/devtask/milestone/` | One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles |
 | [`majordomus distribution`](#majordomus-distribution) | `/docs/cli/distribution/` | How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases |
 | [`majordomus distribution show`](#majordomus-distribution-show) | `/docs/cli/distribution/show/` | The model: the install command, where an installation goes, and every declared target |
 | [`majordomus distribution status`](#majordomus-distribution-status) | `/docs/cli/distribution/status/` | Whether the advertised one-line installation works right now, and what is missing when it does not |
@@ -121,7 +124,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus evidence`](#majordomus-evidence).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus evidence`](#majordomus-evidence).
 
 ```text
 majordomus <COMMAND>
@@ -1252,6 +1255,106 @@ Examples:
   ```
 
   Verified: exits 0; prints moment(s), valid.
+
+<a id="majordomus-devtask"></a>
+## `majordomus devtask`
+
+One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value
+
+Subcommands: [`majordomus devtask issue`](#majordomus-devtask-issue), [`majordomus devtask milestone`](#majordomus-devtask-milestone).
+
+```text
+majordomus devtask [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-devtask-issue"></a>
+## `majordomus devtask issue`
+
+One issue as an executable development task, every field carrying where it came from
+
+```text
+majordomus devtask issue [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The issue id, as the canonical model spells it. An id the model does not declare is answered, not refused |
+| `--no-git` | flag | — | Answer from the canonical records alone, without consulting git — a deterministic answer that is the same on every machine |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One issue as work to be done, not as metadata** — Identity, intent, status, milestone, dependencies, blockers, branches, commits, sessions and readiness in one answer, composed from the derivations that already own each half — the plan for the graph, `trace` for git, the canonical record for everything a person wrote. Nothing is manufactured: a key the record does not carry is `unknown` with the reason, never an empty string that reads as authored.
+
+  ```console
+  $ majordomus devtask issue I0001
+  ```
+
+  Verified: exits 0; prints readiness, explicit.
+
+- **The same, as the shape the API and MCP answer with** — One domain model behind every projection: this document is what `GET /api/v1/devtask/issue` returns and what the `majordomus_devtask` tool answers, with the four groups kept apart by the type — what a person authored, what the plan derives, what happened locally, and where the external projection stands — and a provenance on every field.
+
+  ```console
+  $ majordomus devtask issue I0001 --no-git --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /declaration/title/provenance, /position/status/provenance, /readiness/state, /attestation/explicit.
+
+- **An id the model does not declare is answered, not refused** — A typo that read as "nothing has been authored" is the one answer a work surface must never give, so an unknown id answers with `declared: false`, the readiness `undeclared`, and every canonical field `unknown` with the reason on it.
+
+  ```console
+  $ majordomus devtask issue I9999 --no-git
+  ```
+
+  Verified: exits 0; prints undeclared.
+
+<a id="majordomus-devtask-milestone"></a>
+## `majordomus devtask milestone`
+
+One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles
+
+```text
+majordomus devtask milestone [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The milestone id, as the canonical model spells it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What to work on next in one outcome, and what to unblock first** — The issues partitioned by readiness, the critical blockers ordered by how much unfinished work each holds back, and the startable work partitioned into subsets that may genuinely run at the same time. A pure function of the canonical records — no git, no clock, no network — so two runs on two machines produce the same bytes and a reader derives nothing itself.
+
+  ```console
+  $ majordomus devtask milestone foundation
+  ```
+
+  Verified: exits 0; prints READINESS.
+
+- **The graph, as the shape the API and MCP answer with** — Every partition the plan implies and no surface should recompute: `ready`, `blocked`, `waiting`, `active`, `review`, `completion_blocked`, `complete`, `cancelled`, plus `critical_blockers`, `parallelizable` with the scope path behind each serialisation, and `cycles` as strongly connected components.
+
+  ```console
+  $ majordomus devtask milestone foundation --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /counts/total, /ready, /critical_blockers, /parallelizable.
 
 <a id="majordomus-distribution"></a>
 ## `majordomus distribution`

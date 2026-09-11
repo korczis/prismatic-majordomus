@@ -222,6 +222,15 @@
       "note": "update refuses, offers a diff, and overwrites only under an explicit flag."
     },
     {
+      "id": "claim:archive-fidelity",
+      "kind": "claim",
+      "label": "An archive that lost the file modes fails rather than travelling",
+      "status": "guaranteed",
+      "route": "/guarantees/archive-fidelity/",
+      "external": false,
+      "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns."
+    },
+    {
       "id": "claim:context-budget",
       "kind": "claim",
       "label": "The always-loaded instruction file has a line budget with a failing check",
@@ -1632,6 +1641,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/archive.sh",
+      "kind": "implementation",
+      "label": "lib/archive.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/capture.sh",
       "kind": "implementation",
       "label": "lib/capture.sh",
@@ -1996,6 +2012,13 @@
       "external": false
     },
     {
+      "id": "source:docs/ARCHIVE.md",
+      "kind": "source",
+      "label": "docs/ARCHIVE.md",
+      "route": "/docs/archive/",
+      "external": false
+    },
+    {
       "id": "source:docs/CAPABILITIES.md",
       "kind": "source",
       "label": "docs/CAPABILITIES.md",
@@ -2309,6 +2332,13 @@
       "label": "test/cases/12_site_build.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
+    },
+    {
+      "id": "test:test/cases/130_archive.sh",
+      "kind": "test",
+      "label": "test/cases/130_archive.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_archive.sh"
     },
     {
       "id": "test:test/cases/13_region_projection.sh",
@@ -2831,6 +2861,11 @@
     {
       "source": "claim:no-silent-overwrite",
       "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:archive-fidelity",
+      "target": "source:docs/ARCHIVE.md",
       "kind": "specified_by"
     },
     {
@@ -3604,6 +3639,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:archive-fidelity",
+      "target": "impl:lib/archive.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:context-budget",
       "target": "impl:lib/update.sh",
       "kind": "implemented_by"
@@ -4331,6 +4371,11 @@
     {
       "source": "claim:no-silent-overwrite",
       "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:archive-fidelity",
+      "target": "test:test/cases/130_archive.sh",
       "kind": "proved_by"
     },
     {

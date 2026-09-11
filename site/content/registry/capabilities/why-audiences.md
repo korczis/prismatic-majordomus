@@ -1,7 +1,7 @@
 +++
 title = "why.audiences"
 description = "Every audience the catalogue declares, each with the public moments that name it. Membership is derived from the moments and is never listed in an audience's own file."
-weight = 74
+weight = 76
 slug = "why-audiences"
 [extra]
 id = "why.audiences"

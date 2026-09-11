@@ -47,8 +47,14 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
                 OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
                 OutputFormat::Text => show_text(&mut out, &v)?,
             }
-            if check && !v["findings"].as_array().map(Vec::is_empty).unwrap_or(true) {
-                return Ok(EXIT_UNSUPPORTED);
+            if check {
+                let unsupported = !v["findings"].as_array().map(Vec::is_empty).unwrap_or(true);
+                // An empty finding list over an index that lost entries is not a pass; it
+                // is the absence of an answer. `--check` must not spell the two the same.
+                let partial = !v["subject"]["complete"].as_bool().unwrap_or(false);
+                if unsupported || partial {
+                    return Ok(EXIT_UNSUPPORTED);
+                }
             }
             Ok(0)
         }
@@ -151,6 +157,28 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         )?;
     }
     w(out, String::new())?;
+
+    let sub = &v["subject"];
+    if !sub["complete"].as_bool().unwrap_or(true) {
+        w(
+            out,
+            format!(
+                "SUBJECT      INCOMPLETE — the index excluded {} file(s), so every count below \
+                 is over a smaller matrix than this repository has:",
+                sub["excluded"].as_array().map_or(0, Vec::len)
+            ),
+        )?;
+        for e in sub["excluded"].as_array().into_iter().flatten() {
+            w(out, format!("             {}", e.as_str().unwrap_or("?")))?;
+        }
+        w(out, String::new())?;
+    } else {
+        w(
+            out,
+            format!("subject      {} claim(s), whole", sub["examined"]),
+        )?;
+        w(out, String::new())?;
+    }
 
     if let Some(t) = v["totals"].as_object() {
         for (state, count) in t {

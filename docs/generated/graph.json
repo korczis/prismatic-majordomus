@@ -199,6 +199,24 @@
         "status": "query"
       },
       {
+        "id": "capability:devtask.issue",
+        "kind": "capability",
+        "label": "devtask.issue",
+        "summary": "One issue as an executable development task",
+        "route": "/cockpit/capabilities/devtask.issue",
+        "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:devtask.milestone",
+        "kind": "capability",
+        "label": "devtask.milestone",
+        "summary": "One milestone as an executable dependency graph",
+        "route": "/cockpit/capabilities/devtask.milestone",
+        "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:directories.list",
         "kind": "capability",
         "label": "directories.list",
@@ -805,6 +823,13 @@
         "id": "command:adr",
         "kind": "command",
         "label": "adr",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
+        "id": "command:archive",
+        "kind": "command",
+        "label": "archive",
         "summary": "named by the layer; not an object of this index",
         "external": true
       },
@@ -1635,6 +1660,14 @@
         "label": "derive",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/derive",
+        "external": true
+      },
+      {
+        "id": "file:scripts/development-semantics-check",
+        "kind": "file",
+        "label": "development-semantics-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/development-semantics-check",
         "external": true
       },
       {
@@ -3014,9 +3047,34 @@
         "id": "majordomus://adr/adr-0040",
         "kind": "adr",
         "label": "adr-0040",
-        "summary": "Proof is a recorded execution, and inputs unchanged is not proven",
+        "summary": "Development semantics are capabilities of one runtime; every surface is a consumer",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0040",
-        "source": ".ai/repo/adrs/0040-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md",
+        "source": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.development-semantics-are-canonical",
+            "rule:project.rust-canonical-declaration",
+            "file:docs/DEVELOPMENT_RUNTIME.md",
+            "file:scripts/development-semantics-check"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime",
+            "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0041",
+        "kind": "adr",
+        "label": "adr-0041",
+        "summary": "Proof is a recorded execution, and inputs unchanged is not proven",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0041",
+        "source": ".ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md",
         "status": "proposed",
         "facts": {
           "date": "2026-09-11",
@@ -3682,6 +3740,23 @@
           "responsibility": "layer",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/01_init.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/archive-fidelity",
+        "kind": "claim",
+        "label": "archive-fidelity",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Farchive-fidelity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An archive that lost the file modes fails rather than travelling",
+          "implementation": "lib/archive.sh",
+          "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
+          "responsibility": "projection",
+          "source": "docs/ARCHIVE.md",
+          "test": "test/cases/130_archive.sh"
         }
       },
       {
@@ -6124,6 +6199,43 @@
         }
       },
       {
+        "id": "majordomus://command/archive",
+        "kind": "command",
+        "label": "archive",
+        "summary": "archive",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcommand%2Farchive",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "system",
+          "class": "generated-output-mutating",
+          "demo": "archive-profiles",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12",
+            "13",
+            "15"
+          ],
+          "json": true,
+          "reads": [
+            "share/archive.yaml",
+            ".ai/repo/archive.yaml",
+            ".gitattributes"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "none",
+          "stage": "inspect",
+          "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+          "syntax": "majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]",
+          "visibility": "public",
+          "writes": [
+            "tmp/archives/"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/bench",
         "kind": "command",
         "label": "bench",
@@ -7993,6 +8105,14 @@
         "source": "docs/ADOPTION_FIRST_RUN.md"
       },
       {
+        "id": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "document",
+        "label": "docs/ARCHIVE.md",
+        "summary": "Archiving the repository",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FARCHIVE.md",
+        "source": "docs/ARCHIVE.md"
+      },
+      {
         "id": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "label": "docs/CAPABILITIES.md",
@@ -8031,6 +8151,14 @@
         "summary": "The Cockpit — the registry, rendered for a person",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT.md",
         "source": "docs/COCKPIT.md"
+      },
+      {
+        "id": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "label": "docs/COCKPIT_IDE_AUDIT.md",
+        "summary": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT_IDE_AUDIT.md",
+        "source": "docs/COCKPIT_IDE_AUDIT.md"
       },
       {
         "id": "majordomus://document/docs/COMMANDS.md",
@@ -8079,6 +8207,14 @@
         "summary": "The design system — one declaration, every surface",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
         "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "id": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "label": "docs/DEVELOPMENT_RUNTIME.md",
+        "summary": "The development runtime",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDEVELOPMENT_RUNTIME.md",
+        "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -8391,6 +8527,14 @@
         "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fai-layer-manifest.md",
         "source": "docs/claims/ai-layer-manifest.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/archive-fidelity.md",
+        "kind": "document",
+        "label": "docs/claims/archive-fidelity.md",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Farchive-fidelity.md",
+        "source": "docs/claims/archive-fidelity.md"
       },
       {
         "id": "majordomus://document/docs/claims/benchmark-coverage-derived.md",
@@ -10172,7 +10316,7 @@
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0040"
+            "adr-0041"
           ],
           "areas": [
             "verification",
@@ -10940,6 +11084,13 @@
         "label": "lib/adr.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fadr.sh",
         "source": "lib/adr.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/archive.sh",
+        "kind": "implementation",
+        "label": "lib/archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Farchive.sh",
+        "source": "lib/archive.sh"
       },
       {
         "id": "majordomus://implementation/lib/bench.sh",
@@ -24456,6 +24607,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.5.0",
+        "kind": "release-record",
+        "label": "v0.5.0",
+        "summary": "v0.5.0",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frelease-record%2Fv0.5.0",
+        "source": ".ai/repo/releases/v0.5.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.5.0",
+          "published_at": "2026-09-11T13:36:34Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.5.0"
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -25730,6 +25904,29 @@
           "tags": [
             "safety",
             "tooling"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "label": "project.development-semantics-are-canonical@1",
+        "summary": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.development-semantics-are-canonical%401",
+        "source": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-canonical-declaration@1",
+            "project.interfaces-are-projections@1",
+            "project.commands-are-projections@1"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime"
           ]
         }
       },
@@ -28361,6 +28558,20 @@
         "source": "test/cases/124_evidence.sh"
       },
       {
+        "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "label": "test/cases/128_the_subset_is_a_subset.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F128_the_subset_is_a_subset.sh",
+        "source": "test/cases/128_the_subset_is_a_subset.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/129_executable_issues.sh",
+        "kind": "test",
+        "label": "test/cases/129_executable_issues.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F129_executable_issues.sh",
+        "source": "test/cases/129_executable_issues.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/12_site_build.sh",
         "kind": "test",
         "label": "test/cases/12_site_build.sh",
@@ -28380,6 +28591,13 @@
         "label": "test/cases/12c_graph_data.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F12c_graph_data.sh",
         "source": "test/cases/12c_graph_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/130_archive.sh",
+        "kind": "test",
+        "label": "test/cases/130_archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_archive.sh",
+        "source": "test/cases/130_archive.sh"
       },
       {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
@@ -28422,6 +28640,13 @@
         "label": "test/cases/18_doctrine_wiring.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F18_doctrine_wiring.sh",
         "source": "test/cases/18_doctrine_wiring.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/190_graph_drawing.sh",
+        "kind": "test",
+        "label": "test/cases/190_graph_drawing.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F190_graph_drawing.sh",
+        "source": "test/cases/190_graph_drawing.sh"
       },
       {
         "id": "majordomus://test/test/cases/19_end_to_end.sh",
@@ -29840,6 +30065,38 @@
         }
       },
       {
+        "id": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "kind": "use-case",
+        "label": "hand-the-repository-to-a-reader",
+        "summary": "Hand the repository to someone who cannot clone it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fhand-the-repository-to-a-reader",
+        "source": ".ai/repo/use-cases/hand-the-repository-to-a-reader.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "agent"
+          ],
+          "applications": [],
+          "category": "knowledge",
+          "claims": [
+            "archive-fidelity",
+            "no-network"
+          ],
+          "commands": [
+            "archive"
+          ],
+          "difficulty": "basic",
+          "doctrines": [],
+          "responsibilities": [
+            "projection"
+          ],
+          "summary": "Take a snapshot that a model can read or a gate can run in, without sending anything untracked and without losing the file modes on the way.",
+          "target": "guaranteed",
+          "weight": 60
+        }
+      },
+      {
         "id": "majordomus://use-case/hand-work-between-sessions",
         "kind": "use-case",
         "label": "hand-work-between-sessions",
@@ -31032,6 +31289,11 @@
         "label": "design"
       },
       {
+        "id": "module:devtask",
+        "kind": "module",
+        "label": "devtask"
+      },
+      {
         "id": "module:directories",
         "kind": "module",
         "label": "directories"
@@ -31407,6 +31669,46 @@
       },
       {
         "source": "capability:design.tokens",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.issue",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.issue",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.issue",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.issue",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.milestone",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.milestone",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.milestone",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:devtask.milestone",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33572,37 +33874,7 @@
       },
       {
         "source": "majordomus://adr/adr-0040",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:.ai/repo/evidence-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0040",
-        "target": "file:scripts/evidence-check",
+        "target": "file:scripts/development-semantics-check",
         "kind": "put_in_force"
       },
       {
@@ -33612,61 +33884,116 @@
       },
       {
         "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:.ai/repo/evidence-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:scripts/evidence-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://adr/adr-0030",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/evidence-currency-is-not-collapsed",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/evidence-navigates-both-ways",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/evidence-partial-run-preserves-the-rest",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/evidence-proof-is-an-execution",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://claim/worktree-topology-derived",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://context/ai.repo.evidence",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://document/docs/EVIDENCE.md",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://rule/project.never-reported-is-not-green@1",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://rule/project.no-claim-without-test@1",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0040",
+        "source": "majordomus://adr/adr-0041",
         "target": "majordomus://test/test/cases/124_evidence.sh",
         "kind": "put_in_force"
       },
@@ -33953,6 +34280,26 @@
       {
         "source": "majordomus://claim/ai-layer-manifest",
         "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://implementation/lib/archive.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://test/test/cases/130_archive.sh",
         "kind": "tested_by"
       },
       {
@@ -36861,6 +37208,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/archive",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/bench",
         "target": "kind:command",
         "kind": "is_a"
@@ -37461,6 +37813,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/ARCHIVE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CAPABILITIES.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -37482,6 +37839,11 @@
       },
       {
         "source": "majordomus://document/docs/COCKPIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -37512,6 +37874,11 @@
       },
       {
         "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -37707,6 +38074,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/ai-layer-manifest.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/archive-fidelity.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -38582,6 +38954,11 @@
       },
       {
         "source": "majordomus://implementation/lib/adr.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/archive.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -42586,6 +42963,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.5.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43229,6 +43611,26 @@
         "source": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.commands-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.diagnostics-decide-the-exit@1",
@@ -44196,6 +44598,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/129_executable_issues.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/12_site_build.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -44207,6 +44619,11 @@
       },
       {
         "source": "majordomus://test/test/cases/12c_graph_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/130_archive.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -44237,6 +44654,11 @@
       },
       {
         "source": "majordomus://test/test/cases/18_doctrine_wiring.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/190_graph_drawing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -45734,6 +46156,26 @@
         "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "command:archive",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/archive-fidelity",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/no-network",
+        "kind": "evidences"
       },
       {
         "source": "majordomus://use-case/hand-work-between-sessions",
@@ -47436,6 +47878,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:devtask",
+        "target": "capability:devtask.issue",
+        "kind": "composes"
+      },
+      {
+        "source": "module:devtask",
+        "target": "capability:devtask.milestone",
+        "kind": "composes"
+      },
+      {
         "source": "module:directories",
         "target": "capability:directories.list",
         "kind": "composes"
@@ -47772,8 +48224,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1467,
-      "edges": 3320,
+      "nodes": 1487,
+      "edges": 3358,
       "acyclic": true,
       "truncated": false
     }

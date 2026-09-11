@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0040
+id: adr-0041
 kind: adr
 title: Proof is a recorded execution, and inputs unchanged is not proven
 status: proposed

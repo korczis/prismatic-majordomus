@@ -1,7 +1,7 @@
 +++
 title = "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves"
 description = "docs/CLAIMS.yaml binds a claim to a test with a path, and a path that resolves proves"
-weight = 164
+weight = 165
 [extra]
 claim_id = "evidence-proof-is-an-execution"
 status = "guaranteed"
