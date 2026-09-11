@@ -52,7 +52,7 @@ tags:
   - name: obligations
     description: "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
   - name: peers
-    description: "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
+    description: "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes."
   - name: perf
     description: "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
   - name: plan
@@ -2708,10 +2708,20 @@ paths:
     get:
       operationId: peers.list
       summary: List peers
-      description: "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process."
+      description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
       tags:
         - peers
-      parameters: []
+      parameters:
+        - name: checkouts
+          in: query
+          required: false
+          schema:
+            "$ref": "#/components/schemas/Checkouts"
+            default: repository
+          description: "Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back."
+          examples:
+            default:
+              value: this
       responses:
         "200":
           description: "List peers: the result."
@@ -5226,6 +5236,11 @@ components:
             - "$ref": "#/components/schemas/Announcement"
             - type: "null"
           description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+        checkout:
+          anyOf:
+            - "$ref": "#/components/schemas/PeerCheckout"
+            - type: "null"
+          description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
         overlaps:
           type: array
           items:
@@ -5803,6 +5818,48 @@ components:
           const: cycle
           description: "A dependency cycle this task is in or downstream of, so it can never become ready."
       description: "What kind of thing is holding a task back. The five are the five the canonical model can\nactually produce; there is no `other`."
+    BoardView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+        worktree:
+          type: string
+          description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch checked out there, when it could be read."
+        this_checkout:
+          type: boolean
+          description: Whether this is the checkout of the server answering the call.
+        standing:
+          "$ref": "#/components/schemas/ServerStanding"
+          description: "Where its server stands, by the same reading `server.status` reports."
+        url:
+          type:
+            - string
+            - "null"
+          description: "The address its lease names, when it has one."
+        attached:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many of this board's peers are attached."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why this board is not in the answer. `None` when it is."
+      required:
+        - id
+        - worktree
+        - this_checkout
+        - standing
+        - attached
+      description: "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here."
     BranchState:
       type: object
       properties:
@@ -12134,6 +12191,11 @@ components:
           items:
             "$ref": "#/components/schemas/OverlapPath"
           description: "The claims that meet: one line per pair, `yours` and `theirs`."
+        checkout:
+          anyOf:
+            - "$ref": "#/components/schemas/PeerCheckout"
+            - type: "null"
+          description: "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board."
       required:
         - peer
         - attached
@@ -12226,6 +12288,11 @@ components:
             - "$ref": "#/components/schemas/Announcement"
             - type: "null"
           description: "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
+        checkout:
+          anyOf:
+            - "$ref": "#/components/schemas/PeerCheckout"
+            - type: "null"
+          description: "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
       required:
         - id
         - client
@@ -12234,6 +12301,28 @@ components:
         - last_seen_seconds_ago
         - attached
       description: One peer as the board lists it.
+    PeerCheckout:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+        worktree:
+          type: string
+          description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch checked out there, when it could be read."
+        this_checkout:
+          type: boolean
+          description: Whether this is the checkout of the server answering the call.
+      required:
+        - id
+        - worktree
+        - this_checkout
+      description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
     PeerId:
       type: string
       description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
@@ -12244,26 +12333,36 @@ components:
           type: integer
           format: uint
           minimum: 0
-          description: "How many peers are attached, the caller included."
+          description: "How many peers are attached across every board that was read, the caller included."
         caller:
           anyOf:
             - "$ref": "#/components/schemas/PeerId"
             - type: "null"
-          description: "The caller's own peer id, when the call came through an MCP session."
+          description: "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and [`Peer::checkout`] is the half of a worker's identity that is not."
         peers:
           type: array
           items:
             "$ref": "#/components/schemas/Peer"
-          description: "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+          description: "The peers, this checkout's board first and then the siblings in the order git\nregisters them, each in its own board's attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`."
         overlaps:
           type: array
           items:
             "$ref": "#/components/schemas/Overlap"
-          description: "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
+          description: "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
+        boards:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BoardView"
+          description: "One entry per checkout the answer covers, reached or not."
+        complete:
+          type: boolean
+          description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and [`BoardView::reason`] says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
       required:
         - count
         - peers
-      description: "The answer of `peers.list`: every client attached to this shared server."
+        - boards
+        - complete
+      description: "The answer of `peers.list`: every worker of this repository, from every checkout's board."
     PhaseTotals:
       type: object
       properties:

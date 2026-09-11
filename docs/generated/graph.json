@@ -1084,6 +1084,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "kind": "file",
+        "label": "peers.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -2978,6 +2986,31 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0044",
+        "kind": "adr",
+        "label": "adr-0044",
+        "summary": "Cooperation is repository-wide because the board is gathered, not because the server is shared",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0044",
+        "source": ".ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:apps/majordomus-cli/src/peers.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+            "file:test/cases/250_the_board_is_repository_wide.sh",
+            "claim:mcp-peers",
+            "claim:mcp-shared-server"
+          ],
+          "tags": [
+            "mcp",
+            "architecture",
+            "coordination",
+            "worktrees"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -4672,7 +4705,7 @@
         "id": "majordomus://claim/mcp-peers",
         "kind": "claim",
         "label": "mcp-peers",
-        "summary": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+        "summary": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-peers",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -4680,14 +4713,14 @@
           "implementation": "apps/majordomus-cli/src/peers.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
-          "test": "test/cases/90_mcp_shared_server.sh"
+          "test": "test/cases/250_the_board_is_repository_wide.sh"
         }
       },
       {
         "id": "majordomus://claim/mcp-shared-server",
         "kind": "claim",
         "label": "mcp-shared-server",
-        "summary": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+        "summary": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-shared-server",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -28242,6 +28275,13 @@
         "source": "test/cases/24_prompt_search.sh"
       },
       {
+        "id": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
+        "kind": "test",
+        "label": "test/cases/250_the_board_is_repository_wide.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F250_the_board_is_repository_wide.sh",
+        "source": "test/cases/250_the_board_is_repository_wide.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/25_continuity_lifecycle.sh",
         "kind": "test",
         "label": "test/cases/25_continuity_lifecycle.sh",
@@ -33342,6 +33382,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:apps/majordomus-cli/src/peers.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://claim/mcp-peers",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://claim/mcp-shared-server",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -34933,7 +35003,7 @@
       },
       {
         "source": "majordomus://claim/mcp-peers",
-        "target": "majordomus://test/test/cases/90_mcp_shared_server.sh",
+        "target": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
         "kind": "tested_by"
       },
       {
@@ -43837,6 +43907,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/25_continuity_lifecycle.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47328,8 +47403,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1454,
+      "edges": 3283,
       "acyclic": true,
       "truncated": false
     }
