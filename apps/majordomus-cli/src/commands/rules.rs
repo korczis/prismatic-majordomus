@@ -172,7 +172,10 @@ fn report_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         )?;
         for f in &findings {
             w(out, format!("  {:<44} {}", s(f, "rule"), s(f, "reason")))?;
-            w(out, format!("  {:<44} reproduce: {}", "", s(f, "reproduce")))?;
+            w(
+                out,
+                format!("  {:<44} reproduce: {}", "", s(f, "reproduce")),
+            )?;
         }
     }
     Ok(())
@@ -191,7 +194,10 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     w(out, format!("source       {}", s(r, "path")))?;
     w(
         out,
-        format!("mode         {}", r["enforcement"]["mode"].as_str().unwrap_or("?")),
+        format!(
+            "mode         {}",
+            r["enforcement"]["mode"].as_str().unwrap_or("?")
+        ),
     )?;
     w(out, format!("state        {}", s(p, "state")))?;
     w(out, format!("             {}", s(p, "meaning")))?;
@@ -284,7 +290,10 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
 fn proves_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     w(
         out,
-        format!("test         {}", v["test"].as_str().unwrap_or("(no runner)")),
+        format!(
+            "test         {}",
+            v["test"].as_str().unwrap_or("(no runner)")
+        ),
     )?;
     w(
         out,
@@ -360,7 +369,10 @@ fn execute(ctx: &crate::capability::Context, path: &[&str], input: Value) -> Res
         .by_cli(&words)
         .map(|c| c.id.as_str())
         .ok_or_else(|| Error::Protocol {
-            reason: format!("no capability is exposed as `majordomus {}`", path.join(" ")),
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                path.join(" ")
+            ),
         })?;
     ctx.execute(id, input).map_err(map)
 }

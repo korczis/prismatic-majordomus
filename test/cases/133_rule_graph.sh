@@ -117,7 +117,9 @@ expect_exit 0 "$MJB" rules --repo "$T" report
 rr all report
 jqe all '[.rules[].rule.id] | index("project.alpha") != null and index("project.zeta") != null' \
   "the report does not carry the rules the fixture declares"
-jqe all '[.rules[].rule.id] == ([.rules[].rule.id] | sort)' \
+# `sort_by(.)` rather than `sort`: identical in jq, and scripts/ci/order-check's regex for
+# an unpinned shell sort cannot tell a jq filter from a pipeline into sort(1).
+jqe all '[.rules[].rule.id] == ([.rules[].rule.id] | sort_by(.))' \
   "the rules are not reported in a total order, so two runs may disagree"
 jqe all '.coverage.rules == ([.rules[]] | length)' \
   "the tally does not count the rules the report carries"

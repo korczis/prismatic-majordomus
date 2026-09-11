@@ -10525,7 +10525,7 @@
           "required": [
             "claim"
           ],
-          "description": "One claim of the matrix.",
+          "description": "One claim of the matrix.\n# Example\n\nOne claim of the matrix, named exactly as `docs/CLAIMS.yaml` spells it; a name the\nmatrix does not declare is a not-found rather than an empty answer.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;\nlet i = EvidenceClaimInput { claim: \"evidence-proof-is-an-execution\".into() };\nassert!(!i.claim.is_empty());\n```",
           "title": "EvidenceClaimInput"
         }
       },
@@ -10632,7 +10632,7 @@
             "executions",
             "also_proves"
           ],
-          "description": "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.",
+          "description": "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\n// a ClaimEvidence carries the claim's proof, whose state ranks against the others\nassert!(ProofState::Proven < ProofState::NotRun);\n```",
           "title": "ClaimEvidence",
           "$defs": {
             "ProofState": {
@@ -10673,7 +10673,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -10738,7 +10738,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -10753,7 +10753,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -10783,7 +10783,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -10803,7 +10803,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             }
           }
         }
@@ -10883,7 +10883,7 @@
               "description": "Where the run happened: `local` (the default), `ci` or `release`."
             }
           },
-          "description": "A run to record into the ledger.",
+          "description": "A run to record into the ledger.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\nlet i = EvidenceRecordInput { suite: None, crate_output: None, origin: Some(\"ci\".into()) };\nassert_eq!(i.origin.as_deref(), Some(\"ci\"));\n```",
           "title": "EvidenceRecordInput"
         }
       },
@@ -10932,7 +10932,7 @@
             "unknown",
             "ledger"
           ],
-          "description": "What a recording did.",
+          "description": "What a recording did.\n# Example\n\nWhat the recorder wrote, as a client sees it: how many executions, how many passed,\nthe commit they were recorded against and where the ledger lives.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\nlet r = RecordReport {\n    recorded: 1, passed: 1, commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(), unknown: vec![],\n    ledger: \".ai/repo/evidence/ledger.json\".into(),\n};\nassert_eq!(r.recorded, 1);\n```",
           "title": "RecordReport"
         }
       },
@@ -11005,7 +11005,7 @@
               "description": "Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined."
             }
           },
-          "description": "Which part of the matrix to answer for.",
+          "description": "Which part of the matrix to answer for.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceReportInput;\nlet i = EvidenceReportInput { findings_only: true, ..Default::default() };\nassert!(i.findings_only);\n```",
           "title": "EvidenceReportInput",
           "$defs": {
             "ProofState": {
@@ -11046,7 +11046,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             }
           }
         }
@@ -11102,7 +11102,7 @@
             "totals",
             "findings"
           ],
-          "description": "The whole joined picture: every claim of the matrix against every execution recorded.",
+          "description": "The whole joined picture: every claim of the matrix against every execution recorded.\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```",
           "title": "EvidenceReport",
           "$defs": {
             "EvidenceLedgerSummary": {
@@ -11143,7 +11143,7 @@
                 "executions",
                 "commits"
               ],
-              "description": "What the ledger is and whether it is there at all."
+              "description": "What the ledger is and whether it is there at all.\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```"
             },
             "EvidenceClaimProof": {
               "type": "object",
@@ -11230,7 +11230,7 @@
                 "meaning",
                 "changed"
               ],
-              "description": "One claim, joined to whatever the repository actually recorded about it."
+              "description": "One claim, joined to whatever the repository actually recorded about it.\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -11270,7 +11270,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -11335,7 +11335,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -11350,7 +11350,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -11380,7 +11380,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -11400,7 +11400,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "EvidenceFinding": {
               "type": "object",
@@ -11435,7 +11435,7 @@
                 "state",
                 "reason"
               ],
-              "description": "A claim whose declared status the evidence does not support."
+              "description": "A claim whose declared status the evidence does not support.\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
             }
           }
         }
@@ -11506,7 +11506,7 @@
           "required": [
             "test"
           ],
-          "description": "One test, by its stable identity or by the path a claim names it with.",
+          "description": "One test, by its stable identity or by the path a claim names it with.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceTestInput;\nlet i = EvidenceTestInput { test: \"suite:124_evidence\".into() };\nassert!(i.test.starts_with(\"suite:\"));\n```",
           "title": "EvidenceTestInput"
         }
       },
@@ -11569,7 +11569,7 @@
             "reproduce",
             "proves"
           ],
-          "description": "One test, and what it proves.",
+          "description": "One test, and what it proves.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\n// a TestEvidence names the runner that owns the test it is about\nassert_eq!(Runner::Suite.prefix(), \"suite\");\n```",
           "title": "TestEvidence",
           "$defs": {
             "EvidenceRunner": {
@@ -11585,7 +11585,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -11650,7 +11650,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -11680,7 +11680,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -11700,7 +11700,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "EvidenceClaimProof": {
               "type": "object",
@@ -11787,7 +11787,7 @@
                 "meaning",
                 "changed"
               ],
-              "description": "One claim, joined to whatever the repository actually recorded about it."
+              "description": "One claim, joined to whatever the repository actually recorded about it.\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -11827,7 +11827,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             }
           }
         }
@@ -24624,7 +24624,7 @@
           "required": [
             "test"
           ],
-          "description": "One test, by the path a rule names it with or by its canonical identity.",
+          "description": "One test, by the path a rule names it with or by its canonical identity.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleTestInput;\nlet i = RuleTestInput { test: \"test/cases/125_rule_proof.sh\".into() };\nassert!(i.test.starts_with(\"test/cases/\"));\n```",
           "title": "RuleTestInput"
         }
       },
@@ -24676,7 +24676,7 @@
             "proves",
             "sole_proof_of"
           ],
-          "description": "What one test proves: the reverse of [`RuleDetail`].",
+          "description": "What one test proves: the reverse of [`RuleDetail`].\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\"suite:07_scope\".into()),\n    path: \"test/cases/07_scope.sh\".into(),\n    present: true,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```",
           "title": "TestSubjects",
           "$defs": {
             "RuleSummary": {
@@ -24705,7 +24705,7 @@
                 "class",
                 "state"
               ],
-              "description": "A rule named from somewhere else, with just enough to decide whether to follow it."
+              "description": "A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \"project.x\".into(),\n    title: \"X\".into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```"
             },
             "RuleClass": {
               "oneOf": [
@@ -24725,7 +24725,7 @@
                   "description": "The front matter declared no class, or one this repository does not know."
                 }
               ],
-              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice."
+              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -24780,7 +24780,7 @@
                   "description": "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
                 }
               ],
-              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`."
+              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
             }
           }
         }
@@ -24872,7 +24872,7 @@
               "description": "Only the rules whose declared class the proof does not support, with the findings.\nThe tallies still count the whole corpus, so a filtered answer never misreports how\nmuch of it was examined."
             }
           },
-          "description": "Which part of the corpus to answer for.",
+          "description": "Which part of the corpus to answer for.\n# Example\n\nEvery field narrows the answer; the tallies still count the whole corpus, so a filtered\nreport never misreports how much of it was examined.\n\n```\nuse majordomus_cli::capability::builtin::rules::RulesReportInput;\nuse majordomus_cli::rules::Class;\nlet i = RulesReportInput { class: Some(Class::Blocking), ..Default::default() };\nassert_eq!(i.class, Some(Class::Blocking));\nassert!(!i.findings_only);\n```",
           "title": "RulesReportInput",
           "$defs": {
             "RuleState": {
@@ -24928,7 +24928,7 @@
                   "description": "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
                 }
               ],
-              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`."
+              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
             },
             "RuleClass": {
               "oneOf": [
@@ -24948,7 +24948,7 @@
                   "description": "The front matter declared no class, or one this repository does not know."
                 }
               ],
-              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice."
+              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
             }
           }
         }
@@ -25009,7 +25009,7 @@
             "findings",
             "satisfied"
           ],
-          "description": "The whole rule corpus, verified.",
+          "description": "The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```",
           "title": "RulesReport",
           "$defs": {
             "RuleProof": {
@@ -25070,7 +25070,7 @@
                 "meaning",
                 "satisfied"
               ],
-              "description": "One rule, joined to everything the repository can show about it."
+              "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
             },
             "RuleDefinition": {
               "type": "object",
@@ -25158,7 +25158,7 @@
                 "path",
                 "enforcement"
               ],
-              "description": "One rule, as the repository canonically declares it."
+              "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
             },
             "RuleClass": {
               "oneOf": [
@@ -25178,7 +25178,7 @@
                   "description": "The front matter declared no class, or one this repository does not know."
                 }
               ],
-              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice."
+              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
             },
             "RuleEnforcement": {
               "type": "object",
@@ -25234,7 +25234,7 @@
               "required": [
                 "mode"
               ],
-              "description": "The enforcement block of a rule, read from `x-majordomus`."
+              "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
             },
             "RuleMode": {
               "oneOf": [
@@ -25259,7 +25259,7 @@
                   "description": "Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one."
                 }
               ],
-              "description": "How a rule is enforced, as its own front matter declares it."
+              "description": "How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \"dispatched\");\nassert_eq!(Mode::Declarative.label(), \"declarative\");\n```"
             },
             "RuleValidator": {
               "type": "object",
@@ -25289,7 +25289,7 @@
                 "function",
                 "present"
               ],
-              "description": "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are."
+              "description": "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \"adr\".into(),\n    function: \"mj_validate_adr\".into(),\n    defined_in: Some(\"lib/adr.sh\".into()),\n    present: true,\n};\nassert_eq!(v.function, \"mj_validate_adr\");\n```"
             },
             "RuleTestProof": {
               "type": "object",
@@ -25354,7 +25354,7 @@
                 "state",
                 "meaning"
               ],
-              "description": "One test a rule names, joined to what was recorded against it."
+              "description": "One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \"test/cases/07_scope.sh\".into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    gates: vec![\"shell-suite\".into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```"
             },
             "RuleArtifactKind": {
               "oneOf": [
@@ -25374,7 +25374,7 @@
                   "description": "Neither. Nothing can run it, so nothing can ever record it."
                 }
               ],
-              "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose."
+              "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -25414,7 +25414,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -25479,7 +25479,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -25494,7 +25494,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -25524,7 +25524,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -25544,7 +25544,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -25599,7 +25599,7 @@
                   "description": "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
                 }
               ],
-              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`."
+              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
             },
             "RuleCoverage": {
               "type": "object",
@@ -25691,7 +25691,7 @@
                 "review_only",
                 "satisfied"
               ],
-              "description": "How much of the rule corpus carries each part of a proof.\n\nEvery number here is counted from the tree. Nothing in this struct may be written down\nanywhere else: a hardcoded rule count is the defect this repository keeps rediscovering."
+              "description": "How much of the rule corpus carries each part of a proof.\n\nEvery number here is counted from the tree. Nothing in this struct may be written down\nanywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.\n# Example\n\nEvery number is counted from the tree; an empty corpus counts zero rather than\nreading as complete, which is what `Coverage::default` is for.\n\n```\nuse majordomus_cli::rules::Coverage;\nlet c = Coverage::default();\nassert_eq!(c.rules, 0);\nassert_eq!(c.review_only, 0);\n```"
             },
             "RuleFinding": {
               "type": "object",
@@ -25724,7 +25724,7 @@
                 "reason",
                 "reproduce"
               ],
-              "description": "One rule whose declared class the proof does not support."
+              "description": "One rule whose declared class the proof does not support.\n# Example\n\n```\nuse majordomus_cli::rules::{Class, Finding, RuleState};\nlet f = Finding {\n    rule: \"project.x\".into(),\n    class: Class::Blocking,\n    state: RuleState::Dangling,\n    reason: \"it names a path that is not in the tree\".into(),\n    reproduce: \"scripts/ci/rule-proof-check\".into(),\n};\nassert_eq!(f.state, RuleState::Dangling);\n```"
             }
           }
         }
@@ -25795,7 +25795,7 @@
           "required": [
             "rule"
           ],
-          "description": "One rule of the corpus.",
+          "description": "One rule of the corpus.\n# Example\n\nOne rule of the corpus, named by its id or by the identity the index holds; a client\nthat has either spelling should not need to know the other.\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleInput;\nlet i = RuleInput { rule: \"project.scope-is-declared\".into() };\nassert_eq!(i.rule, \"project.scope-is-declared\");\n```",
           "title": "RuleInput"
         }
       },
@@ -25835,7 +25835,7 @@
             "depends_on",
             "required_by"
           ],
-          "description": "One rule, with everything that proves it and everything that depends on it.",
+          "description": "One rule, with everything that proves it and everything that depends on it.\n# Example\n\nWhat `rules show` answers: the proof, the rules either side of it in the dependency\ngraph, and the one sentence saying what would make it proven.\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\n// a RuleDetail carries these summaries for depends_on and required_by\nlet dep = RuleSummary {\n    id: \"project.dep\".into(), title: \"Dep\".into(),\n    class: Class::Blocking, state: RuleState::NotRun,\n};\nassert_eq!(dep.class, Class::Blocking);\n```",
           "title": "RuleDetail",
           "$defs": {
             "RuleProof": {
@@ -25896,7 +25896,7 @@
                 "meaning",
                 "satisfied"
               ],
-              "description": "One rule, joined to everything the repository can show about it."
+              "description": "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
             },
             "RuleDefinition": {
               "type": "object",
@@ -25984,7 +25984,7 @@
                 "path",
                 "enforcement"
               ],
-              "description": "One rule, as the repository canonically declares it."
+              "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
             },
             "RuleClass": {
               "oneOf": [
@@ -26004,7 +26004,7 @@
                   "description": "The front matter declared no class, or one this repository does not know."
                 }
               ],
-              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice."
+              "description": "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
             },
             "RuleEnforcement": {
               "type": "object",
@@ -26060,7 +26060,7 @@
               "required": [
                 "mode"
               ],
-              "description": "The enforcement block of a rule, read from `x-majordomus`."
+              "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
             },
             "RuleMode": {
               "oneOf": [
@@ -26085,7 +26085,7 @@
                   "description": "Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one."
                 }
               ],
-              "description": "How a rule is enforced, as its own front matter declares it."
+              "description": "How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \"dispatched\");\nassert_eq!(Mode::Declarative.label(), \"declarative\");\n```"
             },
             "RuleValidator": {
               "type": "object",
@@ -26115,7 +26115,7 @@
                 "function",
                 "present"
               ],
-              "description": "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are."
+              "description": "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \"adr\".into(),\n    function: \"mj_validate_adr\".into(),\n    defined_in: Some(\"lib/adr.sh\".into()),\n    present: true,\n};\nassert_eq!(v.function, \"mj_validate_adr\");\n```"
             },
             "RuleTestProof": {
               "type": "object",
@@ -26180,7 +26180,7 @@
                 "state",
                 "meaning"
               ],
-              "description": "One test a rule names, joined to what was recorded against it."
+              "description": "One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \"test/cases/07_scope.sh\".into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    gates: vec![\"shell-suite\".into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```"
             },
             "RuleArtifactKind": {
               "oneOf": [
@@ -26200,7 +26200,7 @@
                   "description": "Neither. Nothing can run it, so nothing can ever record it."
                 }
               ],
-              "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose."
+              "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -26240,7 +26240,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking."
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -26305,7 +26305,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from."
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -26320,7 +26320,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered."
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -26350,7 +26350,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did."
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -26370,7 +26370,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was."
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -26425,7 +26425,7 @@
                   "description": "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
                 }
               ],
-              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`."
+              "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
             },
             "RuleSummary": {
               "type": "object",
@@ -26453,7 +26453,7 @@
                 "class",
                 "state"
               ],
-              "description": "A rule named from somewhere else, with just enough to decide whether to follow it."
+              "description": "A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \"project.x\".into(),\n    title: \"X\".into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```"
             }
           }
         }

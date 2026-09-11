@@ -26,6 +26,20 @@
 //! The ledger is machine-written and machine-read, so it is JSON: `serde` on both sides,
 //! no subset to respect, and `jq` works on it.
 
+//! # Example
+//!
+//! A tree that has recorded nothing has no ledger, and says so rather than refusing to
+//! answer — a repository that could not say "nothing was recorded" would say nothing.
+//!
+//! ```
+//! use majordomus_cli::evidence::Ledger;
+//! use majordomus_cli::synthetic::SyntheticRepository;
+//! let repo = SyntheticRepository::small().unwrap();
+//! let ledger = Ledger::load(repo.root()).unwrap();
+//! assert!(!Ledger::present(repo.root()));
+//! assert!(ledger.latest("suite:07_scope").is_none());
+//! ```
+
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -43,6 +57,14 @@ pub const LEDGER_PATH: &str = ".ai/repo/evidence/ledger.json";
 /// absent one reports `not run` and a misread one could report a pass.
 pub const LEDGER_VERSION: u32 = 1;
 
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Ledger;
+/// let l = Ledger::empty();
+/// assert_eq!(l.summary().executions, 0);
+/// assert!(l.latest("suite:07_scope").is_none());
+/// ```
 /// The latest execution of every test this repository has recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ledger {
@@ -66,12 +88,22 @@ impl Ledger {
     ///
     /// Distinct from a missing file only in [`LedgerSummary::present`]: both report every
     /// claim as `not run`, which is the honest answer in either case.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// assert_eq!(Ledger::empty().summary().executions, 0);
+    /// ```
     pub fn empty() -> Ledger {
         Ledger::default()
     }
 
     /// Read the ledger of a repository. A repository with no ledger has an empty one; that
     /// is not an error, and the summary says which it was.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// assert_eq!(Ledger::load(repo.root()).unwrap().summary().executions, 0);
+    /// ```
     pub fn load(root: &Path) -> Result<Ledger> {
         let path = root.join(LEDGER_PATH);
         if !path.exists() {
@@ -97,11 +129,21 @@ impl Ledger {
     }
 
     /// Whether the file is there at all, as opposed to there and empty.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// assert!(!Ledger::present(repo.root()));
+    /// ```
     pub fn present(root: &Path) -> bool {
         root.join(LEDGER_PATH).exists()
     }
 
     /// The latest recorded execution of one test, by [`super::TestId::as_string`].
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// assert!(Ledger::empty().latest("suite:07_scope").is_none());
+    /// ```
     pub fn latest(&self, test: &str) -> Option<&Execution> {
         self.executions.iter().find(|e| e.test == test)
     }
@@ -113,6 +155,11 @@ impl Ledger {
     /// test/run.sh 84_distribution_model` worth recording. The alternative — a whole-ledger
     /// write per run — would silently delete the evidence for every test the run did not
     /// include, turning a one-case run into a repository that has proven one thing.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// let mut l = Ledger::empty();
+    /// assert_eq!(l.merge(std::iter::empty()), 0);
+    /// ```
     pub fn merge(&mut self, executions: impl IntoIterator<Item = Execution>) -> usize {
         let mut n = 0;
         for e in executions {
@@ -128,6 +175,13 @@ impl Ledger {
 
     /// Write the ledger, creating its directory. Trailing newline, two-space indent: a
     /// tracked file a person reads in a diff.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// Ledger::empty().save(repo.root()).unwrap();
+    /// assert!(Ledger::present(repo.root()));
+    /// ```
     pub fn save(&self, root: &Path) -> Result<()> {
         let path = root.join(LEDGER_PATH);
         if let Some(dir) = path.parent() {
@@ -142,6 +196,12 @@ impl Ledger {
     }
 
     /// What the ledger is, for a report that has to say where its evidence came from.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// let s = Ledger::empty().summary();
+    /// assert_eq!(s.executions, 0);
+    /// assert!(s.newest.is_none());
+    /// ```
     pub fn summary(&self) -> LedgerSummary {
         let mut commits: Vec<String> = self
             .executions
@@ -161,6 +221,10 @@ impl Ledger {
     }
 
     /// How many executions there are of each outcome, for a one-line summary.
+    /// ```
+    /// use majordomus_cli::evidence::Ledger;
+    /// assert!(Ledger::empty().by_outcome().is_empty());
+    /// ```
     pub fn by_outcome(&self) -> BTreeMap<String, usize> {
         let mut m = BTreeMap::new();
         for e in &self.executions {
@@ -205,7 +269,11 @@ mod tests {
         assert_eq!(l.executions.len(), 2);
 
         l.merge([execution("a", Outcome::Fail)]);
-        assert_eq!(l.executions.len(), 2, "merging replaced rather than appended");
+        assert_eq!(
+            l.executions.len(),
+            2,
+            "merging replaced rather than appended"
+        );
         assert_eq!(l.latest("a").unwrap().outcome, Outcome::Fail);
         assert_eq!(
             l.latest("b").unwrap().outcome,

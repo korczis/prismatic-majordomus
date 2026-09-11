@@ -25,14 +25,25 @@
 //! disagree — and the second is the one that says whether deleting a case would leave a
 //! rule unenforced, which is the question nobody could ask before.
 
+//! # Example
+//!
+//! The module declares three capabilities, and every projection — the command line, the
+//! HTTP operation, the MCP tool — is derived from that one declaration.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::rules::module;
+//! let m = module();
+//! assert_eq!(m.id.as_str(), "rules");
+//! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+//! assert_eq!(ids, ["rules.report", "rules.show", "rules.proves"]);
+//! ```
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{
-    CachePolicy, CliExposure, Exposure, McpResource, Stability,
-};
+use crate::capability::model::{CachePolicy, CliExposure, Exposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::evidence::{Ledger, TestId};
 use crate::rules::{self, Class, RuleProof, RuleState, RulesReport, RULES_URI};
@@ -45,6 +56,18 @@ use super::{get, mcp};
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// Which part of the corpus to answer for.
+/// # Example
+///
+/// Every field narrows the answer; the tallies still count the whole corpus, so a filtered
+/// report never misreports how much of it was examined.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::RulesReportInput;
+/// use majordomus_cli::rules::Class;
+/// let i = RulesReportInput { class: Some(Class::Blocking), ..Default::default() };
+/// assert_eq!(i.class, Some(Class::Blocking));
+/// assert!(!i.findings_only);
+/// ```
 pub struct RulesReportInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Only rules in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,
@@ -89,6 +112,16 @@ impl BenchmarkCases for RulesReportInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// One rule of the corpus.
+/// # Example
+///
+/// One rule of the corpus, named by its id or by the identity the index holds; a client
+/// that has either spelling should not need to know the other.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::RuleInput;
+/// let i = RuleInput { rule: "project.scope-is-declared".into() };
+/// assert_eq!(i.rule, "project.scope-is-declared");
+/// ```
 pub struct RuleInput {
     /// The rule id, with or without its version: `project.scope-is-declared`, or the
     /// identity the index holds.
@@ -113,6 +146,13 @@ impl BenchmarkCases for RuleInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// One test, by the path a rule names it with or by its canonical identity.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::RuleTestInput;
+/// let i = RuleTestInput { test: "test/cases/125_rule_proof.sh".into() };
+/// assert!(i.test.starts_with("test/cases/"));
+/// ```
 pub struct RuleTestInput {
     /// `test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`.
     pub test: String,
@@ -133,6 +173,21 @@ impl BenchmarkCases for RuleTestInput {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// One rule, with everything that proves it and everything that depends on it.
+/// # Example
+///
+/// What `rules show` answers: the proof, the rules either side of it in the dependency
+/// graph, and the one sentence saying what would make it proven.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::RuleSummary;
+/// use majordomus_cli::rules::{Class, RuleState};
+/// // a RuleDetail carries these summaries for depends_on and required_by
+/// let dep = RuleSummary {
+///     id: "project.dep".into(), title: "Dep".into(),
+///     class: Class::Blocking, state: RuleState::NotRun,
+/// };
+/// assert_eq!(dep.class, Class::Blocking);
+/// ```
 pub struct RuleDetail {
     /// The rule, joined to the tree and the ledger.
     pub proof: RuleProof,
@@ -149,6 +204,19 @@ pub struct RuleDetail {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// A rule named from somewhere else, with just enough to decide whether to follow it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::RuleSummary;
+/// use majordomus_cli::rules::{Class, RuleState};
+/// let s = RuleSummary {
+///     id: "project.x".into(),
+///     title: "X".into(),
+///     class: Class::Advisory,
+///     state: RuleState::Reviewed,
+/// };
+/// assert_eq!(s.state, RuleState::Reviewed);
+/// ```
 pub struct RuleSummary {
     /// The rule id.
     pub id: String,
@@ -162,6 +230,23 @@ pub struct RuleSummary {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 /// What one test proves: the reverse of [`RuleDetail`].
+/// # Example
+///
+/// The reverse of `rules show`: what a test proves, and which rules would be left with no
+/// proof at all if it were deleted.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::rules::TestSubjects;
+/// let t = TestSubjects {
+///     test: Some("suite:07_scope".into()),
+///     path: "test/cases/07_scope.sh".into(),
+///     present: true,
+///     reproduce: Some("bash test/run.sh 07_scope".into()),
+///     proves: vec![],
+///     sole_proof_of: vec![],
+/// };
+/// assert!(t.present);
+/// ```
 pub struct TestSubjects {
     /// The canonical test identity, when a runner owns the path.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -358,9 +443,10 @@ fn proves(ctx: &Context, input: RuleTestInput) -> Result<TestSubjects, Capabilit
     let mut proves = Vec::new();
     let mut sole = Vec::new();
     for p in &r.rules {
-        let names_it = p.tests.iter().any(|t| {
-            t.path == path || (key.is_some() && t.test == key) || t.path == given
-        });
+        let names_it = p
+            .tests
+            .iter()
+            .any(|t| t.path == path || (key.is_some() && t.test == key) || t.path == given);
         if !names_it {
             continue;
         }
@@ -390,6 +476,12 @@ fn proves(ctx: &Context, input: RuleTestInput) -> Result<TestSubjects, Capabilit
 // ---------------------------------------------------------------- the module
 
 /// The `rules` module: rules joined to what proves them.
+/// ```
+/// use majordomus_cli::capability::builtin::rules::module;
+/// let m = module();
+/// assert_eq!(m.id.as_str(), "rules");
+/// assert_eq!(m.capabilities.len(), 3);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "rules",
@@ -616,13 +708,10 @@ mod tests {
             RuleState::Dangling,
             RuleState::Unproven,
         ] {
-            let m = missing_for(&base(state))
-                .unwrap_or_else(|| panic!("{} says nothing about what would fix it", state.label()));
-            assert!(
-                m.len() > 20,
-                "{}: `{m}` is not a diagnostic",
-                state.label()
-            );
+            let m = missing_for(&base(state)).unwrap_or_else(|| {
+                panic!("{} says nothing about what would fix it", state.label())
+            });
+            assert!(m.len() > 20, "{}: `{m}` is not a diagnostic", state.label());
         }
     }
 }

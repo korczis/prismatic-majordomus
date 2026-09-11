@@ -119,7 +119,8 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
 // ---------------------------------------------------------------- text
 
 fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
-    let w = |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
+    let w =
+        |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
 
     w(
         out,
@@ -185,7 +186,10 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         for p in c["changed"].as_array().into_iter().flatten() {
             w(
                 out,
-                format!("                   changed since: {}", p.as_str().unwrap_or("?")),
+                format!(
+                    "                   changed since: {}",
+                    p.as_str().unwrap_or("?")
+                ),
             )?;
         }
     }
@@ -195,7 +199,10 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         w(out, String::new())?;
         w(
             out,
-            format!("{} claim(s) declare a guarantee the evidence does not support:", findings.len()),
+            format!(
+                "{} claim(s) declare a guarantee the evidence does not support:",
+                findings.len()
+            ),
         )?;
         for f in &findings {
             w(
@@ -215,12 +222,28 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
 }
 
 fn claim_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
-    let w = |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
-    w(out, format!("claim        {}", v["id"].as_str().unwrap_or("?")))?;
-    w(out, format!("             {}", v["claim"].as_str().unwrap_or("?")))?;
-    w(out, format!("status       {}", v["status"].as_str().unwrap_or("?")))?;
-    w(out, format!("state        {}", v["state"].as_str().unwrap_or("?")))?;
-    w(out, format!("             {}", v["meaning"].as_str().unwrap_or("")))?;
+    let w =
+        |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
+    w(
+        out,
+        format!("claim        {}", v["id"].as_str().unwrap_or("?")),
+    )?;
+    w(
+        out,
+        format!("             {}", v["claim"].as_str().unwrap_or("?")),
+    )?;
+    w(
+        out,
+        format!("status       {}", v["status"].as_str().unwrap_or("?")),
+    )?;
+    w(
+        out,
+        format!("state        {}", v["state"].as_str().unwrap_or("?")),
+    )?;
+    w(
+        out,
+        format!("             {}", v["meaning"].as_str().unwrap_or("")),
+    )?;
     for (label, key) in [
         ("source", "source"),
         ("implementation", "implementation"),
@@ -232,12 +255,31 @@ fn claim_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     }
     if let Some(e) = v["execution"].as_object() {
         w(out, String::new())?;
-        w(out, format!("execution    {}", e["outcome"].as_str().unwrap_or("?")))?;
-        w(out, format!("commit       {}", e["commit"].as_str().unwrap_or("?")))?;
-        w(out, format!("tree         {}", e["working_tree"].as_str().unwrap_or("?")))?;
+        w(
+            out,
+            format!("execution    {}", e["outcome"].as_str().unwrap_or("?")),
+        )?;
+        w(
+            out,
+            format!("commit       {}", e["commit"].as_str().unwrap_or("?")),
+        )?;
+        w(
+            out,
+            format!("tree         {}", e["working_tree"].as_str().unwrap_or("?")),
+        )?;
         w(out, format!("duration     {}s", e["seconds"]))?;
-        w(out, format!("recorded     {} ({})", e["at"].as_str().unwrap_or("?"), e["origin"].as_str().unwrap_or("?")))?;
-        w(out, format!("digest       {}", e["digest"].as_str().unwrap_or("?")))?;
+        w(
+            out,
+            format!(
+                "recorded     {} ({})",
+                e["at"].as_str().unwrap_or("?"),
+                e["origin"].as_str().unwrap_or("?")
+            ),
+        )?;
+        w(
+            out,
+            format!("digest       {}", e["digest"].as_str().unwrap_or("?")),
+        )?;
     }
     for p in v["changed"].as_array().into_iter().flatten() {
         w(out, format!("changed      {}", p.as_str().unwrap_or("?")))?;
@@ -250,7 +292,10 @@ fn claim_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         .collect();
     if !also.is_empty() {
         w(out, String::new())?;
-        w(out, format!("the same test also proves {} claim(s):", also.len()))?;
+        w(
+            out,
+            format!("the same test also proves {} claim(s):", also.len()),
+        )?;
         for a in also {
             w(out, format!("  {a}"))?;
         }
@@ -263,9 +308,16 @@ fn claim_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
 }
 
 fn test_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
-    let w = |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
-    w(out, format!("test         {}", v["test"].as_str().unwrap_or("?")))?;
-    w(out, format!("runner       {}", v["runner"].as_str().unwrap_or("?")))?;
+    let w =
+        |o: &mut std::io::StdoutLock<'_>, s: String| writeln!(o, "{s}").map_err(Error::Transport);
+    w(
+        out,
+        format!("test         {}", v["test"].as_str().unwrap_or("?")),
+    )?;
+    w(
+        out,
+        format!("runner       {}", v["runner"].as_str().unwrap_or("?")),
+    )?;
     w(
         out,
         format!(
@@ -279,11 +331,16 @@ fn test_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
         ),
     )?;
     if let Some(e) = v["execution"].as_object() {
-        w(out, format!("latest       {} at {} · {}s · {}",
-            e["outcome"].as_str().unwrap_or("?"),
-            short(e["commit"].as_str().unwrap_or("?")),
-            e["seconds"],
-            e["at"].as_str().unwrap_or("?")))?;
+        w(
+            out,
+            format!(
+                "latest       {} at {} · {}s · {}",
+                e["outcome"].as_str().unwrap_or("?"),
+                short(e["commit"].as_str().unwrap_or("?")),
+                e["seconds"],
+                e["at"].as_str().unwrap_or("?")
+            ),
+        )?;
         match v["digest_matches"].as_bool() {
             Some(true) => w(out, "digest       matches the source as recorded".into())?,
             Some(false) => w(
@@ -293,9 +350,15 @@ fn test_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
             None => {}
         }
     } else {
-        w(out, "latest       no run of this test has ever been recorded".into())?;
+        w(
+            out,
+            "latest       no run of this test has ever been recorded".into(),
+        )?;
     }
-    w(out, format!("reproduce    {}", v["reproduce"].as_str().unwrap_or("?")))?;
+    w(
+        out,
+        format!("reproduce    {}", v["reproduce"].as_str().unwrap_or("?")),
+    )?;
 
     let proves = v["proves"].as_array().cloned().unwrap_or_default();
     w(out, String::new())?;
@@ -335,7 +398,10 @@ fn execute(ctx: &crate::capability::Context, path: &[&str], input: Value) -> Res
         .by_cli(&words)
         .map(|c| c.id.as_str())
         .ok_or_else(|| Error::Protocol {
-            reason: format!("no capability is exposed as `majordomus {}`", path.join(" ")),
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                path.join(" ")
+            ),
         })?;
     ctx.execute(id, input).map_err(map)
 }

@@ -23,6 +23,18 @@
 //! provided the recording happens in that tree. A dirty tree is recorded as dirty for
 //! exactly this reason: it is the one case where the commit does not describe what ran.
 
+//! # Example
+//!
+//! The recorder reads what a run already wrote and stamps it with the provenance the run
+//! did not carry. Parsing is separable from recording, which is what makes it testable.
+//!
+//! ```
+//! use majordomus_cli::evidence::{parse_crate_binaries, Outcome};
+//! let got = parse_crate_binaries("     Running tests/product.rs (target/debug/deps/product-1)\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s\n");
+//! assert_eq!(got.len(), 1);
+//! assert_eq!(got[0].1, Outcome::Pass);
+//! ```
+
 use std::path::Path;
 
 use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
@@ -30,6 +42,13 @@ use crate::error::{Error, Result};
 
 /// What to record, and where from.
 #[derive(Debug, Clone)]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::{Origin, RecordRequest};
+/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci };
+/// assert_eq!(r.origin, Origin::Ci);
+/// ```
 pub struct RecordRequest {
     /// The runner's TSV report, when a suite run is being recorded.
     pub suite: Option<std::path::PathBuf>,
@@ -41,6 +60,20 @@ pub struct RecordRequest {
 
 /// What a recording did.
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// # Example
+///
+/// What a recording did: how many executions were written, how many passed, and which
+/// results named a test no runner in this repository owns.
+///
+/// ```
+/// use majordomus_cli::evidence::RecordOutcome;
+/// let o = RecordOutcome {
+///     recorded: 2, passed: 2, commit: "a04b65c9".into(),
+///     working_tree: "clean".into(), unknown: vec![],
+/// };
+/// assert_eq!(o.recorded, 2);
+/// assert!(o.unknown.is_empty());
+/// ```
 pub struct RecordOutcome {
     /// How many executions were written.
     pub recorded: usize,
@@ -100,6 +133,10 @@ fn now_rfc3339() -> String {
 /// assert!(got[0].1.proves());
 /// assert_eq!(got[1].0, "product");
 /// assert!(!got[1].1.proves());
+/// ```
+/// ```
+/// use majordomus_cli::evidence::parse_crate_binaries;
+/// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
     let mut out = Vec::new();
@@ -170,6 +207,14 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 
 /// Read the runs a request names, stamp each result with provenance, and merge into the
 /// ledger of `root`.
+/// ```
+/// use majordomus_cli::evidence::{record, Origin, RecordRequest};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let req = RecordRequest { suite: None, crate_output: None, origin: Origin::Local };
+/// // a synthetic tree is not a git repository, so there is no commit to record against
+/// assert!(record(repo.root(), &req).is_err());
+/// ```
 pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     if req.suite.is_none() && req.crate_output.is_none() {
         return Err(Error::InvalidSurface {
@@ -305,7 +350,11 @@ mod tests {
         // anything the run measured
         let reports = tempfile::tempdir().unwrap();
         let tsv = reports.path().join("run.tsv");
-        std::fs::write(&tsv, "07_scope\tok\t12\tparallel\n08_other\tFAIL\t3\texclusive\n").unwrap();
+        std::fs::write(
+            &tsv,
+            "07_scope\tok\t12\tparallel\n08_other\tFAIL\t3\texclusive\n",
+        )
+        .unwrap();
 
         let got = record(
             d.path(),
@@ -349,7 +398,11 @@ mod tests {
     fn a_result_for_a_test_that_does_not_exist_is_reported_not_recorded() {
         let d = repo();
         let tsv = d.path().join("run.tsv");
-        std::fs::write(&tsv, "07_scope\tok\t1\tparallel\n99_ghost\tok\t1\tparallel\n").unwrap();
+        std::fs::write(
+            &tsv,
+            "07_scope\tok\t1\tparallel\n99_ghost\tok\t1\tparallel\n",
+        )
+        .unwrap();
         let got = record(
             d.path(),
             &RecordRequest {
@@ -361,7 +414,10 @@ mod tests {
         .unwrap();
         assert_eq!(got.recorded, 1);
         assert_eq!(got.unknown, vec!["suite:99_ghost"]);
-        assert!(Ledger::load(d.path()).unwrap().latest("suite:99_ghost").is_none());
+        assert!(Ledger::load(d.path())
+            .unwrap()
+            .latest("suite:99_ghost")
+            .is_none());
     }
 
     /// Recording twice replaces, and a second partial run does not erase the first run's
@@ -370,7 +426,11 @@ mod tests {
     fn a_later_partial_run_updates_only_what_it_ran() {
         let d = repo();
         let all = d.path().join("all.tsv");
-        std::fs::write(&all, "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n").unwrap();
+        std::fs::write(
+            &all,
+            "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n",
+        )
+        .unwrap();
         record(
             d.path(),
             &RecordRequest {
@@ -422,7 +482,10 @@ mod tests {
         .unwrap_err()
         .to_string();
         assert!(err.contains("field(s)"), "{err}");
-        assert!(!Ledger::present(d.path()), "a refused recording wrote a ledger");
+        assert!(
+            !Ledger::present(d.path()),
+            "a refused recording wrote a ledger"
+        );
     }
 
     #[test]

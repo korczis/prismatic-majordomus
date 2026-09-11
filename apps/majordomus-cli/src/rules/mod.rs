@@ -40,6 +40,21 @@
 //! Either mode names at least one test. A blocking rule that names neither is `Unproven`,
 //! which is the state this module exists to make visible rather than absent.
 
+//! # Example
+//!
+//! The vocabulary, without a repository: a class is read rather than guessed, the mode is
+//! whatever the block names, and every state ranks and says what it means.
+//!
+//! ```
+//! use majordomus_cli::rules::{Class, Mode, RuleState};
+//!
+//! assert_eq!(Class::parse("blocking"), Class::Blocking);
+//! assert_eq!(Class::parse("strict"), Class::Unknown);
+//! assert_eq!(Mode::Reviewed.label(), "reviewed");
+//! assert!(RuleState::Proven < RuleState::Dangling);
+//! assert!(!RuleState::Gated.passing());
+//! ```
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -75,9 +90,18 @@ const CRATE_RUNNER: &str = "rust-check";
 /// a gate refuses the work, `advisory` means a reader is expected to have read it. A rule
 /// whose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,
 /// because guessing here is how a blocking rule quietly becomes advice.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "RuleClass")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::Class;
+/// assert_eq!(Class::Blocking.label(), "blocking");
+/// assert_eq!(Class::parse("advisory"), Class::Advisory);
+/// ```
 pub enum Class {
     /// A gate refuses work that violates it.
     Blocking,
@@ -88,7 +112,13 @@ pub enum Class {
 }
 
 impl Class {
-    /// The word a surface prints.
+    /// The word every surface prints for this class, written here once so the command
+    /// line, the API and the Cockpit cannot disagree about what to call it.
+    ///
+    /// ```
+    /// use majordomus_cli::rules::Class;
+    /// assert_eq!(Class::Unknown.label(), "unknown");
+    /// ```
     pub fn label(self) -> &'static str {
         match self {
             Class::Blocking => "blocking",
@@ -98,6 +128,11 @@ impl Class {
     }
 
     /// Read a class from the front matter, without defaulting.
+    /// ```
+    /// use majordomus_cli::rules::Class;
+    /// assert_eq!(Class::parse(" blocking "), Class::Blocking);
+    /// assert_eq!(Class::parse(""), Class::Unknown);
+    /// ```
     pub fn parse(word: &str) -> Class {
         match word.trim() {
             "blocking" => Class::Blocking,
@@ -108,9 +143,18 @@ impl Class {
 }
 
 /// How a rule is enforced, as its own front matter declares it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "RuleMode")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::Mode;
+/// assert_eq!(Mode::Dispatched.label(), "dispatched");
+/// assert_eq!(Mode::Declarative.label(), "declarative");
+/// ```
 pub enum Mode {
     /// Names a validator the doctrine dispatcher calls at run time.
     Dispatched,
@@ -128,7 +172,13 @@ pub enum Mode {
 }
 
 impl Mode {
-    /// The word a surface prints.
+    /// The word every surface prints for this enforcement mode, written here once so no
+    /// projection invents its own spelling of a mode.
+    ///
+    /// ```
+    /// use majordomus_cli::rules::Mode;
+    /// assert_eq!(Mode::Gated.label(), "gated");
+    /// ```
     pub fn label(self) -> &'static str {
         match self {
             Mode::Dispatched => "dispatched",
@@ -142,6 +192,24 @@ impl Mode {
 /// The enforcement block of a rule, read from `x-majordomus`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RuleEnforcement")]
+/// # Example
+///
+/// Read from front matter rather than built by hand; this is the shape a gated rule
+/// produces, and the mode is decided by what the block actually names.
+///
+/// ```
+/// use majordomus_cli::rules::{Enforcement, Mode};
+/// let e = Enforcement {
+///     mode: Mode::Gated,
+///     validator: None,
+///     category: None,
+///     exit_code: None,
+///     enforced_by: None,
+///     tests: vec!["test/cases/07_scope.sh".into()],
+///     reviewed_because: None,
+/// };
+/// assert_eq!(e.mode, Mode::Gated);
+/// ```
 pub struct Enforcement {
     /// Which of the two canonical modes, or neither.
     pub mode: Mode,
@@ -168,6 +236,35 @@ pub struct Enforcement {
 
 /// One rule, as the repository canonically declares it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// # Example
+///
+/// Built by [`definitions`] from the index rather than by hand. Its ordering is the one
+/// the crate has, so a report over the same tree reads the same twice.
+///
+/// ```
+/// use majordomus_cli::rules::{Class, RuleDefinition};
+/// # use majordomus_cli::rules::{Enforcement, Mode};
+/// let d = RuleDefinition {
+///     id: "project.scope-is-declared".into(),
+///     identity: "project.scope-is-declared@1".into(),
+///     uri: "majordomus://rule/project.scope-is-declared@1".into(),
+///     version: 1,
+///     title: "Scope is declared".into(),
+///     description: None,
+///     statement: None,
+///     status: "active".into(),
+///     class: Class::Blocking,
+///     namespace: "project".into(),
+///     depends_on: vec![],
+///     tags: vec![],
+///     path: ".ai/repo/rules/project/scope-is-declared.v1.md".into(),
+///     enforcement: Enforcement {
+///         mode: Mode::Declarative, validator: None, category: None, exit_code: None,
+///         enforced_by: None, tests: vec![], reviewed_because: None,
+///     },
+/// };
+/// assert_eq!(d.class, Class::Blocking);
+/// ```
 pub struct RuleDefinition {
     /// The rule id, `<namespace>.<stem>`, without the version.
     pub id: String,
@@ -232,6 +329,18 @@ impl crate::order::Ordered for RuleProof {
 /// tree, which is the opposite of true — those are the best-enforced rules there are.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RuleValidator")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::ValidatorRef;
+/// let v = ValidatorRef {
+///     name: "adr".into(),
+///     function: "mj_validate_adr".into(),
+///     defined_in: Some("lib/adr.sh".into()),
+///     present: true,
+/// };
+/// assert_eq!(v.function, "mj_validate_adr");
+/// ```
 pub struct ValidatorRef {
     /// The name the rule declares, without the `mj_validate_` prefix.
     pub name: String,
@@ -253,9 +362,18 @@ pub struct ValidatorRef {
 /// as its own command: it refuses violations on every run, and this repository records no
 /// verdict for it, so what can be shown is the mechanism and not the result. Anything else
 /// a rule names is proof only in prose.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "RuleArtifactKind")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::ArtifactKind;
+/// assert_eq!(ArtifactKind::Case.label(), "case");
+/// assert_eq!(ArtifactKind::Gate.label(), "gate");
+/// ```
 pub enum ArtifactKind {
     /// A behavioural case a runner drives; executions of it are recorded.
     Case,
@@ -266,7 +384,13 @@ pub enum ArtifactKind {
 }
 
 impl ArtifactKind {
-    /// The word a surface prints.
+    /// The word every surface prints for what drives this artifact, so that a gate and a
+    /// case are never rendered as the same kind of thing.
+    ///
+    /// ```
+    /// use majordomus_cli::rules::ArtifactKind;
+    /// assert_eq!(ArtifactKind::Unknown.label(), "unknown");
+    /// ```
     pub fn label(self) -> &'static str {
         match self {
             ArtifactKind::Case => "case",
@@ -279,6 +403,24 @@ impl ArtifactKind {
 /// One test a rule names, joined to what was recorded against it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RuleTestProof")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::{ArtifactKind, TestProof};
+/// use majordomus_cli::evidence::ProofState;
+/// let t = TestProof {
+///     path: "test/cases/07_scope.sh".into(),
+///     kind: ArtifactKind::Case,
+///     present: true,
+///     test: Some("suite:07_scope".into()),
+///     state: ProofState::NotRun,
+///     meaning: ProofState::NotRun.meaning().into(),
+///     execution: None,
+///     reproduce: Some("bash test/run.sh 07_scope".into()),
+///     gates: vec!["shell-suite".into()],
+/// };
+/// assert_eq!(t.kind, ArtifactKind::Case);
+/// ```
 pub struct TestProof {
     /// The path the rule names.
     pub path: String,
@@ -309,8 +451,18 @@ pub struct TestProof {
 ///
 /// Ordered strongest to weakest so that a summary sorted by this reads as a ranking, and so
 /// that a rule's state is the weakest of its parts by `max`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::RuleState;
+/// assert!(RuleState::Proven < RuleState::Stale);
+/// assert!(RuleState::Stale.passing());
+/// assert!(!RuleState::Dangling.passing());
+/// ```
 pub enum RuleState {
     /// Every artifact it names is present, and every test it names has a passing run that
     /// nothing has invalidated.
@@ -341,7 +493,13 @@ pub enum RuleState {
 }
 
 impl RuleState {
-    /// The word a surface prints.
+    /// The word every surface prints for this state, written here once so that `proven`
+    /// and `inputs unchanged` cannot be collapsed into one badge by a renderer.
+    ///
+    /// ```
+    /// use majordomus_cli::rules::RuleState;
+    /// assert_eq!(RuleState::InputsUnchanged.label(), "inputs unchanged");
+    /// ```
     pub fn label(self) -> &'static str {
         match self {
             RuleState::Proven => "proven",
@@ -359,6 +517,10 @@ impl RuleState {
 
     /// One sentence: what the state means, worded once so that every surface says the same
     /// thing rather than each inventing its own gloss.
+    /// ```
+    /// use majordomus_cli::rules::RuleState;
+    /// assert!(RuleState::Dangling.meaning().contains("not in the tree"));
+    /// ```
     pub fn meaning(self) -> &'static str {
         match self {
             RuleState::Proven => {
@@ -403,6 +565,11 @@ impl RuleState {
     }
 
     /// Does this state carry a passing execution behind it, of any freshness?
+    /// ```
+    /// use majordomus_cli::rules::RuleState;
+    /// assert!(RuleState::Proven.passing());
+    /// assert!(!RuleState::Unproven.passing());
+    /// ```
     pub fn passing(self) -> bool {
         matches!(
             self,
@@ -413,6 +580,22 @@ impl RuleState {
 
 /// One rule, joined to everything the repository can show about it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// # Example
+///
+/// A `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state
+/// supports the class the rule declares, which is the whole question.
+///
+/// ```
+/// use majordomus_cli::rules::{report, RuleProof, RuleState};
+/// use majordomus_cli::evidence::Ledger;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report(&repo.index().unwrap(), &ledger);
+/// let first: &RuleProof = &r.rules[0];
+/// assert_eq!(first.state, RuleState::Unproven);
+/// assert!(first.satisfied, "an advisory rule owes no executable proof");
+/// ```
 pub struct RuleProof {
     /// The canonical definition.
     pub rule: RuleDefinition,
@@ -440,6 +623,19 @@ pub struct RuleProof {
 /// One rule whose declared class the proof does not support.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RuleFinding")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::rules::{Class, Finding, RuleState};
+/// let f = Finding {
+///     rule: "project.x".into(),
+///     class: Class::Blocking,
+///     state: RuleState::Dangling,
+///     reason: "it names a path that is not in the tree".into(),
+///     reproduce: "scripts/ci/rule-proof-check".into(),
+/// };
+/// assert_eq!(f.state, RuleState::Dangling);
+/// ```
 pub struct Finding {
     /// The rule id.
     pub rule: String,
@@ -459,6 +655,17 @@ pub struct Finding {
 /// anywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RuleCoverage")]
+/// # Example
+///
+/// Every number is counted from the tree; an empty corpus counts zero rather than
+/// reading as complete, which is what `Coverage::default` is for.
+///
+/// ```
+/// use majordomus_cli::rules::Coverage;
+/// let c = Coverage::default();
+/// assert_eq!(c.rules, 0);
+/// assert_eq!(c.review_only, 0);
+/// ```
 pub struct Coverage {
     /// Rules discovered.
     pub rules: usize,
@@ -493,6 +700,24 @@ pub struct Coverage {
 /// The whole rule corpus, verified.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RulesReport")]
+/// # Example
+///
+/// The whole corpus joined to the tree and the ledger. `satisfied` is true when no rule
+/// declares a class its proof does not support.
+///
+/// ```
+/// use majordomus_cli::rules::RulesReport;
+/// let r = RulesReport {
+///     head: None,
+///     working_tree: "clean".into(),
+///     rules: vec![],
+///     states: Default::default(),
+///     coverage: Default::default(),
+///     findings: vec![],
+///     satisfied: true,
+/// };
+/// assert!(r.satisfied());
+/// ```
 pub struct RulesReport {
     /// The commit the report was derived against, when git could say.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -600,6 +825,13 @@ fn enforcement_of(meta: &Value) -> Enforcement {
 ///
 /// The denominator is read from the index, so a rule added tomorrow is measured tomorrow
 /// and this function never carries a list of what exists.
+/// ```
+/// use majordomus_cli::rules::definitions;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let defs = definitions(&repo.index().unwrap());
+/// assert_eq!(defs.len(), repo.shape.rules);
+/// ```
 pub fn definitions(index: &Index) -> Vec<RuleDefinition> {
     let mut out: Vec<RuleDefinition> = index
         .objects
@@ -691,7 +923,9 @@ fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String> {
 fn validator_defined_in(root: &Path, name: &str) -> Option<String> {
     let needle = format!("mj_validate_{name}()");
     let dir = root.join("lib");
-    let mut hits: Vec<String> = std::fs::read_dir(&dir)
+    // `min` rather than collect-sort-first: one pass, no sort site, and the same answer —
+    // the least file name, deterministically, whatever order the directory was read in.
+    std::fs::read_dir(&dir)
         .ok()?
         .filter_map(Result::ok)
         .filter(|e| e.path().extension().is_some_and(|x| x == "sh"))
@@ -701,9 +935,7 @@ fn validator_defined_in(root: &Path, name: &str) -> Option<String> {
                 .unwrap_or(false)
         })
         .map(|e| format!("lib/{}", e.file_name().to_string_lossy()))
-        .collect();
-    hits.sort();
-    hits.into_iter().next()
+        .min()
 }
 
 /// Does this gate run exactly this path as its own command, as opposed to driving a whole
@@ -769,15 +1001,15 @@ fn rule_state_of(test: &TestProof) -> RuleState {
 /// defect at any class, because it reads as proof and is not.
 fn unsupported(class: Class, state: RuleState) -> Option<String> {
     match (class, state) {
-        (_, RuleState::Dangling) => Some(
-            "it names a path that is not in the tree, so it reads as proven and is not".into(),
-        ),
+        (_, RuleState::Dangling) => {
+            Some("it names a path that is not in the tree, so it reads as proven and is not".into())
+        }
         // Reviewed is deliberately not a finding: the rule says in its own front matter
         // that nothing executable can express it and why, which is a declaration a reader
         // can audit. What it is not is proof, and the report counts it apart.
-        (Class::Blocking, RuleState::Unproven) => Some(
-            "it is blocking and names neither a validator nor a test that proves it".into(),
-        ),
+        (Class::Blocking, RuleState::Unproven) => {
+            Some("it is blocking and names neither a validator nor a test that proves it".into())
+        }
         (Class::Blocking, RuleState::Failing) => {
             Some("it is blocking and the latest run of what proves it did not pass".into())
         }
@@ -798,6 +1030,16 @@ fn unsupported(class: Class, state: RuleState) -> Option<String> {
 /// The git comparison is done once per distinct recorded commit and shared by every rule
 /// that recorded against it, as [`crate::evidence::report`] does — the two derivations read
 /// the same ledger and must not disagree about what a commit's diff is.
+/// ```
+/// use majordomus_cli::rules::report;
+/// use majordomus_cli::evidence::Ledger;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report(&repo.index().unwrap(), &ledger);
+/// assert_eq!(r.coverage.rules, repo.shape.rules);
+/// assert!(r.satisfied(), "the synthetic rules are advisory and owe no proof");
+/// ```
 pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
     let root = PathBuf::from(&index.repository.root);
     let git = crate::git::inspect(&root);
@@ -819,7 +1061,10 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
     let mut required_by: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for d in &defs {
         for dep in &d.depends_on {
-            required_by.entry(dep.clone()).or_default().push(d.id.clone());
+            required_by
+                .entry(dep.clone())
+                .or_default()
+                .push(d.id.clone());
         }
     }
 
@@ -846,7 +1091,10 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
             let gates = gates_for(path, &gate_commands);
             let kind = if id.is_some() {
                 ArtifactKind::Case
-            } else if gates.iter().any(|g| gate_runs_exactly(g, path, &gate_commands)) {
+            } else if gates
+                .iter()
+                .any(|g| gate_runs_exactly(g, path, &gate_commands))
+            {
                 ArtifactKind::Gate
             } else {
                 ArtifactKind::Unknown
@@ -871,7 +1119,8 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
                                     .filter(|p| p.as_str() != crate::evidence::LEDGER_PATH)
                                     .collect();
                                 // what this rule names, and nothing else
-                                let names_changed = d.contains(&t.source()) || d.contains(&def.path);
+                                let names_changed =
+                                    d.contains(&t.source()) || d.contains(&def.path);
                                 let test_moved = e.digest_matches(&root) == Some(false);
                                 if names_changed || test_moved {
                                     ProofState::Stale

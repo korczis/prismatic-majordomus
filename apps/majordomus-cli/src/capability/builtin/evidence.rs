@@ -23,6 +23,18 @@
 //! rather than as a hand-written command is what keeps it inside the registry, the command
 //! graph and the generated reference instead of in the inventory of commands nothing derives.
 
+//! # Example
+//!
+//! Four capabilities, and every projection — the command line, the HTTP operation, the MCP
+//! tool — is derived from that one declaration.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::evidence::module;
+//! let m = module();
+//! assert_eq!(m.id.as_str(), "evidence");
+//! assert_eq!(m.capabilities.len(), 4);
+//! ```
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -48,6 +60,13 @@ pub const EVIDENCE_URI: &str = "majordomus://evidence";
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// Which part of the matrix to answer for.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceReportInput;
+/// let i = EvidenceReportInput { findings_only: true, ..Default::default() };
+/// assert!(i.findings_only);
+/// ```
 pub struct EvidenceReportInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,
@@ -82,6 +101,16 @@ impl BenchmarkCases for EvidenceReportInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// One claim of the matrix.
+/// # Example
+///
+/// One claim of the matrix, named exactly as `docs/CLAIMS.yaml` spells it; a name the
+/// matrix does not declare is a not-found rather than an empty answer.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;
+/// let i = EvidenceClaimInput { claim: "evidence-proof-is-an-execution".into() };
+/// assert!(!i.claim.is_empty());
+/// ```
 pub struct EvidenceClaimInput {
     /// The claim id, as `docs/CLAIMS.yaml` spells it.
     pub claim: String,
@@ -105,6 +134,13 @@ impl BenchmarkCases for EvidenceClaimInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// One test, by its stable identity or by the path a claim names it with.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceTestInput;
+/// let i = EvidenceTestInput { test: "suite:124_evidence".into() };
+/// assert!(i.test.starts_with("suite:"));
+/// ```
 pub struct EvidenceTestInput {
     /// `suite:84_distribution_model`, `crate:why`, or the path itself
     /// (`test/cases/84_distribution_model.sh`), which is resolved to the same identity.
@@ -133,6 +169,13 @@ impl BenchmarkCases for EvidenceTestInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// A run to record into the ledger.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;
+/// let i = EvidenceRecordInput { suite: None, crate_output: None, origin: Some("ci".into()) };
+/// assert_eq!(i.origin.as_deref(), Some("ci"));
+/// ```
 pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The runner's TSV report: `MJ_TEST_REPORT=<file> bash test/run.sh`.
@@ -158,6 +201,13 @@ impl BenchmarkCases for EvidenceRecordInput {
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 /// One claim with everything the repository can say about its proof, and the way back out
 /// to the test that carries it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::ProofState;
+/// // a ClaimEvidence carries the claim's proof, whose state ranks against the others
+/// assert!(ProofState::Proven < ProofState::NotRun);
+/// ```
 pub struct ClaimEvidence {
     /// The claim, joined to its evidence.
     #[serde(flatten)]
@@ -174,6 +224,13 @@ pub struct ClaimEvidence {
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 /// One test, and what it proves.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Runner;
+/// // a TestEvidence names the runner that owns the test it is about
+/// assert_eq!(Runner::Suite.prefix(), "suite");
+/// ```
 pub struct TestEvidence {
     /// The stable identity: `suite:<case>` or `crate:<binary>`.
     pub test: String,
@@ -198,6 +255,20 @@ pub struct TestEvidence {
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 /// What a recording did.
+/// # Example
+///
+/// What the recorder wrote, as a client sees it: how many executions, how many passed,
+/// the commit they were recorded against and where the ledger lives.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::RecordReport;
+/// let r = RecordReport {
+///     recorded: 1, passed: 1, commit: "a04b65c9".into(),
+///     working_tree: "clean".into(), unknown: vec![],
+///     ledger: ".ai/repo/evidence/ledger.json".into(),
+/// };
+/// assert_eq!(r.recorded, 1);
+/// ```
 pub struct RecordReport {
     /// How many executions were written.
     pub recorded: usize,
@@ -356,6 +427,10 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
 // ---------------------------------------------------------------- the module
 
 /// The `evidence` module: claims joined to the runs recorded against them.
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::module;
+/// assert_eq!(module().id.as_str(), "evidence");
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "evidence",
@@ -440,13 +515,19 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
 
+    /// One capability's declared projections: its id, the MCP tool it answers as, the HTTP
+    /// path it is served at, and the words of its command line. Named because the tuple is
+    /// read four times below and an anonymous one of this width is a type nobody can talk
+    /// about.
+    type Projection<'a> = (&'a str, Option<&'a str>, Option<&'a str>, &'a [&'a str]);
+
     /// The declaration is the only place these names exist; every projection derives from
     /// it. This is the assertion a refactor that dropped an exposure would fail.
     #[test]
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "evidence");
-        let expected: &[(&str, Option<&str>, Option<&str>, &[&str])] = &[
+        let expected: &[Projection<'_>] = &[
             (
                 "evidence.report",
                 Some("majordomus_evidence"),
@@ -476,7 +557,11 @@ mod tests {
         assert_eq!(ids, want);
         for (e, (id, tool, path, cli)) in m.capabilities.iter().zip(expected) {
             let x = &e.capability.exposure;
-            assert_eq!(x.mcp.as_ref().and_then(|m| m.tool.as_deref()), *tool, "{id}");
+            assert_eq!(
+                x.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                *tool,
+                "{id}"
+            );
             assert_eq!(x.http.as_ref().map(|h| h.path.as_str()), *path, "{id}");
             assert_eq!(
                 x.cli.as_ref().map(|c| c.path.clone()),
@@ -499,7 +584,10 @@ mod tests {
             let id = e.capability.id.as_str().to_string();
             let x = &e.capability.exposure;
             if id == "evidence.record" {
-                assert!(!e.capability.kind.is_read_only(), "{id} is declared a query");
+                assert!(
+                    !e.capability.kind.is_read_only(),
+                    "{id} is declared a query"
+                );
                 assert!(x.mcp.is_none(), "{id} is reachable over MCP");
                 assert!(x.http.is_none(), "{id} is reachable over HTTP");
                 assert_eq!(
@@ -513,7 +601,10 @@ mod tests {
                 );
             } else {
                 assert!(e.capability.kind.is_read_only(), "{id} writes");
-                assert!(x.mcp.is_some() && x.http.is_some(), "{id} lost a projection");
+                assert!(
+                    x.mcp.is_some() && x.http.is_some(),
+                    "{id} lost a projection"
+                );
             }
         }
     }

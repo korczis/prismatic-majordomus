@@ -115,7 +115,10 @@ fn only_a_recorded_pass_is_passing() {
     assert!(RuleState::Proven.passing());
     assert!(RuleState::InputsUnchanged.passing());
     assert!(RuleState::Stale.passing());
-    assert!(!RuleState::Gated.passing(), "a gate is a mechanism, not a recorded pass");
+    assert!(
+        !RuleState::Gated.passing(),
+        "a gate is a mechanism, not a recorded pass"
+    );
     assert!(!RuleState::Failing.passing());
     assert!(!RuleState::NotRun.passing());
     assert!(!RuleState::Reviewed.passing());
@@ -143,10 +146,19 @@ fn every_state_words_itself_once() {
         assert!(!s.label().is_empty(), "a state with no word");
         assert!(!s.meaning().is_empty(), "{} has no meaning", s.label());
     }
-    for m in [Mode::Dispatched, Mode::Gated, Mode::Reviewed, Mode::Declarative] {
+    for m in [
+        Mode::Dispatched,
+        Mode::Gated,
+        Mode::Reviewed,
+        Mode::Declarative,
+    ] {
         assert!(!m.label().is_empty());
     }
-    for k in [ArtifactKind::Case, ArtifactKind::Gate, ArtifactKind::Unknown] {
+    for k in [
+        ArtifactKind::Case,
+        ArtifactKind::Gate,
+        ArtifactKind::Unknown,
+    ] {
         assert!(!k.label().is_empty());
     }
 }
@@ -245,8 +257,14 @@ fn a_blocking_rule_is_held_to_its_proof_and_an_advisory_one_is_not() {
 #[test]
 fn a_gate_is_found_by_the_command_it_runs() {
     let commands = vec![
-        ("rule-proof".to_string(), "scripts/ci/rule-proof-check".to_string()),
-        ("shell-suite".to_string(), "MJ_TEST_JOBS=4 bash test/run.sh".to_string()),
+        (
+            "rule-proof".to_string(),
+            "scripts/ci/rule-proof-check".to_string(),
+        ),
+        (
+            "shell-suite".to_string(),
+            "MJ_TEST_JOBS=4 bash test/run.sh".to_string(),
+        ),
         (
             "rust-integration".to_string(),
             "scripts/rust-check --integration".to_string(),
@@ -318,7 +336,10 @@ fn a_corpus_with_no_proof_is_unproven_and_not_a_finding() {
     assert_eq!(r.coverage.satisfied, r.coverage.rules);
     assert!(r.rules.iter().all(|p| p.state == RuleState::Unproven));
     assert_eq!(r.states.get("unproven"), Some(&repo.shape.rules));
-    assert!(r.findings.is_empty(), "advisory rules owe no executable proof");
+    assert!(
+        r.findings.is_empty(),
+        "advisory rules owe no executable proof"
+    );
     assert!(r.satisfied());
 
     // canonical order, from the crate's one comparator, so that two runs over one tree
@@ -371,8 +392,16 @@ fn the_dependency_relation_is_readable_in_both_directions() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let zero = r.rules.iter().find(|p| p.rule.id == "project.rule-0").unwrap();
-    let one = r.rules.iter().find(|p| p.rule.id == "project.rule-1").unwrap();
+    let zero = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-0")
+        .unwrap();
+    let one = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-1")
+        .unwrap();
     assert_eq!(one.rule.depends_on, ["project.rule-0"]);
     assert_eq!(zero.required_by, ["project.rule-1"]);
     assert!(one.required_by.is_empty());
@@ -397,7 +426,11 @@ fn a_blocking_rule_naming_a_missing_case_is_dangling_and_a_finding() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-2").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-2")
+        .unwrap();
     assert_eq!(p.rule.class, Class::Blocking);
     assert_eq!(p.rule.enforcement.mode, Mode::Gated);
     assert_eq!(p.state, RuleState::Dangling);
@@ -408,10 +441,17 @@ fn a_blocking_rule_naming_a_missing_case_is_dangling_and_a_finding() {
     assert_eq!(r.coverage.named_proof, 1);
     assert_eq!(r.coverage.artifacts_present, 0);
 
-    let f = r.findings.iter().find(|f| f.rule == "project.rule-2").unwrap();
+    let f = r
+        .findings
+        .iter()
+        .find(|f| f.rule == "project.rule-2")
+        .unwrap();
     assert_eq!(f.state, RuleState::Dangling);
     assert!(f.reason.contains("not in the tree"));
-    assert!(!f.reproduce.is_empty(), "a finding carries how to reproduce it");
+    assert!(
+        !f.reproduce.is_empty(),
+        "a finding carries how to reproduce it"
+    );
     assert!(!r.satisfied());
 }
 
@@ -432,11 +472,19 @@ fn a_blocking_rule_naming_nothing_is_unproven_and_a_finding() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-3").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-3")
+        .unwrap();
     assert_eq!(p.state, RuleState::Unproven);
     assert!(!p.satisfied);
     assert!(p.gates.is_empty());
-    let f = r.findings.iter().find(|f| f.rule == "project.rule-3").unwrap();
+    let f = r
+        .findings
+        .iter()
+        .find(|f| f.rule == "project.rule-3")
+        .unwrap();
     assert!(f.reason.contains("neither a validator nor a test"));
 }
 
@@ -472,7 +520,11 @@ fn a_check_wired_as_a_gate_is_a_mechanism_and_not_a_verdict() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-4").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-4")
+        .unwrap();
     assert_eq!(p.tests[0].kind, ArtifactKind::Gate);
     assert_eq!(p.tests[0].gates, ["alpha-check"]);
     assert_eq!(p.state, RuleState::Gated);
@@ -490,7 +542,11 @@ fn a_check_wired_as_a_gate_is_a_mechanism_and_not_a_verdict() {
     )
     .unwrap();
     let r = report(&repo.index().unwrap(), &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-4").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-4")
+        .unwrap();
     assert_eq!(p.tests[0].kind, ArtifactKind::Unknown);
     assert_eq!(p.state, RuleState::Unrunnable);
     assert!(!p.satisfied, "a blocking rule nothing runs is a finding");
@@ -519,7 +575,11 @@ fn a_rule_is_only_as_proven_as_its_weakest_part() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-5").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-5")
+        .unwrap();
     assert_eq!(p.tests.len(), 2);
     assert!(p.tests[0].present && !p.tests[1].present);
     assert_eq!(p.state, RuleState::Dangling);
@@ -582,10 +642,17 @@ fn a_reviewed_rule_is_counted_apart_and_never_as_proof() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-6").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-6")
+        .unwrap();
     assert_eq!(p.rule.enforcement.mode, Mode::Reviewed);
     assert_eq!(p.state, RuleState::Reviewed);
-    assert!(p.satisfied, "a declared, reasoned exemption is not a finding");
+    assert!(
+        p.satisfied,
+        "a declared, reasoned exemption is not a finding"
+    );
     assert!(!p.state.passing());
     assert_eq!(r.coverage.review_only, 1);
     assert_eq!(
@@ -636,10 +703,7 @@ fn a_validator_is_a_function_in_lib_and_not_a_path() {
     assert_eq!(validator_defined_in(&dir, "ghost"), None);
     assert_eq!(validator_defined_in(&dir, "absent"), None);
     // a tree with no lib/ at all answers, rather than panicking
-    assert_eq!(
-        validator_defined_in(&dir.join("nowhere"), "scope"),
-        None
-    );
+    assert_eq!(validator_defined_in(&dir.join("nowhere"), "scope"), None);
     std::fs::remove_dir_all(&dir).unwrap();
 }
 
@@ -665,9 +729,16 @@ fn a_dispatched_rule_whose_validator_is_undefined_is_dangling() {
     let index = repo.index().unwrap();
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
-    let p = r.rules.iter().find(|p| p.rule.id == "project.rule-7").unwrap();
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-7")
+        .unwrap();
     assert_eq!(p.rule.enforcement.mode, Mode::Dispatched);
-    let v = p.validator.as_ref().expect("a dispatched rule carries its validator");
+    let v = p
+        .validator
+        .as_ref()
+        .expect("a dispatched rule carries its validator");
     assert_eq!(v.function, "mj_validate_nothing_defines_this");
     assert!(!v.present);
     assert!(v.defined_in.is_none());
@@ -696,12 +767,18 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
         let text = std::fs::read_to_string(repo.root().join(&rel)).unwrap();
         std::fs::write(
             repo.root().join(&rel),
-            text.replace("class: advisory", &format!("class: blocking\n\nx-majordomus:\n{block}")),
+            text.replace(
+                "class: advisory",
+                &format!("class: blocking\n\nx-majordomus:\n{block}"),
+            ),
         )
         .unwrap();
     };
     // a case plus a path nothing drives: judged by the case
-    write("rule-8", "  tests: [test/cases/01_alive.sh, scripts/helper.sh]");
+    write(
+        "rule-8",
+        "  tests: [test/cases/01_alive.sh, scripts/helper.sh]",
+    );
     // only a path nothing drives: genuinely unrunnable
     write("rule-9", "  tests: [scripts/helper.sh]");
 
@@ -709,7 +786,11 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
     let ledger = Ledger::load(repo.root()).unwrap();
     let r = report(&index, &ledger);
 
-    let both = r.rules.iter().find(|p| p.rule.id == "project.rule-8").unwrap();
+    let both = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-8")
+        .unwrap();
     assert_eq!(both.tests.len(), 2);
     assert_eq!(both.tests[0].kind, ArtifactKind::Case);
     assert_eq!(both.tests[1].kind, ArtifactKind::Unknown);
@@ -720,14 +801,28 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
     );
     assert!(both.satisfied, "that combination is not a finding");
 
-    let only = r.rules.iter().find(|p| p.rule.id == "project.rule-9").unwrap();
+    let only = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-9")
+        .unwrap();
     assert_eq!(only.state, RuleState::Unrunnable);
-    assert!(!only.satisfied, "a blocking rule with nothing runnable is a finding");
+    assert!(
+        !only.satisfied,
+        "a blocking rule with nothing runnable is a finding"
+    );
 
     // and absence still dominates, whatever else is named
-    write("rule-0", "  tests: [test/cases/01_alive.sh, test/cases/99_gone.sh]");
+    write(
+        "rule-0",
+        "  tests: [test/cases/01_alive.sh, test/cases/99_gone.sh]",
+    );
     let r = report(&repo.index().unwrap(), &ledger);
-    let mixed = r.rules.iter().find(|p| p.rule.id == "project.rule-0").unwrap();
+    let mixed = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-0")
+        .unwrap();
     assert_eq!(mixed.state, RuleState::Dangling);
     assert!(!mixed.satisfied);
 }

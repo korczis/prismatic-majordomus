@@ -39,7 +39,11 @@
 #   scripts/ci/rule-proof-check --strict           fail on any finding, baseline ignored
 #
 # Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure. The counting
+# helper below pipes, and `grep -c` exits 1 when it counts none, so every pipeline that may
+# legitimately find nothing says `|| true` for itself.
 set -eu
+set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 RULES=".ai/repo/rules"

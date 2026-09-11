@@ -69,6 +69,22 @@
 //! process. This is about test runs, durable, committed and read long after the process
 //! that produced them exited. Two different subjects that share an English word.
 
+//! # Example
+//!
+//! The vocabulary, without a repository: a test is named by the path a claim writes down,
+//! a result word is a pass only when the runner said so, and the proof states rank.
+//!
+//! ```
+//! use majordomus_cli::evidence::{Outcome, ProofState, Runner, TestId};
+//!
+//! let t = TestId::of("test/cases/07_scope.sh").unwrap();
+//! assert_eq!(t.runner, Runner::Suite);
+//! assert_eq!(t.as_string(), "suite:07_scope");
+//! assert!(Outcome::parse("ok").proves());
+//! assert!(!Outcome::parse("FAIL").proves());
+//! assert!(ProofState::Proven < ProofState::Stale);
+//! ```
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -89,9 +105,18 @@ pub use record::{parse_crate_binaries, record, RecordOutcome, RecordRequest};
 /// The repository has exactly two that a claim may name today. A third would be a variant
 /// here and a branch in [`TestId::of`]; a claim naming something neither runner produces is
 /// reported as [`ProofState::Unrunnable`] rather than silently counted as covered.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceRunner")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Runner;
+/// assert_eq!(Runner::Suite.prefix(), "suite");
+/// assert_eq!(Runner::Crate.prefix(), "crate");
+/// ```
 pub enum Runner {
     /// A behavioural case under `test/cases/`, run by `test/run.sh`.
     Suite,
@@ -101,6 +126,10 @@ pub enum Runner {
 
 impl Runner {
     /// The prefix this runner's test ids carry.
+    /// ```
+    /// use majordomus_cli::evidence::Runner;
+    /// assert_eq!(Runner::Suite.prefix(), "suite");
+    /// ```
     pub fn prefix(self) -> &'static str {
         match self {
             Runner::Suite => "suite",
@@ -114,9 +143,18 @@ impl Runner {
 /// `NotRun` is deliberately absent: it is the absence of an execution, not an outcome one
 /// had. Encoding it here would let a recorder write "this did not run" and have it counted
 /// among the things that did.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceOutcome")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Outcome;
+/// assert!(Outcome::parse("ok").proves());
+/// assert_eq!(Outcome::parse("wat"), Outcome::Error);
+/// ```
 pub enum Outcome {
     /// It passed.
     Pass,
@@ -132,12 +170,25 @@ pub enum Outcome {
 
 impl Outcome {
     /// Did this outcome prove anything?
+    /// Did the runner call this a pass? Anything it did not spell as success is not one,
+    /// so an unrecognised result word is an error rather than quietly the good outcome.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::Outcome;
+    /// assert!(Outcome::Pass.proves());
+    /// assert!(!Outcome::Timeout.proves());
+    /// ```
     pub fn proves(self) -> bool {
         matches!(self, Outcome::Pass)
     }
 
     /// The word the runner writes, read back. Anything unrecognised is [`Outcome::Error`]:
     /// a result nobody can classify is not a pass.
+    /// ```
+    /// use majordomus_cli::evidence::Outcome;
+    /// assert_eq!(Outcome::parse("PASS"), Outcome::Pass);
+    /// assert_eq!(Outcome::parse("nonsense"), Outcome::Error);
+    /// ```
     pub fn parse(word: &str) -> Outcome {
         match word.trim().to_ascii_lowercase().as_str() {
             "ok" | "pass" | "passed" => Outcome::Pass,
@@ -151,9 +202,18 @@ impl Outcome {
 
 /// Where a run happened. The canonical model is provider-neutral: a CI adapter records
 /// `Ci`, and nothing here knows or cares which CI it was.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 #[schemars(rename = "EvidenceOrigin")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Origin;
+/// assert_eq!(Origin::parse("ci"), Some(Origin::Ci));
+/// assert_eq!(Origin::parse("nowhere"), None);
+/// ```
 pub enum Origin {
     /// Someone ran it on their own machine.
     Local,
@@ -165,6 +225,11 @@ pub enum Origin {
 
 impl Origin {
     /// Read an origin from the word a recorder was given.
+    /// ```
+    /// use majordomus_cli::evidence::Origin;
+    /// assert_eq!(Origin::parse("release"), Some(Origin::Release));
+    /// assert_eq!(Origin::parse(""), None);
+    /// ```
     pub fn parse(word: &str) -> Option<Origin> {
         match word.trim().to_ascii_lowercase().as_str() {
             "local" => Some(Origin::Local),
@@ -185,6 +250,15 @@ impl Origin {
 /// join.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceTestId")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::TestId;
+/// let t = TestId::of("apps/majordomus-cli/tests/product.rs").unwrap();
+/// assert_eq!(t.as_string(), "crate:product");
+/// assert_eq!(t.reproduce(), "cargo test --test product");
+/// assert!(TestId::of("lib/nothing.sh").is_none());
+/// ```
 pub struct TestId {
     /// Which runner owns it.
     pub runner: Runner,
@@ -194,6 +268,10 @@ pub struct TestId {
 
 impl TestId {
     /// The canonical string form: `suite:84_distribution_model`, `crate:why`.
+    /// ```
+    /// use majordomus_cli::evidence::TestId;
+    /// assert_eq!(TestId::of("test/cases/07_scope.sh").unwrap().as_string(), "suite:07_scope");
+    /// ```
     pub fn as_string(&self) -> String {
         format!("{}:{}", self.runner.prefix(), self.name)
     }
@@ -239,6 +317,11 @@ impl TestId {
     }
 
     /// The repository-relative path of the test's own source.
+    /// ```
+    /// use majordomus_cli::evidence::TestId;
+    /// let t = TestId::of("test/cases/07_scope.sh").unwrap();
+    /// assert_eq!(t.source(), "test/cases/07_scope.sh");
+    /// ```
     pub fn source(&self) -> String {
         match self.runner {
             Runner::Suite => format!("test/cases/{}.sh", self.name),
@@ -248,6 +331,11 @@ impl TestId {
 
     /// The exact command that runs this one test, for a reader who wants the proof again
     /// rather than the claim that it exists.
+    /// ```
+    /// use majordomus_cli::evidence::TestId;
+    /// let t = TestId::of("test/cases/07_scope.sh").unwrap();
+    /// assert_eq!(t.reproduce(), "bash test/run.sh 07_scope");
+    /// ```
     pub fn reproduce(&self) -> String {
         match self.runner {
             Runner::Suite => format!("bash test/run.sh {}", self.name),
@@ -263,6 +351,28 @@ impl TestId {
 /// thing a badge must never be derived from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceExecution")]
+/// # Example
+///
+/// One recorded run, with the provenance the runner did not carry: which commit, which
+/// tree state, the digest of the test's own source, when, and how to run it again.
+///
+/// ```
+/// use majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};
+/// let e = Execution {
+///     test: "suite:07_scope".into(),
+///     runner: Runner::Suite,
+///     source: "test/cases/07_scope.sh".into(),
+///     outcome: Outcome::Pass,
+///     seconds: 3,
+///     commit: "a04b65c9".into(),
+///     working_tree: "clean".into(),
+///     digest: "sha256:00".into(),
+///     at: "2026-09-11T00:00:00Z".into(),
+///     origin: Origin::Local,
+///     command: "bash test/run.sh 07_scope".into(),
+/// };
+/// assert!(e.outcome.proves());
+/// ```
 pub struct Execution {
     /// The test, in [`TestId::as_string`] form.
     pub test: String,
@@ -294,6 +404,19 @@ impl Execution {
     ///
     /// `None` when the source is not there to hash — which is itself a finding, reported by
     /// the path checks, not silently read as a match.
+    /// ```
+    /// use majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let e = Execution {
+    ///     test: "suite:99_absent".into(), runner: Runner::Suite,
+    ///     source: "test/cases/99_absent.sh".into(), outcome: Outcome::Pass, seconds: 1,
+    ///     commit: "0".into(), working_tree: "clean".into(), digest: "sha256:00".into(),
+    ///     at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local, command: "x".into(),
+    /// };
+    /// // the source is not in the tree, so the comparison cannot be made
+    /// assert_eq!(e.digest_matches(repo.root()), None);
+    /// ```
     pub fn digest_matches(&self, root: &Path) -> Option<bool> {
         let text = std::fs::read(root.join(&self.source)).ok()?;
         Some(digest_of(&text) == self.digest)
@@ -301,6 +424,12 @@ impl Execution {
 }
 
 /// `sha256:<hex>` of some bytes, the one spelling used in the ledger.
+/// ```
+/// use majordomus_cli::evidence::digest_of;
+/// let d = digest_of(b"majordomus");
+/// assert!(d.starts_with("sha256:"));
+/// assert_eq!(d, digest_of(b"majordomus"));
+/// ```
 pub fn digest_of(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     let mut h = Sha256::new();
@@ -311,8 +440,18 @@ pub fn digest_of(bytes: &[u8]) -> String {
 /// What the repository can say about one claim's proof, right now.
 ///
 /// Ordered from strongest to weakest, so a summary that sorts by this reads as a ranking.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::ProofState;
+/// assert!(ProofState::Proven.passing());
+/// assert!(!ProofState::NotRun.passing());
+/// assert!(!ProofState::InputsUnchanged.meaning().is_empty());
+/// ```
 pub enum ProofState {
     /// A passing run, and nothing has changed since it — the diff against the execution's
     /// own commit is empty but for the ledger. Proof of the tree in front of you.
@@ -337,6 +476,13 @@ pub enum ProofState {
 
 impl ProofState {
     /// The word a surface prints.
+    /// The word every surface prints for this state, written once so that no renderer
+    /// invents its own and collapses two states into one badge.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// assert_eq!(ProofState::Failing.label(), "failing");
+    /// ```
     pub fn label(self) -> &'static str {
         match self {
             ProofState::Proven => "proven",
@@ -352,6 +498,10 @@ impl ProofState {
     /// One sentence: what the state means, for the reader who clicked the badge. This is
     /// the derivation, in words, and it lives here so that every surface says the same
     /// thing rather than each inventing its own gloss.
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// assert!(ProofState::Proven.meaning().contains("passing run"));
+    /// ```
     pub fn meaning(self) -> &'static str {
         match self {
             ProofState::Proven => {
@@ -367,7 +517,9 @@ impl ProofState {
                 "A passing run, but a file this claim names has changed since. The proof is older \
                  than what it is about."
             }
-            ProofState::Failing => "The most recent recorded run of this claim's test did not pass.",
+            ProofState::Failing => {
+                "The most recent recorded run of this claim's test did not pass."
+            }
             ProofState::NotRun => {
                 "The claim names a test, and no run of that test has ever been recorded."
             }
@@ -380,6 +532,11 @@ impl ProofState {
     }
 
     /// Does this state carry a passing execution behind it, of any freshness?
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// assert!(ProofState::Stale.passing());
+    /// assert!(!ProofState::Failing.passing());
+    /// ```
     pub fn passing(self) -> bool {
         matches!(
             self,
@@ -391,6 +548,20 @@ impl ProofState {
 /// One claim, joined to whatever the repository actually recorded about it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceClaimProof")]
+/// # Example
+///
+/// A `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its
+/// `meaning` is that answer in a sentence, worded once for every surface.
+///
+/// ```
+/// use majordomus_cli::evidence::{report, ClaimProof, Ledger};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report(&repo.index().unwrap(), &ledger);
+/// let proofs: &[ClaimProof] = &r.claims;
+/// assert!(proofs.is_empty(), "a synthetic tree declares no claims");
+/// ```
 pub struct ClaimProof {
     /// The claim's id, as `docs/CLAIMS.yaml` spells it.
     pub id: String,
@@ -429,6 +600,19 @@ pub struct ClaimProof {
 /// A claim whose declared status the evidence does not support.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceFinding")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::{Finding, ProofState};
+/// let f = Finding {
+///     claim: "some-claim".into(),
+///     status: "guaranteed".into(),
+///     state: ProofState::NotRun,
+///     reason: "the claim names a test nobody has run".into(),
+///     reproduce: Some("bash test/run.sh 07_scope".into()),
+/// };
+/// assert_eq!(f.state, ProofState::NotRun);
+/// ```
 pub struct Finding {
     /// The claim.
     pub claim: String,
@@ -446,6 +630,19 @@ pub struct Finding {
 /// What the ledger is and whether it is there at all.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EvidenceLedgerSummary")]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::LedgerSummary;
+/// let s = LedgerSummary {
+///     path: ".ai/repo/evidence/ledger.json".into(),
+///     present: false,
+///     executions: 0,
+///     newest: None,
+///     commits: vec![],
+/// };
+/// assert!(!s.present, "a repository that recorded nothing says so");
+/// ```
 pub struct LedgerSummary {
     /// Where it lives, repository-relative.
     pub path: String,
@@ -463,6 +660,19 @@ pub struct LedgerSummary {
 
 /// The whole joined picture: every claim of the matrix against every execution recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// # Example
+///
+/// The whole matrix joined to the ledger. `satisfied` is true when no claim declares a
+/// guarantee the recorded evidence does not support.
+///
+/// ```
+/// use majordomus_cli::evidence::{report, EvidenceReport, Ledger};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r: EvidenceReport = report(&repo.index().unwrap(), &ledger);
+/// assert!(r.satisfied(), "no claim, so no unsupported guarantee");
+/// ```
 pub struct EvidenceReport {
     /// The commit the report was derived against.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -558,6 +768,14 @@ fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
 ///
 /// The git comparison is done once per distinct recorded commit and shared by every claim
 /// that recorded against it.
+/// ```
+/// use majordomus_cli::evidence::{report, Ledger};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report(&repo.index().unwrap(), &ledger);
+/// assert!(!r.ledger.present, "nothing has been recorded in a fresh tree");
+/// ```
 pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
     let root = PathBuf::from(&index.repository.root);
     let git = crate::git::inspect(&root);
@@ -597,14 +815,11 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
                 } else {
                     // what this claim names, and nothing else: the derivation is explicit
                     // about its own reach, and a surface can repeat it
-                    let inputs: Vec<String> = [
-                        c.source.clone(),
-                        c.implementation.clone(),
-                        Some(t.source()),
-                    ]
-                    .into_iter()
-                    .flatten()
-                    .collect();
+                    let inputs: Vec<String> =
+                        [c.source.clone(), c.implementation.clone(), Some(t.source())]
+                            .into_iter()
+                            .flatten()
+                            .collect();
                     match diffs.get(&e.commit).and_then(|d| d.as_ref()) {
                         // git could not compare: not knowing is not proof
                         None => (ProofState::Stale, Vec::new()),

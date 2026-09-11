@@ -366,6 +366,15 @@ pub enum ExecutionsCommand {
 #[derive(Debug, Args)]
 /// `majordomus evidence`. The output shape is global, so it reads the way a person writes
 /// it — `evidence show --findings --format json` — and is declared once.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, EvidenceArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "evidence", "show"]).unwrap();
+/// let Command::Evidence(args) = cli.command else { panic!("not the evidence command") };
+/// let _: EvidenceArgs = args;
+/// ```
 pub struct EvidenceArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -384,6 +393,15 @@ pub struct EvidenceArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus evidence`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, EvidenceCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "evidence", "claim", "some-id"]).unwrap();
+/// let Command::Evidence(args) = cli.command else { panic!("not the evidence command") };
+/// assert!(matches!(args.command, EvidenceCommand::Claim { .. }));
+/// ```
 pub enum EvidenceCommand {
     /// Every claim against the evidence recorded for it
     Show {
@@ -431,6 +449,15 @@ pub enum EvidenceCommand {
 ///
 /// Distinct from `majordomus doctrine`, which asks whether the repository satisfies a rule
 /// right now. That is a question about the tree; this is a question about the rule.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, RulesArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "rules", "report", "--findings"]).unwrap();
+/// let Command::Rules(args) = cli.command else { panic!("not the rules command") };
+/// let _: RulesArgs = args;
+/// ```
 pub struct RulesArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -449,6 +476,15 @@ pub struct RulesArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus rules`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, RulesCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "rules", "show", "project.x"]).unwrap();
+/// let Command::Rules(args) = cli.command else { panic!("not the rules command") };
+/// assert!(matches!(args.command, RulesCommand::Show { .. }));
+/// ```
 pub enum RulesCommand {
     /// Every rule against the proof there is for it
     Report {

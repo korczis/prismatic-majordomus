@@ -19,6 +19,10 @@ use std::time::{Duration, Instant};
 use common::{Fixture, BIN};
 use serde_json::{json, Value};
 
+/// One peer board as a client sees it: per peer, its id, what it announced and when. The
+/// tuple is wide enough that clippy asks for a name, and a name is better anyway.
+type Board = Vec<(String, String, String)>;
+
 const WAIT: Duration = Duration::from_secs(20);
 
 /// A `majordomus mcp` child with its stdout frames and stderr lines readable with a timeout.
@@ -1337,7 +1341,7 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     }
 
     // and reads the layer through it, and sees the whole board
-    let mut boards: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
+    let mut boards: Vec<(String, Board)> = Vec::new();
     for (i, m, _) in clients.iter_mut() {
         let repo = m.call("majordomus_repository", json!({}));
         assert_eq!(
@@ -1387,7 +1391,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     );
     let callers: std::collections::BTreeSet<&str> =
         boards.iter().map(|(c, _)| c.as_str()).collect();
-    assert_eq!(callers.len(), STORM, "each client answers as itself: {callers:?}");
+    assert_eq!(
+        callers.len(),
+        STORM,
+        "each client answers as itself: {callers:?}"
+    );
     assert_eq!(
         callers,
         ids.iter().map(String::as_str).collect(),
@@ -1405,7 +1413,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
             assert_eq!(m.close(), 0, "client {i} did not end cleanly");
         }
     }
-    assert_eq!(clients[owner].1.close(), 0, "the server did not end cleanly");
+    assert_eq!(
+        clients[owner].1.close(),
+        0,
+        "the server did not end cleanly"
+    );
     assert!(
         !lease_path(&f).exists(),
         "the lease outlived the last client of the storm"
