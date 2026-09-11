@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>development-runtime — The runtime has a development surface — Prismatic Majordomus</title>
+<meta name="description" content="A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.">
+<link rel="canonical" href="https://majordomus.dev/plan/development-runtime/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="development-runtime — The runtime has a development surface — Prismatic Majordomus">
+<meta property="og:description" content="A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.">
+<meta property="og:url" content="https://majordomus.dev/plan/development-runtime/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Method<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Method</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://majordomus.dev/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-9" data-dropdown-toggle="nav-menu-9" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-9" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-9">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/plan/" class="font-medium text-body hover:text-fg-brand">The plan</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">development-runtime — The runtime has a development surface</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">development-runtime — The runtime has a development surface</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="min-w-0">
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--planned">PLANNED</span>
+<span class="text-sm text-body">0 of 12 issues done</span></p>
+
+  <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">9</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">3</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+  </dl>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The Cockpit is a faithful projection of a registry that has almost nothing development-shaped in it. Re-measured on today&#39;s master, the registry declares exactly three capabilities of kind `command` — executions.start, executions.cancel, peers.announce — and the OpenAPI document the server serves has exactly those three non-GET operations to match. Every command of the development lifecycle lives in a second program, bin/majordomus, and every one of its nodes in the command graph is withheld from every machine surface. So no development surface can be built by adding pages: there is nothing behind the pages to call, and `majordomus_plan_done` answers `unknown tool` because there is no capability for a plan transition. docs/COCKPIT_IDE_AUDIT.md is the evidence; ADR 0040 is the decision it argues for. Until this milestone existed, none of it was in the plan at all: a keyword search of the issues and milestones for palette, diff view, CI status and syntax highlighting returned nothing, so the work could not be scheduled, blocked or reported.</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit&#39;s generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Three command capabilities, all of them about executions or peers. The lifecycle transitions exist only in lib/plan.sh and lib/start.sh. `majordomus run` executes in its own process and never reaches the running server, so the execution plane the Cockpit shows and the one a person uses are disjoint. A server whose executable has been replaced still reports itself `ready`. Two capabilities — devtask.issue and devtask.milestone — landed after the audit&#39;s base and give the runtime its first canonical read of an issue and a milestone as work; neither of them writes anything.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Phase A of the audit&#39;s plan has landed end to end — one transition, one capability, four surfaces, no hand-written projection — and the phases that depend on it are schedulable against it. The three load-bearing defects named in the audit&#39;s F-table are fixed or explicitly deferred with a record, rather than carried silently under every later measurement.</p>
+
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">apps/majordomus-cli/src/capability/builtin</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src/cockpit</li><li class="font-mono text-heading break-words">lib</li><li class="font-mono text-heading break-words">share</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">test/cases</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>A terminal, a PTY or shell execution on any surface. The audit records this as a non-goal and share/cockpit/palette.js already states the boundary in terms.</li><li>Editing repository source in the browser. The Cockpit refuses every non-GET route by decision, and this milestone does not reopen that decision.</li><li>Retries and a scheduler. apps/majordomus-cli/src/execution/mod.rs states in its own module documentation that it has none, by decision.</li><li>A second datastore or a second project model. The records stay canonical and the runtime reads them.</li><li>The `/cockpit/worktrees` response time. It is F3 in the audit&#39;s table and is being fixed on fix/cockpit-answers-quickly; this milestone references that work rather than duplicating it.</li><li>A wholesale port of lib/*.sh. Phase A is one transition; the rest is scheduled behind it or not at all.</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>The registry declares at least one capability of kind command that changes a development record, and the generated OpenAPI carries its non-GET operation without anyone editing the document</li><li>The same transition is reachable from the CLI, from MCP and over HTTP, and the Cockpit&#39;s existing generic runner drives it with no Cockpit source edited</li><li>An execution a person starts is visible to the server that serves the repository, or the record says which decision was taken instead and why</li><li>A surface that reports a runtime as ready cannot be serving an executable that no longer exists on disk</li><li>No claim in docs/COCKPIT_IDE_AUDIT.md is left standing that a command in this repository contradicts</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">majordomus plan validate</li><li class="font-mono text-heading break-words">bin/majordomus-cli capabilities validate</li><li class="font-mono text-heading break-words">bin/majordomus-cli generate --check</li><li class="font-mono text-heading break-words">bash test/run.sh</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">suite</li><li class="font-mono text-heading break-words">one_mutating_development_capability</li><li class="font-mono text-heading break-words">projection_not_handwritten</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risks</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Phase A is the whole architecture in miniature. If the pattern does not land cleanly on one transition, no later phase would have worked either, and the correct response is to stop rather than to widen.</li><li>A second name for an existing concept can land in parallel. One already has: the devtask module documents itself as a join over plan and trace rather than a second model, and holds an equality assertion against plan.issues. It is additive and should stay, but its readiness vocabulary refines the canonical statuses, and Phase A should converge the naming rather than grow a third.</li><li>Master moves during the work. It moved eleven times during the audit that produced this milestone, and again between that audit and this record.</li></ul>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[38rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">issue</th><th scope="col" class="px-4 py-2">status</th><th scope="col" class="px-4 py-2">wave</th><th scope="col" class="px-4 py-2">depends on</th><th scope="col" class="px-4 py-2">title</th></tr></thead>
+      <tbody>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1501/" class="text-fg-brand hover:underline">I1501</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">An execution a person starts is an execution the server can see</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1502/" class="text-fg-brand hover:underline">I1502</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A server serving code that no longer exists stops calling itself ready</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1503/" class="text-fg-brand hover:underline">I1503</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A closed session is not closed a second time under the same identity</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1504/" class="text-fg-brand hover:underline">I1504</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">One development transition is a capability, end to end</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1505/" class="text-fg-brand hover:underline">I1505</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">1</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1504/" class="text-fg-brand hover:underline">I1504</a></td>
+          <td class="px-4 py-2 text-heading">A mutating capability leaves a durable event, and the ledger can be read back</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1506/" class="text-fg-brand hover:underline">I1506</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">2</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1504/" class="text-fg-brand hover:underline">I1504</a>, <a href="https://majordomus.dev/plan/i1505/" class="text-fg-brand hover:underline">I1505</a></td>
+          <td class="px-4 py-2 text-heading">The lifecycle commands become non-interactive capabilities</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1507/" class="text-fg-brand hover:underline">I1507</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">3</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/plan/i1505/" class="text-fg-brand hover:underline">I1505</a>, <a href="https://majordomus.dev/plan/i1506/" class="text-fg-brand hover:underline">I1506</a></td>
+          <td class="px-4 py-2 text-heading">Issues, milestones, sessions and peers reach the Cockpit as projections</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1508/" class="text-fg-brand hover:underline">I1508</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The navigation is derived from the dispatcher, not kept beside it</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1509/" class="text-fg-brand hover:underline">I1509</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A detail page that pages nothing has outgrown the reason it pages nothing</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1510/" class="text-fg-brand hover:underline">I1510</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A gap the audit calls planned names a plan object that exists</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1511/" class="text-fg-brand hover:underline">I1511</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The documentation surface answers in a checkout that has not built the site</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1512/" class="text-fg-brand hover:underline">I1512</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">Gate state is something the runtime can answer</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
+  
+<figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+  <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">development-runtime dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0">flowchart LR
+    I1501[&quot;I1501&lt;br/&gt;An execution a person starts is an execution the server can see&quot;]:::ready
+    I1502[&quot;I1502&lt;br/&gt;A server serving code that no longer exists stops calling itself ready&quot;]:::ready
+    I1503[&quot;I1503&lt;br/&gt;A closed session is not closed a second time under the same identity&quot;]:::ready
+    I1504[&quot;I1504&lt;br/&gt;One development transition is a capability, end to end&quot;]:::ready
+    I1505[&quot;I1505&lt;br/&gt;A mutating capability leaves a durable event, and the ledger can be read back&quot;]:::blocked
+    I1506[&quot;I1506&lt;br/&gt;The lifecycle commands become non-interactive capabilities&quot;]:::blocked
+    I1507[&quot;I1507&lt;br/&gt;Issues, milestones, sessions and peers reach the Cockpit as projections&quot;]:::blocked
+    I1508[&quot;I1508&lt;br/&gt;The navigation is derived from the dispatcher, not kept beside it&quot;]:::ready
+    I1509[&quot;I1509&lt;br/&gt;A detail page that pages nothing has outgrown the reason it pages nothing&quot;]:::ready
+    I1510[&quot;I1510&lt;br/&gt;A gap the audit calls planned names a plan object that exists&quot;]:::ready
+    I1511[&quot;I1511&lt;br/&gt;The documentation surface answers in a checkout that has not built the site&quot;]:::ready
+    I1512[&quot;I1512&lt;br/&gt;Gate state is something the runtime can answer&quot;]:::ready
+    I1504 --&gt; I1505
+    I1504 --&gt; I1506
+    I1505 --&gt; I1506
+    I1505 --&gt; I1507
+    I1506 --&gt; I1507
+    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
+    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
+    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
+    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px
+    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px
+    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px</pre></div>
+</figure>
+
+
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/milestones/development-runtime.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/development-runtime.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show development-runtime</code>.</p>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://majordomus.dev/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ce9d3157590ada9db8aad11f4e61e919a069764" class="font-mono underline">8ce9d31</a> · inputs <span class="font-mono">65209381c10d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>
