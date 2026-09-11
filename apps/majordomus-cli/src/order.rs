@@ -62,6 +62,14 @@ pub trait Ordered {
     fn order_key(&self) -> OrderKey<'_>;
 }
 
+/// A reference orders as the item it points at, so a projection can put a borrowed view of
+/// a collection in canonical order without cloning every item into a vector first.
+impl<T: Ordered + ?Sized> Ordered for &T {
+    fn order_key(&self) -> OrderKey<'_> {
+        (**self).order_key()
+    }
+}
+
 /// The four parts of the canonical order, most significant first. See the module
 /// documentation for what each part means and why the last one is not optional.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -132,6 +140,27 @@ impl PartialOrd for OrderKey<'_> {
 /// the property [`is_canonical`] checks and the permutation tests below prove.
 pub fn canonical<T: Ordered>(items: &mut [T]) {
     items.sort_by(|a, b| a.order_key().cmp(&b.order_key()));
+}
+
+/// Put a collection of plain strings in canonical order, in place.
+///
+/// A `Vec<String>` has no group, no rank and no identity apart from the string itself, so it
+/// cannot implement [`Ordered`] without a newtype nobody wants. It still has an order, and
+/// before this existed every caller picked one of two: `.sort()`, which is `Ord for str` and
+/// puts `case-107` before `case-9`, or a hand-written `sort_by(|a, b| natural_cmp(a, b))`,
+/// which is this function spelled out again at the call site. The second is the duplication
+/// `project.canonical-order` exists to prevent, and the first is a different order from the
+/// one every other collection in the crate is shown in.
+///
+/// ```
+/// use majordomus_cli::order::canonical_strings;
+///
+/// let mut cases = vec!["case-107".to_string(), "case-9".to_string(), "case-10".to_string()];
+/// canonical_strings(&mut cases);
+/// assert_eq!(cases, ["case-9", "case-10", "case-107"]);
+/// ```
+pub fn canonical_strings<S: AsRef<str>>(items: &mut [S]) {
+    items.sort_by(|a, b| natural_cmp(a.as_ref(), b.as_ref()));
 }
 
 /// Is this collection already in canonical order? What a validator asks of a projection it

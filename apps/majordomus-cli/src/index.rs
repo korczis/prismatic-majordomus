@@ -148,6 +148,10 @@ impl Index {
             }
         }
         dedupe(&mut objects, &mut diagnostics);
+        // Byte order of the URI, and deliberately not the canonical order: `Index::get`
+        // binary-searches this vector with the same comparison, so the sequence here is a
+        // search invariant rather than anything a reader is shown. A surface that presents
+        // objects to a person asks `crate::order::canonical` for the order instead.
         objects.sort_by(|a, b| a.uri.cmp(&b.uri));
         let state = if diagnostics.iter().any(|d| d.severity == Severity::Error) {
             State::Degraded

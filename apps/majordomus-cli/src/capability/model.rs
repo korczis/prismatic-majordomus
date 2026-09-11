@@ -822,6 +822,15 @@ pub struct Capability {
     pub execution: ExecutionPolicy,
 }
 
+/// A capability is presented by its id: the command line's table, the site's registry pages
+/// and the closure matrix all list it that way, and a title is neither unique nor stable
+/// enough to be the thing a reader navigates by.
+impl crate::order::Ordered for Capability {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.id.as_str(), self.id.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
