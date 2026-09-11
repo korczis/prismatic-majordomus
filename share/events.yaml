@@ -31,19 +31,19 @@ events:
 
   - id: task.checkpoint
     title: Checkpoint recorded
-    summary: Progress was recorded inside the active task.
+    summary: Progress was recorded in this episode, against the task it carries when it carries one.
     emitted_by: checkpoint
-    requires: [task_id]
+    requires: []
     public: true
-    note: Written by checkpoint, and by check --checkpoint, which records one after its checks run. The checkpoint_path key is absent when the body was empty.
+    note: "Written by checkpoint, and by check --checkpoint, which records one after its checks run. The checkpoint_path key is absent when the body was empty. task_id was required until ADR 0041: a checkpoint is an episode's record and an episode need not have a task, so the key is now absent rather than written as a literal none, which every reader of this event would otherwise collect as a task by that name."
 
   - id: task.handed_over
     title: Handover written
-    summary: A continuation record was written for an active task.
+    summary: A continuation record was written, against the task it carries when it carries one.
     emitted_by: handover
-    requires: [task_id, handover_path, closed]
+    requires: [handover_path, closed]
     public: true
-    note: Only for a handover written against an active task. handover --no-task writes a record and emits nothing, because there is no task for the event to belong to.
+    note: "task_id is present when a task was open and absent otherwise. Until ADR 0041 a handover written outside a task emitted nothing at all, so the one record a future worker resumes from could be written without leaving any trace in the ledger that reports on it — which is how six days of silence went unreported. The name is kept as written because it is already in every ledger that exists."
 
   - id: task.finished
     title: Task finished
@@ -132,6 +132,22 @@ events:
     emitted_by: session
     requires: [outcome, session_path]
     public: true
+
+  - id: provider.event.received
+    title: Provider lifecycle event received
+    summary: A provider's lifecycle event reached this repository, recorded before anything decided what to do about it.
+    emitted_by: capture
+    requires: [provider, event]
+    public: true
+    note: "The first act of every lifecycle adapter, written before any guard runs. A hook must not block the person's work, so it returns success whatever happens inside it; that is not permission to leave no evidence the event arrived. Before this existed, an adapter that skipped its work wrote a line to stderr nobody keeps, and the difference between an event that never fired and one that fired and did nothing could not be recovered afterwards — which is the difference the 2026-09-05 outage turned on. Carries provider_session when the provider named one."
+
+  - id: provider.event.failed
+    title: Provider lifecycle event failed
+    summary: A lifecycle event arrived and the work it should have done did not complete.
+    emitted_by: capture
+    requires: [provider, event, reason]
+    public: true
+    note: "Paired with provider.event.received: a receipt with no resulting record and no failure beside it is itself a finding. The hook still exits 0, because the exit status belongs to the provider and the truth belongs here."
 
   - id: layout.migrated
     title: Layout migrated

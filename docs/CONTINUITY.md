@@ -152,14 +152,24 @@ nothing else; every other record is written exactly as before.
 
 They are easy to conflate and expensive to conflate.
 
-A **checkpoint** is a progress note inside an active task. It is written often, it is
-short by policy (`checkpoint.max_body_lines`), and its job is to be quotable whole into
-the next briefing. "Reproduced the fault with the fixture; the cause is in normalisation,
-not comparison; next, write the regression test."
+A **checkpoint** is a progress note of an episode. It is written often, it is short by
+policy (`checkpoint.max_body_lines`), and its job is to be quotable whole into the next
+briefing. "Reproduced the fault with the fixture; the cause is in normalisation, not
+comparison; next, write the regression test."
 
 A **handover** is a deliberate continuation package written when a worker stops. It has
 required sections, it is refused if any of them is empty, and it is the thing another
 worker resumes from. It is written rarely.
+
+**Neither of them belongs to a task.** Both name the task they were written under when
+there is one, and both are written when there is not. A task is a unit of intended work
+that somebody opens and closes; an episode is a provider's conversation boundary that
+begins when a client attaches and ends when it detaches. Making the records depend on the
+first means that the ordinary act of finishing a task disables continuity for every episode
+after it — which is not a hypothetical. Between 2026-09-05 and 2026-09-11 this repository
+wrote neither record, because a task had been marked `handed_over` and three separate
+guards each asked, correctly against their own contract, whether a task was `active`. ADR
+0041 removed the premise they shared.
 
 A checkpoint that grows into a report is refused rather than truncated, with the
 suggestion to write a handover instead. The cap is the mechanism that keeps the two
@@ -295,7 +305,8 @@ provider fires SessionStart
         +--> session opens (or the open one is kept)
         +--> the working context is frozen
         +--> the briefing goes to stdout: the episode, the resolved handover with its
-        |    divergence label, the blockers, and the one section to act on
+        |    divergence label AND its freshness, the blockers, and — only when the record
+        |    is still current — the one section to act on
         v
    work happens
         |
@@ -303,9 +314,38 @@ provider fires PreCompact
         +--> a derived checkpoint, because the conversation is about to stop holding it
         |
 provider fires SessionEnd
-        +--> a derived handover, when the task is still active
+        +--> a derived checkpoint, for the same reason: the close is the other moment at
+        |    which what the episode knows stops being reachable
+        +--> a derived handover
         +--> the episode closes into its envelope of references
 ```
+
+Every one of those arrows fires whether or not a task is open and whatever outcome the last
+task reached, and each event writes a `provider.event.received` line to the ledger *before*
+any of them is decided. A hook must return success to its provider — blocking somebody's
+work is the worse failure — but returning success is not the same as claiming the work
+happened, and without the receipt an event that never fired and an event that fired and did
+nothing are the same observation afterwards.
+
+## Divergence is not freshness
+
+Every record carries two independent judgements and they answer different questions.
+
+**Divergence** — `exact`, `advanced`, `diverged`, `different_context` — says where the
+record's commit sits relative to this checkout's HEAD. **Freshness** — `fresh`, `aging`,
+`stale`, `unknown`, `invalid` — says how old it is, against `session.freshness` in the
+policy, which is the only place either threshold is written.
+
+A record is `advanced` on the day it is written and still `advanced` a month later:
+`advanced` means its commit is an ancestor of HEAD, which sounds like agreement and says
+nothing whatever about time. A record that is both `advanced` and `stale` is the exact
+shape of the 2026-09-05 outage, and it is the reason the two are reported side by side.
+
+A stale record is history. The briefing still shows it — knowing what the last worker was
+doing is worth having — but it is labelled as historical, its age and the reason are
+stated, and its `Next Action` is deliberately **not** quoted as the thing to do now. An
+instruction that was correct six days ago, handed over without qualification, is worse than
+no instruction: the worker cannot tell it is wrong until after acting on it.
 
 The episode belongs to the provider session that opened it, and not to the checkout. Two
 windows of the same provider open on one worktree are two workers: each start event opens

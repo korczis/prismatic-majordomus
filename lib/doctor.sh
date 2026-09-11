@@ -505,6 +505,104 @@ mj_validate_prompts() {
   return 0
 }
 
+# ---------------------------------------------------------------- lifecycle writtenness
+# Whether the lifecycle is still *writing*, which is a different question from whether its
+# stores can be read.
+#
+# Every check that existed before this one asked the second question. `retention` counted
+# the files and found them under the cap. `layout` found the directories present.
+# `resolver` found a record and reported its divergence label. All three passed, every day,
+# for the six days in which this repository wrote no checkpoint and no handover at all
+# (ADR 0041) — because a store that nothing writes to is perfectly reachable, perfectly
+# well-formed and perfectly under its retention cap.
+#
+# The invariant here is the one that spans both halves: *if lifecycle events are arriving,
+# the derived state they produce must advance.* Episodes were opening and closing that whole
+# week, which is the evidence that makes the absence of records a finding rather than a
+# quiet period. A repository where nothing at all is happening is not failing; one that is
+# demonstrably busy and has written nothing a future worker could resume from is.
+mj_validate_lifecycle() {
+  # No watch-specific path. The other validators that take one do so because their full
+  # output is too long for a drift report; this one emits four lines and the question it
+  # answers — is the lifecycle still writing — is exactly what a watch is for.
+  local ledger="$MJ_STATE_DIR/ledger.jsonl"
+  if [ ! -f "$ledger" ]; then
+    mj_doctrine_ok lifecycle "ledger" "no ledger yet; nothing has happened here to be silent about"
+    return 0
+  fi
+
+  # Is anything happening? Episodes opening is the cheapest evidence of a live lifecycle,
+  # and it is the evidence that was present throughout the outage.
+  local opens; opens="$(grep -c '"event":"session.started"' "$ledger" 2>/dev/null || true)"
+  : "${opens:=0}"
+  if [ "$opens" -lt 2 ]; then
+    mj_doctrine_ok lifecycle "activity" "$opens episode(s) opened here; too few to judge whether the writers stopped"
+    return 0
+  fi
+
+  # The two records a future worker resumes from. Absence is judged against the same
+  # thresholds everything else reads, so there is one place to change the answer.
+  local d
+  for d in checkpoints handovers; do
+    if ! mj_resolve_latest "$MJ_STATE_DIR/$d" ""; then
+      mj_doctrine_fail lifecycle "$d" \
+        "$opens episode(s) have opened here and no $d record exists for this worktree and branch" \
+        "majordomus ${d%s} --list"
+      continue
+    fi
+    mj_freshness "$MJ_RES_CREATED" >/dev/null
+    case "$MJ_FRESH_STATE" in
+      stale|invalid)
+        mj_doctrine_fail lifecycle "$d" \
+          "the newest record is $MJ_FRESH_STATE ($MJ_FRESH_REASON) while episodes go on opening; the writer has stopped" \
+          "majordomus ${d%s} --list" ;;
+      unknown)
+        mj_doctrine_fail lifecycle "$d" \
+          "the newest record cannot be dated ($MJ_FRESH_REASON), so nothing can say whether the writer is still running" \
+          "majordomus ${d%s} --list" ;;
+      *)
+        mj_doctrine_ok lifecycle "$d" "newest record is $MJ_FRESH_STATE, $MJ_FRESH_REASON" ;;
+    esac
+  done
+
+  # A receipt with no resulting event beside it. The receipt exists precisely so that an
+  # adapter which arrived and did nothing is distinguishable from one that never fired, and
+  # a count that keeps climbing while the records do not is that adapter.
+  local got failed
+  got="$(grep -c '"event":"provider.event.received"' "$ledger" 2>/dev/null || true)"; : "${got:=0}"
+  failed="$(grep -c '"event":"provider.event.failed"' "$ledger" 2>/dev/null || true)"; : "${failed:=0}"
+  if [ "$failed" -gt 0 ]; then
+    mj_doctrine_fail lifecycle "receipts" \
+      "$failed lifecycle event(s) arrived and did not complete their work" \
+      "majordomus history --event provider.event.failed"
+  elif [ "$got" -gt 0 ]; then
+    mj_doctrine_ok lifecycle "receipts" "$got lifecycle event(s) received, none failed"
+  fi
+
+  # Episodes that opened and were never closed. An episode is a conversation boundary; one
+  # that outlives every threshold the policy has is a client that went away without saying
+  # so, and it is not closed here — a diagnostic that silently mutated state would be the
+  # watchdog this design refuses. It is named, so that recovery is a decision somebody makes.
+  local open_dir="$MJ_STATE_DIR/sessions-open" f stranded=0 newest_open=""
+  if [ -d "$open_dir" ]; then
+    for f in "$open_dir"/*.yaml; do
+      [ -f "$f" ] || continue
+      mj_freshness "$(sed -n 's/^started_at: //p' "$f" | head -n 1)" >/dev/null
+      case "$MJ_FRESH_STATE" in
+        stale|invalid) stranded=$((stranded + 1)); newest_open="$MJ_FRESH_REASON" ;;
+      esac
+    done
+  fi
+  if [ "$stranded" -gt 0 ]; then
+    mj_doctrine_fail lifecycle "episodes" \
+      "$stranded open episode(s) older than the policy's stale threshold (oldest: $newest_open); their clients are gone and nothing closed them" \
+      "majordomus session list"
+  else
+    mj_doctrine_ok lifecycle "episodes" "no episode has outlived the stale threshold"
+  fi
+  return 0
+}
+
 # The resolver running and reporting a clean absence is as healthy as it finding a
 # record; only a malformed record is a finding.
 mj_validate_resolver() {
