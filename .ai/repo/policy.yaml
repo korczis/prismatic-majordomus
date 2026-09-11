@@ -35,6 +35,26 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The prompt archive under .ai/local/prompts/. Nothing used to bound it: the ledger, the
+# handovers and the checkpoints each rotate under a cap because each restates state that is
+# still available elsewhere, and a prompt restates nothing — so the archive grew without
+# limit, 20 MB of raw prompts in this repository before anyone measured it.
+#
+# What is bounded is the *body*, never the record. Pruning replaces the prompt text with a
+# tombstone and keeps every other field, including how the record came to be linked to its
+# episode: the archive stays a complete index of what was asked and when, and only the bytes
+# nobody can be held responsible for keeping go. A record is still never deleted.
+#
+# Two bounds, because they fail differently. `retention_max_days` is about exposure — raw
+# prompts carry credentials and customer names, and age is the only thing that reliably
+# reduces what they are worth to someone who should not have them. `retention_max_bytes` is
+# about the disk, and prunes oldest-first until the archive's bodies fit. Either alone is a
+# bound; both is the usual configuration. `majordomus capture prune` applies them, doctor
+# reports an archive over either, and nothing prunes behind a person's back.
+prompts:
+  retention_max_days: 90                 # a prompt body older than this is pruned
+  retention_max_bytes: 8388608           # 8 MiB of bodies; the oldest are pruned first
+
 # The provider's episode events do three things beyond drawing the boundary, and each is a
 # switch here rather than a constant in the shim. The start event hands the worker a
 # briefing on standard output, which the provider adds to the context it is about to build;

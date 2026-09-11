@@ -1,7 +1,7 @@
 +++
 title = "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state"
 description = "Ask models.route which model satisfies a need — required capability words, a minimum"
-weight = 169
+weight = 176
 [extra]
 claim_id = "models-routing-explains-itself"
 status = "guaranteed"
@@ -52,5 +52,5 @@ session's work is the capture adapters' follow-up, not this function's promise.
 An unexplainable router is a black box somebody eventually distrusts and routes
 around, at which point there are two routers. A pure function whose answer carries
 its own reasons can be read, tested and argued with — which is what keeps it the
-only one (ADR 0044).
+only one (ADR 0049).
 {% endraw %}

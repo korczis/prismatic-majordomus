@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 87 | 84 | 0 | 3 |
-| http | 87 | 84 | 0 | 3 |
-| mcp | 85 | 82 | 0 | 3 |
+| direct | 96 | 92 | 0 | 4 |
+| http | 95 | 92 | 0 | 3 |
+| mcp | 93 | 90 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 272 | 263 | 0 | 9 |
+| total | 297 | 287 | 0 | 10 |
 
 ## Capabilities
 
@@ -44,6 +44,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
+| `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
+| `evidence.record` | evidence | command | — | waived | — | — | — |
+| `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |
+| `evidence.test` | evidence | query | — | covered | covered | covered | `first-test` |
 | `executions.cancel` | executions | command | — | waived | waived | waived | — |
 | `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
 | `executions.events` | executions | query | — | waived | waived | waived | — |
@@ -56,6 +60,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
+| `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
+| `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.identity` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |

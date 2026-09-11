@@ -338,7 +338,7 @@ selects, with the reason, the fallback chain and the first failing check for eve
 excluded candidate. Both are ordinary capability modules: the CLI, `/api/v1/mesh*` and
 `/api/v1/models*`, the MCP tools and the Cockpit's Mesh and Models pages render the
 same state. `docs/MESH.md` (threat model included) and `docs/MODELS.md` are the deep
-ends; ADR 0043 and ADR 0044 are the decisions.
+ends; ADR 0043 and ADR 0049 are the decisions.
 
 ## Worktrees
 

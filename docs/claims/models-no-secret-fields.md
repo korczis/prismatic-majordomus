@@ -41,4 +41,4 @@ entire fact this tool can honestly state.
 Credential leaks through listings and diagnostics are the classic failure of
 inventory surfaces. A schema with no field a secret could occupy — held by a test
 that walks the schema, not a convention — moves the property from "everyone is
-careful" to "the type system refuses" (ADR 0044).
+careful" to "the type system refuses" (ADR 0049).

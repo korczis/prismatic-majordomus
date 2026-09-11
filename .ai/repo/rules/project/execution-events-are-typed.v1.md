@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.rust-canonical-declaration@1, project.derived-once@1]
 tags: [architecture, rust, http, capabilities]
+
+x-majordomus:
+  tests: [test/cases/100_execution_plane.sh]
 ---
 
 # Rationale

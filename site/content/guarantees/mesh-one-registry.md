@@ -1,7 +1,7 @@
 +++
 title = "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own"
 description = "A node heard on multicast and handed back by a rendezvous is one record with two"
-weight = 166
+weight = 173
 [extra]
 claim_id = "mesh-one-registry"
 status = "guaranteed"

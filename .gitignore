@@ -73,3 +73,9 @@ share/cockpit/vendor/p5.min.js
 # .claude/worktrees/ and removed with it. Committing one embeds a repository inside this
 # one, which a clone cannot reconstruct.
 .claude/worktrees/
+
+# The staging file of mj_publish_record. It is created inside the tracked record directory it
+# publishes into, because the hard link that publishes a record cannot cross a filesystem. The
+# writer unlinks its own and sweeps what a killed run left behind; this line is the third guard,
+# so that a leftover can dirty the tree but never reach a commit.
+.ai/repo/**/.tmp.*

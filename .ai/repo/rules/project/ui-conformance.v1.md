@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.web-surface-topology@1, project.derived-once@1, project.no-counts-in-prose@1]
 tags: [ui, accessibility, web, projections]
+
+x-majordomus:
+  tests: [test/cases/85_ui_conformance.sh]
 ---
 
 # Rationale

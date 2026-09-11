@@ -426,6 +426,114 @@
       "tool": "majordomus_environment"
     },
     {
+      "api_anchor": "/docs/api/#op-evidence-claim",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence claim",
+      "id": "evidence.claim",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-claim/",
+      "slug": "evidence-claim",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "What proves this claim",
+      "tool": "majordomus_evidence_claim"
+    },
+    {
+      "api_anchor": null,
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence record",
+      "id": "evidence.record",
+      "kind": "command",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-record/",
+      "slug": "evidence-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Record a run that happened",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/#op-evidence-report",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence show",
+      "id": "evidence.report",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": "majordomus://evidence",
+      "route": "/registry/capabilities/evidence-report/",
+      "slug": "evidence-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Every claim against the evidence recorded for it",
+      "tool": "majordomus_evidence"
+    },
+    {
+      "api_anchor": "/docs/api/#op-evidence-test",
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence proves",
+      "id": "evidence.test",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-test/",
+      "slug": "evidence-test",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "What this test proves",
+      "tool": "majordomus_evidence_test"
+    },
+    {
       "api_anchor": "/docs/api/#op-executions-cancel",
       "claims": [],
       "cli": "majordomus executions cancel",
@@ -628,6 +736,141 @@
       "tests": [],
       "title": "Health of this process",
       "tool": "majordomus_health"
+    },
+    {
+      "api_anchor": "/docs/api/#op-lifecycle-closed",
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "cli": null,
+      "id": "lifecycle.closed",
+      "kind": "query",
+      "module": "lifecycle",
+      "module_route": "/registry/modules/lifecycle/",
+      "resource": null,
+      "route": "/registry/capabilities/lifecycle-closed/",
+      "slug": "lifecycle-closed",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "tests": [
+        "test/cases/171_session_observability.sh"
+      ],
+      "title": "The records a clone receives",
+      "tool": "majordomus_lifecycle_closed"
+    },
+    {
+      "api_anchor": "/docs/api/#op-lifecycle-episodes",
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "cli": null,
+      "id": "lifecycle.episodes",
+      "kind": "query",
+      "module": "lifecycle",
+      "module_route": "/registry/modules/lifecycle/",
+      "resource": "majordomus://lifecycle/episodes",
+      "route": "/registry/capabilities/lifecycle-episodes/",
+      "slug": "lifecycle-episodes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "tests": [
+        "test/cases/171_session_observability.sh"
+      ],
+      "title": "Every open episode",
+      "tool": "majordomus_lifecycle_episodes"
+    },
+    {
+      "api_anchor": "/docs/api/#op-lifecycle-providers",
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "cli": null,
+      "id": "lifecycle.providers",
+      "kind": "query",
+      "module": "lifecycle",
+      "module_route": "/registry/modules/lifecycle/",
+      "resource": null,
+      "route": "/registry/capabilities/lifecycle-providers/",
+      "slug": "lifecycle-providers",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "tests": [
+        "test/cases/171_session_observability.sh"
+      ],
+      "title": "What each provider's adapter declares",
+      "tool": "majordomus_lifecycle_providers"
+    },
+    {
+      "api_anchor": "/docs/api/#op-lifecycle-recovery",
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "cli": null,
+      "id": "lifecycle.recovery",
+      "kind": "query",
+      "module": "lifecycle",
+      "module_route": "/registry/modules/lifecycle/",
+      "resource": "majordomus://lifecycle/recovery",
+      "route": "/registry/capabilities/lifecycle-recovery/",
+      "slug": "lifecycle-recovery",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "tests": [
+        "test/cases/171_session_observability.sh"
+      ],
+      "title": "What the store needs somebody to do",
+      "tool": "majordomus_lifecycle_recovery"
+    },
+    {
+      "api_anchor": "/docs/api/#op-lifecycle-runtime",
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "cli": null,
+      "id": "lifecycle.runtime",
+      "kind": "query",
+      "module": "lifecycle",
+      "module_route": "/registry/modules/lifecycle/",
+      "resource": null,
+      "route": "/registry/capabilities/lifecycle-runtime/",
+      "slug": "lifecycle-runtime",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "tests": [
+        "test/cases/171_session_observability.sh"
+      ],
+      "title": "The commit this process is answering about",
+      "tool": "majordomus_lifecycle_runtime"
     },
     {
       "api_anchor": "/docs/api/#op-mesh-doctor",
@@ -1723,6 +1966,27 @@
         "test": "apps/majordomus-cli/tests/product.rs"
       },
       {
+        "id": "evidence-proof-is-an-execution",
+        "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
+        "route": "/guarantees/evidence-proof-is-an-execution/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
+      },
+      {
+        "id": "evidence-currency-is-not-collapsed",
+        "implementation": "apps/majordomus-cli/src/evidence/mod.rs",
+        "route": "/guarantees/evidence-currency-is-not-collapsed/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
+      },
+      {
+        "id": "evidence-partial-run-preserves-the-rest",
+        "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+        "route": "/guarantees/evidence-partial-run-preserves-the-rest/",
+        "status": "guaranteed",
+        "test": "test/cases/124_evidence.sh"
+      },
+      {
         "id": "mesh-one-registry",
         "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
         "route": "/guarantees/mesh-one-registry/",
@@ -1808,7 +2072,7 @@
         "implementation": "apps/majordomus-cli/src/peers.rs",
         "route": "/guarantees/mcp-peers/",
         "status": "guaranteed",
-        "test": "test/cases/90_mcp_shared_server.sh"
+        "test": "test/cases/250_the_board_is_repository_wide.sh"
       },
       {
         "id": "mesh-off-by-default",
@@ -1820,9 +2084,9 @@
     ]
   },
   "counts": {
-    "capabilities": 87,
-    "claims": 42,
-    "modules": 29
+    "capabilities": 96,
+    "claims": 47,
+    "modules": 31
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -2064,6 +2328,45 @@
     {
       "capabilities": [
         {
+          "id": "evidence.claim",
+          "route": "/registry/capabilities/evidence-claim/",
+          "slug": "evidence-claim"
+        },
+        {
+          "id": "evidence.record",
+          "route": "/registry/capabilities/evidence-record/",
+          "slug": "evidence-record"
+        },
+        {
+          "id": "evidence.report",
+          "route": "/registry/capabilities/evidence-report/",
+          "slug": "evidence-report"
+        },
+        {
+          "id": "evidence.test",
+          "route": "/registry/capabilities/evidence-test/",
+          "slug": "evidence-test"
+        }
+      ],
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "id": "evidence",
+      "route": "/registry/modules/evidence/",
+      "slug": "evidence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "title": "Evidence"
+    },
+    {
+      "capabilities": [
+        {
           "id": "executions.cancel",
           "route": "/registry/capabilities/executions-cancel/",
           "slug": "executions-cancel"
@@ -2153,6 +2456,50 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "lifecycle.closed",
+          "route": "/registry/capabilities/lifecycle-closed/",
+          "slug": "lifecycle-closed"
+        },
+        {
+          "id": "lifecycle.episodes",
+          "route": "/registry/capabilities/lifecycle-episodes/",
+          "slug": "lifecycle-episodes"
+        },
+        {
+          "id": "lifecycle.providers",
+          "route": "/registry/capabilities/lifecycle-providers/",
+          "slug": "lifecycle-providers"
+        },
+        {
+          "id": "lifecycle.recovery",
+          "route": "/registry/capabilities/lifecycle-recovery/",
+          "slug": "lifecycle-recovery"
+        },
+        {
+          "id": "lifecycle.runtime",
+          "route": "/registry/capabilities/lifecycle-runtime/",
+          "slug": "lifecycle-runtime"
+        }
+      ],
+      "claims": [
+        {
+          "id": "session-observability",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+          "route": "/guarantees/session-observability/",
+          "status": "guaranteed",
+          "test": "test/cases/171_session_observability.sh"
+        }
+      ],
+      "id": "lifecycle",
+      "route": "/registry/modules/lifecycle/",
+      "slug": "lifecycle",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "title": "Session lifecycle"
     },
     {
       "capabilities": [

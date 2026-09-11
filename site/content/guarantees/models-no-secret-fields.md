@@ -1,7 +1,7 @@
 +++
 title = "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in"
 description = "A vendor entry may name the environment variable its credential lives in"
-weight = 170
+weight = 177
 [extra]
 claim_id = "models-no-secret-fields"
 status = "guaranteed"
@@ -50,5 +50,5 @@ entire fact this tool can honestly state.
 Credential leaks through listings and diagnostics are the classic failure of
 inventory surfaces. A schema with no field a secret could occupy — held by a test
 that walks the schema, not a convention — moves the property from "everyone is
-careful" to "the type system refuses" (ADR 0044).
+careful" to "the type system refuses" (ADR 0049).
 {% endraw %}

@@ -38,8 +38,8 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>87 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>38 of 87</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>87 of 87</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>85 of 87</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
-    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>40 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>40 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>96 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>42 of 96</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>95 of 96</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>93 of 96</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>41 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>41 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
     "claims": 5,
@@ -91,6 +91,13 @@
       },
       {
         "capabilities": 5,
+        "cli": 0,
+        "http": 5,
+        "mcp": 5,
+        "module": "lifecycle"
+      },
+      {
+        "capabilities": 5,
         "cli": 2,
         "http": 5,
         "mcp": 5,
@@ -109,6 +116,13 @@
         "http": 4,
         "mcp": 4,
         "module": "design"
+      },
+      {
+        "capabilities": 4,
+        "cli": 4,
+        "http": 3,
+        "mcp": 3,
+        "module": "evidence"
       },
       {
         "capabilities": 4,
@@ -265,35 +279,39 @@
         "module": "web"
       }
     ],
-    "capabilities": 87,
+    "capabilities": 96,
     "combinations": [
       {
-        "count": 47,
+        "count": 52,
         "surfaces": "http + mcp"
       },
       {
-        "count": 38,
+        "count": 41,
         "surfaces": "cli + http + mcp"
       },
       {
         "count": 2,
         "surfaces": "http"
+      },
+      {
+        "count": 1,
+        "surfaces": "cli"
       }
     ],
-    "modules": 29,
+    "modules": 31,
     "surfaces": [
       {
-        "count": 38,
+        "count": 42,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 87,
+        "count": 95,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 85,
+        "count": 93,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
@@ -301,7 +319,7 @@
   },
   "governance": {
     "advisory": 4,
-    "blocking": 36,
+    "blocking": 37,
     "commands": [
       "check",
       "doctor",
@@ -318,12 +336,17 @@
       "Execution depth is not output verbosity",
       "Parallel work requires isolation"
     ],
-    "rules": 40,
+    "rules": 41,
     "rules_without_principle": [
       {
         "route": "/doctrines/deployment-contract/",
         "slug": "deployment-contract",
         "title": "A deployment is described once, and every provider artifact is generated from it"
+      },
+      {
+        "route": "/doctrines/prompt-continuity/",
+        "slug": "prompt-continuity",
+        "title": "A prompt record carries its own identity, is bounded, and is private"
       },
       {
         "route": "/doctrines/use-case-coverage/",
@@ -337,8 +360,8 @@
       }
     ],
     "rules_without_test": [],
-    "tests": 32,
-    "validators": 40
+    "tests": 33,
+    "validators": 41
   },
   "layers": [
     {
@@ -361,7 +384,7 @@
     },
     {
       "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
-      "count": 40,
+      "count": 41,
       "level": "Rule",
       "lifetime": "months",
       "question": "What exactly must, or must not, be?",
@@ -370,7 +393,7 @@
     },
     {
       "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
-      "count": 40,
+      "count": 41,
       "level": "Enforcement",
       "lifetime": "the implementation that answers it",
       "question": "How does a machine decide it?",

@@ -40,9 +40,11 @@ pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
+pub mod evidence;
 pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
+pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub mod objects;
@@ -96,6 +98,11 @@ pub use executions::{
 };
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
+pub use lifecycle::{
+    Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
+    PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
+    EPISODES_URI, RECOVERY_URI,
+};
 pub use mesh::{IdentityReport, NodeList, RegisterInput, MESH_URI};
 pub use models::{ModelsFilter, ModelsReport, RouteInput, VendorView, MODELS_URI};
 pub use objects::{
@@ -138,8 +145,10 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        lifecycle,
         obligations,
         deploy,
+        evidence,
         executions,
         mesh,
         models,

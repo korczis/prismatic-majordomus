@@ -1,6 +1,6 @@
 //! The `models` module: the model catalogue and its routing, projected. Both
 //! capabilities read `share/models.yaml` through [`crate::models::ModelCatalogue`] —
-//! declared data, never a live client (ADR 0044, standing on ADR 0032's no-network
+//! declared data, never a live client (ADR 0049, standing on ADR 0032's no-network
 //! boundary) — so the CLI, HTTP, OpenAPI, MCP and the Cockpit name models from one
 //! file and nothing else.
 

@@ -162,6 +162,42 @@ impl Context {
         }
     }
 
+    /// This context's reading of the repository, carrying on the in-memory life of an
+    /// earlier one: what [`crate::live::Live`] hands out after the repository has moved.
+    ///
+    /// A reload is not a restart. The index, the registry and everything derived from them
+    /// — the Why catalogue, the product model, the web topology — are pictures of the
+    /// repository and are replaced wholesale, which is the point. The peer board, the
+    /// executions this process is running and the capability executor are not pictures of
+    /// anything: they are this process's own life, and a peer that announced its intent
+    /// must not vanish from the board because somebody else committed. The executor is
+    /// carried because its cache is keyed by the registry's fingerprint, so the entries of
+    /// an older generation are already unreachable and the ones of an unchanged capability
+    /// are still worth having.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::capability::Context;
+    /// # fn example(before: Arc<Context>, after: Arc<Context>) {
+    /// let renewed = after.continuing(&before);
+    /// assert!(Arc::ptr_eq(&renewed.peers, &before.peers), "the board survives a reload");
+    /// assert!(Arc::ptr_eq(&renewed.index, &after.index), "the picture does not");
+    /// # }
+    /// ```
+    pub fn continuing(&self, previous: &Context) -> Self {
+        Context {
+            peers: Arc::clone(&previous.peers),
+            executions: Arc::clone(&previous.executions),
+            executor: Arc::clone(&previous.executor),
+            // The mesh runtime is this process's, not this generation's: it holds the
+            // sockets that are already announcing and the registry every observation has
+            // converged into. A rebuild that handed the surfaces a fresh one would leave
+            // the server announcing from a runtime nothing could read.
+            mesh: Arc::clone(&previous.mesh),
+            ..self.same()
+        }
+    }
+
     /// The same context, seen from one peer: what a session hands its handlers.
     pub fn for_caller(&self, caller: PeerId) -> Self {
         Context {

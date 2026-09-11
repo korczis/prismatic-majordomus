@@ -20,7 +20,7 @@ projection is derived (ADR 0004); the catalogue type and its loader live in
 resolution everything else uses. Declaration order is routing's preference order, a
 property a person verifies by reading the file. `test/cases/131_models.sh` proves the
 operator path — one declaration rendered, presence-only credentials, an empty
-catalogue as an answer. ADR 0044 records the decision and why the word "provider"
+catalogue as an answer. ADR 0049 records the decision and why the word "provider"
 stays spent.
 
 ## How to see it
@@ -44,4 +44,4 @@ where it can be judged.
 Model names scattered through prompts, configs and workers' heads are a
 hand-maintained truth per consumer — the exact shape this repository refuses
 everywhere else. One declared file, projected everywhere, makes adding or retiring
-a model one reviewable edit (ADR 0044).
+a model one reviewable edit (ADR 0049).

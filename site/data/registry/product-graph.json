@@ -38,7 +38,7 @@
       "id": "command:capture",
       "kind": "command",
       "label": "majordomus capture",
-      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
       "route": "/commands/capture/",
       "source": "share/commands.yaml",
       "status": "work"
@@ -96,6 +96,15 @@
       "route": "/commands/doctrine/",
       "source": "share/commands.yaml",
       "status": "inspect"
+    },
+    {
+      "id": "command:evidence",
+      "kind": "command",
+      "label": "majordomus evidence",
+      "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+      "route": "/commands/evidence/",
+      "source": "share/commands.yaml",
+      "status": "work"
     },
     {
       "id": "command:finish",
@@ -332,6 +341,15 @@
       "status": "featured"
     },
     {
+      "id": "feature:evidence",
+      "kind": "feature",
+      "label": "Evidence",
+      "summary": "The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.",
+      "route": "/features/evidence/",
+      "source": ".ai/repo/features/evidence.md",
+      "status": "stable"
+    },
+    {
       "id": "feature:finish-contract",
       "kind": "feature",
       "label": "Finish contract",
@@ -452,7 +470,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "41 object(s) of the layer",
+      "summary": "43 object(s) of the layer",
       "route": "/registry/modules/adr/",
       "source": "share/kinds.yaml"
     },
@@ -484,7 +502,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "156 object(s) of the layer",
+      "summary": "163 object(s) of the layer",
       "route": "/registry/modules/claim/",
       "source": "share/kinds.yaml"
     },
@@ -500,7 +518,7 @@
       "id": "kind:context",
       "kind": "kind",
       "label": "context",
-      "summary": "28 object(s) of the layer",
+      "summary": "29 object(s) of the layer",
       "route": "/registry/modules/context/",
       "source": "share/kinds.yaml"
     },
@@ -516,7 +534,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "226 object(s) of the layer",
+      "summary": "234 object(s) of the layer",
       "route": "/registry/modules/document/",
       "source": "share/kinds.yaml"
     },
@@ -524,7 +542,7 @@
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "22 object(s) of the layer",
+      "summary": "23 object(s) of the layer",
       "route": "/registry/modules/feature/",
       "source": "share/kinds.yaml"
     },
@@ -588,7 +606,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "122 object(s) of the layer",
+      "summary": "126 object(s) of the layer",
       "route": "/registry/modules/rule/",
       "source": "share/kinds.yaml"
     },
@@ -604,7 +622,7 @@
       "id": "kind:session",
       "kind": "kind",
       "label": "session",
-      "summary": "12 object(s) of the layer",
+      "summary": "22 object(s) of the layer",
       "route": "/registry/modules/session/",
       "source": "share/kinds.yaml"
     },
@@ -675,6 +693,15 @@
       "summary": "Distribution",
       "route": "/registry/modules/distribution/",
       "source": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:evidence",
+      "kind": "module",
+      "label": "evidence",
+      "summary": "Evidence",
+      "route": "/registry/modules/evidence/",
+      "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -877,6 +904,11 @@
     },
     {
       "source": "command:doctrine",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "command:evidence",
       "target": "surface:cli",
       "kind": "exposed_through"
     },
@@ -1292,6 +1324,36 @@
     },
     {
       "source": "feature:doctrine",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:evidence",
+      "target": "command:evidence",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:evidence",
+      "target": "feature:benchmarks",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:evidence",
+      "target": "feature:ci",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:evidence",
+      "target": "feature:declare-once",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:evidence",
+      "target": "module:evidence",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:evidence",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2036,6 +2098,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:evidence",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:evidence",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:evidence",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:evidence",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:graph",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2282,8 +2364,8 @@
     }
   ],
   "metadata": {
-    "nodes": 95,
-    "edges": 289,
+    "nodes": 98,
+    "edges": 300,
     "acyclic": false,
     "truncated": false
   },

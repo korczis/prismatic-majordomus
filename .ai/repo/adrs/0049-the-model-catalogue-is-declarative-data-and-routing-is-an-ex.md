@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0044
+id: adr-0049
 kind: adr
 title: The model catalogue is declarative data, and routing is an explainable projection of it
 status: proposed
@@ -15,7 +15,7 @@ provenance:
   origin: authored
 ---
 
-# 44. The model catalogue is declarative data, and routing is an explainable projection of it
+# 49. The model catalogue is declarative data, and routing is an explainable projection of it
 
 ## Context
 

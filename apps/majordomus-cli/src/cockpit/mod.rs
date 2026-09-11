@@ -31,6 +31,7 @@ use std::sync::Arc;
 
 use crate::capability::Context;
 use crate::http::router::{percent_decode, Request, Response};
+use crate::live::{IntoLive, Live};
 
 use assets::Assets;
 
@@ -51,18 +52,18 @@ pub const STYLESHEET: &str = "cockpit.css";
 /// overview.
 pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
 
-/// The Cockpit over one context. Cheap to clone into every worker thread: the assets are
-/// shared and the context is an `Arc`.
+/// The Cockpit over the repository as it is now. Cheap to clone into every worker thread:
+/// the assets are shared and the view of the repository is an `Arc`.
 pub struct Cockpit {
-    ctx: Arc<Context>,
+    live: Arc<Live>,
     version: &'static str,
     assets: Assets,
 }
 
 impl Cockpit {
-    /// A Cockpit over a context, serving its assets from `share_dir/cockpit`.
+    /// A Cockpit over a view of the repository, serving its assets from `share_dir/cockpit`.
     pub fn new(
-        ctx: Arc<Context>,
+        live: impl IntoLive,
         version: &'static str,
         share_dir: Option<&std::path::Path>,
     ) -> Self {
@@ -76,7 +77,7 @@ impl Cockpit {
             );
         }
         Cockpit {
-            ctx,
+            live: live.into_live(),
             version,
             assets,
         }
@@ -113,8 +114,11 @@ impl Cockpit {
             return self.assets.respond(name, version);
         }
 
-        let page = self.route(req);
-        let navigation = nav::build(&self.ctx, &req.path);
+        // One reading of the repository for the whole page: the navigation and the page
+        // itself must be two views of one generation, never two generations side by side.
+        let ctx = self.live.current();
+        let page = self.route(&ctx, req);
+        let navigation = nav::build(&ctx, &req.path);
         let scripts = SHELL_SCRIPTS
             .iter()
             .copied()
@@ -134,9 +138,9 @@ impl Cockpit {
         };
         let body = view::page(&shell, page.main);
         let mut response = Response::new(page.status, "text/html; charset=utf-8", body);
-        // a page is derived from the registry and the index, both immutable for the life
-        // of the process, but the process is a development server: revalidation is right,
-        // and the assets carry the long cache because their URLs carry their digests
+        // a page is derived from the registry and the index, which follow the repository
+        // as it moves under this process: revalidation is right, and the assets carry the
+        // long cache because their URLs carry their digests
         response
             .headers
             .push(("Cache-Control".into(), "no-cache".into()));
@@ -152,42 +156,42 @@ impl Cockpit {
         response
     }
 
-    fn route(&self, req: &Request) -> pages::Page {
+    fn route(&self, ctx: &Arc<Context>, req: &Request) -> pages::Page {
         let path = req.path.trim_end_matches('/');
         let query = &req.query;
         match path {
-            "" | PREFIX => pages::overview(&self.ctx),
-            "/cockpit/capabilities" => pages::capabilities(&self.ctx, query),
-            "/cockpit/commands" => pages::commands(&self.ctx, query),
-            "/cockpit/objects" => pages::objects(&self.ctx, query),
+            "" | PREFIX => pages::overview(ctx),
+            "/cockpit/capabilities" => pages::capabilities(ctx, query),
+            "/cockpit/commands" => pages::commands(ctx, query),
+            "/cockpit/objects" => pages::objects(ctx, query),
             "/cockpit/object" => match query.iter().find(|(k, _)| k == "uri") {
-                Some((_, uri)) => pages::object(&self.ctx, uri),
-                None => pages::objects(&self.ctx, query),
+                Some((_, uri)) => pages::object(ctx, uri),
+                None => pages::objects(ctx, query),
             },
-            "/cockpit/executions" => pages::executions(&self.ctx, query),
-            "/cockpit/graphs" => pages::graphs(&self.ctx),
-            "/cockpit/graphs/topology" => pages::topology(&self.ctx),
-            "/cockpit/continuity" => pages::continuity(&self.ctx),
-            "/cockpit/worktrees" => pages::worktrees(&self.ctx),
-            "/cockpit/mesh" => pages::mesh(&self.ctx),
-            "/cockpit/models" => pages::models(&self.ctx),
-            "/cockpit/directories" => pages::directories(&self.ctx, query),
-            "/cockpit/health" => pages::health(&self.ctx),
-            "/cockpit/quality" => pages::quality(&self.ctx),
-            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
-            "/cockpit/design" => pages::design(&self.ctx),
-            "/cockpit/api" => pages::api(&self.ctx),
-            "/cockpit/search" => pages::search(&self.ctx, query),
-            "/cockpit/activity" => pages::activity(&self.ctx),
+            "/cockpit/executions" => pages::executions(ctx, query),
+            "/cockpit/graphs" => pages::graphs(ctx),
+            "/cockpit/graphs/topology" => pages::topology(ctx),
+            "/cockpit/continuity" => pages::continuity(ctx),
+            "/cockpit/worktrees" => pages::worktrees(ctx),
+            "/cockpit/mesh" => pages::mesh(ctx),
+            "/cockpit/models" => pages::models(ctx),
+            "/cockpit/directories" => pages::directories(ctx, query),
+            "/cockpit/health" => pages::health(ctx),
+            "/cockpit/quality" => pages::quality(ctx),
+            "/cockpit/artifacts" => pages::artifacts(ctx),
+            "/cockpit/design" => pages::design(ctx),
+            "/cockpit/api" => pages::api(ctx),
+            "/cockpit/search" => pages::search(ctx, query),
+            "/cockpit/activity" => pages::activity(ctx),
             other => {
                 if let Some(id) = other.strip_prefix("/cockpit/executions/") {
-                    pages::execution(&self.ctx, &percent_decode(id))
+                    pages::execution(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/capabilities/") {
-                    pages::capability(&self.ctx, &percent_decode(id))
+                    pages::capability(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
-                    pages::command(&self.ctx, &percent_decode(id))
+                    pages::command(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
-                    pages::graph(&self.ctx, &percent_decode(id))
+                    pages::graph(ctx, &percent_decode(id))
                 } else {
                     pages::not_found(other)
                 }
