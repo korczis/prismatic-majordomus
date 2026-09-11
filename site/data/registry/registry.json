@@ -6,22 +6,22 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "f544d8ce0c24f025a7d8cd1622f239ce3779ed97abad79c6850cd49819459069",
+    "fingerprint": "91f48eb87daa1876627f77a8fca8d526ed1eb5ec0abe431d26cf495056dc3f67",
     "summary": {
-      "total": 1244,
+      "total": 1257,
       "builtin": 80,
-      "declarative": 1164,
+      "declarative": 1177,
       "by_kind": {
         "command": 3,
         "query": 77,
-        "resource": 1164
+        "resource": 1177
       },
       "by_stability": {
         "behaviorally_verified": 75,
-        "implemented": 1169
+        "implemented": 1182
       },
       "mcp_tools": 78,
-      "mcp_resources": 1192,
+      "mcp_resources": 1205,
       "http_routes": 80,
       "cli_commands": 34,
       "modules": 55,
@@ -29360,7 +29360,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 203,
+        "capabilities": 215,
         "capability_ids": []
       },
       {
@@ -29376,7 +29376,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 18,
+        "capabilities": 19,
         "capability_ids": []
       },
       {
@@ -29683,7 +29683,7 @@
     ]
   },
   "index": {
-    "fingerprint": "70d07259a1a492c22a63ef6bc502fed293ee96e2fdca0993a378e82396d898c2",
+    "fingerprint": "cb8436598606dbb32e06fec46064b72e0439b9145042065f258e3052bb223df6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -29718,9 +29718,9 @@
       "document": 216,
       "feature": 20,
       "implementation": 45,
-      "issue": 203,
+      "issue": 215,
       "knowledge": 1,
-      "milestone": 18,
+      "milestone": 19,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -33020,7 +33020,7 @@
         "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
         "path": "docs/COCKPIT_IDE_AUDIT.md",
         "source_class": "document",
-        "bytes": 41230
+        "bytes": 50157
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -33245,7 +33245,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 45148
+        "bytes": 53838
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -37625,6 +37625,138 @@
         "bytes": 5194
       },
       {
+        "uri": "majordomus://issue/I1501",
+        "kind": "issue",
+        "identity": "I1501",
+        "title": "An execution a person starts is an execution the server can see",
+        "description": "Make `majordomus-cli run` reach the server that serves this repository, so that the execution plane a surface shows and the execution plane a person uses are the same plane — or record the decision that they are not, and stop every surface from implying otherwise.",
+        "path": ".ai/repo/project/issues/I1501.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3386
+      },
+      {
+        "uri": "majordomus://issue/I1502",
+        "kind": "issue",
+        "identity": "I1502",
+        "title": "A server serving code that no longer exists stops calling itself ready",
+        "description": "Make a running server's own root and health documents carry the identity of the code it is serving, so that a stale server is detectable by the client reading it rather than only by an outside reader holding a newer executable.",
+        "path": ".ai/repo/project/issues/I1502.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3017
+      },
+      {
+        "uri": "majordomus://issue/I1503",
+        "kind": "issue",
+        "identity": "I1503",
+        "title": "A closed session is not closed a second time under the same identity",
+        "description": "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it.",
+        "path": ".ai/repo/project/issues/I1503.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2802
+      },
+      {
+        "uri": "majordomus://issue/I1504",
+        "kind": "issue",
+        "identity": "I1504",
+        "title": "One development transition is a capability, end to end",
+        "description": "Declare one development transition — the plan's `done` — as a single `capability!` of kind command in the plan module, with a typed input schema, benchmark cases and a registered ledger event, and point lib/plan.sh at it instead of letting it write the YAML itself.",
+        "path": ".ai/repo/project/issues/I1504.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3627
+      },
+      {
+        "uri": "majordomus://issue/I1505",
+        "kind": "issue",
+        "identity": "I1505",
+        "title": "A mutating capability leaves a durable event, and the ledger can be read back",
+        "description": "Give a capability of kind command one way to record what it did: append a ledger event whose name share/events.yaml declares, publish the same change to the execution stream, and add a read capability for the ledger so a surface can show history at all.",
+        "path": ".ai/repo/project/issues/I1505.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2550
+      },
+      {
+        "uri": "majordomus://issue/I1506",
+        "kind": "issue",
+        "identity": "I1506",
+        "title": "The lifecycle commands become non-interactive capabilities",
+        "description": "Move task start, checkpoint and finish, session open and close, handover and evidence into the pattern Phase A establishes, each one non-interactive, so that the exposure policy stops withholding them from every machine surface.",
+        "path": ".ai/repo/project/issues/I1506.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2696
+      },
+      {
+        "uri": "majordomus://issue/I1507",
+        "kind": "issue",
+        "identity": "I1507",
+        "title": "Issues, milestones, sessions and peers reach the Cockpit as projections",
+        "description": "Give the Cockpit the development areas it has none of — issues, milestones, sessions, peers and the current task — each one rendering what a capability answered and computing nothing of its own.",
+        "path": ".ai/repo/project/issues/I1507.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2712
+      },
+      {
+        "uri": "majordomus://issue/I1508",
+        "kind": "issue",
+        "identity": "I1508",
+        "title": "The navigation is derived from the dispatcher, not kept beside it",
+        "description": "Reconcile the Cockpit's area list against the routes the dispatcher actually answers, and derive or check the route table in docs/COCKPIT.md, so that a routed page cannot be invisible.",
+        "path": ".ai/repo/project/issues/I1508.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2704
+      },
+      {
+        "uri": "majordomus://issue/I1509",
+        "kind": "issue",
+        "identity": "I1509",
+        "title": "A detail page that pages nothing has outgrown the reason it pages nothing",
+        "description": "Reconcile the two things the Cockpit's largest page is trying to be — complete before any JavaScript loads, and usable by a person — without giving up the first, and bring the page under the test sweep that covers every other one.",
+        "path": ".ai/repo/project/issues/I1509.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3414
+      },
+      {
+        "uri": "majordomus://issue/I1510",
+        "kind": "issue",
+        "identity": "I1510",
+        "title": "A gap the audit calls planned names a plan object that exists",
+        "description": "Check docs/COCKPIT_IDE_AUDIT.md's gap matrix against the plan, so that a row whose status is `planned` must name an issue that exists, and a row cannot quietly claim to be scheduled when nothing schedules it.",
+        "path": ".ai/repo/project/issues/I1510.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2916
+      },
+      {
+        "uri": "majordomus://issue/I1511",
+        "kind": "issue",
+        "identity": "I1511",
+        "title": "The documentation surface answers in a checkout that has not built the site",
+        "description": "Make /docs/ say what it needs rather than fail, so that a developer entering a fresh worktree does not meet a broken documentation surface as their first impression of the runtime.",
+        "path": ".ai/repo/project/issues/I1511.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1896
+      },
+      {
+        "uri": "majordomus://issue/I1512",
+        "kind": "issue",
+        "identity": "I1512",
+        "title": "Gate state is something the runtime can answer",
+        "description": "Give the runtime a capability that answers what the repository's gates are and how the last run of each one went, so that CI status stops being the one observability subject with no reader on any surface.",
+        "path": ".ai/repo/project/issues/I1512.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2602
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -37726,6 +37858,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4742
+      },
+      {
+        "uri": "majordomus://milestone/development-runtime",
+        "kind": "milestone",
+        "identity": "development-runtime",
+        "title": "The runtime has a development surface",
+        "description": "A development transition is decided in exactly one place — a `capability!` of kind `command` in the Rust registry — and every surface that offers it is a projection: the CLI, the MCP tool, the HTTP route, the OpenAPI operation and the Cockpit's generated runner form, none of them written by hand. The lifecycle stops being a second program with no surfaces, and the execution history a development surface would show exists somewhere durable.",
+        "path": ".ai/repo/project/milestones/development-runtime.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 5428
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -40583,10 +40726,10 @@
         "identity": "s-20260909152316-024f",
         "title": "Session s-20260909152316-024f on master",
         "description": "Session s-20260909152316-024f on master",
-        "path": ".ai/repo/sessions/20260909T214136Z--s-20260909152316-024f--master--06b3c3c--8573c6044ea5126f.md",
+        "path": ".ai/repo/sessions/20260910T103933Z--s-20260909152316-024f--master--38f056b--5b5b1acf70e75670.md",
         "section": "sessions",
         "source_class": "session",
-        "bytes": 2139
+        "bytes": 10673
       },
       {
         "uri": "majordomus://skill/deploy-site",
@@ -42587,7 +42730,7 @@
       "identity": [
         "id"
       ],
-      "objects": 203
+      "objects": 215
     },
     {
       "name": "knowledge",
@@ -42607,7 +42750,7 @@
       "identity": [
         "id"
       ],
-      "objects": 18
+      "objects": 19
     },
     {
       "name": "moment",
