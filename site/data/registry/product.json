@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "2fe88cd24dfe0a1a9c28ad280bd1ddeef27f98349107178c4d3bf8dfac29cb8a",
+  "fingerprint": "7d0ca7e05eb4b35ac7291d8d308add28a077e400a4be5df76bc676ec924d70f4",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -823,7 +823,7 @@
         },
         {
           "id": "mcp-shared-server",
-          "claim": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+          "claim": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
           "status": "guaranteed"
         },
         {
@@ -833,7 +833,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1222,7 +1222,7 @@
         {
           "id": "peers",
           "title": "Peers",
-          "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+          "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
           "capabilities": [
@@ -1419,7 +1419,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -2459,7 +2459,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 39
+          "objects": 40
         },
         {
           "name": "knowledge",
@@ -2716,11 +2716,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 259,
+        "mcp_resources": 260,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 258,
+        "objects": 259,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -7761,7 +7761,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (39)",
+        "title": "adr (40)",
         "features": [
           "knowledge"
         ]
@@ -8660,19 +8660,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1251,
+    "capabilities": 1253,
     "builtin": 80,
-    "declarative": 1171,
+    "declarative": 1173,
     "modules": 27,
     "mcp_tools": 78,
-    "mcp_resources": 1199,
+    "mcp_resources": 1201,
     "http_routes": 80,
     "cli_commands": 93,
     "shell_commands": 29,
     "kinds": 28,
-    "objects": 1171,
+    "objects": 1173,
     "by_kind": {
-      "adr": 39,
+      "adr": 40,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8697,7 +8697,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 155,
+      "test": 156,
       "use-case": 44,
       "workspace": 1
     },

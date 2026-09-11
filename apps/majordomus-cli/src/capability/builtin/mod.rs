@@ -45,7 +45,7 @@ pub(crate) mod graph;
 pub mod health;
 pub mod objects;
 pub mod obligations;
-pub(crate) mod peers;
+pub mod peers;
 pub(crate) mod perf;
 pub mod plan;
 pub(crate) mod product;
