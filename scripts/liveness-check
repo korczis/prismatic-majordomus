@@ -112,7 +112,11 @@ files | while IFS= read -r f; do scan "$f"; done > "$FOUND" || true
 # --- the ratchet ----------------------------------------------------------------------
 # The baseline is keyed by path and class, not by line: a file that moves a known finding
 # by three lines has not regressed, and a ratchet that fires on that is noise.
-key() { cut -d: -f1,3 < "$1" | sort -u; }
+# LC_ALL=C on both sorts, and on the `comm` inputs below that consume them: this list is
+# compared against a baseline file somebody else's machine wrote, and two collations
+# disagreeing about where `_` falls make `comm` report a difference that is not one
+# (project.canonical-order).
+key() { cut -d: -f1,3 < "$1" | LC_ALL=C sort -u; }
 
 if [ "$WRITE" = 1 ]; then
   { echo "# liveness-check baseline — path:class of the debt that existed when the gate landed."
@@ -125,7 +129,7 @@ if [ "$WRITE" = 1 ]; then
 fi
 
 [ -f "$BASELINE" ] || : > "$BASELINE"
-grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^[[:space:]]*$' | sort -u > "$FOUND.b" || : > "$FOUND.b"
+grep -v '^#' "$BASELINE" 2>/dev/null | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u > "$FOUND.b" || : > "$FOUND.b"
 key "$FOUND" > "$FOUND.new.all"
 comm -23 "$FOUND.new.all" "$FOUND.b" > "$FOUND.new" || : > "$FOUND.new"
 comm -13 "$FOUND.new.all" "$FOUND.b" > "$FOUND.stale" || : > "$FOUND.stale"

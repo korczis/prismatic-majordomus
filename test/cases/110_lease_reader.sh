@@ -136,4 +136,44 @@ track "$F"
 expect_exit 0 env MJ_ROOT="$F" "$GATE"
 expect_grep 'nothing to measure'
 
+# --- a file that only WRITES the lease's name down is not a reader. This gate reported
+# itself for eleven days: its own comment explaining why the bare file name must be matched
+# contains the bare file name, and a grep for a literal cannot tell a parser from a sentence
+# about parsers. Every language that could hold a reader is planted here as a comment, so
+# the repair cannot regress in one of them while holding in the others — and the code line
+# beside each comment is the control: a file that mentions the lease in a comment AND opens
+# it is still a reader, which is the direction the exclusion must not reach.
+F="$(fixture 8)"
+printf '# the lease at .ai/local/state/mcp/server.json is read by serve status\necho hello\n' > "$F/scripts/shell-comment"
+printf '// state/mcp/server.json is majordomus-mcp-lease/v1; see lease.rs\nfn f() {}\n' > "$F/apps/majordomus-cli/src/rust-comment.rs"
+printf '/* the schema is majordomus-mcp-lease/v1 */\nconst x = 1;\n' > "$F/scripts/block-comment.mjs"
+printf '  * state/mcp/server.json, continued from the line above\nconst y = 2;\n' > "$F/scripts/continued-comment.mjs"
+track "$F"
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_no_grep 'shell-comment'
+expect_no_grep 'rust-comment'
+expect_no_grep 'block-comment'
+expect_no_grep 'continued-comment'
+# the control: prose beside code does not launder the code
+printf '# we read .ai/local/state/mcp/server.json here, and here is where\njq .url .ai/local/state/mcp/server.json\n' > "$F/scripts/both"
+track "$F"
+expect_exit 10 env MJ_ROOT="$F" "$GATE"
+expect_grep 'FAIL lease-reader scripts/both'
+# and a trailing comment on a line of code is not a way out either
+printf 'jq .url .ai/local/state/mcp/server.json  # the lease\n' > "$F/scripts/trailing"
+rm -f "$F/scripts/both"
+track "$F"
+expect_exit 10 env MJ_ROOT="$F" "$GATE"
+expect_grep 'FAIL lease-reader scripts/trailing'
+
+# --- and the gate is not its own subject. Run against this repository, it must not name
+# itself: the assertion is cheap, it is the exact defect that was live, and nothing else
+# here would have caught it.
+# The assertion is on the finding, not on the word: every line the gate prints begins with
+# its own name, so `expect_no_grep lease-reader-check` fails on the success message. A check
+# of a check has to distinguish its subject too.
+expect_exit 0 env "$GATE"
+expect_no_grep 'FAIL lease-reader scripts/ci/'
+expect_no_grep 'a second parser of the lease'
+
 echo "    the lease has one reader, and a second one is refused by name in every language it could be written in"
