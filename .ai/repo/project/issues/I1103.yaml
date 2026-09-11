@@ -1,0 +1,30 @@
+id: I1103
+milestone: repository-knowledge
+title: Phase 2: the Cockpit page table is derived from the router
+slug: tightening-cockpit-document
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "docs/COCKPIT.md lists every route with the capability behind it by hand; derive the table from the router's own declarations."
+why: "A route table kept by hand is wrong the week a page is added."
+current_state: "docs/COCKPIT.md is tolerated in the baseline as a suspected mirror."
+desired_state: "The route table is generated from the Cockpit's route list; the audit no longer names docs/COCKPIT.md."
+scope:
+  - docs/COCKPIT.md
+  - apps/majordomus-cli/src/cockpit
+  - apps/majordomus-cli/src/generate.rs
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1102
+acceptance_criteria:
+  - docs/COCKPIT.md names no capability identifier in a table by hand
+  - The Cockpit's routes are one declared list the router and the generator both read
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

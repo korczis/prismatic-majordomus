@@ -1,0 +1,28 @@
+id: I1108
+milestone: repository-knowledge
+title: Phase 7: strict mode in CI
+slug: tightening-strict
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Move the policy's knowledge mode from protect to strict once the tolerated debt is paid."
+why: "Protect is for adoption; strict is where a repository with no debt belongs."
+current_state: "Mode protect."
+desired_state: "Mode strict, and CI passes."
+scope:
+  - .ai/repo/policy.yaml
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1107
+acceptance_criteria:
+  - The policy says strict
+  - rust-integration passes under it
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

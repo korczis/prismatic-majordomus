@@ -1,0 +1,30 @@
+id: I1111
+milestone: repository-knowledge
+title: Phase 10: the mean manual maintenance surface is one
+slug: tightening-mms-one
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Close the programme: every capability's MMS is one, every exception has expired or been removed, the audit passes strict, and the baseline's canonicality section is empty."
+why: "The metric the programme exists for."
+current_state: "Mean MMS above one; two mirrors tolerated."
+desired_state: "Mean MMS one; no tolerated canonicality violation; no exception."
+scope:
+  - apps/majordomus-cli
+  - .ai/repo/knowledge
+  - docs
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1110
+acceptance_criteria:
+  - The audit reports mean MMS 1.00 and every capability canonical
+  - The baseline's canonicality section and the exceptions file are empty or absent
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

@@ -1,0 +1,31 @@
+id: I1102
+milestone: repository-knowledge
+title: Phase 1: the MCP surface document is derived from the registry
+slug: tightening-mcp-document
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "docs/MCP.md lists every tool and resource by hand; derive the table from docs/generated/registry.json and keep only the prose by hand."
+why: "Fifteen capability identifiers in a hand-kept table are the largest mirror the audit names."
+current_state: "docs/MCP.md is tolerated in the baseline as a suspected mirror."
+desired_state: "The table is a generated region or a generated page; the audit no longer names docs/MCP.md; the baseline is recorded again without it."
+scope:
+  - docs/MCP.md
+  - apps/majordomus-cli/src/generate.rs
+  - .ai/repo/knowledge/baseline.yaml
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1101
+acceptance_criteria:
+  - docs/MCP.md names no capability identifier in a table or list by hand
+  - The generated region carries a provenance header and appears in the manifest with derived_from
+  - majordomus canonicality check names one fewer suspected mirror
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

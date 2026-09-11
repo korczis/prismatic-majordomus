@@ -1,0 +1,30 @@
+id: I1105
+milestone: repository-knowledge
+title: Phase 4: the shell tool's knowledge command points at the knowledge system
+slug: tightening-shell-knowledge
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "bin/majordomus knowledge (the declarative index) and majordomus knowledge (the Rust system) share a word; the shell command's usage names the other and the documentation says which answers what."
+why: "Two commands with one name and different answers is a duplication of the noun."
+current_state: "The shell command lists sources, nodes and edges of the declarative index; the Rust command is the knowledge system."
+desired_state: "The shell usage names the Rust command for freshness, conflicts and canonicality; docs/CLI.md and docs/KNOWLEDGE.md agree."
+scope:
+  - lib/knowledge.sh
+  - docs/CLI.md
+  - docs/KNOWLEDGE.md
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1104
+acceptance_criteria:
+  - The shell usage text points at the Rust command
+  - docs/CLI.md's knowledge section links docs/KNOWLEDGE.md
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

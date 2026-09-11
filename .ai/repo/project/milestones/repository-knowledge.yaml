@@ -1,0 +1,47 @@
+id: repository-knowledge
+title: The repository knowledge system and the tightening programme
+slug: repository-knowledge
+version: "1.0"
+order: 62
+priority: p1
+problem: "Documentation drifts because nothing tells it that the thing it describes has moved, and the projections of a capability are kept in sync by hand in three documents that disagree the week one is edited."
+outcome: "The repository knows what it knows, from what, and whether it still holds: every claim rests on fingerprinted evidence, drift is refused by name, and every representation of a concept is derived from one canonical source with the manual maintenance surface measured and ratcheting down to one."
+current_state: "Landed: the model, the extractors, the baseline and its check, the canonicality audit, the command line, MCP, HTTP, the Cockpit, the health checks, the CI gate, the pre-commit gate, the dogfood baseline. Tolerated: two hand-kept tables of capability identifiers, which the issues below derive."
+desired_state: "Every hand-kept mirror derived or excepted with a date, the mean manual maintenance surface at one, the semantic layer exercised by a real provider behind the policy, and the baseline recorded again with less in it."
+scope:
+  - apps/majordomus-cli
+  - docs
+  - .ai/repo/knowledge
+  - .ai/repo/rules/project
+  - test/cases
+  - share
+non_scope:
+  - A hosted service or a shared knowledge store across repositories
+  - A remote semantic provider enabled by default
+acceptance_criteria:
+  - A curated claim whose evidence changed is reported stale with the reason, and the check refuses it until a person verifies it again
+  - Two sources that disagree about a functional predicate are an open conflict with both sides until a person accepts it by name
+  - The baseline recorded at adoption tolerates the present debt, the check refuses new debt, and tolerated debt that is gone is reported so the baseline shrinks
+  - Every capability's canonical source and derived surfaces are printed by one command, and a hand-kept listing of capability identifiers is a named violation
+  - The public projection carries nothing outside the public visibility, and no provider runs unless the policy says so
+  - The two tolerated mirrors are derived from the registry, and the mean manual maintenance surface reported by the audit falls
+validation:
+  - cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test knowledge
+  - bash test/run.sh
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+  - baseline_recorded
+depends_on:
+  - capability-graph
+claims:
+  - knowledge-freshness-from-evidence
+  - knowledge-baseline-ratchet
+  - knowledge-conflicts-never-silent
+  - canonicality-audit
+risks:
+  - "A scan on every check costs time proportional to the tree; it is measured and memoised, and the file limit bounds it."
+  - "A heuristic that names a hand-kept mirror can name a legitimate table; the exception is typed and dated so the argument is written down once."
+created_at: 2026-09-07
+updated_at: 2026-09-07

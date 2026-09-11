@@ -1,0 +1,32 @@
+id: I1101
+milestone: repository-knowledge
+title: Phase 0: the doctrine and the audit exist
+slug: tightening-doctrine-and-audit
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The canonicality doctrine is a rule every canonical-source rule depends on, and the audit that measures it runs in CI and in the pre-commit hook."
+why: "A principle argued case by case is re-argued every time; written once and audited, it is decided once."
+current_state: "Done in the landing of the repository knowledge system."
+desired_state: "project.canonicality is the root rule; majordomus canonicality check runs in rust-integration and in the hook; the baseline tolerates what the repository had."
+scope:
+  - .ai/repo/rules/project
+  - apps/majordomus-cli/src/knowledge
+  - scripts/rust-check
+  - .githooks
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1030
+acceptance_criteria:
+  - The rule exists and every canonical-source rule depends on it
+  - The audit exits 10 on a counting violation and 0 with every violation tolerated or excepted
+  - The baseline records the two tolerated mirrors
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

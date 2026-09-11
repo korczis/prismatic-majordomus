@@ -1,0 +1,30 @@
+id: I1110
+milestone: repository-knowledge
+title: Phase 9: the impact of a change gates the documents it touches
+slug: tightening-impact-gate
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "change inspect lists the documents a change reaches along relations; a change that touches a component without touching the documents that describe it is reported as a warning in the pull request."
+why: "Impact analysis exists; the review should read it."
+current_state: "change inspect prints the impact; nothing reads it in review."
+desired_state: "The pull-request workflow posts the inspection, and a document reached transitively that did not change is listed as possibly stale."
+scope:
+  - .github/workflows
+  - scripts/ci
+  - apps/majordomus-cli/src/knowledge/inspect.rs
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1109
+acceptance_criteria:
+  - The workflow posts the inspection on a pull request
+  - A test proves a transitive document is listed
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

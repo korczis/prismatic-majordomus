@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/knowledge-baseline/knowledge-baseline.v1.schema.json",
+  "x-majordomus-schema": "majordomus.knowledge-baseline/v1",
+  "title": "Knowledge baseline",
+  "description": "The committed baseline of the repository knowledge system, .ai/repo/knowledge/baseline.yaml: every node's fingerprint as recorded, every curated claim verified and against what, the debt tolerated, the conflicts accepted and the canonicality violations tolerated. Written by `majordomus knowledge bootstrap` and `baseline record`; read by `knowledge check`, which refuses debt this file does not tolerate.",
+  "x-majordomus-allow": "knowledge-baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus/knowledge-baseline/v1"
+    },
+    "recorded_at": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "The commit the baseline was recorded at."
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "fingerprint"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_-]*:.+$"
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          }
+        }
+      }
+    },
+    "verified": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claim",
+          "evidence",
+          "fingerprint"
+        ],
+        "properties": {
+          "claim": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "debt": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node",
+          "freshness"
+        ],
+        "properties": {
+          "node": {
+            "type": "string",
+            "minLength": 1
+          },
+          "freshness": {
+            "type": "string",
+            "enum": [
+              "current",
+              "possibly_stale",
+              "stale",
+              "conflicted",
+              "unverified"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "accepted": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "conflict"
+        ],
+        "properties": {
+          "conflict": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "canonicality": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "violation"
+        ],
+        "properties": {
+          "violation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

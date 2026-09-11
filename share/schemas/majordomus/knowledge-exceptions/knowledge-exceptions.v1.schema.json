@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/knowledge-exceptions/knowledge-exceptions.v1.schema.json",
+  "x-majordomus-schema": "majordomus.knowledge-exceptions/v1",
+  "title": "Canonicality exceptions",
+  "description": "The typed, time-limited exceptions to the canonicality doctrine, .ai/repo/knowledge/exceptions.yaml: each names the violation it excepts, why, who answers for it, the day it expires and how to tell it is no longer needed. An expired exception counts as a violation again.",
+  "x-majordomus-allow": "knowledge-exceptions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "exceptions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus/knowledge-exceptions/v1"
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "reason",
+          "owner",
+          "expires",
+          "validation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The violation id, `<class>:<subject>`, as `majordomus canonicality check` prints it."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A role or a team, never a machine path or a private address."
+          },
+          "expires": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "validation": {
+            "type": "string",
+            "minLength": 1,
+            "description": "How to tell the exception is no longer needed: a command, or what to look for."
+          }
+        }
+      }
+    }
+  }
+}

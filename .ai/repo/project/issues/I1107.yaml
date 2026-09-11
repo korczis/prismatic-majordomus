@@ -1,0 +1,29 @@
+id: I1107
+milestone: repository-knowledge
+title: Phase 6: the tolerated debt is paid down
+slug: tightening-debt
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Every tolerated freshness item of the baseline is verified or corrected, and the baseline is recorded again with the debt gone."
+why: "Tolerated debt is a loan; the ratchet only works if it is paid."
+current_state: "The baseline tolerates the unverified items present at adoption."
+desired_state: "knowledge check passes with an empty tolerated list; the baseline's debt section is empty."
+scope:
+  - .ai/repo/knowledge
+  - docs
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1106
+acceptance_criteria:
+  - The baseline's debt list is empty
+  - knowledge check reports zero tolerated items
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

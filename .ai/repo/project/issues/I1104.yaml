@@ -1,0 +1,30 @@
+id: I1104
+milestone: repository-knowledge
+title: Phase 3: every hand-written mention of a capability is either a typed reference or prose
+slug: tightening-mentions
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Reduce the mean manual maintenance surface: every file that names a capability identifier by hand either becomes a typed reference the graph resolves or is rewritten as prose that names the concept, not the identifier."
+why: "The mean MMS is the number the programme moves; every mention is a file a rename must touch."
+current_state: "The audit reports the mean MMS and the mentions per capability."
+desired_state: "The mean MMS falls below three; every remaining mention is a typed reference or an exception with a date."
+scope:
+  - docs
+  - apps/majordomus-cli/src/cockpit
+  - docs/CLAIMS.yaml
+non_scope:
+  - Anything outside the phase named in the objective
+depends_on:
+  - I1103
+acceptance_criteria:
+  - The mean MMS the audit reports is lower than at phase 0 and the number is recorded in the issue's evidence
+  - No capability has more than three hand-written mentions without an exception
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

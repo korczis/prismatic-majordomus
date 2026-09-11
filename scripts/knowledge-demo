@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# knowledge-demo — a brownfield repository, built in a temporary directory, walked through the
+# repository knowledge system: what the scan finds before adoption, what one command records
+# as the baseline, what happens when the evidence a note was verified against moves, what a
+# contradiction between a note and a manifest looks like, what the check refuses and what a
+# person accepts. Deterministic; the same fixture the crate's suite adopts. Writes nothing
+# outside the temporary directory it removes on exit.
+#
+#   scripts/knowledge-demo                 build the executable when needed, then run
+#   MAJORDOMUS_BIN=path scripts/knowledge-demo
+#   KEEP=1 scripts/knowledge-demo          print the path and keep the repository
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  cargo build --quiet --manifest-path "$ROOT/apps/majordomus-cli/Cargo.toml"
+  MAJORDOMUS_BIN="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+fi
+D="$(mktemp -d "${TMPDIR:-/tmp}/mj-knowledge-demo.XXXXXX")"
+if [ -z "${KEEP:-}" ]; then trap 'rm -rf "$D"' EXIT; fi
+R="$D/brownfield"
+mkdir -p "$R"
+MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
+say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
+run() { printf '\033[2m$ majordomus %s\033[0m\n' "$*"; ( cd "$R" && "$MAJORDOMUS_BIN" "$@" ) || printf '\033[2m(exit %s)\033[0m\n' "$?"; }
+
+say "a repository with a component, documentation about it, a note somebody verified once, and a contradiction"
+( cd "$R" && git init -q . && git config user.email demo@example.com && git config user.name demo )
+( cd "$R" && MJ_ROOT="$R" "$ROOT/bin/majordomus" init >/dev/null && "$ROOT/bin/majordomus" update >/dev/null )
+mkdir -p "$R/apps/alpha" "$R/docs" "$R/.ai/repo/knowledge/curated"
+cat > "$R/apps/alpha/Cargo.toml" <<'EOF'
+[package]
+name = "alpha"
+version = "1.2.3"
+edition = "2021"
+license = "MIT"
+
+[dependencies]
+serde = "1"
+EOF
+cat > "$R/docs/ALPHA.md" <<'EOF'
+# The alpha component
+
+The crate lives under [apps/alpha](../apps/alpha/) and ships as one binary.
+Its operating notes are in [the runbook](runbooks/alpha.md), which nobody wrote.
+EOF
+cat > "$R/.ai/repo/knowledge/curated/alpha-version.md" <<'EOF'
+---
+schema: knowledge/v1
+id: alpha-version
+kind: knowledge
+class: fact
+title: alpha is at version 2.0.0
+description: The version the release notes were written against.
+status: verified
+epistemics: observed
+date: 2026-01-01
+provenance:
+  origin: authored
+  derived_from:
+    - file:apps/alpha/Cargo.toml
+asserts:
+  - subject: component:alpha
+    predicate: version
+    value: '2.0.0'
+---
+
+# alpha is at 2.0.0
+
+Read off the manifest when the notes were written.
+EOF
+printf '# Brownfield\n\nA repository with history. See [alpha](docs/ALPHA.md).\n' > "$R/README.md"
+( cd "$R" && git add -A && git commit -qm "the repository as found" )
+echo "repository: $R"
+
+say "before adoption: the scan finds what a reader would have found later"
+run knowledge status
+run knowledge stale
+run knowledge conflicts
+run knowledge gaps
+run knowledge check
+
+say "why the model says what it says about the note"
+run knowledge explain knowledge:alpha-version
+
+say "adoption: one command records the present state, debt and all, and the check passes"
+run knowledge bootstrap
+run knowledge check
+( cd "$R" && git add -A && git commit -qm "adopt the knowledge system" )
+
+say "the evidence moves: the manifest changes, the note is stale, the check refuses it by name"
+sed -i.bak 's/^version = "1.2.3"/version = "1.3.0"/' "$R/apps/alpha/Cargo.toml" && rm -f "$R/apps/alpha/Cargo.toml.bak"
+( cd "$R" && git commit -qam "bump alpha to 1.3.0" )
+run knowledge impact --base HEAD~1
+run knowledge stale
+run knowledge check
+run change inspect --base HEAD~1
+
+say "a person checks the note and accepts; the baseline is rewritten and the check passes"
+run knowledge reconcile
+run knowledge reconcile --accept
+run knowledge check
+
+say "every capability of the executable, its one source and derived surfaces"
+run canonicality check
+run explain capability objects.get
+
+say "the context an agent reads before touching the component"
+run knowledge context apps/alpha
+
+if [ -n "${KEEP:-}" ]; then echo; echo "kept: $R"; fi

@@ -1,0 +1,30 @@
+id: I1109
+milestone: repository-knowledge
+title: Phase 8: the site renders the knowledge model at build time
+slug: tightening-site-dataset
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Render the public projection of the knowledge model into the site at build time — the coverage, the gaps, the freshness of the documentation pages — from the served executable, without committing a dataset that changes on every edit."
+why: "A committed dataset of the whole model would be stale on every commit; runtime and build-time derivation come before a committed artifact."
+current_state: "The site has no knowledge pages."
+desired_state: "The site's documentation pages show their freshness, derived at build time; nothing new is committed under site/data."
+scope:
+  - scripts/generate-site-data
+  - site/templates
+  - scripts/derive
+non_scope:
+  - A committed knowledge dataset
+depends_on:
+  - I1108
+acceptance_criteria:
+  - A documentation page on the site shows whether the model holds it current
+  - site-check passes and no new file under site/data is committed
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07

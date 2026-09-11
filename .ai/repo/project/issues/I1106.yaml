@@ -1,0 +1,30 @@
+id: I1106
+milestone: repository-knowledge
+title: Phase 5: a semantic provider behind the policy
+slug: tightening-semantic-provider
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Implement one provider that calls a model, behind the policy switches, with the redactor and the public-only rule proven by a test that asserts what leaves the process."
+why: "The trait exists and only the offline stub implements it; a real provider is where the security rules are tested for real."
+current_state: "The local stub is the only provider."
+desired_state: "A provider that calls a model exists, is refused unless enabled and allowed remote, and a test proves restricted evidence never reaches it."
+scope:
+  - apps/majordomus-cli/src/knowledge/semantic.rs
+  - apps/majordomus-cli/tests
+non_scope:
+  - Enabling any provider by default
+  - Reading a credential outside the repository's established conventions
+depends_on:
+  - I1105
+acceptance_criteria:
+  - The provider is refused with exit 10 when the policy does not enable it
+  - A test asserts the request payload carries no restricted evidence and no redacted line
+validation:
+  - majordomus knowledge check
+  - majordomus canonicality check
+evidence_required:
+  - suite
+risk: "A phase that is half done leaves a mirror half derived; each phase ends with the audit and the baseline recorded again."
+created_at: 2026-09-07
+updated_at: 2026-09-07
