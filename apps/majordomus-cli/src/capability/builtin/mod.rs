@@ -180,3 +180,63 @@ pub(crate) fn post(path: &str) -> Option<HttpExposure> {
         path: path.into(),
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capability::{CapabilityKind, Effect};
+
+    /// Only a command may claim to write the repository, and one that does must be a POST.
+    ///
+    /// Two facts about the whole builtin registry rather than about one module, because the
+    /// harm of getting either wrong is not local: the exposure ceiling of every surface is
+    /// derived from the effect, and a capability whose effect is understated is projected
+    /// onto surfaces whose ceiling exists to exclude it. A query that claimed the effect
+    /// would be worse still — bound to GET, announced to MCP as read-only, and followed by
+    /// every crawler and prefetcher that ever met the Cockpit.
+    ///
+    /// The registry refuses both at construction; this states them where a reader looking
+    /// for the invariant will find it, and fails on a declaration that slipped past.
+    #[test]
+    fn only_a_command_writes_the_repository_and_only_by_post() {
+        for e in all() {
+            let c = &e.capability;
+            if c.execution.effect != Effect::RepositoryMutation {
+                continue;
+            }
+            assert_eq!(
+                c.kind,
+                CapabilityKind::Command,
+                "{} claims to write the repository and is not a command",
+                c.id
+            );
+            if let Some(http) = &c.exposure.http {
+                assert_eq!(
+                    http.method.as_str(),
+                    "POST",
+                    "{} writes the repository and is reachable by {}",
+                    c.id,
+                    http.method.as_str()
+                );
+            }
+        }
+    }
+
+    /// Every capability that writes the repository, named.
+    ///
+    /// A list rather than a count, and it is meant to be edited: adding one is a deliberate
+    /// widening of what this executable may do to a tracked file, and it should be visible
+    /// in a diff rather than absorbed silently. The entries converge as ADR 0040 is worked
+    /// through, so this grows — one line per lifecycle command that stops being the shell
+    /// tool's alone.
+    #[test]
+    fn the_capabilities_that_write_the_repository_are_these() {
+        let mut writers: Vec<String> = all()
+            .iter()
+            .filter(|e| e.capability.execution.effect == Effect::RepositoryMutation)
+            .map(|e| e.capability.id.to_string())
+            .collect();
+        writers.sort();
+        assert_eq!(writers, ["plan.transition"]);
+    }
+}

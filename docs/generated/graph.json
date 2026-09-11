@@ -532,6 +532,15 @@
         "status": "query"
       },
       {
+        "id": "capability:plan.transition",
+        "kind": "capability",
+        "label": "plan.transition",
+        "summary": "Move one issue through the lifecycle",
+        "route": "/cockpit/capabilities/plan.transition",
+        "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:plan.validate",
         "kind": "capability",
         "label": "plan.validate",
@@ -28279,6 +28288,13 @@
         "source": "test/cases/130_archive.sh"
       },
       {
+        "id": "majordomus://test/test/cases/133_plan_transition.sh",
+        "kind": "test",
+        "label": "test/cases/133_plan_transition.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F133_plan_transition.sh",
+        "source": "test/cases/133_plan_transition.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/139_release_record_schema.sh",
         "kind": "test",
         "label": "test/cases/139_release_record_schema.sh",
@@ -31960,6 +31976,21 @@
       },
       {
         "source": "capability:plan.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.transition",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.transition",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:plan.transition",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43999,6 +44030,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/133_plan_transition.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/139_release_record_schema.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47440,6 +47476,11 @@
       },
       {
         "source": "module:plan",
+        "target": "capability:plan.transition",
+        "kind": "composes"
+      },
+      {
+        "source": "module:plan",
         "target": "capability:plan.validate",
         "kind": "composes"
       },
@@ -47580,8 +47621,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1463,
-      "edges": 3293,
+      "nodes": 1465,
+      "edges": 3298,
       "acyclic": true,
       "truncated": false
     }

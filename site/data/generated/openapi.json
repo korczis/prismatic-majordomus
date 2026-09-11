@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 80,
-    "schemas": 373,
+    "operations": 81,
+    "schemas": 376,
     "tags": 27
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2064,7 +2064,7 @@
       "variants": []
     },
     {
-      "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].",
+      "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].",
       "is_enum": true,
       "name": "CapabilityKind",
       "properties": [],
@@ -2081,7 +2081,7 @@
           "value": "query"
         },
         {
-          "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only.",
+          "description": "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it.",
           "value": "command"
         },
         {
@@ -7101,6 +7101,7 @@
         "plan.record",
         "plan.roadmap",
         "plan.status",
+        "plan.transition",
         "plan.validate",
         "plan.waves",
         "product.feature",
@@ -7479,7 +7480,7 @@
           "value": "process_state"
         },
         {
-          "description": "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button.",
+          "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
           "value": "repository_mutation"
         }
       ],
@@ -9660,7 +9661,7 @@
           "value": "GET"
         },
         {
-          "description": "The input is bound from the JSON body. No builtin uses it yet.",
+          "description": "The input is bound from the JSON body. Every mutating capability uses it.",
           "value": "POST"
         }
       ],
@@ -13803,6 +13804,108 @@
       "type": "object",
       "used_by": [
         "plan.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `plan.transition`.",
+      "is_enum": false,
+      "name": "PlanTransitionInput",
+      "properties": [
+        {
+          "description": "The issue to move, by its id — which is also its file name.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which move: `start`, `verify` or `done`.",
+          "name": "transition",
+          "refs": [
+            "Transition"
+          ],
+          "required": true,
+          "type": "Transition"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.transition"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.",
+      "is_enum": false,
+      "name": "PlanTransitionResult",
+      "properties": [
+        {
+          "description": "The issue that moved.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The move that was performed.",
+          "name": "transition",
+          "refs": [
+            "Transition"
+          ],
+          "required": true,
+          "type": "Transition"
+        },
+        {
+          "description": "The status the issue was in before.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The status it is in now, derived from the record as written.",
+          "name": "to",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The field that was stamped.",
+          "name": "field",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The timestamp written into it, and into `updated_at`.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ledger event appended.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The issue a worker should take next, derived after the move. Absent when the plan\nhas none — which after a `start` is the ordinary case, because the issue just taken\nis no longer READY.",
+          "name": "next_ready",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.transition"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -19561,6 +19664,33 @@
       "variants": []
     },
     {
+      "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.",
+      "is_enum": true,
+      "name": "Transition",
+      "properties": [],
+      "type": "\"start\" | \"verify\" | \"done\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanTransitionInput",
+        "PlanTransitionResult"
+      ],
+      "values": [
+        {
+          "description": "Execution began. Refused unless the issue is READY.",
+          "value": "start"
+        },
+        {
+          "description": "Implementation is complete and the evidence is still outstanding.",
+          "value": "verify"
+        },
+        {
+          "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent.",
+          "value": "done"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How a peer reached the server.",
       "is_enum": true,
       "name": "Transport",
@@ -24072,6 +24202,72 @@
           "result_schema": "PlanStatusReport",
           "stability": "behaviorally_verified",
           "summary": "Where the plan stands"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "refused-not-ready",
+              "json": "{\"issue\":\"I0001\",\"transition\":\"start\"}"
+            },
+            {
+              "case": "refused-unknown-issue",
+              "json": "{\"issue\":\"no-such-issue\",\"transition\":\"start\"}"
+            }
+          ],
+          "body_schema": "PlanTransitionInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/plan/transition\" -H \"content-type: application/json\" -d '{\"issue\":\"I0001\",\"transition\":\"start\"}'",
+          "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+          "id": "plan.transition",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_transition",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/plan/transition",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Move one issue through the lifecycle: the result.",
+              "schema": "PlanTransitionResult",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanTransitionResult",
+          "stability": "behaviorally_verified",
+          "summary": "Move one issue through the lifecycle"
         },
         {
           "benchmark": "required",

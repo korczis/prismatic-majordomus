@@ -3239,6 +3239,78 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_plan_status
+  "/api/v1/plan/transition":
+    post:
+      operationId: plan.transition
+      summary: Move one issue through the lifecycle
+      description: "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so."
+      tags:
+        - plan
+      requestBody:
+        required: true
+        description: "The input of `plan.transition`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PlanTransitionInput"
+            examples:
+              refused-not-ready:
+                value:
+                  issue: I0001
+                  transition: start
+              refused-unknown-issue:
+                value:
+                  issue: no-such-issue
+                  transition: start
+      responses:
+        "200":
+          description: "Move one issue through the lifecycle: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/PlanTransitionResult"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: plan.transition
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::plan
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_plan_transition
   "/api/v1/plan/validate":
     get:
       operationId: plan.validate
@@ -6156,11 +6228,11 @@ components:
           description: "Executable and read-only: a typed handler, an input schema, an output schema."
         - type: string
           const: command
-          description: "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+          description: "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
         - type: string
           const: resource
           description: "Declarative content the repository holds: read as it is, never executed."
-      description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+      description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
     CapabilityList:
       type: object
       properties:
@@ -9026,7 +9098,7 @@ components:
           description: "This process's own memory changes, and nothing outside it."
         - type: string
           const: repository_mutation
-          description: "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button."
+          description: "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
       description: "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
     ExecutionError:
       type: object
@@ -10340,7 +10412,7 @@ components:
           description: Read-only; the input is bound from the query string.
         - type: string
           const: POST
-          description: The input is bound from the JSON body. No builtin uses it yet.
+          description: The input is bound from the JSON body. Every mutating capability uses it.
       description: The HTTP methods a capability may be bound to.
     Identity:
       type: object
@@ -12724,6 +12796,58 @@ components:
         - milestones
         - counts
       description: "Where the plan stands: every milestone's progress, the milestone being executed, and the\none issue to take next."
+    PlanTransitionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        issue:
+          type: string
+          description: "The issue to move, by its id — which is also its file name."
+        transition:
+          "$ref": "#/components/schemas/Transition"
+          description: "Which move: `start`, `verify` or `done`."
+      required:
+        - issue
+        - transition
+      description: "The input of `plan.transition`."
+    PlanTransitionResult:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue that moved.
+        transition:
+          "$ref": "#/components/schemas/Transition"
+          description: The move that was performed.
+        from:
+          type: string
+          description: The status the issue was in before.
+        to:
+          type: string
+          description: "The status it is in now, derived from the record as written."
+        field:
+          type: string
+          description: The field that was stamped.
+        at:
+          type: string
+          description: "The timestamp written into it, and into `updated_at`."
+        event:
+          type: string
+          description: The ledger event appended.
+        next_ready:
+          type:
+            - string
+            - "null"
+          description: "The issue a worker should take next, derived after the move. Absent when the plan\nhas none — which after a `start` is the ordinary case, because the issue just taken\nis no longer READY."
+      required:
+        - issue
+        - transition
+        - from
+        - to
+        - field
+        - at
+        - event
+      description: "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded."
     PlanValidation:
       type: object
       properties:
@@ -15976,6 +16100,18 @@ components:
         - unattributed
         - ambiguous
       description: The counts of one report.
+    Transition:
+      oneOf:
+        - type: string
+          const: start
+          description: Execution began. Refused unless the issue is READY.
+        - type: string
+          const: verify
+          description: Implementation is complete and the evidence is still outstanding.
+        - type: string
+          const: done
+          description: "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+      description: "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks."
     Transport:
       oneOf:
         - type: string

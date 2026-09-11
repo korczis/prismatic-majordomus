@@ -5,9 +5,9 @@
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.
+The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.
 
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.
 
 Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../../apps/majordomus-cli/src/cli.rs), together with its examples; this file is a projection of that declaration, as `--help` is, as `docs/generated/cli.json` is, and as the website's reference under `/docs/cli/` is. Every example printed here is executed against the built executable by `apps/majordomus-cli/tests/cli_examples.rs`. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the *shell* tool `bin/majordomus`, a different program, documented in `docs/CLI.md`.
 
@@ -15,8 +15,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 | command | route | does |
 |---|---|---|
-| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
-| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
+| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio |
+| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ |
 | [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
 | [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
 | [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go |
@@ -130,7 +130,7 @@ Arguments: none.
 <a id="majordomus-mcp"></a>
 ## `majordomus mcp`
 
-Serve the repository's AI layer to an MCP client over stdio (read-only)
+Serve the repository's AI layer to an MCP client over stdio
 
 ```text
 majordomus mcp [OPTIONS]
@@ -178,7 +178,7 @@ Examples:
 <a id="majordomus-serve"></a>
 ## `majordomus serve`
 
-Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
+Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
 
 Subcommands: [`majordomus serve status`](#majordomus-serve-status), [`majordomus serve ensure`](#majordomus-serve-ensure), [`majordomus serve stop`](#majordomus-serve-stop).
 

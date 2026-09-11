@@ -925,6 +925,23 @@
       "tool": "majordomus_plan_status"
     },
     {
+      "api_anchor": "/docs/api/#op-plan-transition",
+      "claims": [],
+      "cli": null,
+      "id": "plan.transition",
+      "kind": "command",
+      "module": "plan",
+      "module_route": "/registry/modules/plan/",
+      "resource": null,
+      "route": "/registry/capabilities/plan-transition/",
+      "slug": "plan-transition",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "tests": [],
+      "title": "Move one issue through the lifecycle",
+      "tool": "majordomus_plan_transition"
+    },
+    {
       "api_anchor": "/docs/api/#op-plan-validate",
       "claims": [],
       "cli": null,
@@ -1659,7 +1676,7 @@
     ]
   },
   "counts": {
-    "capabilities": 80,
+    "capabilities": 81,
     "claims": 36,
     "modules": 27
   },
@@ -2121,6 +2138,11 @@
           "id": "plan.status",
           "route": "/registry/capabilities/plan-status/",
           "slug": "plan-status"
+        },
+        {
+          "id": "plan.transition",
+          "route": "/registry/capabilities/plan-transition/",
+          "slug": "plan-transition"
         },
         {
           "id": "plan.validate",

@@ -5,7 +5,7 @@
 
 The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.
 
-Stability: behaviorally_verified. Capabilities: 8.
+Stability: behaviorally_verified. Capabilities: 9.
 
 ## `plan.issues` — The issues, filtered by what the graph derived
 
@@ -135,6 +135,28 @@ Every milestone with its derived status and its issues counted by status, the mi
 active milestone with the rest of the plan as the fallback. |
 
 Output: `PlanStatusReport`.
+
+## `plan.transition` — Move one issue through the lifecycle
+
+Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_plan_transition` |
+| HTTP | `POST /api/v1/plan/transition` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::plan |
+| tags | plan, project, issues, lifecycle |
+
+| input | type | required | description |
+|---|---|---|---|
+| `issue` | string | yes | The issue to move, by its id — which is also its file name. |
+| `transition` | Transition | yes | Which move: `start`, `verify` or `done`. |
+
+Output: `PlanTransitionResult`.
 
 ## `plan.validate` — What the model refuses
 

@@ -15,7 +15,9 @@ use crate::capability::builtin::{
     InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
     TokenList,
 };
-use crate::capability::{Capability, CapabilityKind, Context, Provenance};
+use crate::capability::{
+    Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
+};
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
@@ -989,16 +991,23 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure, start_rou
 
     // what the page says about running this comes from the descriptor's own policy, never
     // from a list of capabilities that need care
-    let effect = match (c.kind, c.execution.cancellable) {
-        (CapabilityKind::Command, _) => alert(
+    // The sentence is derived from the declared effect, not from the kind: two commands are
+    // the same kind whether one announces a peer and the other writes a tracked record, and
+    // telling a person the second is the first is how a control comes to lie.
+    let effect = match (c.kind, c.execution.effect, c.execution.cancellable) {
+        (CapabilityKind::Command, CapabilityEffect::RepositoryMutation, _) => alert(
             "warn",
-            "A command. It changes this process's own memory — never the repository — and is sent as a POST from this page's origin.",
+            "A command that writes the repository. It changes tracked files a commit will carry, and is sent as a POST from this page's origin.",
         ),
-        (_, true) => alert(
+        (CapabilityKind::Command, _, _) => alert(
+            "warn",
+            "A command. It changes this process's own memory — not the repository — and is sent as a POST from this page's origin.",
+        ),
+        (_, _, true) => alert(
             "info",
             "It reads and changes nothing, and it stops when it is asked to. Run it as an execution to watch it happen and to be able to cancel it.",
         ),
-        (_, false) => alert("info", "A query. It reads and changes nothing."),
+        (_, _, false) => alert("info", "A query. It reads and changes nothing."),
     };
 
     card_with(

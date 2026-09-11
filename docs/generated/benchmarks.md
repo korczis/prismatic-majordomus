@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 80 | 77 | 0 | 3 |
-| http | 80 | 77 | 0 | 3 |
-| mcp | 78 | 75 | 0 | 3 |
+| direct | 81 | 78 | 0 | 3 |
+| http | 81 | 78 | 0 | 3 |
+| mcp | 79 | 76 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 251 | 242 | 0 | 9 |
+| total | 254 | 245 | 0 | 9 |
 
 ## Capabilities
 
@@ -71,6 +71,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
 | `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
 | `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.transition` | plan | command | — | covered | covered | covered | `refused-unknown-issue`, `refused-not-ready` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |

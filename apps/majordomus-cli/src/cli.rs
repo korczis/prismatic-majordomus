@@ -17,9 +17,13 @@ pub const EXIT_USAGE: u8 = 2;
     version,
     about = "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
     long_about = "The Rust executable of Majordomus. It reads the repository's provider-neutral \
-AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\n\
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus \
-in the same repository; this executable does not implement those commands."
+AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a \
+query; the few that change anything declare themselves as commands and are listed by \
+`capabilities list --kind command`.\n\n\
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool \
+bin/majordomus in the same repository. Development semantics are converging onto capabilities \
+of this registry one at a time (ADR 0040); until one has, this executable does not implement \
+that command."
 )]
 /// The command line: one of the commands below.
 pub struct Cli {
@@ -31,9 +35,9 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 /// The commands. A command listed here is implemented; nothing is advertised ahead of its behaviour.
 pub enum Command {
-    /// Serve the repository's AI layer to an MCP client over stdio (read-only)
+    /// Serve the repository's AI layer to an MCP client over stdio
     Mcp(McpArgs),
-    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
+    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),

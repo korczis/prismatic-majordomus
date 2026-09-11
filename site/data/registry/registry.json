@@ -6,26 +6,26 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "37b9b80d1f7238db5acec5b7e19e10714a8a362227bb9f723e09209f065acdb2",
+    "fingerprint": "2bfc4347837067c8d547c507fb182013f024fd3ba5243b77438563bb10a34a61",
     "summary": {
-      "total": 1255,
-      "builtin": 80,
-      "declarative": 1175,
+      "total": 1257,
+      "builtin": 81,
+      "declarative": 1176,
       "by_kind": {
-        "command": 3,
+        "command": 4,
         "query": 77,
-        "resource": 1175
+        "resource": 1176
       },
       "by_stability": {
-        "behaviorally_verified": 75,
-        "implemented": 1180
+        "behaviorally_verified": 76,
+        "implemented": 1181
       },
-      "mcp_tools": 78,
-      "mcp_resources": 1203,
-      "http_routes": 80,
+      "mcp_tools": 79,
+      "mcp_resources": 1204,
+      "http_routes": 81,
       "cli_commands": 34,
       "modules": 55,
-      "benchmark_required": 77,
+      "benchmark_required": 78,
       "benchmark_waived": 3,
       "cached": 24
     },
@@ -516,7 +516,7 @@
                   {
                     "type": "string",
                     "const": "command",
-                    "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                    "description": "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
                   },
                   {
                     "type": "string",
@@ -524,7 +524,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
               },
               "CanonicalSchema": {
                 "type": "object",
@@ -724,7 +724,7 @@
                   {
                     "type": "string",
                     "const": "POST",
-                    "description": "The input is bound from the JSON body. No builtin uses it yet."
+                    "description": "The input is bound from the JSON body. Every mutating capability uses it."
                   }
                 ],
                 "description": "The HTTP methods a capability may be bound to."
@@ -966,7 +966,7 @@
                   {
                     "type": "string",
                     "const": "repository_mutation",
-                    "description": "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button."
+                    "description": "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
                   }
                 ],
                 "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
@@ -1279,7 +1279,7 @@
                   {
                     "type": "string",
                     "const": "command",
-                    "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                    "description": "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
                   },
                   {
                     "type": "string",
@@ -1287,7 +1287,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
               },
               "CapabilityProvenance": {
                 "oneOf": [
@@ -1468,7 +1468,7 @@
                   {
                     "type": "string",
                     "const": "POST",
-                    "description": "The input is bound from the JSON body. No builtin uses it yet."
+                    "description": "The input is bound from the JSON body. Every mutating capability uses it."
                   }
                 ],
                 "description": "The HTTP methods a capability may be bound to."
@@ -14428,7 +14428,7 @@
                   {
                     "type": "string",
                     "const": "command",
-                    "description": "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                    "description": "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
                   },
                   {
                     "type": "string",
@@ -14436,7 +14436,7 @@
                     "description": "Declarative content the repository holds: read as it is, never executed."
                   }
                 ],
-                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+                "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
               },
               "CapabilityProvenance": {
                 "oneOf": [
@@ -18267,6 +18267,168 @@
           "effect": "read",
           "cancellable": false,
           "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.transition",
+        "module": "plan",
+        "kind": "command",
+        "title": "Move one issue through the lifecycle",
+        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+        "input": {
+          "name": "PlanTransitionInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue to move, by its id — which is also its file name."
+              },
+              "transition": {
+                "$ref": "#/$defs/Transition",
+                "description": "Which move: `start`, `verify` or `done`."
+              }
+            },
+            "required": [
+              "issue",
+              "transition"
+            ],
+            "description": "The input of `plan.transition`.",
+            "title": "PlanTransitionInput",
+            "$defs": {
+              "Transition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "start",
+                    "description": "Execution began. Refused unless the issue is READY."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verify",
+                    "description": "Implementation is complete and the evidence is still outstanding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "done",
+                    "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+                  }
+                ],
+                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks."
+              }
+            }
+          }
+        },
+        "output": {
+          "name": "PlanTransitionResult",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue that moved."
+              },
+              "transition": {
+                "$ref": "#/$defs/Transition",
+                "description": "The move that was performed."
+              },
+              "from": {
+                "type": "string",
+                "description": "The status the issue was in before."
+              },
+              "to": {
+                "type": "string",
+                "description": "The status it is in now, derived from the record as written."
+              },
+              "field": {
+                "type": "string",
+                "description": "The field that was stamped."
+              },
+              "at": {
+                "type": "string",
+                "description": "The timestamp written into it, and into `updated_at`."
+              },
+              "event": {
+                "type": "string",
+                "description": "The ledger event appended."
+              },
+              "next_ready": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The issue a worker should take next, derived after the move. Absent when the plan\nhas none — which after a `start` is the ordinary case, because the issue just taken\nis no longer READY."
+              }
+            },
+            "required": [
+              "issue",
+              "transition",
+              "from",
+              "to",
+              "field",
+              "at",
+              "event"
+            ],
+            "description": "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.",
+            "title": "PlanTransitionResult",
+            "$defs": {
+              "Transition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "start",
+                    "description": "Execution began. Refused unless the issue is READY."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verify",
+                    "description": "Implementation is complete and the evidence is still outstanding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "done",
+                    "description": "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+                  }
+                ],
+                "description": "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_transition"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/plan/transition"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "issues",
+          "lifecycle"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
       },
@@ -29446,7 +29608,7 @@
         "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 8,
+        "capabilities": 9,
         "capability_ids": [
           "plan.issues",
           "plan.model",
@@ -29454,6 +29616,7 @@
           "plan.record",
           "plan.roadmap",
           "plan.status",
+          "plan.transition",
           "plan.validate",
           "plan.waves"
         ],
@@ -29603,7 +29766,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 158,
+        "capabilities": 159,
         "capability_ids": []
       },
       {
@@ -29683,7 +29846,7 @@
     ]
   },
   "index": {
-    "fingerprint": "dd66b5cd5de5a03caec1c09afa53575bb7d1824a7f00d071b89a8aae3f769a60",
+    "fingerprint": "ee006d2ddc076a8c7f4203688f3c794c5b30269796e7a7a90ec028370bce98e9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -29731,7 +29894,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 158,
+      "test": 159,
       "use-case": 44,
       "workspace": 1
     },
@@ -41173,6 +41336,14 @@
         "bytes": 7081
       },
       {
+        "uri": "majordomus://test/test/cases/133_plan_transition.sh",
+        "kind": "test",
+        "identity": "test/cases/133_plan_transition.sh",
+        "path": "test/cases/133_plan_transition.sh",
+        "source_class": "case",
+        "bytes": 10537
+      },
+      {
         "uri": "majordomus://test/test/cases/139_release_record_schema.sh",
         "kind": "test",
         "identity": "test/cases/139_release_record_schema.sh",
@@ -42828,7 +42999,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 158
+      "objects": 159
     },
     {
       "name": "use-case",
@@ -42879,7 +43050,7 @@
     "executable": false,
     "usage": "majordomus <COMMAND>",
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
-    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.\n\nMost of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.",
     "args": [],
     "examples": [],
     "subcommands": [
@@ -42891,7 +43062,7 @@
         "route": "/docs/cli/mcp/",
         "executable": true,
         "usage": "majordomus mcp [OPTIONS]",
-        "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+        "about": "Serve the repository's AI layer to an MCP client over stdio",
         "args": [
           {
             "name": "repo",
@@ -43103,7 +43274,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS] [COMMAND]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
         "args": [
           {
             "name": "repo",
@@ -57630,6 +57801,16 @@
         "output": "PlanStatusReport"
       },
       {
+        "name": "majordomus_plan_transition",
+        "id": "plan.transition",
+        "title": "Move one issue through the lifecycle",
+        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+        "kind": "command",
+        "read_only": false,
+        "input": "PlanTransitionInput",
+        "output": "PlanTransitionResult"
+      },
+      {
         "name": "majordomus_plan_validate",
         "id": "plan.validate",
         "title": "What the model refuses",
@@ -58423,6 +58604,12 @@
         "path": "/api/v1/plan/status",
         "id": "plan.status",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/plan/transition",
+        "id": "plan.transition",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -60826,6 +61013,64 @@
         "route": "GET /api/v1/plan/status"
       },
       {
+        "key": "plan.transition|direct|refused-unknown-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-unknown-issue",
+        "cached": false
+      },
+      {
+        "key": "plan.transition|direct|refused-not-ready",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-not-ready",
+        "cached": false
+      },
+      {
+        "key": "plan.transition|mcp|refused-unknown-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-unknown-issue",
+        "cached": false,
+        "tool": "majordomus_plan_transition"
+      },
+      {
+        "key": "plan.transition|mcp|refused-not-ready",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-not-ready",
+        "cached": false,
+        "tool": "majordomus_plan_transition"
+      },
+      {
+        "key": "plan.transition|http|refused-unknown-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-unknown-issue",
+        "cached": false,
+        "route": "POST /api/v1/plan/transition"
+      },
+      {
+        "key": "plan.transition|http|refused-not-ready",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.transition",
+        "module": "plan",
+        "case": "refused-not-ready",
+        "cached": false,
+        "route": "POST /api/v1/plan/transition"
+      },
+      {
         "key": "plan.validate|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -63197,6 +63442,27 @@
           "cases": 2
         },
         {
+          "subject": "plan.transition",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.transition",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.transition",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "plan.validate",
           "module": "plan",
           "transport": "direct",
@@ -63878,20 +64144,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 80,
-          "covered": 77,
+          "required": 81,
+          "covered": 78,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 80,
-          "covered": 77,
+          "required": 81,
+          "covered": 78,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 78,
-          "covered": 75,
+          "required": 79,
+          "covered": 76,
           "missing": 0,
           "waived": 3
         },
@@ -63902,8 +64168,8 @@
           "waived": 0
         },
         "total": {
-          "required": 251,
-          "covered": 242,
+          "required": 254,
+          "covered": 245,
           "missing": 0,
           "waived": 9
         }

@@ -13,7 +13,7 @@
     "executable": false,
     "usage": "majordomus <COMMAND>",
     "about": "Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer",
-    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+    "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.\n\nMost of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.",
     "args": [],
     "examples": [],
     "subcommands": [
@@ -25,7 +25,7 @@
         "route": "/docs/cli/mcp/",
         "executable": true,
         "usage": "majordomus mcp [OPTIONS]",
-        "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+        "about": "Serve the repository's AI layer to an MCP client over stdio",
         "args": [
           {
             "name": "repo",
@@ -237,7 +237,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS] [COMMAND]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
         "args": [
           {
             "name": "repo",

@@ -6,13 +6,13 @@
       "args": [],
       "children": [
         {
-          "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+          "about": "Serve the repository's AI layer to an MCP client over stdio",
           "command": "majordomus mcp",
           "name": "mcp",
           "route": "/docs/cli/mcp/"
         },
         {
-          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
           "command": "majordomus serve",
           "name": "serve",
           "route": "/docs/cli/serve/"
@@ -124,7 +124,7 @@
       "depth": 0,
       "examples": [],
       "executable": false,
-      "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.\n\nThe task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.",
+      "long_about": "The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.\n\nMost of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.",
       "name": "majordomus",
       "parent_route": null,
       "path": [
@@ -134,7 +134,7 @@
       "usage": "majordomus <COMMAND>"
     },
     {
-      "about": "Serve the repository's AI layer to an MCP client over stdio (read-only)",
+      "about": "Serve the repository's AI layer to an MCP client over stdio",
       "ancestors": [
         {
           "command": "majordomus",
@@ -358,7 +358,7 @@
       "usage": "majordomus mcp [OPTIONS]"
     },
     {
-      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
+      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/",
       "ancestors": [
         {
           "command": "majordomus",
