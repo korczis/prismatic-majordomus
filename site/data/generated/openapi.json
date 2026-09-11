@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 80,
-    "schemas": 373,
+    "schemas": 375,
     "tags": 27
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -368,6 +368,15 @@
           ],
           "required": false,
           "type": "Announcement | null"
+        },
+        {
+          "description": "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked.",
+          "name": "checkout",
+          "refs": [
+            "PeerCheckout"
+          ],
+          "required": false,
+          "type": "PeerCheckout | null"
         },
         {
           "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case.",
@@ -1402,6 +1411,78 @@
           "value": "cycle"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.",
+      "is_enum": false,
+      "name": "BoardView",
+      "properties": [
+        {
+          "description": "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out there, when it could be read.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this is the checkout of the server answering the call.",
+          "name": "this_checkout",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where its server stands, by the same reading `server.status` reports.",
+          "name": "standing",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "The address its lease names, when it has one.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many of this board's peers are attached.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Why this board is not in the answer. `None` when it is.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PeerList"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -2602,6 +2683,7 @@
       "properties": [],
       "type": "\"repository\" | \"this\"",
       "used_by": [
+        "peers.list",
         "server.status"
       ],
       "used_by_schemas": [],
@@ -12783,6 +12865,15 @@
           ],
           "required": true,
           "type": "array of OverlapPath"
+        },
+        {
+          "description": "Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \"p1 is on\nyour ground\" into something a reader can act on when `p1` is not on this board.",
+          "name": "checkout",
+          "refs": [
+            "PeerCheckout"
+          ],
+          "required": false,
+          "type": "PeerCheckout | null"
         }
       ],
       "type": "object",
@@ -12964,12 +13055,65 @@
           ],
           "required": false,
           "type": "Announcement | null"
+        },
+        {
+          "description": "Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked.",
+          "name": "checkout",
+          "refs": [
+            "PeerCheckout"
+          ],
+          "required": false,
+          "type": "PeerCheckout | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```",
+      "is_enum": false,
+      "name": "PeerCheckout",
+      "properties": [
+        {
+          "description": "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out there, when it could be read.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this is the checkout of the server answering the call.",
+          "name": "this_checkout",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Announced",
+        "Overlap",
+        "Peer"
       ],
       "values": [],
       "variants": []
@@ -12991,19 +13135,19 @@
       "variants": []
     },
     {
-      "description": "The answer of `peers.list`: every client attached to this shared server.",
+      "description": "The answer of `peers.list`: every worker of this repository, from every checkout's board.",
       "is_enum": false,
       "name": "PeerList",
       "properties": [
         {
-          "description": "How many peers are attached, the caller included.",
+          "description": "How many peers are attached across every board that was read, the caller included.",
           "name": "count",
           "refs": [],
           "required": true,
           "type": "integer (uint)"
         },
         {
-          "description": "The caller's own peer id, when the call came through an MCP session.",
+          "description": "The caller's own peer id, when the call came through an MCP session. A position on\nthis checkout's board, not a durable identity: it is handed out again after a\nreconnect, and [`Peer::checkout`] is the half of a worker's identity that is not.",
           "name": "caller",
           "refs": [
             "PeerId"
@@ -13012,7 +13156,7 @@
           "type": "PeerId | null"
         },
         {
-          "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`.",
+          "description": "The peers, this checkout's board first and then the siblings in the order git\nregisters them, each in its own board's attachment order. Every one carries the\ncheckout it belongs to, because `p1` is the first session of every board. A peer\nthat announced something and then went away is still here, with `attached: false`.",
           "name": "peers",
           "refs": [
             "Peer"
@@ -13021,13 +13165,29 @@
           "type": "array of Peer"
         },
         {
-          "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work.",
+          "description": "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work.",
           "name": "overlaps",
           "refs": [
             "Overlap"
           ],
           "required": false,
           "type": "array of Overlap"
+        },
+        {
+          "description": "One entry per checkout the answer covers, reached or not.",
+          "name": "boards",
+          "refs": [
+            "BoardView"
+          ],
+          "required": true,
+          "type": "array of BoardView"
+        },
+        {
+          "description": "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and [`BoardView::reason`] says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\".",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
         }
       ],
       "type": "object",
@@ -17415,6 +17575,7 @@
       "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
       "used_by": [],
       "used_by_schemas": [
+        "BoardView",
         "ServerStatus",
         "ServerView"
       ],
@@ -23502,7 +23663,7 @@
       ]
     },
     {
-      "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+      "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
       "name": "peers",
       "operations": [
         {
@@ -23513,14 +23674,27 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers\"",
-          "description": "Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers?checkouts=this\"",
+          "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
           "id": "peers.list",
           "kind": "query",
           "mcp_resource": "",
           "mcp_tool": "majordomus_peers",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "Which checkouts the board covers. Absent means `repository`: every checkout git\nregisters, each server that answers asked for its own board.\n\n`this` is the checkout the call reached and nothing else. It is what the gather\nitself asks of a sibling server, and it is what makes the gather terminate: a\nserver asked for `this` enumerates no checkout, so it can never ask back.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"this\""
+                }
+              ],
+              "name": "checkouts",
+              "required": false,
+              "type": "Checkouts"
+            }
+          ],
           "path": "/api/v1/peers",
           "provenance": {
             "module": "majordomus_cli::capability::builtin::peers",

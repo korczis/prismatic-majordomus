@@ -885,13 +885,13 @@ claims:
     note: Byte-identical on regeneration, no timestamps, no absolute paths; --check writes nothing and exits 10 naming every file that differs or is missing. CI runs it.
 
   - id: mcp-shared-server
-    claim: One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves
+    claim: One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves
     source: docs/MCP.md
     implementation: apps/majordomus-cli/src/lease.rs
     test: test/cases/90_mcp_shared_server.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client.
+    note: The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client. A checkout, not a repository - a linked worktree is a checkout of its own and elects a server of its own (ADR 0035), which measured on 2026-09-11 meant seven live servers over one git repository. The word was wrong here until ADR 0044; what makes cooperation repository-wide is the gathered board of mcp-peers, not a shared process.
 
   - id: mcp-lease-resilience
     claim: Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies
@@ -912,13 +912,13 @@ claims:
     note: The takeover itself is correct, the stale-executable guard doing its job; what was unowned was the aftermath. The superseded process kept its socket, its peer board and its generation of the layer, and answered GET / with the same name and repository_id as the leaseholder, so every liveness test in the system passed on it. Measured on 2026-09-10 - two servers of one checkout, one lease, and a session whose environment carried the older address reading a board with one peer where the shared board had two. GET / now carries leaseholder (lease::LEASEHOLDER_KEY, read by lease::probe, so writer and reader cannot drift), a new initialize is refused 409 lease_lost naming the launcher, and health.report's server check warns that this process is not the server it describes. A server too old to answer the question is accepted by the probe on purpose - refusing it would take over a live server, which is how one checkout comes to have two. The doctrine is project.shared-server-resilience.
 
   - id: mcp-peers
-    claim: Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch
+    claim: Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch
     source: docs/MCP.md
     implementation: apps/majordomus-cli/src/peers.rs
-    test: test/cases/90_mcp_shared_server.sh
+    test: test/cases/250_the_board_is_repository_wide.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here.
+    note: Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; each board is one process's memory and is gone with it. peers.list gathers - it enumerates the checkouts git registers, reads its own board from memory and asks every other checkout's server for its own board (checkouts=this, which is what keeps the gather one hop deep), and reports in boards and complete which checkouts it covered and whether it could read them all. Before ADR 0044 it answered one checkout's board while the bootstrap told every worker it had seen the repository; measured on 2026-09-11, nine agents across sixty worktrees each read a board that held only itself. A peer id is a position on one board and is reassigned on reconnect; the checkout a peer carries is the durable half. Announcements are informational and die with the connection; scope is enforced by the shell tool's task record, not here.
 
   - id: mcp-client-autostart
     claim: An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp

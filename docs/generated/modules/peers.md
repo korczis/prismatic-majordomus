@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.5.0 -->
 # Module `peers` — Peers
 
-The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.
+The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.
 
 Stability: behaviorally_verified. Capabilities: 2.
 
@@ -41,7 +41,7 @@ Output: `Announced`.
 
 ## `peers.list` — List peers
 
-Every client attached to this shared server: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.
+Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.
 
 | | |
 |---|---|
@@ -54,7 +54,14 @@ Every client attached to this shared server: id, the client's own name and versi
 | provenance | builtin majordomus_cli::capability::builtin::peers |
 | tags | peers, coordination |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `checkouts` | Checkouts | no | Which checkouts the board covers. Absent means `repository`: every checkout git
+registers, each server that answers asked for its own board.
+
+`this` is the checkout the call reached and nothing else. It is what the gather
+itself asks of a sibling server, and it is what makes the gather terminate: a
+server asked for `this` enumerates no checkout, so it can never ask back. |
 
 Output: `PeerList`.
 
