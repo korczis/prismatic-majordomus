@@ -66,6 +66,8 @@ pub enum Command {
     Release(ReleaseArgs),
     /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
     Quality(QualityArgs),
+    /// What is preventing this repository from being completely landed and delivered: every stage of delivery with its verdict, the capability that decided it, and the remedy
+    Landing(LandingArgs),
     /// Run a capability as an execution and follow it: its steps, its progress and its output as they happen
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
@@ -222,6 +224,23 @@ pub enum ReleaseCommand {
         #[arg(long)]
         dry_run: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus landing`. One question, so no subcommand: a group of one is a word a person
+/// has to type for nothing.
+pub struct LandingArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Show every finding of every stage, not the first few of each
+    #[arg(long)]
+    pub all: bool,
 }
 
 #[derive(Debug, Args)]
@@ -2636,6 +2655,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["completion", "query", "--surface", "cli", "--", "majordomus", "work"],
             setup: &[],
             expect: Expect::StdoutContains(&["worktree"]),
+        }],
+    },
+    CommandExamples {
+        command: "landing",
+        examples: &[ExampleDoc {
+            id: "landing-closure",
+            title: "What is preventing this repository from being delivered",
+            description: "Twelve stages of delivery, each answered by the capability that already owns the fact, with what it read and the command that would settle it. Exits 10 when any stage refuses or goes unanswered: a stage nothing answered is not a stage that passed.",
+            argv: &["landing", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/landed", "/verdict", "/stages"]),
         }],
     },
     CommandExamples {

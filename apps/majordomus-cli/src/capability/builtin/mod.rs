@@ -44,6 +44,7 @@ pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub mod landing;
 pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
@@ -96,6 +97,7 @@ pub use executions::{
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
+pub use landing::{LandingClosure, LandingStage, LANDING_URI};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
     ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
@@ -138,6 +140,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         continuity,
         obligations,
         gates,
+        landing,
         deploy,
         executions,
         peers,
