@@ -20,21 +20,21 @@
 {%- set areas = [a for a in catalogue.areas if a.count > 0] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+<div class="mj-page-band"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
   {% include "partials/breadcrumb.html" %}
   <p class="mt-4 font-mono text-xs uppercase tracking-widest text-fg-brand">why · {{ public | length }} operational failure modes</p>
   <h1 class="mt-2 break-words text-3xl font-extrabold tracking-tight text-heading sm:text-4xl lg:text-5xl">You need this if, this week, you have…</h1>
   <p class="mt-4 max-w-3xl break-words text-lg leading-relaxed text-body">{{ section.description }}</p>
   <p class="mt-3 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
   <nav aria-label="Ways into the catalogue" class="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-    <a href="#who" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">start here</span><span class="mt-1 text-base font-semibold text-heading">Who you are</span><span class="mt-1 text-sm text-body">{{ audiences | length }} kinds of team, the problems each meets first</span></a>
-    <a href="#areas" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">by category</span><span class="mt-1 text-base font-semibold text-heading">What part of operations</span><span class="mt-1 text-sm text-body">{{ areas | length }} areas, from context to cost</span></a>
+    <a href="#who" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="mj-eyebrow">start here</span><span class="mt-1 text-base font-semibold text-heading">Who you are</span><span class="mt-1 text-sm text-body">{{ audiences | length }} kinds of team, the problems each meets first</span></a>
+    <a href="#areas" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="mj-eyebrow">by category</span><span class="mt-1 text-base font-semibold text-heading">What part of operations</span><span class="mt-1 text-sm text-body">{{ areas | length }} areas, from context to cost</span></a>
     <a href="#diagnose" class="flex flex-col rounded-base border border-brand bg-brand-softer px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-fg-brand">interactive</span><span class="mt-1 text-base font-semibold text-fg-brand-strong">Diagnose your week</span><span class="mt-1 text-sm text-body">tick what you recognise; the profile is counted, not scored</span></a>
-    <a href="#all" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">everything</span><span class="mt-1 text-base font-semibold text-heading">All {{ public | length }} moments</span><span class="mt-1 text-sm text-body">searchable, filterable, one card each</span></a>
+    <a href="#all" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="mj-eyebrow">everything</span><span class="mt-1 text-base font-semibold text-heading">All {{ public | length }} moments</span><span class="mt-1 text-sm text-body">searchable, filterable, one card each</span></a>
   </nav>
 </div></div>
 
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-container">
 
   {#- ------------------------------------------------------------------ who you are -#}
   {#- The audiences as tabs without a runtime: one radio per audience, the labels as pills,
@@ -125,7 +125,7 @@
 
       <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start" aria-live="polite">
         <div class="rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
-          <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">your operational pain profile</h3>
+          <h3 class="mj-eyebrow">your operational pain profile</h3>
           <template x-if="picked.length === 0">
             <p class="mt-3 text-sm text-body">Nothing ticked yet. Tick a line and this fills in.</p>
           </template>
@@ -191,21 +191,21 @@
       {#- One row per facet. The values are the catalogue's, counted; only the three
           bound names differ, which is why the rows are written out rather than looped. -#}
       <div class="flex flex-wrap items-center gap-2">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">who</span>
+        <span class="mj-eyebrow">who</span>
         <button type="button" x-on:click="audience = ''" :aria-pressed="audience === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.audiences %}
         <button type="button" x-on:click="audience = (audience === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="audience === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
         {%- endfor %}
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">area</span>
+        <span class="mj-eyebrow">area</span>
         <button type="button" x-on:click="area = ''" :aria-pressed="area === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.areas %}
         <button type="button" x-on:click="area = (area === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="area === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
         {%- endfor %}
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">cost</span>
+        <span class="mj-eyebrow">cost</span>
         <button type="button" x-on:click="severity = ''" :aria-pressed="severity === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.severities %}
         <button type="button" x-on:click="severity = (severity === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="severity === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>

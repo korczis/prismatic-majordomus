@@ -13,10 +13,10 @@
 {%- set public = [f for f in model.features if f.status != "draft"] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">
   {% include "partials/breadcrumb.html" %}
-  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
-  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+  <h1 class="mj-page-title">{{ section.title }}</h1>
+  <p class="mj-page-subtitle">{{ section.description }}</p>
   <nav aria-label="Ways into the product" class="mt-6 flex flex-wrap gap-2 text-sm">
     <a href="#features" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} features</a>
     <a href="{{ get_url(path='/features/matrix/', trailing_slash=true) }}" class="rounded-base border border-brand bg-brand-softer px-3 py-1.5 font-medium text-fg-brand-strong hover:bg-neutral-secondary-medium">Every feature against every interface</a>
@@ -24,7 +24,7 @@
   </nav>
 </div></div>
 
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-container">
 
   {#- ------------------------------------------------------------------ interfaces -#}
   <section aria-labelledby="interfaces">
@@ -33,7 +33,7 @@
     <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {%- for s in model.surfaces %}
       <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
+        <span class="mj-eyebrow">{{ s.id }}</span>
         <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
         <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
         <span class="text-xs text-body">features exposed here</span>

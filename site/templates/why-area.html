@@ -8,9 +8,9 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format mj-doc max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ e.count }} moment{% if e.count != 1 %}s{% endif %}</h2>
+    <h2 class="mj-section-title">{{ e.count }} moment{% if e.count != 1 %}s{% endif %}</h2>
     <p class="mt-2 text-body">Every moment that names this one. Derived from the moments; this page keeps no list.</p>
     {#- The same card as the catalogue's index, so a moment reads the same wherever it is listed. -#}
     <ol class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -21,7 +21,7 @@
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <h2 class="mj-eyebrow mb-3">read it anywhere</h2>
       <ul class="space-y-2 font-mono text-xs text-body">
         <li>majordomus why list --{{ "audience" if "areas" == "audiences" else "area" }} {{ e.id }}</li>
         <li>GET /api/v1/why?{{ "audience" if "areas" == "audiences" else "area" }}={{ e.id }}</li>

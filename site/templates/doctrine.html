@@ -9,7 +9,7 @@
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3">{{ <doctrine_class class={d.class} /> }}<span class="text-sm text-body">{% if d.class == "blocking" %}A violation stops the command with exit {{ d.exit_code }}.{% else %}A violation is reported and the command still succeeds.{% endif %}</span></p>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The chain</h2>
+    <h2 class="mj-section-title">The chain</h2>
     <p class="mt-2 text-sm text-body">A rule is enforced only when every link below holds. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand underline">majordomus doctor</a> resolves each one from the source on every run; this page shows what it resolved.</p>
     <ol class="mt-4 list-none rounded-base border border-default bg-neutral-primary-soft px-5 py-2">
       {{ <chain_link step="1" label="Declared" detail={d.id} href={repo ~ d.source} /> }}
@@ -20,7 +20,7 @@
       {{ <chain_link step="6" label="Run by CI" detail=".github/workflows/validate.yml" href={repo ~ ".github/workflows/validate.yml"} /> }}
     </ol>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where it runs</h2>
+    <h2 class="mj-section-title">Where it runs</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for name in d.enforced_by -%}
       {%- set m = [x for x in cmds.commands if x.name == name] -%}
@@ -33,13 +33,13 @@
 
     {%- set related = [c for c in caps.claims if c.id in d.claims] -%}
     {%- if related | length > 0 %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it lets us promise</h2>
+    <h2 class="mj-section-title">What it lets us promise</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for c in related -%}<li><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={c.status} /> }}</span><span class="text-sm text-heading">{{ c.claim }}</span></a></li>{%- endfor -%}
     </ul>
     {%- endif %}
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Read it here</h2>
+    <h2 class="mj-section-title">Read it here</h2>
     <div class="mt-3 max-w-2xl">{% <code label="read one rule"> %}
 majordomus doctrine show {{ d.id }}
 majordomus check --rule {{ d.id }}
@@ -48,11 +48,11 @@ majordomus check --rule {{ d.id }}
 
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">doctrines</h2>
+      <h2 class="mj-eyebrow mb-3">doctrines</h2>
       <ul class="space-y-1 text-sm">{% for q in doc.doctrines %}<li><a href="{{ get_url(path="/doctrines/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.id == d.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.id == d.id %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul>
     </div>
     <div class="mt-4 rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">principle</h2>
+      <h2 class="mj-eyebrow mb-3">principle</h2>
       {%- set life = load_data(path="data/generated/lifecycle.json") -%}
       <p class="text-sm text-body">{{ d.principle }}</p>
     </div>

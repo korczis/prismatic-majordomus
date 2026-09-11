@@ -29,11 +29,11 @@
       {%- endif %}
     </dl>
 
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format mj-doc max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
     {#- ------------------------------------------------------- what it is made of -#}
     {%- if f.module_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The capabilities behind it</h2>
+    <h2 class="mj-section-title">The capabilities behind it</h2>
     <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The command line, the HTTP route, the MCP tool and the reference beside every row are projections of one declaration, not four registrations.</p>
     <div class="mt-4 space-y-4">
       {%- for mod in f.module_refs %}
@@ -68,7 +68,7 @@
     {%- endif %}
 
     {%- if f.command_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
+    <h2 class="mj-section-title">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
       {%- for c in f.command_refs %}
       <li class="p-4">
@@ -83,7 +83,7 @@
     {%- endif %}
 
     {%- if f.kind_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
+    <h2 class="mj-section-title">The objects it is made of</h2>
     <p class="mt-2 text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
     <ul class="mt-4 flex flex-wrap gap-2">
       {%- for k in f.kind_refs %}
@@ -94,7 +94,7 @@
 
     {#- --------------------------------------------------------------- the moments -#}
     {%- if f.moments | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
+    <h2 class="mj-section-title">What it answers</h2>
     <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for mo in f.moments %}
@@ -105,7 +105,7 @@
 
     {#- ------------------------------------------------------- rules and guarantees -#}
     {%- if f.rule_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The rules that hold it</h2>
+    <h2 class="mj-section-title">The rules that hold it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
       {%- for r in f.rule_refs %}
       {%- set d = [x for x in doctrines.doctrines if x.id == r.id] -%}
@@ -120,7 +120,7 @@
     {%- endif %}
 
     {%- if f.claim_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
+    <h2 class="mj-section-title">What is guaranteed</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
       {%- for c in f.claim_refs %}
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
@@ -132,10 +132,10 @@
     {%- endif %}
 
     {%- if f.use_case_refs | length %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable use cases</h2>
+    <h2 class="mj-section-title">Executable use cases</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for u in f.use_case_refs %}
-      <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ u.category }}</span><span class="mt-1 text-sm font-medium text-heading">{{ u.title }}</span></a></li>
+      <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="mj-eyebrow">{{ u.category }}</span><span class="mt-1 text-sm font-medium text-heading">{{ u.title }}</span></a></li>
       {%- endfor %}
     </ul>
     {%- endif %}

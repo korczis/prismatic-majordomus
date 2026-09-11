@@ -3,7 +3,7 @@
     claim's implementation. Rendered with the claim's own text from capabilities.json. -#}
 {%- set caps_all = load_data(path="data/generated/capabilities.json") -%}
 {%- if claims | length > 0 -%}
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ heading }}</h2>
+<h2 class="mj-section-title">{{ heading }}</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">Attached by the file that implements each claim; every one links to its page with the implementation and the test that proves it.</p>
 <ul class="mt-4 grid gap-3 sm:grid-cols-2">
   {%- for cl in claims -%}

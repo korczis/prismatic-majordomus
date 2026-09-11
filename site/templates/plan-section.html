@@ -14,12 +14,12 @@
 {#- The vocabulary comes from the engine, not from this file: plan.json carries the statuses
     project.awk declares, so a status added there gets a tile here without an edit. -#}
 {%- set statuses = plan.statuses.issue -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">{% include "partials/breadcrumb.html" %}<h1 class="mj-page-title">{{ section.title }}</h1><p class="mj-page-subtitle">{{ section.description }}</p></div></div>
+<div class="mj-container">
 
   <dl class="grid max-w-3xl grid-cols-2 gap-4 border-b border-default pb-8 sm:grid-cols-3 lg:grid-cols-6">
     {%- for st in statuses %}
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
+    <div><dt class="mj-eyebrow">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
     {%- endfor %}
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
@@ -27,7 +27,7 @@
   {%- if plan.next_ready %}
   {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}
   <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
-    <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
+    <p class="mj-eyebrow">next ready issue</p>
     <p class="mt-2 text-lg font-semibold text-heading"><a href="{{ get_url(path="/plan/" ~ (plan.next_ready | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline">{{ plan.next_ready }}</a> — {{ nx[0].title }}</p>
     <p class="mt-2 text-sm text-body">{{ nx[0].objective }}</p>
     <p class="mt-3 font-mono text-xs text-body-subtle">majordomus plan next</p>
@@ -56,7 +56,7 @@
   <div class="mt-6 space-y-6">
     {%- for w in plan.waves %}
     <div>
-      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave {{ w.wave }}</p>
+      <p class="mj-eyebrow">wave {{ w.wave }}</p>
       <ul class="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {%- for id in w.issues %}{%- set it = [i for i in issues if i.id == id] -%}
         <li class="min-w-0"><a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">{{ id }}</span>{{ <plan_status status={it[0].status} /> }}<span class="min-w-0 break-words text-sm text-heading">{{ it[0].title }}</span></a></li>

@@ -8,7 +8,7 @@
 
   {{ <plan_graph mermaid={plan.mermaid} caption="Issue dependency graph" /> }}
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Edges</h2>
+  <h2 class="mj-section-title">Edges</h2>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[30rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">must finish</th><th scope="col" class="px-4 py-2">before</th><th scope="col" class="px-4 py-2">which is</th></tr></thead>
@@ -24,12 +24,12 @@
     </table>
   </div>
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Waves</h2>
+  <h2 class="mj-section-title">Waves</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">The layering the graph implies. Nothing in wave <em>n</em> can start before everything it depends on in earlier waves is done.</p>
   <div class="mt-4 space-y-4">
     {%- for w in plan.waves %}
     <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">wave {{ w.wave }}</p>
+      <p class="mj-eyebrow">wave {{ w.wave }}</p>
       <p class="mt-2 flex flex-wrap gap-2">{%- for id in w.issues %}{%- set i = [x for x in plan.issues if x.id == id][0] -%}<a href="{{ get_url(path="/plan/" ~ (id | lower) ~ "/", trailing_slash=true) }}" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">{{ id }}</span>{{ <plan_status status={i.status} /> }}</a>{%- endfor %}</p>
     </div>
     {%- endfor %}

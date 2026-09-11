@@ -9,7 +9,7 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {%- set versioned = [m for m in roadmap.milestones if m.version != ""] -%}
 
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+<article class="format mj-doc max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
 <ol class="mt-8 space-y-4">
   {%- for m in versioned %}
@@ -39,7 +39,7 @@
 
     {%- if m.claims | length > 0 %}
     <div class="mt-4 border-t border-default pt-3">
-      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">what this would make guaranteed</p>
+      <p class="mj-eyebrow">what this would make guaranteed</p>
       <ul class="mt-2 space-y-1.5">
         {%- for cid in m.claims %}{% set matches = [c for c in caps.claims if c.id == cid] %}{% if matches | length > 0 %}{% set c = matches[0] %}
         <li class="flex min-w-0 items-start gap-2"><span class="shrink-0">{{ <badge status={c.status} /> }}</span>

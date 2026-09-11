@@ -10,9 +10,9 @@
 {%- set graph_id = "governance" -%}
 {%- set graph_rings = "principle,rule,validator,enforcer,test" -%}
 {%- set graph_label = "Every invariant this repository holds, the rule that makes it decidable, the validator that answers it, the command that dispatches it and the test that proves it. A node with nothing attached is a gap, not a rounding error." -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-  <article class="format max-w-3xl break-words dark:format-invert lg:format-lg" tabindex="0">{{ section.content | safe }}</article>
+<div class="mj-page-band"><div class="mj-container">{% include "partials/breadcrumb.html" %}<h1 class="mj-page-title">{{ section.title }}</h1><p class="mj-page-subtitle">{{ section.description }}</p></div></div>
+<div class="mj-container">
+  <article class="format mj-doc max-w-3xl dark:format-invert lg:format-lg" tabindex="0">{{ section.content | safe }}</article>
 
   <section class="mt-14" aria-labelledby="layers">
     <div class="mb-8 max-w-3xl">
@@ -58,7 +58,7 @@
         {{ <chain_link step="6" label="Proved by" detail={m.example.test} /> }}
       </ol>
       <aside class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
-        <h3 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">why this one</h3>
+        <h3 class="mj-eyebrow mb-3">why this one</h3>
         <p class="text-sm text-body">Not chosen by an author. It is the rule with the most of the repository standing on it — {{ m.example.claims }} guarantees name it — among those that carry a behavioural test. Pick a different rule tomorrow and this section follows.</p>
         <p class="mt-4 text-sm text-body">Every other rule has the same six links. <a class="font-medium text-fg-brand underline" href="{{ get_url(path="/doctrines/", trailing_slash=true) }}">All {{ m.governance.rules }} of them</a>.</p>
       </aside>

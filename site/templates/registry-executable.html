@@ -8,7 +8,7 @@
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
+    <article class="format mj-doc max-w-none dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
     {%- set claims = ex.claims.executable -%}{%- set heading = "Claims implemented in the executable" -%}{% include "partials/registry-claims.html" %}
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">

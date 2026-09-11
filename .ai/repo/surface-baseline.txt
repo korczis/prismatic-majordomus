@@ -1,0 +1,10 @@
+# The composition debt of the published site, as a count. Written by
+# `scripts/ci/surface-parity --update`; the gate refuses a rise.
+#
+# site_utilities   class tokens under site/templates/ that are not one of the shared
+#                  `mj-*` components: a Flowbite or Tailwind utility written into a
+#                  template, which is a composition decided there rather than in
+#                  share/design/. Lowering this is a template that adopted a shared
+#                  component, or a component grown in share/design/ to cover what
+#                  the template was doing by hand.
+site_utilities=14294

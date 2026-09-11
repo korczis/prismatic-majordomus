@@ -136,6 +136,36 @@
     @apply mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle;
   }
 
+  /* A band that opens a section of the site rather than a page inside it: the same
+     measure, more air. */
+  .mj-container--tall {
+    @apply mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20;
+  }
+
+  /* The heading of a block inside a page, under the page's own title. */
+  .mj-section-title {
+    @apply mt-10 text-xl font-semibold tracking-tight text-heading;
+  }
+
+  /* The quiet label above a block: what the thing below it is, in the monospace the
+     repository names identities in. */
+  .mj-eyebrow {
+    @apply font-mono text-xs uppercase tracking-wide text-body-subtle;
+  }
+
+  /* Rendered Markdown: a document the repository holds, shown with the typography plugin
+     over the same tokens. None of the markup inside it is markup we write, so the fixes a
+     long document needs — a code span that wraps instead of widening the line, a `pre` and
+     a table that scroll inside themselves instead of widening the page — belong to the
+     component and not to each of the twenty-seven callers that had to remember them. The
+     width is the caller's: a reference is `max-w-none`, a read is `max-w-3xl`. */
+  .mj-doc {
+    @apply break-words;
+    @apply [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal;
+    @apply [&_pre]:overflow-x-auto [&_pre]:max-w-full;
+    @apply [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full;
+  }
+
   /* -------------------------------------------------------------- the page head */
 
   /* The band the page announces itself in: the trail, the title, the one line under it. */

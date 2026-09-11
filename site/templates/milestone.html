@@ -13,16 +13,16 @@
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
     {#- one tile per status the engine declares; nothing here names a status -#}
     {%- for st in plan.statuses.issue %}
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.by_status[st] }}</dd></div>
+    <div><dt class="mj-eyebrow">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ ms.counts.by_status[st] }}</dd></div>
     {%- endfor %}
   </dl>
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
+  <h2 class="mj-section-title">Problem</h2>
   <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.problem }}</p>
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
+  <h2 class="mj-section-title">Outcome</h2>
   <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.outcome }}</p>
-  {%- if ms.current_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.current_state }}</p>{% endif %}
-  {%- if ms.desired_state %}<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.desired_state }}</p>{% endif %}
+  {%- if ms.current_state %}<h2 class="mj-section-title">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.current_state }}</p>{% endif %}
+  {%- if ms.desired_state %}<h2 class="mj-section-title">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ ms.desired_state }}</p>{% endif %}
 
   {{ <plan_list title="Scope" items={ms.scope} mono="1" /> }}
   {{ <plan_list title="Out of scope" items={ms.non_scope} /> }}
@@ -32,7 +32,7 @@
   {{ <plan_list title="Risks" items={ms.risks} /> }}
 
   {%- if ms.evidence | length > 0 %}
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+  <h2 class="mj-section-title">Evidence</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">A milestone is never done because its issues are; the last step is its own acceptance, and it is gated on the rows below.</p>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[34rem] text-left text-sm">
@@ -42,7 +42,7 @@
   </div>
   {%- endif %}
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
+  <h2 class="mj-section-title">Issues</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[38rem] text-left text-sm">
@@ -61,7 +61,7 @@
     </table>
   </div>
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
+  <h2 class="mj-section-title">The graph</h2>
   {{ <plan_graph mermaid={ms.mermaid} caption={ms.id ~ " dependency graph"} /> }}
 
   <p class="mt-8 text-sm text-body">Canonical record: <a href="{{ repo }}.ai/repo/project/milestones/{{ ms.id }}.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/{{ ms.id }}.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show {{ ms.id }}</code>.</p>

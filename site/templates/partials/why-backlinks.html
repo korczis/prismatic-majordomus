@@ -8,7 +8,7 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {%- set hits = [m for m in catalogue.moments if m.status == "stable" and why_key in m[why_field]] -%}
 {%- if hits | length > 0 %}
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
+<h2 class="mj-section-title">The moments this answers</h2>
 <ul class="mt-4 space-y-3">
   {%- for m in hits %}
   <li><a href="{{ base }}{{ m.route }}" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">

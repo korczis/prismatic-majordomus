@@ -23,10 +23,10 @@
         {%- for a in m.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
     </dl>
 
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format mj-doc max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
     {#- ------------------------------------------------------------- the examples -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What this looks like</h2>
+    <h2 class="mj-section-title">What this looks like</h2>
     <p class="mt-2 text-body">Concrete situations, one per audience. Each is declared in the moment's front matter, so the before and the after are data rather than prose a page could drift from.</p>
     <ol class="mt-4 space-y-4">
       {%- for e in m.examples %}
@@ -36,15 +36,15 @@
           <a href="{{ get_url(path='/why/audiences/' ~ e.audience ~ '/', trailing_slash=true) }}" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">{{ e.audience }}</a>
         </p>
         <dl class="mt-3 grid gap-3 sm:grid-cols-2">
-          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">{{ e.before }}</dd></div>
-          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">{{ e.after }}</dd></div>
+          <div class="min-w-0"><dt class="mj-eyebrow">before</dt><dd class="mt-1 break-words text-sm text-body">{{ e.before }}</dd></div>
+          <div class="min-w-0"><dt class="mj-eyebrow">after</dt><dd class="mt-1 break-words text-sm text-body">{{ e.after }}</dd></div>
         </dl>
       </li>
       {%- endfor %}
     </ol>
 
     {#- ------------------------------------------------------------- the signals -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How you would know</h2>
+    <h2 class="mj-section-title">How you would know</h2>
     <p class="mt-2 text-body">The observable symptoms this moment declares. They are the questionnaire on <a href="{{ get_url(path='/why/', trailing_slash=true) }}#diagnose" class="text-fg-brand underline">the index</a> and the input of <code class="font-mono text-heading">majordomus why diagnose</code>; nothing else defines them.</p>
     <ul class="mt-4 space-y-2">
       {%- for s in m.signals %}
@@ -57,7 +57,7 @@
     </ul>
 
     {#- ------------------------------------------------------------- the mechanism -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
+    <h2 class="mj-section-title">Where this lives in the tool</h2>
     <p class="mt-2 text-body">Everything below is read out of this moment's own front matter and resolved against the repository. A name here that did not exist would fail validation.</p>
 
     {%- if m.commands | length > 0 %}
@@ -130,7 +130,7 @@
 
     {#- ------------------------------------------------------------- relations -#}
     {%- if m.neighbours | length > 0 %}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
+    <h2 class="mj-section-title">If this one is familiar, so is the next</h2>
     <p class="mt-2 text-body">What this moment names, what names it, and what shares its area, audience or tags. The second and third are derived; only the first is written down.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
       {%- for id in m.neighbours %}{% set o = [x for x in catalogue.moments if x.id == id][0] %}
@@ -145,7 +145,7 @@
 
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start space-y-5">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <h2 class="mj-eyebrow mb-3">read it anywhere</h2>
       <ul class="space-y-2 font-mono text-xs text-body">
         <li>majordomus why show {{ m.id }}</li>
         <li>GET /api/v1/why/moment?id={{ m.id }}</li>
@@ -154,7 +154,7 @@
       <p class="mt-3 border-t border-default pt-3 text-xs text-body-subtle">One record, four readers. The page you are on is the fourth.</p>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ catalogue.counts.moments }} moments</h2>
+      <h2 class="mj-eyebrow mb-3">the {{ catalogue.counts.moments }} moments</h2>
       <ol class="space-y-2 text-sm">{% for o in catalogue.moments %}{% if o.status == "stable" %}<li><a href="{{ base }}{{ o.route }}" class="block rounded px-2 py-1 {% if o.id == m.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if o.id == m.id %} aria-current="page"{% endif %}>{{ o.hook }}</a></li>{% endif %}{% endfor %}</ol>
     </div>
   </aside>

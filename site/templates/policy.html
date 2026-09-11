@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set policy = load_data(path="data/generated/policy.json") -%}
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
+<article class="format mj-doc max-w-3xl dark:format-invert" tabindex="0">{{ page.content | safe }}</article>
 <div class="mt-10 grid gap-4 md:grid-cols-2">
   {{ <card level="2" kicker="context" title={"Always-loaded budget: " ~ policy.context.always_loaded_budget_lines ~ " lines"} text={"Strategy <code>" ~ policy.context.strategy ~ "</code>. Transcript is state: <code>" ~ policy.context.transcript_is_state ~ "</code>. The generated instruction file marked always-loaded fails <code>doctor</code> and <code>update</code> when over budget."} /> }}
   {{ <card level="2" kicker="profiles" title={"Default profile: " ~ policy.profiles.default} text={"Checkpoint interval default <code>" ~ policy.profiles.checkpoint_interval_default ~ "</code>; each profile may override it."} /> }}
@@ -21,7 +21,7 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set mine = [x for x in caps.claims if x.source is starting_with(pat="share/skeleton/policy")] -%}
 {%- if mine | length > 0 -%}
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims defined by this policy</h2>
+<h2 class="mj-section-title">Claims defined by this policy</h2>
 <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
 {%- endif -%}
 {#- A native disclosure, not an Alpine one. The previous version used x-show with x-cloak,

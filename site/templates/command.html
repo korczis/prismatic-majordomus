@@ -18,11 +18,11 @@
     {%- if c.note %}<p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">{{ c.note }}</p>{% endif -%}
 
     {#- C. Syntax -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <h2 class="mj-section-title">Syntax</h2>
     <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">{{ c.syntax }}</pre></div>
 
     {#- J. Where it sits in the lifecycle -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+    <h2 class="mj-section-title">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm">
       {%- for st in cmds.stages -%}
       <li class="rounded-base border px-3 py-1.5 {% if st.id == c.stage %}border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong{% else %}border-default bg-neutral-primary-soft text-body-subtle{% endif %}"{% if st.id == c.stage %} aria-current="step"{% endif %}>{{ st.title }}</li>
@@ -52,7 +52,7 @@
     </div>
 
     {#- H. Exit semantics, joined to the one exit-code contract -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
+    <h2 class="mj-section-title">Exit codes</h2>
     <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand underline">commands index</a>.</p>
     <ul class="mt-3 space-y-1 text-sm">
       {%- for e in project.exit_codes -%}
@@ -66,7 +66,7 @@
         binary by test/cases/34_command_fixtures.sh; this page renders that fixture and
         nothing else. Without JavaScript every scenario is shown, in order. -#}
     {%- set d = c.demo_data -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ d.title }}</h2>
+    <h2 class="mj-section-title">{{ d.title }}</h2>
     <p class="mt-2 text-sm text-body">{{ d.intro }}</p>
     <div class="mt-4" x-data="{ s: '{{ d.scenarios[0].id }}' }">
       <div role="tablist" aria-label="Scenarios" class="flex flex-wrap gap-2">
@@ -110,23 +110,23 @@
     </div>
 
     {#- B, D, G, K. The authored reference: when to use it, its options, its output, examples -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0">{{ c.doc_md | markdown | safe }}</article>
+    <h2 class="mj-section-title">Reference</h2>
+    <article class="format mj-doc max-w-none dark:format-invert lg:format-lg" tabindex="0">{{ c.doc_md | markdown | safe }}</article>
 
     {#- M. Evidence. Generated from coverage metadata; nothing here is typed by hand. -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+    <h2 class="mj-section-title">Evidence</h2>
     <p class="mt-2 text-sm text-body-subtle">Every case below runs in CI on Linux and macOS. The site refuses to build if a public command has no behavioural case, no negative case, or no demonstration.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
+        <h3 class="mj-eyebrow">Behaviour</h3>
         <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
+        <h3 class="mj-eyebrow">Failure modes</h3>
         <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
+        <h3 class="mj-eyebrow">Implementation</h3>
         <ul class="mt-2 space-y-1 text-sm">
           <li><a href="{{ repo }}/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li>
           {%- if c.name != "version" %}<li><a href="{{ repo }}/blob/master/lib/{{ c.name }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/{{ c.name }}.sh</a></li>{% endif -%}
@@ -134,7 +134,7 @@
         </ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
+        <h3 class="mj-eyebrow">Demonstration</h3>
         <ul class="mt-2 space-y-1 text-sm">
           <li><a href="{{ repo }}/blob/master/test/fixtures/commands/{{ c.name }}.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/{{ c.name }}.json</a></li>
           <li><a href="{{ repo }}/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">34_command_fixtures</a></li>
@@ -146,7 +146,7 @@
     {%- set caps = load_data(path="data/generated/capabilities.json") -%}
     {%- set mine = [x for x in caps.claims if x.command == c.name] -%}
     {%- if mine | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
+    <h2 class="mj-section-title">Guarantees this command carries</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in mine %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     {%- endif -%}
   </div>
@@ -154,7 +154,7 @@
   {#- O. Related commands, grouped by the registry's own categories -#}
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2>
+      <h2 class="mj-eyebrow mb-3">commands</h2>
       {%- for st in cmds.stages -%}
         {%- set group = [x for x in cmds.commands if x.stage == st.id] -%}
         {%- if group | length > 0 -%}

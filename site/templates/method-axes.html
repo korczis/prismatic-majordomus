@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set m = load_data(path="data/generated/method.json") -%}
-<article class="format max-w-3xl break-words dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
+<article class="format mj-doc max-w-3xl dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
 
 <section class="mt-12" aria-labelledby="axes">
   <div class="mb-8 max-w-3xl">
@@ -33,9 +33,9 @@
     <p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Writing <code class="font-mono">model: some-vendor-model</code> into a configuration file does not remove a lock-in; it gives it a directory. A profile here declares a capability class and an effort, and the run decides what satisfies them. No file of the layer names a model, and a check refuses one that starts to.</p>
   </div>
   <dl class="grid gap-4 sm:grid-cols-3">
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">capability classes</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.capability_classes | join(sep=" · ") }}</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">effort levels</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.efforts | join(sep=" · ") }}</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">what a worker must return</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.output_contract | join(sep=" · ") }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="mj-eyebrow">capability classes</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.capability_classes | join(sep=" · ") }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="mj-eyebrow">effort levels</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.efforts | join(sep=" · ") }}</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="mj-eyebrow">what a worker must return</dt><dd class="mt-2 font-mono text-sm text-heading">{{ m.profile_fields.output_contract | join(sep=" · ") }}</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body-subtle">Continuity is the point. The task, its decisions, its evidence and its handover are records in the repository, so the model answering a task may change mid-flight without the work losing its state — and so may the vendor.</p>
 </section>
@@ -49,7 +49,7 @@
   <dl class="grid gap-4 sm:grid-cols-3">
     {%- for s in m.exposure.surfaces %}
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
-      <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.label }}</dt>
+      <dt class="mj-eyebrow">{{ s.label }}</dt>
       <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">{{ s.count }}</span> <span class="font-mono text-xs text-body-subtle">of {{ m.exposure.capabilities }}</span></dd>
     </div>
     {%- endfor %}

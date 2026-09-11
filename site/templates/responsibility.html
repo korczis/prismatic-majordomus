@@ -17,18 +17,18 @@
   <div class="min-w-0">
 
     {#- What it is -#}
-    <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0">{{ r.text | markdown | safe }}</div>
+    <div class="format mj-doc max-w-none dark:format-invert lg:format-lg" tabindex="0">{{ r.text | markdown | safe }}</div>
 
     {#- Where it lives. The paths come from docs/RESPONSIBILITIES.yaml and every one is
         proved to exist at generation time, so these links cannot rot silently. -#}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where it lives</h2>
+    <h2 class="mj-section-title">Where it lives</h2>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">State it owns</h3>
+        <h3 class="mj-eyebrow">State it owns</h3>
         <ul class="mt-2 space-y-1 text-sm">{% for f in r.files %}<li><a href="{{ repo }}/blob/master/{{ f }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ f }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">What implements it</h3>
+        <h3 class="mj-eyebrow">What implements it</h3>
         <ul class="mt-2 space-y-1 text-sm">
           <li><a href="{{ repo }}/blob/master/{{ r.implementation }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ r.implementation }}</a></li>
         </ul>
@@ -43,7 +43,7 @@
     {#- The command that acts on it, with the whole contract rather than a name -#}
     {%- if matching | length > 0 -%}
     {%- set cmd = matching[0] -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The command that acts on it</h2>
+    <h2 class="mj-section-title">The command that acts on it</h2>
     <a href="{{ get_url(path="/commands/" ~ cmd.name ~ "/", trailing_slash=true) }}" class="mt-4 block rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
       <code class="font-mono text-lg font-semibold text-heading">majordomus {{ cmd.name }}</code>
       <p class="mt-2 text-sm text-body">{{ cmd.summary }}</p>
@@ -59,7 +59,7 @@
         binary, shown here for the command that owns this responsibility. Without JavaScript
         every scenario is listed in order. -#}
     {%- set d = cmd.demo_data -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">See it refuse, and accept</h2>
+    <h2 class="mj-section-title">See it refuse, and accept</h2>
     <p class="mt-2 text-sm text-body">{{ d.intro }}</p>
     <div class="mt-4" x-data="{ s: '{{ d.scenarios[0].id }}' }">
       <div role="tablist" aria-label="Scenarios" class="flex flex-wrap gap-2">
@@ -71,7 +71,7 @@
       </div>
       {%- for sc in d.scenarios -%}
       <div x-show="s === '{{ sc.id }}'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-        <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
+        <p class="mj-eyebrow">Given this repository</p>
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.setup_sh }}</pre></div>
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus{% for a in sc.run %} {{ a }}{% endfor %}{% if sc.stdin_body %} &lt; body.md{% endif %}</pre></div>
@@ -87,7 +87,7 @@
 
     {#- What enforces it: the doctrines that back this responsibility's guarantees -#}
     {%- if enforcing | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What enforces it</h2>
+    <h2 class="mj-section-title">What enforces it</h2>
     <ul class="mt-4 space-y-3">
       {%- for x in enforcing -%}
       <li><a href="{{ get_url(path="/doctrines/" ~ x.slug ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
@@ -102,7 +102,7 @@
 
     {#- The guarantees, each with the test that proves it -#}
     {%- if related | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
+    <h2 class="mj-section-title">What is guaranteed</h2>
     <ul class="mt-4 space-y-3">
       {%- for c in related -%}
       <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -115,7 +115,7 @@
     {%- endif -%}
 
     {%- if dispatches | length > 0 -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rules this command runs</h2>
+    <h2 class="mj-section-title">Rules this command runs</h2>
     <p class="mt-2 text-sm text-body-subtle">Doctrines whose <code class="font-mono">enforced_by</code> names <code class="font-mono">{{ r.command }}</code>. Enforcing a rule and being governed by one are different relations, so they are listed separately.</p>
     <ul class="mt-4 flex flex-wrap gap-2">
       {%- for x in dispatches -%}
@@ -128,6 +128,6 @@
     {% include "partials/why-backlinks.html" %}
   </div>
 
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2><ul class="space-y-1 text-sm">{% for q in readme.does %}<li><a href="{{ get_url(path="/supervises/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.slug == r.slug %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == r.slug %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul></div></aside>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mj-eyebrow mb-3">responsibilities</h2><ul class="space-y-1 text-sm">{% for q in readme.does %}<li><a href="{{ get_url(path="/supervises/" ~ q.slug ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 {% if q.slug == r.slug %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.slug == r.slug %} aria-current="page"{% endif %}>{{ q.title }}</a></li>{% endfor %}</ul></div></aside>
 </div>
 {% endblock body %}

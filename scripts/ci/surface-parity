@@ -1,0 +1,208 @@
+#!/usr/bin/env bash
+# surface-parity — the gate of project.surfaces-compose-alike: the first-party surfaces do
+# not merely resolve one set of values, they compose from one vocabulary.
+#
+# project.design-tokens-declared-once settled where a *value* is decided and said, of
+# composition, only that "a surface keeps only what it alone has". Nothing measured it, and
+# the two surfaces drifted exactly there: the published site's visual language was Flowbite
+# utilities written into its templates, the Cockpit's was private classes in its own
+# stylesheet, and 45 of the 47 shared primitives were bytes nothing rendered. The chrome
+# both surfaces render now lives in share/design/shell.css, composed the way the site
+# composes it, and this gate keeps it that way.
+#
+# Four questions. The first three are absolute, because the tree already satisfies them and
+# a new violation is always a mistake:
+#
+#   1. no surface keeps a private copy of a shared component. A `.mj-*` class defined in
+#      share/cockpit/src/cockpit.css that the shared layer also defines is one component
+#      with two definitions, and which one a page gets is decided by import order.
+#   2. the site names no class that only the Cockpit's own stylesheet defines. The site
+#      does not load that stylesheet, so such a class is markup with no rule behind it.
+#   3. the Rust that renders the Cockpit names no Tailwind utility. Its entry point is
+#      `@import "tailwindcss" source(none)`, so a utility written into the markup compiles
+#      to nothing at all — it is not a style that is merely out of place, it is absent.
+#
+# The fourth is a ratchet, because the debt is real and predates the gate:
+#
+#   4. the number of raw utility tokens the site's templates emit may fall and may not
+#      rise. The count lives in .ai/repo/surface-baseline.txt; lowering it is a commit that
+#      moved a composition into share/design/, and the gate then asks for the baseline to
+#      be lowered with it.
+#
+#   scripts/ci/surface-parity              report every finding, exit 10 on any
+#   scripts/ci/surface-parity --update     rewrite the baseline from this tree (never in CI)
+#   scripts/ci/surface-parity --root DIR   ask about another tree (the test case's fixture)
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+UPDATE=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --update) UPDATE=1; shift ;;
+    --root) ROOT="$2"; shift 2 ;;
+    *) echo "surface-parity: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+cd "$ROOT"
+
+BASELINE=.ai/repo/surface-baseline.txt
+SHARED="share/design/base.css share/design/primitives.css share/design/shell.css"
+PRIVATE=share/cockpit/src/cockpit.css
+TEMPLATES=site/templates
+COCKPIT_RS=apps/majordomus-cli/src/cockpit
+
+findings=0
+ok()   { printf 'ok    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }
+
+# Comments out. A `{` inside one would otherwise look like the head of a rule.
+strip_comments() { # file
+  awk 'BEGIN { inc = 0 }
+  {
+    line = $0
+    while (1) {
+      if (inc) {
+        i = index(line, "*/")
+        if (i == 0) { line = ""; break }
+        line = substr(line, i + 2); inc = 0
+      } else {
+        i = index(line, "/*")
+        if (i == 0) break
+        pre = substr(line, 1, i - 1); rest = substr(line, i + 2)
+        j = index(rest, "*/")
+        if (j == 0) { line = pre; inc = 1; break }
+        line = pre substr(rest, j + 2)
+      }
+    }
+    print line
+  }' "$1"
+}
+
+# Every `.mj-…` component a stylesheet *defines*. A component is defined by a rule whose
+# subject is the class itself — `.mj-badge`, `.mj-badge:hover`, `.mj-nav-link--current`.
+# A rule whose subject is something *inside* a component (`.mj-table th`,
+# `.mj-graph-controls .mj-input`) states how that component treats what it contains, and is
+# not a second definition of anything. Splitting on both braces is what makes a rule
+# nested inside `@layer components { … }` visible: a selector is a record that reads as
+# one, wherever it sits.
+SUBJECT='^[.]mj-[a-z0-9-]+(([:][:]?[a-z-]+([(][^)]*[)])?)|([[][^]]*[]]))*$'
+defined() { # file…
+  for f in "$@"; do
+    [ -f "$f" ] || continue
+    strip_comments "$f" \
+      | tr '\n' ' ' \
+      | tr '{}' '\n\n' \
+      | tr ',' '\n' \
+      | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+      | grep -E "$SUBJECT" 2>/dev/null || true
+  done | sed 's/^[.]//; s/[:[].*//' | LC_ALL=C sort -u
+}
+
+# Every class the site's templates *name*, one per line, with the template expressions
+# dropped: a token carrying `{` or `}` is a fragment of Tera, not a class.
+site_classes() {
+  find "$TEMPLATES" -name '*.html' -print0 2>/dev/null \
+    | xargs -0 grep -ohE 'class="[^"]*"' 2>/dev/null \
+    | sed 's/.*class="//; s/"$//' \
+    | tr ' \t' '\n\n' \
+    | grep -v '^$' \
+    | grep -vE '[{}]' || true
+}
+
+# Every class the Cockpit's Rust names, in the code that renders a page: the doc comments
+# and the `#[cfg(test)]` module are the markup builder's own examples and fixtures, not a
+# surface anybody loads a stylesheet for.
+cockpit_classes() {
+  for f in "$COCKPIT_RS"/*.rs; do
+    [ -f "$f" ] || continue
+    sed '/^#\[cfg(test)\]/,$d' "$f" \
+      | grep -vE '^[[:space:]]*//' \
+      | grep -ohE '\.class\("[^"]*"\)|\.class\(format!\("[^"]*"' 2>/dev/null || true
+  done \
+    | sed 's/.*("//; s/")$//; s/"$//' \
+    | tr ' ' '\n' \
+    | grep -v '^$' || true
+}
+
+# --------------------------------------------------- 1. no private copy of a shared component
+shared_names="$(defined $SHARED)"
+private_names="$(defined "$PRIVATE")"
+[ -n "$shared_names" ] || { echo "surface-parity: $SHARED define nothing; is this a repository?" >&2; exit 12; }
+both="$(printf '%s\n' "$shared_names" | LC_ALL=C comm -12 - <(printf '%s\n' "$private_names") || true)"
+if [ -n "$both" ]; then
+  printf '%s\n' "$both" | while IFS= read -r class; do
+    [ -n "$class" ] || continue
+    printf 'FAIL  .%s is defined in %s and in the shared layer — one component, two definitions\n' "$class" "$PRIVATE"
+  done
+  fail "$(printf '%s\n' "$both" | grep -c .) private copy(ies) of a shared component; delete the copy and keep the shared rule"
+else
+  ok "no private copy of a shared component ($(printf '%s\n' "$shared_names" | grep -c .) shared, $(printf '%s\n' "$private_names" | grep -c .) the Cockpit's own)"
+fi
+
+# ------------------------------------------- 2. the site names no Cockpit-only class
+site_mj="$(site_classes | grep -E '^mj-' | LC_ALL=C sort -u || true)"
+only_private="$(printf '%s\n' "$private_names" | LC_ALL=C comm -23 - <(printf '%s\n' "$shared_names") || true)"
+stray="$(printf '%s\n' "$site_mj" | LC_ALL=C comm -12 - <(printf '%s\n' "$only_private") || true)"
+if [ -n "$stray" ]; then
+  printf '%s\n' "$stray" | while IFS= read -r class; do
+    [ -n "$class" ] || continue
+    printf 'FAIL  the site names .%s, which only %s defines — the site never loads it\n' "$class" "$PRIVATE"
+  done
+  fail "the site reaches into the Cockpit's own stylesheet; move the component into share/design/"
+else
+  ok "every shared class the site names is defined in share/design/ ($(printf '%s\n' "$site_mj" | grep -c .) named)"
+fi
+
+# --------------------------------- 3. the Cockpit's Rust names no Tailwind utility
+# `source(none)` means the compiled stylesheet is a function of the stylesheets alone: a
+# utility in the markup is not merely unstyled here, it is not compiled at all.
+utilities="$(cockpit_classes | grep -vE '^(mj-|$)' | LC_ALL=C sort -u || true)"
+if [ -n "$utilities" ]; then
+  printf '%s\n' "$utilities" | while IFS= read -r class; do
+    [ -n "$class" ] || continue
+    printf 'FAIL  the Cockpit renders class "%s", which its stylesheet cannot compile (source(none))\n' "$class"
+  done
+  fail "$(printf '%s\n' "$utilities" | grep -c .) utility class(es) in the Cockpit's markup; name a component instead"
+else
+  ok "the Cockpit's markup names components only, never utilities"
+fi
+
+# ------------------------------------------------------------------- 4. the ratchet
+site_utilities="$(site_classes | grep -vE '^mj-' | grep -c . || true)"
+
+if [ "$UPDATE" = 1 ]; then
+  {
+    printf '# The composition debt of the published site, as a count. Written by\n'
+    printf '# `scripts/ci/surface-parity --update`; the gate refuses a rise.\n'
+    printf '#\n'
+    printf '# site_utilities   class tokens under site/templates/ that are not one of the shared\n'
+    printf '#                  `mj-*` components: a Flowbite or Tailwind utility written into a\n'
+    printf '#                  template, which is a composition decided there rather than in\n'
+    printf '#                  share/design/. Lowering this is a template that adopted a shared\n'
+    printf '#                  component, or a component grown in share/design/ to cover what\n'
+    printf '#                  the template was doing by hand.\n'
+    printf 'site_utilities=%s\n' "$site_utilities"
+  } > "$BASELINE"
+  printf 'surface-parity: baseline written — site_utilities=%s\n' "$site_utilities"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || { echo "surface-parity: $BASELINE is missing; run scripts/ci/surface-parity --update" >&2; exit 12; }
+base_site="$(sed -n 's/^site_utilities=//p' "$BASELINE")"
+[ -n "$base_site" ] || { echo "surface-parity: $BASELINE carries no count" >&2; exit 12; }
+
+if [ "$site_utilities" -gt "$base_site" ]; then
+  fail "raw utility tokens in the site's templates rose from $base_site to $site_utilities — a composition was decided in a template; compose it in share/design/shell.css or share/design/primitives.css and name it"
+elif [ "$site_utilities" -lt "$base_site" ]; then
+  fail "raw utility tokens in the site's templates fell from $base_site to $site_utilities — lower the baseline in $BASELINE (scripts/ci/surface-parity --update)"
+else
+  ok "raw utility tokens in the site's templates: $site_utilities, at the baseline"
+fi
+
+if [ "$findings" -gt 0 ]; then
+  printf 'surface-parity: %s finding(s)\n' "$findings"
+  exit 10
+fi
+printf 'surface-parity: two surfaces, one vocabulary\n'

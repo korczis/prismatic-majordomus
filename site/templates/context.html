@@ -6,8 +6,8 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set cx = load_data(path="data/generated/context.json") -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mj-container">
 
   <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">{{ cx.counts.directories }}</dd></div>
@@ -18,7 +18,7 @@
   {#- The tree, in the order the resolver walks it: least specific first. Indentation is the
       directory's depth below the layer root, and every row carries the verdict validation
       reached for that directory rather than one this page worked out for itself. -#}
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The tree</h2>
+  <h2 class="mj-section-title">The tree</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each row is a directory of <code class="font-mono">{{ cx.tree }}</code>. A directory carries its own contract, or the contract that governs its subtree exempts it — instances of a kind, such as a skill and its examples, owe no contract of their own. What applies to a path is <code class="font-mono">majordomus context resolve &lt;path&gt;</code>; this page is the shape that resolution walks.</p>
 
   <ul class="mt-6 space-y-2" role="list">
@@ -53,7 +53,7 @@
     {%- endfor -%}
   </ul>
 
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How a chain is composed</h2>
+  <h2 class="mj-section-title">How a chain is composed</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">The effective context for a path is every applicable document from the root down to it, least specific first, ordered by depth, then the declared order, then the path. A <code class="font-mono">subtree</code> document applies to its directory and everything below; a <code class="font-mono">directory</code> document to its own directory alone; an <code class="font-mono">explicit</code> one to the directories it lists. <code class="font-mono">extend</code> appends, <code class="font-mono">replace</code> names the ancestors it stands in for, and <code class="font-mono">final</code> may not be superseded by anything below it.</p>
 </div>
 {% endblock content %}

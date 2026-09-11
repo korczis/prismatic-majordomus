@@ -10,7 +10,7 @@
 {%- set log = load_data(path="data/generated/changelog.json") -%}
 <div class="mt-6 min-w-0">
 
-  <article class="format max-w-3xl break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal">
+  <article class="format mj-doc max-w-3xl dark:format-invert">
     <p>A release is a record of the layer, not a file somebody edits after the fact. <code>majordomus generate changelog</code> reads those records, pairs each one with the decisions dated inside its window and the commits in its range, and writes the result as one value in three encodings — <code>docs/generated/changelog.json</code> for a program, <code>.yaml</code> beside it, <code>.md</code> for a reader. This page is a fourth projection of the same value, so it cannot say anything the tool does not.</p>
     <p>What that buys: a version cannot appear here without a release record, a change cannot appear without a commit that carries it, and an artifact cannot appear without the record's own evidence for it — the file name and the SHA-256 the record read off the file it published.</p>
   </article>

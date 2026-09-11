@@ -15,7 +15,7 @@
   <h2 id="coverage" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Coverage</h2>
   <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
     {%- for name, t in b.coverage.tallies -%}
-    <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ name }}</span><p class="mt-1 text-2xl font-semibold text-heading">{{ t.covered }}<span class="text-base font-normal text-body-subtle"> / {{ t.required }}</span></p><p class="mt-1 font-mono text-xs {% if t.missing > 0 %}text-fg-danger-strong{% else %}text-body-subtle{% endif %}">{{ t.missing }} missing · {{ t.waived }} waived</p></div>
+    <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><span class="mj-eyebrow">{{ name }}</span><p class="mt-1 text-2xl font-semibold text-heading">{{ t.covered }}<span class="text-base font-normal text-body-subtle"> / {{ t.required }}</span></p><p class="mt-1 font-mono text-xs {% if t.missing > 0 %}text-fg-danger-strong{% else %}text-body-subtle{% endif %}">{{ t.missing }} missing · {{ t.waived }} waived</p></div>
     {%- endfor -%}
   </div>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">

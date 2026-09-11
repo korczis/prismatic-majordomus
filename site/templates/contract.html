@@ -12,7 +12,7 @@
 {%- set lines = readme.finish_transcript | split(pat="
 ") -%}
 
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+<article class="format mj-doc max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
 
 {#- The demonstration is deterministic and derived: the five keys come from the policy the tool
     installs (verification.finish_requires), the printed lines come from the transcript in

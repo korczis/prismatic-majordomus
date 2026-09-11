@@ -11,12 +11,12 @@
 {%- set crumb_title = section.title -%}
 {#- the command this one is under, whatever the depth: Zola's own ancestry, never a fixed path -#}
 {%- set crumb_parent = get_section(path=section.ancestors | last) -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">
   {% include "partials/breadcrumb.html" %}
-  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
-  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+  <h1 class="mj-page-title">{{ section.title }}</h1>
+  <p class="mj-page-subtitle">{{ section.description }}</p>
 </div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-container">
   {% include "partials/cli-page.html" %}
 </div>
 {% endblock content %}

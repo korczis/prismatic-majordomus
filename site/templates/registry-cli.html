@@ -11,7 +11,7 @@
 {%- set current = "cli" -%}{% include "partials/registry-nav.html" %}
 <div class="mt-6 grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Commands">
-    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</p>
+    <p class="mj-eyebrow mb-2">commands</p>
     <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
       {%- for c in root.subcommands -%}
       <li><a href="#cmd-{{ c.path | join(sep="-") }}" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">{{ c.path | last }}</a>

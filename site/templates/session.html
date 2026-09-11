@@ -6,8 +6,8 @@
 {%- set sx = load_data(path="data/generated/sessions.json") -%}
 {%- set_global rec = false -%}
 {%- for s in sx.sessions %}{% if s.session_id == page.extra.session_id %}{% set_global rec = s %}{% endif %}{% endfor -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 font-mono text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ page.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ page.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 font-mono text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ page.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ page.description }}</p></div></div>
+<div class="mj-container">
   {%- if rec %}
   <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Outcome</dt><dd class="mt-1 font-mono text-lg text-heading">{{ rec.outcome }}</dd></div>
@@ -15,15 +15,15 @@
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Changed paths</dt><dd class="mt-1 font-mono text-lg text-heading">{{ rec.changed_files | length }}</dd></div>
   </dl>
   {%- if rec.summary %}
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the episode says it did</h2>
+  <h2 class="mj-section-title">What the episode says it did</h2>
   <p class="mt-2 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-body">{{ rec.summary }}</p>
   {%- endif %}
   {%- if rec.commits | length > 0 %}
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Commits</h2>
+  <h2 class="mj-section-title">Commits</h2>
   <ul class="mt-2 space-y-1" role="list">{% for c in rec.commits %}<li class="break-all font-mono text-xs text-body">{{ c }}</li>{% endfor %}</ul>
   {%- endif %}
   {%- if rec.changed_files | length > 0 %}
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Paths the working tree held changed</h2>
+  <h2 class="mj-section-title">Paths the working tree held changed</h2>
   <ul class="mt-2 space-y-1" role="list">{% for f in rec.changed_files %}<li class="break-all font-mono text-xs text-body">{{ f }}</li>{% endfor %}</ul>
   {%- endif %}
   <p class="mt-10 text-xs text-body-subtle">Written by <code class="font-mono">majordomus session close</code> into <code class="font-mono">{{ sx.source }}</code>, against <code class="font-mono">{{ sx.contract }}</code>.</p>

@@ -12,11 +12,11 @@
 {%- set reg = load_data(path="data/registry/registry.json") -%}
 {%- set ex = load_data(path="data/generated/executable.json") -%}
 {%- set r = reg.registry -%}{%- set ix = reg.index -%}
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
-<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="mj-page-band"><div class="mj-container">{% include "partials/breadcrumb.html" %}<h1 class="mj-page-title">{{ section.title }}</h1><p class="mj-page-subtitle">{{ section.description }}</p></div></div>
+<div class="mj-container">
 {%- set current = "overview" -%}{% include "partials/registry-nav.html" %}
 
-<article class="format mt-6 max-w-3xl break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal">
+<article class="format mj-doc mt-6 max-w-3xl dark:format-invert">
 <p>The registry is the one model every interface of the Rust executable answers from. <code>majordomus mcp</code>, the HTTP routes, the OpenAPI document, the <code>capabilities</code> commands, the generated reference and every page under this route are projections of the same entries. This page is rendered from <code>site/data/registry/registry.json</code>, which <code>majordomus generate site</code> writes and <code>majordomus generate --check</code> compares in CI; the routes come from <code>docs/generated/registry.json</code> through <code>scripts/generate-site-data</code>. Nothing below is typed by hand: a number that disagrees with the executable is a stale generated file, and the build refuses it.</p>
 </article>
 
@@ -39,7 +39,7 @@
   {{ <linkcard level="2" href={get_url(path=ex.routes.benchmarks, trailing_slash=true)} kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
 </div>
 
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Modules</h2>
+<h2 class="mj-section-title">Modules</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">The builtin modules compose the executable's own capabilities; a declarative module is a kind of the layer, one resource per object, listed under Kinds below.</p>
 <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {%- for m in ex.modules -%}
@@ -48,7 +48,7 @@
   {%- endfor -%}
 </ul>
 
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable capabilities</h2>
+<h2 class="mj-section-title">Executable capabilities</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">Composed in Rust, each exposed as the table says. The id is the <code>operationId</code> of the OpenAPI document and the <code>_meta.majordomus.id</code> of the MCP tool; each links to its own page with schemas, policies, provenance and claims.</p>
 <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
 <table class="w-full text-left text-sm">
@@ -71,7 +71,7 @@
 </table>
 </div>
 
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Kinds</h2>
+<h2 class="mj-section-title">Kinds</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">What the executable reads, from <code>share/kinds.yaml</code> and the repository's own additions: how a file of the kind is read, the JSON Schema its metadata must satisfy, and how many objects of it the index holds.</p>
 <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
 <table class="w-full text-left text-sm">
@@ -84,11 +84,11 @@
 </table>
 </div>
 
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provider projections</h2>
+<h2 class="mj-section-title">Provider projections</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">The bootstraps the policy declares, rendered by <code>majordomus generate providers</code> and checked in CI. None of them is a source.</p>
 <ul class="mt-4 grid gap-2 text-sm sm:grid-cols-3">{% for pr in reg.projections %}<li class="min-w-0 rounded border border-default px-3 py-2"><code class="break-all font-mono text-heading">{{ pr.target }}</code> <span class="text-body">← {{ pr.provider }} · {{ pr.mode }}</span>{% if pr.always_loaded %} <span class="ms-1 rounded bg-brand-softer px-1 font-mono text-xs text-fg-brand-strong">always loaded</span>{% endif %}</li>{% endfor %}</ul>
 
-<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objects of the layer</h2>
+<h2 class="mj-section-title">Objects of the layer</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">{{ ix.objects | length }} objects, each an MCP resource. Grouped by kind; the path is where the object lives in the repository.</p>
 {%- for kind, n in ix.by_kind %}
 <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">

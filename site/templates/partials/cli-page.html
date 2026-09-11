@@ -6,7 +6,7 @@
 {%- set cli = load_data(path="data/generated/cli.json") -%}
 <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Commands">
-    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</p>
+    <p class="mj-eyebrow mb-2">commands</p>
     <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
       {%- for c in cli.commands -%}
       {%- set pad = ["", "pl-3", "pl-6", "pl-9"] | nth(n=c.depth) | default(value="") -%}

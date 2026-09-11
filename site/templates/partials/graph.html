@@ -13,7 +13,7 @@
 <figure class="not-format my-8" data-graph="{{ graph_id }}-data" data-graph-base="{{ base }}"{% if graph_rings %} data-graph-rings="{{ graph_rings }}"{% endif %}>
   <div class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-default px-4 py-3">
-      <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ graph.source }}</span>
+      <span class="mj-eyebrow">{{ graph.source }}</span>
       <div class="ms-auto flex flex-wrap items-center gap-x-3 gap-y-2">
         {% for kind, meaning in graph.edge_kinds %}
         <label class="inline-flex items-center gap-1.5 text-xs text-body" title="{{ meaning }}">
@@ -48,7 +48,7 @@
           {%- if n.route %}{% if n.external %}{% set href = n.route %}{% else %}{% set href = base ~ n.route %}{% endif %}
           <a class="break-all font-mono text-sm text-heading underline decoration-dotted underline-offset-2" href="{{ href }}" data-graph-node="{{ n.id }}">{{ n.label }}</a>
           {%- else %}<span class="break-all font-mono text-sm text-heading" data-graph-node="{{ n.id }}">{{ n.label }}</span>{% endif %}
-          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ n.kind }}{% if n.status %} · {{ n.status }}{% endif %}</span>
+          <span class="mj-eyebrow">{{ n.kind }}{% if n.status %} · {{ n.status }}{% endif %}</span>
         </p>
         {%- if n.summary %}<p class="mt-1 text-sm text-body">{{ n.summary }}</p>{% endif -%}
         {%- set out = [e for e in graph.edges if e.source == n.id] -%}

@@ -30,8 +30,8 @@
 {#- Theme before paint: the one statement the design declaration generates for every surface (the Cockpit ships the same bytes). -#}
 <script>{{ design.theme.bootstrap | safe }}</script>
 </head>
-<body class="min-h-screen bg-neutral-primary text-body antialiased">
-<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+<body class="mj-body">
+<a href="#main" class="mj-skip">Skip to content</a>
 {% include "partials/navbar.html" %}
 <main id="main">
 {% block content %}{% endblock content %}
