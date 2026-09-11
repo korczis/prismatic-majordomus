@@ -152,6 +152,27 @@ fn group_cmp(a: Option<&str>, b: Option<&str>) -> Ordering {
     }
 }
 
+/// A bare string is ordered by itself.
+///
+/// A list of paths, ids or names is a collection like any other, and it had no way to reach
+/// the canonical order without a comparator written beside it. This is that way: one
+/// implementation, so `canonical` orders a `Vec<String>` the same way it orders everything
+/// else — naturally, and identically on every machine, which `sort()` does not promise
+/// because it compares bytes and `natural_cmp` compares what a person reads.
+///
+/// ```
+/// use majordomus_cli::order::canonical;
+///
+/// let mut paths = vec!["a/item-10".to_string(), "a/item-2".to_string()];
+/// canonical(&mut paths);
+/// assert_eq!(paths, ["a/item-2", "a/item-10"]);
+/// ```
+impl Ordered for String {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(self, self)
+    }
+}
+
 /// Compare two human-facing strings the way a person reads them.
 ///
 /// A run of ASCII digits compares by value, so `item-2` precedes `item-10` instead of

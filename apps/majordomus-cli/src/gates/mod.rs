@@ -34,10 +34,30 @@
 //! [`judge`] turns those lines into a status. Recording is the shell tool's, because the
 //! ledger has one writer (ADR 0030); judging is here, because a judgement with two
 //! implementations is how `check` and a gate come to disagree.
+//!
+//! # One lifecycle
+//!
+//! A change set goes through the model to a plan, the plan and the recorded runs through the
+//! judgement to a status per gate, and the statuses fold into one verdict.
+//!
+//! ```
+//! use majordomus_cli::gates::GateStatus;
+//!
+//! // the vocabulary the whole module reports in, and the two rules that make it useful
+//! assert!(GateStatus::Fail.refuses() && GateStatus::Stale.refuses());
+//! assert!(GateStatus::Queued.unverified() && !GateStatus::Queued.refuses());
+//! // and the one word that discharges anything
+//! assert!(!GateStatus::Pass.refuses() && !GateStatus::Pass.unverified());
+//! ```
+//!
 
-pub mod done;
-pub mod judge;
-pub mod model;
+// The three halves of the judgement are the crate's own. What a reader outside the crate
+// needs is the *documents* — the completion report and the types inside it — and those are
+// re-exported below, so the public surface is the answer and not the machinery that makes
+// it.
+pub(crate) mod done;
+pub(crate) mod judge;
+pub(crate) mod model;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -51,7 +71,8 @@ use crate::discovery::glob::Glob;
 
 pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
-pub use model::{GateModel, GatePlan, GatePlanMode};
+pub(crate) use model::GateModel;
+pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode};
 
 /// The local half of the layer, relative to the repository root. The same constant
 /// `obligations` and `continuity` state, for the same reason: the shell tool decides where
@@ -60,6 +81,22 @@ const STATE_DIR: &str = ".ai/local/state";
 
 // ---------------------------------------------------------------- derived obligations
 
+/// ```
+/// use majordomus_cli::gates::ImpliedObligation;
+///
+/// let owed = ImpliedObligation {
+///     id: "tests".into(),
+///     title: "The cases the change obliges were run".into(),
+///     applicable: true,
+///     declared: false,
+///     reason: "lib/check.sh is an input of this obligation".into(),
+///     because: vec!["lib/check.sh".into()],
+///     remediation: "majordomus start --requires tests".into(),
+/// };
+/// // applicable and undeclared is the gap nothing else reports: the change owes it and
+/// // the task promised nothing, so no validator holds anybody to it
+/// assert!(owed.applicable && !owed.declared);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// One obligation the change set implies, and whether the task promised it.
 ///
@@ -101,7 +138,7 @@ pub struct ImpliedObligation {
 ///   declared it: a deployment-scoped task declares `deploy` and owes verification, and a
 ///   task that deploys nothing does not, which is the difference between "not applicable"
 ///   and "unknown".
-pub fn implied(
+pub(crate) fn implied(
     vocabulary: &[Obligation],
     changed: &[String],
     task: Option<&ActiveTask>,
@@ -172,6 +209,29 @@ pub fn implied(
 
 // ---------------------------------------------------------------- the report
 
+/// ```
+/// use majordomus_cli::gates::Completion;
+///
+/// // the document every surface reads, as `gates.completion` answers with it. The property
+/// // that matters is the one asserted here: a gate that never reported leaves the task
+/// // finishable and *unverified*, which is a different thing from a task that passed.
+/// let c: Completion = serde_json::from_value(serde_json::json!({
+///     "present": true,
+///     "model": ".ai/repo/ci/gates.yaml",
+///     "plan": { "mode": "affected", "reason": "1 path in 1 class", "changed": ["docs/CLI.md"],
+///               "classes": [], "unclassified": [], "selected": {}, "excluded": {} },
+///     "finishable": true,
+///     "unverified": ["reference-check"],
+///     "tallies": { "queued": 1 },
+///     "gates": [],
+///     "obligations": [],
+///     "questions": []
+/// }))
+/// .unwrap();
+/// assert!(c.finishable, "absence of a verdict does not refuse");
+/// assert_eq!(c.unverified, ["reference-check"], "and it is never silently accepted");
+/// assert!(c.blocking.is_empty());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Whether the active task may be called finished, and everything the answer rests on.
 ///
@@ -222,7 +282,7 @@ pub struct Completion {
 /// The same two questions `scripts/ci-plan` asks of git without a base, and for the same
 /// reason: a plan computed over the committed half only would go green on a worker who has
 /// not committed, which is the failure mode this whole module exists to close.
-pub fn changed_paths(root: &Path, base: Option<&str>) -> Result<Vec<String>, String> {
+pub(crate) fn changed_paths(root: &Path, base: Option<&str>) -> Result<Vec<String>, String> {
     let mut out: BTreeSet<String> = BTreeSet::new();
     let git = |args: &[&str]| -> Result<String, String> {
         let out = std::process::Command::new("git")
@@ -267,7 +327,7 @@ pub fn changed_paths(root: &Path, base: Option<&str>) -> Result<Vec<String>, Str
 /// test and a benchmark all drive the same function: the model, the change set, the task,
 /// the vocabulary and the per-gate hashes.
 #[allow(clippy::too_many_arguments)]
-pub fn complete(
+pub(crate) fn complete(
     model: &GateModel,
     changed: &[String],
     task: Option<&ActiveTask>,
@@ -337,12 +397,12 @@ pub fn complete(
 }
 
 /// Where this checkout's ledger is.
-pub fn ledger_path(root: &Path) -> std::path::PathBuf {
+pub(crate) fn ledger_path(root: &Path) -> std::path::PathBuf {
     root.join(STATE_DIR).join("ledger.jsonl")
 }
 
 /// Where this checkout's task record is.
-pub fn task_path(root: &Path) -> std::path::PathBuf {
+pub(crate) fn task_path(root: &Path) -> std::path::PathBuf {
     root.join(STATE_DIR).join("current.yaml")
 }
 

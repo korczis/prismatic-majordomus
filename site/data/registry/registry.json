@@ -6,7 +6,7 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "a0095dd53261fa5dbb55b3dd5bbf45b47b80cccb8c3dbeaaacebfc508b6213c5",
+    "fingerprint": "8bbc42f00422a1959c0fb06b731717bc0f0fd24a18092e17b73bf611c613d413",
     "summary": {
       "total": 1249,
       "builtin": 82,
@@ -13568,7 +13568,7 @@
                 "description": "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
               }
             },
-            "description": "Which change to judge completion over.",
+            "description": "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over.",
             "title": "CompletionInput"
           }
         },
@@ -13666,7 +13666,7 @@
               "obligations",
               "questions"
             ],
-            "description": "Whether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
+            "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
             "title": "Completion",
             "$defs": {
               "ActiveTask": {
@@ -13775,7 +13775,7 @@
                   "selected",
                   "excluded"
                 ],
-                "description": "Which gates a change must pass, and why each one is in or out."
+                "description": "```\nuse majordomus_cli::gates::{GateClassMatch, GatePlan, GatePlanMode};\nuse std::collections::BTreeMap;\n\nlet plan = GatePlan {\n    mode: GatePlanMode::Affected,\n    reason: \"3 path(s) fall in 1 class\".into(),\n    changed: vec![\"docs/CLI.md\".into()],\n    classes: vec![GateClassMatch { id: \"docs\".into(), paths: vec![\"docs/CLI.md\".into()] }],\n    unclassified: Vec::new(),\n    selected: BTreeMap::from([(\"reference-check\".to_string(), \"class docs\".to_string())]),\n    excluded: BTreeMap::new(),\n};\n// the plan says what it selected and why, so a reader can check it rather than believe it\nassert_eq!(plan.selected[\"reference-check\"], \"class docs\");\nassert!(!plan.selected.contains_key(\"rust-check\"), \"a document change cannot break the crate\");\n```\nWhich gates a change must pass, and why each one is in or out."
               },
               "GatePlanMode": {
                 "oneOf": [
@@ -13790,7 +13790,7 @@
                     "description": "Every gate but the on-demand ones: asked for, or escalated to."
                   }
                 ],
-                "description": "Why the plan selects what it selects."
+                "description": "```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \"affected\");\nassert_eq!(GatePlanMode::Full.as_str(), \"full\");\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects."
               },
               "GateClassMatch": {
                 "type": "object",
@@ -13811,7 +13811,7 @@
                   "id",
                   "paths"
                 ],
-                "description": "One class a change fell in, and the paths that put it there."
+                "description": "```\nuse majordomus_cli::gates::GateClassMatch;\n\nlet hit = GateClassMatch { id: \"docs\".into(), paths: vec![\"docs/CLI.md\".into()] };\n// the class, and the files of the change that put it in the plan — never the class alone,\n// because a plan a reader cannot check is a plan a reader has to believe\nassert_eq!(hit.paths.len(), 1);\n```\nOne class a change fell in, and the paths that put it there."
               },
               "Gate": {
                 "type": "object",
@@ -13886,7 +13886,7 @@
                   "source",
                   "evaluated_at"
                 ],
-                "description": "One completion gate: what it is, whether it applies, what it said, and what to do."
+                "description": "```\nuse majordomus_cli::gates::{Gate, GateStatus};\n\nlet gate = Gate {\n    id: \"rust-check\".into(),\n    title: \"the crate builds, is formatted and passes its tests\".into(),\n    scope: \"apps/majordomus-cli\".into(),\n    required: true,\n    status: GateStatus::Queued,\n    reason: \"the plan selects it and no run has ever reported\".into(),\n    remediation: \"majordomus evidence --gate rust-check --exit 0\".into(),\n    source: \"the plan\".into(),\n    evidence: None,\n    inputs: vec![\"apps/majordomus-cli/**\".into()],\n    inputs_hash: \"3f0a\".into(),\n    evaluated_at: \"2026-01-01T00:00:00Z\".into(),\n};\n// silence does not refuse and is not a pass either: it is a debt, reported as one\nassert!(!gate.status.refuses());\nassert!(gate.status.unverified());\nassert!(gate.evidence.is_none());\n```\nOne completion gate: what it is, whether it applies, what it said, and what to do."
               },
               "GateStatus": {
                 "oneOf": [
@@ -13926,7 +13926,7 @@
                     "description": "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass."
                   }
                 ],
-                "description": "What is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
+                "description": "```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \"a run that failed refuses\");\nassert!(GateStatus::Queued.unverified(), \"asked and unanswered is a debt\");\nassert!(!GateStatus::Exempt.refuses() && !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \"stale\");\n```\nWhat is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
               },
               "GateRun": {
                 "type": "object",
@@ -13967,7 +13967,7 @@
                   "branch",
                   "exit"
                 ],
-                "description": "The `task.gate` ledger line that last reported a gate, as the ledger holds it."
+                "description": "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
               },
               "ImpliedObligation": {
                 "type": "object",
@@ -14012,7 +14012,7 @@
                   "reason",
                   "remediation"
                 ],
-                "description": "One obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not."
+                "description": "```\nuse majordomus_cli::gates::ImpliedObligation;\n\nlet owed = ImpliedObligation {\n    id: \"tests\".into(),\n    title: \"The cases the change obliges were run\".into(),\n    applicable: true,\n    declared: false,\n    reason: \"lib/check.sh is an input of this obligation\".into(),\n    because: vec![\"lib/check.sh\".into()],\n    remediation: \"majordomus start --requires tests\".into(),\n};\n// applicable and undeclared is the gap nothing else reports: the change owes it and\n// the task promised nothing, so no validator holds anybody to it\nassert!(owed.applicable && !owed.declared);\n```\nOne obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not."
               },
               "DoneQuestion": {
                 "type": "object",
@@ -14050,7 +14050,7 @@
                   "source",
                   "remediation"
                 ],
-                "description": "One question of the done invariant, and what answered it."
+                "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it."
               }
             }
           }
@@ -14150,6 +14150,13 @@
                   "$ref": "#/$defs/GateClass"
                 },
                 "description": "Every path class, in declaration order."
+              },
+              "unreadable": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why there is no model to report, when there is none. A repository of the layer does\nnot have to declare a CI model, and a reader is entitled to the difference between\n\"this repository declares no gates\" and \"this call failed\"."
               }
             },
             "required": [
@@ -14223,7 +14230,7 @@
                   "runs",
                   "inputs"
                 ],
-                "description": "One gate of the model, with what the model implies about it."
+                "description": "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it."
               },
               "GateClass": {
                 "type": "object",
@@ -14256,7 +14263,7 @@
                 "required": [
                   "id"
                 ],
-                "description": "One path class: the paths it covers and the gates a change to them selects."
+                "description": "```\nuse majordomus_cli::gates::GateClass;\n\n// one path class as the CI model declares it: which paths select which gates\nlet class: GateClass = serde_json::from_value(serde_json::json!({\n    \"id\": \"docs\",\n    \"paths\": [\"docs/**\"],\n    \"gates\": [\"reference-check\"]\n}))\n.unwrap();\nassert_eq!(class.id, \"docs\");\nassert_eq!(class.paths, [\"docs/**\"]);\n```\nOne path class: the paths it covers and the gates a change to them selects."
               },
               "GateClassSelects": {
                 "anyOf": [
@@ -30483,7 +30490,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a36140dc9a09bd6ca08fbcc6aa26e75719a35fafa45fa8832acca960c36f0b58",
+    "fingerprint": "2104a741cd3066a8cd70daccca83f6114dd46200d9b933e15101a32f877c8430",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
