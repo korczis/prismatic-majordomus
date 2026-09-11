@@ -102,6 +102,12 @@ H
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
   mkdir -p "$MJ_STATE_DIR/handovers" "$MJ_STATE_DIR/checkpoints" "$MJ_AI_LOCAL_DIR/prompts" \
            "$MJ_AI_LOCAL_DIR/cache" "$MJ_AI_LOCAL_DIR/session-contexts"
+  # The prompt archive is the one store here whose *names* are private: a record is called
+  # after the opening of the prompt it holds, so a world-readable directory discloses what
+  # was asked even while it is empty. It is created 0700 by the command that creates it,
+  # rather than by the hook that writes the first record — the hook would be repairing a
+  # mode that had already been wrong for however long the repository went without a prompt.
+  chmod 700 "$MJ_AI_LOCAL_DIR/prompts" 2>/dev/null || true
   [ -f "$MJ_STATE_DIR/decisions.md" ]      || cp "$skel/templates/decisions.md" "$MJ_STATE_DIR/decisions.md"
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   mj_init_gitignore

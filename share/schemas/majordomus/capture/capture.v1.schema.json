@@ -51,6 +51,19 @@
         "session": {
           "type": "string"
         },
+        "episode": {
+          "description": "The record's identity, and the reason this schema has a second version's worth of fields at all. `session` is the provider's own session UUID, and turning it into the canonical episode id used to need a file the close of the episode deletes — so a closed episode's prompts became unattributable the moment it closed. `episode` is written at capture, while the mapping is still there.  `episode_link` says how: `open` (resolved against the open episode), `session-context` or `ledger` (linked afterwards from evidence that survived), `orphan` (no episode was open under that provider session) or `unlinked-legacy` (written before the field existed, and nothing survives to link it). The last two carry no episode. A reader that cannot tell an observation from an inference cannot tell what the archive proves, which is why the provenance is a field and not a convention.",
+          "type": "string"
+        },
+        "episode_link": {
+          "type": "string"
+        },
+        "repository_id": {
+          "type": "string"
+        },
+        "worktree_id": {
+          "type": "string"
+        },
         "source": {
           "type": "string"
         },
@@ -87,6 +100,20 @@
         },
         "record": {
           "description": "The file name of the JSON this was rendered from — a name, never a path, because a rendering can only ever point inside its own directory.",
+          "type": "string"
+        },
+        "redacted": {
+          "description": "Present only when the writer replaced credential material on its way to the record: the names of the shapes it matched, comma-separated. Absent means nothing was found, which is not the same claim as \"nothing was there\", and is why this is a field rather than a silence.",
+          "type": "string"
+        },
+        "pruned_at": {
+          "description": "The tombstone retention leaves. A prompt body over the declared age or size bound is replaced; the record, its identity and its provenance are not. These three say when the body went, how long it was and the digest of the raw span it was — enough to recognise a prompt somebody still holds a copy of, and not enough to reconstruct one nobody does.",
+          "type": "string"
+        },
+        "pruned_bytes": {
+          "type": "integer"
+        },
+        "pruned_sha256": {
           "type": "string"
         }
       }

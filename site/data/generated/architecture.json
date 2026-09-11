@@ -110,6 +110,26 @@
       "external": false
     },
     {
+      "id": ".ai/local/state/sessions-open",
+      "kind": "artifact",
+      "label": "local/state/sessions-open",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/session-contexts",
+      "kind": "artifact",
+      "label": "local/session-contexts",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/derive.sh",
       "kind": "module",
       "label": "derive",
@@ -157,6 +177,16 @@
       "summary": "write an append-only continuation record (body on stdin)",
       "read_only": null,
       "route": "/commands/handover/",
+      "external": false
+    },
+    {
+      "id": ".ai/repo/policy.yaml",
+      "kind": "artifact",
+      "label": "repo/policy.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
       "external": false
     },
     {
@@ -280,29 +310,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/policy.yaml",
-      "kind": "artifact",
-      "label": "repo/policy.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": ".ai/repo/providers",
       "kind": "artifact",
       "label": "repo/providers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/sessions-open",
-      "kind": "artifact",
-      "label": "local/state/sessions-open",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -633,16 +643,6 @@
       "id": ".ai/local/cache",
       "kind": "artifact",
       "label": "local/cache",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/session-contexts",
-      "kind": "artifact",
-      "label": "local/session-contexts",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1432,6 +1432,21 @@
       "kind": "uses"
     },
     {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/session-contexts",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/local/state/sessions-open",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/repo/policy.yaml",
+      "kind": "uses"
+    },
+    {
       "source": "lib/check.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "uses"
@@ -1539,11 +1554,6 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/local/cache",
-      "kind": "uses"
-    },
-    {
-      "source": "lib/init.sh",
-      "target": ".ai/local/prompts",
       "kind": "uses"
     },
     {
@@ -1873,6 +1883,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/local/prompts",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/local/state/handovers",
       "kind": "writes"
     },
@@ -1899,6 +1914,11 @@
     {
       "source": "lib/start.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": ".ai/local/prompts",
       "kind": "writes"
     },
     {
