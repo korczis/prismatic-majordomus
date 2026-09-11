@@ -791,6 +791,13 @@
         "external": true
       },
       {
+        "id": "command:archive",
+        "kind": "command",
+        "label": "archive",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
         "id": "command:bench",
         "kind": "command",
         "label": "bench",
@@ -3631,6 +3638,23 @@
         }
       },
       {
+        "id": "majordomus://claim/archive-fidelity",
+        "kind": "claim",
+        "label": "archive-fidelity",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Farchive-fidelity",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An archive that lost the file modes fails rather than travelling",
+          "implementation": "lib/archive.sh",
+          "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.",
+          "responsibility": "projection",
+          "source": "docs/ARCHIVE.md",
+          "test": "test/cases/130_archive.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/benchmark-coverage-derived",
         "kind": "claim",
         "label": "benchmark-coverage-derived",
@@ -5990,6 +6014,43 @@
         }
       },
       {
+        "id": "majordomus://command/archive",
+        "kind": "command",
+        "label": "archive",
+        "summary": "archive",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcommand%2Farchive",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "system",
+          "class": "generated-output-mutating",
+          "demo": "archive-profiles",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12",
+            "13",
+            "15"
+          ],
+          "json": true,
+          "reads": [
+            "share/archive.yaml",
+            ".ai/repo/archive.yaml",
+            ".gitattributes"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "none",
+          "stage": "inspect",
+          "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+          "syntax": "majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]",
+          "visibility": "public",
+          "writes": [
+            "tmp/archives/"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/bench",
         "kind": "command",
         "label": "bench",
@@ -7838,6 +7899,14 @@
         "source": "docs/ADOPTION_FIRST_RUN.md"
       },
       {
+        "id": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "document",
+        "label": "docs/ARCHIVE.md",
+        "summary": "Archiving the repository",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FARCHIVE.md",
+        "source": "docs/ARCHIVE.md"
+      },
+      {
         "id": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "document",
         "label": "docs/CAPABILITIES.md",
@@ -8244,6 +8313,14 @@
         "summary": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fai-layer-manifest.md",
         "source": "docs/claims/ai-layer-manifest.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/archive-fidelity.md",
+        "kind": "document",
+        "label": "docs/claims/archive-fidelity.md",
+        "summary": "An archive that lost the file modes fails rather than travelling",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Farchive-fidelity.md",
+        "source": "docs/claims/archive-fidelity.md"
       },
       {
         "id": "majordomus://document/docs/claims/benchmark-coverage-derived.md",
@@ -10704,6 +10781,13 @@
         "label": "lib/adr.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fadr.sh",
         "source": "lib/adr.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/archive.sh",
+        "kind": "implementation",
+        "label": "lib/archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Farchive.sh",
+        "source": "lib/archive.sh"
       },
       {
         "id": "majordomus://implementation/lib/bench.sh",
@@ -29091,6 +29175,13 @@
         "source": "test/cases/12c_graph_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_archive.sh",
+        "kind": "test",
+        "label": "test/cases/130_archive.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_archive.sh",
+        "source": "test/cases/130_archive.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -30602,6 +30693,38 @@
           "summary": "Run the checks CI runs, read every finding with the command that reproduces it, and rely on exit codes that mean one thing each: no code means warn and continue.",
           "target": "guaranteed",
           "weight": 44
+        }
+      },
+      {
+        "id": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "kind": "use-case",
+        "label": "hand-the-repository-to-a-reader",
+        "summary": "Hand the repository to someone who cannot clone it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Fhand-the-repository-to-a-reader",
+        "source": ".ai/repo/use-cases/hand-the-repository-to-a-reader.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "maintainer",
+            "agent"
+          ],
+          "applications": [],
+          "category": "knowledge",
+          "claims": [
+            "archive-fidelity",
+            "no-network"
+          ],
+          "commands": [
+            "archive"
+          ],
+          "difficulty": "basic",
+          "doctrines": [],
+          "responsibilities": [
+            "projection"
+          ],
+          "summary": "Take a snapshot that a model can read or a gate can run in, without sending anything untracked and without losing the file modes on the way.",
+          "target": "guaranteed",
+          "weight": 60
         }
       },
       {
@@ -34621,6 +34744,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://document/docs/ARCHIVE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://implementation/lib/archive.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/archive-fidelity",
+        "target": "majordomus://test/test/cases/130_archive.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/benchmark-coverage-derived",
         "target": "file:apps/majordomus-cli/src/bench/coverage.rs",
         "kind": "implemented_by"
@@ -37426,6 +37569,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/archive",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/bench",
         "target": "kind:command",
         "kind": "is_a"
@@ -38021,6 +38169,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/ARCHIVE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/CAPABILITIES.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -38272,6 +38425,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/ai-layer-manifest.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/archive-fidelity.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -39117,6 +39275,11 @@
       },
       {
         "source": "majordomus://implementation/lib/adr.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/archive.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -44936,6 +45099,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_archive.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/13_region_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -46499,6 +46667,26 @@
         "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "command:archive",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/archive-fidelity",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
+        "target": "majordomus://claim/no-network",
+        "kind": "evidences"
       },
       {
         "source": "majordomus://use-case/hand-work-between-sessions",
@@ -48527,8 +48715,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1474,
-      "edges": 3318,
+      "nodes": 1482,
+      "edges": 3331,
       "acyclic": true,
       "truncated": false
     }
