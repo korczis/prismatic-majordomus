@@ -15,7 +15,7 @@ scope:
   - test/cases
   - docs/CI.md
 non_scope:
-  - Making the Pages build re-derive instead of refusing. The input fingerprint is deterministic - three runs on one tree are byte-identical - but the generated content is machine-dependent: %h abbreviates against the local object store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling worktree root. A build that re-derived could produce a third answer matching neither side. Recorded here because this exit will be proposed again, and because an objection stated as non-determinism of the fingerprint is refutable in one command and would take the correct objection down with it.
+  - "Making the Pages build re-derive instead of refusing. The input fingerprint is deterministic - three runs on one tree are byte-identical - but the generated content is machine-dependent: %h abbreviates against the local object store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling worktree root. A build that re-derived could produce a third answer matching neither side. Recorded here because this exit will be proposed again, and because an objection stated as non-determinism of the fingerprint is refutable in one command and would take the correct objection down with it."
   - Turning on branch protection, or choosing which check is required. A repository setting, and the operator's decision.
   - Weakening the derived merge driver. Resolving to ours is correct; what is missing is the refusal downstream of it on the server-side path.
 acceptance_criteria:

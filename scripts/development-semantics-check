@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+# development-semantics-check — the rule project.development-semantics-are-canonical,
+# as far as tracked data can decide it.
+#
+# A development semantic — the plan, tasks, sessions, context, executions, peers, evidence,
+# obligations, completion — belongs to the capability registry of the Rust executable, and
+# every surface consumes it. This gate decides the two halves of that a file read can
+# decide, and is deliberately silent about the half it cannot (see WHAT THIS CANNOT DECIDE).
+#
+#   scripts/development-semantics-check              report; exit 0 clean, 10 with findings
+#   scripts/development-semantics-check --json       the findings as JSON
+#   scripts/development-semantics-check --baseline   rewrite the baseline from what is found
+#
+# BACKING. A command declared in share/commands.yaml that mutates a development object tree
+# is owed a mutating capability in the registry projection docs/generated/registry.json. A
+# command with none is unbacked: no machine surface has a typed input schema to execute it
+# from, so a surface that wants the semantic must reimplement it. Every unbacked command
+# today is recorded in the baseline as "backing:<command>"; one that is not is a regression.
+#
+# SURFACE PURITY. The Cockpit renders capability output. A path into the AI layer, or the
+# name of a majordomus executable, inside apps/majordomus-cli/src/cockpit/** or
+# share/cockpit/** is a second implementation starting, and is reported as
+# "surface:<path>:<line>:<evidence>".
+#
+# WHAT THIS CANNOT DECIDE. Whether a derivation inside a surface is a semantic or a
+# presentation choice: a template that pluralises a count is not a second implementation and
+# a template that computes readiness is. A gate that guessed would be unauditable, so this
+# one does not, and a reviewer decides it — exactly as majordomus.decision-threshold leaves
+# its own threshold to a reviewer. Nor does it decide who writes a development object: a
+# write in shell has no reliable syntactic shape, and a grep for the object trees would
+# report every reader. That check would need the writers declared as data — the `writes`
+# field of share/commands.yaml extended to name the writing function — and is left open.
+#
+# The baseline is .ai/repo/development-semantics-baseline.txt, one finding key per line. A
+# finding in it is known debt and does not fail; one that is not is a regression and does;
+# a baseline line that matches nothing is reported so the ratchet tightens instead of
+# rotting. The baseline may shrink and may not grow.
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BASELINE="$ROOT/.ai/repo/development-semantics-baseline.txt"
+COMMANDS="$ROOT/share/commands.yaml"
+REGISTRY="$ROOT/docs/generated/registry.json"
+JSON=0; WRITE=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) JSON=1; shift ;;
+    --baseline) WRITE=1; shift ;;
+    --help|-h) sed -n '2,36p' "$0"; exit 0 ;;
+    *) echo "development-semantics-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+cd "$ROOT"
+for f in "$COMMANDS" "$REGISTRY"; do
+  [ -f "$f" ] || { echo "development-semantics-check: missing $f" >&2; exit 12; }
+done
+
+FOUND="$(mktemp "${TMPDIR:-/tmp}/mj-devsem.XXXXXX")"
+trap 'rm -f "$FOUND" "$FOUND.new" "$FOUND.stale" "$FOUND.known"' EXIT
+
+# --- backing ---------------------------------------------------------------------------
+# The object trees a development semantic owns. A command that writes one of these is
+# moving development state and is owed a capability.
+DEV_TREES='.ai/repo/project/ .ai/repo/sessions/ .ai/repo/adrs/ .ai/local/state/'
+
+python3 - "$COMMANDS" "$REGISTRY" "$DEV_TREES" >>"$FOUND" <<'PY'
+import json, re, sys
+
+commands_path, registry_path, trees = sys.argv[1], sys.argv[2], sys.argv[3].split()
+
+text = open(commands_path, encoding='utf-8').read()
+start = re.search(r'^commands:\s*$', text, re.M)
+if not start:
+    sys.exit('development-semantics-check: share/commands.yaml has no commands: block')
+block = text[start.end():]
+
+# One entry per "  - id: <name>"; fields are the flat two-space keys under it.
+entries = []
+for m in re.finditer(r'^  - id: (\S+)\n((?:    \S.*\n|    \n)*)', block, re.M):
+    fields = {}
+    for line in m.group(2).splitlines():
+        f = re.match(r'    ([a-z_]+): (.*)$', line)
+        if f:
+            fields[f.group(1)] = f.group(2).strip()
+    entries.append((m.group(1), fields))
+
+registry = json.load(open(registry_path, encoding='utf-8'))
+# A mutating capability is one the registry declares as a command rather than a query.
+mutating_modules = {
+    c.get('module')
+    for c in registry.get('capabilities', [])
+    if c.get('kind') == 'command'
+}
+
+for name, fields in entries:
+    if fields.get('visibility') != 'public':
+        continue
+    if fields.get('class', 'read-only') == 'read-only':
+        continue
+    writes = fields.get('writes', '')
+    if not any(tree in writes for tree in trees):
+        continue
+    if name in mutating_modules:
+        continue
+    print(f'backing:{name}')
+PY
+
+# --- surface purity --------------------------------------------------------------------
+# The Cockpit trees render capability output. A layer path or an executable name in them is
+# a semantic about to be implemented in the wrong place.
+surface_files() {
+  git ls-files -- 'apps/majordomus-cli/src/cockpit' 'share/cockpit' 2>/dev/null \
+    | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done
+}
+
+surface_files | while IFS= read -r f; do
+  grep -nE '\.ai/(repo|local)|bin/majordomus|majordomus-cli' "$f" 2>/dev/null \
+    | grep -vE 'Generator:|generated by|GENERATED FILE' \
+    | while IFS= read -r hit; do
+        line="${hit%%:*}"
+        printf 'surface:%s:%s\n' "$f" "$line"
+      done
+done >>"$FOUND"
+
+LC_ALL=C sort -u "$FOUND" -o "$FOUND"
+
+if [ "$WRITE" -eq 1 ]; then
+  {
+    echo "# development-semantics-check baseline — accepted debt for"
+    echo "# project.development-semantics-are-canonical@1 (ADR 0040)."
+    echo "#"
+    echo "# backing:<command>        a public mutating command of share/commands.yaml that"
+    echo "#                          writes a development object tree and that the capability"
+    echo "#                          registry does not declare a mutating capability for."
+    echo "# surface:<path>:<line>    a layer path or executable name inside a Cockpit tree."
+    echo "#"
+    echo "# This list may shrink and may not grow. Regenerate only when closing an entry:"
+    echo "#   scripts/development-semantics-check --baseline"
+    LC_ALL=C sort -u "$FOUND"
+  } > "$BASELINE"
+  echo "development-semantics-check: baseline rewritten with $(grep -cv '^#' "$BASELINE" || true) entry/entries"
+  exit 0
+fi
+
+if [ -f "$BASELINE" ]; then
+  grep -v '^#' "$BASELINE" | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u > "$FOUND.known" || true
+else
+  : > "$FOUND.known"
+fi
+LC_ALL=C comm -23 "$FOUND" "$FOUND.known" > "$FOUND.new" || true
+LC_ALL=C comm -13 "$FOUND" "$FOUND.known" > "$FOUND.stale" || true
+
+n_all=$(wc -l < "$FOUND" | tr -d ' ')
+n_new=$(wc -l < "$FOUND.new" | tr -d ' ')
+n_stale=$(wc -l < "$FOUND.stale" | tr -d ' ')
+
+if [ "$JSON" -eq 1 ]; then
+  printf '{"schema":"development-semantics-check/v1","found":%s,"regressions":[' "$n_all"
+  sep=''
+  while IFS= read -r l; do [ -n "$l" ] && { printf '%s"%s"' "$sep" "$l"; sep=','; }; done < "$FOUND.new"
+  printf '],"stale_baseline":['
+  sep=''
+  while IFS= read -r l; do [ -n "$l" ] && { printf '%s"%s"' "$sep" "$l"; sep=','; }; done < "$FOUND.stale"
+  printf ']}\n'
+else
+  echo "development-semantics-check: $n_all finding(s); $n_new not in the baseline, $n_stale baseline line(s) matching nothing"
+  if [ "$n_new" -gt 0 ]; then
+    echo
+    echo "REGRESSION — a development semantic outside the canonical runtime:"
+    sed 's/^/  FAIL  /' "$FOUND.new"
+    echo
+    echo "  A mutating development command belongs to the capability registry"
+    echo "  (apps/majordomus-cli/src/capability/builtin/), and a Cockpit tree renders"
+    echo "  capability output rather than reading the layer. See ADR 0040 and"
+    echo "  docs/DEVELOPMENT_RUNTIME.md; the rule is"
+    echo "  project.development-semantics-are-canonical@1."
+  fi
+  if [ "$n_stale" -gt 0 ]; then
+    echo
+    echo "STALE — baseline entries that match nothing (remove them; the ratchet tightened):"
+    sed 's/^/  ----  /' "$FOUND.stale"
+  fi
+fi
+
+[ "$n_new" -eq 0 ] && [ "$n_stale" -eq 0 ] || exit 10
+exit 0

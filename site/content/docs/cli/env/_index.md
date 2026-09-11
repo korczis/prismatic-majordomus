@@ -4,7 +4,7 @@ description = "What this checkout is: the project, version control, the toolchai
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 46
+weight = 49
 [extra]
 route = "/docs/cli/env/"
 command = "majordomus env"

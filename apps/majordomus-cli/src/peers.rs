@@ -17,6 +17,15 @@
 //! agent working in the same checkout can read it and choose not to collide — the
 //! coordination is between the peers, not imposed by the server.
 //!
+//! A peer may hold **several claims at once**, each under a name of its own. One connection
+//! is not always one piece of work: a session that fans work out to subagents shares its MCP
+//! session with all of them, so they are one peer here while being several workers there.
+//! Before named claims the board could hold only the last thing said, and each announcement
+//! silently erased the one before it — the other peers stopped being told about scope that
+//! was still very much being written. Announcing under the same name updates that claim;
+//! announcing under a new one leaves the others standing; announcing without a name is the
+//! peer's one unnamed claim, which is all a single session ever needs.
+//!
 //! ```
 //! use majordomus_cli::peers::{ClientInfo, PeerBoard, Transport};
 //!
@@ -125,15 +134,35 @@ pub enum Transport {
     Http,
 }
 
-/// What a peer said it is working on.
+/// One claim a peer has made: what it is working on, and where.
+///
+/// A peer may hold several. The `name` is what tells them apart and what makes announcing
+/// again an update rather than a second claim: announce under the same name and the claim
+/// is replaced, announce under a new one and the peer now holds both. A peer that never
+/// names anything holds exactly one claim, the unnamed one, which is what a single session
+/// announcing about itself has always had.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Announcement {
+    /// What this claim is called, when the peer named it. Absent for a peer's unnamed claim.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
     /// One line: the task or intent, in the peer's words.
     pub intent: String,
     /// Repository-relative paths the peer expects to touch; informational, never enforced here.
     pub scope: Vec<String>,
     /// When it was announced, RFC 3339, UTC.
     pub at: String,
+}
+
+/// The key a claim is held under: its name, or the empty string for the unnamed claim.
+///
+/// Private, because the emptiness is an implementation of "unnamed" and not something a
+/// reader of the board should ever see: [`Announcement::name`] is `None` there.
+fn claim_key(name: Option<&str>) -> String {
+    name.map(str::trim)
+        .filter(|n| !n.is_empty())
+        .unwrap_or("")
+        .to_string()
 }
 
 /// One peer as the board lists it.
@@ -153,8 +182,20 @@ pub struct Peer {
     /// went away is kept and listed with `attached: false`: what it said it was working on
     /// outlives the connection that said it, because the work does.
     pub attached: bool,
+    /// Every claim this peer holds, in name order, the unnamed one first. Empty for a peer
+    /// that has announced nothing.
+    ///
+    /// One connection may be doing several things at once — a session that fans work out to
+    /// subagents shares its MCP session with all of them — and before this field the board
+    /// could hold only the last thing said, so each announcement silently erased the one
+    /// before it and the other peers stopped seeing the rest of the scope.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub claims: Vec<Announcement>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// Its announcement, when it made one.
+    /// The most recently made of [`Peer::claims`], for a reader that wants one line rather
+    /// than all of them. Derived from `claims` and never a second account of it: a peer
+    /// holding one claim reports the same thing in both, which is what every peer that does
+    /// not name its claims reports.
     pub announcement: Option<Announcement>,
 }
 
@@ -193,6 +234,16 @@ pub struct Announced {
     /// Every other peer whose claimed scope meets this one. Empty is the ordinary case.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub overlaps: Vec<Overlap>,
+    /// Paths the claim this one replaced had, and this one does not.
+    ///
+    /// Announcing under a name a peer already used replaces that claim, which is what an
+    /// update is. When the replacement is narrower, the peer has just stopped claiming
+    /// ground it held a moment ago, and the other peers stop being warned off it. That is
+    /// occasionally what was meant and is otherwise a mistake nobody would ever see, so it
+    /// is said here, at the moment it happens, rather than left to be discovered in a
+    /// collision later. Empty is the ordinary case.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub released: Vec<String>,
 }
 
 /// Do two claimed paths meet? Equal, or one inside the other.
@@ -226,7 +277,22 @@ struct Slot {
     connected_at: SystemTime,
     last_seen: Instant,
     departed: bool,
-    announcement: Option<Announcement>,
+    /// The peer's claims, by [`claim_key`]. A `BTreeMap` rather than a `Vec` because
+    /// announcing under a name a peer already used must replace that claim and not append
+    /// a second one — idempotence is the map, not a search.
+    claims: BTreeMap<String, Announcement>,
+}
+
+impl Slot {
+    /// The claims, in name order, the unnamed one first.
+    fn claims(&self) -> Vec<Announcement> {
+        self.claims.values().cloned().collect()
+    }
+
+    /// The most recently made claim, which is what a one-line reader wants.
+    fn latest(&self) -> Option<Announcement> {
+        self.claims.values().max_by(|a, b| a.at.cmp(&b.at)).cloned()
+    }
 }
 
 /// How many departed peers the board keeps. A retained announcement is the whole point —
@@ -277,7 +343,7 @@ impl PeerBoard {
                 connected_at: SystemTime::now(),
                 last_seen: Instant::now(),
                 departed: false,
-                announcement: None,
+                claims: BTreeMap::new(),
             },
         );
         PeerId::new(seq)
@@ -298,7 +364,11 @@ impl PeerBoard {
         }
     }
 
-    /// Record what a peer is working on, and answer with who else is on that ground.
+    /// Record a peer's unnamed claim, and answer with who else is on that ground.
+    ///
+    /// This is the whole of what a session announcing about itself needs, and it is what
+    /// announcing has always meant: the peer holds one claim and each announcement replaces
+    /// it. A connection doing several things at once wants [`PeerBoard::announce_claim`].
     ///
     /// `None` when the id is not attached. The overlap is computed here, under the same
     /// lock as the write, so that two peers announcing at once cannot both be told they
@@ -310,42 +380,96 @@ impl PeerBoard {
     /// let a = board.attach(Transport::Stdio);
     /// let b = board.attach(Transport::Http);
     /// board.announce(&a, "the ordering rule", vec!["apps/majordomus-cli/src".into()]);
-    /// let second = board.announce(&b, "the release model", vec!["apps/majordomus-cli/src/release".into()]).unwrap();
+    /// let second = board
+    ///     .announce(&b, "the release model", vec!["apps/majordomus-cli/src/release".into()])
+    ///     .unwrap();
     /// assert_eq!(second.overlaps.len(), 1, "a claim inside another claim is an overlap");
     /// assert_eq!(second.overlaps[0].intent, "the ordering rule");
+    ///
+    /// // announcing again, narrower: the peer is told what it stopped claiming
+    /// let again = board.announce(&b, "the release model", vec![]).unwrap();
+    /// assert_eq!(again.released, vec!["apps/majordomus-cli/src/release".to_string()]);
     /// ```
     pub fn announce(&self, id: &PeerId, intent: &str, scope: Vec<String>) -> Option<Announced> {
+        self.announce_claim(id, None, intent, scope)
+    }
+
+    /// The same, naming which of the peer's claims this is.
+    ///
+    /// `None` is [`PeerBoard::announce`]: the peer's one unnamed claim. Every other value
+    /// is a claim of its own, held beside the rest until it is announced again under the
+    /// same name.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let fleet = board.attach(Transport::Http);
+    /// board.announce(&fleet, "the whole mandate", vec!["docs".into()]);
+    /// let named = board
+    ///     .announce_claim(&fleet, Some("worker-a"), "the guard", vec![".claude".into()])
+    ///     .unwrap();
+    /// assert_eq!(named.peer.claims.len(), 2, "the unnamed claim still stands");
+    /// assert_eq!(named.peer.claims[1].name.as_deref(), Some("worker-a"));
+    /// ```
+    pub fn announce_claim(
+        &self,
+        id: &PeerId,
+        claim: Option<&str>,
+        intent: &str,
+        scope: Vec<String>,
+    ) -> Option<Announced> {
         let mut slots = self.lock();
         if !slots.contains_key(&id.seq()) {
             return None;
         }
         let overlaps = overlaps_against(&slots, id.seq(), &scope);
+        let key = claim_key(claim);
         let s = slots.get_mut(&id.seq())?;
         s.last_seen = Instant::now();
         s.departed = false;
-        s.announcement = Some(Announcement {
-            intent: intent.to_string(),
-            scope,
-            at: rfc3339(SystemTime::now()),
-        });
+        let released = s
+            .claims
+            .get(&key)
+            .map(|old| {
+                old.scope
+                    .iter()
+                    .filter(|held| !scope.iter().any(|now| claims_meet(held, now)))
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default();
+        s.claims.insert(
+            key.clone(),
+            Announcement {
+                name: (!key.is_empty()).then(|| key.clone()),
+                intent: intent.to_string(),
+                scope,
+                at: rfc3339(SystemTime::now()),
+            },
+        );
         Some(Announced {
             peer: peer(id.seq(), s),
             overlaps,
+            released,
         })
     }
 
-    /// Every pair of peers whose claims meet, each pair once, in peer order.
+    /// Every pair of claims that meet, each pair once, in peer order.
+    ///
+    /// A peer holding several claims is asked about each of them, so two connections that
+    /// collide on two different claims are reported twice, with the intent of each. That is
+    /// the answer a reader wants: it is not "these two sessions overlap" but "these two
+    /// pieces of work overlap", and the intent says which.
     pub fn overlaps(&self) -> Vec<Overlap> {
         let slots = self.lock();
         let mut out = Vec::new();
         for (seq, s) in slots.iter() {
-            let Some(mine) = &s.announcement else {
-                continue;
-            };
-            for o in overlaps_against(&slots, *seq, &mine.scope) {
-                // each pair once: report it against the later peer only
-                if o.peer.seq() < *seq {
-                    out.push(o);
+            for mine in s.claims.values() {
+                for o in overlaps_against(&slots, *seq, &mine.scope) {
+                    // each pair once: report it against the later peer only
+                    if o.peer.seq() < *seq {
+                        out.push(o);
+                    }
                 }
             }
         }
@@ -381,7 +505,7 @@ impl PeerBoard {
     pub fn detach(&self, id: &PeerId) {
         let mut slots = self.lock();
         match slots.get_mut(&id.seq()) {
-            Some(s) if s.announcement.is_some() => s.departed = true,
+            Some(s) if !s.claims.is_empty() => s.departed = true,
             _ => {
                 slots.remove(&id.seq());
                 return;
@@ -425,12 +549,20 @@ impl PeerBoard {
         }
         peers
             .iter()
-            .map(|p| match &p.announcement {
-                Some(a) => format!(
-                    "{} {} ({:?}: {})",
-                    p.id, p.client.name, p.transport, a.intent
-                ),
-                None => format!("{} {} ({:?})", p.id, p.client.name, p.transport),
+            .map(|p| {
+                if p.claims.is_empty() {
+                    return format!("{} {} ({:?})", p.id, p.client.name, p.transport);
+                }
+                let claims = p
+                    .claims
+                    .iter()
+                    .map(|a| match &a.name {
+                        Some(n) => format!("{n}: {}", a.intent),
+                        None => a.intent.clone(),
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" | ");
+                format!("{} {} ({:?}: {claims})", p.id, p.client.name, p.transport)
             })
             .collect::<Vec<_>>()
             .join("; ")
@@ -449,38 +581,42 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         connected_at: rfc3339(s.connected_at),
         last_seen_seconds_ago: s.last_seen.elapsed().as_secs(),
         attached: !s.departed,
-        announcement: s.announcement.clone(),
+        claims: s.claims(),
+        announcement: s.latest(),
     }
 }
 
-/// Every peer other than `seq` whose announced scope meets `scope`.
+/// Every claim of every peer other than `seq` whose scope meets `scope`.
+///
+/// One entry per claim, not per peer: a connection holding two claims that both meet this
+/// scope is two entries, because they are two pieces of work and the reader needs the
+/// intent of each to know which one to talk about.
 fn overlaps_against(slots: &BTreeMap<u64, Slot>, seq: u64, scope: &[String]) -> Vec<Overlap> {
     let mut out = Vec::new();
     for (other, s) in slots.iter() {
         if *other == seq {
             continue;
         }
-        let Some(theirs) = &s.announcement else {
-            continue;
-        };
-        let mut paths: Vec<OverlapPath> = Vec::new();
-        for mine in scope {
-            for path in &theirs.scope {
-                if claims_meet(mine, path) {
-                    paths.push(OverlapPath {
-                        yours: mine.clone(),
-                        theirs: path.clone(),
-                    });
+        for theirs in s.claims.values() {
+            let mut paths: Vec<OverlapPath> = Vec::new();
+            for mine in scope {
+                for path in &theirs.scope {
+                    if claims_meet(mine, path) {
+                        paths.push(OverlapPath {
+                            yours: mine.clone(),
+                            theirs: path.clone(),
+                        });
+                    }
                 }
             }
-        }
-        if !paths.is_empty() {
-            out.push(Overlap {
-                peer: PeerId::new(*other),
-                attached: !s.departed,
-                intent: theirs.intent.clone(),
-                paths,
-            });
+            if !paths.is_empty() {
+                out.push(Overlap {
+                    peer: PeerId::new(*other),
+                    attached: !s.departed,
+                    intent: theirs.intent.clone(),
+                    paths,
+                });
+            }
         }
     }
     out
@@ -736,5 +872,171 @@ mod tests {
     fn announcing_as_a_peer_that_is_not_on_the_board_answers_nothing() {
         let board = PeerBoard::new();
         assert!(board.announce(&PeerId::new(99), "hello", vec![]).is_none());
+    }
+
+    /// One MCP session is not always one piece of work. A client that fans work out to
+    /// subagents shares its session with them, so they arrive here as one peer; before named
+    /// claims each announcement replaced the last, and the board ended up describing
+    /// whichever worker spoke most recently while the rest of the scope silently stopped
+    /// being claimed. This is that failure, and its absence.
+    #[test]
+    fn a_peer_holds_every_claim_it_names() {
+        let board = PeerBoard::new();
+        let fleet = board.attach(Transport::Http);
+
+        board.announce(&fleet, "the whole mandate", vec!["docs".into()]);
+        board.announce_claim(
+            &fleet,
+            Some("worker-a"),
+            "the guard",
+            vec![".claude".into()],
+        );
+        let third = board
+            .announce_claim(&fleet, Some("worker-b"), "the cockpit", vec!["site".into()])
+            .unwrap();
+
+        assert_eq!(
+            third.peer.claims.len(),
+            3,
+            "three claims, not the newest one"
+        );
+        let intents: Vec<&str> = third
+            .peer
+            .claims
+            .iter()
+            .map(|c| c.intent.as_str())
+            .collect();
+        assert_eq!(
+            intents,
+            vec!["the whole mandate", "the guard", "the cockpit"],
+            "the unnamed claim first, then the named ones in name order"
+        );
+        assert_eq!(
+            third.peer.claims[0].name, None,
+            "the unnamed claim is unnamed"
+        );
+        assert_eq!(third.peer.claims[1].name.as_deref(), Some("worker-a"));
+
+        // and every one of them is still ground another peer is warned off
+        let other = board.attach(Transport::Http);
+        let answer = board
+            .announce(
+                &other,
+                "unrelated",
+                vec![".claude/hooks".into(), "site".into()],
+            )
+            .unwrap();
+        let met: Vec<&str> = answer.overlaps.iter().map(|o| o.intent.as_str()).collect();
+        assert_eq!(
+            met,
+            vec!["the guard", "the cockpit"],
+            "a claim of a peer is an overlap whichever of its claims it is"
+        );
+    }
+
+    /// Announcing under a name the peer already used is an update, not a second claim — and
+    /// when the update is narrower the peer is told which ground it just stopped holding,
+    /// because nobody would otherwise ever see it happen.
+    #[test]
+    fn re_announcing_a_name_updates_it_and_says_what_it_released() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Http);
+        board.announce_claim(
+            &peer,
+            Some("worker-a"),
+            "the guard",
+            vec![".claude".into(), "scripts/ci".into()],
+        );
+        let again = board
+            .announce_claim(
+                &peer,
+                Some("worker-a"),
+                "the guard, narrowed",
+                vec![".claude".into()],
+            )
+            .unwrap();
+
+        assert_eq!(
+            again.peer.claims.len(),
+            1,
+            "the same name is the same claim"
+        );
+        assert_eq!(again.peer.claims[0].intent, "the guard, narrowed");
+        assert_eq!(
+            again.released,
+            vec!["scripts/ci".to_string()],
+            "the path it stopped claiming is named at the moment it stops"
+        );
+
+        // widening releases nothing, and neither does re-stating the same scope
+        let wider = board
+            .announce_claim(
+                &peer,
+                Some("worker-a"),
+                "the guard, wider",
+                vec![".claude".into(), "scripts/ci".into()],
+            )
+            .unwrap();
+        assert!(wider.released.is_empty());
+        let same = board
+            .announce_claim(
+                &peer,
+                Some("worker-a"),
+                "the guard, wider",
+                vec![".claude".into(), "scripts/ci".into()],
+            )
+            .unwrap();
+        assert!(
+            same.released.is_empty(),
+            "announcing the same thing releases nothing"
+        );
+
+        // a claim inside the one it replaces is not a release: the ground is still held
+        let inside = board
+            .announce_claim(
+                &peer,
+                Some("worker-a"),
+                "deeper",
+                vec![".claude/hooks".into()],
+            )
+            .unwrap();
+        assert_eq!(
+            inside.released,
+            vec!["scripts/ci".to_string()],
+            ".claude is still covered by .claude/hooks; scripts/ci is not covered by anything"
+        );
+    }
+
+    /// A peer that announced anything at all is kept on the board when its session ends —
+    /// including one whose only claims are named ones, which the departure test's unnamed
+    /// announcement would not have caught.
+    #[test]
+    fn a_peer_with_only_named_claims_outlives_its_session() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Http);
+        board.announce_claim(&peer, Some("worker-a"), "the guard", vec![".claude".into()]);
+        board.detach(&peer);
+        let listed = board.list();
+        assert_eq!(
+            listed.len(),
+            1,
+            "what it said it was working on outlives the socket"
+        );
+        assert!(!listed[0].attached);
+        assert_eq!(listed[0].claims.len(), 1);
+        assert_eq!(listed[0].claims[0].name.as_deref(), Some("worker-a"));
+    }
+
+    /// The one-line summary an `initialize` hands a new client names every claim, so a client
+    /// arriving into a fleet of fanned-out workers sees all of them and not just the last.
+    #[test]
+    fn the_summary_names_every_claim() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Http);
+        board.announce(&peer, "the whole mandate", vec![]);
+        board.announce_claim(&peer, Some("worker-a"), "the guard", vec![]);
+        let line = board.summary();
+        assert!(line.contains("the whole mandate"), "{line}");
+        assert!(line.contains("worker-a: the guard"), "{line}");
     }
 }

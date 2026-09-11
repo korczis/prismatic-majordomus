@@ -60,6 +60,17 @@ pub struct AnnounceInput {
     /// read it to avoid a collision; nothing here enforces it.
     #[serde(default)]
     pub scope: Vec<String>,
+    /// Which of this peer's claims this is, when the peer holds more than one.
+    ///
+    /// One MCP session is not always one piece of work — a client that fans work out to
+    /// subagents shares its session with all of them — and without a name every
+    /// announcement replaces the last, so the board ends up describing whichever worker
+    /// spoke most recently and the rest of the scope silently stops being claimed. Name a
+    /// claim and it stands beside the others; announce under that name again and it is
+    /// updated. Leave it out and this is the peer's one unnamed claim, which is what a
+    /// single session announcing about itself wants.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub claim: Option<String>,
 }
 
 impl BenchmarkCases for AnnounceInput {
@@ -69,6 +80,7 @@ impl BenchmarkCases for AnnounceInput {
             AnnounceInput {
                 intent: "benchmark: announcing".into(),
                 scope: vec!["apps/majordomus-cli".into()],
+                claim: None,
             },
         )]
     }
@@ -91,8 +103,13 @@ fn peers_announce(ctx: &Context, input: AnnounceInput) -> Result<Announced, Capa
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
+    let claim = input
+        .claim
+        .as_deref()
+        .map(str::trim)
+        .filter(|c| !c.is_empty());
     ctx.peers
-        .announce(caller, input.intent.trim(), scope)
+        .announce_claim(caller, claim, input.intent.trim(), scope)
         .ok_or_else(|| CapabilityError::Internal(format!("peer {caller} is not attached")))
 }
 
@@ -119,7 +136,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "peers.announce",
                 kind: CapabilityKind::Command,
                 title: "Announce what this peer is working on",
-                description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+                description: "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
                 input: AnnounceInput,
                 output: Announced,
                 stability: Stability::BehaviorallyVerified,

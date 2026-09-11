@@ -13,6 +13,15 @@ something. A field that loses one of those is removed, not kept "for later".
 
 Conventions:
 - YAML for anything a person edits. JSON Lines for anything only Majordomus appends to.
+- The YAML is a subset, and a subset is a narrowing: no flow maps, no folding, no
+  anchors. A file this repository accepts must therefore also parse as YAML for
+  everyone else, because `share/` is vendored into repositories whose tools are not
+  ours. Three constructs read as intended to our flatteners and are syntax errors to
+  every other parser: an unquoted `: ` inside a plain scalar, a plain scalar opening
+  on an indicator character (`` ` ``, `%`, `@`), and nested brackets inside a flow
+  sequence. Quote the scalar — both engines strip matching surrounding quotes, so the
+  value does not move. `test/cases/128_the_subset_is_a_subset.sh` asks an independent
+  parser and fails when a canonical file leaves the language.
 - Unknown keys are errors at every level.
 - Identity fields (`repository_id`, `branch`, `head`, `working_tree`, `changed_files`)
   are always computed from git at write time. A worker or a person supplying them is an

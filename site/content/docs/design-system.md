@@ -1,7 +1,7 @@
 +++
 title = "The design system"
 description = "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong"
-weight = 44
+weight = 46
 [extra]
 source = "docs/DESIGN_SYSTEM.md"
 +++
