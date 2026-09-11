@@ -223,7 +223,7 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <p class="mb-6 flex items-center gap-3"><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-<span class="font-mono text-sm text-body-subtle">136 claims</span></p>
+<span class="font-mono text-sm text-body-subtle">141 claims</span></p>
 <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://majordomus.dev/guarantees/distribution-canonical-model/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</h2>
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/distribution/mod.rs · test/cases/84_distribution_model.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/install-command-is-derived/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
@@ -496,7 +496,17 @@
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">The dataset the website is rendered from carries only fields an allow-list names, so a feature&#39;s prose, a machine path or a field nobody allowed cannot reach a published page</h2>
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/site.rs · apps/majordomus-cli/tests/product.rs</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/landing-page-is-a-projection/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">The website&#39;s homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed</h2>
-    <p class="mt-2 break-all font-mono text-xs text-body-subtle">site/templates/index.html · test/cases/12_site_build.sh</p></a></li></ul>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">site/templates/index.html · test/cases/12_site_build.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/evidence-proof-is-an-execution/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A claim&#39;s proof is an execution that was recorded with the commit it ran against, not a test path that resolves</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/evidence/mod.rs · test/cases/124_evidence.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/evidence-currency-is-not-collapsed/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/evidence/mod.rs · test/cases/124_evidence.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/evidence-partial-run-preserves-the-rest/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Recording one test&#39;s result never erases the evidence recorded for any other test</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/evidence/ledger.rs · test/cases/124_evidence.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/evidence-navigates-both-ways/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Every claim names the test that proves it and every test names the claims it proves, from one derivation</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/evidence.rs · test/cases/124_evidence.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/evidence-unsupported-guarantee-is-reported/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">scripts/evidence-check · test/cases/124_evidence.sh</p></a></li></ul>
 <p class="mt-8 text-sm"><a href="https://majordomus.dev/guarantees/" class="font-medium text-fg-brand underline">← The full matrix</a></p>
 
 </div>
@@ -515,7 +525,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3959ffe795a73c8af69917b3e3a2437d708a54c0" class="font-mono underline">3959ffe</a> · inputs <span class="font-mono">4d836d8a2fe3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

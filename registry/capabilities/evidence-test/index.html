@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evidence.test — Prismatic Majordomus</title>
+<meta name="description" content="One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/evidence-test/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="evidence.test — Prismatic Majordomus">
+<meta property="og:description" content="One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/evidence-test/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.5.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.5.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Method<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Method</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://majordomus.dev/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://majordomus.dev/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-9" data-dropdown-toggle="nav-menu-9" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-9" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-9">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">evidence.test</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">evidence.test</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">One test — by identity or by the path a claim names it with — with its latest execution, whether its source still hashes to what that execution recorded, the command that runs it again, and every claim that names it. This is the reverse of evidence.claim and reads the same derivation, so the two directions cannot disagree.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/evidence/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module evidence</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#evidence</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#tests</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#verification</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#provenance</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_evidence_test</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/#op-evidence-test" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/evidence/test</a> <span class="text-xs text-body-subtle">operationId evidence.test</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus evidence proves</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · EvidenceTestInput</h3><p class="mt-1 break-words text-sm text-body">One test, by its stable identity or by the path a claim names it with.
+
+Both spellings reach the same test. `docs/CLAIMS.yaml` names a path, the ledger keys on
+an identity, and a caller holding one of them should not have to know the other; the
+handler resolves a path to the identity and reads the same derivation either way.
+
+```
+use majordomus_cli::capability::builtin::evidence::EvidenceTestInput;
+use majordomus_cli::evidence::{Runner, TestId};
+
+let by_path: EvidenceTestInput =
+    serde_json::from_str(r#&quot;{&quot;test&quot;: &quot;test/cases/84_distribution_model.sh&quot;}&quot;#).unwrap();
+let id = TestId::of(&amp;by_path.test).unwrap();
+assert_eq!(id.as_string(), &quot;suite:84_distribution_model&quot;);
+assert_eq!(id.runner, Runner::Suite);
+
+// an identity is not a path: `TestId::of` reads paths, and the handler parses the
+// `&lt;runner&gt;:&lt;name&gt;` form itself
+let by_id: EvidenceTestInput = serde_json::from_str(r#&quot;{&quot;test&quot;: &quot;crate:why&quot;}&quot;#).unwrap();
+assert!(TestId::of(&amp;by_id.test).is_none());
+```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">test</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">`suite:84_distribution_model`, `crate:why`, or the path itself
+(`test/cases/84_distribution_model.sh`), which is resolved to the same identity.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;One test, by its stable identity or by the path a claim names it with.\n\nBoth spellings reach the same test. `docs/CLAIMS.yaml` names a path, the ledger keys on\nan identity, and a caller holding one of them should not have to know the other; the\nhandler resolves a path to the identity and reads the same derivation either way.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceTestInput;\nuse majordomus_cli::evidence::{Runner, TestId};\n\nlet by_path: EvidenceTestInput =\n    serde_json::from_str(r#\&quot;{\&quot;test\&quot;: \&quot;test/cases/84_distribution_model.sh\&quot;}\&quot;#).unwrap();\nlet id = TestId::of(&amp;by_path.test).unwrap();\nassert_eq!(id.as_string(), \&quot;suite:84_distribution_model\&quot;);\nassert_eq!(id.runner, Runner::Suite);\n\n// an identity is not a path: `TestId::of` reads paths, and the handler parses the\n// `&lt;runner&gt;:&lt;name&gt;` form itself\nlet by_id: EvidenceTestInput = serde_json::from_str(r#\&quot;{\&quot;test\&quot;: \&quot;crate:why\&quot;}\&quot;#).unwrap();\nassert!(TestId::of(&amp;by_id.test).is_none());\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;`suite:84_distribution_model`, `crate:why`, or the path itself\n(`test/cases/84_distribution_model.sh`), which is resolved to the same identity.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;test&quot;
+  ],
+  &quot;title&quot;: &quot;EvidenceTestInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · TestEvidence</h3><p class="mt-1 break-words text-sm text-body">One test, and what it proves.
+
+The other direction of [`ClaimEvidence`], read from the test&#39;s end: its identity, its
+source and whether that source is still the one that ran, the command that runs it
+again, and every claim that names it.
+
+```
+use majordomus_cli::capability::builtin::evidence::TestEvidence;
+use majordomus_cli::evidence::TestId;
+
+let id = TestId::of(&quot;apps/majordomus-cli/tests/why.rs&quot;).unwrap();
+let answer = TestEvidence {
+    test: id.as_string(),
+    runner: id.runner,
+    source: id.source(),
+    present: true,
+    reproduce: id.reproduce(),
+    execution: None,
+    digest_matches: None,
+    proves: Vec::new(),
+};
+assert_eq!(answer.test, &quot;crate:why&quot;);
+assert_eq!(answer.reproduce, &quot;cargo test --test why&quot;);
+
+// nothing recorded: the two provenance keys are absent rather than null, so &quot;no
+// execution&quot; cannot be read as an execution that said nothing
+let json = serde_json::to_value(&amp;answer).unwrap();
+assert!(json.get(&quot;execution&quot;).is_none() &amp;&amp; json.get(&quot;digest_matches&quot;).is_none());
+assert_eq!(json[&quot;proves&quot;], serde_json::json!([]));
+```</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">digest_matches</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Whether the test&#39;s source still hashes to what the execution recorded. `None` when
+there is no execution, or the source is not there to hash.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">execution</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The latest recorded execution, when there is one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">present</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether that source is in this checkout.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">proves</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Every claim that names this test, with the state each is in.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reproduce</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The command that runs this one test.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">runner</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Which runner owns it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Its own source, repository-relative.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">test</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The stable identity: `suite:&lt;case&gt;` or `crate:&lt;binary&gt;`.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;EvidenceClaimProof&quot;: {
+      &quot;description&quot;: &quot;One claim, joined to whatever the repository actually recorded about it.\n\nThe claim&#39;s own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \&quot;scope-integrity\&quot;.into(),\n    claim: \&quot;a commit outside the task&#39;s scope is refused\&quot;.into(),\n    status: \&quot;guaranteed\&quot;.into(),\n    source: Some(\&quot;docs/SCOPE.md\&quot;.into()),\n    implementation: Some(\&quot;apps/majordomus-cli/src/scope.rs\&quot;.into()),\n    test_path: Some(\&quot;test/cases/07_scope.sh\&quot;.into()),\n    test: Some(\&quot;suite:07_scope\&quot;.into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\&quot;bash test/run.sh 07_scope\&quot;.into()),\n};\n\nlet json = serde_json::to_value(&amp;proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \&quot;no file changed\&quot; from \&quot;the server did not say\&quot;\nassert_eq!(json[\&quot;changed\&quot;], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\&quot;execution\&quot;).is_none());\nassert_eq!(json[\&quot;meaning\&quot;], serde_json::json!(ProofState::NotRun.meaning()));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;changed&quot;: {
+          &quot;description&quot;: &quot;The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \&quot;no files changed\&quot; from \&quot;the server did not say\&quot;\nis a client reading two different answers as one.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The claim sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;execution&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The execution the state was derived from, when there is one.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s id, as `docs/CLAIMS.yaml` spells it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;implementation&quot;: {
+          &quot;description&quot;: &quot;The file that implements it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state, in one sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reproduce&quot;: {
+          &quot;description&quot;: &quot;The command that produces the proof again, when a runner owns the test.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The document that defines the behaviour.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProofState&quot;,
+          &quot;description&quot;: &quot;What the repository can say about the proof.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;The status the claim declares: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;The test&#39;s stable identity, when a runner owns it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;test_path&quot;: {
+          &quot;description&quot;: &quot;The path the claim names as its test, verbatim.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;claim&quot;,
+        &quot;status&quot;,
+        &quot;state&quot;,
+        &quot;meaning&quot;,
+        &quot;changed&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EvidenceExecution&quot;: {
+      &quot;description&quot;: &quot;One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \&quot;0\&quot;.repeat(40),\n    working_tree: \&quot;clean\&quot;.into(),\n    digest: digest_of(b\&quot;fn main() {}\&quot;),\n    at: \&quot;2026-09-11T00:00:00Z\&quot;.into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&amp;serde_json::to_string(&amp;run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \&quot;crate:why\&quot;);\nassert_eq!(back.command, \&quot;cargo test --test why\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When it was recorded, RFC 3339, UTC.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;command&quot;: {
+          &quot;description&quot;: &quot;The exact command that runs this one test again.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;commit&quot;: {
+          &quot;description&quot;: &quot;The full commit id the run was made against.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;digest&quot;: {
+          &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` of the test&#39;s own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;origin&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceOrigin&quot;,
+          &quot;description&quot;: &quot;Where the run happened.&quot;
+        },
+        &quot;outcome&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceOutcome&quot;,
+          &quot;description&quot;: &quot;What it said.&quot;
+        },
+        &quot;runner&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceRunner&quot;,
+          &quot;description&quot;: &quot;Which runner produced it.&quot;
+        },
+        &quot;seconds&quot;: {
+          &quot;description&quot;: &quot;How long it took, in whole seconds.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;The test&#39;s own source, repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;test&quot;: {
+          &quot;description&quot;: &quot;The test, in [`TestId::as_string`] form.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;working_tree&quot;: {
+          &quot;description&quot;: &quot;`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;test&quot;,
+        &quot;runner&quot;,
+        &quot;source&quot;,
+        &quot;outcome&quot;,
+        &quot;seconds&quot;,
+        &quot;commit&quot;,
+        &quot;working_tree&quot;,
+        &quot;digest&quot;,
+        &quot;at&quot;,
+        &quot;origin&quot;,
+        &quot;command&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EvidenceOrigin&quot;: {
+      &quot;description&quot;: &quot;Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\&quot;CI\&quot;), Some(Origin::Ci));\nassert_eq!(Origin::parse(\&quot;local\&quot;), Some(Origin::Local));\n// naming the provider is the adapter&#39;s business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\&quot;github-actions\&quot;).is_none());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;Someone ran it on their own machine.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;A continuous-integration run.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;release&quot;,
+          &quot;description&quot;: &quot;A release run.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;EvidenceOutcome&quot;: {
+      &quot;description&quot;: &quot;What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \&quot;this did not run\&quot; and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\&quot;ok\&quot;).proves());\nassert!(!Outcome::parse(\&quot;timeout\&quot;).proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \&quot;it declined\&quot; and \&quot;the harness broke\&quot; are different bugs\nassert_eq!(Outcome::parse(\&quot;skipped\&quot;), Outcome::Skip);\nassert_eq!(Outcome::parse(\&quot;nonsense\&quot;), Outcome::Error);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;pass&quot;,
+          &quot;description&quot;: &quot;It passed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;fail&quot;,
+          &quot;description&quot;: &quot;It failed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;skip&quot;,
+          &quot;description&quot;: &quot;It declined to run and said so (an unmet precondition the case reports itself).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;timeout&quot;,
+          &quot;description&quot;: &quot;The bound fired before it finished.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;The harness could not run it at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;EvidenceRunner&quot;: {
+      &quot;description&quot;: &quot;Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\&quot;test/cases/07_scope.sh\&quot;).unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\&quot;test/lib.sh\&quot;).is_none());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;suite&quot;,
+          &quot;description&quot;: &quot;A behavioural case under `test/cases/`, run by `test/run.sh`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;crate&quot;,
+          &quot;description&quot;: &quot;An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ProofState&quot;: {
+      &quot;description&quot;: &quot;What the repository can say about one claim&#39;s proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven &lt; ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;proven&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing has changed since it — the diff against the execution&#39;s\nown commit is empty but for the ledger. Proof of the tree in front of you.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inputs_unchanged&quot;,
+          &quot;description&quot;: &quot;A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A passing run, but something this claim names has changed since. The proof is older\nthan its subject.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;failing&quot;,
+          &quot;description&quot;: &quot;The latest run of this claim&#39;s test did not pass.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_run&quot;,
+          &quot;description&quot;: &quot;The claim names a test a runner owns, and no run of it has ever been recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unrunnable&quot;,
+          &quot;description&quot;: &quot;The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;no_test&quot;,
+          &quot;description&quot;: &quot;The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;One test, and what it proves.\n\nThe other direction of [`ClaimEvidence`], read from the test&#39;s end: its identity, its\nsource and whether that source is still the one that ran, the command that runs it\nagain, and every claim that names it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::TestEvidence;\nuse majordomus_cli::evidence::TestId;\n\nlet id = TestId::of(\&quot;apps/majordomus-cli/tests/why.rs\&quot;).unwrap();\nlet answer = TestEvidence {\n    test: id.as_string(),\n    runner: id.runner,\n    source: id.source(),\n    present: true,\n    reproduce: id.reproduce(),\n    execution: None,\n    digest_matches: None,\n    proves: Vec::new(),\n};\nassert_eq!(answer.test, \&quot;crate:why\&quot;);\nassert_eq!(answer.reproduce, \&quot;cargo test --test why\&quot;);\n\n// nothing recorded: the two provenance keys are absent rather than null, so \&quot;no\n// execution\&quot; cannot be read as an execution that said nothing\nlet json = serde_json::to_value(&amp;answer).unwrap();\nassert!(json.get(\&quot;execution\&quot;).is_none() &amp;&amp; json.get(\&quot;digest_matches\&quot;).is_none());\nassert_eq!(json[\&quot;proves\&quot;], serde_json::json!([]));\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;digest_matches&quot;: {
+      &quot;description&quot;: &quot;Whether the test&#39;s source still hashes to what the execution recorded. `None` when\nthere is no execution, or the source is not there to hash.&quot;,
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;execution&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/EvidenceExecution&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The latest recorded execution, when there is one.&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;Whether that source is in this checkout.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;proves&quot;: {
+      &quot;description&quot;: &quot;Every claim that names this test, with the state each is in.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EvidenceClaimProof&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reproduce&quot;: {
+      &quot;description&quot;: &quot;The command that runs this one test.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;runner&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/EvidenceRunner&quot;,
+      &quot;description&quot;: &quot;Which runner owns it.&quot;
+    },
+    &quot;source&quot;: {
+      &quot;description&quot;: &quot;Its own source, repository-relative.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;The stable identity: `suite:&lt;case&gt;` or `crate:&lt;binary&gt;`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;test&quot;,
+    &quot;runner&quot;,
+    &quot;source&quot;,
+    &quot;present&quot;,
+    &quot;reproduce&quot;,
+    &quot;proves&quot;
+  ],
+  &quot;title&quot;: &quot;TestEvidence&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-evidence-test-direct-first-test" class="break-all text-fg-brand hover:underline inline-block py-1">first-test</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-evidence-test-mcp-first-test" class="break-all text-fg-brand hover:underline inline-block py-1">first-test</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-evidence-test-http-first-test" class="break-all text-fg-brand hover:underline inline-block py-1">first-test</a><br></td></tr></tbody>
+      </table>
+    </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims implemented beside it</h2>
+<p class="mt-2 max-w-3xl text-sm text-body">Attached by the file that implements each claim; every one links to its page with the implementation and the test that proves it.</p>
+<ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/evidence-navigates-both-ways/" class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+ <span class="ms-1 break-all font-mono text-xs text-body-subtle">evidence-navigates-both-ways</span></span><span class="text-sm text-heading">Every claim names the test that proves it and every test names the claims it proves, from one derivation</span><span class="mt-auto break-all font-mono text-xs text-body-subtle">test: test/cases/124_evidence.sh</span></a></li></ul>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">evidence.test</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/evidence.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::evidence</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EvidenceTestInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">TestEvidence</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/evidence.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/evidence.md</a></dd></div><div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">test/cases/124_evidence.sh</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">8a178e3c9b5c49bbb13eeabd28f3ac4c4c7b9056911d15887814d12cd5dfa3ff</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://majordomus.dev/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
