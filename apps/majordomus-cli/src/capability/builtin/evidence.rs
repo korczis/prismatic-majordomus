@@ -22,6 +22,36 @@
 //! to whoever runs the executable and to nobody over a network. Declaring it as a capability
 //! rather than as a hand-written command is what keeps it inside the registry, the command
 //! graph and the generated reference instead of in the inventory of commands nothing derives.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::evidence;
+//!
+//! let m = evidence::module();
+//! assert_eq!(m.id.as_str(), "evidence");
+//! let ids: Vec<&str> = m
+//!     .capabilities
+//!     .iter()
+//!     .map(|e| e.capability.id.as_str())
+//!     .collect();
+//! assert_eq!(
+//!     ids,
+//!     ["evidence.report", "evidence.claim", "evidence.test", "evidence.record"]
+//! );
+//!
+//! // the recorder writes a tracked file, so it is offered to whoever runs the executable
+//! // and to nobody over a network; that is what keeps the server read-only
+//! let record = m
+//!     .capabilities
+//!     .iter()
+//!     .find(|e| e.capability.id.as_str() == "evidence.record")
+//!     .unwrap();
+//! assert!(record.capability.exposure.mcp.is_none());
+//! assert!(record.capability.exposure.http.is_none());
+//! assert_eq!(
+//!     record.capability.exposure.cli.as_ref().unwrap().path,
+//!     ["evidence".to_string(), "record".to_string()]
+//! );
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -48,6 +78,25 @@ pub const EVIDENCE_URI: &str = "majordomus://evidence";
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// Which part of the matrix to answer for.
+///
+/// Every field narrows, and they compose; saying nothing asks for the whole matrix. A key
+/// nothing recognises is refused rather than dropped, because a misspelled filter that read
+/// as "no filter" would answer a question nobody asked and look like a clean one.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceReportInput;
+/// use majordomus_cli::evidence::ProofState;
+///
+/// let all: EvidenceReportInput = serde_json::from_str("{}").unwrap();
+/// assert!(all.state.is_none() && all.status.is_none() && !all.findings_only);
+///
+/// let narrowed: EvidenceReportInput =
+///     serde_json::from_str(r#"{"state": "stale", "findings_only": true}"#).unwrap();
+/// assert_eq!(narrowed.state, Some(ProofState::Stale));
+/// assert!(narrowed.findings_only);
+///
+/// assert!(serde_json::from_str::<EvidenceReportInput>(r#"{"states": "stale"}"#).is_err());
+/// ```
 pub struct EvidenceReportInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Only claims in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,
@@ -81,7 +130,22 @@ impl BenchmarkCases for EvidenceReportInput {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// One claim of the matrix.
+/// One claim of the matrix, named by the id it is declared under.
+///
+/// The id is required, and there is no spelling of this input that means "every claim" —
+/// that question belongs to `evidence.report`. An id the matrix does not declare is a
+/// not-found from the handler rather than an empty proof.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;
+///
+/// let input: EvidenceClaimInput =
+///     serde_json::from_str(r#"{"claim": "evidence-both-directions"}"#).unwrap();
+/// assert_eq!(input.claim, "evidence-both-directions");
+///
+/// // no id is a usage error, never a request for all of them
+/// assert!(serde_json::from_str::<EvidenceClaimInput>("{}").is_err());
+/// ```
 pub struct EvidenceClaimInput {
     /// The claim id, as `docs/CLAIMS.yaml` spells it.
     pub claim: String,
@@ -105,6 +169,26 @@ impl BenchmarkCases for EvidenceClaimInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// One test, by its stable identity or by the path a claim names it with.
+///
+/// Both spellings reach the same test. `docs/CLAIMS.yaml` names a path, the ledger keys on
+/// an identity, and a caller holding one of them should not have to know the other; the
+/// handler resolves a path to the identity and reads the same derivation either way.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceTestInput;
+/// use majordomus_cli::evidence::{Runner, TestId};
+///
+/// let by_path: EvidenceTestInput =
+///     serde_json::from_str(r#"{"test": "test/cases/84_distribution_model.sh"}"#).unwrap();
+/// let id = TestId::of(&by_path.test).unwrap();
+/// assert_eq!(id.as_string(), "suite:84_distribution_model");
+/// assert_eq!(id.runner, Runner::Suite);
+///
+/// // an identity is not a path: `TestId::of` reads paths, and the handler parses the
+/// // `<runner>:<name>` form itself
+/// let by_id: EvidenceTestInput = serde_json::from_str(r#"{"test": "crate:why"}"#).unwrap();
+/// assert!(TestId::of(&by_id.test).is_none());
+/// ```
 pub struct EvidenceTestInput {
     /// `suite:84_distribution_model`, `crate:why`, or the path itself
     /// (`test/cases/84_distribution_model.sh`), which is resolved to the same identity.
@@ -133,6 +217,26 @@ impl BenchmarkCases for EvidenceTestInput {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// A run to record into the ledger.
+///
+/// Paths to what the runners already wrote, not a run to perform: the recorder reads a
+/// report, stamps each result with the provenance the run did not carry, and merges it.
+/// Both reports are optional and may be given together; an absent origin is `local`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;
+///
+/// let input: EvidenceRecordInput =
+///     serde_json::from_str(r#"{"suite": "tmp/report.tsv"}"#).unwrap();
+/// assert_eq!(input.suite.as_deref(), Some("tmp/report.tsv"));
+/// assert!(input.crate_output.is_none() && input.origin.is_none());
+///
+/// // what was not given is not written back as null: the shape a client reads is the
+/// // shape it sent
+/// assert_eq!(
+///     serde_json::to_string(&input).unwrap(),
+///     r#"{"suite":"tmp/report.tsv"}"#
+/// );
+/// ```
 pub struct EvidenceRecordInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The runner's TSV report: `MJ_TEST_REPORT=<file> bash test/run.sh`.
@@ -158,6 +262,43 @@ impl BenchmarkCases for EvidenceRecordInput {
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 /// One claim with everything the repository can say about its proof, and the way back out
 /// to the test that carries it.
+///
+/// The proof is flattened in, so a client reads one claim rather than an evidence wrapper
+/// around one; the executions and the other claims the same test proves sit beside it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::ClaimEvidence;
+/// use majordomus_cli::evidence::ClaimProof;
+///
+/// let proof: ClaimProof = serde_json::from_value(serde_json::json!({
+///     "id": "evidence-both-directions",
+///     "claim": "a claim and its test answer for each other",
+///     "status": "guaranteed",
+///     "source": null,
+///     "implementation": null,
+///     "test_path": "test/cases/84_distribution_model.sh",
+///     "test": "suite:84_distribution_model",
+///     "state": "not_run",
+///     "meaning": "no run of this test has been recorded",
+///     "execution": null,
+///     "changed": [],
+///     "reproduce": "bash test/run.sh 84_distribution_model"
+/// }))
+/// .unwrap();
+///
+/// let answer = ClaimEvidence {
+///     proof,
+///     executions: Vec::new(),
+///     also_proves: vec!["evidence-record-is-not-networked".to_string()],
+/// };
+/// let json = serde_json::to_value(&answer).unwrap();
+/// assert_eq!(json["id"], "evidence-both-directions");
+/// assert!(json.get("proof").is_none(), "the claim is flattened in, not nested");
+/// assert_eq!(json["also_proves"], serde_json::json!(["evidence-record-is-not-networked"]));
+/// // a list even where the ledger keeps one: retention is a decision that may change,
+/// // and a client that read a bare object would break when it did
+/// assert_eq!(json["executions"], serde_json::json!([]));
+/// ```
 pub struct ClaimEvidence {
     /// The claim, joined to its evidence.
     #[serde(flatten)]
@@ -174,6 +315,35 @@ pub struct ClaimEvidence {
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
 /// One test, and what it proves.
+///
+/// The other direction of [`ClaimEvidence`], read from the test's end: its identity, its
+/// source and whether that source is still the one that ran, the command that runs it
+/// again, and every claim that names it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::TestEvidence;
+/// use majordomus_cli::evidence::TestId;
+///
+/// let id = TestId::of("apps/majordomus-cli/tests/why.rs").unwrap();
+/// let answer = TestEvidence {
+///     test: id.as_string(),
+///     runner: id.runner,
+///     source: id.source(),
+///     present: true,
+///     reproduce: id.reproduce(),
+///     execution: None,
+///     digest_matches: None,
+///     proves: Vec::new(),
+/// };
+/// assert_eq!(answer.test, "crate:why");
+/// assert_eq!(answer.reproduce, "cargo test --test why");
+///
+/// // nothing recorded: the two provenance keys are absent rather than null, so "no
+/// // execution" cannot be read as an execution that said nothing
+/// let json = serde_json::to_value(&answer).unwrap();
+/// assert!(json.get("execution").is_none() && json.get("digest_matches").is_none());
+/// assert_eq!(json["proves"], serde_json::json!([]));
+/// ```
 pub struct TestEvidence {
     /// The stable identity: `suite:<case>` or `crate:<binary>`.
     pub test: String,
@@ -197,7 +367,32 @@ pub struct TestEvidence {
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
-/// What a recording did.
+/// What a recording did: how much of the run reached the ledger, and under what provenance.
+///
+/// The recorder decides nothing, and this report says so. A result no runner in this
+/// repository owns is named in `unknown` rather than written under a guessed identity, and
+/// a failure is recorded like a pass — the ledger holds what happened, so `passed` is a
+/// count and never a filter.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::RecordReport;
+///
+/// let report = RecordReport {
+///     recorded: 3,
+///     passed: 2,
+///     commit: "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f".to_string(),
+///     working_tree: "clean".to_string(),
+///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
+///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
+/// };
+/// // the failing test is one of the three recorded, not a fourth thing that was dropped
+/// assert_eq!(report.recorded - report.passed, 1);
+/// assert!(report.ledger.starts_with(".ai/repo/"));
+///
+/// let json = serde_json::to_value(&report).unwrap();
+/// assert_eq!(json["unknown"].as_array().unwrap().len(), 1);
+/// assert_eq!(json["working_tree"], "clean");
+/// ```
 pub struct RecordReport {
     /// How many executions were written.
     pub recorded: usize,
@@ -287,10 +482,8 @@ fn test(ctx: &Context, input: EvidenceTestInput) -> Result<TestEvidence, Capabil
                 "crate" => evidence::Runner::Crate,
                 _ => return None,
             };
-            Some(evidence::TestId {
-                runner,
-                name: name.to_string(),
-            })
+            // the same rule the path form applies: one grammar, not two that disagree
+            evidence::TestId::named(runner, name)
         })
         .ok_or_else(|| {
             CapabilityError::InvalidInput(format!(
@@ -356,6 +549,38 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
 // ---------------------------------------------------------------- the module
 
 /// The `evidence` module: claims joined to the runs recorded against them.
+///
+/// The declaration is the whole of what the four capabilities are — every projection, from
+/// the HTTP route to the MCP tool to the word a person types, is read out of what it
+/// returns. Nothing here caches: the ledger is a file that changes outside this process,
+/// and a cached answer would be exactly the stale evidence the module exists to name.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::evidence::module;
+///
+/// let m = module();
+/// let report = m
+///     .capabilities
+///     .iter()
+///     .find(|e| e.capability.id.as_str() == "evidence.report")
+///     .unwrap();
+/// assert_eq!(report.capability.exposure.http.as_ref().unwrap().path, "/api/v1/evidence");
+/// assert_eq!(
+///     report.capability.exposure.mcp.as_ref().unwrap().tool.as_deref(),
+///     Some("majordomus_evidence")
+/// );
+///
+/// // `evidence.test` is spelled `majordomus evidence proves`: `test` is a word the fish
+/// // completion adapter refuses, and the identity is not the command
+/// let test = m
+///     .capabilities
+///     .iter()
+///     .find(|e| e.capability.id.as_str() == "evidence.test")
+///     .unwrap();
+/// assert_eq!(test.capability.exposure.cli.as_ref().unwrap().path[1], "proves");
+///
+/// assert!(m.capabilities.iter().all(|e| !e.capability.cache.is_enabled()));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "evidence",
@@ -476,7 +701,11 @@ mod tests {
         assert_eq!(ids, want);
         for (e, (id, tool, path, cli)) in m.capabilities.iter().zip(expected) {
             let x = &e.capability.exposure;
-            assert_eq!(x.mcp.as_ref().and_then(|m| m.tool.as_deref()), *tool, "{id}");
+            assert_eq!(
+                x.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                *tool,
+                "{id}"
+            );
             assert_eq!(x.http.as_ref().map(|h| h.path.as_str()), *path, "{id}");
             assert_eq!(
                 x.cli.as_ref().map(|c| c.path.clone()),
@@ -499,7 +728,10 @@ mod tests {
             let id = e.capability.id.as_str().to_string();
             let x = &e.capability.exposure;
             if id == "evidence.record" {
-                assert!(!e.capability.kind.is_read_only(), "{id} is declared a query");
+                assert!(
+                    !e.capability.kind.is_read_only(),
+                    "{id} is declared a query"
+                );
                 assert!(x.mcp.is_none(), "{id} is reachable over MCP");
                 assert!(x.http.is_none(), "{id} is reachable over HTTP");
                 assert_eq!(
@@ -513,7 +745,10 @@ mod tests {
                 );
             } else {
                 assert!(e.capability.kind.is_read_only(), "{id} writes");
-                assert!(x.mcp.is_some() && x.http.is_some(), "{id} lost a projection");
+                assert!(
+                    x.mcp.is_some() && x.http.is_some(),
+                    "{id} lost a projection"
+                );
             }
         }
     }
