@@ -36,6 +36,7 @@ pub mod index;
 pub mod lease;
 pub mod logging;
 pub mod mcp;
+pub mod mesh;
 pub mod metadata;
 pub mod model;
 pub mod order;
