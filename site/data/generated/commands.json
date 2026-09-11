@@ -3282,6 +3282,147 @@
         ]
       },
       "doc_md": "\nTime every public command of the registry, cold and warm, and compare with the baseline.\n\nThe targets are the public commands of `share/commands.yaml` and nothing else: a command\nadded to the registry is a target from that moment, and the harness never times itself.\nEach target runs in a disposable repository. When the tool's own suite is present, the\nscenario is the first scenario of the command's fixture under `test/fixtures/commands/`,\nso what is timed is what the site demonstrates and the suite executes; otherwise it is the\nbare command in an installed repository.\n\nA read-only command is run once cold, then `benchmark.warmup` times unsampled, then\n`benchmark.samples` times warm, all in one repository. A command that mutates state gets a\nfresh repository per sample, so every sample of it is cold and it has no warm\ndistribution. A sample is the wall-clock time of the child process alone; setup is never\ninside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,\np99, maximum, mean and standard deviation; nothing is averaged away.\n\n- `bench` times every target; `bench <command>...` only those.\n- `--list` prints the targets with their class and scenario, `--format json` as data.\n- `--samples <n>`, `--warmup <n>` override the policy for this run only; `--mode cold|warm|both`\n  selects the distributions recorded.\n- `--format json` prints the run as one document with schema `majordomus/benchmark-result/v1`:\n  the run id, the commit and whether the tree was dirty, the platform, the profile and one\n  result per target and mode.\n- Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,\n  one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored\n  by git, never a baseline.\n- `--write-baseline` writes the run under `.ai/repo/benchmarks/rust/`, as\n  `baseline.<platform>.json` — one baseline per platform, since a duration compared\n  across machines compares the machines — with schema\n  `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It\n  refuses a dirty tree without `--force`, because a baseline records a commit.\n- `--check` compares the run with the baseline under `benchmark.regression`: for each target\n  and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a\n  `FAIL` naming the metric, both values and the threshold, and the command exits `10`. No\n  baseline exits `12`; a baseline with another schema is not comparable and exits `15`.\n\n`MJ_TIMING=1` on any command prints the phases and work counters of that run on stderr,\nwhich is how a slow target is taken apart.\n\n```\n$ majordomus bench --list\ncommand      class                      scenario\ninit         generated-output-mutating  fixture fresh\ndoctor       read-only                  fixture not-wired\n...\n\n$ majordomus bench doctor version\ncommand      mode  status       n     p50     p95     p99     max  scenario\ndoctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired\ndoctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired\nversion      cold  ok           1      41      41      41      41  fixture prints\nversion      warm  ok          10      38      45      45      45  fixture prints\n\nslowest by warm p95 (cold where warm does not apply):\n  doctor       p95 2790 ms\n  version      p95 45 ms\n\nrun b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json\n```\n\nExit `2` on a usage error, `12` when a named target is not a public command of the\nregistry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit\ncode it produced), `10`, `12` and `15` from `--check` as above."
+    },
+    {
+      "name": "archive",
+      "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+      "category": "system",
+      "stage": "inspect",
+      "class": "generated-output-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]",
+      "demo": "archive-profiles",
+      "note": "The file set is the git index, so nothing untracked — no build output, no cache, no .ai/local/ — can travel. What a profile drops beyond that is declared in share/archive.yaml; a profile that drops the derived paths reads .gitattributes rather than keeping a second list of generated paths. Every entry's mode is taken from the index and written into the archive's manifest, and the restore script inside the archive puts the modes back and builds a local git index, because a copy whose scripts are not executable fails checks for reasons of its own.",
+      "reads": [
+        "share/archive.yaml",
+        ".ai/repo/archive.yaml",
+        ".gitattributes"
+      ],
+      "writes": [
+        "tmp/archives/"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12,
+        13,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "130_archive"
+        ],
+        "negative": [
+          "130_archive"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "archive",
+        "title": "A snapshot that can be read, or checked, somewhere else",
+        "intro": "A repository leaves the machine more often than it looks: to a model that will read all of it, to a reviewer who cannot clone, to an auditor who must run the gates on a copy. What travels is the git index and only the git index, so nothing untracked can escape; what is dropped beyond that is a profile in share/archive.yaml, and a profile that drops the generated projections reads .gitattributes rather than keeping a second list of them.",
+        "scenarios": [
+          {
+            "id": "profiles",
+            "title": "What snapshots there are, and which is the default",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--list"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "context",
+                "\\(default\\)",
+                "audit",
+                "governance"
+              ]
+            },
+            "explain": "The profiles are declarations, not flags: each one names a different reader, and the summary says what that reader is owed. A repository may add its own in .ai/repo/archive.yaml without changing the tool.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "dry-run",
+            "title": "What would travel, and why the rest would not",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--dry-run"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "profile context",
+                "tracked file",
+                "nothing written"
+              ]
+            },
+            "explain": "The count of tracked files is stated beside the count archived, so a selection that quietly matched nothing cannot look like a selection that matched everything. Every file left out is attributed to the rule that left it out.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "written",
+            "title": "Written, and then read back",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--format",
+              "tar.gz"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "OK   archive",
+                "read back",
+                "wrote tmp/archives/"
+              ]
+            },
+            "explain": "The archive is opened again before the command returns. The entry count must match what was staged, and executables that went in must come back out — the failure this command exists to answer is a container that silently discarded the file modes.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "no-such-profile",
+            "title": "Asking for a snapshot nobody declared",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "nosuch"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no profile",
+                "archive --list"
+              ]
+            },
+            "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist rather than listing it here.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nTake a snapshot of the tracked tree that can be read, or checked, somewhere else.\n\nA repository leaves the machine more often than it looks: to a language model that will\nread all of it at once, to a reviewer who cannot clone, to an auditor who has to run the\ngates on a copy. Those were being done by hand, differently each time, and the hand-made\nversion got two things wrong that only surface at the far end.\n\n**What travels is the git index and only the git index.** Nothing untracked is ever\narchived — not the build output, not the caches, and not `.ai/local/`, which is this\ncheckout's own state and is never shared. That is one rule instead of a list of\nexclusions, and it is what makes the command safe to point at a repository nobody has\nread.\n\n**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the\nprofiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that\ndrops the derived paths reads `.gitattributes` — every projection in this repository is\nalready marked `merge=derived` there, for a different reason — rather than keeping a\nsecond list of generated paths, which is the duplication\n`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.\n\n**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix\nmode, and the unpacked tree then has no executable in it: every script fails to run, and\nat the far end that is indistinguishable from the repository being broken. So the mode of\neach entry is read from the index — the authority, not the working tree — written into\n`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back\nand creates a local git index, because the checks here enumerate the repository with\n`git ls-files` and without an index they examine nothing and report that nothing is wrong.\n\nEvery archive is read back before the command returns: the entry count must match what\nwas staged, and if executables went in and none came out, that is a failure rather than a\nsurprise for the recipient.\n\n**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,\n`.gitattributes`, and the git index.\n**Writes:** `tmp/archives/` — or wherever `--out` says.\n\n**The profiles shipped:**\n\n| Profile | For |\n|---|---|\n| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |\n| `audit` | Running the repository's own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |\n| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |\n\n```\n$ majordomus archive --dry-run\narchive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content\n         left out: 10 (binary)\n         left out: 443 (derived)\n         left out: 5 (excluded)\n         nothing written (--dry-run)\n\n$ majordomus archive\nOK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable\narchive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content\n         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)\n```\n\n**Behaviour:**\n- `--list` prints the profiles with what each one is for, and marks the default.\n- `--dry-run` reports the selection and the reason every file was left out, and writes\n  nothing.\n- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.\n- An existing output file is refused with `15` unless `--force` is given, so an archive\n  someone is uploading cannot be replaced underneath them.\n- A path the index names and the working tree no longer has is counted and reported, not\n  silently absent.\n- `--json` emits one object with the counts, the reasons and the path.\n\nExit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,\n`10` when a profile selects none of the tracked files, `15` when the output exists, `13`\nwhen the container could not be written or does not read back as what went in."
     }
   ]
 }
