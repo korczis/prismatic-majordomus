@@ -3,6 +3,16 @@
 //! is the mesh not working" has an answer that names the broken link instead of a
 //! shrug. Read-only toward the repository; the sockets it probes are ephemeral and
 //! closed before it answers.
+//!
+//! ```
+//! use majordomus_cli::mesh::doctor::doctor;
+//!
+//! // No declaration is the default posture, and the self-check says so and runs on.
+//! let report = doctor(None);
+//! let declaration = report.checks.iter().find(|c| c.check == "declaration").unwrap();
+//! assert!(declaration.ok);
+//! assert!(declaration.detail.contains("default posture"));
+//! ```
 
 use std::net::{Ipv4Addr, UdpSocket};
 
@@ -35,6 +45,7 @@ pub struct MeshDoctorReport {
 }
 
 /// Run the self-check against the declaration as parsed (or its absence, or its error).
+/// Deterministic order, no second node required, no repository writes.
 pub fn doctor(declaration: Option<Result<MeshConfig, MeshError>>) -> MeshDoctorReport {
     let mut checks = Vec::new();
 
@@ -70,7 +81,9 @@ pub fn doctor(declaration: Option<Result<MeshConfig, MeshError>>) -> MeshDoctorR
         None => checks.push(DoctorCheck {
             check: "identity".into(),
             ok: false,
-            detail: "no HOME and no XDG_STATE_HOME: this process has nowhere to keep a node identity".into(),
+            detail:
+                "no HOME and no XDG_STATE_HOME: this process has nowhere to keep a node identity"
+                    .into(),
         }),
         Some(path) if path.is_file() => match NodeIdentity::load_or_create(&path) {
             Ok(identity) => checks.push(DoctorCheck {
@@ -171,7 +184,9 @@ fn multicast_probe(group_text: &str) -> Result<(), MeshError> {
         .parse()
         .map_err(|_| MeshError::Provider(format!("'{group_text}' is not an IPv4 group")))?;
     if !group.is_multicast() {
-        return Err(MeshError::Provider(format!("{group} is not a multicast address")));
+        return Err(MeshError::Provider(format!(
+            "{group} is not a multicast address"
+        )));
     }
     let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0))
         .map_err(|e| MeshError::Provider(format!("cannot bind: {e}")))?;
@@ -197,7 +212,10 @@ fn protocol_probe() -> Result<String, String> {
     if parsed.adv.node_id() != Some(identity.public.node_id.clone()) {
         return Err("the parsed envelope proves a different node".into());
     }
-    Ok(format!("sign → encode ({} bytes) → parse → verify", bytes.len()))
+    Ok(format!(
+        "sign → encode ({} bytes) → parse → verify",
+        bytes.len()
+    ))
 }
 
 #[cfg(test)]
@@ -210,16 +228,31 @@ mod tests {
         let names: Vec<&str> = report.checks.iter().map(|c| c.check.as_str()).collect();
         assert_eq!(
             names,
-            vec!["declaration", "identity", "udp", "multicast", "broadcast", "protocol"]
+            vec![
+                "declaration",
+                "identity",
+                "udp",
+                "multicast",
+                "broadcast",
+                "protocol"
+            ]
         );
-        let protocol = report.checks.iter().find(|c| c.check == "protocol").unwrap();
+        let protocol = report
+            .checks
+            .iter()
+            .find(|c| c.check == "protocol")
+            .unwrap();
         assert!(protocol.ok, "{}", protocol.detail);
     }
 
     #[test]
     fn a_broken_declaration_is_one_failed_check_not_a_crash() {
         let report = doctor(Some(Err(MeshError::Config("bad".into()))));
-        let declaration = report.checks.iter().find(|c| c.check == "declaration").unwrap();
+        let declaration = report
+            .checks
+            .iter()
+            .find(|c| c.check == "declaration")
+            .unwrap();
         assert!(!declaration.ok);
         assert!(!report.ok);
     }

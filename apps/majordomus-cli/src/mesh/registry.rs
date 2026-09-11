@@ -7,6 +7,21 @@
 //! In memory, bounded, and gone with the process, like the peer board beside it: a
 //! discovered node is an observation about *now*, and persisting it would only let the
 //! registry disagree with the network.
+//!
+//! ```
+//! use majordomus_cli::mesh::identity::NodeIdentity;
+//! use majordomus_cli::mesh::protocol::advertise;
+//! use majordomus_cli::mesh::registry::{MeshRegistry, MeshSource};
+//! use majordomus_cli::mesh::trust::TrustState;
+//!
+//! let registry = MeshRegistry::new();
+//! let node = NodeIdentity::ephemeral().unwrap();
+//! let heard = advertise(&node, 1, &[], &[], &[], "docs");
+//! registry.observe(&heard.adv, node.public.node_id.clone(), TrustState::Observed,
+//!     MeshSource::Synthetic, "docs", serde_json::Value::Null);
+//! assert_eq!(registry.list().len(), 1);
+//! assert_eq!(registry.tallies().accepted, 1);
+//! ```
 
 use std::collections::BTreeMap;
 use std::sync::Mutex;
@@ -31,9 +46,11 @@ pub const RETENTION: Duration = Duration::from_secs(15 * 60);
 
 /// Where an observation came from. A record accumulates these; provenance is the answer
 /// to "why do I see this node".
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
-pub enum Source {
+pub enum MeshSource {
     /// A multicast datagram.
     UdpMulticast,
     /// A broadcast datagram.
@@ -44,14 +61,14 @@ pub enum Source {
     Synthetic,
 }
 
-impl Source {
-    /// The source's wire word.
+impl MeshSource {
+    /// The source's wire word, as sightings and status listings carry it.
     pub fn as_str(&self) -> &'static str {
         match self {
-            Source::UdpMulticast => "udp_multicast",
-            Source::UdpBroadcast => "udp_broadcast",
-            Source::Rendezvous => "rendezvous",
-            Source::Synthetic => "synthetic",
+            MeshSource::UdpMulticast => "udp_multicast",
+            MeshSource::UdpBroadcast => "udp_broadcast",
+            MeshSource::Rendezvous => "rendezvous",
+            MeshSource::Synthetic => "synthetic",
         }
     }
 }
@@ -71,7 +88,7 @@ pub enum Presence {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Sighting {
     /// The provider kind that saw it.
-    pub source: Source,
+    pub source: MeshSource,
     /// The network path, as text: a sender address, an interface, a rendezvous URL.
     pub path: String,
     /// When, RFC 3339.
@@ -160,7 +177,7 @@ impl Default for MeshRegistry {
 }
 
 impl MeshRegistry {
-    /// An empty registry.
+    /// An empty registry; it fills only through [`MeshRegistry::observe`].
     pub fn new() -> Self {
         MeshRegistry {
             inner: Mutex::new(Inner {
@@ -190,7 +207,7 @@ impl MeshRegistry {
         adv: &Advertisement,
         node_id: NodeId,
         trust: TrustState,
-        source: Source,
+        source: MeshSource,
         path: &str,
         raw: serde_json::Value,
     ) -> bool {
@@ -361,7 +378,14 @@ mod tests {
     fn node() -> (NodeIdentity, Advertisement) {
         let dir = tempfile::tempdir().unwrap();
         let id = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
-        let env = advertise(&id, 1, &["127.0.0.1:8741".into()], &["http".into()], &[], "0.5.0");
+        let env = advertise(
+            &id,
+            1,
+            &["127.0.0.1:8741".into()],
+            &["http".into()],
+            &[],
+            "0.5.0",
+        );
         (id, env.adv)
     }
 
@@ -371,20 +395,51 @@ mod tests {
         let (id, adv) = node();
         let mut second = adv.clone();
         second.seq = 2;
-        assert!(registry.observe(&adv, id.public.node_id.clone(), TrustState::Observed, Source::UdpMulticast, "192.168.1.5:7741", serde_json::Value::Null));
-        assert!(registry.observe(&second, id.public.node_id.clone(), TrustState::Observed, Source::Rendezvous, "http://127.0.0.1:8741", serde_json::Value::Null));
+        assert!(registry.observe(
+            &adv,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::UdpMulticast,
+            "192.168.1.5:7741",
+            serde_json::Value::Null
+        ));
+        assert!(registry.observe(
+            &second,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::Rendezvous,
+            "http://127.0.0.1:8741",
+            serde_json::Value::Null
+        ));
         let listed = registry.list();
         assert_eq!(listed.len(), 1, "one node, not one per source");
-        let sources: Vec<Source> = listed[0].sources.iter().map(|s| s.source).collect();
-        assert_eq!(sources, vec![Source::UdpMulticast, Source::Rendezvous]);
+        let sources: Vec<MeshSource> = listed[0].sources.iter().map(|s| s.source).collect();
+        assert_eq!(
+            sources,
+            vec![MeshSource::UdpMulticast, MeshSource::Rendezvous]
+        );
     }
 
     #[test]
     fn a_replay_is_dropped_and_counted() {
         let registry = MeshRegistry::new();
         let (id, adv) = node();
-        assert!(registry.observe(&adv, id.public.node_id.clone(), TrustState::Observed, Source::UdpMulticast, "a", serde_json::Value::Null));
-        assert!(!registry.observe(&adv, id.public.node_id.clone(), TrustState::Observed, Source::UdpMulticast, "a", serde_json::Value::Null));
+        assert!(registry.observe(
+            &adv,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::UdpMulticast,
+            "a",
+            serde_json::Value::Null
+        ));
+        assert!(!registry.observe(
+            &adv,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::UdpMulticast,
+            "a",
+            serde_json::Value::Null
+        ));
         assert_eq!(registry.tallies().replayed, 1);
     }
 
@@ -392,14 +447,28 @@ mod tests {
     fn a_restart_keeps_the_record_and_counts() {
         let registry = MeshRegistry::new();
         let (id, adv) = node();
-        registry.observe(&adv, id.public.node_id.clone(), TrustState::Observed, Source::UdpMulticast, "a", serde_json::Value::Null);
+        registry.observe(
+            &adv,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::UdpMulticast,
+            "a",
+            serde_json::Value::Null,
+        );
         // The same node key, a new instance: sequence numbering starts over.
         let dir = tempfile::tempdir().unwrap();
         let restarted = NodeIdentity::load_or_create(&dir.path().join("other.json")).unwrap();
         let mut again = adv.clone();
         again.inst = restarted.public.instance_id.clone();
         again.seq = 1;
-        assert!(registry.observe(&again, id.public.node_id.clone(), TrustState::Observed, Source::UdpMulticast, "a", serde_json::Value::Null));
+        assert!(registry.observe(
+            &again,
+            id.public.node_id.clone(),
+            TrustState::Observed,
+            MeshSource::UdpMulticast,
+            "a",
+            serde_json::Value::Null
+        ));
         let listed = registry.list();
         assert_eq!(listed.len(), 1, "a restart is not a second node");
         assert_eq!(listed[0].restarts, 1);
@@ -409,12 +478,26 @@ mod tests {
     fn the_table_is_bounded_and_trusted_nodes_survive_pressure() {
         let registry = MeshRegistry::new();
         let (id, adv) = node();
-        registry.observe(&adv, id.public.node_id.clone(), TrustState::Trusted("allowlist".into()), Source::Synthetic, "t", serde_json::Value::Null);
+        registry.observe(
+            &adv,
+            id.public.node_id.clone(),
+            TrustState::Trusted("allowlist".into()),
+            MeshSource::Synthetic,
+            "t",
+            serde_json::Value::Null,
+        );
         for i in 0..(MAX_NODES + 10) {
             let (other_id, mut other) = node();
             other.seq = 1;
             other.name = format!("n{i}");
-            registry.observe(&other, other_id.public.node_id.clone(), TrustState::Observed, Source::Synthetic, "s", serde_json::Value::Null);
+            registry.observe(
+                &other,
+                other_id.public.node_id.clone(),
+                TrustState::Observed,
+                MeshSource::Synthetic,
+                "s",
+                serde_json::Value::Null,
+            );
         }
         let listed = registry.list();
         assert!(listed.len() <= MAX_NODES);
@@ -430,7 +513,14 @@ mod tests {
         let registry = MeshRegistry::new();
         for _ in 0..5 {
             let (id, adv) = node();
-            registry.observe(&adv, id.public.node_id.clone(), TrustState::Observed, Source::Synthetic, "s", serde_json::Value::Null);
+            registry.observe(
+                &adv,
+                id.public.node_id.clone(),
+                TrustState::Observed,
+                MeshSource::Synthetic,
+                "s",
+                serde_json::Value::Null,
+            );
         }
         let listed = registry.list();
         let mut ids: Vec<String> = listed.iter().map(|r| r.node_id.to_string()).collect();

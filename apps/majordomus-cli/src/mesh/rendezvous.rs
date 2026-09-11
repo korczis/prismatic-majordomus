@@ -5,6 +5,17 @@
 //! local registry stays the only truth; a rendezvous is one more source of observations,
 //! its failure stretches the retry and stops nothing else, and its answers are signed
 //! end-to-end: a poisoned rendezvous can withhold nodes, it cannot invent one.
+//!
+//! ```
+//! use majordomus_cli::mesh::rendezvous::RendezvousProvider;
+//! use majordomus_cli::mesh::provider::{MeshProvider, MeshProviderState};
+//!
+//! // Before the manager starts it, a provider is stopped; with no endpoints declared
+//! // there is nothing to register with, and starting it says so.
+//! let provider = RendezvousProvider::new(vec![], 60);
+//! assert_eq!(provider.id(), "rendezvous");
+//! assert_eq!(provider.status().state, MeshProviderState::Stopped);
+//! ```
 
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
@@ -12,10 +23,10 @@ use std::time::Duration;
 
 use super::protocol::Envelope;
 use super::provider::{
-    jitter_ms, Counters, MeshProvider, Observation, ProviderContext, ProviderState,
+    jitter_ms, Counters, MeshProvider, MeshProviderState, Observation, ProviderContext,
     ProviderStatus,
 };
-use super::registry::Source;
+use super::registry::MeshSource;
 use super::MeshError;
 
 /// The HTTP route `mesh.register` is served on. Named once, here: the capability
@@ -46,22 +57,24 @@ pub struct RegisterAnswer {
     pub candidates: Vec<Envelope>,
 }
 
-/// The provider.
+/// The rendezvous provider: the declared endpoints, one registration thread each,
+/// and the counters their status reports. Constructed by the manager from the declaration.
 pub struct RendezvousProvider {
     endpoints: Vec<String>,
     interval: Duration,
     counters: Arc<Counters>,
-    state: Arc<Mutex<(ProviderState, Option<String>)>>,
+    state: Arc<Mutex<(MeshProviderState, Option<String>)>>,
 }
 
 impl RendezvousProvider {
-    /// A provider over its endpoints.
+    /// A provider over its endpoints; nothing is contacted until the manager calls
+    /// `start`, and each endpoint then gets its own bounded, backed-off loop.
     pub fn new(endpoints: Vec<String>, interval_seconds: u64) -> Self {
         RendezvousProvider {
             endpoints,
             interval: Duration::from_secs(interval_seconds),
             counters: Arc::new(Counters::default()),
-            state: Arc::new(Mutex::new((ProviderState::Stopped, None))),
+            state: Arc::new(Mutex::new((MeshProviderState::Stopped, None))),
         }
     }
 }
@@ -75,11 +88,11 @@ impl MeshProvider for RendezvousProvider {
         if self.endpoints.is_empty() {
             let reason = "no endpoints declared".to_string();
             *self.state.lock().expect("rendezvous state") =
-                (ProviderState::Stopped, Some(reason.clone()));
+                (MeshProviderState::Stopped, Some(reason.clone()));
             return Err(MeshError::Provider(reason));
         }
         *self.state.lock().expect("rendezvous state") = (
-            ProviderState::Running,
+            MeshProviderState::Running,
             Some(format!("{} endpoint(s)", self.endpoints.len())),
         );
         // One thread per endpoint: endpoints are independent sources, and one that
@@ -103,7 +116,7 @@ impl MeshProvider for RendezvousProvider {
                                     if let Ok(bytes) = serde_json::to_vec(&candidate) {
                                         counters.received.fetch_add(1, Ordering::Relaxed);
                                         let _ = tx.send(Observation {
-                                            source: Source::Rendezvous,
+                                            source: MeshSource::Rendezvous,
                                             path: endpoint.clone(),
                                             bytes,
                                         });
@@ -117,8 +130,8 @@ impl MeshProvider for RendezvousProvider {
                         // interval × 2^failures, capped at ×MAX_BACKOFF_FACTOR: an
                         // unreachable rendezvous is asked less and less, never hammered,
                         // never a tight loop.
-                        let total = interval * (1u32 << failures)
-                            + Duration::from_millis(jitter_ms(2000));
+                        let total =
+                            interval * (1u32 << failures) + Duration::from_millis(jitter_ms(2000));
                         let mut slept = Duration::ZERO;
                         while slept < total && !stop.load(Ordering::SeqCst) {
                             let slice = SLICE.min(total - slept);
@@ -164,4 +177,53 @@ fn register_once(endpoint: &str, envelope: &Envelope) -> Result<RegisterAnswer, 
     }
     serde_json::from_str(&reply.body)
         .map_err(|e| MeshError::Provider(format!("{endpoint}: not a register answer: {e}")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_endpoints_means_a_stopped_provider_with_the_reason() {
+        let mut provider = RendezvousProvider::new(vec![], 60);
+        let (tx, _rx) = std::sync::mpsc::channel();
+        let ctx = crate::mesh::provider::ProviderContext {
+            tx,
+            stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
+            beacon: std::sync::Arc::new(crate::mesh::provider::Beacon::new(
+                std::sync::Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+                vec![],
+                vec![],
+                vec![],
+                "test",
+            )),
+        };
+        assert!(provider.start(&ctx).is_err());
+        let status = provider.status();
+        assert_eq!(status.state, MeshProviderState::Stopped);
+        assert_eq!(status.detail.as_deref(), Some("no endpoints declared"));
+    }
+
+    #[test]
+    fn an_unreachable_endpoint_is_one_failure_not_a_panic() {
+        let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        let envelope = crate::mesh::protocol::advertise(&identity, 1, &[], &[], &[], "test");
+        // A port nothing listens on: connection refused, reported as the endpoint's error.
+        let error = register_once("http://127.0.0.1:9", &envelope)
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("127.0.0.1:9"), "{error}");
+    }
+
+    #[test]
+    fn a_register_answer_round_trips_as_json() {
+        let answer = RegisterAnswer {
+            accepted: true,
+            refusal: None,
+            candidates: vec![],
+        };
+        let text = serde_json::to_string(&answer).unwrap();
+        let back: RegisterAnswer = serde_json::from_str(&text).unwrap();
+        assert!(back.accepted && back.candidates.is_empty());
+    }
 }

@@ -7,6 +7,15 @@
 //! The signing key never leaves this module: everything above it sees [`NodeIdentity`],
 //! which signs and exposes public material only. The instance id distinguishes runs of
 //! the same node — a machine that restarts keeps its node id and changes its instance.
+//!
+//! ```
+//! use majordomus_cli::mesh::identity::{verify, NodeIdentity};
+//!
+//! let node = NodeIdentity::ephemeral().unwrap();
+//! let signature = node.sign(b"a majordomus exists here");
+//! assert!(verify(&node.public.public_key, b"a majordomus exists here", &signature));
+//! assert!(!verify(&node.public.public_key, b"something else", &signature));
+//! ```
 
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -20,7 +29,9 @@ use super::MeshError;
 
 /// The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public
 /// key. Derived, never chosen: two nodes with one id hold one key.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(transparent)]
 pub struct NodeId(String);
 
@@ -37,7 +48,7 @@ impl NodeId {
         NodeId(hex)
     }
 
-    /// The id as text.
+    /// The id as text: 32 lowercase hex characters, the form listings and allowlists carry.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -65,7 +76,7 @@ impl InstanceId {
         Ok(InstanceId(hex(&bytes)))
     }
 
-    /// The id as text.
+    /// The id as text: 16 hex characters, stable for the life of this process alone.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -157,8 +168,9 @@ impl NodeIdentity {
     fn load(path: &Path) -> Result<Self, MeshError> {
         let text = std::fs::read_to_string(path)
             .map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))?;
-        let file: IdentityFile = serde_json::from_str(&text)
-            .map_err(|e| MeshError::Identity(format!("{}: not an identity file: {e}", path.display())))?;
+        let file: IdentityFile = serde_json::from_str(&text).map_err(|e| {
+            MeshError::Identity(format!("{}: not an identity file: {e}", path.display()))
+        })?;
         if file.schema != SCHEMA {
             return Err(MeshError::Identity(format!(
                 "{}: schema {} is not {SCHEMA}",
@@ -170,7 +182,10 @@ impl NodeIdentity {
             MeshError::Identity(format!("{}: the secret key is not hex", path.display()))
         })?;
         let seed: [u8; 32] = seed.try_into().map_err(|_| {
-            MeshError::Identity(format!("{}: the secret key is not 32 bytes", path.display()))
+            MeshError::Identity(format!(
+                "{}: the secret key is not 32 bytes",
+                path.display()
+            ))
         })?;
         let signing = SigningKey::from_bytes(&seed);
         Self::assemble(signing, file.display_name)
@@ -217,8 +232,8 @@ impl NodeIdentity {
             display_name: Some(self.public.display_name.clone()),
             created_at: crate::peers::rfc3339(std::time::SystemTime::now()),
         };
-        let text = serde_json::to_string_pretty(&file)
-            .map_err(|e| MeshError::Identity(e.to_string()))?;
+        let text =
+            serde_json::to_string_pretty(&file).map_err(|e| MeshError::Identity(e.to_string()))?;
         write_private(path, &text)
     }
 
@@ -230,6 +245,11 @@ impl NodeIdentity {
 
 /// Verify `signature` (hex) over `message` against `public_key` (hex). False on any
 /// malformed material: a verifier never panics on hostile input.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::verify;
+/// assert!(!verify("zz", b"m", "zz"), "garbage material is false, not a panic");
+/// ```
 pub fn verify(public_key: &str, message: &[u8], signature: &str) -> bool {
     let Some(key) = unhex(public_key).and_then(|b| <[u8; 32]>::try_from(b).ok()) else {
         return false;
@@ -272,14 +292,14 @@ fn unhex(text: &str) -> Option<Vec<u8>> {
 /// state directory: a temp file beside the target, then a rename.
 fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {
     let tmp = path.with_extension("tmp");
-    std::fs::write(&tmp, text).map_err(|e| MeshError::Identity(format!("{}: {e}", tmp.display())))?;
+    std::fs::write(&tmp, text)
+        .map_err(|e| MeshError::Identity(format!("{}: {e}", tmp.display())))?;
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         let _ = std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o600));
     }
-    std::fs::rename(&tmp, path)
-        .map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))
+    std::fs::rename(&tmp, path).map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))
 }
 
 #[cfg(test)]
@@ -292,7 +312,10 @@ mod tests {
         let path = dir.path().join("node.json");
         let first = NodeIdentity::load_or_create(&path).unwrap();
         let second = NodeIdentity::load_or_create(&path).unwrap();
-        assert_eq!(first.public.node_id, second.public.node_id, "the node id survives a reload");
+        assert_eq!(
+            first.public.node_id, second.public.node_id,
+            "the node id survives a reload"
+        );
         assert_ne!(
             first.public.instance_id, second.public.instance_id,
             "every run is a new instance"
@@ -306,7 +329,10 @@ mod tests {
         let sig = identity.sign(b"hello mesh");
         assert!(verify(&identity.public.public_key, b"hello mesh", &sig));
         assert!(!verify(&identity.public.public_key, b"hello mess", &sig));
-        assert!(!verify("zz", b"hello mesh", &sig), "malformed key material is false, not a panic");
+        assert!(
+            !verify("zz", b"hello mesh", &sig),
+            "malformed key material is false, not a panic"
+        );
         assert!(!verify(&identity.public.public_key, b"hello mesh", "zz"));
     }
 
@@ -327,7 +353,11 @@ mod tests {
         let path = dir.path().join("node.json");
         std::fs::write(&path, "not json").unwrap();
         assert!(NodeIdentity::load_or_create(&path).is_err());
-        assert_eq!(std::fs::read_to_string(&path).unwrap(), "not json", "the file is untouched");
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "not json",
+            "the file is untouched"
+        );
     }
 
     #[test]
@@ -336,6 +366,9 @@ mod tests {
         let identity = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
         let rendered = format!("{identity:?}");
         let secret = hex(&identity.signing.to_bytes());
-        assert!(!rendered.contains(&secret), "Debug must not leak the signing key");
+        assert!(
+            !rendered.contains(&secret),
+            "Debug must not leak the signing key"
+        );
     }
 }

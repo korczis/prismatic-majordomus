@@ -10,6 +10,18 @@
 //!
 //! The parser is written for hostile input: bounded before it is read, refused before it
 //! is trusted, and no input of any shape panics — a property test holds that.
+//!
+//! ```
+//! use majordomus_cli::mesh::identity::NodeIdentity;
+//! use majordomus_cli::mesh::protocol::{advertise, encode, parse, Refusal, MAX_DATAGRAM};
+//!
+//! let node = NodeIdentity::ephemeral().unwrap();
+//! let envelope = advertise(&node, 1, &["127.0.0.1:8741".into()], &[], &[], "docs");
+//! let bytes = encode(&envelope).unwrap();
+//! assert!(bytes.len() <= MAX_DATAGRAM);
+//! assert!(parse(&bytes).is_ok());
+//! assert_eq!(parse(&vec![0u8; MAX_DATAGRAM + 1]), Err(Refusal::Oversized));
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -169,6 +181,11 @@ impl std::fmt::Display for Refusal {
 
 /// Parse and verify one datagram. `Ok` means: well-formed, in bounds, current, and the
 /// signature proves the key. It does NOT mean trusted — trust policy runs above.
+///
+/// ```
+/// use majordomus_cli::mesh::protocol::{parse, Refusal};
+/// assert_eq!(parse(b"not an envelope"), Err(Refusal::Malformed));
+/// ```
 pub fn parse(bytes: &[u8]) -> Result<Envelope, Refusal> {
     parse_at(bytes, now())
 }
@@ -216,7 +233,8 @@ fn plausible_authority(text: &str) -> bool {
     !host.is_empty() && port.parse::<u16>().is_ok()
 }
 
-/// Seconds since the Unix epoch.
+/// Seconds since the Unix epoch, the clock advertisements are stamped and judged with;
+/// zero when the system clock sits before the epoch, which only ever refuses packets.
 pub fn now() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

@@ -166,6 +166,11 @@ gates:
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
+  - id: mesh-check
+    job: structure
+    runs: scripts/ci/mesh-check
+    summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
+
   # The one structural gate that reads the remote. It needs a token (issues:read) and says
   # so rather than passing when it has none: a projection gate that skips quietly is the
   # disease it was written to cure — --check has exited 11 on drift since the adapter was
@@ -296,7 +301,13 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check]
+
+  # the mesh: its declaration objects, their schema, the gate that holds the subsystem
+  # to ADR 0043, and the architecture document
+  - id: mesh
+    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, docs/MESH.md]
+    gates: [mesh-check, rust-integration, shell-suite]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite

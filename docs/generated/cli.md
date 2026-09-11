@@ -113,13 +113,18 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus executions events`](#majordomus-executions-events) | `/docs/cli/executions/events/` | One execution's retained events, oldest first |
 | [`majordomus executions cancel`](#majordomus-executions-cancel) | `/docs/cli/executions/cancel/` | Ask an execution to stop |
 | [`majordomus executions protocol`](#majordomus-executions-protocol) | `/docs/cli/executions/protocol/` | The live channel's contract: where it is, what it writes, and the schema of each message |
+| [`majordomus mesh`](#majordomus-mesh) | `/docs/cli/mesh/` | The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone |
+| [`majordomus mesh status`](#majordomus-mesh-status) | `/docs/cli/mesh/status/` | Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies |
+| [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
+| [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
+| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus mesh`](#majordomus-mesh).
 
 ```text
 majordomus <COMMAND>
@@ -3118,4 +3123,125 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events.
+
+<a id="majordomus-mesh"></a>
+## `majordomus mesh`
+
+The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
+
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor).
+
+```text
+majordomus mesh <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-status"></a>
+## `majordomus mesh status`
+
+Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies
+
+```text
+majordomus mesh status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether this checkout's server runs a mesh** — The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.
+
+  ```console
+  $ majordomus mesh status
+  ```
+
+  Verified: exits 0; prints mesh.
+
+<a id="majordomus-mesh-nodes"></a>
+## `majordomus mesh nodes`
+
+Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance
+
+```text
+majordomus mesh nodes [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The nodes the running server has observed** — One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.
+
+  ```console
+  $ majordomus mesh nodes
+  ```
+
+  Verified: exits 0; prints mesh.
+
+<a id="majordomus-mesh-identity"></a>
+## `majordomus mesh identity`
+
+This machine's node identity, public half only; absent is an answer, not an error
+
+```text
+majordomus mesh identity [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **This machine's node identity, public half only** — The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.
+
+  ```console
+  $ majordomus mesh identity
+  ```
+
+  Verified: exits 0; prints present.
+
+<a id="majordomus-mesh-doctor"></a>
+## `majordomus mesh doctor`
+
+Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+
+```text
+majordomus mesh doctor [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every mesh prerequisite, proved on this machine alone** — Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.
+
+  ```console
+  $ majordomus mesh doctor
+  ```
+
+  Verified: exits 0; prints protocol.
 

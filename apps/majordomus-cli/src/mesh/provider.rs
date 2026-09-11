@@ -4,6 +4,21 @@
 //! and answers for its own health. It parses nothing, verifies nothing, trusts nothing
 //! and holds no peers — the manager owns the one verification path and the one registry,
 //! which is what makes adding a provider a registration rather than a rewrite.
+//!
+//! ```
+//! use std::sync::Arc;
+//! use majordomus_cli::mesh::identity::NodeIdentity;
+//! use majordomus_cli::mesh::provider::Beacon;
+//!
+//! // The beacon signs this node's advertisements with one rising sequence, so every
+//! // transmitting provider shares the replay window.
+//! let identity = NodeIdentity::ephemeral().unwrap();
+//! let beacon = Beacon::new(Arc::new(identity), vec!["127.0.0.1:8741".into()],
+//!     vec!["http".into()], vec![], "docs");
+//! let first = beacon.next_envelope();
+//! let second = beacon.next_envelope();
+//! assert!(second.adv.seq > first.adv.seq, "the sequence only rises");
+//! ```
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::Sender;
@@ -14,14 +29,14 @@ use serde::{Deserialize, Serialize};
 
 use super::identity::NodeIdentity;
 use super::protocol::{advertise, Envelope};
-use super::registry::Source;
+use super::registry::MeshSource;
 use super::MeshError;
 
 /// One raw observation: where it came from, and the bytes as heard. Parsing and
 /// verification happen once, in the manager, for every provider alike.
 pub struct Observation {
     /// The provider kind that heard it.
-    pub source: Source,
+    pub source: MeshSource,
     /// The network path, as text: a sender address, a rendezvous URL.
     pub path: String,
     /// The datagram, unparsed and untrusted.
@@ -81,7 +96,7 @@ impl Beacon {
 /// The provider's health, as every surface reports it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ProviderState {
+pub enum MeshProviderState {
     /// Threads up, socket bound (where the provider has one).
     Running,
     /// The provider could not start or died; `ProviderStatus::detail` says why. One
@@ -97,7 +112,7 @@ pub struct ProviderStatus {
     /// The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.
     pub id: String,
     /// The state.
-    pub state: ProviderState,
+    pub state: MeshProviderState,
     /// Why, when `Failed`; what it watches, when `Running`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detail: Option<String>,
@@ -130,12 +145,13 @@ pub struct ProviderContext {
 /// A discovery mechanism. Implementing this — and handing an instance to the manager —
 /// is the whole registration: no consumer, surface or registry learns provider names.
 pub trait MeshProvider: Send {
-    /// The provider id, stable, snake_case.
+    /// The provider id, stable, snake_case: the word status listings and sighting
+    /// provenance carry for this mechanism.
     fn id(&self) -> &'static str;
     /// Start the provider's threads. An `Err` marks this provider `Failed` and starts
     /// the others regardless.
     fn start(&mut self, ctx: &ProviderContext) -> Result<(), MeshError>;
-    /// The current status.
+    /// The current status: state, the reason or subject, and this provider's counters.
     fn status(&self) -> ProviderStatus;
 }
 
@@ -150,4 +166,29 @@ pub fn jitter_ms(bound: u64) -> u64 {
         return 0;
     }
     u64::from_le_bytes(b) % bound
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+
+    #[test]
+    fn the_beacon_signs_with_one_rising_sequence() {
+        let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        let node = identity.public.node_id.clone();
+        let beacon = Beacon::new(Arc::new(identity), vec![], vec![], vec![], "test");
+        let a = beacon.next_envelope();
+        let b = beacon.next_envelope();
+        assert_eq!(a.adv.seq + 1, b.adv.seq);
+        assert_eq!(a.adv.node_id(), Some(node));
+    }
+
+    #[test]
+    fn jitter_stays_under_its_bound_and_zero_is_zero() {
+        assert_eq!(jitter_ms(0), 0);
+        for _ in 0..32 {
+            assert!(jitter_ms(50) < 50);
+        }
+    }
 }

@@ -7,6 +7,20 @@
 //! Transmit-first by design: when the multicast provider runs, its socket already hears
 //! everything aimed at the port and a second bound socket would fight it for the
 //! address. This provider binds a listener only when it is the sole UDP provider.
+//!
+//! ```
+//! use majordomus_cli::mesh::broadcast::BroadcastProvider;
+//! use majordomus_cli::mesh::config::{BroadcastConfig, BroadcastMode};
+//! use majordomus_cli::mesh::provider::{MeshProvider, MeshProviderState};
+//!
+//! // A disabled declaration yields a provider that starts nothing and says so.
+//! let provider = BroadcastProvider::new(BroadcastConfig::default(), false);
+//! let status = provider.status();
+//! assert_eq!(status.id, "udp_broadcast");
+//! assert_eq!(status.state, MeshProviderState::Stopped);
+//! assert_eq!(status.sent, 0);
+//! # let _ = BroadcastMode::Auto;
+//! ```
 
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::sync::atomic::Ordering;
@@ -16,31 +30,34 @@ use std::time::Duration;
 use super::config::{BroadcastConfig, BroadcastMode};
 use super::protocol::{encode, MAX_DATAGRAM};
 use super::provider::{
-    jitter_ms, Counters, MeshProvider, Observation, ProviderContext, ProviderState,
+    jitter_ms, Counters, MeshProvider, MeshProviderState, Observation, ProviderContext,
     ProviderStatus,
 };
-use super::registry::Source;
+use super::registry::MeshSource;
 use super::MeshError;
 
 const READ_TIMEOUT: Duration = Duration::from_millis(500);
 
-/// The provider.
+/// The broadcast provider: the declared destinations, the counters its threads share,
+/// and the state its status reports. Constructed by the manager from the declaration.
 pub struct BroadcastProvider {
     config: BroadcastConfig,
     /// Whether this provider should also listen (no multicast provider is running).
     listen: bool,
     counters: Arc<Counters>,
-    state: Arc<Mutex<(ProviderState, Option<String>)>>,
+    state: Arc<Mutex<(MeshProviderState, Option<String>)>>,
 }
 
 impl BroadcastProvider {
-    /// A provider over its declaration; `listen` when no other UDP socket hears the port.
+    /// A provider over its declaration; `listen` when no other UDP socket hears the
+    /// port — with the multicast provider running, that socket already hears every
+    /// datagram aimed at it, and this provider only transmits.
     pub fn new(config: BroadcastConfig, listen: bool) -> Self {
         BroadcastProvider {
             config,
             listen,
             counters: Arc::new(Counters::default()),
-            state: Arc::new(Mutex::new((ProviderState::Stopped, None))),
+            state: Arc::new(Mutex::new((MeshProviderState::Stopped, None))),
         }
     }
 
@@ -77,14 +94,14 @@ impl MeshProvider for BroadcastProvider {
             Ok(d) => d,
             Err(e) => {
                 *self.state.lock().expect("broadcast state") =
-                    (ProviderState::Failed, Some(e.to_string()));
+                    (MeshProviderState::Failed, Some(e.to_string()));
                 return Err(e);
             }
         };
         if destinations.is_empty() {
             let reason = "mode is disabled".to_string();
             *self.state.lock().expect("broadcast state") =
-                (ProviderState::Stopped, Some(reason.clone()));
+                (MeshProviderState::Stopped, Some(reason.clone()));
             return Err(MeshError::Provider(reason));
         }
         // The sender binds an ephemeral port (the listener, when this provider has one,
@@ -95,23 +112,27 @@ impl MeshProvider for BroadcastProvider {
             Err(e) => {
                 let reason = format!("cannot bind udp port {bind_port}: {e}");
                 *self.state.lock().expect("broadcast state") =
-                    (ProviderState::Failed, Some(reason.clone()));
+                    (MeshProviderState::Failed, Some(reason.clone()));
                 return Err(MeshError::Provider(reason));
             }
         };
         if let Err(e) = socket.set_broadcast(true) {
             let reason = format!("cannot enable broadcast: {e}");
             *self.state.lock().expect("broadcast state") =
-                (ProviderState::Failed, Some(reason.clone()));
+                (MeshProviderState::Failed, Some(reason.clone()));
             return Err(MeshError::Provider(reason));
         }
         let _ = socket.set_read_timeout(Some(READ_TIMEOUT));
         *self.state.lock().expect("broadcast state") = (
-            ProviderState::Running,
+            MeshProviderState::Running,
             Some(format!(
                 "{} destination(s), {}",
                 destinations.len(),
-                if self.listen { "listening" } else { "transmit only" }
+                if self.listen {
+                    "listening"
+                } else {
+                    "transmit only"
+                }
             )),
         );
 
@@ -132,7 +153,7 @@ impl MeshProvider for BroadcastProvider {
                             Ok((len, from)) => {
                                 counters.received.fetch_add(1, Ordering::Relaxed);
                                 let _ = tx.send(Observation {
-                                    source: Source::UdpBroadcast,
+                                    source: MeshSource::UdpBroadcast,
                                     path: from.to_string(),
                                     bytes: buffer[..len].to_vec(),
                                 });
@@ -142,12 +163,12 @@ impl MeshProvider for BroadcastProvider {
                                     || e.kind() == std::io::ErrorKind::TimedOut => {}
                             Err(e) => {
                                 *state.lock().expect("broadcast state") =
-                                    (ProviderState::Failed, Some(format!("recv: {e}")));
+                                    (MeshProviderState::Failed, Some(format!("recv: {e}")));
                                 return;
                             }
                         }
                     }
-                    *state.lock().expect("broadcast state") = (ProviderState::Stopped, None);
+                    *state.lock().expect("broadcast state") = (MeshProviderState::Stopped, None);
                 });
         }
 
@@ -189,5 +210,47 @@ impl MeshProvider for BroadcastProvider {
             sent: self.counters.sent.load(Ordering::Relaxed),
             received: self.counters.received.load(Ordering::Relaxed),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn destinations_follow_the_declared_mode() {
+        let auto = BroadcastProvider::new(
+            BroadcastConfig {
+                mode: BroadcastMode::Auto,
+                ..BroadcastConfig::default()
+            },
+            false,
+        );
+        assert_eq!(auto.destinations().unwrap().len(), 1);
+        let explicit = BroadcastProvider::new(
+            BroadcastConfig {
+                mode: BroadcastMode::Explicit,
+                networks: vec!["192.168.1.255".into(), "10.0.0.255".into()],
+                ..BroadcastConfig::default()
+            },
+            false,
+        );
+        assert_eq!(explicit.destinations().unwrap().len(), 2);
+        let disabled = BroadcastProvider::new(BroadcastConfig::default(), false);
+        assert!(disabled.destinations().unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_malformed_network_is_an_error_naming_it() {
+        let provider = BroadcastProvider::new(
+            BroadcastConfig {
+                mode: BroadcastMode::Explicit,
+                networks: vec!["not-an-address".into()],
+                ..BroadcastConfig::default()
+            },
+            false,
+        );
+        let error = provider.destinations().unwrap_err().to_string();
+        assert!(error.contains("not-an-address"), "{error}");
     }
 }

@@ -3,6 +3,18 @@
 //! here and nowhere else. No declaration, or `enabled: false`, means the mesh is off and
 //! not one socket opens — the repository's default posture ("nothing leaves the
 //! machine") holds until a person commits the object that says otherwise.
+//!
+//! ```
+//! use majordomus_cli::mesh::config::{MeshConfig, BroadcastMode};
+//!
+//! // The defaults are the safe ones: multicast prepared, broadcast off, nobody trusted.
+//! let minimal: MeshConfig = serde_json::from_value(serde_json::json!({
+//!     "schema": "mesh/v1", "kind": "mesh-declaration", "id": "docs", "enabled": false
+//! })).unwrap();
+//! assert!(!minimal.enabled);
+//! assert_eq!(minimal.broadcast.mode, BroadcastMode::Disabled);
+//! assert!(minimal.trust.allow.is_empty());
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,7 +25,7 @@ use super::trust::TrustPolicy;
 use super::MeshError;
 
 /// The kind the declaration is discovered under.
-pub const KIND: &str = "mesh";
+pub const KIND: &str = "mesh-declaration";
 
 /// The schema version this executable reads.
 pub const SCHEMA_VERSION: &str = "mesh/v1";
@@ -28,12 +40,15 @@ pub const DEFAULT_PORT: u16 = 7741;
 /// The default seconds between announcements.
 pub const DEFAULT_INTERVAL: u64 = 15;
 
-/// The whole declaration.
+/// The whole declaration: the master switch and one section per mechanism. Unknown
+/// keys are refused, so a typo is an error and not a silently ignored wish.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct MeshConfig {
     /// The format version: `mesh/v1`.
     pub schema: String,
+    /// The kind: `mesh`, the same word the discovery class carries.
+    pub kind: String,
     /// The declaration's identity.
     pub id: String,
     /// The master switch. `false` starts nothing.
@@ -53,7 +68,8 @@ pub struct MeshConfig {
     pub trust: TrustConfig,
 }
 
-/// Multicast settings.
+/// Multicast settings: the group, the port, how far a datagram travels and how often
+/// this node announces.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct MulticastConfig {
@@ -98,7 +114,8 @@ pub enum BroadcastMode {
     Explicit,
 }
 
-/// Broadcast settings.
+/// Broadcast settings: the fallback's mode, destinations and cadence; `disabled`
+/// unless a person declared otherwise.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BroadcastConfig {
@@ -152,7 +169,7 @@ impl Default for RendezvousConfig {
     }
 }
 
-/// Trust settings.
+/// Trust settings: the policy, and the public keys trusted regardless of it.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct TrustConfig {
@@ -187,7 +204,9 @@ fn rendezvous_interval() -> u64 {
 }
 
 impl MeshConfig {
-    /// Parse one indexed object into a mesh declaration, or say why it is not one.
+    /// Parse one indexed object into a mesh declaration, or say why it is not one:
+    /// the wrong schema version, an unknown key, and a zero interval are each refused
+    /// with the object's URI in the reason.
     pub fn parse(object: &Object) -> Result<MeshConfig, MeshError> {
         let parsed: MeshConfig = serde_json::from_value(object.metadata.clone())
             .map_err(|e| MeshError::Config(format!("{}: {e}", object.uri)))?;
@@ -195,6 +214,12 @@ impl MeshConfig {
             return Err(MeshError::Config(format!(
                 "{}: schema {} is not {SCHEMA_VERSION}",
                 object.uri, parsed.schema
+            )));
+        }
+        if parsed.kind != KIND {
+            return Err(MeshError::Config(format!(
+                "{}: kind {} is not {KIND}",
+                object.uri, parsed.kind
             )));
         }
         if parsed.multicast.interval_seconds == 0
@@ -218,7 +243,7 @@ mod tests {
         Object {
             kind: KIND.into(),
             identity: "majordomus".into(),
-            uri: "majordomus://mesh/majordomus".into(),
+            uri: "majordomus://mesh-declaration/majordomus".into(),
             title: None,
             description: None,
             metadata,
@@ -239,7 +264,7 @@ mod tests {
     #[test]
     fn a_minimal_declaration_parses_with_safe_defaults() {
         let config = MeshConfig::parse(&object(serde_json::json!({
-            "schema": "mesh/v1", "id": "majordomus", "enabled": true
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true
         })))
         .unwrap();
         assert!(config.enabled);
@@ -253,11 +278,11 @@ mod tests {
     #[test]
     fn a_wrong_schema_and_an_unknown_key_are_refused() {
         assert!(MeshConfig::parse(&object(serde_json::json!({
-            "schema": "mesh/v2", "id": "x"
+            "schema": "mesh/v2", "kind": "mesh", "id": "x"
         })))
         .is_err());
         assert!(MeshConfig::parse(&object(serde_json::json!({
-            "schema": "mesh/v1", "id": "x", "surprise": 1
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "surprise": 1
         })))
         .is_err());
     }
@@ -265,7 +290,7 @@ mod tests {
     #[test]
     fn a_zero_interval_is_refused_as_a_busy_loop() {
         assert!(MeshConfig::parse(&object(serde_json::json!({
-            "schema": "mesh/v1", "id": "x",
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x",
             "multicast": {"interval_seconds": 0}
         })))
         .is_err());

@@ -23,6 +23,24 @@
 //!
 //! Nothing here writes to the repository. The identity file lives under the user's
 //! state directory; the registry lives in process memory and dies with it.
+//!
+//! The whole lifecycle, in memory:
+//!
+//! ```
+//! use majordomus_cli::mesh::{identity::NodeIdentity, protocol};
+//!
+//! // a node proves itself: sign, encode, parse, verify — the one path every
+//! // transport's datagrams take
+//! let node = NodeIdentity::ephemeral().unwrap();
+//! let envelope = protocol::advertise(&node, 1, &["127.0.0.1:8741".into()],
+//!     &["http".into()], &[], "docs");
+//! let bytes = protocol::encode(&envelope).unwrap();
+//! let heard = protocol::parse(&bytes).expect("a fresh signed envelope verifies");
+//! assert_eq!(heard.adv.node_id(), Some(node.public.node_id.clone()));
+//!
+//! // and hostile input is a refusal, never a panic
+//! assert!(protocol::parse(b"garbage").is_err());
+//! ```
 
 pub mod broadcast;
 pub mod config;
@@ -42,11 +60,18 @@ pub use identity::{default_identity_path, InstanceId, NodeId, NodeIdentity, Publ
 pub use manager::{MeshRuntime, MeshStatus, Refusals};
 pub use protocol::{Advertisement, Envelope};
 pub use provider::{MeshProvider, Observation, ProviderContext, ProviderStatus};
-pub use registry::{MeshRegistry, NodeRecord, Presence, Sighting, Source, Tallies};
+pub use registry::{MeshRegistry, MeshSource, NodeRecord, Presence, Sighting, Tallies};
 pub use rendezvous::RegisterAnswer;
 pub use trust::{TrustPolicy, TrustState};
 
-/// Why a mesh operation did not happen.
+/// Why a mesh operation did not happen. Each variant names the layer that refused, so
+/// a log line places the failure without a backtrace.
+///
+/// ```
+/// use majordomus_cli::mesh::MeshError;
+/// let e = MeshError::Config("an interval of 0 would be a busy loop".into());
+/// assert_eq!(e.to_string(), "config: an interval of 0 would be a busy loop");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum MeshError {
     /// The identity file: unreadable, malformed, or nowhere to keep one.
@@ -61,4 +86,21 @@ pub enum MeshError {
     /// The declaration: missing, malformed, or a version this executable does not read.
     #[error("config: {0}")]
     Config(String),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_error_layer_names_itself() {
+        for (error, prefix) in [
+            (MeshError::Identity("x".into()), "identity:"),
+            (MeshError::Protocol("x".into()), "protocol:"),
+            (MeshError::Provider("x".into()), "provider:"),
+            (MeshError::Config("x".into()), "config:"),
+        ] {
+            assert!(error.to_string().starts_with(prefix));
+        }
+    }
 }

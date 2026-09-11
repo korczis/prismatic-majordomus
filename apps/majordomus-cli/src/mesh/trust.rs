@@ -6,16 +6,27 @@
 //! Discovery creates awareness, not authority: even a `Trusted` node gains no execution
 //! rights anywhere in this codebase. Trust gates which nodes surfaces mark as ours and
 //! which endpoints later negotiation may approach — nothing else.
+//!
+//! ```
+//! use majordomus_cli::mesh::trust::{evaluate, TrustPolicy, TrustState};
+//!
+//! // the default: a valid unknown key is observed and trusted for nothing
+//! assert_eq!(evaluate(&TrustPolicy::DenyUnknown, &[], "aa", None, None), TrustState::Observed);
+//! // an allowlisted key is trusted under every policy
+//! let listed = evaluate(&TrustPolicy::DenyUnknown, &["aa".into()], "aa", None, None);
+//! assert!(listed.is_trusted());
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The policy, from the mesh declaration.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TrustPolicy {
     /// The default: a valid unknown node is recorded as observed and trusted for
     /// nothing. The safe answer when nobody decided otherwise.
+    #[default]
     DenyUnknown,
     /// Trust-on-first-use: the first valid appearance of a key is trusted, a later
     /// appearance of the same node id under a different key is rejected. A development
@@ -26,19 +37,18 @@ pub enum TrustPolicy {
 }
 
 impl TrustPolicy {
-    /// The policy's wire word.
+    /// The policy's wire word, as declarations write it and listings show it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::trust::TrustPolicy;
+    /// assert_eq!(TrustPolicy::DenyUnknown.as_str(), "deny_unknown");
+    /// ```
     pub fn as_str(&self) -> &'static str {
         match self {
             TrustPolicy::DenyUnknown => "deny_unknown",
             TrustPolicy::Tofu => "tofu",
             TrustPolicy::Allowlist => "allowlist",
         }
-    }
-}
-
-impl Default for TrustPolicy {
-    fn default() -> Self {
-        TrustPolicy::DenyUnknown
     }
 }
 
@@ -57,13 +67,24 @@ pub enum TrustState {
 }
 
 impl TrustState {
-    /// Whether this state trusts the node.
+    /// Whether this state trusts the node — the one question consumers ask; the detail
+    /// stays on the variant for whoever renders it.
     pub fn is_trusted(&self) -> bool {
         matches!(self, TrustState::Trusted(_))
     }
 }
 
 /// Evaluate the policy for a node's key against what the registry already knows.
+///
+/// ```
+/// use majordomus_cli::mesh::trust::{evaluate, TrustPolicy, TrustState};
+/// // TOFU trusts first use; a key change under a known node id is rejected regardless
+/// assert!(evaluate(&TrustPolicy::Tofu, &[], "aa", None, None).is_trusted());
+/// assert!(matches!(
+///     evaluate(&TrustPolicy::Tofu, &[], "bb", Some("aa"), None),
+///     TrustState::Rejected(_)
+/// ));
+/// ```
 ///
 /// `known_key` is the key the registry last associated with this node id — with node
 /// ids derived from keys the two cannot disagree, so a mismatch can only mean a digest
@@ -107,7 +128,11 @@ mod tests {
 
     #[test]
     fn the_allowlist_trusts_listed_keys_under_every_policy() {
-        for policy in [TrustPolicy::DenyUnknown, TrustPolicy::Tofu, TrustPolicy::Allowlist] {
+        for policy in [
+            TrustPolicy::DenyUnknown,
+            TrustPolicy::Tofu,
+            TrustPolicy::Allowlist,
+        ] {
             let state = evaluate(&policy, &["aa".into()], "aa", None, None);
             assert_eq!(state, TrustState::Trusted("allowlist".into()), "{policy:?}");
         }
@@ -125,7 +150,10 @@ mod tests {
         assert_eq!(first, TrustState::Trusted("tofu".into()));
         let rejected = TrustState::Rejected("test".into());
         let after = evaluate(&TrustPolicy::Tofu, &[], "aa", Some("aa"), Some(&rejected));
-        assert_eq!(after, rejected, "a rejection is not washed away by reappearing");
+        assert_eq!(
+            after, rejected,
+            "a rejection is not washed away by reappearing"
+        );
     }
 
     #[test]

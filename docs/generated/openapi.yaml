@@ -47,6 +47,8 @@ tags:
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
+  - name: mesh
+    description: "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here."
   - name: objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
   - name: obligations
@@ -2397,6 +2399,283 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+  "/api/v1/mesh":
+    get:
+      operationId: mesh.status
+      summary: "The mesh, at a glance"
+      description: "Whether the mesh runs in this process and why not when it does not; this node's public identity; every discovery provider with its state and counters; the registry's tallies; and the refused datagrams by reason. The one status every surface shows."
+      tags:
+        - mesh
+      parameters: []
+      responses:
+        "200":
+          description: "The mesh, at a glance: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MeshStatus"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.status
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_mesh
+        resource:
+          uri: majordomus://mesh
+          name: mesh
+  "/api/v1/mesh/doctor":
+    get:
+      operationId: mesh.doctor
+      summary: The mesh self-check
+      description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required."
+      tags:
+        - mesh
+      parameters: []
+      responses:
+        "200":
+          description: "The mesh self-check: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/MeshDoctorReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.doctor
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_mesh_doctor
+      x-majordomus-cli: mesh doctor
+  "/api/v1/mesh/identity":
+    get:
+      operationId: mesh.identity
+      summary: "This machine's node identity"
+      description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates."
+      tags:
+        - mesh
+      parameters: []
+      responses:
+        "200":
+          description: "This machine's node identity: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IdentityReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.identity
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_mesh_identity
+      x-majordomus-cli: mesh identity
+  "/api/v1/mesh/nodes":
+    get:
+      operationId: mesh.nodes
+      summary: The discovered nodes
+      description: "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process."
+      tags:
+        - mesh
+      parameters: []
+      responses:
+        "200":
+          description: "The discovered nodes: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/NodeList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.nodes
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_mesh_nodes
+  "/api/v1/mesh/register":
+    post:
+      operationId: mesh.register
+      summary: "Register with this node's mesh"
+      description: "Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only."
+      tags:
+        - mesh
+      requestBody:
+        required: true
+        description: "The input of `mesh.register`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RegisterInput"
+            examples:
+              refused:
+                value:
+                  envelope:
+                    v: 0
+      responses:
+        "200":
+          description: "Register with this node's mesh: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RegisterAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: mesh.register
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::mesh
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_mesh_register
   "/api/v1/object":
     get:
       operationId: objects.get
@@ -8667,6 +8946,23 @@ components:
       required:
         - path
       description: One document the feature names.
+    DoctorCheck:
+      type: object
+      properties:
+        check:
+          type: string
+          description: What was checked.
+        ok:
+          type: boolean
+          description: Whether it holds.
+        detail:
+          type: string
+          description: "The evidence: a path, an address, an error."
+      required:
+        - check
+        - ok
+        - detail
+      description: "One check's verdict."
     DocumentView:
       type: object
       properties:
@@ -8775,6 +9071,67 @@ components:
         - reason
         - local
       description: "One contract in a directory's effective chain, in the order it is applied."
+    Envelope:
+      type: object
+      properties:
+        v:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Protocol version.
+        pk:
+          type: string
+          description: "The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge."
+        inst:
+          "$ref": "#/components/schemas/InstanceId"
+          description: This run of the node.
+        name:
+          type: string
+          description: A human name for the node. Presentation only.
+          default: ""
+        seq:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped."
+        ts:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds since the Unix epoch at signing time.
+        ep:
+          type: array
+          items:
+            type: string
+          description: "Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key."
+          default: []
+        caps:
+          type: array
+          items:
+            type: string
+          description: "The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization."
+          default: []
+        repos:
+          type: array
+          items:
+            type: string
+          description: "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\"."
+          default: []
+        ver:
+          type: string
+          description: "The executable version, informational."
+          default: ""
+        sig:
+          type: string
+          description: "Ed25519 over [`Advertisement::signing_bytes`], hex."
+      required:
+        - v
+        - pk
+        - inst
+        - seq
+        - ts
+        - sig
+      description: "The wire envelope: the advertisement plus its signature."
     EnvironmentProvenance:
       type: object
       properties:
@@ -10364,6 +10721,30 @@ components:
         - logo
         - social
       description: Who this is.
+    IdentityReport:
+      type: object
+      properties:
+        path:
+          type:
+            - string
+            - "null"
+          description: Where the identity file lives (or would).
+        present:
+          type: boolean
+          description: Whether the file exists.
+        identity:
+          anyOf:
+            - "$ref": "#/components/schemas/PublicIdentity"
+            - type: "null"
+          description: "The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log."
+        error:
+          type:
+            - string
+            - "null"
+          description: "Why the identity did not load, when it did not."
+      required:
+        - present
+      description: "The answer of `mesh.identity`: this machine's node identity, public half only."
     InspectReport:
       type: object
       properties:
@@ -10479,6 +10860,9 @@ components:
         - latest_url
         - checks
       description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
+    InstanceId:
+      type: string
+      description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
     Integration:
       oneOf:
         - type: string
@@ -10914,6 +11298,91 @@ components:
         - enforced
         - seen
       description: "One measured pair: a foreground on a ground, in one theme."
+    MeshDoctorReport:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: Whether every check holds.
+        checks:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DoctorCheck"
+          description: "The checks, in the order they ran."
+      required:
+        - ok
+        - checks
+      description: The whole self-check.
+    MeshProviderState:
+      oneOf:
+        - type: string
+          const: running
+          description: "Threads up, socket bound (where the provider has one)."
+        - type: string
+          const: failed
+          description: "The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract."
+        - type: string
+          const: stopped
+          description: Stopped by the manager.
+      description: "The provider's health, as every surface reports it."
+    MeshSource:
+      oneOf:
+        - type: string
+          const: udp_multicast
+          description: A multicast datagram.
+        - type: string
+          const: udp_broadcast
+          description: A broadcast datagram.
+        - type: string
+          const: rendezvous
+          description: A rendezvous answer or registration.
+        - type: string
+          const: synthetic
+          description: "A synthetic provider (tests, self-check)."
+      description: "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\"."
+    MeshStatus:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: Whether the mesh is running in this process.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why not, when it is not: no declaration, disabled, no identity, stopped."
+        identity:
+          anyOf:
+            - "$ref": "#/components/schemas/PublicIdentity"
+            - type: "null"
+          description: "This node, when the mesh has an identity."
+        trust_policy:
+          type:
+            - string
+            - "null"
+          description: The trust policy in force.
+        providers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProviderStatus"
+          description: "Every provider, canonical order (by id)."
+        tallies:
+          "$ref": "#/components/schemas/Tallies"
+          description: "The registry's tallies."
+        refusals:
+          "$ref": "#/components/schemas/Refusals"
+          description: "Refused datagrams, by reason."
+        started_at:
+          type:
+            - string
+            - "null"
+          description: "When the mesh started, RFC 3339."
+      required:
+        - active
+        - providers
+        - tallies
+        - refusals
+      description: "The whole mesh, as every surface reports it."
     MigrationAction:
       oneOf:
         - type: string
@@ -11672,6 +12141,103 @@ components:
         - kind
         - label
       description: "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+    NodeId:
+      type: string
+      description: "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+    NodeList:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many nodes the registry holds.
+        nodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/NodeRecord"
+          description: "The nodes, in node-id order — the one canonical order every surface shows."
+      required:
+        - count
+        - nodes
+      description: "The answer of `mesh.nodes`: every node this process has observed."
+    NodeRecord:
+      type: object
+      properties:
+        node_id:
+          "$ref": "#/components/schemas/NodeId"
+          description: "The node id: the digest of the key below."
+        public_key:
+          type: string
+          description: "The Ed25519 public key that proved this record's advertisements."
+        display_name:
+          type: string
+          description: "The node's own display name. Presentation only."
+        instance_id:
+          "$ref": "#/components/schemas/InstanceId"
+          description: "The node's current run."
+        trust:
+          "$ref": "#/components/schemas/TrustState"
+          description: What the policy decided.
+        presence:
+          "$ref": "#/components/schemas/Presence"
+          description: Whether the node is answering now.
+        endpoints:
+          type: array
+          items:
+            type: string
+          description: "Advertised `host:port` authorities."
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: "Advertised transports (`http`, `mcp`, `ws`)."
+        repositories:
+          type: array
+          items:
+            type: string
+          description: Advertised repository digests.
+        protocol_version:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The advertised protocol version.
+        version:
+          type: string
+          description: The advertised executable version.
+        sources:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Sighting"
+          description: "Every source this node was seen through, most recent sighting per source."
+        first_seen:
+          type: string
+          description: "First seen, RFC 3339."
+        last_seen:
+          type: string
+          description: "Last seen, RFC 3339."
+        restarts:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many instances this node id has shown (a restart increments it).
+      required:
+        - node_id
+        - public_key
+        - display_name
+        - instance_id
+        - trust
+        - presence
+        - endpoints
+        - capabilities
+        - repositories
+        - protocol_version
+        - version
+        - sources
+        - first_seen
+        - last_seen
+        - restarts
+      description: "One discovered node: the canonical record every surface projects."
     ObjectList:
       type: object
       properties:
@@ -12842,6 +13408,15 @@ components:
       format: uint32
       minimum: 0
       description: "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+    Presence:
+      oneOf:
+        - type: string
+          const: present
+          description: "An advertisement arrived within [`PRESENCE_TTL`]."
+        - type: string
+          const: absent
+          description: "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely."
+      description: "Whether the node is answering now, by its own announcements."
     ProductCounts:
       type: object
       properties:
@@ -13308,6 +13883,36 @@ components:
         - state
         - always_loaded
       description: "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders."
+    ProviderStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`."
+        state:
+          "$ref": "#/components/schemas/MeshProviderState"
+          description: The state.
+        detail:
+          type:
+            - string
+            - "null"
+          description: "Why, when `Failed`; what it watches, when `Running`."
+        sent:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Advertisements transmitted.
+        received:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Datagrams heard and handed to the manager.
+      required:
+        - id
+        - state
+        - sent
+        - received
+      description: "One provider's status: state, why, and its counters."
     PublicApiQuality:
       type: object
       properties:
@@ -13343,6 +13948,27 @@ components:
         - exampled
         - exempt
       description: What the exported item surface looks like.
+    PublicIdentity:
+      type: object
+      properties:
+        node_id:
+          "$ref": "#/components/schemas/NodeId"
+          description: "The node id: a digest of the public key."
+        public_key:
+          type: string
+          description: "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof."
+        display_name:
+          type: string
+          description: "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust."
+        instance_id:
+          "$ref": "#/components/schemas/InstanceId"
+          description: This run of the node.
+      required:
+        - node_id
+        - public_key
+        - display_name
+        - instance_id
+      description: "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs."
     QualityAnswer:
       type: object
       properties:
@@ -13596,6 +14222,82 @@ components:
         - problem
         - correction
       description: "Why a deployment object is refused: what was read, where, and what to do about it."
+    Refusals:
+      type: object
+      properties:
+        oversized:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Longer than the datagram bound.
+        malformed:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Not an envelope.
+        version:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: A protocol version this executable does not read.
+        bounds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Out-of-bounds fields.
+        stale:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Outside the clock-skew window.
+        signature:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: A signature that does not verify.
+        self_heard:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "This node's own datagrams, heard back and skipped."
+      required:
+        - oversized
+        - malformed
+        - version
+        - bounds
+        - stale
+        - signature
+        - self_heard
+      description: "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+    RegisterAnswer:
+      type: object
+      properties:
+        accepted:
+          type: boolean
+          description: Whether the presented envelope was accepted into the local registry.
+        refusal:
+          type:
+            - string
+            - "null"
+          description: "Why not, when it was not."
+        candidates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Envelope"
+          description: "The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode's own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing."
+      required:
+        - accepted
+        - candidates
+      description: "What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it."
+    RegisterInput:
+      type: object
+      additionalProperties: false
+      properties:
+        envelope:
+          description: "The envelope. Verified here exactly as a datagram would be — bounds, staleness,\nsignature — before anything is recorded."
+      required:
+        - envelope
+      description: "The input of `mesh.register`: one signed envelope, exactly as the wire carries it."
     ReleaseArtifactView:
       type: object
       properties:
@@ -14905,6 +15607,23 @@ components:
           const: error
           description: The file is excluded and the index is degraded.
       description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+    Sighting:
+      type: object
+      properties:
+        source:
+          "$ref": "#/components/schemas/MeshSource"
+          description: The provider kind that saw it.
+        path:
+          type: string
+          description: "The network path, as text: a sender address, an interface, a rendezvous URL."
+        at:
+          type: string
+          description: "When, RFC 3339."
+      required:
+        - source
+        - path
+        - at
+      description: "One provenance entry: a source, and where the observation physically came from."
     Signal:
       type: object
       properties:
@@ -15426,6 +16145,53 @@ components:
         - cockpit
         - docs
       description: "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+    Tallies:
+      type: object
+      properties:
+        nodes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Records held.
+        trusted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Of which trusted.
+        present:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Of which present.
+        accepted:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Observations accepted since start.
+        replayed:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Replayed datagrams dropped since start.
+        expired:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Records expired out since start.
+        evicted:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Records evicted for space since start.
+      required:
+        - nodes
+        - trusted
+        - present
+        - accepted
+        - replayed
+        - expired
+        - evicted
+      description: "The registry's tallies, for status and health."
     Tally:
       type: object
       properties:
@@ -16022,6 +16788,39 @@ components:
       required:
         - source
       description: "The trunk, as the topology reports it."
+    TrustState:
+      oneOf:
+        - type: object
+          properties:
+            state:
+              type: string
+              const: observed
+          required:
+            - state
+          description: "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+        - type: object
+          properties:
+            state:
+              type: string
+              const: trusted
+            detail:
+              type: string
+          required:
+            - state
+            - detail
+          description: "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+        - type: object
+          properties:
+            state:
+              type: string
+              const: rejected
+            detail:
+              type: string
+          required:
+            - state
+            - detail
+          description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+      description: What the policy decided about one node.
     UpstreamState:
       type: object
       properties:

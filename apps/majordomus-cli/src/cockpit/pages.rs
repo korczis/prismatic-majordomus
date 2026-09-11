@@ -12,8 +12,8 @@ use serde_json::{json, Value};
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
-    TokenList,
+    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
+    RepositoryReport, TokenList,
 };
 use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
@@ -2048,6 +2048,177 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
             ("Cockpit", Some("/cockpit")),
             ("Directories", None),
         ])
+}
+
+/// The mesh: the discovered nodes of this process's runtime, the providers that heard
+/// them, and why the mesh is or is not running. Everything on this page is the same
+/// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
+/// node list of its own (project.mesh-is-observation-not-authority).
+pub fn mesh(ctx: &Context) -> Page {
+    let status: crate::mesh::MeshStatus = match ask(ctx, "mesh.status", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let nodes: NodeList = match ask(ctx, "mesh.nodes", json!({})) {
+        Ok(n) => n,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+
+    let mut this_node = facts(vec![(
+        "Mesh",
+        Node::Element(word_badge(if status.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]);
+    if let Some(reason) = &status.reason {
+        this_node = this_node.child(el("p").class("mj-prose").text(reason));
+    }
+    let mut overview = el("div").child(this_node);
+    if let Some(identity) = &status.identity {
+        overview = overview.child(facts(vec![
+            ("Node", Node::Element(mono(identity.node_id.to_string()))),
+            (
+                "Name",
+                Node::Element(el("span").text(&identity.display_name)),
+            ),
+            (
+                "Instance",
+                Node::Element(mono(identity.instance_id.to_string())),
+            ),
+        ]));
+    }
+    if let Some(policy) = &status.trust_policy {
+        overview = overview.child(facts(vec![(
+            "Trust policy",
+            Node::Element(word_badge(policy)),
+        )]));
+    }
+    let t = &status.tallies;
+    let r = &status.refusals;
+    overview = overview.child(facts(vec![
+        (
+            "Nodes",
+            Node::Element(el("span").text(format!(
+                "{} ({} trusted, {} present)",
+                t.nodes, t.trusted, t.present
+            ))),
+        ),
+        (
+            "Accepted / replayed / expired",
+            Node::Element(el("span").text(format!("{} / {} / {}", t.accepted, t.replayed, t.expired))),
+        ),
+        (
+            "Refused",
+            Node::Element(el("span").text(format!(
+                "oversized {}, malformed {}, version {}, bounds {}, stale {}, signature {}, self {}",
+                r.oversized, r.malformed, r.version, r.bounds, r.stale, r.signature, r.self_heard
+            ))),
+        ),
+    ]));
+
+    let providers: Vec<El> = status
+        .providers
+        .iter()
+        .map(|p| {
+            let state = match p.state {
+                crate::mesh::provider::MeshProviderState::Running => "running",
+                crate::mesh::provider::MeshProviderState::Failed => "failed",
+                crate::mesh::provider::MeshProviderState::Stopped => "stopped",
+            };
+            card_with(
+                p.id.clone(),
+                word_badge(state),
+                el("div")
+                    .child(facts(vec![
+                        ("Sent", Node::Element(el("span").text(p.sent.to_string()))),
+                        (
+                            "Received",
+                            Node::Element(el("span").text(p.received.to_string())),
+                        ),
+                    ]))
+                    .when(p.detail.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(p.detail.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+
+    let node_cards: Vec<El> = nodes
+        .nodes
+        .iter()
+        .map(|n| {
+            let trust = match &n.trust {
+                crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
+                crate::mesh::TrustState::Observed => "observed".to_string(),
+                crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+            };
+            let presence = match n.presence {
+                crate::mesh::Presence::Present => "present",
+                crate::mesh::Presence::Absent => "absent",
+            };
+            let sources = n
+                .sources
+                .iter()
+                .map(|s| format!("{} via {} at {}", s.source.as_str(), s.path, s.at))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("{} — {}", n.display_name, n.node_id),
+                word_badge(presence),
+                el("div")
+                    .child(el("p").class("mj-prose").text(trust))
+                    .child(facts(vec![
+                        (
+                            "Endpoints",
+                            Node::Element(el("span").text(n.endpoints.join(", "))),
+                        ),
+                        (
+                            "Transports",
+                            Node::Element(el("span").text(n.capabilities.join(", "))),
+                        ),
+                        (
+                            "Seen",
+                            Node::Element(el("span").text(format!(
+                                "first {}, last {}, restarts {}",
+                                n.first_seen, n.last_seen, n.restarts
+                            ))),
+                        ),
+                        ("Sources", Node::Element(el("span").text(sources))),
+                        ("Key", Node::Element(mono(n.public_key.clone()))),
+                    ])),
+            )
+        })
+        .collect();
+
+    Page::new(
+        Area::Mesh,
+        "Mesh",
+        el("div")
+            .class("mj-grid")
+            .child(card("This node", overview))
+            .when(!providers.is_empty(), |d| {
+                d.child(card(
+                    "Discovery providers",
+                    el("div").class("mj-grid").children(providers),
+                ))
+            })
+            .child(card(
+                format!("Discovered nodes ({})", nodes.count),
+                if node_cards.is_empty() {
+                    el("p")
+                        .class("mj-prose")
+                        .text("No nodes observed. The registry fills as advertisements arrive; `majordomus mesh doctor` proves the prerequisites on this machine alone.")
+                } else {
+                    el("div").class("mj-grid").children(node_cards)
+                },
+            )),
+    )
 }
 
 /// The health report: the verdicts the engines already reach, read through one capability.

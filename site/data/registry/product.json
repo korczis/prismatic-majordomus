@@ -5,18 +5,18 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "29fb0066cee48e5f03297db24558afbe0c8f1c5a601d03f30926339ce7ccee7c",
+  "fingerprint": "f591e4b0ee0068d5883936fa1482f203ac62658831030cd46e0b147c6e9b3e27",
   "route": "/features/",
   "counts": {
     "features": 19,
-    "features_all": 20,
+    "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 27,
+    "modules": 28,
     "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
-    "kinds": 25,
+    "kinds": 26,
     "kinds_covered": 22
   },
   "surfaces": [
@@ -266,7 +266,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 20
+          "objects": 21
         },
         {
           "name": "command",
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 202,
+        "mcp_resources": 203,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 198,
+        "objects": 199,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -1545,6 +1545,7 @@
         "continuity",
         "finish-contract",
         "interfaces",
+        "mesh",
         "worktrees"
       ],
       "counts": {
@@ -1796,6 +1797,176 @@
         },
         "modules": {
           "behaviorally_verified": 1
+        }
+      }
+    },
+    {
+      "id": "mesh",
+      "title": "Running instances find each other, and prove who they are",
+      "short_title": "Mesh",
+      "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
+      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "status": "draft",
+      "weight": 45,
+      "featured": false,
+      "areas": [
+        "coordination"
+      ],
+      "audiences": [],
+      "modules": [
+        "mesh"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [
+        "project.mesh-is-observation-not-authority"
+      ],
+      "docs": [
+        "docs/MESH.md"
+      ],
+      "adrs": [
+        "adr-0043"
+      ],
+      "claims": [
+        "mesh-observation-not-authority",
+        "mesh-one-registry",
+        "mesh-off-by-default"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "mesh"
+      ],
+      "web": [],
+      "related": [
+        "coordination"
+      ],
+      "tags": [
+        "mesh",
+        "discovery",
+        "network",
+        "security"
+      ],
+      "route": "/features/mesh/",
+      "source": ".ai/repo/features/mesh.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "mesh",
+          "title": "Mesh",
+          "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+          "capabilities": [
+            {
+              "id": "mesh.doctor",
+              "title": "The mesh self-check",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_doctor",
+              "route": "GET /api/v1/mesh/doctor",
+              "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.identity",
+              "title": "This machine's node identity",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_identity",
+              "route": "GET /api/v1/mesh/identity",
+              "cli": "majordomus mesh identity"
+            },
+            {
+              "id": "mesh.nodes",
+              "title": "The discovered nodes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_nodes",
+              "route": "GET /api/v1/mesh/nodes"
+            },
+            {
+              "id": "mesh.register",
+              "title": "Register with this node's mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_register",
+              "route": "POST /api/v1/mesh/register"
+            },
+            {
+              "id": "mesh.status",
+              "title": "The mesh, at a glance",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh",
+              "resource": "majordomus://mesh",
+              "route": "GET /api/v1/mesh"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [
+        {
+          "id": "project.mesh-is-observation-not-authority",
+          "identity": "project.mesh-is-observation-not-authority@1",
+          "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
+          "class": "blocking",
+          "enforced": false,
+          "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+        }
+      ],
+      "doc_refs": [
+        {
+          "path": "docs/MESH.md",
+          "title": "The mesh: discovery of running Majordomus instances"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0043",
+          "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0043-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+        }
+      ],
+      "claim_refs": [],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "mesh",
+          "title": "Mesh",
+          "route": "/cockpit/mesh"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 1,
+        "http_routes": 5,
+        "cli_paths": 2,
+        "commands": 0,
+        "objects": 0,
+        "rules": 1,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 0,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {},
+        "modules": {
+          "experimental": 1
         }
       }
     },
@@ -2459,7 +2630,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 39
+          "objects": 41
         },
         {
           "name": "knowledge",
@@ -2467,7 +2638,7 @@
         },
         {
           "name": "document",
-          "objects": 216
+          "objects": 217
         }
       ],
       "rule_refs": [
@@ -2716,11 +2887,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 257,
+        "mcp_resources": 260,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 256,
+        "objects": 259,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2885,7 +3056,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 121
+          "objects": 122
         }
       ],
       "rule_refs": [
@@ -3206,11 +3377,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 122,
+        "mcp_resources": 123,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 121,
+        "objects": 122,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -5407,7 +5578,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 27
+          "objects": 28
         },
         {
           "name": "scope",
@@ -5687,11 +5858,11 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 31,
+        "mcp_resources": 32,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 28,
+        "objects": 29,
         "rules": 6,
         "enforced_rules": 3,
         "docs": 2,
@@ -7063,6 +7234,26 @@
         ]
       },
       {
+        "id": "mesh",
+        "label": "Mesh",
+        "route": "/features/mesh/",
+        "status": "draft",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "continuity",
         "label": "Continuity",
         "route": "/features/continuity/",
@@ -7449,6 +7640,11 @@
         ]
       },
       {
+        "id": "mesh",
+        "title": "Mesh",
+        "features": []
+      },
+      {
         "id": "objects",
         "title": "Objects",
         "features": [
@@ -7756,7 +7952,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (39)",
+        "title": "adr (41)",
         "features": [
           "knowledge"
         ]
@@ -7798,7 +7994,7 @@
       },
       {
         "id": "context",
-        "title": "context (27)",
+        "title": "context (28)",
         "features": [
           "context"
         ]
@@ -7817,7 +8013,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (20)",
+        "title": "feature (21)",
         "features": [
           "declare-once"
         ]
@@ -7835,6 +8031,11 @@
         "features": [
           "knowledge"
         ]
+      },
+      {
+        "id": "mesh-declaration",
+        "title": "mesh-declaration (1)",
+        "features": []
       },
       {
         "id": "milestone",
@@ -7878,7 +8079,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (121)",
+        "title": "rule (122)",
         "features": [
           "doctrine"
         ]
@@ -8634,6 +8835,11 @@
       "route": "/cockpit/worktrees"
     },
     {
+      "id": "mesh",
+      "title": "Mesh",
+      "route": "/cockpit/mesh"
+    },
+    {
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
@@ -8655,39 +8861,40 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1244,
-    "builtin": 80,
-    "declarative": 1164,
-    "modules": 27,
-    "mcp_tools": 78,
-    "mcp_resources": 1192,
-    "http_routes": 80,
-    "cli_commands": 93,
+    "capabilities": 1256,
+    "builtin": 85,
+    "declarative": 1171,
+    "modules": 28,
+    "mcp_tools": 83,
+    "mcp_resources": 1200,
+    "http_routes": 85,
+    "cli_commands": 97,
     "shell_commands": 28,
-    "kinds": 28,
-    "objects": 1164,
+    "kinds": 29,
+    "objects": 1171,
     "by_kind": {
-      "adr": 39,
+      "adr": 41,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 149,
       "command": 29,
-      "context": 27,
+      "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 216,
-      "feature": 20,
+      "document": 217,
+      "feature": 21,
       "implementation": 45,
       "issue": 203,
       "knowledge": 1,
+      "mesh-declaration": 1,
       "milestone": 18,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 121,
+      "rule": 122,
       "scope": 1,
       "session": 12,
       "skill": 3,
@@ -8700,5 +8907,5 @@
     "features": 19,
     "web_surfaces": 9
   },
-  "valid": true
+  "valid": false
 }

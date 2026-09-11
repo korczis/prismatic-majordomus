@@ -9,6 +9,17 @@
 //! provider runs on. The datagrams this socket hears may also be unicast or broadcast
 //! aimed at the port — provenance names the socket that heard, not the routing that
 //! delivered.
+//!
+//! ```
+//! use majordomus_cli::mesh::multicast::MulticastProvider;
+//! use majordomus_cli::mesh::config::MulticastConfig;
+//! use majordomus_cli::mesh::provider::{MeshProvider, MeshProviderState};
+//!
+//! // Before the manager starts it, a provider is stopped and has heard nothing.
+//! let provider = MulticastProvider::new(MulticastConfig::default());
+//! assert_eq!(provider.id(), "udp_multicast");
+//! assert_eq!(provider.status().state, MeshProviderState::Stopped);
+//! ```
 
 use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
 use std::sync::atomic::Ordering;
@@ -18,38 +29,38 @@ use std::time::Duration;
 use super::config::MulticastConfig;
 use super::protocol::{encode, MAX_DATAGRAM};
 use super::provider::{
-    jitter_ms, Counters, MeshProvider, Observation, ProviderContext, ProviderState,
+    jitter_ms, Counters, MeshProvider, MeshProviderState, Observation, ProviderContext,
     ProviderStatus,
 };
-use super::registry::Source;
+use super::registry::MeshSource;
 use super::MeshError;
 
 /// How long a blocked read waits before checking the stop flag: every wait is bounded.
 const READ_TIMEOUT: Duration = Duration::from_millis(500);
 
-/// The provider.
+/// The multicast provider: the declared group and port, the socket its threads share,
+/// and the counters its status reports. Constructed by the manager from the declaration.
 pub struct MulticastProvider {
     config: MulticastConfig,
     counters: Arc<Counters>,
-    state: Arc<Mutex<(ProviderState, Option<String>)>>,
+    state: Arc<Mutex<(MeshProviderState, Option<String>)>>,
 }
 
 impl MulticastProvider {
-    /// A provider over its declaration.
+    /// A provider over its declaration; nothing opens until the manager calls `start`,
+    /// so constructing one is free and never touches the network.
     pub fn new(config: MulticastConfig) -> Self {
         MulticastProvider {
             config,
             counters: Arc::new(Counters::default()),
-            state: Arc::new(Mutex::new((ProviderState::Stopped, None))),
+            state: Arc::new(Mutex::new((MeshProviderState::Stopped, None))),
         }
     }
 
     fn open(&self) -> Result<(UdpSocket, Ipv4Addr), MeshError> {
-        let group: Ipv4Addr = self
-            .config
-            .group
-            .parse()
-            .map_err(|_| MeshError::Provider(format!("'{}' is not an IPv4 group", self.config.group)))?;
+        let group: Ipv4Addr = self.config.group.parse().map_err(|_| {
+            MeshError::Provider(format!("'{}' is not an IPv4 group", self.config.group))
+        })?;
         if !group.is_multicast() {
             return Err(MeshError::Provider(format!(
                 "{group} is not a multicast address"
@@ -84,13 +95,13 @@ impl MeshProvider for MulticastProvider {
             Ok(opened) => opened,
             Err(e) => {
                 *self.state.lock().expect("multicast state") =
-                    (ProviderState::Failed, Some(e.to_string()));
+                    (MeshProviderState::Failed, Some(e.to_string()));
                 return Err(e);
             }
         };
         let destination = SocketAddrV4::new(group, self.config.port);
         *self.state.lock().expect("multicast state") = (
-            ProviderState::Running,
+            MeshProviderState::Running,
             Some(format!("group {destination}, ttl {}", self.config.ttl)),
         );
 
@@ -112,7 +123,7 @@ impl MeshProvider for MulticastProvider {
                             Ok((len, from)) => {
                                 counters.received.fetch_add(1, Ordering::Relaxed);
                                 let _ = tx.send(Observation {
-                                    source: Source::UdpMulticast,
+                                    source: MeshSource::UdpMulticast,
                                     path: from.to_string(),
                                     bytes: buffer[..len].to_vec(),
                                 });
@@ -122,12 +133,12 @@ impl MeshProvider for MulticastProvider {
                                     || e.kind() == std::io::ErrorKind::TimedOut => {}
                             Err(e) => {
                                 *state.lock().expect("multicast state") =
-                                    (ProviderState::Failed, Some(format!("recv: {e}")));
+                                    (MeshProviderState::Failed, Some(format!("recv: {e}")));
                                 return;
                             }
                         }
                     }
-                    *state.lock().expect("multicast state") = (ProviderState::Stopped, None);
+                    *state.lock().expect("multicast state") = (MeshProviderState::Stopped, None);
                 });
         }
 
@@ -172,5 +183,43 @@ impl MeshProvider for MulticastProvider {
             sent: self.counters.sent.load(Ordering::Relaxed),
             received: self.counters.received.load(Ordering::Relaxed),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mesh::provider::MeshProvider;
+
+    #[test]
+    fn a_group_that_is_not_multicast_is_refused_with_the_reason() {
+        let mut provider = MulticastProvider::new(MulticastConfig {
+            group: "10.0.0.1".into(),
+            ..MulticastConfig::default()
+        });
+        let (tx, _rx) = std::sync::mpsc::channel();
+        let ctx = crate::mesh::provider::ProviderContext {
+            tx,
+            stop: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true)),
+            beacon: std::sync::Arc::new(crate::mesh::provider::Beacon::new(
+                std::sync::Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+                vec![],
+                vec![],
+                vec![],
+                "test",
+            )),
+        };
+        let error = provider.start(&ctx).unwrap_err().to_string();
+        assert!(error.contains("not a multicast address"), "{error}");
+        assert_eq!(provider.status().state, MeshProviderState::Failed);
+    }
+
+    #[test]
+    fn a_garbled_group_is_refused_before_any_socket_opens() {
+        let provider = MulticastProvider::new(MulticastConfig {
+            group: "not-an-ip".into(),
+            ..MulticastConfig::default()
+        });
+        assert!(provider.open().is_err());
     }
 }

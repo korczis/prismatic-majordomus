@@ -26,6 +26,7 @@
       "issue": "an object of kind `issue`",
       "kind": "one kind of object the layer indexed",
       "knowledge": "an object of kind `knowledge`",
+      "mesh-declaration": "an object of kind `mesh-declaration`",
       "milestone": "an object of kind `milestone`",
       "module": "a capability module of this executable",
       "moment": "an object of kind `moment`",
@@ -394,6 +395,51 @@
         "summary": "Health of this process",
         "route": "/cockpit/capabilities/health.report",
         "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.doctor",
+        "kind": "capability",
+        "label": "mesh.doctor",
+        "summary": "The mesh self-check",
+        "route": "/cockpit/capabilities/mesh.doctor",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.identity",
+        "kind": "capability",
+        "label": "mesh.identity",
+        "summary": "This machine's node identity",
+        "route": "/cockpit/capabilities/mesh.identity",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.nodes",
+        "kind": "capability",
+        "label": "mesh.nodes",
+        "summary": "The discovered nodes",
+        "route": "/cockpit/capabilities/mesh.nodes",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.register",
+        "kind": "capability",
+        "label": "mesh.register",
+        "summary": "Register with this node's mesh",
+        "route": "/cockpit/capabilities/mesh.register",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.status",
+        "kind": "capability",
+        "label": "mesh.status",
+        "summary": "The mesh, at a glance",
+        "route": "/cockpit/capabilities/mesh.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
       },
       {
@@ -1820,6 +1866,14 @@
         "external": true
       },
       {
+        "id": "file:share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "kind": "file",
+        "label": "mesh-declaration.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "external": true
+      },
+      {
         "id": "file:share/schemas/majordomus/session-record/session-record.v1.schema.json",
         "kind": "file",
         "label": "session-record.v1.schema.json",
@@ -2014,6 +2068,12 @@
         "kind": "kind",
         "label": "knowledge",
         "summary": "every object of kind `knowledge`"
+      },
+      {
+        "id": "kind:mesh-declaration",
+        "kind": "kind",
+        "label": "mesh-declaration",
+        "summary": "every object of kind `mesh-declaration`"
       },
       {
         "id": "kind:milestone",
@@ -2975,6 +3035,41 @@
             "runtime",
             "governance"
           ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "label": "adr-0043",
+        "summary": "Mesh peer discovery is provider-based observation with authenticated node identity",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0043",
+        "source": ".ai/repo/adrs/0043-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0035-a-checkout-s-server-is-one-of-the-repository-s-and-its-state.md",
+            "rule:project.mesh-is-observation-not-authority",
+            "file:docs/MESH.md"
+          ],
+          "tags": [
+            "mesh",
+            "discovery",
+            "security"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0044",
+        "kind": "adr",
+        "label": "adr-0044",
+        "summary": "The model catalogue is declarative data, and routing is an explainable projection of it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0044",
+        "source": ".ai/repo/adrs/0044-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11"
         }
       },
       {
@@ -7267,6 +7362,32 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.mesh",
+        "kind": "context",
+        "label": "ai.repo.mesh",
+        "summary": "Mesh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcontext%2Fai.repo.mesh",
+        "source": ".ai/repo/mesh/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+            "share/kinds.yaml",
+            "docs/MESH.md"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.profiles",
         "kind": "context",
         "label": "ai.repo.profiles",
@@ -8034,6 +8155,14 @@
         "summary": "MCP surface — `majordomus mcp`",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FMCP.md",
         "source": "docs/MCP.md"
+      },
+      {
+        "id": "majordomus://document/docs/MESH.md",
+        "kind": "document",
+        "label": "docs/MESH.md",
+        "summary": "The mesh: discovery of running Majordomus instances",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FMESH.md",
+        "source": "docs/MESH.md"
       },
       {
         "id": "majordomus://document/docs/PAGES_STATUS.md",
@@ -10237,6 +10366,54 @@
             "find-an-object-without-reading-everything"
           ],
           "weight": 60
+        }
+      },
+      {
+        "id": "majordomus://feature/mesh",
+        "kind": "feature",
+        "label": "mesh",
+        "summary": "Running instances find each other, and prove who they are",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Fmesh",
+        "source": ".ai/repo/features/mesh.md",
+        "status": "draft",
+        "facts": {
+          "adrs": [
+            "adr-0043"
+          ],
+          "areas": [
+            "coordination"
+          ],
+          "claims": [
+            "mesh-observation-not-authority",
+            "mesh-one-registry",
+            "mesh-off-by-default"
+          ],
+          "cockpit": [
+            "mesh"
+          ],
+          "docs": [
+            "docs/MESH.md"
+          ],
+          "featured": false,
+          "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
+          "modules": [
+            "mesh"
+          ],
+          "related": [
+            "coordination"
+          ],
+          "rules": [
+            "project.mesh-is-observation-not-authority"
+          ],
+          "short_title": "Mesh",
+          "tags": [
+            "mesh",
+            "discovery",
+            "network",
+            "security"
+          ],
+          "use_cases": [],
+          "weight": 45
         }
       },
       {
@@ -20303,6 +20480,16 @@
         }
       },
       {
+        "id": "majordomus://mesh-declaration/majordomus",
+        "kind": "mesh-declaration",
+        "label": "majordomus",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmesh-declaration%2Fmajordomus",
+        "source": ".ai/repo/mesh/majordomus.yaml",
+        "facts": {
+          "enabled": false
+        }
+      },
+      {
         "id": "majordomus://milestone/M000",
         "kind": "milestone",
         "label": "M000",
@@ -25834,6 +26021,24 @@
         }
       },
       {
+        "id": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "rule",
+        "label": "project.mesh-is-observation-not-authority@1",
+        "summary": "The mesh observes nodes; it authorizes nothing and holds one registry",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.mesh-is-observation-not-authority%401",
+        "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [],
+          "tags": [
+            "mesh",
+            "security",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.native-cli-documented@1",
         "kind": "rule",
         "label": "project.native-cli-documented@1",
@@ -30843,6 +31048,11 @@
         "label": "health"
       },
       {
+        "id": "module:mesh",
+        "kind": "module",
+        "label": "mesh"
+      },
+      {
         "id": "module:objects",
         "kind": "module",
         "label": "objects"
@@ -31568,6 +31778,91 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.doctor",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.doctor",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.doctor",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.doctor",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.identity",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.identity",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.identity",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.identity",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.nodes",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.nodes",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.nodes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.register",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.register",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.register",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33340,6 +33635,36 @@
         "source": "majordomus://adr/adr-0040",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
         "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://adr/adr-0035",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0043",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "kind:adr",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -36707,6 +37032,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.mesh",
+        "target": "file:share/kinds.yaml",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.mesh",
+        "target": "file:share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.mesh",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.mesh",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "tracks"
+      },
+      {
         "source": "majordomus://context/ai.repo.profiles",
         "target": "file:share/allow/profile.txt",
         "kind": "tracks"
@@ -37158,6 +37503,11 @@
       },
       {
         "source": "majordomus://document/docs/MCP.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/MESH.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -38063,6 +38413,11 @@
       },
       {
         "source": "majordomus://feature/knowledge",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/mesh",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -41747,6 +42102,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://mesh-declaration/majordomus",
+        "target": "kind:mesh-declaration",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/M000",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -43000,6 +43360,11 @@
         "source": "majordomus://rule/project.land-and-publish@1",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "target": "kind:rule",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://rule/project.native-cli-documented@1",
@@ -47112,6 +47477,31 @@
         "kind": "composes"
       },
       {
+        "source": "module:mesh",
+        "target": "capability:mesh.doctor",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.identity",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.nodes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.register",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:objects",
         "target": "capability:objects.get",
         "kind": "composes"
@@ -47328,8 +47718,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1466,
+      "edges": 3312,
       "acyclic": true,
       "truncated": false
     }

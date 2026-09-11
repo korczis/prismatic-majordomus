@@ -70,6 +70,41 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+    /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
+    Mesh(MeshArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus mesh`.
+pub struct MeshArgs {
+    #[command(subcommand)]
+    /// `status`, `nodes`, `identity`, `doctor`.
+    pub command: MeshCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `mesh` subcommands.
+pub enum MeshCommand {
+    /// Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies
+    Status(MeshQueryArgs),
+    /// Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance
+    Nodes(MeshQueryArgs),
+    /// This machine's node identity, public half only; absent is an answer, not an error
+    Identity(MeshQueryArgs),
+    /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+    Doctor(MeshQueryArgs),
+}
+
+#[derive(Debug, Args)]
+/// One read-only `mesh` question.
+pub struct MeshQueryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -2668,5 +2703,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "mesh status",
+        examples: &[ExampleDoc {
+            id: "mesh-status",
+            title: "Whether this checkout's server runs a mesh",
+            description: "The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.",
+            argv: &["mesh", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh nodes",
+        examples: &[ExampleDoc {
+            id: "mesh-nodes",
+            title: "The nodes the running server has observed",
+            description: "One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.",
+            argv: &["mesh", "nodes"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh identity",
+        examples: &[ExampleDoc {
+            id: "mesh-identity",
+            title: "This machine's node identity, public half only",
+            description: "The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.",
+            argv: &["mesh", "identity"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["present"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh doctor",
+        examples: &[ExampleDoc {
+            id: "mesh-doctor",
+            title: "Every mesh prerequisite, proved on this machine alone",
+            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+            argv: &["mesh", "doctor"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["protocol"]),
+        }],
     },
 ];

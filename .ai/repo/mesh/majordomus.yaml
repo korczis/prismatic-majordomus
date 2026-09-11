@@ -1,0 +1,26 @@
+# The mesh declaration of this repository. Disabled as committed: enabling the mesh is
+# an operator's explicit decision (edit `enabled`, review, commit), and until then no
+# discovery socket opens anywhere this repository's servers run (ADR 0043).
+#
+# `trust.allow` lists Ed25519 public keys (hex) — `majordomus mesh identity` prints a
+# machine's. With `policy: deny_unknown` and an allowlist, only your own machines are
+# ever trusted; everything else that shouts on the network is recorded as observed and
+# trusted for nothing.
+schema: mesh/v1
+kind: mesh-declaration
+id: majordomus
+enabled: false
+multicast:
+  enabled: true
+  group: 239.255.77.77
+  port: 7741
+  ttl: 1
+  interval_seconds: 15
+broadcast:
+  mode: disabled
+rendezvous:
+  endpoints: []
+  interval_seconds: 60
+trust:
+  policy: deny_unknown
+  allow: []

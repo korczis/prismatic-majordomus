@@ -24,7 +24,7 @@ use super::identity::{NodeIdentity, PublicIdentity};
 use super::multicast::MulticastProvider;
 use super::protocol::{self, Refusal};
 use super::provider::{Beacon, MeshProvider, Observation, ProviderContext, ProviderStatus};
-use super::registry::{MeshRegistry, NodeRecord, Source, Tallies};
+use super::registry::{MeshRegistry, MeshSource, NodeRecord, Tallies};
 use super::rendezvous::{RegisterAnswer, RendezvousProvider};
 use super::trust;
 use super::MeshError;
@@ -155,9 +155,18 @@ impl MeshRuntime {
         }
     }
 
-    /// The registry, for surfaces.
+    /// The registry behind this runtime, for surfaces that project it directly.
     pub fn registry(&self) -> &Arc<MeshRegistry> {
         &self.registry
+    }
+
+    /// Record why the mesh is not running, without activating anything: a disabled or
+    /// malformed declaration is an answer `mesh.status` must be able to give.
+    pub fn decline(&self, reason: &str) {
+        let state = self.state.lock().expect("mesh state");
+        if state.is_none() {
+            *self.reason.lock().expect("mesh reason") = format!("not active: {reason}");
+        }
     }
 
     /// Activate the mesh from a declaration. Idempotent: a second activation of an
@@ -313,7 +322,7 @@ impl MeshRuntime {
         status
     }
 
-    /// The nodes, canonical order.
+    /// Every observed node, in the registry's canonical node-id order.
     pub fn nodes(&self) -> Vec<NodeRecord> {
         self.registry.list()
     }
@@ -343,7 +352,7 @@ impl MeshRuntime {
             &trust,
             &own,
             &Observation {
-                source: Source::Rendezvous,
+                source: MeshSource::Rendezvous,
                 path: path.into(),
                 bytes,
             },
@@ -441,6 +450,7 @@ mod tests {
         // Enabled, but with every transport off: what unit tests want.
         MeshConfig {
             schema: "mesh/v1".into(),
+            kind: "mesh-declaration".into(),
             id: "test".into(),
             enabled: true,
             multicast: MulticastConfig {
@@ -467,7 +477,7 @@ mod tests {
         fn start(&mut self, ctx: &ProviderContext) -> Result<(), MeshError> {
             for bytes in self.datagrams.drain(..) {
                 let _ = ctx.tx.send(Observation {
-                    source: Source::Synthetic,
+                    source: MeshSource::Synthetic,
                     path: "test".into(),
                     bytes,
                 });
@@ -477,7 +487,7 @@ mod tests {
         fn status(&self) -> ProviderStatus {
             ProviderStatus {
                 id: "synthetic".into(),
-                state: crate::mesh::provider::ProviderState::Running,
+                state: crate::mesh::provider::MeshProviderState::Running,
                 detail: None,
                 sent: 0,
                 received: 0,
@@ -500,18 +510,36 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let runtime = MeshRuntime::new();
         runtime
-            .activate(&quiet_config(), identity_in(&dir, "self.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &quiet_config(),
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         let other = identity_in(&dir, "other.json");
-        let envelope = advertise(&other, 1, &["127.0.0.1:1".into()], &["http".into()], &[], "0.5.0");
+        let envelope = advertise(
+            &other,
+            1,
+            &["127.0.0.1:1".into()],
+            &["http".into()],
+            &[],
+            "0.5.0",
+        );
         let bytes = serde_json::to_vec(&envelope).unwrap();
         runtime
-            .attach(Box::new(SyntheticProvider { datagrams: vec![bytes] }))
+            .attach(Box::new(SyntheticProvider {
+                datagrams: vec![bytes],
+            }))
             .unwrap();
         wait_for("the observation to land", || runtime.nodes().len() == 1);
         let nodes = runtime.nodes();
         assert_eq!(nodes[0].node_id, other.public.node_id);
-        assert!(!nodes[0].trust.is_trusted(), "deny_unknown observes, never trusts");
+        assert!(
+            !nodes[0].trust.is_trusted(),
+            "deny_unknown observes, never trusts"
+        );
         runtime.stop();
     }
 
@@ -526,9 +554,13 @@ mod tests {
             .unwrap();
         let bytes = serde_json::to_vec(&own_envelope).unwrap();
         runtime
-            .attach(Box::new(SyntheticProvider { datagrams: vec![bytes] }))
+            .attach(Box::new(SyntheticProvider {
+                datagrams: vec![bytes],
+            }))
             .unwrap();
-        wait_for("the self-heard counter", || runtime.status().refusals.self_heard == 1);
+        wait_for("the self-heard counter", || {
+            runtime.status().refusals.self_heard == 1
+        });
         assert!(runtime.nodes().is_empty());
         runtime.stop();
     }
@@ -538,7 +570,13 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let runtime = MeshRuntime::new();
         runtime
-            .activate(&quiet_config(), identity_in(&dir, "self.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &quiet_config(),
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         runtime
             .attach(Box::new(SyntheticProvider {
@@ -583,7 +621,13 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let runtime = MeshRuntime::new();
         runtime
-            .activate(&quiet_config(), identity_in(&dir, "self.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &quiet_config(),
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         let answer = runtime.register(&serde_json::json!({"v": 1}), "test");
         assert!(!answer.accepted);
@@ -598,7 +642,13 @@ mod tests {
         let mut config = quiet_config();
         config.enabled = false;
         runtime
-            .activate(&config, identity_in(&dir, "self.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &config,
+                identity_in(&dir, "self.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         let status = runtime.status();
         assert!(!status.active);
@@ -611,10 +661,22 @@ mod tests {
         let runtime = MeshRuntime::new();
         let config = quiet_config();
         runtime
-            .activate(&config, identity_in(&dir, "a.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &config,
+                identity_in(&dir, "a.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         runtime
-            .activate(&config, identity_in(&dir, "b.json"), vec![], vec![], "0.5.0")
+            .activate(
+                &config,
+                identity_in(&dir, "b.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
             .unwrap();
         let status = runtime.status();
         assert!(status.active);

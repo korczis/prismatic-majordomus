@@ -6,26 +6,27 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "f544d8ce0c24f025a7d8cd1622f239ce3779ed97abad79c6850cd49819459069",
+    "fingerprint": "af9f9e6953d164d878fa88db73da6f5d27b564e382be8232225b6e413ad58a42",
     "summary": {
-      "total": 1244,
-      "builtin": 80,
-      "declarative": 1164,
+      "total": 1256,
+      "builtin": 85,
+      "declarative": 1171,
       "by_kind": {
-        "command": 3,
-        "query": 77,
-        "resource": 1164
+        "command": 4,
+        "query": 81,
+        "resource": 1171
       },
       "by_stability": {
         "behaviorally_verified": 75,
-        "implemented": 1169
+        "experimental": 5,
+        "implemented": 1176
       },
-      "mcp_tools": 78,
-      "mcp_resources": 1192,
-      "http_routes": 80,
-      "cli_commands": 34,
-      "modules": 55,
-      "benchmark_required": 77,
+      "mcp_tools": 83,
+      "mcp_resources": 1200,
+      "http_routes": 85,
+      "cli_commands": 36,
+      "modules": 57,
+      "benchmark_required": 82,
       "benchmark_waived": 3,
       "cached": 24
     },
@@ -14252,6 +14253,1048 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "mesh.doctor",
+        "module": "mesh",
+        "kind": "query",
+        "title": "The mesh self-check",
+        "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "MeshDoctorReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "Whether every check holds."
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DoctorCheck"
+                },
+                "description": "The checks, in the order they ran."
+              }
+            },
+            "required": [
+              "ok",
+              "checks"
+            ],
+            "description": "The whole self-check.",
+            "title": "MeshDoctorReport",
+            "$defs": {
+              "DoctorCheck": {
+                "type": "object",
+                "properties": {
+                  "check": {
+                    "type": "string",
+                    "description": "What was checked."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Whether it holds."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The evidence: a path, an address, an error."
+                  }
+                },
+                "required": [
+                  "check",
+                  "ok",
+                  "detail"
+                ],
+                "description": "One check's verdict."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_doctor"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/doctor"
+          },
+          "cli": {
+            "path": [
+              "mesh",
+              "doctor"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "diagnostics"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.identity",
+        "module": "mesh",
+        "kind": "query",
+        "title": "This machine's node identity",
+        "description": "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "IdentityReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Where the identity file lives (or would)."
+              },
+              "present": {
+                "type": "boolean",
+                "description": "Whether the file exists."
+              },
+              "identity": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PublicIdentity"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log."
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the identity did not load, when it did not."
+              }
+            },
+            "required": [
+              "present"
+            ],
+            "description": "The answer of `mesh.identity`: this machine's node identity, public half only.",
+            "title": "IdentityReport",
+            "$defs": {
+              "PublicIdentity": {
+                "type": "object",
+                "properties": {
+                  "node_id": {
+                    "$ref": "#/$defs/NodeId",
+                    "description": "The node id: a digest of the public key."
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "description": "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof."
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust."
+                  },
+                  "instance_id": {
+                    "$ref": "#/$defs/InstanceId",
+                    "description": "This run of the node."
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "public_key",
+                  "display_name",
+                  "instance_id"
+                ],
+                "description": "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs."
+              },
+              "NodeId": {
+                "type": "string",
+                "description": "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+              },
+              "InstanceId": {
+                "type": "string",
+                "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_identity"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/identity"
+          },
+          "cli": {
+            "path": [
+              "mesh",
+              "identity"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "identity"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.nodes",
+        "module": "mesh",
+        "kind": "query",
+        "title": "The discovered nodes",
+        "description": "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "NodeList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many nodes the registry holds."
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/NodeRecord"
+                },
+                "description": "The nodes, in node-id order — the one canonical order every surface shows."
+              }
+            },
+            "required": [
+              "count",
+              "nodes"
+            ],
+            "description": "The answer of `mesh.nodes`: every node this process has observed.",
+            "title": "NodeList",
+            "$defs": {
+              "NodeRecord": {
+                "type": "object",
+                "properties": {
+                  "node_id": {
+                    "$ref": "#/$defs/NodeId",
+                    "description": "The node id: the digest of the key below."
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "description": "The Ed25519 public key that proved this record's advertisements."
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "The node's own display name. Presentation only."
+                  },
+                  "instance_id": {
+                    "$ref": "#/$defs/InstanceId",
+                    "description": "The node's current run."
+                  },
+                  "trust": {
+                    "$ref": "#/$defs/TrustState",
+                    "description": "What the policy decided."
+                  },
+                  "presence": {
+                    "$ref": "#/$defs/Presence",
+                    "description": "Whether the node is answering now."
+                  },
+                  "endpoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Advertised `host:port` authorities."
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Advertised transports (`http`, `mcp`, `ws`)."
+                  },
+                  "repositories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Advertised repository digests."
+                  },
+                  "protocol_version": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The advertised protocol version."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The advertised executable version."
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Sighting"
+                    },
+                    "description": "Every source this node was seen through, most recent sighting per source."
+                  },
+                  "first_seen": {
+                    "type": "string",
+                    "description": "First seen, RFC 3339."
+                  },
+                  "last_seen": {
+                    "type": "string",
+                    "description": "Last seen, RFC 3339."
+                  },
+                  "restarts": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many instances this node id has shown (a restart increments it)."
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "public_key",
+                  "display_name",
+                  "instance_id",
+                  "trust",
+                  "presence",
+                  "endpoints",
+                  "capabilities",
+                  "repositories",
+                  "protocol_version",
+                  "version",
+                  "sources",
+                  "first_seen",
+                  "last_seen",
+                  "restarts"
+                ],
+                "description": "One discovered node: the canonical record every surface projects."
+              },
+              "NodeId": {
+                "type": "string",
+                "description": "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+              },
+              "InstanceId": {
+                "type": "string",
+                "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+              },
+              "TrustState": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "observed"
+                      }
+                    },
+                    "required": [
+                      "state"
+                    ],
+                    "description": "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "trusted"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string",
+                        "const": "rejected"
+                      },
+                      "detail": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "state",
+                      "detail"
+                    ],
+                    "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+                  }
+                ],
+                "description": "What the policy decided about one node."
+              },
+              "Presence": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "present",
+                    "description": "An advertisement arrived within [`PRESENCE_TTL`]."
+                  },
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely."
+                  }
+                ],
+                "description": "Whether the node is answering now, by its own announcements."
+              },
+              "Sighting": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "$ref": "#/$defs/MeshSource",
+                    "description": "The provider kind that saw it."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The network path, as text: a sender address, an interface, a rendezvous URL."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  }
+                },
+                "required": [
+                  "source",
+                  "path",
+                  "at"
+                ],
+                "description": "One provenance entry: a source, and where the observation physically came from."
+              },
+              "MeshSource": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "udp_multicast",
+                    "description": "A multicast datagram."
+                  },
+                  {
+                    "type": "string",
+                    "const": "udp_broadcast",
+                    "description": "A broadcast datagram."
+                  },
+                  {
+                    "type": "string",
+                    "const": "rendezvous",
+                    "description": "A rendezvous answer or registration."
+                  },
+                  {
+                    "type": "string",
+                    "const": "synthetic",
+                    "description": "A synthetic provider (tests, self-check)."
+                  }
+                ],
+                "description": "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\"."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_nodes"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/nodes"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "discovery"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.register",
+        "module": "mesh",
+        "kind": "command",
+        "title": "Register with this node's mesh",
+        "description": "Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only.",
+        "input": {
+          "name": "RegisterInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "envelope": {
+                "description": "The envelope. Verified here exactly as a datagram would be — bounds, staleness,\nsignature — before anything is recorded."
+              }
+            },
+            "required": [
+              "envelope"
+            ],
+            "description": "The input of `mesh.register`: one signed envelope, exactly as the wire carries it.",
+            "title": "RegisterInput"
+          }
+        },
+        "output": {
+          "name": "RegisterAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "accepted": {
+                "type": "boolean",
+                "description": "Whether the presented envelope was accepted into the local registry."
+              },
+              "refusal": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, when it was not."
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Envelope"
+                },
+                "description": "The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode's own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing."
+              }
+            },
+            "required": [
+              "accepted",
+              "candidates"
+            ],
+            "description": "What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it.",
+            "title": "RegisterAnswer",
+            "$defs": {
+              "Envelope": {
+                "type": "object",
+                "properties": {
+                  "v": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Protocol version."
+                  },
+                  "pk": {
+                    "type": "string",
+                    "description": "The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge."
+                  },
+                  "inst": {
+                    "$ref": "#/$defs/InstanceId",
+                    "description": "This run of the node."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "A human name for the node. Presentation only.",
+                    "default": ""
+                  },
+                  "seq": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped."
+                  },
+                  "ts": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since the Unix epoch at signing time."
+                  },
+                  "ep": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key.",
+                    "default": []
+                  },
+                  "caps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization.",
+                    "default": []
+                  },
+                  "repos": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\".",
+                    "default": []
+                  },
+                  "ver": {
+                    "type": "string",
+                    "description": "The executable version, informational.",
+                    "default": ""
+                  },
+                  "sig": {
+                    "type": "string",
+                    "description": "Ed25519 over [`Advertisement::signing_bytes`], hex."
+                  }
+                },
+                "required": [
+                  "v",
+                  "pk",
+                  "inst",
+                  "seq",
+                  "ts",
+                  "sig"
+                ],
+                "description": "The wire envelope: the advertisement plus its signature."
+              },
+              "InstanceId": {
+                "type": "string",
+                "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_register"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/mesh/register"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "discovery"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.status",
+        "module": "mesh",
+        "kind": "query",
+        "title": "The mesh, at a glance",
+        "description": "Whether the mesh runs in this process and why not when it does not; this node's public identity; every discovery provider with its state and counters; the registry's tallies; and the refused datagrams by reason. The one status every surface shows.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "MeshStatus",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Whether the mesh is running in this process."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why not, when it is not: no declaration, disabled, no identity, stopped."
+              },
+              "identity": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PublicIdentity"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "This node, when the mesh has an identity."
+              },
+              "trust_policy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trust policy in force."
+              },
+              "providers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProviderStatus"
+                },
+                "description": "Every provider, canonical order (by id)."
+              },
+              "tallies": {
+                "$ref": "#/$defs/Tallies",
+                "description": "The registry's tallies."
+              },
+              "refusals": {
+                "$ref": "#/$defs/Refusals",
+                "description": "Refused datagrams, by reason."
+              },
+              "started_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When the mesh started, RFC 3339."
+              }
+            },
+            "required": [
+              "active",
+              "providers",
+              "tallies",
+              "refusals"
+            ],
+            "description": "The whole mesh, as every surface reports it.",
+            "title": "MeshStatus",
+            "$defs": {
+              "PublicIdentity": {
+                "type": "object",
+                "properties": {
+                  "node_id": {
+                    "$ref": "#/$defs/NodeId",
+                    "description": "The node id: a digest of the public key."
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "description": "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof."
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "description": "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust."
+                  },
+                  "instance_id": {
+                    "$ref": "#/$defs/InstanceId",
+                    "description": "This run of the node."
+                  }
+                },
+                "required": [
+                  "node_id",
+                  "public_key",
+                  "display_name",
+                  "instance_id"
+                ],
+                "description": "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs."
+              },
+              "NodeId": {
+                "type": "string",
+                "description": "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+              },
+              "InstanceId": {
+                "type": "string",
+                "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+              },
+              "ProviderStatus": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/MeshProviderState",
+                    "description": "The state."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when `Failed`; what it watches, when `Running`."
+                  },
+                  "sent": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Advertisements transmitted."
+                  },
+                  "received": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Datagrams heard and handed to the manager."
+                  }
+                },
+                "required": [
+                  "id",
+                  "state",
+                  "sent",
+                  "received"
+                ],
+                "description": "One provider's status: state, why, and its counters."
+              },
+              "MeshProviderState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "Threads up, socket bound (where the provider has one)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "Stopped by the manager."
+                  }
+                ],
+                "description": "The provider's health, as every surface reports it."
+              },
+              "Tallies": {
+                "type": "object",
+                "properties": {
+                  "nodes": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Records held."
+                  },
+                  "trusted": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of which trusted."
+                  },
+                  "present": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of which present."
+                  },
+                  "accepted": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Observations accepted since start."
+                  },
+                  "replayed": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Replayed datagrams dropped since start."
+                  },
+                  "expired": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Records expired out since start."
+                  },
+                  "evicted": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Records evicted for space since start."
+                  }
+                },
+                "required": [
+                  "nodes",
+                  "trusted",
+                  "present",
+                  "accepted",
+                  "replayed",
+                  "expired",
+                  "evicted"
+                ],
+                "description": "The registry's tallies, for status and health."
+              },
+              "Refusals": {
+                "type": "object",
+                "properties": {
+                  "oversized": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Longer than the datagram bound."
+                  },
+                  "malformed": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Not an envelope."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "A protocol version this executable does not read."
+                  },
+                  "bounds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Out-of-bounds fields."
+                  },
+                  "stale": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Outside the clock-skew window."
+                  },
+                  "signature": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "A signature that does not verify."
+                  },
+                  "self_heard": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "This node's own datagrams, heard back and skipped."
+                  }
+                },
+                "required": [
+                  "oversized",
+                  "malformed",
+                  "version",
+                  "bounds",
+                  "stale",
+                  "signature",
+                  "self_heard"
+                ],
+                "description": "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh",
+            "resource": {
+              "uri": "majordomus://mesh",
+              "name": "mesh"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "discovery"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
       {
         "id": "objects.get",
@@ -29084,7 +30127,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 39,
+        "capabilities": 41,
         "capability_ids": []
       },
       {
@@ -29172,7 +30215,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 27,
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -29278,7 +30321,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 217,
         "capability_ids": []
       },
       {
@@ -29317,7 +30360,7 @@
         "title": "feature",
         "description": "Declarative objects of kind 'feature' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 20,
+        "capabilities": 21,
         "capability_ids": []
       },
       {
@@ -29367,6 +30410,30 @@
         "id": "knowledge",
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
+        "id": "mesh",
+        "title": "Mesh",
+        "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 5,
+        "capability_ids": [
+          "mesh.doctor",
+          "mesh.identity",
+          "mesh.nodes",
+          "mesh.register",
+          "mesh.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh-declaration",
+        "title": "mesh-declaration",
+        "description": "Declarative objects of kind 'mesh-declaration' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 1,
         "capability_ids": []
@@ -29551,7 +30618,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 121,
+        "capabilities": 122,
         "capability_ids": []
       },
       {
@@ -29683,7 +30750,7 @@
     ]
   },
   "index": {
-    "fingerprint": "70d07259a1a492c22a63ef6bc502fed293ee96e2fdca0993a378e82396d898c2",
+    "fingerprint": "a6bbe42643d53427edc07c81096c6914a01d58beb3aba5ecfd280d0b123af61f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -29706,27 +30773,28 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 39,
+      "adr": 41,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 149,
       "command": 29,
-      "context": 27,
+      "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 216,
-      "feature": 20,
+      "document": 217,
+      "feature": 21,
       "implementation": 45,
       "issue": 203,
       "knowledge": 1,
+      "mesh-declaration": 1,
       "milestone": 18,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 121,
+      "rule": 122,
       "scope": 1,
       "session": 12,
       "skill": 3,
@@ -30367,6 +31435,33 @@
           "runtime",
           "governance"
         ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0043",
+        "kind": "adr",
+        "identity": "adr-0043",
+        "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
+        "description": "Mesh peer discovery is provider-based observation with authenticated node identity",
+        "path": ".ai/repo/adrs/0043-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9108,
+        "tags": [
+          "mesh",
+          "discovery",
+          "security"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0044",
+        "kind": "adr",
+        "identity": "adr-0044",
+        "title": "The model catalogue is declarative data, and routing is an explainable projection of it",
+        "description": "The model catalogue is declarative data, and routing is an explainable projection of it",
+        "path": ".ai/repo/adrs/0044-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 643
       },
       {
         "uri": "majordomus://application/ci-gated-project",
@@ -32584,6 +33679,16 @@
         "bytes": 975
       },
       {
+        "uri": "majordomus://context/ai.repo.mesh",
+        "kind": "context",
+        "identity": "ai.repo.mesh",
+        "title": "Mesh",
+        "description": "One canonical object that says whether this repository's servers participate in mesh discovery, over which transports, and whom they trust; absent or disabled means no socket opens.",
+        "path": ".ai/repo/mesh/README.md",
+        "source_class": "context",
+        "bytes": 1763
+      },
+      {
         "uri": "majordomus://context/ai.repo.profiles",
         "kind": "context",
         "identity": "ai.repo.profiles",
@@ -33210,6 +34315,15 @@
         "path": "docs/MCP.md",
         "source_class": "document",
         "bytes": 35308
+      },
+      {
+        "uri": "majordomus://document/docs/MESH.md",
+        "kind": "document",
+        "identity": "docs/MESH.md",
+        "title": "The mesh: discovery of running Majordomus instances",
+        "path": "docs/MESH.md",
+        "source_class": "document",
+        "bytes": 11584
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -34922,6 +36036,23 @@
           "decisions",
           "adr",
           "knowledge"
+        ]
+      },
+      {
+        "uri": "majordomus://feature/mesh",
+        "kind": "feature",
+        "identity": "mesh",
+        "title": "Running instances find each other, and prove who they are",
+        "description": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+        "path": ".ai/repo/features/mesh.md",
+        "section": "features",
+        "source_class": "feature",
+        "bytes": 2719,
+        "tags": [
+          "mesh",
+          "discovery",
+          "network",
+          "security"
         ]
       },
       {
@@ -37640,6 +38771,14 @@
         ]
       },
       {
+        "uri": "majordomus://mesh-declaration/majordomus",
+        "kind": "mesh-declaration",
+        "identity": "majordomus",
+        "path": ".ai/repo/mesh/majordomus.yaml",
+        "source_class": "mesh-declaration",
+        "bytes": 820
+      },
+      {
         "uri": "majordomus://milestone/M000",
         "kind": "milestone",
         "identity": "M000",
@@ -39843,6 +40982,22 @@
           "integration",
           "deployment",
           "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "rule",
+        "identity": "project.mesh-is-observation-not-authority@1",
+        "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
+        "description": "Mesh discovery is provider-based, signed and canonical — providers emit observations into the one MeshRegistry through the manager's single verification path, no discovery event grants execution or trust by presence, and the mesh is off until a repository declares it.",
+        "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3748,
+        "tags": [
+          "mesh",
+          "security",
+          "doctrine"
         ]
       },
       {
@@ -42474,7 +43629,7 @@
       "identity": [
         "id"
       ],
-      "objects": 39
+      "objects": 41
     },
     {
       "name": "application",
@@ -42534,7 +43689,7 @@
       "identity": [
         "id"
       ],
-      "objects": 27
+      "objects": 28
     },
     {
       "name": "deployment",
@@ -42560,7 +43715,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 216
+      "objects": 217
     },
     {
       "name": "feature",
@@ -42570,7 +43725,7 @@
       "identity": [
         "id"
       ],
-      "objects": 20
+      "objects": 21
     },
     {
       "name": "implementation",
@@ -42594,6 +43749,16 @@
       "format": "markdown",
       "front_matter": "required",
       "schema": "majordomus.knowledge/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
+    },
+    {
+      "name": "mesh-declaration",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.mesh-declaration/v1",
       "identity": [
         "id"
       ],
@@ -42674,7 +43839,7 @@
         "id",
         "version"
       ],
-      "objects": 121
+      "objects": 122
     },
     {
       "name": "scope",
@@ -57019,6 +58184,468 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "mesh"
+        ],
+        "route": "/docs/cli/mesh/",
+        "executable": false,
+        "usage": "majordomus mesh <COMMAND>",
+        "about": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "status"
+            ],
+            "route": "/docs/cli/mesh/status/",
+            "executable": true,
+            "usage": "majordomus mesh status [OPTIONS]",
+            "about": "Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-status",
+                "title": "Whether this checkout's server runs a mesh",
+                "description": "The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.",
+                "argv": [
+                  "mesh",
+                  "status"
+                ],
+                "command": "majordomus mesh status",
+                "setup": [],
+                "expectation": "exits 0; prints mesh"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "nodes"
+            ],
+            "route": "/docs/cli/mesh/nodes/",
+            "executable": true,
+            "usage": "majordomus mesh nodes [OPTIONS]",
+            "about": "Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-nodes",
+                "title": "The nodes the running server has observed",
+                "description": "One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.",
+                "argv": [
+                  "mesh",
+                  "nodes"
+                ],
+                "command": "majordomus mesh nodes",
+                "setup": [],
+                "expectation": "exits 0; prints mesh"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "identity"
+            ],
+            "route": "/docs/cli/mesh/identity/",
+            "executable": true,
+            "usage": "majordomus mesh identity [OPTIONS]",
+            "about": "This machine's node identity, public half only; absent is an answer, not an error",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-identity",
+                "title": "This machine's node identity, public half only",
+                "description": "The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.",
+                "argv": [
+                  "mesh",
+                  "identity"
+                ],
+                "command": "majordomus mesh identity",
+                "setup": [],
+                "expectation": "exits 0; prints present"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "doctor"
+            ],
+            "route": "/docs/cli/mesh/doctor/",
+            "executable": true,
+            "usage": "majordomus mesh doctor [OPTIONS]",
+            "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-doctor",
+                "title": "Every mesh prerequisite, proved on this machine alone",
+                "description": "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+                "argv": [
+                  "mesh",
+                  "doctor"
+                ],
+                "command": "majordomus mesh doctor",
+                "setup": [],
+                "expectation": "exits 0; prints protocol"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -57379,6 +59006,56 @@
         "read_only": true,
         "input": "Empty",
         "output": "Health"
+      },
+      {
+        "name": "majordomus_mesh_doctor",
+        "id": "mesh.doctor",
+        "title": "The mesh self-check",
+        "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "MeshDoctorReport"
+      },
+      {
+        "name": "majordomus_mesh_identity",
+        "id": "mesh.identity",
+        "title": "This machine's node identity",
+        "description": "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "IdentityReport"
+      },
+      {
+        "name": "majordomus_mesh_nodes",
+        "id": "mesh.nodes",
+        "title": "The discovered nodes",
+        "description": "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "NodeList"
+      },
+      {
+        "name": "majordomus_mesh_register",
+        "id": "mesh.register",
+        "title": "Register with this node's mesh",
+        "description": "Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only.",
+        "kind": "command",
+        "read_only": false,
+        "input": "RegisterInput",
+        "output": "RegisterAnswer"
+      },
+      {
+        "name": "majordomus_mesh",
+        "id": "mesh.status",
+        "title": "The mesh, at a glance",
+        "description": "Whether the mesh runs in this process and why not when it does not; this node's public identity; every discovery provider with its state and counters; the registry's tallies; and the refused datagrams by reason. The one status every surface shows.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "MeshStatus"
       },
       {
         "name": "majordomus_get",
@@ -57890,6 +59567,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://mesh",
+        "name": "mesh",
+        "id": "mesh.status",
+        "title": "The mesh, at a glance",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://obligations/closure",
         "name": "obligation-closure",
         "id": "obligations.closure",
@@ -58233,6 +59917,36 @@
         "method": "GET",
         "path": "/api/v1/health",
         "id": "health.report",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/doctor",
+        "id": "mesh.doctor",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/identity",
+        "id": "mesh.identity",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/nodes",
+        "id": "mesh.nodes",
+        "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/mesh/register",
+        "id": "mesh.register",
+        "kind": "command"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh",
+        "id": "mesh.status",
         "kind": "query"
       },
       {
@@ -60058,6 +61772,151 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/health"
+      },
+      {
+        "key": "mesh.doctor|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.doctor",
+        "module": "mesh",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "mesh.doctor|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.doctor",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_mesh_doctor"
+      },
+      {
+        "key": "mesh.doctor|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.doctor",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/mesh/doctor"
+      },
+      {
+        "key": "mesh.identity|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.identity",
+        "module": "mesh",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "mesh.identity|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.identity",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_mesh_identity"
+      },
+      {
+        "key": "mesh.identity|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.identity",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/mesh/identity"
+      },
+      {
+        "key": "mesh.nodes|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.nodes",
+        "module": "mesh",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "mesh.nodes|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.nodes",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_mesh_nodes"
+      },
+      {
+        "key": "mesh.nodes|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.nodes",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/mesh/nodes"
+      },
+      {
+        "key": "mesh.register|direct|refused",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.register",
+        "module": "mesh",
+        "case": "refused",
+        "cached": false
+      },
+      {
+        "key": "mesh.register|mcp|refused",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.register",
+        "module": "mesh",
+        "case": "refused",
+        "cached": false,
+        "tool": "majordomus_mesh_register"
+      },
+      {
+        "key": "mesh.register|http|refused",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.register",
+        "module": "mesh",
+        "case": "refused",
+        "cached": false,
+        "route": "POST /api/v1/mesh/register"
+      },
+      {
+        "key": "mesh.status|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "mesh.status",
+        "module": "mesh",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "mesh.status|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "mesh.status",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_mesh"
+      },
+      {
+        "key": "mesh.status|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "mesh.status",
+        "module": "mesh",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/mesh"
       },
       {
         "key": "objects.get|direct|first-object",
@@ -62783,6 +64642,111 @@
           "cases": 1
         },
         {
+          "subject": "mesh.doctor",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.doctor",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.doctor",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.identity",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.identity",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.identity",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.nodes",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.nodes",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.nodes",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.register",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.register",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.register",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.status",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.status",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "mesh.status",
+          "module": "mesh",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "objects.get",
           "module": "objects",
           "transport": "direct",
@@ -63779,20 +65743,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 80,
-          "covered": 77,
+          "required": 85,
+          "covered": 82,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 80,
-          "covered": 77,
+          "required": 85,
+          "covered": 82,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 78,
-          "covered": 75,
+          "required": 83,
+          "covered": 80,
           "missing": 0,
           "waived": 3
         },
@@ -63803,8 +65767,8 @@
           "waived": 0
         },
         "total": {
-          "required": 251,
-          "covered": 242,
+          "required": 266,
+          "covered": 257,
           "missing": 0,
           "waived": 9
         }
