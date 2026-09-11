@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.envrc-is-an-adapter@1, project.shared-server-resilience@1, project.interfaces-are-projections@1, project.the-lease-is-read-once@1]
 tags: [entry, mcp, environment, enforcement]
+
+x-majordomus:
+  tests: [test/cases/118_entry_converges_by_rule.sh, test/cases/108_entry_converges_on_a_server.sh]
 ---
 
 # Rationale
