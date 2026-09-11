@@ -302,6 +302,7 @@ table, rule bullets, a rules or lifecycle or finish-contract heading — and a
 | `finish` | evaluate the finish contract | task record, ledger | 0 / 10 / 15 |
 | `skills` | the repository's skills: list, show one, check every one against its contract | no | 0 / 10 / 12 / 13 |
 | `bench` | how long does every public command take here, cold and warm, against the baseline? | local evidence under `.ai/local/benchmarks/`; the baseline only with `--write-baseline` | 0 / 10 / 12 / 15 |
+| `archive` | a snapshot of the tracked tree that can be read, or checked, somewhere else | an archive under `tmp/archives/`, or wherever `--out` says | 0 / 2 / 10 / 12 / 13 / 15 |
 
 Exit codes are a contract: `0` ok, `2` usage, `10` contract unmet, `11` drift found,
 `12` missing artifact, `13` internal error, `15` refused. There is no "warn and

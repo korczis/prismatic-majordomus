@@ -1,7 +1,7 @@
 +++
 title = "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift"
 description = "majordomus watch is the read-only inspection of everything that can silently disagree: the policy changed after the last update (policy drift); a generated file no longer matches its own stamp (projection drift); the task record no longer describes the checkout (state drift); touched files outside scope (scope drift); a task marked handed over with no handover file, or one missing a required section (handover drift); a task marked complete with no task.finished in the ledger (verification drift); a checkpoint older than the profile interval (staleness); a store over its cap (retention). Each finding names the command that reproduces it; exit 11 when anything drifted."
-weight = 51
+weight = 52
 [extra]
 claim_id = "drift-watch"
 status = "guaranteed"
