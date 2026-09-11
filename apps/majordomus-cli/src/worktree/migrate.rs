@@ -139,8 +139,30 @@ pub fn plan(service: &WorktreeService) -> Result<MigrationPlan> {
 }
 
 /// The plan, optionally counting ephemeral worktrees as steps.
+///
+/// The topology is read *fast* — no `git status` anywhere — and the uncommitted work is then
+/// read only for the work trees that became steps. A plan is about the handful of work trees
+/// that are not where they belong, and reading every work tree of the repository to describe
+/// two of them is what made this the second half of a thirty-second page: the Cockpit asks
+/// for the topology and the plan, and both walked all 111 work trees. The steps carry
+/// exactly the same `dirty` they carried when the whole topology was read in full.
 pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<MigrationPlan> {
-    let topology = service.topology(Detail::Full)?;
+    let topology = service.topology(Detail::Fast)?;
+    let dirty = super::state::dirty_states(
+        &topology
+            .worktrees
+            .iter()
+            .filter(|w| {
+                w.exists
+                    && match w.standing {
+                        Standing::Ephemeral => include_ephemeral,
+                        Standing::Misplaced => true,
+                        _ => false,
+                    }
+            })
+            .map(|w| PathBuf::from(&w.path))
+            .collect::<Vec<_>>(),
+    );
     let container = service.container().path.clone();
     let mut steps = Vec::new();
     let mut exceptions = Vec::new();
@@ -184,7 +206,7 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
                     } else {
                         MigrationAction::Move
                     },
-                    dirty: w.dirty.clone().unwrap_or_default(),
+                    dirty: dirty.get(Path::new(&w.path)).cloned().unwrap_or_default(),
                     outcome: if blockers.is_empty() {
                         StepOutcome::Planned
                     } else {

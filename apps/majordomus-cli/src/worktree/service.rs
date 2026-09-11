@@ -22,9 +22,9 @@ use super::git;
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
 use super::lock::WorktreeLock;
 use super::model::{
-    BranchState, ContainerView, DiagnosticCode, GuardVerdict, InspectReport, RepairReport,
-    RepositoryTopology, RepositoryView, Severity, Standing, StatusReport, TopologyDiagnostic,
-    TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
+    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
+    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
+    TopologyDiagnostic, TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
 };
 use super::path::{self, BranchName, CONTAINER_SUFFIX};
 use super::state::{self, BranchRef};
@@ -198,6 +198,23 @@ impl WorktreeService {
         record: &WorktreeRecord,
         detail: Detail,
         branches: &BTreeMap<String, BranchRef>,
+    ) -> WorktreeState {
+        self.judge_with(record, detail, branches, None)
+    }
+
+    /// The same, over a reading of the uncommitted work that has already been taken.
+    ///
+    /// [`Self::topology`] reads every work tree's uncommitted state at once
+    /// ([`state::dirty_states`]) and hands each judgement its own entry, because the
+    /// alternative — each judgement running its own `git status` in turn — is where a
+    /// repository with a hundred work trees spent thirty seconds answering one page. A
+    /// caller judging a single work tree passes `None` and the reading is taken here.
+    fn judge_with(
+        &self,
+        record: &WorktreeRecord,
+        detail: Detail,
+        branches: &BTreeMap<String, BranchRef>,
+        read: Option<&BTreeMap<PathBuf, DirtyState>>,
     ) -> WorktreeState {
         let resolved = ResolvedPath::of(&record.path);
         let is_primary = self.identity.is_primary(record);
@@ -410,7 +427,10 @@ impl WorktreeService {
         }
 
         let dirty = if detail == Detail::Full && exists && !record.bare {
-            state::dirty_state(&record.path).ok()
+            match read {
+                Some(taken) => taken.get(&record.path).cloned(),
+                None => state::dirty_state(&record.path).ok(),
+            }
         } else {
             None
         };
@@ -554,11 +574,24 @@ impl WorktreeService {
             None => None,
         };
 
-        let mut worktrees: Vec<WorktreeState> = self
-            .identity
-            .registered_worktrees()
+        // Every work tree's uncommitted state, read at once rather than one judgement at a
+        // time: the readings are independent, they are git walking separate trees on disk,
+        // and the serial form cost the sum of a hundred waits on the one page that has to
+        // answer a person.
+        let registered = self.identity.registered_worktrees();
+        let taken: BTreeMap<PathBuf, DirtyState> = if detail == Detail::Full {
+            let paths: Vec<PathBuf> = registered
+                .iter()
+                .filter(|r| !r.bare && r.path.is_dir())
+                .map(|r| r.path.clone())
+                .collect();
+            state::dirty_states(&paths)
+        } else {
+            BTreeMap::new()
+        };
+        let mut worktrees: Vec<WorktreeState> = registered
             .iter()
-            .map(|r| self.judge(r, detail, &branches))
+            .map(|r| self.judge_with(r, detail, &branches, Some(&taken)))
             .collect();
 
         // repository-wide facts

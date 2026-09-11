@@ -1,8 +1,16 @@
 //! What git says about the state of a work tree and of every branch: uncommitted work from
 //! `status --porcelain`, and every local branch with its upstream, its distance from it and
 //! the work tree holding it from one `for-each-ref`. Nothing here fetches.
+//!
+//! Reading the uncommitted work of *one* work tree is one subprocess; reading it for every
+//! work tree of a repository is one subprocess per work tree, and this machine's repository
+//! has over a hundred of them. [`dirty_states`] is the only caller that matters and it runs
+//! them concurrently, because the cost is git walking a hundred separate working trees on
+//! disk and not this process computing anything: the work is independent per tree, it is
+//! I/O-bound, and running it one tree at a time made a page that has to answer a person
+//! wait for the sum of a hundred waits.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
 use super::error::Result;
@@ -59,11 +67,7 @@ pub fn parse_status_z(bytes: &[u8]) -> DirtyState {
 /// would report as "rebase in progress" and so on, read from the per-worktree git
 /// directory the way git itself does.
 pub fn operation_in_progress(worktree: &Path) -> Option<String> {
-    let out = git::try_run(worktree, &["rev-parse", "--absolute-git-dir"]).ok()?;
-    if out.status != Some(0) {
-        return None;
-    }
-    let dir = PathBuf::from(out.text().ok()?);
+    let dir = git_dir_of(worktree)?;
     let probes: &[(&str, &str)] = &[
         ("rebase-merge", "rebase"),
         ("rebase-apply", "rebase"),
@@ -76,6 +80,81 @@ pub fn operation_in_progress(worktree: &Path) -> Option<String> {
         .iter()
         .find(|(file, _)| dir.join(file).exists())
         .map(|(_, op)| (*op).to_string())
+}
+
+/// The git directory of a work tree, read the way git lays it out rather than by asking
+/// git. The primary checkout has a `.git` directory; a linked work tree has a `.git` *file*
+/// holding one `gitdir: <path>` line, which is git's own on-disk contract and is what
+/// `rev-parse --absolute-git-dir` would answer.
+///
+/// It is read here rather than asked because asking costs a subprocess per work tree, and
+/// [`dirty_states`] asks it once for every work tree of the repository. A relative `gitdir:`
+/// is resolved against the work tree, which is how git writes it when the two are moved
+/// together.
+///
+/// ```
+/// use majordomus_cli::worktree::state::git_dir_of;
+/// let tmp = tempfile::tempdir().unwrap();
+/// std::fs::create_dir(tmp.path().join(".git")).unwrap();
+/// assert_eq!(git_dir_of(tmp.path()), Some(tmp.path().join(".git")));
+/// ```
+pub fn git_dir_of(worktree: &Path) -> Option<PathBuf> {
+    let entry = worktree.join(".git");
+    if entry.is_dir() {
+        return Some(entry);
+    }
+    let text = std::fs::read_to_string(&entry).ok()?;
+    let target = text.lines().find_map(|l| l.strip_prefix("gitdir:"))?.trim();
+    let path = PathBuf::from(target);
+    Some(if path.is_absolute() {
+        path
+    } else {
+        worktree.join(path)
+    })
+}
+
+/// How many work trees are read at once.
+///
+/// The unit of work is a `git status` subprocess walking one working tree on disk: it is
+/// bound by the filesystem and by git's own process, not by this process's CPU, so the
+/// useful degree is higher than the core count and is capped rather than computed. Eight
+/// per core keeps a hundred trees in flight on any machine this runs on; the ceiling is
+/// there because a hundred simultaneous `git status` processes is a load spike on a machine
+/// several sessions share, and `1` when the parallelism cannot be read is a working answer
+/// and not a failure.
+fn read_concurrency(jobs: usize) -> usize {
+    let cores = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1);
+    jobs.clamp(1, (cores * 8).clamp(4, 32))
+}
+
+/// The uncommitted work of every named work tree, read concurrently.
+///
+/// One entry per path that answered; a work tree git refused to report on is absent rather
+/// than reported clean, because "no answer" and "nothing to report" are different facts and
+/// a topology that conflated them would call a broken checkout tidy.
+pub fn dirty_states(worktrees: &[PathBuf]) -> BTreeMap<PathBuf, DirtyState> {
+    if worktrees.is_empty() {
+        return BTreeMap::new();
+    }
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let out = std::sync::Mutex::new(BTreeMap::new());
+    let threads = read_concurrency(worktrees.len());
+    std::thread::scope(|scope| {
+        for _ in 0..threads {
+            scope.spawn(|| loop {
+                let i = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                let Some(path) = worktrees.get(i) else { return };
+                if let Ok(state) = dirty_state(path) {
+                    if let Ok(mut map) = out.lock() {
+                        map.insert(path.clone(), state);
+                    }
+                }
+            });
+        }
+    });
+    out.into_inner().unwrap_or_default()
 }
 
 /// One local branch as `for-each-ref` reports it.
