@@ -109,6 +109,12 @@ sources:
     pathspec: ':(glob)docs/CLAIMS.yaml'
     required: false
 
+  - id: mesh-declaration
+    kind: mesh-declaration
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/mesh/*.yaml'
+    required: false
+
   - id: moment
     kind: moment
     discovery: vcs
@@ -716,10 +722,20 @@ pub struct Served {
 impl Served {
     /// Spawn the server in `cwd` and wait for the "listening on" line on stderr.
     pub fn start(cwd: &Path, extra: &[&str]) -> Self {
+        Self::start_with_env(cwd, extra, &[])
+    }
+
+    /// [`Served::start`], with extra environment — what a test needs when the server
+    /// would otherwise touch per-user state (the mesh's node identity, for one).
+    pub fn start_with_env(cwd: &Path, extra: &[&str], env: &[(&str, &str)]) -> Self {
         use std::process::Stdio;
         let mut args = vec!["serve", "--port", "0"];
         args.extend_from_slice(extra);
-        let mut child = Command::new(BIN)
+        let mut command = Command::new(BIN);
+        for (key, value) in env {
+            command.env(key, value);
+        }
+        let mut child = command
             .args(&args)
             .current_dir(cwd)
             .env("MAJORDOMUS_LOG", "info")

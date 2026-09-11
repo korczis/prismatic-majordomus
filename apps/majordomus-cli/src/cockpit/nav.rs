@@ -49,6 +49,10 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// The discovered nodes of the mesh, and the machinery that observes them.
+    Mesh,
+    /// The declared model catalogue and its routing.
+    Models,
     /// The health report.
     Health,
     /// What the crate's own public surface is held to.
@@ -133,6 +137,18 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Worktrees",
             href: "/cockpit/worktrees",
             area: Area::Worktrees,
+        },
+        AreaInfo {
+            id: "mesh",
+            label: "Mesh",
+            href: "/cockpit/mesh",
+            area: Area::Mesh,
+        },
+        AreaInfo {
+            id: "models",
+            label: "Models",
+            href: "/cockpit/models",
+            area: Area::Models,
         },
         AreaInfo {
             id: "health",

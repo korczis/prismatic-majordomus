@@ -266,6 +266,9 @@ mj_report_overlap_from_current() {
   mj_report_overlap "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ')"
   [ "$MJ_FINDINGS" = 0 ] && mj_info overlap "$(mj_cur id)" "no other worktree claims an overlapping path"
 }
+# changed.sh defines mj_validate_record_changed_files, and the classifier it judges by
+# shellcheck source=changed.sh
+. "$MJ_LIB_DIR/changed.sh"
 # start.sh defines mj_report_overlap; question.sh and decision.sh define the store validators
 # shellcheck source=start.sh
 . "$MJ_LIB_DIR/start.sh"

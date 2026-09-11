@@ -312,6 +312,34 @@ Every command reports where its time went with `MJ_TIMING=1`, and `bench` holds 
 accepted state in a tracked baseline; how that works, and the rules behind it, is
 [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
+## Mesh and models
+
+Two machines running Majordomus on the same network can find each other. Each machine
+holds one Ed25519 node identity (the node id is a digest of the key — never an address),
+announces itself in one signed, bounded envelope over UDP multicast, an optional
+broadcast fallback and any rendezvous endpoints the repository declares, and every
+observation converges into one bounded registry — deduplicated by identity, replay-
+protected, expired when silent. Trust is an explicit policy that defaults to trusting
+nobody, and discovery grants nothing: a listed node can execute nothing here. The whole
+subsystem is **off until the repository commits an enabled `mesh` declaration**, so the
+default posture — nothing leaves the machine — holds until a person decides otherwise.
+
+```sh
+majordomus mesh doctor      # every prerequisite, proved on this machine alone
+majordomus mesh identity    # this machine's node id and public key (for allowlists)
+majordomus mesh status      # the running server's mesh: providers, tallies, refusals
+majordomus mesh nodes       # the observed nodes, trust and provenance per row
+```
+
+Beside it, `share/models.yaml` declares the AI models this tool's world can name —
+vendors, canonical ids, capabilities, context windows, provenance stated and pricing
+deliberately absent — and `majordomus models route` answers which model a stated need
+selects, with the reason, the fallback chain and the first failing check for every
+excluded candidate. Both are ordinary capability modules: the CLI, `/api/v1/mesh*` and
+`/api/v1/models*`, the MCP tools and the Cockpit's Mesh and Models pages render the
+same state. `docs/MESH.md` (threat model included) and `docs/MODELS.md` are the deep
+ends; ADR 0050 and ADR 0049 are the decisions.
+
 ## Worktrees
 
 Several sessions on one repository need several checkouts, and git has no opinion about

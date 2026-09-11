@@ -335,7 +335,7 @@
       "id": "feature:doctrine",
       "kind": "feature",
       "label": "Doctrine",
-      "summary": "Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.",
+      "summary": "Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.",
       "route": "/features/doctrine/",
       "source": ".ai/repo/features/doctrine.md",
       "status": "featured"
@@ -383,6 +383,24 @@
       "summary": "Decisions are recorded with their reason and their task, open questions block acceptance until resolved, architecture decision records carry typed references to the rules, claims, files and tests they put in force, and the graph of all of it is derived from those references rather than drawn.",
       "route": "/features/knowledge/",
       "source": ".ai/repo/features/knowledge.md",
+      "status": "featured"
+    },
+    {
+      "id": "feature:mesh",
+      "kind": "feature",
+      "label": "Mesh",
+      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "route": "/features/mesh/",
+      "source": ".ai/repo/features/mesh.md",
+      "status": "featured"
+    },
+    {
+      "id": "feature:models",
+      "kind": "feature",
+      "label": "Models",
+      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
+      "route": "/features/models/",
+      "source": ".ai/repo/features/models.md",
       "status": "featured"
     },
     {
@@ -452,7 +470,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "43 object(s) of the layer",
+      "summary": "46 object(s) of the layer",
       "route": "/registry/modules/adr/",
       "source": "share/kinds.yaml"
     },
@@ -484,7 +502,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "157 object(s) of the layer",
+      "summary": "168 object(s) of the layer",
       "route": "/registry/modules/claim/",
       "source": "share/kinds.yaml"
     },
@@ -492,7 +510,7 @@
       "id": "kind:command",
       "kind": "kind",
       "label": "command",
-      "summary": "30 object(s) of the layer",
+      "summary": "31 object(s) of the layer",
       "route": "/registry/modules/command/",
       "source": "share/kinds.yaml"
     },
@@ -500,7 +518,7 @@
       "id": "kind:context",
       "kind": "kind",
       "label": "context",
-      "summary": "28 object(s) of the layer",
+      "summary": "29 object(s) of the layer",
       "route": "/registry/modules/context/",
       "source": "share/kinds.yaml"
     },
@@ -516,7 +534,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "227 object(s) of the layer",
+      "summary": "240 object(s) of the layer",
       "route": "/registry/modules/document/",
       "source": "share/kinds.yaml"
     },
@@ -524,7 +542,7 @@
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "21 object(s) of the layer",
+      "summary": "23 object(s) of the layer",
       "route": "/registry/modules/feature/",
       "source": "share/kinds.yaml"
     },
@@ -588,7 +606,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "126 object(s) of the layer",
+      "summary": "128 object(s) of the layer",
       "route": "/registry/modules/rule/",
       "source": "share/kinds.yaml"
     },
@@ -628,7 +646,7 @@
       "id": "kind:use-case",
       "kind": "kind",
       "label": "use-case",
-      "summary": "44 object(s) of the layer",
+      "summary": "45 object(s) of the layer",
       "route": "/registry/modules/use-case/",
       "source": "share/kinds.yaml"
     },
@@ -705,6 +723,24 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:mesh",
+      "kind": "module",
+      "label": "mesh",
+      "summary": "Mesh",
+      "route": "/registry/modules/mesh/",
+      "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "status": "experimental"
+    },
+    {
+      "id": "module:models",
+      "kind": "module",
+      "label": "models",
+      "summary": "Models",
+      "route": "/registry/modules/models/",
+      "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "status": "experimental"
+    },
+    {
       "id": "module:objects",
       "kind": "module",
       "label": "objects",
@@ -747,6 +783,15 @@
       "summary": "Repository",
       "route": "/registry/modules/repository/",
       "source": "apps/majordomus-cli/src/capability/builtin/repository.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:rules",
+      "kind": "module",
+      "label": "rules",
+      "summary": "Rules",
+      "route": "/registry/modules/rules/",
+      "source": "apps/majordomus-cli/src/capability/builtin/rules.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1288,6 +1333,11 @@
     },
     {
       "source": "feature:doctrine",
+      "target": "module:rules",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:doctrine",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -1483,6 +1533,36 @@
     },
     {
       "source": "feature:knowledge",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:mesh",
+      "target": "feature:coordination",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:mesh",
+      "target": "module:mesh",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:mesh",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:models",
+      "target": "feature:mesh",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:models",
+      "target": "module:models",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:models",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2082,6 +2162,46 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:mesh",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:objects",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2163,6 +2283,26 @@
     },
     {
       "source": "module:repository",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:rules",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:rules",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:rules",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:rules",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2258,8 +2398,8 @@
     }
   ],
   "metadata": {
-    "nodes": 94,
-    "edges": 286,
+    "nodes": 99,
+    "edges": 305,
     "acyclic": false,
     "truncated": false
   },

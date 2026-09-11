@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [majordomus.adr-integrity@1, majordomus.externalise-decisions@1]
 tags: [adrs, records, architecture]
+
+x-majordomus:
+  tests: [test/cases/99_adr.sh]
 ---
 
 # Rationale

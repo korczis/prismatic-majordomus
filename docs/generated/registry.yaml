@@ -101,6 +101,18 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 5
+  - id: mesh
+    title: Mesh
+    description: "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here."
+    stability: experimental
+    source: builtin
+    capabilities: 5
+  - id: models
+    title: Models
+    description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
+    stability: experimental
+    source: builtin
+    capabilities: 2
   - id: objects
     title: Objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
@@ -130,7 +142,7 @@ modules:
     description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 8
+    capabilities: 9
   - id: product
     title: Product
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
@@ -152,6 +164,12 @@ modules:
   - id: repository
     title: Repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
+  - id: rules
+    title: Rules
+    description: "What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces."
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
@@ -548,11 +566,11 @@ capabilities:
                 description: "Executable and read-only: a typed handler, an input schema, an output schema."
               - type: string
                 const: command
-                description: "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                description: "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
               - type: string
                 const: resource
                 description: "Declarative content the repository holds: read as it is, never executed."
-            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
           CanonicalSchema:
             type: object
             properties:
@@ -681,7 +699,7 @@ capabilities:
                 description: Read-only; the input is bound from the query string.
               - type: string
                 const: POST
-                description: The input is bound from the JSON body. No builtin uses it yet.
+                description: The input is bound from the JSON body. Every mutating capability uses it.
             description: The HTTP methods a capability may be bound to.
           CliExposure:
             type: object
@@ -836,7 +854,7 @@ capabilities:
                 description: "This process's own memory changes, and nothing outside it."
               - type: string
                 const: repository_mutation
-                description: "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button."
+                description: "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n[`ExecutionPolicy::writes_repository`], the way one that stops says so with\n[`ExecutionPolicy::stoppable`].\n\n[ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
             description: "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
           ExecutionConcurrency:
             oneOf:
@@ -1074,11 +1092,11 @@ capabilities:
                 description: "Executable and read-only: a typed handler, an input schema, an output schema."
               - type: string
                 const: command
-                description: "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                description: "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
               - type: string
                 const: resource
                 description: "Declarative content the repository holds: read as it is, never executed."
-            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
           CapabilityProvenance:
             oneOf:
               - type: object
@@ -1194,7 +1212,7 @@ capabilities:
                 description: Read-only; the input is bound from the query string.
               - type: string
                 const: POST
-                description: The input is bound from the JSON body. No builtin uses it yet.
+                description: The input is bound from the JSON body. Every mutating capability uses it.
             description: The HTTP methods a capability may be bound to.
           CliExposure:
             type: object
@@ -8937,7 +8955,7 @@ capabilities:
               - type: string
                 const: no_test
                 description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
-            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
           EvidenceExecution:
             type: object
             properties:
@@ -8988,7 +9006,7 @@ capabilities:
               - at
               - origin
               - command
-            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
           EvidenceRunner:
             oneOf:
               - type: string
@@ -8997,7 +9015,7 @@ capabilities:
               - type: string
                 const: crate
                 description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
-            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
           EvidenceOutcome:
             oneOf:
               - type: string
@@ -9015,7 +9033,7 @@ capabilities:
               - type: string
                 const: error
                 description: The harness could not run it at all.
-            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
           EvidenceOrigin:
             oneOf:
               - type: string
@@ -9027,7 +9045,7 @@ capabilities:
               - type: string
                 const: release
                 description: A release run.
-            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::evidence
@@ -9199,7 +9217,7 @@ capabilities:
               - type: string
                 const: no_test
                 description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
-            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
     output:
       name: EvidenceReport
       schema:
@@ -9243,7 +9261,7 @@ capabilities:
           - claims
           - totals
           - findings
-        description: "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```"
+        description: "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```"
         title: EvidenceReport
         "$defs":
           EvidenceLedgerSummary:
@@ -9275,7 +9293,7 @@ capabilities:
               - present
               - executions
               - commits
-            description: "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```"
+            description: "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```"
           EvidenceSubject:
             type: object
             properties:
@@ -9357,7 +9375,7 @@ capabilities:
               - state
               - meaning
               - changed
-            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```"
+            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
           ProofState:
             oneOf:
               - type: string
@@ -9381,7 +9399,7 @@ capabilities:
               - type: string
                 const: no_test
                 description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
-            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
           EvidenceExecution:
             type: object
             properties:
@@ -9432,7 +9450,7 @@ capabilities:
               - at
               - origin
               - command
-            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
           EvidenceRunner:
             oneOf:
               - type: string
@@ -9441,7 +9459,7 @@ capabilities:
               - type: string
                 const: crate
                 description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
-            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
           EvidenceOutcome:
             oneOf:
               - type: string
@@ -9459,7 +9477,7 @@ capabilities:
               - type: string
                 const: error
                 description: The harness could not run it at all.
-            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
           EvidenceOrigin:
             oneOf:
               - type: string
@@ -9471,7 +9489,7 @@ capabilities:
               - type: string
                 const: release
                 description: A release run.
-            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
           EvidenceFinding:
             type: object
             properties:
@@ -9497,7 +9515,7 @@ capabilities:
               - status
               - state
               - reason
-            description: "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```"
+            description: "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::evidence
@@ -9603,7 +9621,7 @@ capabilities:
               - type: string
                 const: crate
                 description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
-            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```"
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
           EvidenceExecution:
             type: object
             properties:
@@ -9654,7 +9672,7 @@ capabilities:
               - at
               - origin
               - command
-            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```"
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
           EvidenceOutcome:
             oneOf:
               - type: string
@@ -9672,7 +9690,7 @@ capabilities:
               - type: string
                 const: error
                 description: The harness could not run it at all.
-            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```"
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
           EvidenceOrigin:
             oneOf:
               - type: string
@@ -9684,7 +9702,7 @@ capabilities:
               - type: string
                 const: release
                 description: A release run.
-            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```"
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
           EvidenceClaimProof:
             type: object
             properties:
@@ -9745,7 +9763,7 @@ capabilities:
               - state
               - meaning
               - changed
-            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```"
+            description: "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
           ProofState:
             oneOf:
               - type: string
@@ -9769,7 +9787,7 @@ capabilities:
               - type: string
                 const: no_test
                 description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
-            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```"
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::evidence
@@ -13241,6 +13259,1070 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/lifecycle.rs
+  - id: mesh.doctor
+    module: mesh
+    kind: query
+    title: The mesh self-check
+    description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshDoctorReport
+      schema:
+        type: object
+        properties:
+          ok:
+            type: boolean
+            description: Whether every check holds.
+          checks:
+            type: array
+            items:
+              "$ref": "#/$defs/DoctorCheck"
+            description: "The checks, in the order they ran."
+        required:
+          - ok
+          - checks
+        description: The whole self-check.
+        title: MeshDoctorReport
+        "$defs":
+          DoctorCheck:
+            type: object
+            properties:
+              check:
+                type: string
+                description: What was checked.
+              ok:
+                type: boolean
+                description: Whether it holds.
+              detail:
+                type: string
+                description: "The evidence: a path, an address, an error."
+            required:
+              - check
+              - ok
+              - detail
+            description: "One check's verdict."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_doctor
+      http:
+        method: GET
+        path: /api/v1/mesh/doctor
+      cli:
+        path:
+          - mesh
+          - doctor
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - diagnostics
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.identity
+    module: mesh
+    kind: query
+    title: "This machine's node identity"
+    description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshIdentityReport
+      schema:
+        type: object
+        properties:
+          path:
+            type:
+              - string
+              - "null"
+            description: Where the identity file lives (or would).
+          present:
+            type: boolean
+            description: Whether the file exists.
+          identity:
+            anyOf:
+              - "$ref": "#/$defs/PublicIdentity"
+              - type: "null"
+            description: "The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log."
+          error:
+            type:
+              - string
+              - "null"
+            description: "Why the identity did not load, when it did not."
+        required:
+          - present
+        description: "The answer of `mesh.identity`: this machine's node identity, public half only."
+        title: MeshIdentityReport
+        "$defs":
+          PublicIdentity:
+            type: object
+            properties:
+              node_id:
+                "$ref": "#/$defs/NodeId"
+                description: "The node id: a digest of the public key."
+              public_key:
+                type: string
+                description: "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof."
+              display_name:
+                type: string
+                description: "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust."
+              instance_id:
+                "$ref": "#/$defs/InstanceId"
+                description: This run of the node.
+            required:
+              - node_id
+              - public_key
+              - display_name
+              - instance_id
+            description: "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs."
+          NodeId:
+            type: string
+            description: "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+          InstanceId:
+            type: string
+            description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_identity
+      http:
+        method: GET
+        path: /api/v1/mesh/identity
+      cli:
+        path:
+          - mesh
+          - identity
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - identity
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.nodes
+    module: mesh
+    kind: query
+    title: The discovered nodes
+    description: "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: NodeList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many nodes the registry holds.
+          nodes:
+            type: array
+            items:
+              "$ref": "#/$defs/NodeRecord"
+            description: "The nodes, in node-id order — the one canonical order every surface shows."
+        required:
+          - count
+          - nodes
+        description: "The answer of `mesh.nodes`: every node this process has observed."
+        title: NodeList
+        "$defs":
+          NodeRecord:
+            type: object
+            properties:
+              node_id:
+                "$ref": "#/$defs/NodeId"
+                description: "The node id: the digest of the key below."
+              public_key:
+                type: string
+                description: "The Ed25519 public key that proved this record's advertisements."
+              display_name:
+                type: string
+                description: "The node's own display name. Presentation only."
+              instance_id:
+                "$ref": "#/$defs/InstanceId"
+                description: "The node's current run."
+              trust:
+                "$ref": "#/$defs/TrustState"
+                description: What the policy decided.
+              presence:
+                "$ref": "#/$defs/Presence"
+                description: Whether the node is answering now.
+              endpoints:
+                type: array
+                items:
+                  type: string
+                description: "Advertised `host:port` authorities."
+              capabilities:
+                type: array
+                items:
+                  type: string
+                description: "Advertised transports (`http`, `mcp`, `ws`)."
+              repositories:
+                type: array
+                items:
+                  type: string
+                description: Advertised repository digests.
+              protocol_version:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The advertised protocol version.
+              version:
+                type: string
+                description: The advertised executable version.
+              sources:
+                type: array
+                items:
+                  "$ref": "#/$defs/Sighting"
+                description: "Every source this node was seen through, most recent sighting per source."
+              first_seen:
+                type: string
+                description: "First seen, RFC 3339."
+              last_seen:
+                type: string
+                description: "Last seen, RFC 3339."
+              restarts:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: How many instances this node id has shown (a restart increments it).
+            required:
+              - node_id
+              - public_key
+              - display_name
+              - instance_id
+              - trust
+              - presence
+              - endpoints
+              - capabilities
+              - repositories
+              - protocol_version
+              - version
+              - sources
+              - first_seen
+              - last_seen
+              - restarts
+            description: "One discovered node: the canonical record every surface projects."
+          NodeId:
+            type: string
+            description: "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+          InstanceId:
+            type: string
+            description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+          TrustState:
+            oneOf:
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: observed
+                required:
+                  - state
+                description: "Valid, recorded, trusted for nothing. The resting state of an unknown node."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: trusted
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`)."
+              - type: object
+                properties:
+                  state:
+                    type: string
+                    const: rejected
+                  detail:
+                    type: string
+                required:
+                  - state
+                  - detail
+                description: "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence."
+            description: What the policy decided about one node.
+          Presence:
+            oneOf:
+              - type: string
+                const: present
+                description: "An advertisement arrived within [`PRESENCE_TTL`]."
+              - type: string
+                const: absent
+                description: "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely."
+            description: "Whether the node is answering now, by its own announcements."
+          Sighting:
+            type: object
+            properties:
+              source:
+                "$ref": "#/$defs/MeshSource"
+                description: The provider kind that saw it.
+              path:
+                type: string
+                description: "The network path, as text: a sender address, an interface, a rendezvous URL."
+              at:
+                type: string
+                description: "When, RFC 3339."
+            required:
+              - source
+              - path
+              - at
+            description: "One provenance entry: a source, and where the observation physically came from."
+          MeshSource:
+            oneOf:
+              - type: string
+                const: udp_multicast
+                description: A multicast datagram.
+              - type: string
+                const: udp_broadcast
+                description: A broadcast datagram.
+              - type: string
+                const: rendezvous
+                description: A rendezvous answer or registration.
+              - type: string
+                const: synthetic
+                description: "A synthetic provider (tests, self-check)."
+            description: "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\"."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_nodes
+      http:
+        method: GET
+        path: /api/v1/mesh/nodes
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - coordination
+      - discovery
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.register
+    module: mesh
+    kind: command
+    title: "Register with this node's mesh"
+    description: "Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only."
+    input:
+      name: RegisterInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          envelope:
+            description: "The envelope. Verified here exactly as a datagram would be — bounds, staleness,\nsignature — before anything is recorded."
+        required:
+          - envelope
+        description: "The input of `mesh.register`: one signed envelope, exactly as the wire carries it."
+        title: RegisterInput
+    output:
+      name: RegisterAnswer
+      schema:
+        type: object
+        properties:
+          accepted:
+            type: boolean
+            description: Whether the presented envelope was accepted into the local registry.
+          refusal:
+            type:
+              - string
+              - "null"
+            description: "Why not, when it was not."
+          candidates:
+            type: array
+            items:
+              "$ref": "#/$defs/Envelope"
+            description: "The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode's own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing."
+        required:
+          - accepted
+          - candidates
+        description: "What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it."
+        title: RegisterAnswer
+        "$defs":
+          Envelope:
+            type: object
+            properties:
+              v:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Protocol version.
+              pk:
+                type: string
+                description: "The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge."
+              inst:
+                "$ref": "#/$defs/InstanceId"
+                description: This run of the node.
+              name:
+                type: string
+                description: A human name for the node. Presentation only.
+                default: ""
+              seq:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped."
+              ts:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since the Unix epoch at signing time.
+              ep:
+                type: array
+                items:
+                  type: string
+                description: "Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key."
+                default: []
+              caps:
+                type: array
+                items:
+                  type: string
+                description: "The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization."
+                default: []
+              repos:
+                type: array
+                items:
+                  type: string
+                description: "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\"."
+                default: []
+              ver:
+                type: string
+                description: "The executable version, informational."
+                default: ""
+              sig:
+                type: string
+                description: "Ed25519 over [`Advertisement::signing_bytes`], hex."
+            required:
+              - v
+              - pk
+              - inst
+              - seq
+              - ts
+              - sig
+            description: "The wire envelope: the advertisement plus its signature."
+          InstanceId:
+            type: string
+            description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_register
+      http:
+        method: POST
+        path: /api/v1/mesh/register
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - coordination
+      - discovery
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.status
+    module: mesh
+    kind: query
+    title: "The mesh, at a glance"
+    description: "Whether the mesh runs in this process and why not when it does not; this node's public identity; every discovery provider with its state and counters; the registry's tallies; and the refused datagrams by reason. The one status every surface shows."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshStatus
+      schema:
+        type: object
+        properties:
+          active:
+            type: boolean
+            description: Whether the mesh is running in this process.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why not, when it is not: no declaration, disabled, no identity, stopped."
+          identity:
+            anyOf:
+              - "$ref": "#/$defs/PublicIdentity"
+              - type: "null"
+            description: "This node, when the mesh has an identity."
+          trust_policy:
+            type:
+              - string
+              - "null"
+            description: The trust policy in force.
+          providers:
+            type: array
+            items:
+              "$ref": "#/$defs/ProviderStatus"
+            description: "Every provider, canonical order (by id)."
+          tallies:
+            "$ref": "#/$defs/Tallies"
+            description: "The registry's tallies."
+          refusals:
+            "$ref": "#/$defs/Refusals"
+            description: "Refused datagrams, by reason."
+          started_at:
+            type:
+              - string
+              - "null"
+            description: "When the mesh started, RFC 3339."
+        required:
+          - active
+          - providers
+          - tallies
+          - refusals
+        description: "The whole mesh, as every surface reports it."
+        title: MeshStatus
+        "$defs":
+          PublicIdentity:
+            type: object
+            properties:
+              node_id:
+                "$ref": "#/$defs/NodeId"
+                description: "The node id: a digest of the public key."
+              public_key:
+                type: string
+                description: "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof."
+              display_name:
+                type: string
+                description: "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust."
+              instance_id:
+                "$ref": "#/$defs/InstanceId"
+                description: This run of the node.
+            required:
+              - node_id
+              - public_key
+              - display_name
+              - instance_id
+            description: "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs."
+          NodeId:
+            type: string
+            description: "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key."
+          InstanceId:
+            type: string
+            description: "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\"."
+          ProviderStatus:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`."
+              state:
+                "$ref": "#/$defs/MeshProviderState"
+                description: The state.
+              detail:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when `Failed`; what it watches, when `Running`."
+              sent:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Advertisements transmitted.
+              received:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Datagrams heard and handed to the manager.
+            required:
+              - id
+              - state
+              - sent
+              - received
+            description: "One provider's status: state, why, and its counters."
+          MeshProviderState:
+            oneOf:
+              - type: string
+                const: running
+                description: "Threads up, socket bound (where the provider has one)."
+              - type: string
+                const: failed
+                description: "The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract."
+              - type: string
+                const: stopped
+                description: Stopped by the manager.
+            description: "The provider's health, as every surface reports it."
+          Tallies:
+            type: object
+            properties:
+              nodes:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Records held.
+              trusted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Of which trusted.
+              present:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Of which present.
+              accepted:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Observations accepted since start.
+              replayed:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Replayed datagrams dropped since start.
+              expired:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Records expired out since start.
+              evicted:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Records evicted for space since start.
+            required:
+              - nodes
+              - trusted
+              - present
+              - accepted
+              - replayed
+              - expired
+              - evicted
+            description: "The registry's tallies, for status and health."
+          Refusals:
+            type: object
+            properties:
+              oversized:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Longer than the datagram bound.
+              malformed:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Not an envelope.
+              version:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: A protocol version this executable does not read.
+              bounds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Out-of-bounds fields.
+              stale:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Outside the clock-skew window.
+              signature:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: A signature that does not verify.
+              self_heard:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "This node's own datagrams, heard back and skipped."
+            required:
+              - oversized
+              - malformed
+              - version
+              - bounds
+              - stale
+              - signature
+              - self_heard
+            description: "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh
+        resource:
+          uri: majordomus://mesh
+          name: mesh
+      http:
+        method: GET
+        path: /api/v1/mesh
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - coordination
+      - discovery
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: models.list
+    module: models
+    kind: query
+    title: The model catalogue
+    description: "Every declared vendor and model, optionally narrowed by vendor, capability word, or one id or alias. Vendors carry whether their named credential variable is set — presence only, never a value. The order is the declaration's, which is also routing's preference order; the catalogue's own findings (a duplicate alias, an undeclared vendor) ride along."
+    input:
+      name: ModelsFilter
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          vendor:
+            type:
+              - string
+              - "null"
+            description: Only this vendor.
+          capability:
+            type:
+              - string
+              - "null"
+            description: Only models declaring this capability word.
+          id:
+            type:
+              - string
+              - "null"
+            description: "One model, by canonical id or alias."
+        description: "The input of `models.list`: optional narrowing. Everything empty lists everything."
+        title: ModelsFilter
+    output:
+      name: ModelsReport
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many models matched.
+          vendors:
+            type: array
+            items:
+              "$ref": "#/$defs/VendorView"
+            description: "The vendors, declaration order."
+          models:
+            type: array
+            items:
+              "$ref": "#/$defs/ModelEntry"
+            description: "The matching models, declaration order — which is routing's preference order."
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: "The catalogue's own findings: duplicate names, undeclared vendors. Empty is\nthe ordinary case."
+        required:
+          - count
+          - vendors
+          - models
+        description: "The answer of `models.list`."
+        title: ModelsReport
+        "$defs":
+          VendorView:
+            type: object
+            description: "One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read."
+            properties:
+              id:
+                type: string
+                description: "The vendor id, unique in the catalogue."
+              title:
+                type: string
+                description: The human name.
+              inference:
+                "$ref": "#/$defs/Inference"
+                description: "Where inference runs: `remote` (an API over the network) or `local` (a runtime\non this machine). Typed here so routing's `local_only` is data, not a name test."
+                default: remote
+              credential_env:
+                type:
+                  - string
+                  - "null"
+                description: "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
+              credential_configured:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether the named credential variable is set in this process's environment.\n`None` when the vendor names no variable."
+            required:
+              - id
+              - title
+          Inference:
+            oneOf:
+              - type: string
+                const: remote
+                description: An API over the network.
+              - type: string
+                const: local
+                description: A runtime on this machine.
+            description: "Where a vendor's inference runs."
+          ModelEntry:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+                description: "The canonical id, unique in the catalogue: what sessions, configuration and\nrouting name. Stable even when a vendor renames."
+              vendor:
+                type: string
+                description: The vendor that serves it.
+              native_id:
+                type: string
+                description: "The vendor's own identifier, verbatim."
+              aliases:
+                type: array
+                items:
+                  type: string
+                description: Other names that resolve to this model. Aliases live here and nowhere else.
+              capabilities:
+                type: array
+                items:
+                  type: string
+                description: "Typed capability words: `text`, `vision`, `tools`, `structured_output`,\n`reasoning`, `streaming`, `embeddings` — the declared vocabulary, open for a\ncatalogue to extend without a code change."
+                default: []
+              context_window:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The context window, tokens."
+              status:
+                "$ref": "#/$defs/ModelStatus"
+                description: The lifecycle standing.
+                default: available
+              note:
+                type:
+                  - string
+                  - "null"
+                description: "One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data)."
+            required:
+              - id
+              - vendor
+              - native_id
+            description: "One model: the canonical reference this repository uses, the vendor's own name for\nit, and its typed capabilities. Capability words are data the catalogue declares —\nconsumers compare against a requirement list, never against a hardcoded name."
+          ModelStatus:
+            oneOf:
+              - type: string
+                const: available
+                description: Generally available.
+              - type: string
+                const: preview
+                description: "Usable, expected to change."
+              - type: string
+                const: deprecated
+                description: "Still served, no longer chosen by routing unless named explicitly."
+              - type: string
+                const: retired
+                description: "Gone; kept so an old record's reference still resolves to a row with a story."
+            description: "A model's lifecycle standing, as the catalogue declares it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::models
+    exposure:
+      mcp:
+        tool: majordomus_models
+        resource:
+          uri: majordomus://models
+          name: models
+      http:
+        method: GET
+        path: /api/v1/models
+      cli:
+        path:
+          - models
+          - list
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - models
+      - catalogue
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/models.rs
+  - id: models.route
+    module: models
+    kind: query
+    title: Route a need to a model
+    description: "Decide which declared model a stated need selects: the first in declaration order satisfying every requirement, the qualifying rest as the fallback chain, and every excluded model with the first check it failed. Pure over the catalogue and the input — the same question gets the same answer, and 'why' is in the answer itself."
+    input:
+      name: RouteInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          require:
+            type:
+              - string
+              - "null"
+            description: "Capability words the model must declare, comma-separated: `vision,tools`."
+          min_context:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "The least context window, tokens."
+          vendor:
+            type:
+              - string
+              - "null"
+            description: Only this vendor.
+          local_only:
+            type:
+              - boolean
+              - "null"
+            description: Only local inference.
+          model:
+            type:
+              - string
+              - "null"
+            description: "A model named outright, by canonical id or alias — still checked against the\nother requirements."
+        description: "The input of `models.route`: what the task needs, in transport-friendly scalars\n(`require` is comma-separated so a GET query string can carry it)."
+        title: RouteInput
+    output:
+      name: RoutingDecision
+      schema:
+        type: object
+        properties:
+          selected:
+            type:
+              - string
+              - "null"
+            description: "The selected model's canonical id; `None` when nothing qualifies."
+          reason:
+            type:
+              - string
+              - "null"
+            description: Why the selected model was selected.
+          fallbacks:
+            type: array
+            items:
+              type: string
+            description: "The models that also qualify, in preference order: the fallback chain."
+          excluded:
+            type: array
+            items:
+              "$ref": "#/$defs/ExcludedModel"
+            description: "Every model that did not qualify, with its reason."
+        description: "The routing answer: what was selected, what stands behind it, who fell out and why.\nThe whole decision is derived from the catalogue and the requirements — run it\ntwice, get it twice; there is no state to consult and no health to guess."
+        title: RoutingDecision
+        "$defs":
+          ExcludedModel:
+            type: object
+            properties:
+              model:
+                type: string
+                description: The canonical id.
+              reason:
+                type: string
+                description: "The first reason it fell out, in the order the checks run."
+            required:
+              - model
+              - reason
+            description: "One model that did not qualify, and exactly why."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::models
+    exposure:
+      mcp:
+        tool: majordomus_models_route
+      http:
+        method: GET
+        path: /api/v1/models/route
+      cli:
+        path:
+          - models
+          - route
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - models
+      - routing
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/models.rs
   - id: objects.get
     module: objects
     kind: query
@@ -13370,11 +14452,11 @@ capabilities:
                 description: "Executable and read-only: a typed handler, an input schema, an output schema."
               - type: string
                 const: command
-                description: "Executable with an effect on this process's in-memory state and nowhere else (a\npeer announcing itself): a typed handler, bound to `POST` over HTTP, and announced\nto MCP clients as not read-only."
+                description: "Executable and changing something: a typed handler, bound to `POST` over HTTP, and\nannounced to MCP clients as not read-only. Most reach no further than this process's\nown memory (a peer announcing itself); one that writes the repository's tracked\nrecords says so on its execution policy, which is where a projection reads it."
               - type: string
                 const: resource
                 description: "Declarative content the repository holds: read as it is, never executed."
-            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
+            description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. A command may also write the repository's own\ntracked records, which its kind does not say and its execution policy does\n([`ExecutionPolicy::writes_repository`]).\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
           CapabilityProvenance:
             oneOf:
               - type: object
@@ -16366,6 +17448,121 @@ capabilities:
       effect: read
       cancellable: false
       concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: plan.transition
+    module: plan
+    kind: command
+    title: Move one issue through the lifecycle
+    description: "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so."
+    input:
+      name: PlanTransitionInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          issue:
+            type: string
+            description: "The issue to move, by its id — which is also its file name."
+          transition:
+            "$ref": "#/$defs/PlanTransition"
+            description: "Which move: `start`, `verify` or `done`."
+        required:
+          - issue
+          - transition
+        description: "The input of `plan.transition`: which issue to move, and which way.\n\nTwo fields and no third. There is no timestamp — the move is stamped with the moment it\nhappened, never with one the caller supplies, because a lifecycle a caller can backdate\nis not a record of what happened. There is no force or reason field either: a transition\nthe model refuses is refused, and the way to make it legal is to satisfy the guard rather\nthan to ask past it.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionInput;\nuse majordomus_cli::plan::Transition;\n\n// The wire form an MCP client or an HTTP POST sends.\nlet input: PlanTransitionInput =\n    serde_json::from_str(r#\"{\"issue\":\"I0001\",\"transition\":\"done\"}\"#).unwrap();\nassert_eq!(input.issue, \"I0001\");\nassert_eq!(input.transition, Transition::Done);\nassert_eq!(input.transition.field(), \"completed_at\");\nassert_eq!(input.transition.event(), \"plan_done\");\n\n// Unknown fields are refused rather than ignored: a caller that misspells `transition`\n// is told so instead of having its move silently dropped.\nassert!(serde_json::from_str::<PlanTransitionInput>(\n    r#\"{\"issue\":\"I0001\",\"transition\":\"done\",\"force\":true}\"#).is_err());\n```"
+        title: PlanTransitionInput
+        "$defs":
+          PlanTransition:
+            oneOf:
+              - type: string
+                const: start
+                description: Execution began. Refused unless the issue is READY.
+              - type: string
+                const: verify
+                description: Implementation is complete and the evidence is still outstanding.
+              - type: string
+                const: done
+                description: "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+            description: "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
+    output:
+      name: PlanTransitionResult
+      schema:
+        type: object
+        properties:
+          issue:
+            type: string
+            description: The issue that moved.
+          transition:
+            "$ref": "#/$defs/PlanTransition"
+            description: The move that was performed.
+          from:
+            type: string
+            description: The status the issue was in before.
+          to:
+            type: string
+            description: "The status it is in now, derived from the record as written."
+          field:
+            type: string
+            description: The field that was stamped.
+          at:
+            type: string
+            description: "The timestamp written into it, and into `updated_at`."
+          event:
+            type: string
+            description: The ledger event appended.
+          next_ready:
+            type:
+              - string
+              - "null"
+            description: "The issue a worker should take next, derived after the move. Absent when the plan\nhas none — which after a `start` is the ordinary case, because the issue just taken\nis no longer READY."
+        required:
+          - issue
+          - transition
+          - from
+          - to
+          - field
+          - at
+          - event
+        description: "What one transition did.\n\n`from` and `to` are both derived statuses, read before and after the write. They are\nreported rather than assumed because the move does not determine the status on its own:\n`done` on a record whose evidence is incomplete leaves it in VERIFY, and the caller is\ntold that rather than told it succeeded.\n\n```\nuse majordomus_cli::capability::builtin::plan::PlanTransitionResult;\n\n// What a `done` looks like when the record's required evidence is not all present: the\n// call succeeded, the field was written, and the issue is still in VERIFY. A caller that\n// read only the absence of an error would report this as finished; a caller that reads\n// `to` knows better, which is why the field is here.\nlet held: PlanTransitionResult = serde_json::from_str(r#\"{\n    \"issue\":\"I0001\",\"transition\":\"done\",\"from\":\"VERIFY\",\"to\":\"VERIFY\",\n    \"field\":\"completed_at\",\"at\":\"2026-09-11T12:00:00Z\",\"event\":\"plan_done\"\n}\"#).unwrap();\nassert_eq!(held.to, \"VERIFY\", \"the status is derived from the record, not from the move\");\n\n// `next_ready` is absent when the plan has none left to hand out, which is ordinary\n// rather than an error, so it is omitted rather than spelled as an empty string.\nassert!(held.next_ready.is_none());\n```"
+        title: PlanTransitionResult
+        "$defs":
+          PlanTransition:
+            oneOf:
+              - type: string
+                const: start
+                description: Execution began. Refused unless the issue is READY.
+              - type: string
+                const: verify
+                description: Implementation is complete and the evidence is still outstanding.
+              - type: string
+                const: done
+                description: "Complete. Refused while anything it waits on is unfinished, or while any evidence\nits own record requires is absent."
+            description: "One lifecycle move.\n\nThree, not four: `evidence` appends a record rather than moving an issue, and it belongs\nwith the record it proves rather than with the moves it unblocks.\n\n```\nuse majordomus_cli::plan::Transition;\n\n// The wire spelling is the one a caller types on the command line.\nlet t: Transition = serde_json::from_str(\"\\\"done\\\"\").unwrap();\nassert_eq!(t, Transition::Done);\nassert_eq!(serde_json::to_string(&Transition::Start).unwrap(), \"\\\"start\\\"\");\n\n// Each move owns the field it stamps and the event it records; nothing else decides\n// either, so a new move cannot be added without saying both.\nfor (t, field, event) in [\n    (Transition::Start, \"started_at\", \"plan_start\"),\n    (Transition::Verify, \"verified_at\", \"plan_verify\"),\n    (Transition::Done, \"completed_at\", \"plan_done\"),\n] {\n    assert_eq!(t.field(), field);\n    assert_eq!(t.event(), event);\n}\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::plan
+    exposure:
+      mcp:
+        tool: majordomus_plan_transition
+      http:
+        method: POST
+        path: /api/v1/plan/transition
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - plan
+      - project
+      - issues
+      - lifecycle
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
     source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
   - id: plan.validate
     module: plan
@@ -19869,6 +21066,1319 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/repository.rs
+  - id: rules.proves
+    module: rules
+    kind: query
+    title: What this test proves
+    description: "One test — by identity or by the path a rule names it with — with every rule that names it and the rules that would be left with no proof at all if it were deleted. This is the reverse of rules.show and reads the same derivation, so the two directions cannot disagree. It is the question that could not be asked while the relation ran one way only: before deleting or renaming a case, what stops being enforced."
+    input:
+      name: RuleTestInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          test:
+            type: string
+            description: "`test/cases/07_scope.sh`, or `suite:07_scope`, or `crate:product`."
+        required:
+          - test
+        description: "One test, by the path a rule names it with or by its canonical identity.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleTestInput;\nlet i = RuleTestInput { test: \"test/cases/125_rule_proof.sh\".into() };\nassert!(i.test.starts_with(\"test/cases/\"));\n```"
+        title: RuleTestInput
+    output:
+      name: TestSubjects
+      schema:
+        type: object
+        properties:
+          test:
+            type:
+              - string
+              - "null"
+            description: "The canonical test identity, when a runner owns the path."
+          path:
+            type: string
+            description: The path as given.
+          present:
+            type: boolean
+            description: Whether that path is in the tree.
+          reproduce:
+            type:
+              - string
+              - "null"
+            description: The command that runs it again.
+          proves:
+            type: array
+            items:
+              "$ref": "#/$defs/RuleSummary"
+            description: "Every rule that names this test, with the state it is in."
+          sole_proof_of:
+            type: array
+            items:
+              type: string
+            description: "Every rule that would lose its only proof if this test were deleted. This is the\nquestion the one-way relation could never answer."
+        required:
+          - path
+          - present
+          - proves
+          - sole_proof_of
+        description: "What one test proves: the reverse of [`RuleDetail`].\n# Example\n\nThe reverse of `rules show`: what a test proves, and which rules would be left with no\nproof at all if it were deleted.\n\n```\nuse majordomus_cli::capability::builtin::rules::TestSubjects;\nlet t = TestSubjects {\n    test: Some(\"suite:07_scope\".into()),\n    path: \"test/cases/07_scope.sh\".into(),\n    present: true,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    proves: vec![],\n    sole_proof_of: vec![],\n};\nassert!(t.present);\n```"
+        title: TestSubjects
+        "$defs":
+          RuleSummary:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The rule id.
+              title:
+                type: string
+                description: The title.
+              class:
+                "$ref": "#/$defs/RuleClass"
+                description: How strongly it binds.
+              state:
+                "$ref": "#/$defs/RuleState"
+                description: What the repository can say about its proof.
+            required:
+              - id
+              - title
+              - class
+              - state
+            description: "A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \"project.x\".into(),\n    title: \"X\".into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```"
+          RuleClass:
+            oneOf:
+              - type: string
+                const: blocking
+                description: A gate refuses work that violates it.
+              - type: string
+                const: advisory
+                description: Normative for whoever reads it; nothing refuses a violation.
+              - type: string
+                const: unknown
+                description: "The front matter declared no class, or one this repository does not know."
+            description: "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+          RuleState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated."
+              - type: string
+                const: inputs_unchanged
+                description: "Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree."
+              - type: string
+                const: stale
+                description: "A passing run exists, but something it is about has changed since."
+              - type: string
+                const: gated
+                description: "An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here."
+              - type: string
+                const: failing
+                description: The latest run of a test this rule names did not pass.
+              - type: string
+                const: not_run
+                description: "Every artifact is present, and no run of at least one named test was ever recorded."
+              - type: string
+                const: reviewed
+                description: "The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one."
+              - type: string
+                const: unrunnable
+                description: The rule names a path no runner in this repository drives.
+              - type: string
+                const: dangling
+                description: "The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven."
+              - type: string
+                const: unproven
+                description: "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
+            description: "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::rules
+    exposure:
+      mcp:
+        tool: majordomus_rule_proves
+      http:
+        method: GET
+        path: /api/v1/rules/proves
+      cli:
+        path:
+          - rules
+          - proves
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - rules
+      - governance
+      - tests
+      - verification
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/rules.rs
+  - id: rules.report
+    module: rules
+    kind: query
+    title: Every rule against the proof there is for it
+    description: "The whole rule corpus joined to the tree and the ledger: per rule, its class, its enforcement mode, the validator and the cases it names, whether each is in the tree, the execution behind each, the CI gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the answer is filtered, and the findings name every rule whose declared class the proof does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+    input:
+      name: RulesReportInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          state:
+            anyOf:
+              - "$ref": "#/$defs/RuleState"
+              - type: "null"
+            description: "Only rules in this proof state (`proven`, `inputs_unchanged`, `stale`, `failing`,\n`not_run`, `unrunnable`, `dangling`, `unproven`). Absent: every rule."
+          class:
+            anyOf:
+              - "$ref": "#/$defs/RuleClass"
+              - type: "null"
+            description: "Only rules of this class (`blocking`, `advisory`). Absent: every rule."
+          namespace:
+            type:
+              - string
+              - "null"
+            description: "Only rules of this namespace — `project` for this repository's own, `majordomus` for\nthe vendored package. Absent: both."
+          findings_only:
+            type: boolean
+            description: "Only the rules whose declared class the proof does not support, with the findings.\nThe tallies still count the whole corpus, so a filtered answer never misreports how\nmuch of it was examined."
+        description: "Which part of the corpus to answer for.\n# Example\n\nEvery field narrows the answer; the tallies still count the whole corpus, so a filtered\nreport never misreports how much of it was examined.\n\n```\nuse majordomus_cli::capability::builtin::rules::RulesReportInput;\nuse majordomus_cli::rules::Class;\nlet i = RulesReportInput { class: Some(Class::Blocking), ..Default::default() };\nassert_eq!(i.class, Some(Class::Blocking));\nassert!(!i.findings_only);\n```"
+        title: RulesReportInput
+        "$defs":
+          RuleState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated."
+              - type: string
+                const: inputs_unchanged
+                description: "Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree."
+              - type: string
+                const: stale
+                description: "A passing run exists, but something it is about has changed since."
+              - type: string
+                const: gated
+                description: "An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here."
+              - type: string
+                const: failing
+                description: The latest run of a test this rule names did not pass.
+              - type: string
+                const: not_run
+                description: "Every artifact is present, and no run of at least one named test was ever recorded."
+              - type: string
+                const: reviewed
+                description: "The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one."
+              - type: string
+                const: unrunnable
+                description: The rule names a path no runner in this repository drives.
+              - type: string
+                const: dangling
+                description: "The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven."
+              - type: string
+                const: unproven
+                description: "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
+            description: "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
+          RuleClass:
+            oneOf:
+              - type: string
+                const: blocking
+                description: A gate refuses work that violates it.
+              - type: string
+                const: advisory
+                description: Normative for whoever reads it; nothing refuses a violation.
+              - type: string
+                const: unknown
+                description: "The front matter declared no class, or one this repository does not know."
+            description: "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+    output:
+      name: RulesReport
+      schema:
+        type: object
+        properties:
+          head:
+            type:
+              - string
+              - "null"
+            description: "The commit the report was derived against, when git could say."
+          working_tree:
+            type: string
+            description: "`clean`, `dirty` or `unknown` at the time of derivation."
+          rules:
+            type: array
+            items:
+              "$ref": "#/$defs/RuleProof"
+            description: "Every rule, in canonical id order."
+          states:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many rules are in each state, by the state's printed word."
+          coverage:
+            "$ref": "#/$defs/RuleCoverage"
+            description: "The parts of a proof, counted."
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/RuleFinding"
+            description: Every rule whose declared class the proof does not support.
+          satisfied:
+            type: boolean
+            description: Whether there are no findings.
+        required:
+          - working_tree
+          - rules
+          - states
+          - coverage
+          - findings
+          - satisfied
+        description: "The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```"
+        title: RulesReport
+        "$defs":
+          RuleProof:
+            type: object
+            properties:
+              rule:
+                "$ref": "#/$defs/RuleDefinition"
+                description: The canonical definition.
+              validator:
+                anyOf:
+                  - "$ref": "#/$defs/RuleValidator"
+                  - type: "null"
+                description: "The validator, when the mode is dispatched."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/RuleTestProof"
+                description: "Every test the rule names, joined to the ledger."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "Every CI gate that runs something this rule names, deduplicated."
+              required_by:
+                type: array
+                items:
+                  type: string
+                description: "The rules that depend on this one, by id — the converse of `depends_on`, which no\nrule declares and which a reader always wants."
+              state:
+                "$ref": "#/$defs/RuleState"
+                description: "What the repository can say, as a whole."
+              meaning:
+                type: string
+                description: "That state, in one sentence."
+              satisfied:
+                type: boolean
+                description: "Whether the state is one this rule's class can live with."
+            required:
+              - rule
+              - state
+              - meaning
+              - satisfied
+            description: "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
+          RuleDefinition:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The rule id, `<namespace>.<stem>`, without the version."
+              identity:
+                type: string
+                description: "The identity the index holds, with the version."
+              uri:
+                type: string
+                description: "`majordomus://rule/<identity>`."
+              version:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The declared version.
+              title:
+                type: string
+                description: The title.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: The one-line description.
+              statement:
+                type:
+                  - string
+                  - "null"
+                description: The normative sentence.
+              status:
+                type: string
+                description: "`active`, or whatever else the front matter declares."
+              class:
+                "$ref": "#/$defs/RuleClass"
+                description: How strongly it binds.
+              namespace:
+                type: string
+                description: Whether it came with the vendored package or belongs to this project.
+              depends_on:
+                type: array
+                items:
+                  type: string
+                description: "The rules it depends on, by id."
+              tags:
+                type: array
+                items:
+                  type: string
+                description: The declared tags.
+              path:
+                type: string
+                description: Repository-relative path of the rule object.
+              enforcement:
+                "$ref": "#/$defs/RuleEnforcement"
+                description: "How it is enforced, as declared."
+            required:
+              - id
+              - identity
+              - uri
+              - version
+              - title
+              - status
+              - class
+              - namespace
+              - path
+              - enforcement
+            description: "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+          RuleClass:
+            oneOf:
+              - type: string
+                const: blocking
+                description: A gate refuses work that violates it.
+              - type: string
+                const: advisory
+                description: Normative for whoever reads it; nothing refuses a violation.
+              - type: string
+                const: unknown
+                description: "The front matter declared no class, or one this repository does not know."
+            description: "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+          RuleEnforcement:
+            type: object
+            properties:
+              mode:
+                "$ref": "#/$defs/RuleMode"
+                description: "Which of the two canonical modes, or neither."
+              validator:
+                type:
+                  - string
+                  - "null"
+                description: "The validator the dispatcher calls, when the mode is dispatched."
+              category:
+                type:
+                  - string
+                  - "null"
+                description: The diagnostic category the validator reports under.
+              exit_code:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: The exit code the validator uses to refuse.
+              enforced_by:
+                type:
+                  - string
+                  - "null"
+                description: "Which boundary enforces it: the word the rule's own block uses."
+              tests:
+                type: array
+                items:
+                  type: string
+                description: "Every test the block names, in the order it names them."
+              reviewed_because:
+                type:
+                  - string
+                  - "null"
+                description: "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace."
+            required:
+              - mode
+            description: "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
+          RuleMode:
+            oneOf:
+              - type: string
+                const: dispatched
+                description: Names a validator the doctrine dispatcher calls at run time.
+              - type: string
+                const: gated
+                description: Names behavioural cases and no validator; a gate runs them.
+              - type: string
+                const: reviewed
+                description: "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to."
+              - type: string
+                const: declarative
+                description: "Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one."
+            description: "How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \"dispatched\");\nassert_eq!(Mode::Declarative.label(), \"declarative\");\n```"
+          RuleValidator:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name the rule declares, without the `mj_validate_` prefix."
+              function:
+                type: string
+                description: The function the dispatcher calls.
+              defined_in:
+                type:
+                  - string
+                  - "null"
+                description: "The file that defines it, when one does."
+              present:
+                type: boolean
+                description: "Whether anything in `lib/` defines it."
+            required:
+              - name
+              - function
+              - present
+            description: "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \"adr\".into(),\n    function: \"mj_validate_adr\".into(),\n    defined_in: Some(\"lib/adr.sh\".into()),\n    present: true,\n};\nassert_eq!(v.function, \"mj_validate_adr\");\n```"
+          RuleTestProof:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path the rule names.
+              kind:
+                "$ref": "#/$defs/RuleArtifactKind"
+                description: "What drives it: a runner, a CI gate, or nothing."
+              present:
+                type: boolean
+                description: Whether that path is in the tree.
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The canonical test identity (`suite:<case>`, `crate:<binary>`), when a runner owns\nthe path. Absent means no runner drives it, so no run of it can ever be recorded."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the repository can say about this test's latest run."
+              meaning:
+                type: string
+                description: "That state, in one sentence, from the one place it is worded."
+              execution:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceExecution"
+                  - type: "null"
+                description: "The execution behind the state, when there is one."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs this test again.
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates that run this test, derived from the repository's own CI model."
+            required:
+              - path
+              - kind
+              - present
+              - state
+              - meaning
+            description: "One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \"test/cases/07_scope.sh\".into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    gates: vec![\"shell-suite\".into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```"
+          RuleArtifactKind:
+            oneOf:
+              - type: string
+                const: case
+                description: A behavioural case a runner drives; executions of it are recorded.
+              - type: string
+                const: gate
+                description: An executable check a CI gate runs as its own command.
+              - type: string
+                const: unknown
+                description: "Neither. Nothing can run it, so nothing can ever record it."
+            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          EvidenceExecution:
+            type: object
+            properties:
+              test:
+                type: string
+                description: "The test, in [`TestId::as_string`] form."
+              runner:
+                "$ref": "#/$defs/EvidenceRunner"
+                description: Which runner produced it.
+              source:
+                type: string
+                description: "The test's own source, repository-relative."
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: What it said.
+              seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it took, in whole seconds."
+              commit:
+                type: string
+                description: The full commit id the run was made against.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+              at:
+                type: string
+                description: "When it was recorded, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where the run happened.
+              command:
+                type: string
+                description: The exact command that runs this one test again.
+            required:
+              - test
+              - runner
+              - source
+              - outcome
+              - seconds
+              - commit
+              - working_tree
+              - digest
+              - at
+              - origin
+              - command
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+          EvidenceRunner:
+            oneOf:
+              - type: string
+                const: suite
+                description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+              - type: string
+                const: crate
+                description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+          EvidenceOutcome:
+            oneOf:
+              - type: string
+                const: pass
+                description: It passed.
+              - type: string
+                const: fail
+                description: It failed.
+              - type: string
+                const: skip
+                description: It declined to run and said so (an unmet precondition the case reports itself).
+              - type: string
+                const: timeout
+                description: The bound fired before it finished.
+              - type: string
+                const: error
+                description: The harness could not run it at all.
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+          EvidenceOrigin:
+            oneOf:
+              - type: string
+                const: local
+                description: Someone ran it on their own machine.
+              - type: string
+                const: ci
+                description: A continuous-integration run.
+              - type: string
+                const: release
+                description: A release run.
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+          RuleState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated."
+              - type: string
+                const: inputs_unchanged
+                description: "Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree."
+              - type: string
+                const: stale
+                description: "A passing run exists, but something it is about has changed since."
+              - type: string
+                const: gated
+                description: "An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here."
+              - type: string
+                const: failing
+                description: The latest run of a test this rule names did not pass.
+              - type: string
+                const: not_run
+                description: "Every artifact is present, and no run of at least one named test was ever recorded."
+              - type: string
+                const: reviewed
+                description: "The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one."
+              - type: string
+                const: unrunnable
+                description: The rule names a path no runner in this repository drives.
+              - type: string
+                const: dangling
+                description: "The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven."
+              - type: string
+                const: unproven
+                description: "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
+            description: "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
+          RuleCoverage:
+            type: object
+            properties:
+              rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules discovered.
+              blocking:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of those, blocking."
+              advisory:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Of those, advisory."
+              named_proof:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules naming a validator or at least one test.
+              artifacts_present:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules every one of whose named paths is in the tree.
+              runnable:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules at least one of whose tests a runner owns.
+              recorded:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules every one of whose tests has a recorded run.
+              passing:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules whose recorded runs all passed.
+              gated:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules some CI gate runs.
+              mechanism_only:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Rules whose only executable proof is a gate: a mechanism that refuses violations,\nwith no recorded verdict behind it. Counted apart from `passing` so that the two\nare never read as one number."
+              review_only:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Rules that declare, with a reason, that a reader enforces them. Counted apart from\nevery executable mode: this number going up is governance getting weaker, and a\nsummary that folded it into a total would hide exactly that."
+              satisfied:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Rules whose state their class can live with.
+            required:
+              - rules
+              - blocking
+              - advisory
+              - named_proof
+              - artifacts_present
+              - runnable
+              - recorded
+              - passing
+              - gated
+              - mechanism_only
+              - review_only
+              - satisfied
+            description: "How much of the rule corpus carries each part of a proof.\n\nEvery number here is counted from the tree. Nothing in this struct may be written down\nanywhere else: a hardcoded rule count is the defect this repository keeps rediscovering.\n# Example\n\nEvery number is counted from the tree; an empty corpus counts zero rather than\nreading as complete, which is what `Coverage::default` is for.\n\n```\nuse majordomus_cli::rules::Coverage;\nlet c = Coverage::default();\nassert_eq!(c.rules, 0);\nassert_eq!(c.review_only, 0);\n```"
+          RuleFinding:
+            type: object
+            properties:
+              rule:
+                type: string
+                description: The rule id.
+              class:
+                "$ref": "#/$defs/RuleClass"
+                description: The class it declares.
+              state:
+                "$ref": "#/$defs/RuleState"
+                description: The state its proof is in.
+              reason:
+                type: string
+                description: Why that combination is a finding.
+              reproduce:
+                type: string
+                description: The command that shows it again.
+            required:
+              - rule
+              - class
+              - state
+              - reason
+              - reproduce
+            description: "One rule whose declared class the proof does not support.\n# Example\n\n```\nuse majordomus_cli::rules::{Class, Finding, RuleState};\nlet f = Finding {\n    rule: \"project.x\".into(),\n    class: Class::Blocking,\n    state: RuleState::Dangling,\n    reason: \"it names a path that is not in the tree\".into(),\n    reproduce: \"scripts/ci/rule-proof-check\".into(),\n};\nassert_eq!(f.state, RuleState::Dangling);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::rules
+    exposure:
+      mcp:
+        tool: majordomus_rules
+        resource:
+          uri: majordomus://rules
+          name: rules
+      http:
+        method: GET
+        path: /api/v1/rules
+      cli:
+        path:
+          - rules
+          - report
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - rules
+      - governance
+      - verification
+      - evidence
+      - gates
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/rules.rs
+  - id: rules.show
+    module: rules
+    kind: query
+    title: What proves this rule
+    description: "One rule with its full proof: the validator and the cases it names, the execution behind each, the gates that run them, the rules it depends on and the rules that depend on it — each with the state it is in, because a rule is proven only as far as its dependencies are — and, when it is not proven, the one sentence saying what would have to be true for it to be. A rule this repository does not declare is a not-found rather than an empty answer, because a typo that read as 'this rule has no proof' is the one answer this capability must never give."
+    input:
+      name: RuleInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          rule:
+            type: string
+            description: "The rule id, with or without its version: `project.scope-is-declared`, or the\nidentity the index holds."
+        required:
+          - rule
+        description: "One rule of the corpus.\n# Example\n\nOne rule of the corpus, named by its id or by the identity the index holds; a client\nthat has either spelling should not need to know the other.\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleInput;\nlet i = RuleInput { rule: \"project.scope-is-declared\".into() };\nassert_eq!(i.rule, \"project.scope-is-declared\");\n```"
+        title: RuleInput
+    output:
+      name: RuleDetail
+      schema:
+        type: object
+        properties:
+          proof:
+            "$ref": "#/$defs/RuleProof"
+            description: "The rule, joined to the tree and the ledger."
+          depends_on:
+            type: array
+            items:
+              "$ref": "#/$defs/RuleSummary"
+            description: "The rules this one depends on, with the state each is in — a rule whose dependency\nis unproven is proven only as far as that dependency is."
+          required_by:
+            type: array
+            items:
+              "$ref": "#/$defs/RuleSummary"
+            description: The rules that depend on this one.
+          missing:
+            type:
+              - string
+              - "null"
+            description: "What would have to be true for this rule to reach `proven`, in words, or nothing\nwhen it is there already."
+        required:
+          - proof
+          - depends_on
+          - required_by
+        description: "One rule, with everything that proves it and everything that depends on it.\n# Example\n\nWhat `rules show` answers: the proof, the rules either side of it in the dependency\ngraph, and the one sentence saying what would make it proven.\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\n// a RuleDetail carries these summaries for depends_on and required_by\nlet dep = RuleSummary {\n    id: \"project.dep\".into(), title: \"Dep\".into(),\n    class: Class::Blocking, state: RuleState::NotRun,\n};\nassert_eq!(dep.class, Class::Blocking);\n```"
+        title: RuleDetail
+        "$defs":
+          RuleProof:
+            type: object
+            properties:
+              rule:
+                "$ref": "#/$defs/RuleDefinition"
+                description: The canonical definition.
+              validator:
+                anyOf:
+                  - "$ref": "#/$defs/RuleValidator"
+                  - type: "null"
+                description: "The validator, when the mode is dispatched."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/RuleTestProof"
+                description: "Every test the rule names, joined to the ledger."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "Every CI gate that runs something this rule names, deduplicated."
+              required_by:
+                type: array
+                items:
+                  type: string
+                description: "The rules that depend on this one, by id — the converse of `depends_on`, which no\nrule declares and which a reader always wants."
+              state:
+                "$ref": "#/$defs/RuleState"
+                description: "What the repository can say, as a whole."
+              meaning:
+                type: string
+                description: "That state, in one sentence."
+              satisfied:
+                type: boolean
+                description: "Whether the state is one this rule's class can live with."
+            required:
+              - rule
+              - state
+              - meaning
+              - satisfied
+            description: "One rule, joined to everything the repository can show about it.\n# Example\n\nA `RuleProof` is what [`report`] produces per rule; `satisfied` is whether the state\nsupports the class the rule declares, which is the whole question.\n\n```\nuse majordomus_cli::rules::{report, RuleProof, RuleState};\nuse majordomus_cli::evidence::Ledger;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet first: &RuleProof = &r.rules[0];\nassert_eq!(first.state, RuleState::Unproven);\nassert!(first.satisfied, \"an advisory rule owes no executable proof\");\n```"
+          RuleDefinition:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The rule id, `<namespace>.<stem>`, without the version."
+              identity:
+                type: string
+                description: "The identity the index holds, with the version."
+              uri:
+                type: string
+                description: "`majordomus://rule/<identity>`."
+              version:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The declared version.
+              title:
+                type: string
+                description: The title.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: The one-line description.
+              statement:
+                type:
+                  - string
+                  - "null"
+                description: The normative sentence.
+              status:
+                type: string
+                description: "`active`, or whatever else the front matter declares."
+              class:
+                "$ref": "#/$defs/RuleClass"
+                description: How strongly it binds.
+              namespace:
+                type: string
+                description: Whether it came with the vendored package or belongs to this project.
+              depends_on:
+                type: array
+                items:
+                  type: string
+                description: "The rules it depends on, by id."
+              tags:
+                type: array
+                items:
+                  type: string
+                description: The declared tags.
+              path:
+                type: string
+                description: Repository-relative path of the rule object.
+              enforcement:
+                "$ref": "#/$defs/RuleEnforcement"
+                description: "How it is enforced, as declared."
+            required:
+              - id
+              - identity
+              - uri
+              - version
+              - title
+              - status
+              - class
+              - namespace
+              - path
+              - enforcement
+            description: "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by [`definitions`] from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+          RuleClass:
+            oneOf:
+              - type: string
+                const: blocking
+                description: A gate refuses work that violates it.
+              - type: string
+                const: advisory
+                description: Normative for whoever reads it; nothing refuses a violation.
+              - type: string
+                const: unknown
+                description: "The front matter declared no class, or one this repository does not know."
+            description: "What a rule declares about how strongly it binds.\n\nThe repository has exactly two, and they are not severities on a scale: `blocking` means\na gate refuses the work, `advisory` means a reader is expected to have read it. A rule\nwhose front matter says neither is reported as [`Class::Unknown`] rather than defaulted,\nbecause guessing here is how a blocking rule quietly becomes advice.\n# Example\n\n```\nuse majordomus_cli::rules::Class;\nassert_eq!(Class::Blocking.label(), \"blocking\");\nassert_eq!(Class::parse(\"advisory\"), Class::Advisory);\n```"
+          RuleEnforcement:
+            type: object
+            properties:
+              mode:
+                "$ref": "#/$defs/RuleMode"
+                description: "Which of the two canonical modes, or neither."
+              validator:
+                type:
+                  - string
+                  - "null"
+                description: "The validator the dispatcher calls, when the mode is dispatched."
+              category:
+                type:
+                  - string
+                  - "null"
+                description: The diagnostic category the validator reports under.
+              exit_code:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: The exit code the validator uses to refuse.
+              enforced_by:
+                type:
+                  - string
+                  - "null"
+                description: "Which boundary enforces it: the word the rule's own block uses."
+              tests:
+                type: array
+                items:
+                  type: string
+                description: "Every test the block names, in the order it names them."
+              reviewed_because:
+                type:
+                  - string
+                  - "null"
+                description: "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace."
+            required:
+              - mode
+            description: "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
+          RuleMode:
+            oneOf:
+              - type: string
+                const: dispatched
+                description: Names a validator the doctrine dispatcher calls at run time.
+              - type: string
+                const: gated
+                description: Names behavioural cases and no validator; a gate runs them.
+              - type: string
+                const: reviewed
+                description: "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to."
+              - type: string
+                const: declarative
+                description: "Names neither. Correct for a rule nothing executable can express; a defect for a\nblocking one."
+            description: "How a rule is enforced, as its own front matter declares it.\n# Example\n\n```\nuse majordomus_cli::rules::Mode;\nassert_eq!(Mode::Dispatched.label(), \"dispatched\");\nassert_eq!(Mode::Declarative.label(), \"declarative\");\n```"
+          RuleValidator:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The name the rule declares, without the `mj_validate_` prefix."
+              function:
+                type: string
+                description: The function the dispatcher calls.
+              defined_in:
+                type:
+                  - string
+                  - "null"
+                description: "The file that defines it, when one does."
+              present:
+                type: boolean
+                description: "Whether anything in `lib/` defines it."
+            required:
+              - name
+              - function
+              - present
+            description: "The validator a dispatched rule names, and whether anything defines it.\n\nA validator is **not a path**. `validator: adr` names the shell function\n`mj_validate_adr`, which the doctrine dispatcher calls; the tool finds it by scanning\n`lib/`, exactly as `majordomus doctor` does. Reading it as a path is a mistake worth\nrecording here, because it is the one this type was introduced to fix: it makes every\ndispatched rule in the vendored package report as naming something that is not in the\ntree, which is the opposite of true — those are the best-enforced rules there are.\n# Example\n\n```\nuse majordomus_cli::rules::ValidatorRef;\nlet v = ValidatorRef {\n    name: \"adr\".into(),\n    function: \"mj_validate_adr\".into(),\n    defined_in: Some(\"lib/adr.sh\".into()),\n    present: true,\n};\nassert_eq!(v.function, \"mj_validate_adr\");\n```"
+          RuleTestProof:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path the rule names.
+              kind:
+                "$ref": "#/$defs/RuleArtifactKind"
+                description: "What drives it: a runner, a CI gate, or nothing."
+              present:
+                type: boolean
+                description: Whether that path is in the tree.
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The canonical test identity (`suite:<case>`, `crate:<binary>`), when a runner owns\nthe path. Absent means no runner drives it, so no run of it can ever be recorded."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the repository can say about this test's latest run."
+              meaning:
+                type: string
+                description: "That state, in one sentence, from the one place it is worded."
+              execution:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceExecution"
+                  - type: "null"
+                description: "The execution behind the state, when there is one."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs this test again.
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates that run this test, derived from the repository's own CI model."
+            required:
+              - path
+              - kind
+              - present
+              - state
+              - meaning
+            description: "One test a rule names, joined to what was recorded against it.\n# Example\n\n```\nuse majordomus_cli::rules::{ArtifactKind, TestProof};\nuse majordomus_cli::evidence::ProofState;\nlet t = TestProof {\n    path: \"test/cases/07_scope.sh\".into(),\n    kind: ArtifactKind::Case,\n    present: true,\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().into(),\n    execution: None,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n    gates: vec![\"shell-suite\".into()],\n};\nassert_eq!(t.kind, ArtifactKind::Case);\n```"
+          RuleArtifactKind:
+            oneOf:
+              - type: string
+                const: case
+                description: A behavioural case a runner drives; executions of it are recorded.
+              - type: string
+                const: gate
+                description: An executable check a CI gate runs as its own command.
+              - type: string
+                const: unknown
+                description: "Neither. Nothing can run it, so nothing can ever record it."
+            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          EvidenceExecution:
+            type: object
+            properties:
+              test:
+                type: string
+                description: "The test, in [`TestId::as_string`] form."
+              runner:
+                "$ref": "#/$defs/EvidenceRunner"
+                description: Which runner produced it.
+              source:
+                type: string
+                description: "The test's own source, repository-relative."
+              outcome:
+                "$ref": "#/$defs/EvidenceOutcome"
+                description: What it said.
+              seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "How long it took, in whole seconds."
+              commit:
+                type: string
+                description: The full commit id the run was made against.
+              working_tree:
+                type: string
+                description: "`clean`, `dirty` or `unknown`: whether the tree the run measured was the commit."
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
+              at:
+                type: string
+                description: "When it was recorded, RFC 3339, UTC."
+              origin:
+                "$ref": "#/$defs/EvidenceOrigin"
+                description: Where the run happened.
+              command:
+                type: string
+                description: The exact command that runs this one test again.
+            required:
+              - test
+              - runner
+              - source
+              - outcome
+              - seconds
+              - commit
+              - working_tree
+              - digest
+              - at
+              - origin
+              - command
+            description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+          EvidenceRunner:
+            oneOf:
+              - type: string
+                const: suite
+                description: "A behavioural case under `test/cases/`, run by `test/run.sh`."
+              - type: string
+                const: crate
+                description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
+            description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+          EvidenceOutcome:
+            oneOf:
+              - type: string
+                const: pass
+                description: It passed.
+              - type: string
+                const: fail
+                description: It failed.
+              - type: string
+                const: skip
+                description: It declined to run and said so (an unmet precondition the case reports itself).
+              - type: string
+                const: timeout
+                description: The bound fired before it finished.
+              - type: string
+                const: error
+                description: The harness could not run it at all.
+            description: "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+          EvidenceOrigin:
+            oneOf:
+              - type: string
+                const: local
+                description: Someone ran it on their own machine.
+              - type: string
+                const: ci
+                description: A continuous-integration run.
+              - type: string
+                const: release
+                description: A release run.
+            description: "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+          RuleState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every artifact it names is present, and every test it names has a passing run that\nnothing has invalidated."
+              - type: string
+                const: inputs_unchanged
+                description: "Every artifact is present and every test passed, but at least one run is only\nun-invalidated rather than measured against this tree."
+              - type: string
+                const: stale
+                description: "A passing run exists, but something it is about has changed since."
+              - type: string
+                const: gated
+                description: "An executable gate runs what this rule names, on every CI run that selects it. The\nmechanism is in the tree and wired; no verdict for it is recorded here."
+              - type: string
+                const: failing
+                description: The latest run of a test this rule names did not pass.
+              - type: string
+                const: not_run
+                description: "Every artifact is present, and no run of at least one named test was ever recorded."
+              - type: string
+                const: reviewed
+                description: "The rule declares, with a stated reason, that nothing executable can express it. An\nhonest exemption: counted apart from every proven rule, never counted as one."
+              - type: string
+                const: unrunnable
+                description: The rule names a path no runner in this repository drives.
+              - type: string
+                const: dangling
+                description: "The rule names a path that is not in the tree. A proof that does not exist is worse\nthan no proof, because the rule reads as proven."
+              - type: string
+                const: unproven
+                description: "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
+            description: "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
+          RuleSummary:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The rule id.
+              title:
+                type: string
+                description: The title.
+              class:
+                "$ref": "#/$defs/RuleClass"
+                description: How strongly it binds.
+              state:
+                "$ref": "#/$defs/RuleState"
+                description: What the repository can say about its proof.
+            required:
+              - id
+              - title
+              - class
+              - state
+            description: "A rule named from somewhere else, with just enough to decide whether to follow it.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::rules::RuleSummary;\nuse majordomus_cli::rules::{Class, RuleState};\nlet s = RuleSummary {\n    id: \"project.x\".into(),\n    title: \"X\".into(),\n    class: Class::Advisory,\n    state: RuleState::Reviewed,\n};\nassert_eq!(s.state, RuleState::Reviewed);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::rules
+    exposure:
+      mcp:
+        tool: majordomus_rule
+      http:
+        method: GET
+        path: /api/v1/rules/rule
+      cli:
+        path:
+          - rules
+          - show
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - rules
+      - governance
+      - verification
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/rules.rs
   - id: server.status
     module: server
     kind: query
@@ -24484,6 +26994,7 @@ declarative_kinds:
   - implementation
   - issue
   - knowledge
+  - mesh-declaration
   - milestone
   - moment
   - policy

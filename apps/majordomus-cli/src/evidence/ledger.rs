@@ -72,6 +72,20 @@
 //! assert_eq!(read.by_outcome().get("pass"), Some(&1));
 //! ```
 
+//! # Example
+//!
+//! A tree that has recorded nothing has no ledger, and says so rather than refusing to
+//! answer — a repository that could not say "nothing was recorded" would say nothing.
+//!
+//! ```
+//! use majordomus_cli::evidence::Ledger;
+//! use majordomus_cli::synthetic::SyntheticRepository;
+//! let repo = SyntheticRepository::small().unwrap();
+//! let ledger = Ledger::load(repo.root()).unwrap();
+//! assert!(!Ledger::present(repo.root()));
+//! assert!(ledger.latest("suite:07_scope").is_none());
+//! ```
+
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -89,6 +103,14 @@ pub const LEDGER_PATH: &str = ".ai/repo/evidence/ledger.json";
 /// absent one reports `not run` and a misread one could report a pass.
 pub const LEDGER_VERSION: u32 = 1;
 
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::Ledger;
+/// let l = Ledger::empty();
+/// assert_eq!(l.summary().executions, 0);
+/// assert!(l.latest("suite:07_scope").is_none());
+/// ```
 /// The latest execution of every test this repository has recorded.
 ///
 /// One entry per test, never a history: the question it answers ("is this claim proven
