@@ -1,7 +1,7 @@
 +++
 title = "First run in a foreign repository"
 description = "forensic finding, closed: what `doctor` reported in a repository that is not this one, why the findings tracked the tool's own distribution rather than the adopting repository, and the release stamp that now scopes them"
-weight = 26
+weight = 27
 [extra]
 source = "docs/ADOPTION_FIRST_RUN.md"
 +++

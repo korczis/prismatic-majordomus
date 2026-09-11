@@ -1,7 +1,7 @@
 +++
 title = "Routing recommendations will be derived from measured cost and outcome data"
 description = "**Planned.** Once cost per accepted outcome exists per profile and task class, Majordomus can say which profile produced the best acceptance rate per unit cost for a class of work — as a recommendation to change a profile, never as an automatic model choice."
-weight = 93
+weight = 94
 [extra]
 claim_id = "routing"
 status = "planned"

@@ -568,6 +568,24 @@ commands:
     demo: benchmark-run
     note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
 
+  - id: archive
+    title: archive
+    summary: Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+    category: system
+    stage: inspect
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]
+    reads: [share/archive.yaml, .ai/repo/archive.yaml, .gitattributes]
+    writes: [tmp/archives/]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: archive-profiles
+    note: The file set is the git index, so nothing untracked — no build output, no cache, no .ai/local/ — can travel. What a profile drops beyond that is declared in share/archive.yaml; a profile that drops the derived paths reads .gitattributes rather than keeping a second list of generated paths. Every entry's mode is taken from the index and written into the archive's manifest, and the restore script inside the archive puts the modes back and builds a local git index, because a copy whose scripts are not executable fails checks for reasons of its own.
+
   - id: help
     title: help
     summary: Print the usage text, which is the list of every public command.

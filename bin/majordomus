@@ -61,6 +61,7 @@ SYSTEM
   watch                what has drifted: state, policy, projections, retention    (read-only)
   version              print the version
   bench                time every public command, cold and warm, against the baseline
+  archive              a snapshot of the tracked tree, for reading or checking elsewhere
 
 global options:
   --repo <path>        repository to operate on (default: the git toplevel of the cwd)
@@ -125,7 +126,7 @@ case "$cmd" in
     # version is dispatched before the option parser and has to say so for itself
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence|archive)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
