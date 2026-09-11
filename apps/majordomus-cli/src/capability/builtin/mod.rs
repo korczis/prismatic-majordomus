@@ -67,7 +67,10 @@ use super::module::ModuleDescriptor;
 
 pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
-pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
+pub use continuity::{
+    ActiveTask, Answer, Citation, CitationKind, Considered, Continuity, Divergence,
+    ExplainEpisodeInput, OpenSession, Record, Selection, SessionProvenance, Subject, CONTINUITY_URI,
+};
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
 };

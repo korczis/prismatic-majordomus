@@ -382,6 +382,49 @@ account of events the ledger already holds is what this design refuses.
 It is served and never published. Those records name this machine, so no generated document
 and no site page carries one, and a test proves it.
 
+## Every judgement can be asked why
+
+Each of the things above is the output of a resolution rule with tiers, thresholds and
+tie-breaks, and for a long time none of them could explain itself. Between 2026-09-05 and
+2026-09-11 this repository handed six days of workers a record that was finished work,
+labelled `advanced` — true about git topology, silent about age — and nothing anywhere could
+be asked *why is this the record you are showing me*.
+
+`continuity.explain` is that question, over MCP (`majordomus_continuity_explain`) and over
+HTTP (`GET /api/v1/continuity/explain`). It answers nine:
+
+| Question | What it answers |
+|----------|-----------------|
+| `episode.current` | which pointer or provider session resolved this episode, and which open episodes were passed over |
+| `episode.close` | whether it closed, whether the close was `closed` or `interrupted`, and which provider event caused it |
+| `episode.task` | the task it carries, if any — and `none` is an answer, not a gap |
+| `episode.prompts` | which prompt records join to it, by recorded episode or by provider session, and how many join to nothing |
+| `episode.recovery` | which recovery action touched it |
+| `handover.selected`, `checkpoint.selected` | which tier matched, what was skipped and why, and what the tie-break was |
+| `handover.freshness`, `checkpoint.freshness` | the age, the threshold it crossed, and the file that declares the threshold |
+
+Every answer carries a **reason**, never empty, and at least one **citation** a reader can
+open: a file, the symlink the pointer is, a numbered ledger line, or a policy key named with
+the file that declares it. Where the judgement chose between candidates, every candidate that
+lost is listed with the reason it lost — the deliberate refusals ("that one is another
+branch's") distinguishable from the defects ("that one has no front matter") from the
+tie-breaks ("that one is nine minutes older").
+
+Nothing is recomputed for the explanation. The tier and the tie-break come out of the
+selection itself, the verdict and the age out of the same judgement `continuity.state`
+reports, the thresholds out of the policy. A second engine for any of it would drift from the
+one it explains, and an explanation that has drifted is another confident assertion.
+
+**Where the subsystem does not know, it says so.** A prompt record carrying no episode, an
+episode with no closed record in this clone, a policy that predates `session.freshness` —
+each of those is reported as unknown *with its cause*, and answers nothing at all. Absence is
+an answer; invention is not, and a plausible explanation is worse than none. The rule is
+`project.session-judgement-cites-its-evidence`; `test/cases/270_a_session_explains_itself.sh`
+holds it to that.
+
+Like `continuity.state`, it has no command line: everything under `.ai/local/` names this
+machine, and a command line is how a value reaches a script, a log and eventually a commit.
+
 ## Where the lifecycle puts each piece
 
 ```
