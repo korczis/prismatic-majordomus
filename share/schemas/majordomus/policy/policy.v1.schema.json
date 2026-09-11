@@ -233,6 +233,16 @@
             "watch_ms": {
               "type": "integer",
               "minimum": 1
+            },
+            "cockpit_page_ms": {
+              "description": "How long a Cockpit page may take to answer. A page is a projection of state the process already holds, so this is a constant of the page and not of the repository.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "cockpit_worktrees_ms_per_worktree": {
+              "description": "How long /cockpit/worktrees may take per work tree git has registered, on top of cockpit_page_ms. The one Cockpit page that runs git inside every work tree; its cost is per work tree, so its budget is too.",
+              "type": "integer",
+              "minimum": 1
             }
           }
         }

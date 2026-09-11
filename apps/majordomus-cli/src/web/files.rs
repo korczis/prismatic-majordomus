@@ -17,6 +17,7 @@ use std::sync::Mutex;
 
 use crate::http::router::Response;
 
+use super::html;
 use super::model::Surface;
 
 /// Media types by file extension. A file whose extension is not here is not served: a
@@ -210,23 +211,59 @@ impl Files {
         document(body, media_type)
     }
 
-    /// What a request under a surface whose producer has not run answers with: the reason,
-    /// the directory that is missing, the command that writes it, and that this process
-    /// resolved its surfaces once at start.
+    /// What a request under a surface whose producer has not run answers with: a page that
+    /// names the surface, the directory that is missing, the command that writes it, and
+    /// that this process resolved its surfaces once at start.
+    ///
+    /// It is a page and not an error. `/docs` is a *declared* surface of this server — the
+    /// home page lists it, the reservation table gives it that path, and a feature names it
+    /// — and in any checkout that has not built the site it is also the normal case, because
+    /// nothing about starting a server builds a documentation tree. A declared surface that
+    /// answers a browser with a JSON error object has told the reader that something is
+    /// broken; nothing is broken, the build has simply not been made, and the one thing the
+    /// reader needs is the command that makes it. Readiness is not lost by saying so: the
+    /// home page answers `"ready": false` for this surface, which is where a client learns
+    /// it, and every request under the mount gets this same page because the whole tree is
+    /// absent and no path under it is more present than another.
     ///
     /// Restart-based rediscovery is this executable's contract everywhere — the index, the
     /// registry and the topology are all read at start and immutable for the process — so
     /// building the directory while the server runs does not make it appear, and saying so
     /// is cheaper than a reader wondering why.
     fn unavailable(&self) -> Response {
-        Response::error(
-            503,
-            "unavailable",
-            &format!(
-                "'{}' ({}) is not built: {} does not exist when this process started. Run: {} — then restart this server",
-                self.surface.id, self.surface.title, self.artifact, self.surface.producer
+        let title = html::escape(&self.surface.title);
+        let body = format!(
+            "<p>This build has not been made in this checkout. Nothing is wrong with the \
+             server: <code>{artifact}</code> did not exist when it started, and a server \
+             does not build a documentation tree by starting.</p>\
+             <h2>How to get it</h2>\
+             <p>Run this, then restart the server — the surfaces are resolved once, at \
+             start, like the index and the registry:</p>\
+             <pre><code>{producer}</code></pre>\
+             <h2>What is here meanwhile</h2>\
+             <ul>\
+             <li><a href=\"/\">The server's home page</a> — every surface it serves, and \
+             whether each one is ready</li>\
+             <li><a href=\"/cockpit\">The Cockpit</a> — the registry, the objects, the \
+             graphs and the health report, rendered for a person</li>\
+             <li><a href=\"/swagger\">Swagger UI</a> — every HTTP route, with its schemas</li>\
+             </ul>",
+            artifact = html::escape(&self.artifact),
+            producer = html::escape(&self.surface.producer),
+        );
+        Response::new(
+            200,
+            "text/html; charset=utf-8",
+            html::page(
+                &title,
+                &format!(
+                    "The '{}' surface is declared and not built",
+                    html::escape(&self.surface.id)
+                ),
+                &body,
             ),
         )
+        .with_header("Cache-Control", DOCUMENT_CACHE)
     }
 }
 

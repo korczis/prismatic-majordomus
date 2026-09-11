@@ -14,7 +14,7 @@ modules: [health]
 rules: [project.interfaces-are-projections]
 docs: [docs/COCKPIT.md]
 adrs: [adr-0012, adr-0020]
-cockpit: [overview, capabilities, objects, directories, graphs, continuity, worktrees, health, artifacts, design, api]
+cockpit: [overview, capabilities, commands, objects, directories, graphs, executions, continuity, activity, worktrees, health, quality, artifacts, design, api]
 web: [cockpit]
 related: [interfaces, declare-once]
 tags: [cockpit, interface]
@@ -29,6 +29,12 @@ its schemas, its projections, its provenance and a form generated from its input
 calls its real route. A capability, a kind or a graph added to the backend has a page, a
 navigation entry and a search entry the first time it exists, with no line of the Cockpit
 written for it.
+
+The areas this list names are the areas the server serves and the sidebar offers, because
+all three read one table (`cockpit::nav::areas`): the router dispatches from it, the
+navigation is built from it, and this list is validated against it in both directions — an
+area named here that does not exist is refused, and an area the sidebar offers that nothing
+here names is refused too.
 
 The browser layer is an enhancement in the strict sense: a command palette, the runner, a
 graph drawing and two optional views, under a strict content-security policy with no inline

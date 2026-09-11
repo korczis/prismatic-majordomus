@@ -63,6 +63,21 @@ benchmark:
   budget:
     doctor_ms: 3000
     watch_ms: 3000
+    # A Cockpit page is a projection of state this process already holds — the index and the
+    # registry are built once at start and immutable — so serving one is laying out what it
+    # has. Measured: every page but one answers in 1-4 ms. 1000 is that with three orders of
+    # magnitude of room, so the budget catches a page that started doing work and nothing
+    # else.
+    cockpit_page_ms: 1000
+    # /cockpit/worktrees is the exception and the reason these two keys exist: it is the one
+    # page that runs git inside every registered work tree, so its cost is not a constant of
+    # the page but a constant per work tree. Its budget is cockpit_page_ms plus this much for
+    # each one git has registered. Measured on a repository with 111 work trees after the
+    # readings were made concurrent: ~58 ms per work tree (7.4 s), against ~308 ms per work
+    # tree before (34.2 s, two full walks taken one subprocess at a time). 100 is the
+    # measured cost with room for a loaded machine, and it is below what the serial form
+    # costs at any repository size — which is what makes it a budget and not a record.
+    cockpit_worktrees_ms_per_worktree: 100
 
 # Use-case coverage: every public command must be named and run by an active use case
 # (required); a guaranteed claim or an MCP tool without one is reported (advisory).

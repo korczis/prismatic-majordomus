@@ -152,31 +152,30 @@ impl Cockpit {
         response
     }
 
+    /// Which page answers this request.
+    ///
+    /// An **area** is looked up in [`nav::areas`], which is the Cockpit's one table of them:
+    /// the sidebar offers what that table lists, the router serves what it carries, the
+    /// product model validates a feature's `cockpit:` list against it, and the site data
+    /// projects it. There is no list of areas in this function, which is why
+    /// `/cockpit/activity` could not be served-but-unreachable again.
+    ///
+    /// What is matched here is everything that is *not* an area: a detail route below one
+    /// (an object, a capability, a command, a graph), which is a prefix and a decoded
+    /// identity rather than a name anyone lists.
     fn route(&self, req: &Request) -> pages::Page {
         let path = req.path.trim_end_matches('/');
+        let path = if path.is_empty() { PREFIX } else { path };
         let query = &req.query;
+        if let Some(area) = nav::area_at(path) {
+            return (area.page)(&self.ctx, query);
+        }
         match path {
-            "" | PREFIX => pages::overview(&self.ctx),
-            "/cockpit/capabilities" => pages::capabilities(&self.ctx, query),
-            "/cockpit/commands" => pages::commands(&self.ctx, query),
-            "/cockpit/objects" => pages::objects(&self.ctx, query),
             "/cockpit/object" => match query.iter().find(|(k, _)| k == "uri") {
                 Some((_, uri)) => pages::object(&self.ctx, uri),
                 None => pages::objects(&self.ctx, query),
             },
-            "/cockpit/executions" => pages::executions(&self.ctx, query),
-            "/cockpit/graphs" => pages::graphs(&self.ctx),
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
-            "/cockpit/continuity" => pages::continuity(&self.ctx),
-            "/cockpit/worktrees" => pages::worktrees(&self.ctx),
-            "/cockpit/directories" => pages::directories(&self.ctx, query),
-            "/cockpit/health" => pages::health(&self.ctx),
-            "/cockpit/quality" => pages::quality(&self.ctx),
-            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
-            "/cockpit/design" => pages::design(&self.ctx),
-            "/cockpit/api" => pages::api(&self.ctx),
-            "/cockpit/search" => pages::search(&self.ctx, query),
-            "/cockpit/activity" => pages::activity(&self.ctx),
             other => {
                 if let Some(id) = other.strip_prefix("/cockpit/executions/") {
                     pages::execution(&self.ctx, &percent_decode(id))
