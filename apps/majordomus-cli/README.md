@@ -67,11 +67,15 @@ cargo clippy --all-targets --all-features -- -D warnings   # missing_docs is an 
 cargo test                                                  # unit, integration, doctests
 cargo doc --no-deps                                         # RUSTDOCFLAGS="-D warnings" in CI
 cargo bench                                                 # criterion, benches/{projections,shared,scaling}.rs
-cargo llvm-cov --all-targets --summary-only                 # coverage; CI enforces the threshold in scripts/rust-check
+../../scripts/rust-coverage --report                        # coverage, test code out of the denominator
 ```
 
 `scripts/rust-check` at the repository root (`just rust-check`) runs all of it in the order
-CI does; the coverage floor is the one integer in `scripts/rust-coverage-threshold`, read
+CI does. Coverage is measured by `scripts/rust-coverage` rather than by `cargo llvm-cov
+--summary-only` directly, because this crate keeps its unit tests inline as `#[cfg(test)] mod
+tests` inside `src/*.rs`, where no `--ignore-filename-regex` can reach them: left alone, the
+tests are counted in their own denominator and the percentage moves whenever one is written or
+deleted. The floor is the one integer in `scripts/rust-coverage-threshold`, read
 by CI, by the script and by `just coverage`. The tests build a disposable repository each
 and never read this checkout; `test/cases/72_rust_mcp.sh`, `76_capabilities_projections.sh`
 and `90_mcp_shared_server.sh` at the repository root run the built binary against a
