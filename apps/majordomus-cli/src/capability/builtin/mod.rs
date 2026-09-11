@@ -44,6 +44,7 @@ pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
 pub(crate) mod mesh;
+pub(crate) mod models;
 pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
@@ -96,6 +97,7 @@ pub use executions::{
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use mesh::{IdentityReport, NodeList, RegisterInput, MESH_URI};
+pub use models::{ModelsFilter, ModelsReport, RouteInput, VendorView, MODELS_URI};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
     ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
@@ -140,6 +142,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         deploy,
         executions,
         mesh,
+        models,
         peers,
         server,
         perf,

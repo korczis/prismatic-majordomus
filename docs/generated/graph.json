@@ -443,6 +443,24 @@
         "status": "query"
       },
       {
+        "id": "capability:models.list",
+        "kind": "capability",
+        "label": "models.list",
+        "summary": "The model catalogue",
+        "route": "/cockpit/capabilities/models.list",
+        "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:models.route",
+        "kind": "capability",
+        "label": "models.route",
+        "summary": "Route a need to a model",
+        "route": "/cockpit/capabilities/models.route",
+        "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:objects.get",
         "kind": "capability",
         "label": "objects.get",
@@ -1354,11 +1372,35 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/registry.rs",
+        "kind": "file",
+        "label": "registry.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/registry.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/trust.rs",
+        "kind": "file",
+        "label": "trust.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/trust.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/metadata/mod.rs",
         "kind": "file",
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/metadata/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/models/mod.rs",
         "external": true
       },
       {
@@ -1439,6 +1481,14 @@
         "label": "scope.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/scope.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/shared.rs",
+        "kind": "file",
+        "label": "shared.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/shared.rs",
         "external": true
       },
       {
@@ -1538,6 +1588,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/mesh.rs",
+        "kind": "file",
+        "label": "mesh.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/mesh.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -1559,6 +1617,14 @@
         "label": "why.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/why.rs",
+        "external": true
+      },
+      {
+        "id": "file:docs/MODELS.md",
+        "kind": "file",
+        "label": "MODELS.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "docs/MODELS.md",
         "external": true
       },
       {
@@ -1850,6 +1916,14 @@
         "external": true
       },
       {
+        "id": "file:share/models.yaml",
+        "kind": "file",
+        "label": "models.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/models.yaml",
+        "external": true
+      },
+      {
         "id": "file:share/obligations.yaml",
         "kind": "file",
         "label": "obligations.yaml",
@@ -1975,6 +2049,14 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
+        "external": true
+      },
+      {
+        "id": "file:test/cases/131_models.sh",
+        "kind": "file",
+        "label": "131_models.sh",
+        "summary": "named by the layer; not an object of this index",
+        "source": "test/cases/131_models.sh",
         "external": true
       },
       {
@@ -3069,7 +3151,18 @@
         "source": ".ai/repo/adrs/0044-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md",
         "status": "proposed",
         "facts": {
-          "date": "2026-09-11"
+          "date": "2026-09-11",
+          "related": [
+            "file:.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md",
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            "file:docs/MODELS.md",
+            "file:share/models.yaml"
+          ],
+          "tags": [
+            "models",
+            "catalogue",
+            "routing"
+          ]
         }
       },
       {
@@ -4825,6 +4918,53 @@
         }
       },
       {
+        "id": "majordomus://claim/mesh-observation-not-authority",
+        "kind": "claim",
+        "label": "mesh-observation-not-authority",
+        "summary": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmesh-observation-not-authority",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-off-by-default",
+        "kind": "claim",
+        "label": "mesh-off-by-default",
+        "summary": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmesh-off-by-default",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "implementation": "apps/majordomus-cli/src/shared.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-one-registry",
+        "kind": "claim",
+        "label": "mesh-one-registry",
+        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmesh-one-registry",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/130_mesh.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/minimum-context",
         "kind": "claim",
         "label": "minimum-context",
@@ -4838,6 +4978,54 @@
           "responsibility": "profiles",
           "source": "share/skeleton/profiles/routine.yaml",
           "test": "test/cases/04_start_check.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/models-no-secret-fields",
+        "kind": "claim",
+        "label": "models-no-secret-fields",
+        "summary": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmodels-no-secret-fields",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+          "implementation": "apps/majordomus-cli/src/models/mod.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "apps/majordomus-cli/src/models/mod.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/models-one-declaration",
+        "kind": "claim",
+        "label": "models-one-declaration",
+        "summary": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmodels-one-declaration",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+          "implementation": "apps/majordomus-cli/src/models/mod.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "test/cases/131_models.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/models-routing-explains-itself",
+        "kind": "claim",
+        "label": "models-routing-explains-itself",
+        "summary": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmodels-routing-explains-itself",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+          "implementation": "apps/majordomus-cli/src/models/mod.rs",
+          "responsibility": "none",
+          "source": "docs/MODELS.md",
+          "test": "test/cases/131_models.sh"
         }
       },
       {
@@ -28363,6 +28551,13 @@
         "source": "test/cases/12c_graph_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/130_mesh.sh",
+        "kind": "test",
+        "label": "test/cases/130_mesh.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F130_mesh.sh",
+        "source": "test/cases/130_mesh.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -31053,6 +31248,11 @@
         "label": "mesh"
       },
       {
+        "id": "module:models",
+        "kind": "module",
+        "label": "models"
+      },
+      {
         "id": "module:objects",
         "kind": "module",
         "label": "objects"
@@ -31863,6 +32063,46 @@
       },
       {
         "source": "capability:mesh.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.list",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.list",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.list",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.route",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.route",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.route",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:models.route",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -33663,8 +33903,28 @@
       },
       {
         "source": "majordomus://adr/adr-0044",
+        "target": "file:docs/MODELS.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "file:share/models.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://adr/adr-0024",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0044",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -35322,6 +35582,66 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/mesh-observation-not-authority",
+        "target": "file:apps/majordomus-cli/src/mesh/trust.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-observation-not-authority",
+        "target": "file:apps/majordomus-cli/tests/mesh.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-observation-not-authority",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-observation-not-authority",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-off-by-default",
+        "target": "file:apps/majordomus-cli/src/shared.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-off-by-default",
+        "target": "file:apps/majordomus-cli/tests/mesh.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-off-by-default",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-off-by-default",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
+        "target": "file:apps/majordomus-cli/src/mesh/registry.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
+        "target": "majordomus://test/test/cases/130_mesh.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/minimum-context",
         "target": "file:share/skeleton/profiles/routine.yaml",
         "kind": "defined_in"
@@ -35340,6 +35660,66 @@
         "source": "majordomus://claim/minimum-context",
         "target": "majordomus://test/test/cases/04_start_check.sh",
         "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-no-secret-fields",
+        "target": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-no-secret-fields",
+        "target": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-no-secret-fields",
+        "target": "file:docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-no-secret-fields",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-one-declaration",
+        "target": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-one-declaration",
+        "target": "file:docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-one-declaration",
+        "target": "file:test/cases/131_models.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-one-declaration",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/models-routing-explains-itself",
+        "target": "file:apps/majordomus-cli/src/models/mod.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/models-routing-explains-itself",
+        "target": "file:docs/MODELS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-routing-explains-itself",
+        "target": "file:test/cases/131_models.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/models-routing-explains-itself",
+        "target": "kind:claim",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://claim/no-counts-in-context",
@@ -44142,6 +44522,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/130_mesh.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/13_region_projection.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -47502,6 +47887,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:models",
+        "target": "capability:models.list",
+        "kind": "composes"
+      },
+      {
+        "source": "module:models",
+        "target": "capability:models.route",
+        "kind": "composes"
+      },
+      {
         "source": "module:objects",
         "target": "capability:objects.get",
         "kind": "composes"
@@ -47718,8 +48113,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1466,
-      "edges": 3312,
+      "nodes": 1484,
+      "edges": 3351,
       "acyclic": true,
       "truncated": false
     }

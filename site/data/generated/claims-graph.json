@@ -1356,6 +1356,60 @@
       "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository."
     },
     {
+      "id": "claim:mesh-off-by-default",
+      "kind": "claim",
+      "label": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-off-by-default/",
+      "external": false,
+      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0043)."
+    },
+    {
+      "id": "claim:mesh-one-registry",
+      "kind": "claim",
+      "label": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-one-registry/",
+      "external": false,
+      "note": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site."
+    },
+    {
+      "id": "claim:mesh-observation-not-authority",
+      "kind": "claim",
+      "label": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-observation-not-authority/",
+      "external": false,
+      "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only."
+    },
+    {
+      "id": "claim:models-one-declaration",
+      "kind": "claim",
+      "label": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+      "status": "guaranteed",
+      "route": "/guarantees/models-one-declaration/",
+      "external": false,
+      "note": "models.list and models.route are capability declarations, so every surface is a projection; the catalogue's own diagnostics report a duplicate alias or an undeclared vendor at first read. Declaration order is routing's preference order, verifiable by reading the file."
+    },
+    {
+      "id": "claim:models-routing-explains-itself",
+      "kind": "claim",
+      "label": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+      "status": "guaranteed",
+      "route": "/guarantees/models-routing-explains-itself/",
+      "external": false,
+      "note": "Routing is a pure function over the declared catalogue and the stated need; the unit tests prove the preference order, the fixed check order behind every exclusion reason, and that a model named outright is still checked against the requirements."
+    },
+    {
+      "id": "claim:models-no-secret-fields",
+      "kind": "claim",
+      "label": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+      "status": "guaranteed",
+      "route": "/guarantees/models-no-secret-fields/",
+      "external": false,
+      "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1461,9 +1515,30 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/mesh/registry.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/registry.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/trust.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/metadata/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/metadata/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/models/mod.rs",
       "route": null,
       "external": false
     },
@@ -1499,6 +1574,13 @@
       "id": "impl:apps/majordomus-cli/src/scope.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/scope.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/shared.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/shared.rs",
       "route": null,
       "external": false
     },
@@ -1909,6 +1991,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
@@ -2021,6 +2110,20 @@
       "external": false
     },
     {
+      "id": "source:docs/MESH.md",
+      "kind": "source",
+      "label": "docs/MESH.md",
+      "route": "/docs/mesh/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MODELS.md",
+      "kind": "source",
+      "label": "docs/MODELS.md",
+      "route": "/docs/models/",
+      "external": false
+    },
+    {
       "id": "source:docs/PLANNING.md",
       "kind": "source",
       "label": "docs/PLANNING.md",
@@ -2112,6 +2215,13 @@
       "external": false
     },
     {
+      "id": "test:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/src/models/mod.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/models/mod.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/cli_docs.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/cli_docs.rs",
@@ -2124,6 +2234,13 @@
       "label": "apps/majordomus-cli/tests/lease_lost.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/lease_lost.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/mesh.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mesh.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/product.rs",
@@ -2222,6 +2339,20 @@
       "label": "test/cases/12_site_build.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
+    },
+    {
+      "id": "test:test/cases/130_mesh.sh",
+      "kind": "test",
+      "label": "test/cases/130_mesh.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_mesh.sh"
+    },
+    {
+      "id": "test:test/cases/131_models.sh",
+      "kind": "test",
+      "label": "test/cases/131_models.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/131_models.sh"
     },
     {
       "id": "test:test/cases/13_region_projection.sh",
@@ -3377,6 +3508,36 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-off-by-default",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -4082,6 +4243,36 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-off-by-default",
+      "target": "impl:apps/majordomus-cli/src/shared.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "impl:apps/majordomus-cli/src/mesh/registry.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -4784,6 +4975,36 @@
     {
       "source": "claim:landing-page-is-a-projection",
       "target": "test:test/cases/12_site_build.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-off-by-default",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "test:test/cases/130_mesh.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "test:apps/majordomus-cli/src/models/mod.rs",
       "kind": "proved_by"
     }
   ]

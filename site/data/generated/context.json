@@ -239,6 +239,32 @@
       ]
     },
     {
+      "id": "ai.repo.mesh",
+      "path": ".ai/repo/mesh/README.md",
+      "dir": ".ai/repo/mesh",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Mesh",
+      "description": "One canonical object that says whether this repository's servers participate in mesh discovery, over which transports, and whom they trust; absent or disabled means no socket opens.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+        "share/kinds.yaml",
+        "docs/MESH.md"
+      ]
+    },
+    {
       "id": "ai.repo.profiles",
       "path": ".ai/repo/profiles/README.md",
       "dir": ".ai/repo/profiles",
@@ -829,7 +855,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 22,
+        "index": 23,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -864,7 +890,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 23,
+        "index": 24,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -1048,7 +1074,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 24,
+        "index": 25,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1074,6 +1100,43 @@
       }
     },
     {
+      "dir": ".ai/repo/mesh",
+      "document": "ai.repo.mesh",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "mesh",
+      "contract": {
+        "index": 11,
+        "id": "ai.repo.mesh",
+        "path": ".ai/repo/mesh/README.md",
+        "dir": ".ai/repo/mesh",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Mesh",
+        "description": "One canonical object that says whether this repository's servers participate in mesh discovery, over which transports, and whom they trust; absent or disabled means no socket opens.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+          "share/kinds.yaml",
+          "docs/MESH.md"
+        ],
+        "paths": [],
+        "sha256": "8eb4deb2c42777573afa60aa5123b7996514f64017a7e6d1a62cfe818977cea2"
+      }
+    },
+    {
       "dir": ".ai/repo/profiles",
       "document": "ai.repo.profiles",
       "requires_contract": true,
@@ -1081,7 +1144,7 @@
       "depth": 2,
       "name": "profiles",
       "contract": {
-        "index": 11,
+        "index": 12,
         "id": "ai.repo.profiles",
         "path": ".ai/repo/profiles/README.md",
         "dir": ".ai/repo/profiles",
@@ -1117,7 +1180,7 @@
       "depth": 2,
       "name": "project",
       "contract": {
-        "index": 12,
+        "index": 13,
         "id": "ai.repo.project",
         "path": ".ai/repo/project/README.md",
         "dir": ".ai/repo/project",
@@ -1154,7 +1217,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 25,
+        "index": 26,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1189,7 +1252,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1224,7 +1287,7 @@
       "depth": 2,
       "name": "prompts",
       "contract": {
-        "index": 13,
+        "index": 14,
         "id": "ai.repo.prompts",
         "path": ".ai/repo/prompts/README.md",
         "dir": ".ai/repo/prompts",
@@ -1260,7 +1323,7 @@
       "depth": 2,
       "name": "providers",
       "contract": {
-        "index": 14,
+        "index": 15,
         "id": "ai.repo.providers",
         "path": ".ai/repo/providers/README.md",
         "dir": ".ai/repo/providers",
@@ -1329,7 +1392,7 @@
       "depth": 2,
       "name": "rules",
       "contract": {
-        "index": 15,
+        "index": 16,
         "id": "ai.repo.rules",
         "path": ".ai/repo/rules/README.md",
         "dir": ".ai/repo/rules",
@@ -1367,7 +1430,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 27,
+        "index": 28,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1400,7 +1463,7 @@
       "depth": 2,
       "name": "sessions",
       "contract": {
-        "index": 16,
+        "index": 17,
         "id": "ai.repo.sessions",
         "path": ".ai/repo/sessions/README.md",
         "dir": ".ai/repo/sessions",
@@ -1436,7 +1499,7 @@
       "depth": 2,
       "name": "skills",
       "contract": {
-        "index": 17,
+        "index": 18,
         "id": "ai.repo.skills",
         "path": ".ai/repo/skills/README.md",
         "dir": ".ai/repo/skills",
@@ -1514,7 +1577,7 @@
       "depth": 2,
       "name": "use-cases",
       "contract": {
-        "index": 18,
+        "index": 19,
         "id": "ai.repo.use-cases",
         "path": ".ai/repo/use-cases/README.md",
         "dir": ".ai/repo/use-cases",
@@ -1547,7 +1610,7 @@
       "depth": 2,
       "name": "why",
       "contract": {
-        "index": 19,
+        "index": 20,
         "id": "ai.repo.why",
         "path": ".ai/repo/why/README.md",
         "dir": ".ai/repo/why",
@@ -1610,7 +1673,7 @@
       "depth": 2,
       "name": "workflows",
       "contract": {
-        "index": 20,
+        "index": 21,
         "id": "ai.repo.workflows",
         "path": ".ai/repo/workflows/README.md",
         "dir": ".ai/repo/workflows",
@@ -1649,7 +1712,7 @@
       "depth": 2,
       "name": "workspaces",
       "contract": {
-        "index": 21,
+        "index": 22,
         "id": "ai.repo.workspaces",
         "path": ".ai/repo/workspaces/README.md",
         "dir": ".ai/repo/workspaces",
@@ -1679,8 +1742,8 @@
     }
   ],
   "counts": {
-    "directories": 35,
-    "documented": 27,
+    "directories": 36,
+    "documented": 28,
     "exempt": 8
   }
 }

@@ -246,6 +246,27 @@ mod tests {
     }
 
     #[test]
+    fn a_parsed_declaration_is_summarised_in_the_verdict() {
+        let config: MeshConfig = serde_json::from_value(serde_json::json!({
+            "schema": "mesh/v1", "kind": "mesh-declaration", "id": "docs", "enabled": true
+        }))
+        .unwrap();
+        let report = doctor(Some(Ok(config)));
+        let declaration = report
+            .checks
+            .iter()
+            .find(|c| c.check == "declaration")
+            .unwrap();
+        assert!(declaration.ok);
+        assert!(
+            declaration.detail.contains("enabled=true"),
+            "{}",
+            declaration.detail
+        );
+        assert!(declaration.detail.contains("trust=deny_unknown"));
+    }
+
+    #[test]
     fn a_broken_declaration_is_one_failed_check_not_a_crash() {
         let report = doctor(Some(Err(MeshError::Config("bad".into()))));
         let declaration = report

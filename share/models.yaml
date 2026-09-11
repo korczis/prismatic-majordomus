@@ -1,0 +1,75 @@
+# The model catalogue this distribution ships (ADR 0044): the AI models the tool's
+# world can name, one declaration, projected to every surface by `models.list` and
+# `models.route`. Declaration order is routing's preference order.
+#
+# Facts here carry provenance or they do not enter: the entries below are from the
+# Anthropic model reference as cached on 2026-06-24. Pricing is deliberately absent —
+# a price this tool cannot verify live is a fact it must not state. Vendors whose
+# facts nobody has verified (OpenAI, Google, local runtimes) are absent for the same
+# reason; adding one is editing this file, and nothing else.
+#
+# `credential_env` names an environment variable; only its *presence* is ever
+# reported. No value is read, held or rendered anywhere.
+version: 1
+
+vendors:
+  - id: anthropic
+    title: Anthropic
+    inference: remote
+    credential_env: ANTHROPIC_API_KEY
+
+models:
+  - id: claude-opus-5
+    vendor: anthropic
+    native_id: claude-opus-5
+    aliases: [opus]
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+    note: The default for capable work; adaptive thinking is on by default.
+
+  - id: claude-fable-5
+    vendor: anthropic
+    native_id: claude-fable-5
+    aliases: [fable]
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+    note: The most capable widely released model; thinking always on, refusal stop reason to handle.
+
+  - id: claude-sonnet-5
+    vendor: anthropic
+    native_id: claude-sonnet-5
+    aliases: [sonnet]
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+
+  - id: claude-opus-4-8
+    vendor: anthropic
+    native_id: claude-opus-4-8
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+
+  - id: claude-opus-4-7
+    vendor: anthropic
+    native_id: claude-opus-4-7
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+
+  - id: claude-opus-4-6
+    vendor: anthropic
+    native_id: claude-opus-4-6
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+
+  - id: claude-sonnet-4-6
+    vendor: anthropic
+    native_id: claude-sonnet-4-6
+    context_window: 1000000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+
+  - id: claude-haiku-4-5
+    vendor: anthropic
+    native_id: claude-haiku-4-5
+    aliases: [haiku]
+    context_window: 200000
+    capabilities: [text, vision, tools, structured_output, streaming, reasoning]
+    note: The fast, small tier; the usual choice for subagents and high-volume routes.

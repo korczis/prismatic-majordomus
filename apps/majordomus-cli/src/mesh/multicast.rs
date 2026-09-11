@@ -215,6 +215,59 @@ mod tests {
     }
 
     #[test]
+    fn the_listener_hears_and_the_announcer_transmits() {
+        // A free port from the OS, then the real provider on it. The listener hears
+        // anything aimed at the port (the unicast datagram stands in for a multicast
+        // delivery, which not every CI network grants), and the announcer's own
+        // transmissions count.
+        let port = {
+            let probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+            probe.local_addr().unwrap().port()
+        };
+        let mut provider = MulticastProvider::new(MulticastConfig {
+            port,
+            interval_seconds: 1,
+            ..MulticastConfig::default()
+        });
+        let (tx, rx) = std::sync::mpsc::channel();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ctx = crate::mesh::provider::ProviderContext {
+            tx,
+            stop: std::sync::Arc::clone(&stop),
+            beacon: std::sync::Arc::new(crate::mesh::provider::Beacon::new(
+                std::sync::Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+                vec![],
+                vec![],
+                vec![],
+                "test",
+            )),
+        };
+        provider.start(&ctx).unwrap();
+        assert_eq!(provider.status().state, MeshProviderState::Running);
+
+        let sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        sender
+            .send_to(b"a datagram for the listener", (Ipv4Addr::LOCALHOST, port))
+            .unwrap();
+        let heard = rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("the listener hands the datagram up");
+        assert_eq!(heard.source, MeshSource::UdpMulticast);
+        assert_eq!(heard.bytes, b"a datagram for the listener");
+
+        // The announcer transmitted at least its startup announcement.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while provider.status().sent == 0 && std::time::Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(50));
+        }
+        assert!(
+            provider.status().sent >= 1,
+            "the startup announcement counted"
+        );
+        stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    #[test]
     fn a_garbled_group_is_refused_before_any_socket_opens() {
         let provider = MulticastProvider::new(MulticastConfig {
             group: "not-an-ip".into(),

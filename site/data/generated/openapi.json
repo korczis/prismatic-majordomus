@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 80,
-    "schemas": 373,
-    "tags": 27
+    "operations": 87,
+    "schemas": 400,
+    "tags": 29
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -6701,6 +6701,41 @@
       "variants": []
     },
     {
+      "description": "One check's verdict.",
+      "is_enum": false,
+      "name": "DoctorCheck",
+      "properties": [
+        {
+          "description": "What was checked.",
+          "name": "check",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it holds.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The evidence: a path, an address, an error.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshDoctorReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One document, and the encodings it is committed in.",
       "is_enum": false,
       "name": "DocumentView",
@@ -6903,6 +6938,99 @@
       "variants": []
     },
     {
+      "description": "The wire envelope: the advertisement plus its signature.",
+      "is_enum": false,
+      "name": "Envelope",
+      "properties": [
+        {
+          "description": "Protocol version.",
+          "name": "v",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The Ed25519 public key, hex. The node id is derived from it, never carried:\na field that could disagree with the key is a field somebody will forge.",
+          "name": "pk",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This run of the node.",
+          "name": "inst",
+          "refs": [
+            "InstanceId"
+          ],
+          "required": true,
+          "type": "InstanceId"
+        },
+        {
+          "description": "A human name for the node. Presentation only.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Monotonic per instance: a replayed datagram carries a counter the reader has\nalready seen and is dropped.",
+          "name": "seq",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Seconds since the Unix epoch at signing time.",
+          "name": "ts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where this node answers HTTP, as `host:port` authorities, at most\n[`MAX_ENDPOINTS`]. Advisory: an endpoint is where to *try*, identity is the key.",
+          "name": "ep",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The transports the node serves: `http`, `mcp`, `ws`. Sanitized capability\nawareness, never an authorization.",
+          "name": "caps",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\".",
+          "name": "repos",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The executable version, informational.",
+          "name": "ver",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Ed25519 over [`Advertisement::signing_bytes`], hex.",
+          "name": "sig",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RegisterAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the values of one snapshot came from.",
       "is_enum": false,
       "name": "EnvironmentProvenance",
@@ -7087,6 +7215,13 @@
         "graph.list",
         "health.report",
         "health.live",
+        "mesh.status",
+        "mesh.doctor",
+        "mesh.identity",
+        "mesh.nodes",
+        "mesh.register",
+        "models.list",
+        "models.route",
         "objects.get",
         "objects.list",
         "objects.verify",
@@ -7345,6 +7480,34 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One model that did not qualify, and exactly why.",
+      "is_enum": false,
+      "name": "Excluded",
+      "properties": [
+        {
+          "description": "The canonical id.",
+          "name": "model",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first reason it fell out, in the order the checks run.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RoutingDecision"
       ],
       "values": [],
       "variants": []
@@ -9709,6 +9872,72 @@
       "variants": []
     },
     {
+      "description": "The answer of `mesh.identity`: this machine's node identity, public half only.",
+      "is_enum": false,
+      "name": "IdentityReport",
+      "properties": [
+        {
+          "description": "Where the identity file lives (or would).",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the file exists.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The public identity, when the file exists and loads. The signing key is not\nhere, not in any projection, and not in any log.",
+          "name": "identity",
+          "refs": [
+            "PublicIdentity"
+          ],
+          "required": false,
+          "type": "PublicIdentity | null"
+        },
+        {
+          "description": "Why the identity did not load, when it did not.",
+          "name": "error",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.identity"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a vendor's inference runs.",
+      "is_enum": true,
+      "name": "Inference",
+      "properties": [],
+      "type": "\"remote\" | \"local\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "VendorView"
+      ],
+      "values": [
+        {
+          "description": "An API over the network.",
+          "value": "remote"
+        },
+        {
+          "description": "A runtime on this machine.",
+          "value": "local"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One branch, inspected: where its work tree belongs and what is there.",
       "is_enum": false,
       "name": "InspectReport",
@@ -9909,6 +10138,21 @@
         "distribution.status"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One run of a node: 16 hex characters of OS entropy, new at every process start. A\nrestart keeps the node id and changes this, which is how a reader tells \"the same\nnode came back\" from \"the same process is still there\".",
+      "is_enum": false,
+      "name": "InstanceId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Envelope",
+        "NodeRecord",
+        "PublicIdentity"
+      ],
       "values": [],
       "variants": []
     },
@@ -10712,6 +10956,170 @@
       "variants": []
     },
     {
+      "description": "The whole self-check.",
+      "is_enum": false,
+      "name": "MeshDoctorReport",
+      "properties": [
+        {
+          "description": "Whether every check holds.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The checks, in the order they ran.",
+          "name": "checks",
+          "refs": [
+            "DoctorCheck"
+          ],
+          "required": true,
+          "type": "array of DoctorCheck"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.doctor"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The provider's health, as every surface reports it.",
+      "is_enum": true,
+      "name": "MeshProviderState",
+      "properties": [],
+      "type": "\"running\" | \"failed\" | \"stopped\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderStatus"
+      ],
+      "values": [
+        {
+          "description": "Threads up, socket bound (where the provider has one).",
+          "value": "running"
+        },
+        {
+          "description": "The provider could not start or died; `ProviderStatus::detail` says why. One\nprovider failing never stops another — failure isolation is the contract.",
+          "value": "failed"
+        },
+        {
+          "description": "Stopped by the manager.",
+          "value": "stopped"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\".",
+      "is_enum": true,
+      "name": "MeshSource",
+      "properties": [],
+      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"synthetic\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Sighting"
+      ],
+      "values": [
+        {
+          "description": "A multicast datagram.",
+          "value": "udp_multicast"
+        },
+        {
+          "description": "A broadcast datagram.",
+          "value": "udp_broadcast"
+        },
+        {
+          "description": "A rendezvous answer or registration.",
+          "value": "rendezvous"
+        },
+        {
+          "description": "A synthetic provider (tests, self-check).",
+          "value": "synthetic"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The whole mesh, as every surface reports it.",
+      "is_enum": false,
+      "name": "MeshStatus",
+      "properties": [
+        {
+          "description": "Whether the mesh is running in this process.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, when it is not: no declaration, disabled, no identity, stopped.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This node, when the mesh has an identity.",
+          "name": "identity",
+          "refs": [
+            "PublicIdentity"
+          ],
+          "required": false,
+          "type": "PublicIdentity | null"
+        },
+        {
+          "description": "The trust policy in force.",
+          "name": "trust_policy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every provider, canonical order (by id).",
+          "name": "providers",
+          "refs": [
+            "ProviderStatus"
+          ],
+          "required": true,
+          "type": "array of ProviderStatus"
+        },
+        {
+          "description": "The registry's tallies.",
+          "name": "tallies",
+          "refs": [
+            "Tallies"
+          ],
+          "required": true,
+          "type": "Tallies"
+        },
+        {
+          "description": "Refused datagrams, by reason.",
+          "name": "refusals",
+          "refs": [
+            "Refusals"
+          ],
+          "required": true,
+          "type": "Refusals"
+        },
+        {
+          "description": "When the mesh started, RFC 3339.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a step moves its worktree.",
       "is_enum": true,
       "name": "MigrationAction",
@@ -11327,6 +11735,154 @@
       "variants": []
     },
     {
+      "description": "One model: the canonical reference this repository uses, the vendor's own name for\nit, and its typed capabilities. Capability words are data the catalogue declares —\nconsumers compare against a requirement list, never against a hardcoded name.",
+      "is_enum": false,
+      "name": "ModelEntry",
+      "properties": [
+        {
+          "description": "The canonical id, unique in the catalogue: what sessions, configuration and\nrouting name. Stable even when a vendor renames.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The vendor that serves it.",
+          "name": "vendor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The vendor's own identifier, verbatim.",
+          "name": "native_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Other names that resolve to this model. Aliases live here and nowhere else.",
+          "name": "aliases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Typed capability words: `text`, `vision`, `tools`, `structured_output`,\n`reasoning`, `streaming`, `embeddings` — the declared vocabulary, open for a\ncatalogue to extend without a code change.",
+          "name": "capabilities",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The context window, tokens.",
+          "name": "context_window",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The lifecycle standing.",
+          "name": "status",
+          "refs": [
+            "ModelStatus"
+          ],
+          "required": false,
+          "type": "ModelStatus"
+        },
+        {
+          "description": "One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data).",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelsReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A model's lifecycle standing, as the catalogue declares it.",
+      "is_enum": true,
+      "name": "ModelStatus",
+      "properties": [],
+      "type": "\"available\" | \"preview\" | \"deprecated\" | \"retired\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelEntry"
+      ],
+      "values": [
+        {
+          "description": "Generally available.",
+          "value": "available"
+        },
+        {
+          "description": "Usable, expected to change.",
+          "value": "preview"
+        },
+        {
+          "description": "Still served, no longer chosen by routing unless named explicitly.",
+          "value": "deprecated"
+        },
+        {
+          "description": "Gone; kept so an old record's reference still resolves to a row with a story.",
+          "value": "retired"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `models.list`.",
+      "is_enum": false,
+      "name": "ModelsReport",
+      "properties": [
+        {
+          "description": "How many models matched.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The vendors, declaration order.",
+          "name": "vendors",
+          "refs": [
+            "VendorView"
+          ],
+          "required": true,
+          "type": "array of VendorView"
+        },
+        {
+          "description": "The matching models, declaration order — which is routing's preference order.",
+          "name": "models",
+          "refs": [
+            "ModelEntry"
+          ],
+          "required": true,
+          "type": "array of ModelEntry"
+        },
+        {
+          "description": "The catalogue's own findings: duplicate names, undeclared vendors. Empty is\nthe ordinary case.",
+          "name": "diagnostics",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "models.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind.",
       "is_enum": false,
       "name": "ModuleId",
@@ -11934,6 +12490,179 @@
       "used_by": [],
       "used_by_schemas": [
         "Graph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The stable identity of a node: 32 hex characters of the SHA-256 of its Ed25519 public\nkey. Derived, never chosen: two nodes with one id hold one key.",
+      "is_enum": false,
+      "name": "NodeId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "NodeRecord",
+        "PublicIdentity"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.nodes`: every node this process has observed.",
+      "is_enum": false,
+      "name": "NodeList",
+      "properties": [
+        {
+          "description": "How many nodes the registry holds.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The nodes, in node-id order — the one canonical order every surface shows.",
+          "name": "nodes",
+          "refs": [
+            "NodeRecord"
+          ],
+          "required": true,
+          "type": "array of NodeRecord"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.nodes"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One discovered node: the canonical record every surface projects.",
+      "is_enum": false,
+      "name": "NodeRecord",
+      "properties": [
+        {
+          "description": "The node id: the digest of the key below.",
+          "name": "node_id",
+          "refs": [
+            "NodeId"
+          ],
+          "required": true,
+          "type": "NodeId"
+        },
+        {
+          "description": "The Ed25519 public key that proved this record's advertisements.",
+          "name": "public_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node's own display name. Presentation only.",
+          "name": "display_name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node's current run.",
+          "name": "instance_id",
+          "refs": [
+            "InstanceId"
+          ],
+          "required": true,
+          "type": "InstanceId"
+        },
+        {
+          "description": "What the policy decided.",
+          "name": "trust",
+          "refs": [
+            "TrustState"
+          ],
+          "required": true,
+          "type": "TrustState"
+        },
+        {
+          "description": "Whether the node is answering now.",
+          "name": "presence",
+          "refs": [
+            "Presence"
+          ],
+          "required": true,
+          "type": "Presence"
+        },
+        {
+          "description": "Advertised `host:port` authorities.",
+          "name": "endpoints",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Advertised transports (`http`, `mcp`, `ws`).",
+          "name": "capabilities",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Advertised repository digests.",
+          "name": "repositories",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The advertised protocol version.",
+          "name": "protocol_version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The advertised executable version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every source this node was seen through, most recent sighting per source.",
+          "name": "sources",
+          "refs": [
+            "Sighting"
+          ],
+          "required": true,
+          "type": "array of Sighting"
+        },
+        {
+          "description": "First seen, RFC 3339.",
+          "name": "first_seen",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Last seen, RFC 3339.",
+          "name": "last_seen",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many instances this node id has shown (a restart increments it).",
+          "name": "restarts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "NodeList"
       ],
       "values": [],
       "variants": []
@@ -14017,6 +14746,28 @@
       "variants": []
     },
     {
+      "description": "Whether the node is answering now, by its own announcements.",
+      "is_enum": true,
+      "name": "Presence",
+      "properties": [],
+      "type": "\"present\" | \"absent\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "NodeRecord"
+      ],
+      "values": [
+        {
+          "description": "An advertisement arrived within [`PRESENCE_TTL`].",
+          "value": "present"
+        },
+        {
+          "description": "Nothing within the TTL; the node may be gone or unreachable. It stays listed\nuntil [`RETENTION`] passes, then expires out entirely.",
+          "value": "absent"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How much the model holds. Every count anywhere is one of these.",
       "is_enum": false,
       "name": "ProductCounts",
@@ -14831,6 +15582,57 @@
       "variants": []
     },
     {
+      "description": "One provider's status: state, why, and its counters.",
+      "is_enum": false,
+      "name": "ProviderStatus",
+      "properties": [
+        {
+          "description": "The provider id: `udp_multicast`, `udp_broadcast`, `rendezvous`, `synthetic`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The state.",
+          "name": "state",
+          "refs": [
+            "MeshProviderState"
+          ],
+          "required": true,
+          "type": "MeshProviderState"
+        },
+        {
+          "description": "Why, when `Failed`; what it watches, when `Running`.",
+          "name": "detail",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Advertisements transmitted.",
+          "name": "sent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Datagrams heard and handed to the manager.",
+          "name": "received",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the exported item surface looks like.",
       "is_enum": false,
       "name": "PublicApiQuality",
@@ -14877,6 +15679,53 @@
       "used_by": [],
       "used_by_schemas": [
         "QualityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What everyone may know about this node: the id, the public key, a display name and\nthis run's instance. Everything an advertisement carries; nothing that signs.",
+      "is_enum": false,
+      "name": "PublicIdentity",
+      "properties": [
+        {
+          "description": "The node id: a digest of the public key.",
+          "name": "node_id",
+          "refs": [
+            "NodeId"
+          ],
+          "required": true,
+          "type": "NodeId"
+        },
+        {
+          "description": "The Ed25519 public key, 64 hex characters. Whoever holds the matching secret is\nthis node; there is no other proof.",
+          "name": "public_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "A human name for the node, from the identity file; defaults to the first eight\ncharacters of the node id. Presentation only — never used for trust.",
+          "name": "display_name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This run of the node.",
+          "name": "instance_id",
+          "refs": [
+            "InstanceId"
+          ],
+          "required": true,
+          "type": "InstanceId"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IdentityReport",
+        "MeshStatus"
       ],
       "values": [],
       "variants": []
@@ -15355,6 +16204,127 @@
         "DeploymentCheck",
         "DeploymentList"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty.",
+      "is_enum": false,
+      "name": "Refusals",
+      "properties": [
+        {
+          "description": "Longer than the datagram bound.",
+          "name": "oversized",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Not an envelope.",
+          "name": "malformed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "A protocol version this executable does not read.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Out-of-bounds fields.",
+          "name": "bounds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Outside the clock-skew window.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "A signature that does not verify.",
+          "name": "signature",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "This node's own datagrams, heard back and skipped.",
+          "name": "self_heard",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a registration answers: whether the envelope was accepted, and the candidates\nthe rendezvous holds. Defined here beside the client; the capability re-exports it.",
+      "is_enum": false,
+      "name": "RegisterAnswer",
+      "properties": [
+        {
+          "description": "Whether the presented envelope was accepted into the local registry.",
+          "name": "accepted",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, when it was not.",
+          "name": "refusal",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The signed envelopes of the nodes this rendezvous currently holds, the answering\nnode's own included. Each verifies on its own signature; the rendezvous vouches\nfor nothing.",
+          "name": "candidates",
+          "refs": [
+            "Envelope"
+          ],
+          "required": true,
+          "type": "array of Envelope"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.register"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.register`: one signed envelope, exactly as the wire carries it.",
+      "is_enum": false,
+      "name": "RegisterInput",
+      "properties": [
+        {
+          "description": "The envelope. Verified here exactly as a datagram would be — bounds, staleness,\nsignature — before anything is recorded.",
+          "name": "envelope",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.register"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -17071,6 +18041,50 @@
       "variants": []
     },
     {
+      "description": "The routing answer: what was selected, what stands behind it, who fell out and why.\nThe whole decision is derived from the catalogue and the requirements — run it\ntwice, get it twice; there is no state to consult and no health to guess.",
+      "is_enum": false,
+      "name": "RoutingDecision",
+      "properties": [
+        {
+          "description": "The selected model's canonical id; `None` when nothing qualifies.",
+          "name": "selected",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the selected model was selected.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The models that also qualify, in preference order: the fallback chain.",
+          "name": "fallbacks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Every model that did not qualify, with its reason.",
+          "name": "excluded",
+          "refs": [
+            "Excluded"
+          ],
+          "required": false,
+          "type": "array of Excluded"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "models.route"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing.",
       "is_enum": false,
       "name": "Row",
@@ -17694,6 +18708,43 @@
           "value": "error"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One provenance entry: a source, and where the observation physically came from.",
+      "is_enum": false,
+      "name": "Sighting",
+      "properties": [
+        {
+          "description": "The provider kind that saw it.",
+          "name": "source",
+          "refs": [
+            "MeshSource"
+          ],
+          "required": true,
+          "type": "MeshSource"
+        },
+        {
+          "description": "The network path, as text: a sender address, an interface, a rendezvous URL.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "NodeRecord"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -18652,6 +19703,69 @@
         "FeatureSummary",
         "MatrixRow",
         "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The registry's tallies, for status and health.",
+      "is_enum": false,
+      "name": "Tallies",
+      "properties": [
+        {
+          "description": "Records held.",
+          "name": "nodes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of which trusted.",
+          "name": "trusted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of which present.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Observations accepted since start.",
+          "name": "accepted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Replayed datagrams dropped since start.",
+          "name": "replayed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Records expired out since start.",
+          "name": "expired",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Records evicted for space since start.",
+          "name": "evicted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStatus"
       ],
       "values": [],
       "variants": []
@@ -19656,6 +20770,73 @@
       "variants": []
     },
     {
+      "description": "What the policy decided about one node.",
+      "is_enum": false,
+      "name": "TrustState",
+      "properties": [],
+      "type": "one of 3 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "NodeRecord"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Valid, recorded, trusted for nothing. The resting state of an unknown node.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"observed\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`).",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"trusted\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"rejected\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.",
       "is_enum": false,
       "name": "UpstreamState",
@@ -19832,6 +21013,57 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read.",
+      "is_enum": false,
+      "name": "VendorView",
+      "properties": [
+        {
+          "description": "The vendor id, unique in the catalogue.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The human name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where inference runs: `remote` (an API over the network) or `local` (a runtime\non this machine). Typed here so routing's `local_only` is data, not a name test.",
+          "name": "inference",
+          "refs": [
+            "Inference"
+          ],
+          "required": false,
+          "type": "Inference"
+        },
+        {
+          "description": "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one.",
+          "name": "credential_env",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the named credential variable is set in this process's environment.\n`None` when the vendor names no variable.",
+          "name": "credential_configured",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModelsReport"
+      ],
+      "values": [],
+      "variants": []
     },
     {
       "description": "In or out.",
@@ -23075,6 +24307,476 @@
           "result_schema": "Readiness",
           "stability": "behaviorally_verified",
           "summary": "Readiness"
+        }
+      ]
+    },
+    {
+      "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+      "name": "mesh",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh\"",
+          "description": "Whether the mesh runs in this process and why not when it does not; this node's public identity; every discovery provider with its state and counters; the registry's tallies; and the refused datagrams by reason. The one status every surface shows.",
+          "id": "mesh.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "mesh",
+            "uri": "majordomus://mesh"
+          },
+          "mcp_tool": "majordomus_mesh",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The mesh, at a glance: the result.",
+              "schema": "MeshStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshStatus",
+          "stability": "experimental",
+          "summary": "The mesh, at a glance"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh doctor",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor\"",
+          "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+          "id": "mesh.doctor",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_doctor",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/doctor",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The mesh self-check: the result.",
+              "schema": "MeshDoctorReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshDoctorReport",
+          "stability": "experimental",
+          "summary": "The mesh self-check"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh identity",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/identity\"",
+          "description": "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
+          "id": "mesh.identity",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_identity",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/identity",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "This machine's node identity: the result.",
+              "schema": "IdentityReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IdentityReport",
+          "stability": "experimental",
+          "summary": "This machine's node identity"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/nodes\"",
+          "description": "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
+          "id": "mesh.nodes",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_nodes",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/nodes",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The discovered nodes: the result.",
+              "schema": "NodeList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "NodeList",
+          "stability": "experimental",
+          "summary": "The discovered nodes"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "refused",
+              "json": "{\"envelope\":{\"v\":0}}"
+            }
+          ],
+          "body_schema": "RegisterInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/register\" -H \"content-type: application/json\" -d '{\"envelope\":{\"v\":0}}'",
+          "description": "Present one signed envelope; it is verified exactly as a datagram — bounds, staleness, signature, trust policy — and recorded as a rendezvous observation when it holds. The answer carries this node's own envelope and the candidates its registry holds, each verifiable end to end on its own signature. Registration grants nothing: the caller becomes a record, never an authorization. Changes this process's memory only.",
+          "id": "mesh.register",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_register",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/register",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Register with this node's mesh: the result.",
+              "schema": "RegisterAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RegisterAnswer",
+          "stability": "experimental",
+          "summary": "Register with this node's mesh"
+        }
+      ]
+    },
+    {
+      "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value.",
+      "name": "models",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "models list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/models?vendor=anthropic&capability=text&id=claude-opus-5\"",
+          "description": "Every declared vendor and model, optionally narrowed by vendor, capability word, or one id or alias. Vendors carry whether their named credential variable is set — presence only, never a value. The order is the declaration's, which is also routing's preference order; the catalogue's own findings (a duplicate alias, an undeclared vendor) ride along.",
+          "id": "models.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "models",
+            "uri": "majordomus://models"
+          },
+          "mcp_tool": "majordomus_models",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only this vendor.",
+              "examples": [
+                {
+                  "case": "narrowed",
+                  "value": "\"anthropic\""
+                }
+              ],
+              "name": "vendor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only models declaring this capability word.",
+              "examples": [
+                {
+                  "case": "narrowed",
+                  "value": "\"text\""
+                }
+              ],
+              "name": "capability",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "One model, by canonical id or alias.",
+              "examples": [
+                {
+                  "case": "narrowed",
+                  "value": "\"claude-opus-5\""
+                }
+              ],
+              "name": "id",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/models",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::models",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The model catalogue: the result.",
+              "schema": "ModelsReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ModelsReport",
+          "stability": "experimental",
+          "summary": "The model catalogue"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "models route",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/models/route?require=text\"",
+          "description": "Decide which declared model a stated need selects: the first in declaration order satisfying every requirement, the qualifying rest as the fallback chain, and every excluded model with the first check it failed. Pure over the catalogue and the input — the same question gets the same answer, and 'why' is in the answer itself.",
+          "id": "models.route",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_models_route",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Capability words the model must declare, comma-separated: `vision,tools`.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"text\""
+                }
+              ],
+              "name": "require",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The least context window, tokens.",
+              "examples": [],
+              "name": "min_context",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "Only this vendor.",
+              "examples": [],
+              "name": "vendor",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only local inference.",
+              "examples": [],
+              "name": "local_only",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "A model named outright, by canonical id or alias — still checked against the\nother requirements.",
+              "examples": [],
+              "name": "model",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/models/route",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::models",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Route a need to a model: the result.",
+              "schema": "RoutingDecision",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RoutingDecision",
+          "stability": "experimental",
+          "summary": "Route a need to a model"
         }
       ]
     },

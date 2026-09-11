@@ -630,6 +630,125 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/#op-mesh-doctor",
+      "claims": [],
+      "cli": "majordomus mesh doctor",
+      "id": "mesh.doctor",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-doctor/",
+      "slug": "mesh-doctor",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The mesh self-check",
+      "tool": "majordomus_mesh_doctor"
+    },
+    {
+      "api_anchor": "/docs/api/#op-mesh-identity",
+      "claims": [],
+      "cli": "majordomus mesh identity",
+      "id": "mesh.identity",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-identity/",
+      "slug": "mesh-identity",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "This machine's node identity",
+      "tool": "majordomus_mesh_identity"
+    },
+    {
+      "api_anchor": "/docs/api/#op-mesh-nodes",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.nodes",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-nodes/",
+      "slug": "mesh-nodes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The discovered nodes",
+      "tool": "majordomus_mesh_nodes"
+    },
+    {
+      "api_anchor": "/docs/api/#op-mesh-register",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.register",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-register/",
+      "slug": "mesh-register",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Register with this node's mesh",
+      "tool": "majordomus_mesh_register"
+    },
+    {
+      "api_anchor": "/docs/api/#op-mesh-status",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.status",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": "majordomus://mesh",
+      "route": "/registry/capabilities/mesh-status/",
+      "slug": "mesh-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The mesh, at a glance",
+      "tool": "majordomus_mesh"
+    },
+    {
+      "api_anchor": "/docs/api/#op-models-list",
+      "claims": [],
+      "cli": "majordomus models list",
+      "id": "models.list",
+      "kind": "query",
+      "module": "models",
+      "module_route": "/registry/modules/models/",
+      "resource": "majordomus://models",
+      "route": "/registry/capabilities/models-list/",
+      "slug": "models-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
+      "tests": [],
+      "title": "The model catalogue",
+      "tool": "majordomus_models"
+    },
+    {
+      "api_anchor": "/docs/api/#op-models-route",
+      "claims": [],
+      "cli": "majordomus models route",
+      "id": "models.route",
+      "kind": "query",
+      "module": "models",
+      "module_route": "/registry/modules/models/",
+      "resource": null,
+      "route": "/registry/capabilities/models-route/",
+      "slug": "models-route",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
+      "tests": [],
+      "title": "Route a need to a model",
+      "tool": "majordomus_models_route"
+    },
+    {
       "api_anchor": "/docs/api/#op-objects-get",
       "claims": [
         {
@@ -1602,6 +1721,41 @@
         "route": "/guarantees/product-projection-public-safe/",
         "status": "guaranteed",
         "test": "apps/majordomus-cli/tests/product.rs"
+      },
+      {
+        "id": "mesh-one-registry",
+        "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
+        "route": "/guarantees/mesh-one-registry/",
+        "status": "guaranteed",
+        "test": "test/cases/130_mesh.sh"
+      },
+      {
+        "id": "mesh-observation-not-authority",
+        "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
+        "route": "/guarantees/mesh-observation-not-authority/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/mesh.rs"
+      },
+      {
+        "id": "models-one-declaration",
+        "implementation": "apps/majordomus-cli/src/models/mod.rs",
+        "route": "/guarantees/models-one-declaration/",
+        "status": "guaranteed",
+        "test": "test/cases/131_models.sh"
+      },
+      {
+        "id": "models-routing-explains-itself",
+        "implementation": "apps/majordomus-cli/src/models/mod.rs",
+        "route": "/guarantees/models-routing-explains-itself/",
+        "status": "guaranteed",
+        "test": "test/cases/131_models.sh"
+      },
+      {
+        "id": "models-no-secret-fields",
+        "implementation": "apps/majordomus-cli/src/models/mod.rs",
+        "route": "/guarantees/models-no-secret-fields/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/src/models/mod.rs"
       }
     ],
     "http": [
@@ -1655,13 +1809,20 @@
         "route": "/guarantees/mcp-peers/",
         "status": "guaranteed",
         "test": "test/cases/90_mcp_shared_server.sh"
+      },
+      {
+        "id": "mesh-off-by-default",
+        "implementation": "apps/majordomus-cli/src/shared.rs",
+        "route": "/guarantees/mesh-off-by-default/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/mesh.rs"
       }
     ]
   },
   "counts": {
-    "capabilities": 80,
-    "claims": 36,
-    "modules": 27
+    "capabilities": 87,
+    "claims": 42,
+    "modules": 29
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -1992,6 +2153,63 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "mesh.doctor",
+          "route": "/registry/capabilities/mesh-doctor/",
+          "slug": "mesh-doctor"
+        },
+        {
+          "id": "mesh.identity",
+          "route": "/registry/capabilities/mesh-identity/",
+          "slug": "mesh-identity"
+        },
+        {
+          "id": "mesh.nodes",
+          "route": "/registry/capabilities/mesh-nodes/",
+          "slug": "mesh-nodes"
+        },
+        {
+          "id": "mesh.register",
+          "route": "/registry/capabilities/mesh-register/",
+          "slug": "mesh-register"
+        },
+        {
+          "id": "mesh.status",
+          "route": "/registry/capabilities/mesh-status/",
+          "slug": "mesh-status"
+        }
+      ],
+      "claims": [],
+      "id": "mesh",
+      "route": "/registry/modules/mesh/",
+      "slug": "mesh",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "title": "Mesh"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "models.list",
+          "route": "/registry/capabilities/models-list/",
+          "slug": "models-list"
+        },
+        {
+          "id": "models.route",
+          "route": "/registry/capabilities/models-route/",
+          "slug": "models-route"
+        }
+      ],
+      "claims": [],
+      "id": "models",
+      "route": "/registry/modules/models/",
+      "slug": "models",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/models.rs",
+      "title": "Models"
     },
     {
       "capabilities": [

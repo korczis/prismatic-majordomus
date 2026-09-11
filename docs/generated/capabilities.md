@@ -23,6 +23,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `mesh` | Mesh | experimental | 5 | [`modules/mesh.md`](modules/mesh.md) |
+| `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
@@ -84,6 +85,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `mesh.nodes` | `mesh` | query | experimental | `majordomus_mesh_nodes` | — | `GET /api/v1/mesh/nodes` | — | — | required |
 | `mesh.register` | `mesh` | command | experimental | `majordomus_mesh_register` | — | `POST /api/v1/mesh/register` | — | — | required |
 | `mesh.status` | `mesh` | query | experimental | `majordomus_mesh` | `majordomus://mesh` | `GET /api/v1/mesh` | — | — | required |
+| `models.list` | `models` | query | experimental | `majordomus_models` | `majordomus://models` | `GET /api/v1/models` | `majordomus models list` | process, 4 entries, 5s | required |
+| `models.route` | `models` | query | experimental | `majordomus_models_route` | — | `GET /api/v1/models/route` | `majordomus models route` | — | required |
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |

@@ -72,6 +72,81 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
     Mesh(MeshArgs),
+    /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
+    Models(ModelsArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models`.
+pub struct ModelsArgs {
+    #[command(subcommand)]
+    /// `list`, `route`.
+    pub command: ModelsCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `models` subcommands.
+pub enum ModelsCommand {
+    /// Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order
+    List(ModelsListArgs),
+    /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
+    Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models list`.
+pub struct ModelsListArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only models declaring this capability word.
+    pub capability: Option<String>,
+
+    #[arg(long)]
+    /// One model, by canonical id or alias.
+    pub id: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus models route`.
+pub struct ModelsRouteArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long)]
+    /// Capability words the model must declare, comma-separated: `vision,tools`.
+    pub require: Option<String>,
+
+    #[arg(long)]
+    /// The least context window, tokens.
+    pub min_context: Option<u64>,
+
+    #[arg(long)]
+    /// Only this vendor.
+    pub vendor: Option<String>,
+
+    #[arg(long)]
+    /// Only local inference.
+    pub local_only: bool,
+
+    #[arg(long)]
+    /// A model named outright, by canonical id or alias; still checked against the other requirements.
+    pub model: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -2746,6 +2821,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "models list",
+        examples: &[ExampleDoc {
+            id: "models-list",
+            title: "The declared model catalogue",
+            description: "Every vendor and model share/models.yaml declares, in declaration order — which is also routing's preference order. Vendors show whether their named credential variable is set: presence only, never a value. An empty catalogue is an answer, not an error.",
+            argv: &["models", "list"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["model(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "models route",
+        examples: &[ExampleDoc {
+            id: "models-route",
+            title: "Which model a need selects, and why",
+            description: "The first declared model satisfying every requirement wins; the qualifying rest are the fallback chain, and every excluded model carries the first check it failed. Pure over the declared data — the same question always gets the same answer, and the reasons are in it.",
+            argv: &["models", "route", "--require", "text"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["selected"]),
         }],
     },
 ];

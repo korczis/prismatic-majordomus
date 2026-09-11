@@ -170,6 +170,7 @@ impl Cockpit {
             "/cockpit/continuity" => pages::continuity(&self.ctx),
             "/cockpit/worktrees" => pages::worktrees(&self.ctx),
             "/cockpit/mesh" => pages::mesh(&self.ctx),
+            "/cockpit/models" => pages::models(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
             "/cockpit/quality" => pages::quality(&self.ctx),

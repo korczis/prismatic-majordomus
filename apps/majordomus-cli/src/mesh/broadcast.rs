@@ -241,6 +241,47 @@ mod tests {
     }
 
     #[test]
+    fn the_sole_udp_provider_listens_and_counts_what_it_hears() {
+        let port = {
+            let probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+            probe.local_addr().unwrap().port()
+        };
+        let mut provider = BroadcastProvider::new(
+            BroadcastConfig {
+                mode: BroadcastMode::Auto,
+                port,
+                interval_seconds: 1,
+                ..BroadcastConfig::default()
+            },
+            true,
+        );
+        let (tx, rx) = std::sync::mpsc::channel();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ctx = crate::mesh::provider::ProviderContext {
+            tx,
+            stop: std::sync::Arc::clone(&stop),
+            beacon: std::sync::Arc::new(crate::mesh::provider::Beacon::new(
+                std::sync::Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+                vec![],
+                vec![],
+                vec![],
+                "test",
+            )),
+        };
+        provider.start(&ctx).unwrap();
+        assert_eq!(provider.status().state, MeshProviderState::Running);
+        let sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        sender
+            .send_to(b"aimed at the port", (Ipv4Addr::LOCALHOST, port))
+            .unwrap();
+        let heard = rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("the sole UDP provider listens");
+        assert_eq!(heard.source, MeshSource::UdpBroadcast);
+        stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    #[test]
     fn a_malformed_network_is_an_error_naming_it() {
         let provider = BroadcastProvider::new(
             BroadcastConfig {

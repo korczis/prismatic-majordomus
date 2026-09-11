@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "f591e4b0ee0068d5883936fa1482f203ac62658831030cd46e0b147c6e9b3e27",
+  "fingerprint": "13dd0609147b5e4c8489cff4a69f0ec075bd2206d46e8768409e6ffa3dfd4613",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 28,
+    "modules": 29,
     "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 149
+          "objects": 155
         }
       ],
       "rule_refs": [
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 203,
+        "mcp_resources": 209,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 199,
+        "objects": 205,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -1935,7 +1935,23 @@
           "path": ".ai/repo/adrs/0043-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
         }
       ],
-      "claim_refs": [],
+      "claim_refs": [
+        {
+          "id": "mesh-observation-not-authority",
+          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-one-registry",
+          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-off-by-default",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "status": "guaranteed"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [
         {
@@ -1959,12 +1975,14 @@
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 0,
+        "claims": 3,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 3
+        },
         "modules": {
           "experimental": 1
         }
@@ -7645,6 +7663,11 @@
         "features": []
       },
       {
+        "id": "models",
+        "title": "Models",
+        "features": []
+      },
+      {
         "id": "objects",
         "title": "Objects",
         "features": [
@@ -7980,7 +8003,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (149)",
+        "title": "claim (155)",
         "features": [
           "declare-once"
         ]
@@ -8840,6 +8863,11 @@
       "route": "/cockpit/mesh"
     },
     {
+      "id": "models",
+      "title": "Models",
+      "route": "/cockpit/models"
+    },
+    {
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
@@ -8861,23 +8889,23 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1256,
-    "builtin": 85,
-    "declarative": 1171,
-    "modules": 28,
-    "mcp_tools": 83,
-    "mcp_resources": 1200,
-    "http_routes": 85,
-    "cli_commands": 97,
+    "capabilities": 1265,
+    "builtin": 87,
+    "declarative": 1178,
+    "modules": 29,
+    "mcp_tools": 85,
+    "mcp_resources": 1208,
+    "http_routes": 87,
+    "cli_commands": 99,
     "shell_commands": 28,
     "kinds": 29,
-    "objects": 1171,
+    "objects": 1178,
     "by_kind": {
       "adr": 41,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 149,
+      "claim": 155,
       "command": 29,
       "context": 28,
       "deployment": 1,
@@ -8899,7 +8927,7 @@
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 154,
+      "test": 155,
       "use-case": 43,
       "workspace": 1
     },
@@ -8907,5 +8935,5 @@
     "features": 19,
     "web_surfaces": 9
   },
-  "valid": false
+  "valid": true
 }

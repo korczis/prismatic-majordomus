@@ -5,6 +5,12 @@ kind: adr
 title: The model catalogue is declarative data, and routing is an explainable projection of it
 status: proposed
 date: 2026-09-11
+tags: [models, catalogue, routing]
+related:
+  - "file:.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md"
+  - "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md"
+  - "file:docs/MODELS.md"
+  - "file:share/models.yaml"
 provenance:
   origin: authored
 ---
@@ -13,16 +19,85 @@ provenance:
 
 ## Context
 
-What forced the decision. Written by hand; nothing was derived.
+The AI workers of this repository run on models, and the repository knew nothing about
+them. Which models exist, what each can do, how large its context is, which name is an
+alias of which — those facts lived in the workers' own heads and in scattered prose,
+which is precisely the shape (a hand-maintained truth per consumer) every other part
+of this codebase refuses. The capture schema declares optional `model` and `tokens`
+fields nobody fills; `docs/ECONOMICS.md` names the missing provider-side telemetry;
+sessions record a free-text `worker`.
+
+Two standing decisions constrain any fix. ADR 0024/0032 spent the word "provider" on
+the AI *client tools* (Claude Code, Codex, Gemini CLI) and defend it: a model vendor
+must be a different noun. And ADR 0032 keeps HTTP clients, TLS, async runtimes and SDKs
+out of the crate — so a "registry" that live-probes vendors, discovers models over
+their APIs, or measures health by calling them is out of the question here.
 
 ## Decision
 
-The model catalogue is declarative data, and routing is an explainable projection of it
+A declarative model catalogue, exactly in the grain of `share/providers.yaml`:
+
+1. **One declaration.** `share/models.yaml` declares *vendors* (the parties that serve
+   models — the word "provider" stays spent) and *models*: canonical id, the vendor's
+   native id, aliases, typed capability words, context window, lifecycle status, one
+   optional note. Declaration order is meaningful: it is routing's preference order.
+2. **Facts carry provenance or stay out.** Entries state what a named reference could
+   verify (the shipped entries: the Anthropic model reference as cached on a stated
+   date). Pricing is deliberately absent — a price the tool cannot verify live is a
+   fact it must not state — and vendors nobody verified are absent rather than
+   guessed. `credential_env` names an environment variable; only its *presence* is
+   ever reported, no code path reads the value, and the catalogue's schema has no
+   field a secret could hide in (a test proves the property).
+3. **Two capabilities, every surface.** `models.list` (the catalogue, narrowable, with
+   the catalogue's own diagnostics — duplicate aliases, undeclared vendors) and
+   `models.route` (which model a stated need selects). One `capability!` declaration
+   each, so the CLI (`majordomus models ...`), `/api/v1/models*`, OpenAPI, the MCP
+   tools and the Cockpit's Models page are projections that cannot disagree, and no
+   consumer keeps a model name of its own.
+4. **Routing is a pure function with its reasons attached.** Input: required
+   capability words, minimum context, vendor, local-only, or a model named outright
+   (checked against the requirements all the same). Output: the selected model and
+   why, the qualifying rest as the fallback chain, and *every* excluded model with the
+   first check it failed. No state, no health guesses, no opaque dispatcher: the same
+   question gets the same answer, and "why did this pick X / exclude Z" is in the
+   answer itself.
+5. **No live layer, by design.** Nothing calls a vendor, lists models over an API, or
+   probes health. Where a live fact is someday wanted, ADR 0032's precedent stands
+   (an outside layer writes; the crate reads files) or a new ADR revisits the
+   dependency posture explicitly. Recording which model *actually executed* a
+   session's work belongs to the capture/lifecycle adapters (their schema already
+   declares the fields) — provider-hook work, named here as the follow-up, not
+   smuggled into this crate.
 
 ## Alternatives rejected
 
-What else was considered, and why it was not taken.
+- **A live provider/model registry with health and usage.** Forbidden twice over: the
+  crate has no HTTP client and must not gain one for this (ADR 0032), and a health
+  answer computed from probes this tool cannot make would be fabricated. What can be
+  true here is declared data plus presence-of-credential; what cannot is marked
+  absent, not invented.
+- **Reusing the word "provider".** ADR 0032 rejects it by name; a second registry
+  under the same noun as `share/providers.yaml` is the ambiguity it warned against.
+- **Routing policy as scattered call-site logic.** The if/else-per-caller shape is
+  the defect; a pure function over declared data, projected as a capability, is the
+  repair.
+- **A per-repository catalogue under `.ai/`.** Model facts are facts about the world
+  the distribution ships into, not about one repository; the share directory is where
+  such declarations live (`providers.yaml`, `distribution.yaml`). A repository
+  needing its own additions is a later, explicit extension of the share resolution,
+  not a second file format now.
 
 ## Consequences
 
-What this costs, what it forecloses, and what now has to be true.
+- Adding a model or vendor is editing `share/models.yaml`; every surface follows, and
+  `models.list`'s diagnostics catch a duplicate alias or an undeclared vendor at the
+  first read. Nothing else is edited — the zero-per-consumer-registration property
+  the tests hold for the mesh holds here by the same mechanism (one declaration, one
+  registry build, derived projections).
+- The catalogue can go stale, and honestly: entries carry their provenance date in
+  the file's own header, staleness is visible where it can be judged, and no
+  auto-refresh exists to silently rewrite facts.
+- The mesh's capability exchange can carry sanitized model-capability awareness
+  later (a node advertising `reasoning` or `local` inference) by reading this same
+  catalogue — one truth for what a fleet's nodes can do, no credentials anywhere
+  near it.

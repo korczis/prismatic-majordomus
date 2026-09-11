@@ -89,6 +89,12 @@ modules:
     stability: experimental
     source: builtin
     capabilities: 5
+  - id: models
+    title: Models
+    description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
+    stability: experimental
+    source: builtin
+    capabilities: 2
   - id: objects
     title: Objects
     description: "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
@@ -11003,6 +11009,304 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: models.list
+    module: models
+    kind: query
+    title: The model catalogue
+    description: "Every declared vendor and model, optionally narrowed by vendor, capability word, or one id or alias. Vendors carry whether their named credential variable is set — presence only, never a value. The order is the declaration's, which is also routing's preference order; the catalogue's own findings (a duplicate alias, an undeclared vendor) ride along."
+    input:
+      name: ModelsFilter
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          vendor:
+            type:
+              - string
+              - "null"
+            description: Only this vendor.
+          capability:
+            type:
+              - string
+              - "null"
+            description: Only models declaring this capability word.
+          id:
+            type:
+              - string
+              - "null"
+            description: "One model, by canonical id or alias."
+        description: "The input of `models.list`: optional narrowing. Everything empty lists everything."
+        title: ModelsFilter
+    output:
+      name: ModelsReport
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many models matched.
+          vendors:
+            type: array
+            items:
+              "$ref": "#/$defs/VendorView"
+            description: "The vendors, declaration order."
+          models:
+            type: array
+            items:
+              "$ref": "#/$defs/ModelEntry"
+            description: "The matching models, declaration order — which is routing's preference order."
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: "The catalogue's own findings: duplicate names, undeclared vendors. Empty is\nthe ordinary case."
+        required:
+          - count
+          - vendors
+          - models
+        description: "The answer of `models.list`."
+        title: ModelsReport
+        "$defs":
+          VendorView:
+            type: object
+            description: "One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read."
+            properties:
+              id:
+                type: string
+                description: "The vendor id, unique in the catalogue."
+              title:
+                type: string
+                description: The human name.
+              inference:
+                "$ref": "#/$defs/Inference"
+                description: "Where inference runs: `remote` (an API over the network) or `local` (a runtime\non this machine). Typed here so routing's `local_only` is data, not a name test."
+                default: remote
+              credential_env:
+                type:
+                  - string
+                  - "null"
+                description: "The environment variable whose *presence* means a credential is configured.\nOnly the name lives here, and only presence is ever reported — no code in this\ncrate reads the value, and the environment cache refuses to hold one."
+              credential_configured:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether the named credential variable is set in this process's environment.\n`None` when the vendor names no variable."
+            required:
+              - id
+              - title
+          Inference:
+            oneOf:
+              - type: string
+                const: remote
+                description: An API over the network.
+              - type: string
+                const: local
+                description: A runtime on this machine.
+            description: "Where a vendor's inference runs."
+          ModelEntry:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+                description: "The canonical id, unique in the catalogue: what sessions, configuration and\nrouting name. Stable even when a vendor renames."
+              vendor:
+                type: string
+                description: The vendor that serves it.
+              native_id:
+                type: string
+                description: "The vendor's own identifier, verbatim."
+              aliases:
+                type: array
+                items:
+                  type: string
+                description: Other names that resolve to this model. Aliases live here and nowhere else.
+              capabilities:
+                type: array
+                items:
+                  type: string
+                description: "Typed capability words: `text`, `vision`, `tools`, `structured_output`,\n`reasoning`, `streaming`, `embeddings` — the declared vocabulary, open for a\ncatalogue to extend without a code change."
+                default: []
+              context_window:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The context window, tokens."
+              status:
+                "$ref": "#/$defs/ModelStatus"
+                description: The lifecycle standing.
+                default: available
+              note:
+                type:
+                  - string
+                  - "null"
+                description: "One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data)."
+            required:
+              - id
+              - vendor
+              - native_id
+            description: "One model: the canonical reference this repository uses, the vendor's own name for\nit, and its typed capabilities. Capability words are data the catalogue declares —\nconsumers compare against a requirement list, never against a hardcoded name."
+          ModelStatus:
+            oneOf:
+              - type: string
+                const: available
+                description: Generally available.
+              - type: string
+                const: preview
+                description: "Usable, expected to change."
+              - type: string
+                const: deprecated
+                description: "Still served, no longer chosen by routing unless named explicitly."
+              - type: string
+                const: retired
+                description: "Gone; kept so an old record's reference still resolves to a row with a story."
+            description: "A model's lifecycle standing, as the catalogue declares it."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::models
+    exposure:
+      mcp:
+        tool: majordomus_models
+        resource:
+          uri: majordomus://models
+          name: models
+      http:
+        method: GET
+        path: /api/v1/models
+      cli:
+        path:
+          - models
+          - list
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - models
+      - catalogue
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/models.rs
+  - id: models.route
+    module: models
+    kind: query
+    title: Route a need to a model
+    description: "Decide which declared model a stated need selects: the first in declaration order satisfying every requirement, the qualifying rest as the fallback chain, and every excluded model with the first check it failed. Pure over the catalogue and the input — the same question gets the same answer, and 'why' is in the answer itself."
+    input:
+      name: RouteInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          require:
+            type:
+              - string
+              - "null"
+            description: "Capability words the model must declare, comma-separated: `vision,tools`."
+          min_context:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "The least context window, tokens."
+          vendor:
+            type:
+              - string
+              - "null"
+            description: Only this vendor.
+          local_only:
+            type:
+              - boolean
+              - "null"
+            description: Only local inference.
+          model:
+            type:
+              - string
+              - "null"
+            description: "A model named outright, by canonical id or alias — still checked against the\nother requirements."
+        description: "The input of `models.route`: what the task needs, in transport-friendly scalars\n(`require` is comma-separated so a GET query string can carry it)."
+        title: RouteInput
+    output:
+      name: RoutingDecision
+      schema:
+        type: object
+        properties:
+          selected:
+            type:
+              - string
+              - "null"
+            description: "The selected model's canonical id; `None` when nothing qualifies."
+          reason:
+            type:
+              - string
+              - "null"
+            description: Why the selected model was selected.
+          fallbacks:
+            type: array
+            items:
+              type: string
+            description: "The models that also qualify, in preference order: the fallback chain."
+          excluded:
+            type: array
+            items:
+              "$ref": "#/$defs/Excluded"
+            description: "Every model that did not qualify, with its reason."
+        description: "The routing answer: what was selected, what stands behind it, who fell out and why.\nThe whole decision is derived from the catalogue and the requirements — run it\ntwice, get it twice; there is no state to consult and no health to guess."
+        title: RoutingDecision
+        "$defs":
+          Excluded:
+            type: object
+            properties:
+              model:
+                type: string
+                description: The canonical id.
+              reason:
+                type: string
+                description: "The first reason it fell out, in the order the checks run."
+            required:
+              - model
+              - reason
+            description: "One model that did not qualify, and exactly why."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::models
+    exposure:
+      mcp:
+        tool: majordomus_models_route
+      http:
+        method: GET
+        path: /api/v1/models/route
+      cli:
+        path:
+          - models
+          - route
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - models
+      - routing
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/models.rs
   - id: objects.get
     module: objects
     kind: query

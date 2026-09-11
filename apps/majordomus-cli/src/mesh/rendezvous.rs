@@ -216,6 +216,73 @@ mod tests {
     }
 
     #[test]
+    fn a_reachable_endpoint_yields_registrations_and_candidate_observations() {
+        use std::io::{Read, Write};
+        // A canned rendezvous: one thread, plain HTTP/1.1, answering every POST with
+        // an accepted registration carrying one signed candidate.
+        let candidate_identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        let candidate = crate::mesh::protocol::advertise(
+            &candidate_identity,
+            1,
+            &["127.0.0.1:3".into()],
+            &[],
+            &[],
+            "canned",
+        );
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}", listener.local_addr().unwrap());
+        let body = serde_json::to_string(&RegisterAnswer {
+            accepted: true,
+            refusal: None,
+            candidates: vec![candidate.clone()],
+        })
+        .unwrap();
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { return };
+                let mut buffer = [0u8; 4096];
+                let _ = stream.read(&mut buffer);
+                let _ = stream.write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
+                    .as_bytes(),
+                );
+            }
+        });
+
+        let mut provider = RendezvousProvider::new(vec![endpoint.clone()], 1);
+        let (tx, rx) = std::sync::mpsc::channel();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let ctx = crate::mesh::provider::ProviderContext {
+            tx,
+            stop: std::sync::Arc::clone(&stop),
+            beacon: std::sync::Arc::new(crate::mesh::provider::Beacon::new(
+                std::sync::Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+                vec![],
+                vec![],
+                vec![],
+                "test",
+            )),
+        };
+        provider.start(&ctx).unwrap();
+        let heard = rx
+            .recv_timeout(Duration::from_secs(10))
+            .expect("a candidate observation arrives");
+        assert_eq!(heard.source, MeshSource::Rendezvous);
+        assert_eq!(heard.path, endpoint);
+        let parsed = crate::mesh::protocol::parse(&heard.bytes).expect("the candidate verifies");
+        assert_eq!(
+            parsed.adv.node_id(),
+            Some(candidate_identity.public.node_id.clone())
+        );
+        assert!(provider.status().sent >= 1);
+        stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    #[test]
     fn a_register_answer_round_trips_as_json() {
         let answer = RegisterAnswer {
             accepted: true,

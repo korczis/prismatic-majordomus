@@ -39,6 +39,7 @@ pub mod mcp;
 pub mod mesh;
 pub mod metadata;
 pub mod model;
+pub mod models;
 pub mod order;
 pub mod peers;
 pub mod perf;

@@ -2050,6 +2050,117 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
         ])
 }
 
+/// The model catalogue and its routing: the vendors and models `share/models.yaml`
+/// declares, with each vendor's credential *presence* (never a value), rendered from
+/// the same `models.list` every other surface reads. No model name lives in this page.
+pub fn models(ctx: &Context) -> Page {
+    let report: crate::capability::builtin::ModelsReport = match ask(ctx, "models.list", json!({}))
+    {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Models, "Models", e),
+    };
+    let vendors: Vec<El> = report
+        .vendors
+        .iter()
+        .map(|v| {
+            let credential = match v.credential_configured {
+                Some(true) => "credential configured",
+                Some(false) => "credential not configured",
+                None => "no credential declared",
+            };
+            card_with(
+                format!("{} — {}", v.vendor.title, v.vendor.id),
+                word_badge(match v.vendor.inference {
+                    crate::models::Inference::Remote => "remote",
+                    crate::models::Inference::Local => "local",
+                }),
+                el("p").class("mj-prose").text(credential),
+            )
+        })
+        .collect();
+    let models: Vec<El> = report
+        .models
+        .iter()
+        .map(|m| {
+            let status = match m.status {
+                crate::models::ModelStatus::Available => "available",
+                crate::models::ModelStatus::Preview => "preview",
+                crate::models::ModelStatus::Deprecated => "deprecated",
+                crate::models::ModelStatus::Retired => "retired",
+            };
+            card_with(
+                m.id.clone(),
+                word_badge(status),
+                el("div")
+                    .child(facts(vec![
+                        ("Vendor", Node::Element(el("span").text(&m.vendor))),
+                        ("Native id", Node::Element(mono(m.native_id.clone()))),
+                        (
+                            "Context",
+                            Node::Element(
+                                el("span").text(
+                                    m.context_window
+                                        .map(|c| c.to_string())
+                                        .unwrap_or_else(|| "(not declared)".into()),
+                                ),
+                            ),
+                        ),
+                        (
+                            "Capabilities",
+                            Node::Element(el("span").text(m.capabilities.join(", "))),
+                        ),
+                    ]))
+                    .when(!m.aliases.is_empty(), |d| {
+                        d.child(facts(vec![(
+                            "Aliases",
+                            Node::Element(el("span").text(m.aliases.join(", "))),
+                        )]))
+                    })
+                    .when(m.note.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(m.note.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+    let mut findings = el("ul").class("mj-list");
+    for finding in &report.diagnostics {
+        findings = findings.child(el("li").text(finding));
+    }
+    Page::new(
+        Area::Models,
+        "Models",
+        el("div")
+            .class("mj-grid")
+            .child(card(
+                format!("Vendors ({})", report.vendors.len()),
+                if vendors.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no vendors. share/models.yaml is the one place to add one.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(vendors)
+                },
+            ))
+            .child(card(
+                format!("Models ({})", report.count),
+                if models.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no models; `models.route` answers that nothing qualifies, which is the truthful answer.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(models)
+                },
+            ))
+            .when(!report.diagnostics.is_empty(), |d| {
+                d.child(card("Findings", findings))
+            }),
+    )
+}
+
 /// The mesh: the discovered nodes of this process's runtime, the providers that heard
 /// them, and why the mesh is or is not running. Everything on this page is the same
 /// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
