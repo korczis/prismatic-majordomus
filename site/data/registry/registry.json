@@ -6,7 +6,7 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "37ffc8fe72f635cab15f8a3f310f1123b3f42939d9a123f1f7339f7fe16e323b",
+    "fingerprint": "f7ffd9aea0ba90ef519a8c1dd0c35e040004605ae93f965e3f3f9ed49eed1da6",
     "summary": {
       "total": 1350,
       "builtin": 98,
@@ -27422,7 +27422,7 @@
                   "spelling",
                   "writer"
                 ],
-                "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/Users/x/dev/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+                "description": "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
               },
               "Spelling": {
                 "oneOf": [
@@ -34062,7 +34062,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c0f7b07db6aae5472464044bcfd96b7f5c2bf4300628e6c934bd836fd89e27c4",
+    "fingerprint": "8c628c8a8276529277337151ef63e6aec85b3531bf0df37b7b186f7d7b97fbeb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
