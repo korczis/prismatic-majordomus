@@ -305,6 +305,8 @@ pub struct Line {
     pub question: String,
     /// The requirement a piece of evidence covers.
     pub covers: String,
+    /// The profile a `session.started` line records, when a task was active at the boundary.
+    pub profile: String,
 }
 
 /// Every ledger line of a file, oldest first. Order is the file's own, which is the order
@@ -352,6 +354,7 @@ pub fn parse_ledger(text: &str) -> Vec<Line> {
                 decision: field(&v, "decision"),
                 question: field(&v, "question"),
                 covers: field(&v, "covers"),
+                profile: field(&v, "profile"),
             })
         })
         .collect()
@@ -438,6 +441,24 @@ pub fn derive(
         boundary,
         ..Default::default()
     };
+
+    // The boundary task comes from the ledger, not from the caller: `session.started`
+    // records the task that was active when the episode opened, and the ledger is the
+    // canonical account of that. A caller may supply it — the lifecycle knows it at the
+    // moment it composes — but the evidence wins, because a value the caller computed is a
+    // claim and a line the ledger holds is a record. An episode opened before the event
+    // carried the field has an empty one, which means *unknown*, never *none*.
+    if let Some(started) = window.iter().find(|l| l.event == "session.started") {
+        if f.boundary.task_id_at_open.is_empty() {
+            f.boundary.task_id_at_open = started.task_id.clone();
+        }
+        if f.boundary.profile.is_empty() {
+            f.boundary.profile = started.profile.clone();
+        }
+        if f.boundary.issue_of_task.is_empty() {
+            f.boundary.issue_of_task = started.issue.clone();
+        }
+    }
 
     // --- tasks. Two evidence classes, and the boundary one comes first because it is the
     // relationship the episode *had*, not merely one it touched. The old derivation had
@@ -982,6 +1003,45 @@ mod tests {
             f.milestones,
             vec![Attributed::new("m-1", Source::PlanMembership)]
         );
+    }
+
+    #[test]
+    fn the_boundary_task_is_read_from_the_ledger_when_the_caller_names_none() {
+        // The canonical path: nothing is passed in, and `session.started` carries what the
+        // lifecycle observed at the boundary.
+        let all = parse_ledger(
+            "{\"event\":\"session.started\",\"session\":\"s-1\",\"task_id\":\"t-5\",\"profile\":\"implementation\",\"issue\":\"i-2\"}\n",
+        );
+        let w: Vec<&Line> = all.iter().collect();
+        let f = derive(
+            Boundary {
+                session_id: "s-1".into(),
+                ..Default::default()
+            },
+            &w,
+            &no_milestone,
+        );
+        assert_eq!(f.tasks, vec![Attributed::new("t-5", Source::TaskActiveAtOpen)]);
+        assert_eq!(f.issues, vec![Attributed::new("i-2", Source::IssueOfTask)]);
+        assert_eq!(f.boundary.profile, "implementation");
+    }
+
+    #[test]
+    fn an_episode_opened_before_the_event_carried_a_task_stays_unknown() {
+        // A legacy `session.started` with no task_id must not be read as "no task": the
+        // field is absent, which means nothing was recorded, not that nothing was active.
+        let all = parse_ledger("{\"event\":\"session.started\",\"session\":\"s-1\",\"owner\":\"x\"}\n");
+        let w: Vec<&Line> = all.iter().collect();
+        let f = derive(
+            Boundary {
+                session_id: "s-1".into(),
+                ..Default::default()
+            },
+            &w,
+            &no_milestone,
+        );
+        assert!(f.tasks.is_empty());
+        assert_eq!(f.completeness, Completeness::Complete);
     }
 
     #[test]

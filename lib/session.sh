@@ -207,6 +207,124 @@ usage: majordomus session <subcommand> [options]
 H
 }
 
+# ---------------------------------------------------------------- the runtime that composes
+# One episode's record is composed by `lifecycle.compose` and by nothing else.
+#
+# The split is the whole point. This file observes the boundary — identity, times, the two
+# heads, the classified changed files — and the runtime decides what any of it *means*:
+# which tasks and issues the episode is attributed to, by which class of evidence, how
+# complete that account is, and what the human report says. Before it, this file derived the
+# reference lists and the Rust index read the result, which is two implementations of one
+# semantic (`project.development-semantics-are-canonical`); they disagreed, and only the
+# ledger could say which was right.
+mj_session_compose() {
+  local bin share
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || return 1
+  share="$(mj_rust_share "$MJ_HOME")"
+  # a subshell, so the share the executable needs is not exported into everything after it
+  ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+    "$bin" session compose --repo "$MJ_ROOT" < "$1" )
+}
+
+# The record a checkout without the executable writes.
+#
+# It carries every boundary fact this file observed and **no derived attribution at all**,
+# and it says so: `completeness: unverifiable` is the honest third answer, and the empty
+# reference lists beside it read as *never derived* rather than as *nothing happened*. The
+# alternative — deriving them here as well — is the second implementation this change
+# removed, and a record that silently disagrees with every surface is worse than one that
+# declares what it could not do.
+#
+# A provider hook must never block the person's work, so this path exists and exits 0.
+mj_session_compose_unavailable() {
+  local b="$1" k
+  printf -- '---\nschema: session/v1\nkind: session\n'
+  for k in created_at:closed_at task_id:__none profile:__none; do :; done
+  printf 'created_at: %s\n' "$(mj_json_field "$b" closed_at)"
+  printf 'task_id: none\nprofile: none\n'
+  printf 'repository_id: %s\nworktree_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
+    "$(mj_json_field "$b" repository_id)" "$(mj_json_field "$b" worktree_id)" \
+    "$(mj_json_field "$b" branch)" "$(mj_json_field "$b" head)" "$(mj_json_field "$b" working_tree)"
+  printf 'changed_files: []\n'
+  printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' \
+    "$(mj_json_field "$b" session_id)" "$(mj_json_field "$b" started_at)" \
+    "$(mj_json_field "$b" closed_at)" "$(mj_json_field "$b" outcome)"
+  printf 'completeness: unverifiable\n'
+  printf 'title: "%s"\n' "$(mj_json_field "$b" title)"
+  [ -n "$(mj_json_field "$b" worker)" ] && printf 'worker: "%s"\n' "$(mj_json_field "$b" worker)"
+  printf 'start_head: %s\nstart_working_tree: %s\n' \
+    "$(mj_json_field "$b" start_head)" "$(mj_json_field "$b" start_working_tree)"
+  printf 'commits: []\ntasks: []\nissues: []\nmilestones: []\ncheckpoints: []\n'
+  printf 'handovers: []\ndecisions: []\nquestions: []\nevidence: []\nattribution: []\n'
+  printf -- '---\n\n'
+  printf '# Session report\n\n'
+  printf 'This episode closed in a checkout with no Majordomus runtime executable, so its\n'
+  printf 'attribution was never derived. The empty reference lists above mean *not derived*,\n'
+  printf 'not *nothing happened*: the evidence is in this checkout'"'"'s ledger and the account can\n'
+  printf 'be recovered with `majordomus session show %s` where the executable is present.\n' \
+    "$(mj_json_field "$b" session_id)"
+  printf '\n## Verification\n\nCompleteness: **unverifiable**. A closed session does not mean a completed task.\n'
+  return 0
+}
+
+# One top-level string field of a flat JSON object, unescaped enough for a YAML scalar.
+# The boundary this file writes is flat and machine-written, so a full parser would be a
+# dependency bought for nothing.
+mj_json_field() {
+  LC_ALL=C awk -v k="$2" '
+    { s = $0
+      if (index(s, "\"" k "\":\"") == 0) next
+      sub("^.*\"" k "\":\"", "", s); sub(/\".*$/, "", s)
+      gsub(/\\"/, "\"", s); gsub(/\\\\/, "\\", s)
+      print s; exit }' "$1"
+}
+
+# The commits of the episode as a JSON array body, from the same rule the list form uses:
+# the commits between the two heads, or the single entry `diverged` when the opening commit
+# is no longer an ancestor.
+mj_session_commits_json() {
+  local base="$1" first=1 c
+  [ -n "$base" ] && [ "$base" != NONE ] || return 0
+  if ! mj_git merge-base --is-ancestor "$base" HEAD 2>/dev/null; then
+    printf '"diverged"'; return 0
+  fi
+  while IFS= read -r c; do
+    [ -n "$c" ] || continue
+    [ "$first" = 1 ] || printf ','
+    first=0
+    printf '"%s"' "$(mj_json_esc "$c")"
+  done <<EOF
+$(mj_git rev-list --reverse "$base..HEAD" 2>/dev/null | cut -c1-7)
+EOF
+  return 0
+}
+
+# The classified changed files as a JSON array body.
+mj_changed_files_json() {
+  local first=1 f
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ "$first" = 1 ] || printf ','
+    first=0
+    printf '"%s"' "$(mj_json_esc "$f")"
+  done <<EOF
+$(mj_changed_files)
+EOF
+  return 0
+}
+
+# A whole file as one JSON string. The authored note is the only free text that reaches the
+# runtime, and it reaches it as data rather than as a second file the runtime would have to
+# be told where to find.
+mj_json_esc_file() {
+  [ -s "$1" ] || { printf ''; return 0; }
+  LC_ALL=C awk '{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, "\\t")
+                  printf "%s\\n", $0 }' "$1"
+}
+
 # ---------------------------------------------------------------- start
 mj_session_start() {
   local owner="${USER:-unknown}" worker="" if_open=refuse provider="" psession=""
@@ -280,7 +398,24 @@ mj_session_start() {
   chmod 600 "$tmp" 2>/dev/null || true
   mv "$tmp" "$f"
   mj_session_point_at "$f"
-  mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}"
+  # What the episode *belonged to* at the boundary, recorded at the boundary.
+  #
+  # This is the fact whose absence produced `task_id: t-... / tasks: []`. A task active when
+  # an episode opens emits no event of its own during it — it was started before — so an
+  # episode spent entirely inside one attributed nothing, and the close had no way to
+  # recover the relationship afterwards: by then the task may be finished, abandoned or
+  # replaced, and "the current task at close" is a different question with a different
+  # answer. The ledger is the canonical account of what happened, so the relationship is
+  # written there when it is still true, and `lifecycle.compose` reads it back as evidence.
+  #
+  # Absent stays absent. No task active means no key, which reads as *nothing was recorded*
+  # rather than *nothing was active* — the same rule the worker identity keeps.
+  local open_task="" open_profile="" open_issue=""
+  if mj_load_current; then
+    open_task="$(mj_cur id)"; open_profile="$(mj_cur profile)"; open_issue="$(mj_cur issue)"
+  fi
+  mj_ledger_append session.started \
+    "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}${open_task:+,\"task_id\":\"$(mj_json_esc "$open_task")\"}${open_profile:+,\"profile\":\"$(mj_json_esc "$open_profile")\"}${open_issue:+,\"issue\":\"$(mj_json_esc "$open_issue")\"}"
 
   # The working context is written after the episode exists, and its failure never costs
   # one: a session whose context could not be frozen is still a session, and the store
@@ -416,44 +551,56 @@ mj_session_close() {
   win="$(mktemp "${TMPDIR:-/tmp}/mj.sw.XXXXXX")"
   mj_session_window "$sid" > "$win"
   rec="$(mktemp "${TMPDIR:-/tmp}/mj.sr.XXXXXX")"
+
+  # The boundary, and nothing derived from it.
+  #
+  # What this command observes it states; what any of it *means* is decided once, in the
+  # canonical runtime, by `lifecycle.compose`. Before that split this function derived the
+  # reference lists itself while the Rust index read the result, which is two
+  # implementations of one semantic — and the two disagreed, because only one of them had
+  # ever been asked whether `task_id` and `tasks` could contradict each other.
+  #
+  # created_at, head and working_tree describe the close, so the record reads back through
+  # the same resolver and the same divergence label as a handover; start_head and
+  # start_working_tree describe the open. A shared record carries what the repository can
+  # prove and nothing about this machine: the absolute worktree path is a fact about a disk
+  # and the person who ran it is not the repository's business (ADR 0014). Both stay in the
+  # ledger, which is local.
+  local bnd; bnd="$(mktemp "${TMPDIR:-/tmp}/mj.sb2.XXXXXX")"
   {
-    # created_at, head and working_tree describe the close, so the record reads back
-    # through the same resolver and the same divergence label as a handover; start_head
-    # and start_working_tree describe the open.
-    # A shared record carries what the repository can prove and nothing about this machine:
-    # the absolute worktree path is a fact about a disk, and the person who ran it is not
-    # the repository's business (ADR 0014). Both stay in the ledger, which is local.
-    printf -- '---\nschema: session/v1\nkind: session\ncreated_at: %s\ntask_id: %s\nprofile: %s\n' \
-      "$closed_at" "$task" "$profile"
-    printf 'repository_id: %s\nworktree_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
-      "$(mj_repository_id)" "$(mj_worktree_id)" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
+    printf '{'
+    printf '"session_id":"%s",' "$(mj_json_esc "$sid")"
+    printf '"started_at":"%s",' "$(mj_json_esc "$started")"
+    printf '"closed_at":"%s",' "$(mj_json_esc "$closed_at")"
+    printf '"outcome":"%s",' "$(mj_json_esc "$outcome")"
+    printf '"worker":"%s",' "$(mj_json_esc "$(mj_ses worker)")"
+    printf '"branch":"%s",' "$(mj_json_esc "$(mj_git_branch)")"
+    printf '"start_head":"%s",' "$(mj_json_esc "$(mj_ses start_head)")"
+    printf '"head":"%s",' "$(mj_json_esc "$(mj_git_head)")"
+    printf '"start_working_tree":"%s",' "$(mj_json_esc "$(mj_ses start_working_tree)")"
+    printf '"working_tree":"%s",' "$(mj_json_esc "$(mj_git_dirty)")"
+    printf '"repository_id":"%s",' "$(mj_json_esc "$(mj_repository_id)")"
+    printf '"worktree_id":"%s",' "$(mj_json_esc "$(mj_worktree_id)")"
+    printf '"title":"%s",' "$(mj_json_esc "$(mj_session_title "$task" "$sid")")"
+    printf '"commits":['; mj_session_commits_json "$(mj_ses start_head)"; printf '],'
     # Classified, not copied. The record at 20260910T103933Z--s-20260909152316-024f named
     # 122 changed files, among them the whole of site/data/generated/, its own three sibling
     # records and its own site projection — a record claiming itself as its own work
     # product. lib/changed.sh filters against the declarations that already say what is
     # derived; what remains is what the episode actually wrote.
-    mj_changed_files_block
-    printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
-    printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
-    [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"
-    printf 'start_head: %s\nstart_working_tree: %s\n' "$(mj_ses start_head)" "$(mj_ses start_working_tree)"
-    mj_session_commits "$(mj_ses start_head)"
-    mj_session_refs "$win"
-    printf -- '---\n'
-  } > "$rec"
-  # A record with no body is a receipt, not a record: it names ninety-four commits and says
-  # nothing about any of them. The authored summary stays optional — nothing should refuse
-  # to close an episode over prose — but its absence now composes one instead of leaving the
-  # body blank, from this episode's own checkpoints and decisions and from what git and the
-  # ledger can prove. The lifecycle closes with `< /dev/null`, so before this every
-  # automatically closed record had an empty body, which was every record.
-  if [ ! -s "$body" ]; then
-    # shellcheck source=derive.sh
-    . "$MJ_LIB_DIR/derive.sh"
-    mj_derive_session_body "$win" "$outcome" > "$body" 2>/dev/null || : > "$body"
+    printf '"changed_files":['; mj_changed_files_json; printf '],'
+    printf '"authored":"%s"' "$(mj_json_esc_file "$body")"
+    printf '}\n'
+  } > "$bnd"
+
+  # One derivation, in the runtime that owns it. A checkout without the executable still
+  # closes its episode — a provider hook must never block the person's work — but it writes
+  # a record that says its attribution was never derived, rather than one that derives it a
+  # second way and quietly disagrees with every surface.
+  if ! mj_session_compose "$bnd" > "$rec" 2>/dev/null || [ ! -s "$rec" ]; then
+    mj_session_compose_unavailable "$bnd" > "$rec"
   fi
-  if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
-  rm -f "$body"
+  rm -f "$bnd" "$body"
 
   mj_session_store_ready
   # One episode, one record. `mj_publish_record` gives each file a unique name, which makes

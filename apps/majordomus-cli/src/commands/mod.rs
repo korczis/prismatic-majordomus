@@ -43,6 +43,7 @@ pub(crate) mod product;
 pub(crate) mod quality;
 pub(crate) mod release;
 pub(crate) mod scope;
+pub(crate) mod session;
 pub(crate) mod serve;
 pub(crate) mod web;
 pub(crate) mod why;
@@ -64,6 +65,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Why(args) => why::run(args),
         Command::Devtask(args) => devtask::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::Session(args) => session::run(args),
         Command::Env(args) => env::run(args),
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),

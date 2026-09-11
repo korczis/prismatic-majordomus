@@ -59,7 +59,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
 use crate::git::{self, GitState};
@@ -976,6 +976,285 @@ fn providers(ctx: &Context, _: Empty) -> Result<ProviderLifecycles, CapabilityEr
     })
 }
 
+// --------------------------------------------------------------------- compose
+
+/// What the lifecycle hands the runtime when an episode ends.
+///
+/// The boundary facts only: identity, times, outcome, the two heads, and the task that was
+/// active when the episode **opened**. Everything derived from them — which tasks and issues
+/// the episode is attributed to, why, how complete the account is, and the report a person
+/// reads — is decided here and nowhere else, so the shell that writes the bytes cannot write
+/// a different record from the one this runtime would.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+pub struct ComposeInput {
+    /// The episode's boundary, as the lifecycle observed it.
+    #[serde(flatten)]
+    pub boundary: crate::session::Boundary,
+    /// The repository, as the tool identifies it.
+    #[serde(default)]
+    pub repository_id: String,
+    /// A stable identity for the working copy, naming no path.
+    #[serde(default)]
+    pub worktree_id: String,
+    /// One line naming the work, for a listing.
+    #[serde(default)]
+    pub title: String,
+    /// The optional authored note. Never evidence for anything: it cannot establish a
+    /// commit, an identity, an outcome or a verification, and it is rendered below the
+    /// generated report under its own heading so that the boundary between the two is
+    /// visible in the file rather than remembered.
+    #[serde(default)]
+    pub authored: String,
+}
+
+/// One composed record: the typed facts, and the bytes the lifecycle writes.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct Composed {
+    /// Everything derived about the episode.
+    pub facts: crate::session::Facts,
+    /// The record as a file: front matter, then the deterministic report, then the
+    /// authored note when one was supplied.
+    pub record: String,
+}
+
+/// The issue-to-milestone mapping the canonical plan already derived.
+///
+/// Read from the index rather than recomputed, so that a session cannot disagree with
+/// `plan` about which milestone an issue belongs to. An index with no plan answers `None`
+/// for every issue, which is the correct answer for a repository that has no plan.
+fn milestones_of(ctx: &Context) -> BTreeMap<String, String> {
+    ctx.index
+        .objects
+        .iter()
+        .filter(|o| o.kind == crate::plan::ISSUE)
+        .filter_map(|o| {
+            let id = o.metadata.get("id")?.as_str()?.to_string();
+            let m = o.metadata.get("milestone")?.as_str()?.to_string();
+            (!id.is_empty() && !m.is_empty()).then_some((id, m))
+        })
+        .collect()
+}
+
+impl crate::capability::benchmark::BenchmarkCases for ComposeInput {
+    fn benchmark_cases(
+        _: &crate::capability::benchmark::CaseContext<'_>,
+    ) -> Vec<crate::capability::benchmark::NamedCase<Self>> {
+        use crate::capability::benchmark::NamedCase;
+        // The two shapes whose cost differs: an episode with a window to read, and one
+        // with nothing to attribute. Neither names a real episode of this repository —
+        // a benchmark case is an input, not a claim about what happened here.
+        vec![
+            NamedCase::new(
+                "attributed",
+                ComposeInput {
+                    boundary: crate::session::Boundary {
+                        session_id: "s-benchmark".into(),
+                        started_at: "2026-01-01T00:00:00Z".into(),
+                        closed_at: "2026-01-01T01:00:00Z".into(),
+                        outcome: "closed".into(),
+                        task_id_at_open: "t-benchmark".into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+            ),
+            NamedCase::new("empty", ComposeInput::default()),
+        ]
+    }
+}
+
+impl crate::capability::benchmark::BenchmarkCases for RecordInput {
+    fn benchmark_cases(
+        _: &crate::capability::benchmark::CaseContext<'_>,
+    ) -> Vec<crate::capability::benchmark::NamedCase<Self>> {
+        use crate::capability::benchmark::NamedCase;
+        // The newest record this checkout holds: the reading a surface actually makes, and
+        // the only one that is the same question in every clone.
+        vec![NamedCase::new("latest", RecordInput::default())]
+    }
+}
+
+fn compose(ctx: &Context, input: ComposeInput) -> Result<Composed, CapabilityError> {
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let all = crate::session::ledger(&root.join(STATE_DIR).join(LEDGER));
+    let win = crate::session::window(&all, &input.boundary.session_id);
+    let plan = milestones_of(ctx);
+    let facts = crate::session::derive(input.boundary.clone(), &win, &|id| plan.get(id).cloned());
+
+    let b = &facts.boundary;
+    let list = |name: &str, items: &[crate::session::Attributed]| -> String {
+        if items.is_empty() {
+            return format!("{name}: []\n");
+        }
+        let mut s = format!("{name}:\n");
+        for a in items {
+            s.push_str(&format!("  - \"{}\"\n", a.id.replace('\\', "\\\\").replace('"', "\\\"")));
+        }
+        s
+    };
+    let strings = |name: &str, items: &[String]| -> String {
+        if items.is_empty() {
+            return format!("{name}: []\n");
+        }
+        let mut s = format!("{name}:\n");
+        for i in items {
+            s.push_str(&format!("  - {i}\n"));
+        }
+        s
+    };
+    let mut r = String::from("---\n");
+    r.push_str("schema: session/v1\nkind: session\n");
+    r.push_str(&format!("created_at: {}\n", b.closed_at));
+    r.push_str(&format!(
+        "task_id: {}\n",
+        if b.task_id_at_open.is_empty() { "none" } else { &b.task_id_at_open }
+    ));
+    r.push_str(&format!(
+        "profile: {}\n",
+        if b.profile.is_empty() { "none" } else { &b.profile }
+    ));
+    r.push_str(&format!("repository_id: {}\n", input.repository_id));
+    r.push_str(&format!("worktree_id: {}\n", input.worktree_id));
+    r.push_str(&format!("branch: {}\n", b.branch));
+    r.push_str(&format!("head: {}\n", b.head));
+    r.push_str(&format!("working_tree: {}\n", b.working_tree));
+    r.push_str(&strings("changed_files", &b.changed_files));
+    r.push_str(&format!("session_id: {}\n", b.session_id));
+    r.push_str(&format!("started_at: {}\n", b.started_at));
+    r.push_str(&format!("closed_at: {}\n", b.closed_at));
+    r.push_str(&format!("outcome: {}\n", b.outcome));
+    r.push_str(&format!("completeness: {}\n", facts.completeness.as_str()));
+    r.push_str(&format!("title: \"{}\"\n", input.title.replace('"', "\\\"")));
+    if !b.worker.is_empty() {
+        r.push_str(&format!("worker: \"{}\"\n", b.worker.replace('"', "\\\"")));
+    }
+    r.push_str(&format!("start_head: {}\n", b.start_head));
+    r.push_str(&format!("start_working_tree: {}\n", b.start_working_tree));
+    r.push_str(&strings("commits", &b.commits));
+    r.push_str(&list("tasks", &facts.tasks));
+    r.push_str(&list("issues", &facts.issues));
+    r.push_str(&list("milestones", &facts.milestones));
+    r.push_str(&list("checkpoints", &facts.checkpoints));
+    r.push_str(&list("handovers", &facts.handovers));
+    r.push_str(&list("decisions", &facts.decisions));
+    r.push_str(&list("questions", &facts.questions));
+    r.push_str(&list("evidence", &facts.evidence));
+    r.push_str(&crate::session::render_attribution(&facts));
+    r.push_str("---\n\n");
+    r.push_str(&crate::session::render_report(&facts));
+    if !input.authored.trim().is_empty() {
+        r.push_str("\n## Authored note\n\n");
+        r.push_str(
+            "Supplied by the worker. Not evidence: it establishes no commit, no identity, no outcome and no verification, and nothing derived above was read from it.\n\n",
+        );
+        r.push_str(input.authored.trim_end());
+        r.push('\n');
+    }
+    Ok(Composed { facts, record: r })
+}
+
+// --------------------------------------------------------------------- record
+
+/// Which record to read back.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+pub struct RecordInput {
+    /// The episode identity. Empty reads the newest record this checkout holds.
+    #[serde(default)]
+    pub session_id: String,
+}
+
+fn record(ctx: &Context, input: RecordInput) -> Result<Composed, CapabilityError> {
+    let want = input.session_id.trim();
+    let mut found: Option<&crate::model::Object> = None;
+    for o in ctx.index.objects.iter().filter(|o| o.kind == "session") {
+        let id = o
+            .metadata
+            .get("session_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
+        if want.is_empty() {
+            let newer = |a: Option<&crate::model::Object>, b: &crate::model::Object| {
+                let k = |o: &crate::model::Object| {
+                    o.metadata
+                        .get("created_at")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or_default()
+                        .to_string()
+                };
+                a.is_none() || k(b) > k(a.unwrap())
+            };
+            if newer(found, o) {
+                found = Some(o);
+            }
+        } else if id == want {
+            found = Some(o);
+            break;
+        }
+    }
+    let Some(o) = found else {
+        return Err(CapabilityError::NotFound(format!(
+            "no closed session record{}",
+            if want.is_empty() {
+                String::new()
+            } else {
+                format!(" with session_id {want}")
+            }
+        )));
+    };
+    let s = |k: &str| {
+        o.metadata
+            .get(k)
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string()
+    };
+    let v = |k: &str| -> Vec<String> {
+        o.metadata
+            .get(k)
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(str::to_string))
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let task = s("task_id");
+    let boundary = crate::session::Boundary {
+        session_id: s("session_id"),
+        started_at: s("started_at"),
+        closed_at: s("closed_at"),
+        outcome: s("outcome"),
+        task_id_at_open: if task == "none" { String::new() } else { task },
+        issue_of_task: String::new(),
+        profile: s("profile"),
+        worker: s("worker"),
+        branch: s("branch"),
+        start_head: s("start_head"),
+        head: s("head"),
+        start_working_tree: s("start_working_tree"),
+        working_tree: s("working_tree"),
+        commits: v("commits"),
+        changed_files: v("changed_files"),
+    };
+    // A record written before attribution was derived carries no `attribution:` block, and
+    // its ledger window may have rotated away. Re-deriving it from a window that no longer
+    // exists would report a defect that is really an absence of evidence, so a record with
+    // no attribution block and no window is `unverifiable` rather than `incomplete`.
+    let root = PathBuf::from(&ctx.index.repository.root);
+    let all = crate::session::ledger(&root.join(STATE_DIR).join(LEDGER));
+    let win = crate::session::window(&all, &boundary.session_id);
+    let plan = milestones_of(ctx);
+    let mut facts = crate::session::derive(boundary, &win, &|id| plan.get(id).cloned());
+    let legacy = o.metadata.get("attribution").is_none();
+    if legacy && win.is_empty() {
+        facts.completeness = crate::session::Completeness::Unverifiable;
+        facts.diagnostics.clear();
+    }
+    let record = crate::session::render_report(&facts);
+    Ok(Composed { facts, record })
+}
+
 fn closed(ctx: &Context, _: Empty) -> Result<ClosedSessions, CapabilityError> {
     let branch = match &ctx.index.repository.git {
         GitState::Available(i) => i.branch.clone().unwrap_or_default(),
@@ -1120,6 +1399,50 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["continuity", "session", "record"],
                 cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(30) },
                 handler: closed,
+            },
+            capability! {
+                id: "lifecycle.compose",
+                title: "The record an episode closes into",
+                description: "Everything an episode's record carries, derived from the episode's boundary and its own ledger lines: which tasks and issues it is attributed to and by which class of evidence, the milestones the canonical plan puts those issues in, the records it wrote, how complete that account is, and the deterministic human report. The lifecycle writes the bytes this returns and decides none of them, so the record in the tree is the record this runtime would compose.",
+                input: ComposeInput,
+                output: Composed,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure { tool: Some("majordomus_lifecycle_compose".into()), resource: None }),
+                    http: get("/api/v1/lifecycle/compose"),
+                    // The one lifecycle capability that declares a command line, and the
+                    // reason the other five do not is the reason this one must. They read
+                    // the local half and are served so that no fact about this machine
+                    // reaches a script or a commit; this one exists to turn that evidence
+                    // into the shared record, and the lifecycle that writes the record is a
+                    // shell command. Without a command line the shell would have to derive
+                    // the record itself, which is the second implementation this whole
+                    // module was written to remove.
+                    cli: Some(CliExposure { path: vec!["session".into(), "compose".into()] }),
+                },
+                tags: ["continuity", "session", "record"],
+                // Never cached: the answer depends on the ledger, which another process is
+                // appending to, and on the boundary the caller supplies.
+                cache: CachePolicy::Disabled,
+                handler: compose,
+            },
+            capability! {
+                id: "lifecycle.record",
+                title: "One closed record, re-derived",
+                description: "A closed record read back through the same derivation that wrote it: its attribution with the evidence class behind each reference, its completeness, and the diagnostics that decided it. A record whose attribution block predates the derivation and whose ledger window has since rotated is `unverifiable` rather than judged, because the evidence that would decide it no longer exists.",
+                input: RecordInput,
+                output: Composed,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure { tool: Some("majordomus_lifecycle_record".into()), resource: None }),
+                    http: get("/api/v1/lifecycle/record"),
+                    // Reads the *tracked* half — the records a clone receives — so the
+                    // rule the other five keep does not apply to it.
+                    cli: Some(CliExposure { path: vec!["session".into(), "show".into()] }),
+                },
+                tags: ["continuity", "session", "record"],
+                cache: CachePolicy::Process { max_entries: 8, ttl_seconds: Some(5) },
+                handler: record,
             },
         ],
     }

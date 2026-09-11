@@ -51,6 +51,9 @@ pub enum Command {
     Devtask(DevtaskArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+
+    /// One execution episode: compose the record it closes into, or read a closed one back
+    Session(SessionArgs),
     /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
     Env(EnvArgs),
     /// Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it
@@ -483,6 +486,34 @@ pub struct DistributionArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, clap::Args)]
+/// `majordomus session`: the episode record, composed and read back through one derivation.
+pub struct SessionArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the episode model.
+    pub command: SessionCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus session`.
+pub enum SessionCommand {
+    /// Compose the record an episode closes into, from its boundary on standard input
+    Compose,
+    /// Read one closed record back: its attribution, its evidence classes and its completeness
+    Show {
+        /// The episode identity; the newest record when omitted
+        session_id: Option<String>,
+    },
 }
 
 #[derive(Debug, Subcommand)]
