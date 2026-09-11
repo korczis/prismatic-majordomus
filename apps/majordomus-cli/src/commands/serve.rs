@@ -287,7 +287,40 @@ fn server_log(repo: &Repository) -> PathBuf {
     lease::lease_path(repo).with_file_name("server.log")
 }
 
-/// `serve ensure`: converge on a ready server for this checkout.
+/// Where a checkout's runtime stands after a call that tried to make it stand somewhere,
+/// and which arm of the loop the call left by.
+///
+/// This is the value both entry paths share. `serve ensure` renders it for a person and
+/// turns it into an exit code; `majordomus env enter` reads it on the shell-prompt path
+/// and says at most one line about it. Neither of them re-decides any of it, because two
+/// readings of one state are two answers waiting to disagree — the claim
+/// `project.interfaces-are-projections` makes of every other surface, and the reason the
+/// convergence itself is one function rather than one per caller.
+#[derive(Debug)]
+pub struct Convergence {
+    /// Where this checkout's server stands now.
+    pub standing: ServerStanding,
+    /// The lease it stands on, when there is one.
+    pub document: Option<LeaseDocument>,
+    /// Why the standing is not `ready`, in the words the standing itself gave.
+    pub reason: Option<String>,
+    /// Whether this call is what started the server that now stands there.
+    pub started: bool,
+    /// Whether the call ran out of `wait` rather than reaching a decision.
+    pub timed_out: bool,
+    /// Where a server this call started writes its log.
+    pub log: PathBuf,
+}
+
+impl Convergence {
+    /// Is the runtime there and answering for this checkout?
+    pub fn ready(&self) -> bool {
+        self.standing == ServerStanding::Ready
+    }
+}
+
+/// Converge on a ready server for this checkout: the whole of what `serve ensure` does,
+/// as a function, so that every entry path runs this one and not a copy of it.
 ///
 /// The loop reads the lease and probes the server it names on every round, exactly as the
 /// election does, and decides from the standing: `ready` ends it; `starting` waits;
@@ -295,14 +328,16 @@ fn server_log(repo: &Repository) -> PathBuf {
 /// that process takes a stale lease over itself; `outdated` starts one only when the
 /// election would take the lease over — the same executable, replaced on disk — and is
 /// otherwise reported with the remedy, because a server of another build that answers is
-/// not this command's to end. The whole call is bounded by `wait`.
-fn ensure(
-    repo: &Repository,
-    port: u16,
-    idle: u64,
-    wait: Duration,
-    format: OutputFormat,
-) -> Result<u8> {
+/// not this command's to end. The whole call is bounded by `wait`
+/// (`project.every-wait-is-bounded`).
+///
+/// `wait` of zero is a real value and not a degenerate one: it means *start what must be
+/// started and return*, which is what a shell prompt asks for. The server then becomes
+/// ready beside the shell rather than in front of it, and the entry file's `watch_file`
+/// over the lease is what brings the published address into the environment a moment
+/// later. Nothing is lost by not waiting: the election in the started process is what
+/// decides who serves, and it decides that whether or not anybody is watching.
+pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Result<Convergence> {
     let path = lease::lease_path(repo);
     let log = server_log(repo);
     let deadline = Instant::now() + wait;
@@ -316,8 +351,19 @@ fn ensure(
             crate::VERSION,
         );
         let doc = file.document().cloned();
+        // A function of `started` rather than a closure over it: the loop assigns to
+        // `started` in the arms below, and a closure that borrowed it would make that
+        // assignment a borrow-check error.
+        let settle = |started: bool, timed_out: bool| Convergence {
+            standing,
+            document: doc.clone(),
+            reason: reason.clone(),
+            started,
+            timed_out,
+            log: log.clone(),
+        };
         match standing {
-            ServerStanding::Ready => return report(standing, doc, None, started, &log, format),
+            ServerStanding::Ready => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
                 spawn_server(repo, port, idle, &log)?;
@@ -336,25 +382,50 @@ fn ensure(
                     spawn_server(repo, port, idle, &log)?;
                     started = true;
                 } else if !started || Instant::now() >= deadline {
-                    let remedy = format!(
-                        "{}; `majordomus serve stop` ends it, and `serve ensure` then starts one from this executable",
-                        reason.unwrap_or_default()
-                    );
-                    return report(standing, doc, Some(remedy), started, &log, format);
+                    return Ok(settle(started, false));
                 }
             }
         }
         if Instant::now() >= deadline {
-            let why = format!(
-                "{}no server became ready within {} second(s); the log is {}",
-                reason.map(|r| format!("{r}; ")).unwrap_or_default(),
-                wait.as_secs(),
-                log.display()
-            );
-            return report(standing, doc, Some(why), started, &log, format);
+            return Ok(settle(started, true));
         }
         std::thread::sleep(Duration::from_millis(200));
     }
+}
+
+/// `serve ensure`: converge on a ready server for this checkout, and say where it stands.
+///
+/// The convergence is [`converge`]'s; what belongs to the command is the phrasing of a
+/// standing that is not `ready` and the exit code that follows from it.
+fn ensure(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    wait: Duration,
+    format: OutputFormat,
+) -> Result<u8> {
+    let c = converge(repo, port, idle, wait)?;
+    let reason = if c.ready() {
+        None
+    } else if c.timed_out {
+        Some(format!(
+            "{}no server became ready within {} second(s); the log is {}",
+            c.reason
+                .as_ref()
+                .map(|r| format!("{r}; "))
+                .unwrap_or_default(),
+            wait.as_secs(),
+            c.log.display()
+        ))
+    } else if c.standing == ServerStanding::Outdated {
+        Some(format!(
+            "{}; `majordomus serve stop` ends it, and `serve ensure` then starts one from this executable",
+            c.reason.clone().unwrap_or_default()
+        ))
+    } else {
+        c.reason.clone()
+    };
+    report(c.standing, c.document, reason, c.started, &c.log, format)
 }
 
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,
@@ -414,8 +485,30 @@ fn report(
 
 /// Start a server for this checkout as a process of its own: this executable, `serve`, the
 /// port asked for with a free one as the fallback, the idle life it was given, its log
-/// beside the lease, in its own process group so that it outlives the shell that asked. The
-/// election in that process decides whether it serves or defers; this only starts it.
+/// beside the lease, in its own process group so that it outlives the shell that asked, and
+/// carrying none of its parent's open file descriptors. The election in that process decides
+/// whether it serves or defers; this only starts it.
+///
+/// # Why the descriptors are closed, and what happened when they were not
+///
+/// Standard input, output and error are redirected here, and for a long time that looked
+/// like enough. It is not: `Command` only replaces those three, and **every other descriptor
+/// the parent had open is inherited by the child**, which then holds it for its whole life —
+/// fifteen minutes, by `DEFAULT_IDLE_SECONDS`.
+///
+/// direnv is where that stops being theoretical. It hands the file it evaluates an extra
+/// descriptor of its own (fd 6 here), and it does not return until that pipe closes. On
+/// 2026-09-11, the first real `cd` into a checkout after entry learnt to start a server hung
+/// for **481 seconds** and only returned when the server was killed by hand: `lsof` showed
+/// the server holding fd 3 on the other end of direnv's own pipe. Nothing in this
+/// repository's tests could see it, because a test that captures a command's output in a
+/// command substitution passes it no descriptor above two — the very thing direnv does.
+///
+/// So the child closes everything above the three it was given, between `fork` and `exec`.
+/// The limit is read in the parent, because `pre_exec` runs in a forked child where only
+/// async-signal-safe calls are allowed and `close(2)` is one while `sysconf(3)` is not
+/// promised to be. `test/cases/190` holds it: an entry made with a descriptor open on a pipe
+/// must leave that pipe closed when it returns.
 fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<()> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
@@ -445,6 +538,30 @@ fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<(
     {
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
+        // Read here, in the parent: see the note above on what `pre_exec` may call.
+        // SAFETY: sysconf(3) with a standard name; it reads a limit and touches no memory
+        // of ours.
+        let limit = unsafe { libc::sysconf(libc::_SC_OPEN_MAX) };
+        // A machine with no answer, or an absurd one, still gets a bounded sweep: the cost
+        // is one `close(2)` per descriptor on a path that is already forking a process.
+        let highest: i32 = if limit < 4 {
+            1024
+        } else {
+            limit.min(65_536) as i32
+        };
+        // SAFETY: the closure runs in the forked child before `exec`, and calls nothing but
+        // `close(2)`, which is async-signal-safe. It touches no descriptor the child was
+        // given — standard input, output and error are set above and are 0, 1 and 2 — and a
+        // descriptor that was not open makes `close` fail harmlessly, which is why the
+        // result is ignored.
+        unsafe {
+            cmd.pre_exec(move || {
+                for fd in 3..highest {
+                    libc::close(fd);
+                }
+                Ok(())
+            });
+        }
     }
     let child = cmd.spawn().map_err(|e| Error::io(log, e))?;
     tracing::info!(pid = child.id(), log = %log.display(), "started a server for this checkout");

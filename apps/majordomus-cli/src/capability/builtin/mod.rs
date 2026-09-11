@@ -58,6 +58,7 @@ pub mod release;
 pub mod repository;
 mod scope;
 pub mod server;
+pub mod session_domain;
 pub mod trace;
 mod views;
 pub mod web;
@@ -103,7 +104,7 @@ pub use lifecycle::{
     PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
     EPISODES_URI, RECOVERY_URI,
 };
-pub use mesh::{IdentityReport, NodeList, RegisterInput, MESH_URI};
+pub use mesh::{MeshIdentityReport, NodeList, RegisterInput, MESH_URI};
 pub use models::{ModelsFilter, ModelsReport, RouteInput, VendorView, MODELS_URI};
 pub use objects::{
     resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
@@ -123,6 +124,7 @@ pub use server::{
     Checkouts, Desired, LeaseView, ServerStanding, ServerStatus, ServerStatusInput, ServerView,
     SERVER_URI,
 };
+pub use session_domain::{IdentityReport, MachineReport, IDENTITY_URI, MACHINE_URI};
 pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
@@ -154,6 +156,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         models,
         peers,
         server,
+        session_domain,
         perf,
         plan,
         directories,

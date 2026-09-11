@@ -25,7 +25,7 @@ from it; nothing else interprets it, and no environment variable overrides it.
 The default posture of the repository — nothing leaves the machine — is preserved by
 absence: no object here, or `enabled: false`, and not one socket opens. Committing an
 enabled object is the operator's explicit, reviewed decision, exactly as a deployment
-object is for binding beyond loopback (ADR 0043).
+object is for binding beyond loopback (ADR 0050).
 
 The schema is `mesh/v1` (`share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json`);
 the kind `mesh-declaration` is declared in `share/kinds.yaml`; the invariants are

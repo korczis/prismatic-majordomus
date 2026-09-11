@@ -9,7 +9,7 @@ source = "docs/MESH.md"
 {% raw %}
 
 How one running Majordomus learns that others exist, and proves which one it is. The
-decision is ADR 0043; the invariants are `project.mesh-is-observation-not-authority`;
+decision is ADR 0050; the invariants are `project.mesh-is-observation-not-authority`;
 the implementation is `apps/majordomus-cli/src/mesh/`. This document is the operator's
 and contributor's view: what runs, what travels, what is trusted, and what can go wrong.
 
@@ -101,7 +101,7 @@ stays listed as rejected — an operator debugging a mesh needs to see what was 
 And under every policy, trust changes *labels and candidate-sharing only*. There is no
 remote execution in this executable for a trusted node to gain; the HTTP surface a
 node advertises is the same read-only projection it always served. Whoever builds
-remote operations later must bring their own authorization decision (ADR 0043
+remote operations later must bring their own authorization decision (ADR 0050
 forecloses inheriting one from discovery).
 
 ## Transports

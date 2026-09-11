@@ -1,5 +1,5 @@
 //! The mesh: how one running Majordomus learns that others exist, and proves which one
-//! it is. ADR 0043 is the decision; this module is the whole implementation, and its
+//! it is. ADR 0050 is the decision; this module is the whole implementation, and its
 //! boundaries are the point:
 //!
 //! - **Identity is a key, not an address.** A node is an Ed25519 keypair kept per user

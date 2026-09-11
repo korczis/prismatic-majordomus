@@ -45,7 +45,7 @@ The node identity kept under the user's state directory, public half only: node 
 
 Input: none.
 
-Output: `IdentityReport`.
+Output: `MeshIdentityReport`.
 
 ## `mesh.nodes` — The discovered nodes
 

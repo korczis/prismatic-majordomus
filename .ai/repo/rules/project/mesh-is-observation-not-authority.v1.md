@@ -16,7 +16,7 @@ tags: [mesh, security, doctrine]
 A LAN is hostile input, and a discovery subsystem fails in two characteristic ways:
 transports that each keep their own peer list until the CLI, the API and the Cockpit
 disagree about who exists; and presence that quietly becomes permission, where being
-heard on a multicast group is treated as being one of us. ADR 0043 closes both: one
+heard on a multicast group is treated as being one of us. ADR 0050 closes both: one
 registry fed through one verification path, and a trust verdict that labels records
 without granting anything — there is no remote execution in this executable for a
 trusted node to gain, and whoever adds remote operations later must bring their own

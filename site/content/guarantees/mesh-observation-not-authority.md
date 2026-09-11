@@ -19,7 +19,7 @@ operation (`mesh.register`) changes the answering process's memory only. Trust i
 explicit, declared policy: `deny_unknown` (the default — a valid unknown node is
 recorded, visible, and trusted for nothing), `allowlist` (declared public keys), or
 `tofu` (a development convenience every listing names as such). Whoever builds remote
-operations later must bring their own authorization decision; ADR 0043 forecloses
+operations later must bring their own authorization decision; ADR 0050 forecloses
 inheriting one from discovery.
 
 ## How it works
@@ -58,5 +58,5 @@ inherit authorization from discovery.
 Presence quietly becoming permission is how LAN discovery becomes an attack surface.
 Naming the boundary as a blocking rule — and defaulting trust to "nobody" — keeps
 "who exists" and "who may do what" as different questions with different answers
-(ADR 0043).
+(ADR 0050).
 {% endraw %}

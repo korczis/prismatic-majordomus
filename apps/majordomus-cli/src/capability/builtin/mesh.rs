@@ -1,7 +1,7 @@
 //! The `mesh` module: the discovered nodes of this process's mesh runtime, projected.
 //! Every capability here reads [`crate::mesh::MeshRuntime`] on the context or the node
 //! identity file; none holds state of its own, and none grants anything — a listed node
-//! is an observation, not an authorization (ADR 0043).
+//! is an observation, not an authorization (ADR 0050).
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,7 @@ fn mesh_nodes(ctx: &Context, _: Empty) -> Result<NodeList, CapabilityError> {
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 /// The answer of `mesh.identity`: this machine's node identity, public half only.
-pub struct IdentityReport {
+pub struct MeshIdentityReport {
     /// Where the identity file lives (or would).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
@@ -66,9 +66,9 @@ pub struct IdentityReport {
     pub error: Option<String>,
 }
 
-fn mesh_identity(_: &Context, _: Empty) -> Result<IdentityReport, CapabilityError> {
+fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, CapabilityError> {
     let Some(path) = default_identity_path() else {
-        return Ok(IdentityReport {
+        return Ok(MeshIdentityReport {
             path: None,
             present: false,
             identity: None,
@@ -76,7 +76,7 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<IdentityReport, CapabilityErro
         });
     };
     if !path.is_file() {
-        return Ok(IdentityReport {
+        return Ok(MeshIdentityReport {
             path: Some(path.display().to_string()),
             present: false,
             identity: None,
@@ -84,13 +84,13 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<IdentityReport, CapabilityErro
         });
     }
     match NodeIdentity::load_or_create(&path) {
-        Ok(identity) => Ok(IdentityReport {
+        Ok(identity) => Ok(MeshIdentityReport {
             path: Some(path.display().to_string()),
             present: true,
             identity: Some(identity.public),
             error: None,
         }),
-        Err(e) => Ok(IdentityReport {
+        Err(e) => Ok(MeshIdentityReport {
             path: Some(path.display().to_string()),
             present: true,
             identity: None,
@@ -188,7 +188,7 @@ pub fn module() -> ModuleDescriptor {
                 title: "This machine's node identity",
                 description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
                 input: Empty,
-                output: IdentityReport,
+                output: MeshIdentityReport,
                 stability: Stability::Experimental,
                 exposure: Exposure {
                     mcp: mcp("majordomus_mesh_identity"),

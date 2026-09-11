@@ -1,7 +1,7 @@
 //! The discovery wire protocol: one envelope, every transport. A multicast datagram, a
 //! broadcast datagram and a rendezvous candidate all carry the same signed advertisement,
 //! so there is one serializer, one parser and one verification path — a second protocol
-//! per transport is exactly the five-truths defect ADR 0043 refuses.
+//! per transport is exactly the five-truths defect ADR 0050 refuses.
 //!
 //! An advertisement says "a Majordomus node exists, here is its public key, here is where
 //! it answers, and the key signs all of it". It grants nothing: trust is evaluated above

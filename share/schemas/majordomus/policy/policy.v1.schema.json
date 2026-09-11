@@ -245,11 +245,23 @@
           "properties": {
             "doctor_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus doctor`; over it the command WARNs and still exits on its findings."
             },
             "watch_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus watch`; over it the command WARNs and still exits on its findings."
+            },
+            "enter_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for entering the repository (`majordomus env enter`) when a server is already serving this checkout, which is every entry but the first. Entering a directory is something a person does dozens of times a day and never chose to wait for."
+            },
+            "enter_cold_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for the first entry, which additionally finds that nothing answers and starts a server \u2014 and then returns, because entry never waits for a server it started to become ready."
             }
           }
         }

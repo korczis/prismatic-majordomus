@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "9f8e61824f0f28ca018717b760742d0fbba5b07c61e2eedd19e34464d16fe1b1",
+  "fingerprint": "edaa98137b68d70ac7ec32dc266ab915e0de0f1b6b01917eadc75e15bab6d9a8",
   "route": "/features/",
   "counts": {
     "features": 22,
     "features_all": 23,
     "featured": 11,
     "providers": 6,
-    "modules": 31,
+    "modules": 32,
     "modules_covered": 20,
     "commands": 29,
     "commands_covered": 28,
@@ -1826,7 +1826,7 @@
         "docs/MESH.md"
       ],
       "adrs": [
-        "adr-0043"
+        "adr-0050"
       ],
       "claims": [
         "mesh-observation-not-authority",
@@ -1930,10 +1930,10 @@
       ],
       "adr_refs": [
         {
-          "id": "adr-0043",
+          "id": "adr-0050",
           "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
           "status": "proposed",
-          "path": ".ai/repo/adrs/0043-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+          "path": ".ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
         }
       ],
       "claim_refs": [
@@ -2803,7 +2803,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 43
+          "objects": 45
         },
         {
           "name": "knowledge",
@@ -3060,11 +3060,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 279,
+        "mcp_resources": 281,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 278,
+        "objects": 280,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -6997,7 +6997,7 @@
         },
         {
           "id": "rust-coverage-floor",
-          "claim": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
           "status": "guaranteed"
         }
       ],
@@ -8130,6 +8130,11 @@
         ]
       },
       {
+        "id": "session_domain",
+        "title": "The session domain",
+        "features": []
+      },
+      {
         "id": "trace",
         "title": "Traceability",
         "features": [
@@ -8381,7 +8386,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (43)",
+        "title": "adr (45)",
         "features": [
           "knowledge"
         ]
@@ -9303,19 +9308,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1334,
-    "builtin": 96,
-    "declarative": 1238,
-    "modules": 31,
-    "mcp_tools": 93,
-    "mcp_resources": 1271,
-    "http_routes": 95,
-    "cli_commands": 103,
+    "capabilities": 1350,
+    "builtin": 98,
+    "declarative": 1252,
+    "modules": 32,
+    "mcp_tools": 95,
+    "mcp_resources": 1287,
+    "http_routes": 97,
+    "cli_commands": 104,
     "shell_commands": 29,
     "kinds": 29,
-    "objects": 1238,
+    "objects": 1252,
     "by_kind": {
-      "adr": 43,
+      "adr": 45,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -9341,7 +9346,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 167,
+      "test": 179,
       "use-case": 44,
       "workspace": 1
     },

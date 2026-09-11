@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 96,
-      "covered": 92,
+      "required": 98,
+      "covered": 94,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "http",
-      "required": 95,
-      "covered": 92,
+      "required": 97,
+      "covered": 94,
       "missing": 0,
       "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 93,
-      "covered": 90,
+      "required": 95,
+      "covered": 92,
       "missing": 0,
       "waived": 3
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 297,
-      "covered": 287,
+      "required": 303,
+      "covered": 293,
       "missing": 0,
       "waived": 10
     }
@@ -1052,6 +1052,30 @@
       "cases": [
         "repository",
         "this-checkout"
+      ]
+    },
+    {
+      "id": "session_domain.identity",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "session_domain.machine",
+      "module": "session_domain",
+      "kind": "query",
+      "cache": "process, 1 entries, 600s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {

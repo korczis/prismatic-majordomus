@@ -4,7 +4,7 @@ description = "The mesh: the nodes this repository's running server has discover
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 100
+weight = 101
 [extra]
 route = "/docs/cli/mesh/"
 command = "majordomus mesh"
