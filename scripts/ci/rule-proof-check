@@ -19,6 +19,17 @@
 #             that are review-enforced today are recorded in the baseline, so existing debt
 #             blocks nobody and a new blocking rule cannot arrive without proof.
 #
+# On the overlap, because a reader will find it: scripts/ci/reference-check already refuses
+# a path named in any authored document that is not in the tree, and a rule's front matter
+# is prose to it, so today it catches the dangling half too — measured, not assumed. It is
+# kept here for two reasons. Its exemption list is a policy about documents (sessions, ADRs
+# and generated trees are exempt); the moment rules join that list the proof relation would
+# lose its guard silently, which is the one-way dependency this gate exists to refuse. And
+# the diagnosis differs: reference-check says a document names a missing path, which is true
+# of a typo in prose; this says a rule's proof is gone, which is the thing to act on. The
+# `unproven` finding is the half nothing else can express — no other check knows that a
+# blocking rule is supposed to name anything at all.
+#
 # The denominator is read from the tree, so a rule added tomorrow is measured tomorrow and
 # this script never carries a list of what exists.
 #
