@@ -5,17 +5,17 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "114e22b6431c41d013aa76ffbfc1eb556fa005068f33953ef75be1ae9c911902",
+  "fingerprint": "e8cee2cccc02e69256f0f4115d06fb03473132155c2fddfe092e3bb3b34e7d90",
   "route": "/features/",
   "counts": {
-    "features": 19,
-    "features_all": 20,
+    "features": 20,
+    "features_all": 21,
     "featured": 9,
     "providers": 6,
-    "modules": 26,
-    "modules_covered": 17,
+    "modules": 29,
+    "modules_covered": 19,
     "commands": 28,
-    "commands_covered": 27,
+    "commands_covered": 28,
     "kinds": 25,
     "kinds_covered": 22
   },
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 18
+      "features": 19
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 13
+      "features": 14
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 17
+      "features": 18
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 14
+      "features": 15
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 19
+      "features": 20
     }
   ],
   "features": [
@@ -266,7 +266,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 20
+          "objects": 21
         },
         {
           "name": "command",
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 149
+          "objects": 159
         }
       ],
       "rule_refs": [
@@ -528,6 +528,7 @@
       "backlinks": [
         "benchmarks",
         "cockpit",
+        "evidence",
         "interfaces",
         "policy",
         "skills",
@@ -536,11 +537,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 202,
+        "mcp_resources": 213,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 198,
+        "objects": 209,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2459,7 +2460,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 38
+          "objects": 40
         },
         {
           "name": "knowledge",
@@ -2467,7 +2468,7 @@
         },
         {
           "name": "document",
-          "objects": 214
+          "objects": 222
         }
       ],
       "rule_refs": [
@@ -2492,7 +2493,7 @@
           "identity": "majordomus.decision-threshold@1",
           "title": "The decision threshold",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/vendor/majordomus/rules/decision-threshold.v1.md"
         },
         {
@@ -2716,13 +2717,13 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 254,
+        "mcp_resources": 264,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 253,
+        "objects": 263,
         "rules": 4,
-        "enforced_rules": 2,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 2,
         "claims": 8,
@@ -2745,7 +2746,7 @@
       "title": "Rules a machine decides, wired, tested and CI-blocking",
       "short_title": "Doctrine",
       "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
-      "summary": "Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.",
+      "summary": "Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.",
       "status": "stable",
       "weight": 70,
       "featured": true,
@@ -2755,7 +2756,8 @@
       ],
       "audiences": [],
       "modules": [
-        "health"
+        "health",
+        "rules"
       ],
       "commands": [
         "rules",
@@ -2772,7 +2774,9 @@
         "majordomus.doctrine-wiring-integrity",
         "majordomus.enforcement-wiring",
         "majordomus.rule-package-integrity",
-        "project.no-claim-without-test"
+        "project.no-claim-without-test",
+        "project.english-only",
+        "project.finding-carries-reproduce"
       ],
       "docs": [
         "docs/DOCTRINE.md",
@@ -2786,7 +2790,12 @@
         "wiring-reconciliation",
         "vendored-rule-package",
         "rule-resolution",
-        "drift-watch"
+        "drift-watch",
+        "rule-proof-is-named-and-resolves",
+        "rule-exemption-carries-its-reason",
+        "rule-state-is-derived-from-what-ran",
+        "authored-files-are-english",
+        "a-finding-names-how-to-see-it-again"
       ],
       "use_cases": [
         "prove-a-rule-is-enforced",
@@ -2848,6 +2857,43 @@
               "route": "GET /api/v1/health"
             }
           ]
+        },
+        {
+          "id": "rules",
+          "title": "Rules",
+          "description": "What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+          "capabilities": [
+            {
+              "id": "rules.proves",
+              "title": "What this test proves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rule_proves",
+              "route": "GET /api/v1/rules/proves",
+              "cli": "majordomus rules proves"
+            },
+            {
+              "id": "rules.report",
+              "title": "Every rule against the proof there is for it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rules",
+              "resource": "majordomus://rules",
+              "route": "GET /api/v1/rules",
+              "cli": "majordomus rules report"
+            },
+            {
+              "id": "rules.show",
+              "title": "What proves this rule",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rule",
+              "route": "GET /api/v1/rules/rule",
+              "cli": "majordomus rules show"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -2885,7 +2931,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 120
+          "objects": 121
         }
       ],
       "rule_refs": [
@@ -2928,6 +2974,22 @@
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/project/no-claim-without-test.v1.md"
+        },
+        {
+          "id": "project.english-only",
+          "identity": "project.english-only@1",
+          "title": "English only",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/english-only.v1.md"
+        },
+        {
+          "id": "project.finding-carries-reproduce",
+          "identity": "project.finding-carries-reproduce@1",
+          "title": "Every finding carries a reproduce command",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
         }
       ],
       "doc_refs": [
@@ -2975,6 +3037,31 @@
         {
           "id": "drift-watch",
           "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-proof-is-named-and-resolves",
+          "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-exemption-carries-its-reason",
+          "claim": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-state-is-derived-from-what-ran",
+          "claim": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
+          "status": "guaranteed"
+        },
+        {
+          "id": "authored-files-are-english",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "status": "guaranteed"
+        },
+        {
+          "id": "a-finding-names-how-to-see-it-again",
+          "claim": "Every finding a command reports names the command that reproduces it",
           "status": "guaranteed"
         }
       ],
@@ -3204,27 +3291,27 @@
         "use-cases"
       ],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 1,
-        "mcp_resources": 121,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "capabilities": 6,
+        "mcp_tools": 4,
+        "mcp_resources": 123,
+        "http_routes": 6,
+        "cli_paths": 3,
         "commands": 5,
-        "objects": 120,
-        "rules": 5,
-        "enforced_rules": 5,
+        "objects": 121,
+        "rules": 7,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 0,
-        "claims": 7,
+        "claims": 12,
         "use_cases": 4,
         "moments": 31
       },
       "evidence": {
         "claims": {
-          "guaranteed": 7
+          "guaranteed": 12
         },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 2
         }
       }
     },
@@ -3379,7 +3466,7 @@
           "identity": "project.finding-carries-reproduce@1",
           "title": "Every finding carries a reproduce command",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
         }
       ],
@@ -3590,7 +3677,7 @@
         "commands": 4,
         "objects": 0,
         "rules": 7,
-        "enforced_rules": 4,
+        "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
         "claims": 8,
@@ -5407,7 +5494,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 27
+          "objects": 28
         },
         {
           "name": "scope",
@@ -5687,11 +5774,11 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 31,
+        "mcp_resources": 32,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 28,
+        "objects": 29,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -6283,6 +6370,192 @@
       }
     },
     {
+      "id": "evidence",
+      "title": "A claim is proven by a run that happened, not by a file that exists",
+      "short_title": "Evidence",
+      "headline": "Every claim is joined to the execution recorded for its test — the outcome, the commit, the tree, the digest and the command that produces it again — and a run against this commit is never reported as the same thing as a run whose inputs merely have not changed.",
+      "summary": "The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.",
+      "status": "stable",
+      "weight": 175,
+      "featured": false,
+      "areas": [
+        "verification",
+        "governance"
+      ],
+      "audiences": [],
+      "modules": [
+        "evidence"
+      ],
+      "commands": [
+        "evidence"
+      ],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/EVIDENCE.md"
+      ],
+      "adrs": [
+        "adr-0047"
+      ],
+      "claims": [
+        "evidence-proof-is-an-execution",
+        "evidence-currency-is-not-collapsed",
+        "evidence-partial-run-preserves-the-rest",
+        "evidence-navigates-both-ways",
+        "evidence-unsupported-guarantee-is-reported"
+      ],
+      "use_cases": [],
+      "cockpit": [],
+      "web": [],
+      "related": [
+        "benchmarks",
+        "ci",
+        "declare-once"
+      ],
+      "tags": [
+        "evidence",
+        "claims",
+        "tests",
+        "verification",
+        "provenance"
+      ],
+      "route": "/features/evidence/",
+      "source": ".ai/repo/features/evidence.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "evidence",
+          "title": "Evidence",
+          "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "capabilities": [
+            {
+              "id": "evidence.claim",
+              "title": "What proves this claim",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_claim",
+              "route": "GET /api/v1/evidence/claim",
+              "cli": "majordomus evidence claim"
+            },
+            {
+              "id": "evidence.record",
+              "title": "Record a run that happened",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence record"
+            },
+            {
+              "id": "evidence.report",
+              "title": "Every claim against the evidence recorded for it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence",
+              "resource": "majordomus://evidence",
+              "route": "GET /api/v1/evidence",
+              "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.test",
+              "title": "What this test proves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_test",
+              "route": "GET /api/v1/evidence/test",
+              "cli": "majordomus evidence proves"
+            }
+          ]
+        }
+      ],
+      "command_refs": [
+        {
+          "id": "evidence",
+          "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+          "stage": "work",
+          "read_only": false
+        }
+      ],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/EVIDENCE.md",
+          "title": "Evidence — what ran, against which commit, and whether it still proves anything"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0047",
+          "title": "Proof is a recorded execution, and inputs unchanged is not proven",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0047-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "evidence-proof-is-an-execution",
+          "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-currency-is-not-collapsed",
+          "claim": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-partial-run-preserves-the-rest",
+          "claim": "Recording one test's result never erases the evidence recorded for any other test",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-navigates-both-ways",
+          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-unsupported-guarantee-is-reported",
+          "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 3,
+        "mcp_resources": 1,
+        "http_routes": 3,
+        "cli_paths": 4,
+        "commands": 1,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 5,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 5
+        },
+        "modules": {
+          "behaviorally_verified": 1
+        }
+      }
+    },
+    {
       "id": "benchmarks",
       "title": "Every claim about speed is a recorded measurement",
       "short_title": "Benchmarks",
@@ -6519,7 +6792,8 @@
         }
       ],
       "backlinks": [
-        "ci"
+        "ci",
+        "evidence"
       ],
       "counts": {
         "capabilities": 1,
@@ -6638,7 +6912,7 @@
           "identity": "project.tests-run-in-disposable-repos@1",
           "title": "Tests run in disposable repositories",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md"
         },
         {
@@ -6828,7 +7102,8 @@
         }
       ],
       "backlinks": [
-        "benchmarks"
+        "benchmarks",
+        "evidence"
       ],
       "counts": {
         "capabilities": 0,
@@ -6839,7 +7114,7 @@
         "commands": 2,
         "objects": 0,
         "rules": 4,
-        "enforced_rules": 3,
+        "enforced_rules": 4,
         "docs": 2,
         "adrs": 1,
         "claims": 6,
@@ -7312,6 +7587,26 @@
         ]
       },
       {
+        "id": "evidence",
+        "label": "Evidence",
+        "route": "/features/evidence/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "benchmarks",
         "label": "Benchmarks",
         "route": "/features/benchmarks/",
@@ -7405,6 +7700,11 @@
         "features": []
       },
       {
+        "id": "devtask",
+        "title": "Executable development scopes",
+        "features": []
+      },
+      {
         "id": "directories",
         "title": "Directory contracts",
         "features": [
@@ -7422,6 +7722,13 @@
         "id": "environment",
         "title": "Repository environment",
         "features": []
+      },
+      {
+        "id": "evidence",
+        "title": "Evidence",
+        "features": [
+          "evidence"
+        ]
       },
       {
         "id": "executions",
@@ -7497,6 +7804,13 @@
         "features": [
           "interfaces",
           "context"
+        ]
+      },
+      {
+        "id": "rules",
+        "title": "Rules",
+        "features": [
+          "doctrine"
         ]
       },
       {
@@ -7610,7 +7924,9 @@
       {
         "id": "evidence",
         "title": "evidence",
-        "features": []
+        "features": [
+          "evidence"
+        ]
       },
       {
         "id": "finish",
@@ -7751,7 +8067,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (38)",
+        "title": "adr (40)",
         "features": [
           "knowledge"
         ]
@@ -7779,7 +8095,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (149)",
+        "title": "claim (159)",
         "features": [
           "declare-once"
         ]
@@ -7793,7 +8109,7 @@
       },
       {
         "id": "context",
-        "title": "context (27)",
+        "title": "context (28)",
         "features": [
           "context"
         ]
@@ -7812,7 +8128,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (20)",
+        "title": "feature (21)",
         "features": [
           "declare-once"
         ]
@@ -7873,7 +8189,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (120)",
+        "title": "rule (121)",
         "features": [
           "doctrine"
         ]
@@ -8079,7 +8395,7 @@
       "identity": "majordomus.decision-threshold@1",
       "title": "The decision threshold",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/vendor/majordomus/rules/decision-threshold.v1.md"
     },
     {
@@ -8371,11 +8687,19 @@
       "path": ".ai/repo/rules/project/distribution-canonical.v1.md"
     },
     {
+      "id": "project.english-only",
+      "identity": "project.english-only@1",
+      "title": "English only",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/english-only.v1.md"
+    },
+    {
       "id": "project.finding-carries-reproduce",
       "identity": "project.finding-carries-reproduce@1",
       "title": "Every finding carries a reproduce command",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
     },
     {
@@ -8535,7 +8859,7 @@
       "identity": "project.tests-run-in-disposable-repos@1",
       "title": "Tests run in disposable repositories",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md"
     },
     {
@@ -8650,29 +8974,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1237,
-    "builtin": 78,
-    "declarative": 1159,
-    "modules": 26,
-    "mcp_tools": 76,
-    "mcp_resources": 1187,
-    "http_routes": 78,
-    "cli_commands": 91,
+    "capabilities": 1272,
+    "builtin": 87,
+    "declarative": 1185,
+    "modules": 29,
+    "mcp_tools": 84,
+    "mcp_resources": 1215,
+    "http_routes": 86,
+    "cli_commands": 100,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1159,
+    "objects": 1185,
     "by_kind": {
-      "adr": 38,
+      "adr": 40,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 149,
+      "claim": 159,
       "command": 29,
-      "context": 27,
+      "context": 28,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 214,
-      "feature": 20,
+      "document": 222,
+      "feature": 21,
       "implementation": 45,
       "issue": 203,
       "knowledge": 1,
@@ -8682,17 +9006,17 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 120,
+      "rule": 121,
       "scope": 1,
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 153,
+      "test": 156,
       "use-case": 43,
       "workspace": 1
     },
     "providers": 6,
-    "features": 19,
+    "features": 20,
     "web_surfaces": 9
   },
   "valid": true

@@ -72,6 +72,8 @@ pub enum Command {
     Executions(ExecutionsArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
+    /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
+    Rules(RulesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -419,6 +421,62 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus rules`. The rule corpus against the proof there is for it: what each rule
+/// names, whether it is in the tree, whether a runner drives it, whether anything ran, and
+/// whether what ran is older than what it is about.
+///
+/// Distinct from `majordomus doctrine`, which asks whether the repository satisfies a rule
+/// right now. That is a question about the tree; this is a question about the rule.
+pub struct RulesArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `report`, `show` or `proves`. Required: the group runs nothing of its own, so that
+    /// every runnable path here is one a capability declares
+    /// (`.ai/repo/projection-baseline.txt` may only shrink).
+    pub command: RulesCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus rules`.
+pub enum RulesCommand {
+    /// Every rule against the proof there is for it
+    Report {
+        /// Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven)
+        #[arg(long)]
+        state: Option<String>,
+        /// Only rules of this class (blocking, advisory)
+        #[arg(long)]
+        class: Option<String>,
+        /// Only rules of this namespace (project, majordomus)
+        #[arg(long)]
+        namespace: Option<String>,
+        /// Only the rules whose declared class the proof does not support
+        #[arg(long)]
+        findings: bool,
+        /// Exit 10 when a rule declares a class the proof does not support
+        #[arg(long)]
+        check: bool,
+    },
+    /// One rule: what proves it, what it depends on, and what is missing
+    Show {
+        /// The rule id, with or without its version
+        id: String,
+    },
+    /// One test: every rule it proves, and the rules that would be left with none
+    Proves {
+        /// `suite:<case>`, `crate:<binary>`, or the path a rule names it with
+        id: String,
     },
 }
 
@@ -1762,6 +1820,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "proves", "not-a-test"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "rules report",
+        examples: &[ExampleDoc {
+            id: "rules-report-json",
+            title: "Every rule against the proof there is for it",
+            description: "The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.",
+            argv: &["rules", "report", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "rules show",
+        examples: &[ExampleDoc {
+            id: "rules-show-absent",
+            title: "A rule the repository does not declare",
+            description: "A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.",
+            argv: &["rules", "show", "project.no-such-rule"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "rules proves",
+        examples: &[ExampleDoc {
+            id: "rules-proves-case",
+            title: "What a case proves, and what would lose its only proof",
+            description: "The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.",
+            argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
         }],
     },
     CommandExamples {

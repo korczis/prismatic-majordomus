@@ -109,6 +109,18 @@ gates:
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
+  - id: english-only
+    job: structure
+    always: true
+    runs: scripts/ci/english-only-check
+    summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
+
+  - id: finding-reproduce
+    job: structure
+    always: true
+    runs: scripts/ci/finding-reproduce-check
+    summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
+
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
@@ -322,8 +334,8 @@ classes:
   # class, so both apply, and the vendored package under share/ is selected here too —
   # `share` does not name it and a doctrine's proof can go stale exactly like a rule's.
   - id: governance
-    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, test/cases/125_rule_proof.sh]
-    gates: [rule-proof, shell-suite, rust-integration]
+    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/134_governance_gates.sh, apps/majordomus-cli/src/rules/**]
+    gates: [rule-proof, english-only, finding-reproduce, shell-suite, rust-integration]
 
   # the evidence fabric: the ledger of recorded executions, the join that reads it and the
   # gate that ratchets it. A claim's proof is derived from the matrix and the ledger

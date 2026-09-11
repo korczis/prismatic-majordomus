@@ -53,6 +53,7 @@ pub(crate) mod product;
 pub mod quality;
 pub mod release;
 pub mod repository;
+pub mod rules;
 mod scope;
 pub mod server;
 pub mod trace;
@@ -138,6 +139,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         obligations,
         deploy,
         evidence,
+        rules,
         executions,
         peers,
         server,

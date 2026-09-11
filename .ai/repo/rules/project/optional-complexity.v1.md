@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.no-new-nouns@1]
 tags: [design, usability, extensibility]
+
+x-majordomus:
+  reviewed_because: the rule asks whether a mechanism earns its cost, which is a judgement; the mechanical half is already held by project.no-new-nouns and the three vendored integrity rules
 ---
 
 # Rationale

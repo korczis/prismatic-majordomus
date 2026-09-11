@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# english-only-check — the repository writes in one language, and it is English.
+#
+# `project.english-only` says every artifact of this repository is written in English:
+# documents, code, comments, commit messages, the rules themselves. Until this script,
+# nothing decided it. That mattered more than it sounds: this repository is worked on in a
+# language that is not English, several of the people and agents who touch it think in that
+# language, and a paragraph written in it reads as perfectly fine to whoever wrote it and as
+# noise to everyone else. Review catches a document; it does not catch a sentence.
+#
+# What it can actually measure. Detecting a language from prose is a research problem, and a
+# gate that guessed would be a gate nobody trusts. What is decidable is the alphabet: a
+# handful of letters carry diacritics that occur in Czech, Slovak and Polish and never in
+# English, and whole scripts — Cyrillic, Greek, the CJK ranges — are unambiguous on sight.
+# A file containing one of those is not English, whatever else is true of it.
+#
+# That is a partial check and this script says so rather than implying otherwise: English
+# prose with a Czech sentence spelled in ASCII passes, and always will. The rule stays wider
+# than the gate, which is the honest relation between the two — what the gate buys is that
+# the common case, the one that has actually happened here, cannot arrive unnoticed.
+#
+# What is deliberately allowed, and how. This repository's prose uses typographic
+# punctuation — the em dash, the curly apostrophe, the ellipsis — which is allowed by range
+# and never reaches the test. Two other things are allowed, and both are declared with a
+# reason in the allow list beside this script rather than by weakening the test:
+#
+#   name <word>            a proper noun whose spelling is its own: a person, a place, an
+#                          institution, an identifier of a foreign registry. Stripped
+#                          wherever it appears, so a line of English naming one is English.
+#   fixture <path> <why>   a file that uses a non-English string as data, to prove the
+#                          program handles one. A doctest asserting that an identifier's
+#                          local part is opaque bytes has to contain opaque bytes; that is
+#                          the test doing its job, not prose in the wrong language. The
+#                          reason is required, so the exemption is auditable and a file
+#                          cannot acquire one by being added to a list.
+#
+# Neither exempts a sentence. A comment written in another language inside an exempted file
+# is still a finding of the rule; what the fixture exemption says is that this alphabet test
+# cannot tell the two apart in that file, which is a limit stated rather than hidden.
+#
+#   scripts/ci/english-only-check                  report, and fail on new debt
+#   MJ_ROOT=<dir> scripts/ci/english-only-check    measure another tree (the case does)
+#   scripts/ci/english-only-check --write-baseline record today's debt (a deliberate act)
+#   scripts/ci/english-only-check --strict         fail on any finding, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure. Every pipeline
+# below whose last stage may legitimately find nothing — `grep` exits 1 on no match — says
+# `|| true` for itself, so the option catches a real break rather than the empty case.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/english-only-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "english-only-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# How many non-blank lines a list holds. Written once because the obvious spelling is wrong
+# in a way that prints: `grep -c` exits 1 when it counts none, so `grep -vc "^$" || echo 0`
+# prints the count *and* the fallback, and a summary reads "0\n0 rule(s)".
+count_lines() { printf '%s\n' "${1:-}" | grep -c '[^[:space:]]' || true; }
+
+# The subject: what a person in this repository wrote. Generated trees are excluded because
+# they are not authored — a projection carrying a foreign word carries it from its source,
+# and the source is where the finding belongs. Session records are excluded because they
+# quote what was said, and what was said is not always English; that is a record, not an
+# artifact of the repository. Everything else a person edits is in.
+# Selected by extension AND by shebang. The second half is not a nicety: 70 of this
+# repository's tracked files carry no extension and 70 of those are shell scripts, including
+# every gate under scripts/ci/ — this check among them. A selector that reads only
+# extensions would exempt the enforcement layer from the rule it enforces, which is the
+# one-sided shape this whole subsystem exists to refuse. It was written that way first, and
+# measuring it is what caught it.
+files="$( { git ls-files -- \
+      '*.md' '*.rs' '*.sh' '*.yaml' '*.yml' '*.toml' '*.js' '*.css' '*.html' 'justfile'
+    git ls-files | while IFS= read -r f; do
+      case "$f" in *.*) continue ;; esac
+      [ -f "$f" ] || continue
+      head -1 "$f" 2>/dev/null | grep -q '^#!' && printf '%s\n' "$f"
+    done
+  } \
+  | grep -vE '^(site/public/|docs/generated/|site/data/generated/|site/data/registry/|\.ai/repo/sessions/|\.ai/local/)' \
+  | LC_ALL=C sort -u || true)"
+[ -n "$files" ] || { echo "english-only-check: no authored files here; nothing to measure"; exit 12; }
+
+# The letters, as UTF-8 byte sequences, so the scan is a byte scan and never depends on the
+# machine's locale. Czech and Slovak: č ď ě ň ř š ť ů ž and their capitals; Polish: ą ć ę ł
+# ń ó ś ź ż. Whole scripts by their leading bytes: Cyrillic, Greek, CJK, Hangul, Hiragana,
+# Katakana. The list is written once, here, and the message names what was found.
+LETTERS='č|Č|ď|Ď|ě|Ě|ň|Ň|ř|Ř|š|Š|ť|Ť|ů|Ů|ž|Ž|ą|Ą|ć|Ć|ę|Ę|ł|Ł|ń|Ń|ś|Ś|ź|Ź|ż|Ż'
+SCRIPTS='[Ѐ-ӿ]|[Ͱ-Ͽ]|[぀-ヿ]|[一-鿿]|[가-힣]'
+
+ALLOW="$(dirname "$0")/english-only-allow.txt"
+names=""; fixtures=""
+if [ -f "$ALLOW" ]; then
+  names="$(awk '$1 == "name" && NF >= 2 { print $2 }' "$ALLOW" | tr '\n' '|' | sed 's/|$//')"
+  # a fixture without a reason is not a declaration; it is a list entry, which is what this
+  # shape exists to refuse
+  fixtures="$(awk '$1 == "fixture" && NF >= 3 { print $2 }' "$ALLOW" | LC_ALL=C sort -u)"
+  bare="$(awk '$1 == "fixture" && NF < 3 { print $2 }' "$ALLOW" || true)"
+  if [ -n "$bare" ]; then
+    echo "english-only-check: a fixture exemption must say why; these say nothing:" >&2
+    printf '  %s\n' $bare >&2
+    exit 12
+  fi
+fi
+
+findings=""
+for f in $files; do
+  case "
+$fixtures
+" in *"
+$f
+"*) continue ;; esac
+  # strip the allowed names before looking, so a line that is English but for a proper noun
+  # is English
+  hits="$(
+    if [ -n "$names" ]; then sed -E "s/($names)//g" "$f"; else cat "$f"; fi \
+    | grep -nE "$LETTERS|$SCRIPTS" | head -3 || true
+  )"
+  [ -n "$hits" ] || continue
+  first="$(printf '%s' "$hits" | head -1)"
+  line="${first%%:*}"
+  word="$(printf '%s' "$first" | grep -oE "$LETTERS|$SCRIPTS" | head -1)"
+  findings="$findings$f	$line	$word
+"
+done
+
+subjects="$(printf '%s' "$findings" | grep -v '^$' | awk -F'\t' '{print $1}' | LC_ALL=C sort -u || true)"
+
+if [ "$MODE" = write ]; then
+  { echo "# Authored files carrying a letter that does not occur in English: review debt."
+    echo "# Written by scripts/ci/english-only-check --write-baseline. The list may shrink;"
+    echo "# a file not on it that carries one fails the gate. Do not add by hand."
+    printf '%s\n' "$subjects" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "english-only-check: baseline written with $(count_lines "$subjects") file(s)"
+  exit 0
+fi
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
+
+label() { # file -> FAIL or KNOWN
+  [ "$MODE" = strict ] && { printf 'FAIL'; return; }
+  case "
+$known
+" in *"
+$1
+"*) printf 'KNOWN' ;; *) printf 'FAIL' ;; esac
+}
+[ -n "$findings" ] && printf '%s' "$findings" | grep -v '^$' | while IFS="	" read -r file ln word; do
+  printf '%s english-only %-46s carries `%s`, which does not occur in English  [reproduce: scripts/ci/english-only-check]\n' \
+    "$(label "$file")" "$file:$ln" "$word"
+done
+
+count="$(count_lines "$findings")"
+measured="$(count_lines "$files")"
+exempt="$(count_lines "$fixtures")"
+
+if [ "$MODE" = strict ]; then
+  [ "$count" -eq 0 ] && { echo "english-only-check: every authored file is spelled in English ($measured measured, $exempt declared fixtures)"; exit 0; }
+  echo "english-only-check: $count file(s) are not spelled in English (--strict)" >&2
+  exit 10
+fi
+
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$subjects" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$subjects" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+[ -n "$gone" ] && { echo; echo "english-only-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "english-only-check: new debt, not in $BASELINE:" >&2
+  printf '  %s\n' $new >&2
+  echo "  This repository is written in English. Rewrite the passage, or — if the word is a" >&2
+  echo "  proper noun, or a string the file uses as data to prove the program handles one —" >&2
+  echo "  declare it with its reason in scripts/ci/english-only-allow.txt." >&2
+  exit 10
+fi
+echo "english-only-check: no new debt ($(count_lines "$known") file(s) known, $exempt declared fixtures, $measured file(s) measured)"

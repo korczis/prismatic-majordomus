@@ -75,11 +75,51 @@ expect_exit 10 "$MJ" rules list
 expect_grep 'names a category or exit code but no validator'
 rm -f "$P/fixture-cat.v1.md"
 
-# Either mode names a test. A block that names none is enforcement nobody can reproduce.
+# Either executable mode names a test. A block that names none, and gives no reason why it
+# cannot, is enforcement nobody can reproduce.
 prule fixture-untested.v1.md project.fixture-untested blocking 'claims: [fixture]'
 expect_exit 10 "$MJ" rules list
-expect_grep 'x-majordomus names no test'
+expect_grep 'x-majordomus names no test and gives no reviewed_because'
 rm -f "$P/fixture-untested.v1.md"
+
+# ---------------------------------------------------------------- the third mode: review
+# Some rules have no machine expression — the provenance of what was written, whether a
+# mechanism earns its cost. Those may say so, and the reason is the whole declaration:
+# there is no flag beside it, because a flag can be set and a reason cannot be set without
+# writing one. What that buys is that an exemption is a sentence somebody had to defend.
+prule fixture-rev.v1.md project.fixture-rev blocking \
+  'reviewed_because: the rule is about the provenance of code, which no program in this tree can read'
+expect_exit 0 "$MJ" rules list
+expect_grep 'project\.fixture-rev .* review-enforced: the rule is about the provenance'
+expect_exit 0 "$MJ" rules list --json
+expect_grep '"id":"project\.fixture-rev".*"mode":"reviewed"'
+
+# It is a third mode, not a way out of the first two: a rule cannot be dispatched and
+# review-enforced at once, and the loader says which claim contradicts which.
+prule fixture-revbad.v1.md project.fixture-revbad blocking 'validator: fixture' 'category: f' \
+  'exit_code: 12' 'enforced_by: [check]' 'reviewed_because: a reason it has no business having'
+expect_exit 10 "$MJ" rules list
+expect_grep 'a dispatched rule is not review-enforced'
+rm -f "$P/fixture-revbad.v1.md"
+
+# The gate reports it on every run, as a note and never as a failure, and counts it apart:
+# this number going up is governance getting weaker, and a summary that folded it into a
+# total would hide exactly that.
+expect_exit 0 "$CHECK" --strict
+expect_grep 'NOTE rule-proof reviewed .*project\.fixture-rev'
+expect_grep 'declares that a reader enforces it, with its reason'
+
+# And an executable proof always wins, so a rule that acquires a case stops being
+# review-enforced without anyone remembering to delete the declaration.
+prule fixture-rev.v1.md project.fixture-rev blocking \
+  'reviewed_because: the rule is about the provenance of code, which no program in this tree can read' \
+  'tests: [test/cases/01_fixture.sh]'
+expect_exit 0 "$MJ" rules list
+expect_grep 'project\.fixture-rev .* proven by test/cases/01_fixture\.sh'
+expect_exit 0 "$CHECK" --strict
+expect_no_grep 'reviewed .*project\.fixture-rev'
+rm -f "$P/fixture-rev.v1.md"
+expect_exit 0 "$MJ" rules list
 
 # A dispatched rule still needs all four; the second mode did not loosen the first.
 prule fixture-disp.v1.md project.fixture-disp blocking 'validator: fixture' 'tests: [test/cases/01_fixture.sh]'
