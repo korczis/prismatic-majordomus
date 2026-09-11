@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.providers-are-data@1, project.interfaces-are-projections@1]
 tags: [providers, sessions, continuity, capabilities]
+
+x-majordomus:
+  tests: [test/cases/170_provider_lifecycle_declared.sh, test/cases/171_session_observability.sh]
 ---
 
 # Rationale

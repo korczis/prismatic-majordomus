@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.execution-state-is-authoritative@1]
 tags: [session, context, provenance, git]
+
+x-majordomus:
+  tests: [test/cases/127_briefing_freshness.sh]
 ---
 
 # Rationale
