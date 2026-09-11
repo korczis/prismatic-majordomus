@@ -147,7 +147,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/design.md` | `design` | markdown | 7733 | `f30bb7f1f7d70947` |
 | `docs/generated/design.yaml` | `design` | yaml | 89425 | `5f1e5b276d85ce76` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 1830673 | `11aa90321bb0cdaa` |
+| `docs/generated/graph.json` | `graph` | json | 1830673 | `d76f6526230724e5` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `71e561e0eb5fbf61` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `b235d97efff54f98` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `a6458783c48e2be2` |
@@ -237,9 +237,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `fba60ec94ced0f49` |
 | `site/data/registry/design.json` | `site-design` | json | 8204 | `06cd661fe76c7781` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `5a9eb4b9a098bd40` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 61048 | `a255a0683ea9ceec` |
-| `site/data/registry/product.json` | `site-product` | json | 318471 | `f3963060df2e291e` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2665977 | `e7749b2bd3cd8e1d` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 64386 | `f73a3225558d6ed9` |
+| `site/data/registry/product.json` | `site-product` | json | 318882 | `a80b8a2acc400ba4` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2665977 | `1046d2f2d8e17e15` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `840609c69b09d1f7` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `c7422aeb14f1ddcc` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `d955b7757408c4a4` |

@@ -21,3 +21,26 @@ do the work is an exclusion with a reason, never a silent selection; deprecated 
 retired models qualify only when named. The unit tests prove the preference order,
 every reason string, the override semantics and the empty-catalogue answer;
 `test/cases/131_models.sh` proves the same through the command line in text and JSON.
+
+## How to see it
+
+```
+majordomus models route --require vision --min-context 500000
+majordomus models route --model haiku --require vision      # a refused override, with the reason
+curl 'http://127.0.0.1:8741/api/v1/models/route?require=vision'
+bash test/run.sh 131_models
+```
+
+## What it does not cover
+
+The decision does not consider health, load or price — facts this tool cannot verify
+have no seat at the table, and a caller who knows better simply names the model
+outright (and is still checked). Recording which model *actually executed* a
+session's work is the capture adapters' follow-up, not this function's promise.
+
+## Why it exists
+
+An unexplainable router is a black box somebody eventually distrusts and routes
+around, at which point there are two routers. A pure function whose answer carries
+its own reasons can be read, tested and argued with — which is what keeps it the
+only one (ADR 0044).

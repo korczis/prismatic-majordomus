@@ -1,25 +1,13 @@
----
-schema: feature/v1
-id: models
-kind: feature
-title: The models the world offers, declared once and routed with reasons
-short_title: Models
-headline: One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.
-summary: share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.
-status: stable
-weight: 46
-featured: true
-areas: [coordination]
-modules: [models]
-rules: []
-docs: [docs/MODELS.md]
-adrs: [adr-0044]
-claims: [models-one-declaration, models-routing-explains-itself, models-no-secret-fields]
-use_cases: []
-cockpit: [models]
-related: [mesh]
-tags: [models, catalogue, routing]
----
++++
+title = "The models the world offers, declared once and routed with reasons"
+description = "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands."
+weight = 46
+[extra]
+id = "models"
+status = "stable"
+source = ".ai/repo/features/models.md"
++++
+{% raw %}
 
 ## What it does
 
@@ -42,3 +30,4 @@ could hide in (a test holds it). It states no price and no unverified vendor —
 cannot carry provenance stays absent. And it does not yet record which model actually
 executed a session's work; that belongs to the capture adapters, whose schema already
 declares the fields (ADR 0044 names it as the follow-up).
+{% endraw %}

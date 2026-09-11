@@ -32,4 +32,29 @@ convergence, replay drops, restart handling and the eviction bound;
 proves it over a real socket. `scripts/ci/mesh-check` (the `mesh-check` gate) refuses a
 UDP socket outside `src/mesh/` and a second `MeshRegistry` construction site, so the
 one-registry property is machine-held, not remembered.
+
+## How to see it
+
+```
+majordomus mesh nodes                    # the registry, one row per node
+curl http://127.0.0.1:8741/api/v1/mesh/nodes
+scripts/ci/mesh-check                    # the structural half, as CI runs it
+cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::registry
+```
+
+`two_sources_converge_into_one_record` and `a_replay_is_dropped_and_counted` are the
+named unit proofs; `tests/mesh.rs` shows one record surviving a restart over HTTP.
+
+## What it does not cover
+
+The registry does not persist: a server restart forgets what was observed, by design.
+And it does not verify — verification happens in the manager before anything reaches
+the registry; the registry's own promise is convergence and bounds.
+
+## Why it exists
+
+The characteristic defect of discovery subsystems is one peer list per transport until
+the surfaces disagree. One bounded registry, fed through one verification path, is the
+repair — and a gate holds it so the property survives contributors who never read the
+ADR.
 {% endraw %}

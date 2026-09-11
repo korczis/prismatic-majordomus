@@ -27,4 +27,28 @@ schema (`apps/majordomus-cli/src/models/mod.rs`) and refuses any property name t
 smells like a credential — so the schema, not a convention, is what cannot hold a
 secret. `test/cases/131_models.sh` proves the operator-visible half: setting the named
 variable flips the report to "configured" and the value appears nowhere in the output.
+
+## How to see it
+
+```
+majordomus models list                   # "credential configured" / "not configured"
+CASE_KEY=value majordomus models list    # flips the report; the value appears nowhere
+cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib no_field_of_the_catalogue
+```
+
+`test/cases/131_models.sh` greps a canary credential value out of every rendering and
+fails if it ever appears.
+
+## What it does not cover
+
+It does not manage credentials — no storing, no rotation, no validation that the key
+actually works. Presence of the named variable is the entire fact, because it is the
+entire fact this tool can honestly state.
+
+## Why it exists
+
+Credential leaks through listings and diagnostics are the classic failure of
+inventory surfaces. A schema with no field a secret could occupy — held by a test
+that walks the schema, not a convention — moves the property from "everyone is
+careful" to "the type system refuses" (ADR 0044).
 {% endraw %}

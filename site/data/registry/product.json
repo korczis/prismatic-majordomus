@@ -8,12 +8,12 @@
   "fingerprint": "4bd34883b0d5465aaf0f971bf9781ff00637d3cd8b54fd0f3269b76e1e609fdc",
   "route": "/features/",
   "counts": {
-    "features": 19,
+    "features": 21,
     "features_all": 22,
-    "featured": 9,
+    "featured": 11,
     "providers": 6,
     "modules": 29,
-    "modules_covered": 17,
+    "modules_covered": 19,
     "commands": 29,
     "commands_covered": 27,
     "kinds": 26,
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 18
+      "features": 20
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 13
+      "features": 15
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 17
+      "features": 19
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 14
+      "features": 16
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 19
+      "features": 21
     }
   ],
   "features": [
@@ -1806,9 +1806,9 @@
       "short_title": "Mesh",
       "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
       "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
-      "status": "draft",
+      "status": "stable",
       "weight": 45,
-      "featured": false,
+      "featured": true,
       "areas": [
         "coordination"
       ],
@@ -1996,9 +1996,9 @@
       "short_title": "Models",
       "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
       "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
-      "status": "draft",
+      "status": "stable",
       "weight": 46,
-      "featured": false,
+      "featured": true,
       "areas": [
         "coordination"
       ],
@@ -7409,7 +7409,7 @@
         "id": "mesh",
         "label": "Mesh",
         "route": "/features/mesh/",
-        "status": "draft",
+        "status": "stable",
         "surfaces": {
           "cli": true,
           "api": true,
@@ -7429,7 +7429,7 @@
         "id": "models",
         "label": "Models",
         "route": "/features/models/",
-        "status": "draft",
+        "status": "stable",
         "surfaces": {
           "cli": true,
           "api": true,
@@ -7834,12 +7834,16 @@
       {
         "id": "mesh",
         "title": "Mesh",
-        "features": []
+        "features": [
+          "mesh"
+        ]
       },
       {
         "id": "models",
         "title": "Models",
-        "features": []
+        "features": [
+          "models"
+        ]
       },
       {
         "id": "objects",
@@ -8811,6 +8815,14 @@
       "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
     },
     {
+      "id": "project.mesh-is-observation-not-authority",
+      "identity": "project.mesh-is-observation-not-authority@1",
+      "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
+      "class": "blocking",
+      "enforced": false,
+      "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+    },
+    {
       "id": "project.native-cli-documented",
       "identity": "project.native-cli-documented@1",
       "title": "A native command line command exists only with its documentation and its executable examples",
@@ -9111,7 +9123,7 @@
       "workspace": 1
     },
     "providers": 6,
-    "features": 19,
+    "features": 21,
     "web_surfaces": 9
   },
   "valid": true

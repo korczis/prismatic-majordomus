@@ -34,4 +34,30 @@ starts nothing. `apps/majordomus-cli/tests/mesh.rs` proves both directions over 
 socket: a disabled declaration answers with its reason and creates no identity file,
 and an enabled one activates before the first request lands. ADR 0043 records the
 decision and answers the repository's "Intentionally Absent" list point by point.
+
+## How to see it
+
+```
+majordomus mesh status          # inactive, with the reason, in this repository
+majordomus mesh doctor          # the declaration check names the committed default
+grep enabled .ai/repo/mesh/majordomus.yaml
+```
+
+`apps/majordomus-cli/tests/mesh.rs` (`a_disabled_declaration_opens_nothing_and_says_why`)
+is the executable form: a server over a disabled declaration answers `active: false`
+with the reason and creates no identity file.
+
+## What it does not cover
+
+It does not police what an *enabled* mesh discloses — that is the protocol's bound
+(no secrets, no paths, digests only) and the trust policy's business. And it cannot
+stop an operator from enabling the mesh on a network they should not; it only makes
+that a visible, committed decision.
+
+## Why it exists
+
+The repository's security posture is "nothing leaves the machine", and a discovery
+subsystem is exactly the kind of feature that erodes such a posture silently. Making
+absence the default and enablement a reviewed commit keeps the posture true until a
+person decides otherwise (ADR 0043).
 {% endraw %}

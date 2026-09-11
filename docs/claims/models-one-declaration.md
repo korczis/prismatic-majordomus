@@ -22,3 +22,26 @@ property a person verifies by reading the file. `test/cases/131_models.sh` prove
 operator path — one declaration rendered, presence-only credentials, an empty
 catalogue as an answer. ADR 0044 records the decision and why the word "provider"
 stays spent.
+
+## How to see it
+
+```
+majordomus models list                   # the whole catalogue, one declaration
+curl http://127.0.0.1:8741/api/v1/models
+grep -c "id:" share/models.yaml          # the same count the surfaces show
+bash test/run.sh 131_models
+```
+
+## What it does not cover
+
+The catalogue does not verify that a declared model still exists at its vendor — it
+is reviewed data with stated provenance, not a live probe (ADR 0032 keeps network
+clients out of the crate). Staleness is visible in the file's provenance header,
+where it can be judged.
+
+## Why it exists
+
+Model names scattered through prompts, configs and workers' heads are a
+hand-maintained truth per consumer — the exact shape this repository refuses
+everywhere else. One declared file, projected everywhere, makes adding or retiring
+a model one reviewable edit (ADR 0044).

@@ -33,4 +33,30 @@ keys, spoofing an identity is a key-possession problem. The integration test pro
 forged envelope is a counted refusal over a real socket. The rule
 `project.mesh-is-observation-not-authority` holds the boundaries, and the `mesh-check`
 gate enforces its structural half.
+
+## How to see it
+
+```
+majordomus mesh nodes --format json | jq '.nodes[].trust'   # every verdict, labelled
+majordomus check --rule project.mesh-is-observation-not-authority
+cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::trust
+```
+
+`deny_unknown_observes_and_never_trusts` and
+`a_key_change_under_one_node_id_is_rejected` are the named unit proofs; the
+integration test registers a forged envelope and reads the refusal.
+
+## What it does not cover
+
+It does not authenticate the HTTP surface itself — that surface is read-only and
+unauthenticated by the repository's standing design, on loopback by default. And it
+does not promise future remote operations will be safe; it promises they cannot
+inherit authorization from discovery.
+
+## Why it exists
+
+Presence quietly becoming permission is how LAN discovery becomes an attack surface.
+Naming the boundary as a blocking rule — and defaulting trust to "nobody" — keeps
+"who exists" and "who may do what" as different questions with different answers
+(ADR 0043).
 {% endraw %}

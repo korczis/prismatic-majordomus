@@ -368,6 +368,24 @@
       "status": "featured"
     },
     {
+      "id": "feature:mesh",
+      "kind": "feature",
+      "label": "Mesh",
+      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "route": "/features/mesh/",
+      "source": ".ai/repo/features/mesh.md",
+      "status": "featured"
+    },
+    {
+      "id": "feature:models",
+      "kind": "feature",
+      "label": "Models",
+      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
+      "route": "/features/models/",
+      "source": ".ai/repo/features/models.md",
+      "status": "featured"
+    },
+    {
       "id": "feature:planning",
       "kind": "feature",
       "label": "Planning",
@@ -676,6 +694,24 @@
       "route": "/registry/modules/health/",
       "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:mesh",
+      "kind": "module",
+      "label": "mesh",
+      "summary": "Mesh",
+      "route": "/registry/modules/mesh/",
+      "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "status": "experimental"
+    },
+    {
+      "id": "module:models",
+      "kind": "module",
+      "label": "models",
+      "summary": "Models",
+      "route": "/registry/modules/models/",
+      "source": "apps/majordomus-cli/src/capability/builtin/models.rs",
+      "status": "experimental"
     },
     {
       "id": "module:objects",
@@ -1425,6 +1461,36 @@
       "kind": "exposed_through"
     },
     {
+      "source": "feature:mesh",
+      "target": "feature:coordination",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:mesh",
+      "target": "module:mesh",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:mesh",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:models",
+      "target": "feature:mesh",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:models",
+      "target": "module:models",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:models",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
       "source": "feature:planning",
       "target": "command:plan",
       "kind": "made_of"
@@ -2000,6 +2066,46 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:mesh",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:mesh",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:models",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:objects",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2176,8 +2282,8 @@
     }
   ],
   "metadata": {
-    "nodes": 91,
-    "edges": 275,
+    "nodes": 95,
+    "edges": 289,
     "acyclic": false,
     "truncated": false
   },

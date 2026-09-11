@@ -1,25 +1,13 @@
----
-schema: feature/v1
-id: mesh
-kind: feature
-title: Running instances find each other, and prove who they are
-short_title: Mesh
-headline: A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.
-summary: A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.
-status: stable
-weight: 45
-featured: true
-areas: [coordination]
-modules: [mesh]
-rules: [project.mesh-is-observation-not-authority]
-docs: [docs/MESH.md]
-adrs: [adr-0043]
-claims: [mesh-observation-not-authority, mesh-one-registry, mesh-off-by-default]
-use_cases: []
-cockpit: [mesh]
-related: [coordination]
-tags: [mesh, discovery, network, security]
----
++++
+title = "Running instances find each other, and prove who they are"
+description = "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state."
+weight = 45
+[extra]
+id = "mesh"
+status = "stable"
+source = ".ai/repo/features/mesh.md"
++++
+{% raw %}
 
 ## What it does
 
@@ -45,3 +33,4 @@ sends nothing until a person commits `enabled: true`, advertises no secret, no p
 no repository content (repositories travel as digests), and persists nothing but the one
 identity file under the user's state directory — the registry is process memory and dies
 with the server.
+{% endraw %}
