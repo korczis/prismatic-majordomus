@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 52
+weight = 54
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `39d3854ae74f`.
+Generated from canonical inputs `c47ddde7ec45`.
 
 ## Controlled budget
 
@@ -45,6 +45,8 @@ publication path itself. `scripts/pages paths` prints this list and the workflow
 held to it.
 
 - `.ai/**`
+- `.ai/repo/evidence-baseline.txt`
+- `.ai/repo/evidence/**`
 - `.envrc`
 - `.githooks/**`
 - `.github/workflows/pages.yml`
@@ -62,7 +64,10 @@ held to it.
 - `assets/**`
 - `bin/**`
 - `docs/**`
+- `docs/CLAIMS.yaml`
 - `docs/DESIGN_SYSTEM.md`
+- `docs/EVIDENCE.md`
+- `docs/claims/**`
 - `docs/generated/**`
 - `examples/**`
 - `lib/**`
@@ -71,6 +76,7 @@ held to it.
 - `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
+- `scripts/evidence-check`
 - `scripts/generate-site-data`
 - `scripts/github-sync`
 - `scripts/lib/**`

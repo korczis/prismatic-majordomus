@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 82,
-      "covered": 79,
+      "required": 86,
+      "covered": 82,
       "missing": 0,
-      "waived": 3
+      "waived": 4
     },
     {
       "scope": "http",
-      "required": 82,
-      "covered": 79,
+      "required": 85,
+      "covered": 82,
       "missing": 0,
       "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 80,
-      "covered": 77,
+      "required": 83,
+      "covered": 80,
       "missing": 0,
       "waived": 3
     },
@@ -33,10 +33,10 @@
     },
     {
       "scope": "total",
-      "required": 257,
-      "covered": 248,
+      "required": 267,
+      "covered": 257,
       "missing": 0,
-      "waived": 9
+      "waived": 10
     }
   ],
   "capabilities": [
@@ -350,6 +350,53 @@
       "http": "covered",
       "cases": [
         "default"
+      ]
+    },
+    {
+      "id": "evidence.claim",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-claim"
+      ]
+    },
+    {
+      "id": "evidence.record",
+      "module": "evidence",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
+      "id": "evidence.report",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "findings"
+      ]
+    },
+    {
+      "id": "evidence.test",
+      "module": "evidence",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-test"
       ]
     },
     {

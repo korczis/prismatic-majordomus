@@ -1,6 +1,6 @@
 # majordomus-covers: none
 # The typed session domain, through the real executable, against a repository this case
-# makes rather than against the one in the checkout (ADR 0044).
+# makes rather than against the one in the checkout (ADR 0047).
 #
 # What is proved here:
 #
@@ -193,7 +193,7 @@ serve_down
 
 # ---------------------------------------------------------------- additive
 # Nothing this domain adds wrote anything. The shell tool still owns the lifecycle, and the
-# open record this case planted is exactly as it was planted (ADR 0044).
+# open record this case planted is exactly as it was planted (ADR 0047).
 [ -d .ai/local/state/sessions-closing ] \
   && { echo "    the read path created a claim directory"; exit 1; }
 grep -q '^session_id: s-20260910205542-e2a6$' .ai/local/state/sessions-open/01Bv2gJsf.yaml \

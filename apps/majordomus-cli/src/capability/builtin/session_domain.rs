@@ -30,7 +30,7 @@
 //! and `lifecycle.*` (session observability) are being added in the same week by two other
 //! workers, and a third projection over the same store would be this subsystem's own
 //! favourite defect committed by the module written to stop it. What this module adds is
-//! the domain those projections should eventually read from; ADR 0044 records that
+//! the domain those projections should eventually read from; ADR 0047 records that
 //! repointing as a step of the cutover, not of this change.
 //!
 //! ```
@@ -39,7 +39,7 @@
 //! let module = session_domain::module();
 //! let ids: Vec<&str> = module.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 //! assert_eq!(ids, ["session_domain.machine", "session_domain.identity"]);
-//! // every one of them reads: the domain's write path reaches no surface (ADR 0044)
+//! // every one of them reads: the domain's write path reaches no surface (ADR 0047)
 //! assert!(module.capabilities.iter().all(|e| e.capability.kind.is_read_only()));
 //! ```
 
@@ -70,9 +70,9 @@ pub const IDENTITY_URI: &str = "majordomus://session/identity";
 ///
 /// // the report is the machine plus one citation; the machine itself is derived from the
 /// // types and carries no second list
-/// let report = MachineReport { machine: Machine::describe(), decision: "adr-0044".into() };
+/// let report = MachineReport { machine: Machine::describe(), decision: "adr-0047".into() };
 /// assert!(report.machine.transitions.iter().any(|t| !t.moves_state), "a checkpoint is an event");
-/// assert!(report.decision.contains("0044"));
+/// assert!(report.decision.contains("0047"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct MachineReport {
@@ -119,7 +119,7 @@ fn machine(_: &Context, _: Empty) -> Result<MachineReport, CapabilityError> {
     Ok(MachineReport {
         machine: Machine::describe(),
         decision: ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md \
-                   and .ai/repo/adrs/0044-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md"
+                   and .ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md"
             .to_string(),
     })
 }
@@ -249,7 +249,7 @@ mod tests {
                 Some(route)
             );
             // every capability of this module reads; the domain's write path is library
-            // API and reaches no surface (ADR 0044)
+            // API and reaches no surface (ADR 0047)
             assert!(c.kind.is_read_only() && c.kind.is_executable());
         }
     }

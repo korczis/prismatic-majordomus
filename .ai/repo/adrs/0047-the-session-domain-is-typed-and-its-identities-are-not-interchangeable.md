@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0044
+id: adr-0047
 kind: adr
 title: The session domain is typed, its identities are not interchangeable, and closing is exactly once
 status: proposed

@@ -209,7 +209,7 @@ pub enum StoreError {
     /// refused rather than allowed to produce a second writer for one record.
     #[error(
         "the session domain's write path is not enabled in this build path; \
-         construct the store with SessionStore::writable (ADR 0044: the shell keeps the writes \
+         construct the store with SessionStore::writable (ADR 0047: the shell keeps the writes \
          until the cutover)"
     )]
     NotWritable,
@@ -218,7 +218,7 @@ pub enum StoreError {
 /// The stores of one checkout.
 ///
 /// Reading needs no permission. Writing needs [`SessionStore::writable`], which is the
-/// flag ADR 0044 promised: while `lib/session.sh` owns the lifecycle, nothing that is
+/// flag ADR 0047 promised: while `lib/session.sh` owns the lifecycle, nothing that is
 /// merely *served* can write a session record, and a caller that has not said out loud
 /// that it means to is refused by [`StoreError::NotWritable`].
 ///
@@ -253,7 +253,7 @@ impl SessionStore {
     }
 
     /// A store that may write. Not reachable from any surface in this change: the cutover
-    /// (ADR 0044) is what routes `majordomus session close` through it.
+    /// (ADR 0047) is what routes `majordomus session close` through it.
     ///
     /// ```
     /// use majordomus_cli::session::SessionStore;

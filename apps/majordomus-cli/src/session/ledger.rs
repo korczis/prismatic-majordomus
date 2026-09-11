@@ -33,7 +33,7 @@
 //! A database would add a binary file to a store whose value is partly that a person can
 //! `tail -f` it, a second thing to migrate at cutover, a locking model that behaves no
 //! better than `flock` over a network filesystem, and a schema that would immediately
-//! become a second account of `share/events.yaml`. It is refused, and ADR 0044 records the
+//! become a second account of `share/events.yaml`. It is refused, and ADR 0047 records the
 //! refusal so that it is a decision rather than an omission.
 //!
 //! # The vocabulary is not this module's

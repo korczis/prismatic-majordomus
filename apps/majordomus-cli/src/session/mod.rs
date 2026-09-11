@@ -23,7 +23,7 @@
 //! It is **additive**. The shell keeps every write it has. Nothing here changes the
 //! behaviour of the running lifecycle: the projections are read-only queries, and the write
 //! path ([`SessionStore::close`]) exists, is tested, and is reachable only through
-//! [`SessionStore::writable`] — a constructor no surface calls. ADR 0044 records the cutover
+//! [`SessionStore::writable`] — a constructor no surface calls. ADR 0047 records the cutover
 //! and its order. Four workers are editing `lib/*.sh` as this is written, and a cutover in
 //! the same change would be a merge whose conflicts are semantic rather than textual, in the
 //! one subsystem where a wrong merge is invisible until somebody resumes from a record that
@@ -49,7 +49,7 @@
 //!
 //! **[Events](ledger).** Typed, over the ledger that already exists, against the vocabulary
 //! `share/events.yaml` already declares. No second store: locked append-only JSONL meets
-//! concurrency, corruption detection and recovery, and ADR 0044 records why a database was
+//! concurrency, corruption detection and recovery, and ADR 0047 records why a database was
 //! refused rather than merely not chosen.
 //!
 //! # Freshness is consumed, not restated
