@@ -1580,6 +1580,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/development-semantics-check",
+        "kind": "file",
+        "label": "development-semantics-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/development-semantics-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/generate-site-data",
         "kind": "file",
         "label": "generate-site-data",
@@ -2941,6 +2949,31 @@
             "agents",
             "governance",
             "process"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "label": "adr-0040",
+        "summary": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0040",
+        "source": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.development-semantics-are-canonical",
+            "rule:project.rust-canonical-declaration",
+            "file:docs/DEVELOPMENT_RUNTIME.md",
+            "file:scripts/development-semantics-check"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime",
+            "governance"
           ]
         }
       },
@@ -7827,6 +7860,14 @@
         "source": "docs/COCKPIT.md"
       },
       {
+        "id": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "label": "docs/COCKPIT_IDE_AUDIT.md",
+        "summary": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT_IDE_AUDIT.md",
+        "source": "docs/COCKPIT_IDE_AUDIT.md"
+      },
+      {
         "id": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "label": "docs/COMMANDS.md",
@@ -7873,6 +7914,14 @@
         "summary": "The design system — one declaration, every surface",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
         "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "id": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "label": "docs/DEVELOPMENT_RUNTIME.md",
+        "summary": "The development runtime",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDEVELOPMENT_RUNTIME.md",
+        "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -25431,6 +25480,29 @@
         }
       },
       {
+        "id": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "label": "project.development-semantics-are-canonical@1",
+        "summary": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.development-semantics-are-canonical%401",
+        "source": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-canonical-declaration@1",
+            "project.interfaces-are-projections@1",
+            "project.commands-are-projections@1"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "label": "project.diagnostics-decide-the-exit@1",
@@ -26330,6 +26402,27 @@
             "coordination",
             "derived",
             "gates"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "kind": "rule",
+        "label": "project.the-server-sees-the-current-tree@1",
+        "summary": "A long-lived process serves the repository as it is, never as it was when it started",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-server-sees-the-current-tree%401",
+        "source": ".ai/repo/rules/project/the-server-sees-the-current-tree.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-hot-path@1"
+          ],
+          "tags": [
+            "rust",
+            "mcp",
+            "server",
+            "freshness"
           ]
         }
       },
@@ -28051,6 +28144,13 @@
         "source": "test/cases/123_case_bound.sh"
       },
       {
+        "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "label": "test/cases/128_the_subset_is_a_subset.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F128_the_subset_is_a_subset.sh",
+        "source": "test/cases/128_the_subset_is_a_subset.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/129_executable_issues.sh",
         "kind": "test",
         "label": "test/cases/129_executable_issues.sh",
@@ -28091,6 +28191,13 @@
         "label": "test/cases/14_wiring_dispatcher.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F14_wiring_dispatcher.sh",
         "source": "test/cases/14_wiring_dispatcher.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
+        "kind": "test",
+        "label": "test/cases/150_server_sees_the_current_tree.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F150_server_sees_the_current_tree.sh",
+        "source": "test/cases/150_server_sees_the_current_tree.sh"
       },
       {
         "id": "majordomus://test/test/cases/15_command_surface.sh",
@@ -33238,6 +33345,31 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0040",
+        "target": "file:scripts/development-semantics-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -36948,6 +37080,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/COMMANDS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -36974,6 +37111,11 @@
       },
       {
         "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42658,6 +42800,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.commands-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43158,6 +43320,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-server-sees-the-current-tree@1",
+        "target": "majordomus://rule/project.rust-hot-path@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-version-is-measured@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43618,6 +43790,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/129_executable_issues.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -43644,6 +43821,11 @@
       },
       {
         "source": "majordomus://test/test/cases/14_wiring_dispatcher.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47189,8 +47371,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1445,
-      "edges": 3264,
+      "nodes": 1453,
+      "edges": 3279,
       "acyclic": true,
       "truncated": false
     }

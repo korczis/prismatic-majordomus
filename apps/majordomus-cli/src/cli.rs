@@ -761,7 +761,7 @@ pub enum Transport {
 }
 
 /// Where and how the repository is read; shared by every command that reads it.
-#[derive(Debug, Args, Default)]
+#[derive(Debug, Args, Default, Clone)]
 pub struct RepoArgs {
     /// Start the search for the repository root here (default: the current directory)
     #[arg(long, value_name = "PATH", global = true)]
