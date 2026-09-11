@@ -1,0 +1,227 @@
+/* The shell: the chrome both first-party surfaces render, written once as `.mj-*` classes
+   and imported by both Tailwind entry points (site/tailwind.css,
+   share/cockpit/src/cockpit.css) beside base.css and primitives.css.
+
+   Where primitives.css holds the components *inside* a page — a badge, a table, a card, a
+   code block — this file holds the frame around it: the body, the skip link, the top bar
+   and its brand lockup, the primary navigation, the page head, the content container, the
+   breadcrumb, the footer, and the controls the bar carries.
+
+   The composition is the published site's. ADR 0036 made the site the design reference and
+   this file is the second half of that decision: until it existed the two surfaces
+   resolved the same *values* through share/design/theme.css and then composed them
+   differently — the site out of Flowbite utilities written into 86 templates, the Cockpit
+   out of 76 private classes in its own stylesheet — so one product had two designs. Every
+   rule below is the `@apply` composition of exactly the utilities the site's templates
+   emitted, so adopting it changed no pixel of the site and gave the Cockpit the site's
+   chrome.
+
+   Nothing here chooses a value. Every colour is a role — through the Flowbite synonyms
+   share/design/theme.css declares (`text-heading` is `--mj-fg`, `bg-neutral-primary` is
+   `--mj-bg`) — and every size is Tailwind's own step or one of the named scale. A surface
+   keeps in its own stylesheet only what it alone has. */
+
+@layer components {
+  /* ------------------------------------------------------------------ the page */
+
+  /* The body of a first-party page. The site's type size is the browser's; the Cockpit's
+     base layer sets `text-dense` on `body` on purpose — share/design/tokens.yaml names
+     13.5px "the body text of a control plane" — and that declared decision is left where
+     it is declared rather than undone here. */
+  .mj-body {
+    @apply min-h-screen bg-neutral-primary text-body antialiased;
+  }
+
+  /* Out of the way until the keyboard reaches it, and then the first thing on the page. */
+  .mj-skip {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50;
+    @apply focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white;
+  }
+
+  /* The one measure every full-width band is centred in, and the padding it keeps at each
+     breakpoint. A band is the wrapper; this is what sits inside it. */
+  .mj-container {
+    @apply mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8;
+  }
+
+  /* ----------------------------------------------------------------- the top bar */
+
+  .mj-topbar {
+    @apply sticky top-0 z-20 w-full border-b border-default bg-neutral-primary;
+  }
+  /* Wraps rather than overflows: at the narrowest audited width the brand, the navigation
+     and the controls do not fit on one line, and a surface that scrolls sideways in a
+     split pane is worse than one that is two lines tall. */
+  .mj-topbar-inner {
+    @apply mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4;
+  }
+  /* The controls at the end of the bar: the theme toggle, a link out, the menu button.
+     `md:order-2` puts them after the navigation in source order and before it on screen. */
+  .mj-topbar-actions {
+    @apply flex items-center gap-2 md:order-2;
+  }
+
+  /* ------------------------------------------------------------------- the brand */
+
+  /* The mark is the canonical one under share/design/brand/, inlined by each surface from
+     its generated copy; it draws in currentColor, so it is the text colour of the lockup
+     in either theme. */
+  .mj-brand {
+    @apply flex items-center gap-2.5;
+  }
+  .mj-brand-mark {
+    @apply inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full;
+  }
+  .mj-brand-name {
+    @apply self-center whitespace-nowrap text-xl font-semibold text-heading;
+  }
+  /* What follows the name and is dropped first when the bar is narrow: the version on the
+     site, the surface's name in the Cockpit. */
+  .mj-brand-suffix {
+    @apply hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline;
+  }
+
+  /* ------------------------------------------------------- the primary navigation */
+
+  /* The site's horizontal navigation, collapsed behind the menu button below `md`. The
+     Cockpit's navigation is a sidebar and is its own; what the two share is the bar
+     around them, the brand in it and the controls at its end. */
+  .mj-mainnav {
+    @apply hidden w-full min-w-0 md:order-1 md:block md:w-auto;
+  }
+  .mj-mainnav-list {
+    @apply mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium;
+    @apply md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0;
+  }
+  .mj-mainnav-link {
+    @apply block rounded px-3 py-2;
+  }
+  /* The entry the reader is on states it and stops offering itself: no hover ground, no
+     hover colour, because there is nowhere to go. */
+  .mj-mainnav-link:not(.mj-mainnav-link--current) {
+    @apply text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand;
+  }
+  .mj-mainnav-link--current {
+    @apply text-fg-brand;
+  }
+  /* The trigger of a group: a link that opens a menu instead of going somewhere. Hidden
+     below `md`, where the group's members are listed flat under a heading rather than
+     behind a hover. */
+  .mj-mainnav-trigger {
+    @apply hidden w-full items-center justify-between rounded px-3 py-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto;
+  }
+  .mj-mainnav-trigger:not(.mj-mainnav-link--current) {
+    @apply text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand;
+  }
+  .mj-mainnav-caret {
+    @apply ms-1.5 h-3 w-3;
+  }
+
+  /* A menu hung off a trigger. */
+  .mj-menu {
+    @apply z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg;
+  }
+  .mj-menu-list {
+    @apply p-2 text-sm font-medium text-body;
+  }
+  .mj-menu-link {
+    @apply inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading;
+  }
+  .mj-menu-link--current {
+    @apply text-fg-brand;
+  }
+  /* The same group, named rather than hovered, on a viewport with no hover to offer. */
+  .mj-menu-heading {
+    @apply mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle;
+  }
+
+  /* -------------------------------------------------------------- the page head */
+
+  /* The band the page announces itself in: the trail, the title, the one line under it. */
+  .mj-page-band {
+    @apply border-b border-default bg-neutral-primary-soft;
+  }
+  .mj-page-head {
+    @apply mb-5;
+  }
+  /* A heading can be an identity — `document.docs/EXTRACTION_REPORT.md` — and an identity
+     has no spaces to break at, so it breaks anywhere rather than widening the page. */
+  .mj-page-title {
+    @apply mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl;
+  }
+  .mj-page-subtitle {
+    @apply mt-3 max-w-3xl break-words text-lg text-body;
+  }
+
+  /* ------------------------------------------------------------- the breadcrumb */
+
+  .mj-crumbs-nav {
+    @apply flex;
+  }
+  /* The separator is markup — one `<li aria-hidden="true">/</li>` between the crumbs —
+     rather than a `::before`, so a screen reader is never read a slash and the two
+     surfaces emit the same trail. */
+  .mj-crumbs {
+    @apply inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2;
+  }
+  .mj-crumb {
+    @apply inline-flex items-center;
+  }
+  .mj-crumb-link {
+    @apply inline-flex items-center font-medium text-body hover:text-fg-brand;
+  }
+  .mj-crumb-current {
+    @apply font-medium text-heading;
+  }
+
+  /* ----------------------------------------------------------------- the footer */
+
+  .mj-footer {
+    @apply border-t border-default bg-neutral-primary-soft;
+  }
+  .mj-footer-inner {
+    @apply mx-auto w-full max-w-screen-xl p-4 md:py-8;
+  }
+  .mj-footer-row {
+    @apply sm:flex sm:items-center sm:justify-between;
+  }
+  .mj-footer-brand {
+    @apply mb-4 flex items-center gap-2.5 sm:mb-0;
+  }
+  .mj-footer-brand-name {
+    @apply self-center text-lg font-semibold text-heading;
+  }
+  .mj-footer-links {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6;
+  }
+  .mj-footer-rule {
+    @apply my-6 border-default sm:mx-auto lg:my-8;
+  }
+  .mj-footer-note {
+    @apply block text-sm text-body sm:text-center;
+  }
+
+  /* -------------------------------------------------------- the bar's own controls */
+
+  /* An action in the chrome: a link out, a form's submit, a filter's apply. */
+  .mj-action {
+    @apply rounded-base border border-default px-3 py-2 text-sm font-medium text-heading;
+    @apply hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary;
+  }
+  .mj-theme-toggle {
+    @apply rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium;
+    @apply focus:outline-none focus:ring-4 focus:ring-neutral-tertiary;
+  }
+  /* Both icons ship; the theme script shows the one that offers the other theme. */
+  .mj-theme-icon {
+    @apply hidden h-5 w-5;
+  }
+  .mj-menu-toggle {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body;
+    @apply hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden;
+  }
+  .mj-menu-toggle-icon {
+    @apply h-6 w-6;
+  }
+}

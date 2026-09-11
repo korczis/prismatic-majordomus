@@ -19,7 +19,8 @@
 //!   per theme (`DesignSystem::resolve`), and which files each status's text, ground and
 //!   border together — so a status's parts are known to belong to one another; and
 //! - **the primitives that consume it** — `share/design/primitives.css`,
-//!   `share/design/base.css` and `share/cockpit/src/cockpit.css`, the stylesheets a person
+//!   `share/design/base.css`, `share/design/shell.css` and
+//!   `share/cockpit/src/cockpit.css`, the stylesheets a person
 //!   writes over the tokens. A rule that sets `color:` and `background:` together states a
 //!   pair outright. A rule that sets only a colour states a foreground that lands on
 //!   whatever ground a container gave it, so it is measured against every ground a
@@ -82,6 +83,7 @@ pub const MINIMUM_NON_TEXT: f64 = 3.0;
 pub const CONSUMERS: &[&str] = &[
     "design/primitives.css",
     "design/base.css",
+    "design/shell.css",
     "cockpit/src/cockpit.css",
 ];
 
