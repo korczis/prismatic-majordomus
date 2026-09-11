@@ -52,6 +52,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
+| `/cockpit/board` | who else is attached to this checkout's shared server, what each of them claimed, the collisions the server computes between those claims, and where this checkout's server and every other checkout's stands | `peers.list`, `server.status` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
@@ -313,9 +314,28 @@ disposable repository:
 - repository content reaches the page as text and never as markup,
 - serving every page rebuilds nothing canonical.
 
+`apps/majordomus-cli/tests/cockpit_board.rs` runs the same kind of server for the board,
+and attaches its peers the way a client does — `initialize` over MCP at `/mcp`, then
+`majordomus_announce` — rather than planting them:
+
+- a session that attaches and claims ground is named on the page, by the name its own
+  `initialize` gave, with what it claimed,
+- a session that claimed nothing is shown as one, and a departed session keeps its claim,
+- two sessions whose claims meet are raised as a collision naming both of them,
+- the page shows where this checkout's server stands, from the lease the answering process
+  itself holds,
+- the board is reached from every page, because it declares itself an area rather than
+  being listed anywhere,
+- a claim and an intent reach the page as text and never as markup.
+
+`test/cases/125_the_cockpit_shows_the_board.sh` proves the same end to end at the shell
+level, against a server it starts, and proves that none of it wrote to the repository.
+
 The unit tests in `src/cockpit/` cover the escaping (both contexts), the void elements, the
-status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
-the navigation being the registry's rather than a list.
+status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, the
+navigation being the registry's rather than a list, and — for the board — that every
+standing wears a status word the design system files, and that the near side of a collision
+is resolved out of the same answer rather than guessed.
 
 ## What it deliberately does not do
 

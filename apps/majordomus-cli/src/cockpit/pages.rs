@@ -21,7 +21,7 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
-use crate::peers::{Overlap, Peer};
+use crate::peers::{Announcement, Overlap, Peer};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -4203,28 +4203,41 @@ fn ago(seconds: u64) -> String {
     }
 }
 
-/// Which listed peer holds the near side of an overlap.
+/// Every claim a peer is holding, in the board's own order.
+///
+/// `Peer::announcement` is the most recent one and would be the easy thing to render; it is
+/// the wrong thing. One connection may be doing several things at once — a session that
+/// fans work out to subagents shares its MCP session with all of them — so a peer holds
+/// several claims, and a board that shows the newest hides the rest. That is the failure
+/// this page exists to prevent, and rendering the list is how it does not repeat it.
+fn claims_of(peer: &Peer) -> &[Announcement] {
+    &peer.claims
+}
+
+/// Which listed peer holds the near side of an overlap, and which of its claims it is.
 ///
 /// `peers.list` reports each colliding pair once and names only the far peer; the claims
 /// on the near side arrive as paths under `yours` with nobody's name on them. The near
-/// peer is resolved out of the same answer — it is the peer whose own announcement holds
-/// every one of those claims — and never by comparing two paths, which is the server's
-/// judgement and not this page's. A claim no listed announcement holds resolves to
-/// `None`, and the collision is shown with one side unnamed rather than with a guess.
+/// peer is resolved out of the same answer — it is the peer one of whose own claims holds
+/// every one of those paths — and never by comparing two paths, which is the server's
+/// judgement and not this page's. A claim no listed peer holds resolves to `None`, and the
+/// collision is shown with one side unnamed rather than with a guess.
 ///
 /// ```text
 /// overlap { peer: p1, paths: [{ yours: "test/cases", theirs: "test" }] }
-/// p3 announced ["test/cases"]  ->  the near side is p3, and the pair reads "p3 and p1"
+/// p3 claimed ["test/cases"]  ->  the near side is p3, and the pair reads "p3 and p1"
 /// ```
-fn near_side<'a>(peers: &'a [Peer], overlap: &Overlap) -> Option<&'a Peer> {
-    peers.iter().find(|p| {
-        p.id != overlap.peer
-            && p.announcement.as_ref().is_some_and(|a| {
+fn near_side<'a>(peers: &'a [Peer], overlap: &Overlap) -> Option<(&'a Peer, &'a Announcement)> {
+    peers.iter().filter(|p| p.id != overlap.peer).find_map(|p| {
+        claims_of(p)
+            .iter()
+            .find(|a| {
                 overlap
                     .paths
                     .iter()
                     .all(|path| a.scope.contains(&path.yours))
             })
+            .map(|a| (p, a))
     })
 }
 
@@ -4233,15 +4246,22 @@ fn near_side<'a>(peers: &'a [Peer], overlap: &Overlap) -> Option<&'a Peer> {
 fn collision(peers: &[Peer], overlap: &Overlap) -> El {
     let near = near_side(peers, overlap);
     let near_name = near
-        .map(peer_label)
+        .map(|(p, _)| peer_label(p))
         .unwrap_or_else(|| "a session no longer on the board".to_string());
-    let far_name = peers
-        .iter()
-        .find(|p| p.id == overlap.peer)
+    let far = peers.iter().find(|p| p.id == overlap.peer);
+    let far_name = far
         .map(peer_label)
         .unwrap_or_else(|| overlap.peer.to_string());
-    let near_claims = format!("{near_name} claims");
-    let far_claims = format!("{far_name} claims");
+    // which piece of work collided, where either side named it: the far peer's claim is
+    // the one whose intent the overlap carries, found among the claims the same answer
+    // lists for it — the overlap itself carries no name
+    let named = |a: Option<&Announcement>| match a.and_then(|a| a.name.clone()) {
+        Some(name) => format!(" ({name})"),
+        None => String::new(),
+    };
+    let far_claim = far.and_then(|p| claims_of(p).iter().find(|a| a.intent == overlap.intent));
+    let near_claims = format!("{near_name}{} claims", named(near.map(|(_, a)| a)));
+    let far_claims = format!("{far_name}{} claims", named(far_claim));
     let rows: Vec<El> = overlap
         .paths
         .iter()
@@ -4267,9 +4287,7 @@ fn collision(peers: &[Peer], overlap: &Overlap) -> El {
             .when(near.is_some(), |d| {
                 d.child(el("p").class("mj-prose").text(format!(
                     "{near_name}: {}",
-                    near.and_then(|p| p.announcement.as_ref())
-                        .map(|a| a.intent.as_str())
-                        .unwrap_or_default()
+                    near.map(|(_, a)| a.intent.as_str()).unwrap_or_default()
                 )))
             })
             .child(
@@ -4281,26 +4299,40 @@ fn collision(peers: &[Peer], overlap: &Overlap) -> El {
     )
 }
 
-/// One peer's announcement as a cell: what it said it is doing, the ground it claimed, and
-/// when it said so. A peer that has announced nothing says so, because a silent session is
-/// the thing this board exists to make visible.
-fn announcement_cell(peer: &Peer) -> El {
-    match &peer.announcement {
-        Some(a) => el("div")
-            .child(el("p").class("mj-prose").text(&a.intent))
-            .when(!a.scope.is_empty(), |d| {
-                d.child(
-                    el("div")
-                        .class("mj-marks")
-                        // `mono`, not `tag`: a claim is a path, and a path is the one thing
-                        // on this page long enough to push a phone-width column sideways.
-                        // `.mj-mono` breaks inside a word; `.mj-tag` does not.
-                        .children(a.scope.iter().map(mono).collect::<Vec<_>>()),
-                )
-            })
-            .child(el("p").class("mj-note").text(format!("announced {}", a.at))),
-        None => nothing("said nothing"),
+/// What a peer is holding, as a cell: one block per claim — what it said it is doing, the
+/// ground it claimed, and when it said so. A peer holding no claim says so, because a
+/// silent session is exactly the thing this board exists to make visible.
+fn claims_cell(claims: &[Announcement]) -> El {
+    if claims.is_empty() {
+        return nothing("said nothing");
     }
+    el("div").children(
+        claims
+            .iter()
+            .map(|a| {
+                el("div")
+                    .when(a.name.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-note")
+                                .child(tag(a.name.clone().unwrap_or_default())),
+                        )
+                    })
+                    .child(el("p").class("mj-prose").text(&a.intent))
+                    .when(!a.scope.is_empty(), |d| {
+                        d.child(
+                            el("div")
+                                .class("mj-marks")
+                                // `mono`, not `tag`: a claim is a path, and a path is the one
+                                // thing on this page long enough to push a phone-width column
+                                // sideways. `.mj-mono` breaks inside a word; `.mj-tag` does not.
+                                .children(a.scope.iter().map(mono).collect::<Vec<_>>()),
+                        )
+                    })
+                    .child(el("p").class("mj-note").text(format!("claimed {}", a.at)))
+            })
+            .collect::<Vec<_>>(),
+    )
 }
 
 /// The lease a reader is being shown, as facts: the address, the process, the version and
@@ -4363,7 +4395,7 @@ pub fn board(ctx: &Context) -> Page {
     let announced = peers
         .peers
         .iter()
-        .filter(|p| p.announcement.is_some())
+        .filter(|p| !claims_of(p).is_empty())
         .count();
     let ready = status
         .servers
@@ -4379,7 +4411,7 @@ pub fn board(ctx: &Context) -> Page {
         ))
         .child(statistic(
             announced.to_string(),
-            "have announced",
+            "have claimed ground",
             "peers.list",
         ))
         .child(statistic(
@@ -4441,7 +4473,7 @@ pub fn board(ctx: &Context) -> Page {
                 cell(word_badge(&word(&p.transport))),
                 cell(mono(&p.connected_at)),
                 text_cell(ago(p.last_seen_seconds_ago)),
-                cell(announcement_cell(p)),
+                cell(claims_cell(claims_of(p))),
             ])
         })
         .collect();
@@ -4629,8 +4661,8 @@ pub fn board(ctx: &Context) -> Page {
             .child(checkouts),
     )
     .subtitle(
-        "Who else is working in this repository, what each of them announced, and where two \
-         of them are about to collide.",
+        "Who else is working in this repository, every claim each of them holds, and where two \
+         of those claims are about to collide.",
     )
     .trail(vec![("Cockpit", Some("/cockpit")), ("Board", None)])
 }
@@ -4655,7 +4687,17 @@ mod tests {
             connected_at: "2026-09-10T21:00:00Z".into(),
             last_seen_seconds_ago: 4,
             attached,
+            claims: scope
+                .iter()
+                .map(|s| crate::peers::Announcement {
+                    name: None,
+                    intent: format!("what {id} is doing"),
+                    scope: vec![s.to_string()],
+                    at: "2026-09-10T21:00:01Z".into(),
+                })
+                .collect(),
             announcement: (!scope.is_empty()).then(|| crate::peers::Announcement {
+                name: None,
                 intent: format!("what {id} is doing"),
                 scope: scope.iter().map(|s| s.to_string()).collect(),
                 at: "2026-09-10T21:00:01Z".into(),
@@ -4715,9 +4757,10 @@ mod tests {
                 theirs: "apps/majordomus-cli".into(),
             }],
         };
-        let near = near_side(&peers, &overlap).expect("the peer whose claim it is");
+        let (near, claim) = near_side(&peers, &overlap).expect("the peer whose claim it is");
         assert_eq!(near.id.as_str(), "p3");
         assert_eq!(peer_label(near), "p3 claude-code");
+        assert_eq!(claim.scope, ["apps/majordomus-cli/src/cockpit"]);
 
         // a claim nobody on the board announced names nobody, rather than the first peer
         let orphan = Overlap {
@@ -4759,19 +4802,43 @@ mod tests {
     }
 
     #[test]
-    fn a_session_that_announced_nothing_says_so_and_one_that_did_shows_its_claims() {
-        let silent = announcement_cell(&a_peer("p9", "gemini-cli", true, &[])).render();
+    fn a_session_holding_no_claim_says_so_and_one_holding_several_shows_every_one() {
+        let quiet = a_peer("p9", "gemini-cli", true, &[]);
+        let silent = claims_cell(claims_of(&quiet)).render();
         assert!(silent.contains("said nothing"), "{silent}");
 
-        let spoken = announcement_cell(&a_peer("p8", "codex", true, &["lib", "docs"])).render();
+        let loud = a_peer("p8", "codex", true, &["lib", "docs"]);
+        let spoken = claims_cell(claims_of(&loud)).render();
         assert!(spoken.contains("what p8 is doing"), "{spoken}");
         assert!(
             spoken.contains(">lib<") && spoken.contains(">docs<"),
             "{spoken}"
         );
+        assert!(spoken.contains("claimed 2026-09-10T21:00:01Z"), "{spoken}");
+
+        // every claim a peer holds is rendered, not only the newest of them: a session that
+        // fans out to several workers holds several, and a board that shows one hides the rest
+        let fleet = claims_cell(&[
+            crate::peers::Announcement {
+                name: Some("worker-a".into()),
+                intent: "the first worker".into(),
+                scope: vec!["lib".into()],
+                at: "2026-09-10T21:00:01Z".into(),
+            },
+            crate::peers::Announcement {
+                name: Some("worker-b".into()),
+                intent: "the second worker".into(),
+                scope: vec!["docs".into()],
+                at: "2026-09-10T21:00:02Z".into(),
+            },
+        ])
+        .render();
+        assert!(fleet.contains("the first worker"), "{fleet}");
+        assert!(fleet.contains("the second worker"), "{fleet}");
+        // and the name each claim was given, so a fleet's rows are told apart
         assert!(
-            spoken.contains("announced 2026-09-10T21:00:01Z"),
-            "{spoken}"
+            fleet.contains("worker-a") && fleet.contains("worker-b"),
+            "{fleet}"
         );
     }
 

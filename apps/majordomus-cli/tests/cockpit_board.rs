@@ -33,9 +33,25 @@ fn attach(served: &Served, client: &str, version: &str) -> String {
 
 /// Announce an intent and a scope on an attached session, with the tool a client calls.
 fn announce(served: &Served, session: &str, intent: &str, scope: &[&str]) -> String {
+    announce_claim(served, session, None, intent, scope)
+}
+
+/// The same, under a name: one session that fans work out to several workers holds one
+/// named claim per worker, and every one of them stands beside the others.
+fn announce_claim(
+    served: &Served,
+    session: &str,
+    claim: Option<&str>,
+    intent: &str,
+    scope: &[&str],
+) -> String {
     let claims: Vec<String> = scope.iter().map(|s| format!("\"{s}\"")).collect();
+    let named = match claim {
+        Some(c) => format!(r#","claim":"{c}""#),
+        None => String::new(),
+    };
     let body = format!(
-        r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"majordomus_announce","arguments":{{"intent":"{intent}","scope":[{}]}}}}}}"#,
+        r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"majordomus_announce","arguments":{{"intent":"{intent}","scope":[{}]{named}}}}}}}"#,
         claims.join(",")
     );
     let (status, _, answer) =
@@ -274,4 +290,111 @@ fn nothing_on_the_board_is_ever_interpreted_as_markup() {
     );
 
     detach(&served, &session);
+}
+
+#[test]
+fn a_session_that_fans_work_out_shows_every_claim_it_holds_and_not_only_the_last() {
+    let f = Fixture::new();
+    let served = Served::start(&f.root(), &[]);
+    let session = attach(&served, "claude-code", "2.1.268");
+
+    // one connection, three workers: a fanned-out session shares its MCP session with its
+    // subagents, so the board holds three claims for one peer. Rendering only the most
+    // recent would show the third and hide the first two — the exact defect named claims
+    // were added to fix, and the exact thing this page must not reintroduce.
+    announce_claim(
+        &served,
+        &session,
+        Some("worker-a"),
+        "the cockpit board",
+        &["apps/majordomus-cli/src/cockpit"],
+    );
+    announce_claim(
+        &served,
+        &session,
+        Some("worker-b"),
+        "the provider adapters",
+        &["share/providers.yaml"],
+    );
+    announce_claim(
+        &served,
+        &session,
+        Some("worker-c"),
+        "the entry rule",
+        &["docs/ENTRY.md"],
+    );
+
+    let body = page(&served, "/cockpit/board");
+    for (name, intent, claim) in [
+        (
+            "worker-a",
+            "the cockpit board",
+            "apps/majordomus-cli/src/cockpit",
+        ),
+        ("worker-b", "the provider adapters", "share/providers.yaml"),
+        ("worker-c", "the entry rule", "docs/ENTRY.md"),
+    ] {
+        assert!(
+            body.contains(name),
+            "the claim named {name} is not on the board"
+        );
+        assert!(
+            body.contains(intent),
+            "the intent of {name} is not on the board"
+        );
+        assert!(
+            body.contains(claim),
+            "the ground {name} claimed is not on the board"
+        );
+    }
+    // one peer, three claims: the count of sessions is still one
+    assert!(
+        body.contains("sessions attached"),
+        "the board lost its statistics"
+    );
+
+    detach(&served, &session);
+}
+
+#[test]
+fn a_collision_says_which_named_claim_of_a_fanned_out_session_met_the_other() {
+    let f = Fixture::new();
+    let served = Served::start(&f.root(), &[]);
+
+    let one = attach(&served, "claude-code", "2.1.268");
+    announce_claim(
+        &served,
+        &one,
+        Some("the-crate"),
+        "the whole crate",
+        &["apps/majordomus-cli"],
+    );
+    announce_claim(&served, &one, Some("the-site"), "the site", &["site"]);
+    let two = attach(&served, "codex", "0.31");
+    announce_claim(
+        &served,
+        &two,
+        Some("one-page"),
+        "one page of the cockpit",
+        &["apps/majordomus-cli/src/cockpit/pages.rs"],
+    );
+
+    let body = page(&served, "/cockpit/board");
+    assert!(
+        body.contains("p2 codex and p1 claude-code"),
+        "the collision does not name both sessions: {body}"
+    );
+    // and which piece of work each side collided with, so the reader knows it is the crate
+    // claim that met the page claim and not the site one
+    assert!(
+        body.contains("one-page") && body.contains("the-crate"),
+        "the collision does not name the claims that met: {body}"
+    );
+    assert!(
+        !body.contains("the-site claims"),
+        "a claim that met nothing is named as if it had: {body}"
+    );
+
+    detach(&served, &one);
+    detach(&served, &two);
 }

@@ -61,8 +61,12 @@ attach() {
   sed -n 's/^[Mm][Cc][Pp]-[Ss]ession-[Ii][Dd]: *//p' "$S/head.txt" | tr -d '\r'
 }
 announce() {
-  session="$1"; intent="$2"; claim="$3"
-  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_announce","arguments":{"intent":"%s","scope":["%s"]}}}' "$intent" "$claim" > "$S/ann.json"
+  session="$1"; intent="$2"; claim="$3"; name="${4:-}"
+  if [ -n "$name" ]; then
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_announce","arguments":{"claim":"%s","intent":"%s","scope":["%s"]}}}' "$name" "$intent" "$claim" > "$S/ann.json"
+  else
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_announce","arguments":{"intent":"%s","scope":["%s"]}}}' "$intent" "$claim" > "$S/ann.json"
+  fi
   curl -fsS -o "$S/ann.out" -X POST -H 'Content-Type: application/json' -H "Mcp-Session-Id: $session" --data-binary "@$S/ann.json" "$BASE/mcp" \
     || { echo "    the announcement was refused"; return 1; }
   grep -q '"error"' "$S/ann.out" && { echo "    the announcement answered an error"; cat "$S/ann.out"; return 1; }
@@ -97,6 +101,20 @@ grep -q 'No two sessions on this board have claimed the same ground' "$S/board2.
 # and the page agrees with the capability it is a projection of
 curl -fsS "$BASE/api/v1/peers" > "$S/peers.json" || { echo "    the peers route does not answer"; exit 1; }
 grep -q '"overlaps"' "$S/peers.json" || { echo "    the capability reports no overlap for two claims that meet"; cat "$S/peers.json"; exit 1; }
+
+# --- one session, several workers: a client that fans work out shares its MCP session with
+#     all of them, so one peer holds one named claim per worker. Before named claims each
+#     announcement replaced the last and the board described whichever worker spoke most
+#     recently; a page that rendered only the newest would put that defect straight back.
+announce "$s1" "repository entry for every provider" "share/providers.yaml" "worker-b" || exit 1
+curl -fsS "$BASE/cockpit/board" > "$S/board_fleet.html" || { echo "    the board stopped answering"; exit 1; }
+grep -q 'worker-b' "$S/board_fleet.html" || { echo "    a named claim is not named on the page"; exit 1; }
+grep -q 'repository entry for every provider' "$S/board_fleet.html" || { echo "    the second claim did not reach the page"; exit 1; }
+grep -q 'share/providers.yaml' "$S/board_fleet.html" || { echo "    the ground the second claim took is not shown"; exit 1; }
+grep -q 'the whole crate' "$S/board_fleet.html" || { echo "    the first claim was erased by the second"; exit 1; }
+grep -q 'apps/majordomus-cli' "$S/board_fleet.html" || { echo "    the ground the first claim took was forgotten"; exit 1; }
+# one connection is still one session, however many claims it holds
+grep -q '>p3<' "$S/board_fleet.html" && { echo "    a second claim became a second peer"; exit 1; }
 
 # --- where this checkout's server stands, from the lease this very process holds
 grep -q 'This checkout.\{1,6\}s server' "$S/board2.html" || { echo "    the board does not show this checkout's server"; exit 1; }
