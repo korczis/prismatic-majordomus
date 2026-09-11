@@ -2978,6 +2978,32 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0046",
+        "kind": "adr",
+        "label": "adr-0046",
+        "summary": "A working context is derived and a closed record is composed; neither is a document somebody must remember to write",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0046",
+        "source": ".ai/repo/adrs/0046-a-working-context-is-derived-and-a-closed-record-is-composed.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "rule:project.episode-record-carries-its-episode",
+            "rule:project.the-session-context-is-derived",
+            "rule:project.no-new-nouns",
+            "file:lib/session_context.sh",
+            "file:lib/derive.sh",
+            "file:.ai/repo/sessions/README.md"
+          ],
+          "tags": [
+            "sessions",
+            "lifecycle",
+            "continuity",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -25626,6 +25652,26 @@
         }
       },
       {
+        "id": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "kind": "rule",
+        "label": "project.episode-record-carries-its-episode@1",
+        "summary": "An episode record carries its episode",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.episode-record-carries-its-episode%401",
+        "source": ".ai/repo/rules/project/an-episode-record-carries-its-episode.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.diagnostics-decide-the-exit@1"
+          ],
+          "tags": [
+            "sessions",
+            "records",
+            "lifecycle"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.every-wait-is-bounded@1",
         "kind": "rule",
         "label": "project.every-wait-is-bounded@1",
@@ -26402,6 +26448,26 @@
             "coordination",
             "derived",
             "gates"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-session-context-is-derived@1",
+        "kind": "rule",
+        "label": "project.the-session-context-is-derived@1",
+        "summary": "A working context is derived, not stored",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.the-session-context-is-derived%401",
+        "source": ".ai/repo/rules/project/the-session-context-is-derived.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.no-new-nouns@1"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "lifecycle"
           ]
         }
       },
@@ -28212,6 +28278,13 @@
         "label": "test/cases/20_checkpoint.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F20_checkpoint.sh",
         "source": "test/cases/20_checkpoint.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/210_session_context_is_derived.sh",
+        "kind": "test",
+        "label": "test/cases/210_session_context_is_derived.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F210_session_context_is_derived.sh",
+        "source": "test/cases/210_session_context_is_derived.sh"
       },
       {
         "id": "majordomus://test/test/cases/21_decision_question.sh",
@@ -33339,6 +33412,41 @@
       {
         "source": "majordomus://adr/adr-0040",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://context/ai.repo.sessions",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://implementation/lib/derive.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://implementation/lib/session_context.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.the-session-context-is-derived@1",
         "kind": "put_in_force"
       },
       {
@@ -42877,6 +42985,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.every-wait-is-bounded@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43289,6 +43407,16 @@
       {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-session-context-is-derived@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-session-context-is-derived@1",
+        "target": "majordomus://rule/project.no-new-nouns@1",
         "kind": "depends_on"
       },
       {
@@ -43813,6 +43941,11 @@
       },
       {
         "source": "majordomus://test/test/cases/20_checkpoint.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/210_session_context_is_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47328,8 +47461,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1455,
+      "edges": 3288,
       "acyclic": true,
       "truncated": false
     }

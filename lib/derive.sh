@@ -302,6 +302,176 @@ mj_derive_checkpoint_body() {
   return 0
 }
 
+# ---------------------------------------------------------------- session record body
+# What a closed episode did, and how it turned out.
+#
+# The record's front matter is everything a machine can prove about the episode — head,
+# branch, the commits, the files, the references. None of it says what the work was *for*
+# or whether it worked. That half of the contract was optional and its only producer was a
+# person typing into `majordomus session close`; the lifecycle closes an episode with
+# `< /dev/null`, so on the automatic path — which is every path — the body was empty by
+# construction. A record that names ninety-four commits and says nothing about them is not
+# a record of the episode, it is a receipt.
+#
+# So the body is composed from two sources and is never empty:
+#
+#   * what the worker itself wrote down while the episode ran — the checkpoints, the
+#     decisions, the questions it opened. That is the only material in the repository that
+#     carries intent, and a model that leaves none gets a body that says so by name.
+#   * what git and the ledger can prove — the commits with their subjects, the files, the
+#     issues the plan moved, how the episode ended.
+#
+# Neither alone is enough. The derived half cannot say why; the authored half is absent
+# whenever a session is cut short, which is the case that most needs a record. Composing
+# both means the worst outcome is a body that is thin and honest about being thin, and
+# never one that is blank.
+#
+# It asserts nothing it did not read. Where the worker wrote nothing, the section says so
+# rather than inventing a summary, because a fabricated narrative in an append-only record
+# is worse than an acknowledged gap.
+
+# The sections a session body carries, from the policy, with the same contract the handover
+# sections have: a required section with no writer is a configuration error named out loud.
+MJ_DERIVE_SESSION_DEFAULT_SECTIONS="What Happened|Progress Notes|Decisions|Open Questions|Outcome"
+
+# mj_derive_session_body <window-file> <outcome>
+mj_derive_session_body() {
+  MJ_DV_WINDOW="${1:-}"; MJ_DV_OUTCOME="${2:-}"
+  mj_derive_gather
+  local sec slug fn list ses_head
+
+  # `mj_derive_gather` scopes to the *task*, which is right for a handover and wrong here.
+  # A task outlives the episodes that work on it — this one had run for five days — so the
+  # task's opening commit made the first draft of this section claim 1261 commits and 2339
+  # changed files for an episode that had made none of them. An episode's record is scoped
+  # to the episode, by the same `start_head` its own front matter records.
+  ses_head="$(mj_ses start_head 2>/dev/null || true)"
+  if [ -n "$ses_head" ] && [ "$ses_head" != NONE ]; then
+    MJ_DV_START_HEAD="$ses_head"
+    MJ_DV_CHANGED="$(mj_derive_changed "$MJ_DV_START_HEAD")"
+  fi
+
+  list="$(mj_ylist "$MJ_POL_FLAT" session.record_sections | sed '/^$/d')"
+  [ -n "$list" ] || list="$(printf '%s' "$MJ_DERIVE_SESSION_DEFAULT_SECTIONS" | tr '|' '\n')"
+
+  local IFS='
+'
+  for sec in $list; do
+    [ -n "$sec" ] || continue
+    slug="$(mj_derive_slug "$sec")"; fn="mj_derive_ses_$slug"
+    # A session section falls back to the handover writer of the same name, so that
+    # `Decisions` and `Open Questions` have one writer between the two records rather than
+    # two that can disagree.
+    command -v "$fn" >/dev/null 2>&1 || fn="mj_derive_sec_$slug"
+    command -v "$fn" >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \
+      "derive: the policy requires the session section '$sec' and nothing derives it (add mj_derive_ses_$slug in lib/derive.sh)"
+    printf '# %s\n\n' "$sec"; "$fn"; printf '\n'
+  done
+  unset IFS
+
+  printf -- '---\n\nComposed by `majordomus session close` from what this episode wrote down and what git and the ledger can prove. Every statement above is one or the other; nothing here is a summary a model was asked for after the fact.\n'
+  return 0
+}
+
+# The commits, with their subjects. The front matter lists the hashes, which is the
+# checkable form and unreadable; this is the same list a person can act on.
+mj_derive_ses_what_happened() {
+  local n cap; cap="$(mj_derive_cap)"
+  if [ "$MJ_DV_START_HEAD" != "$MJ_DV_HEAD" ] && \
+     mj_git merge-base --is-ancestor "$MJ_DV_START_HEAD" HEAD 2>/dev/null; then
+    n="$(mj_git rev-list --count "$MJ_DV_START_HEAD..HEAD" 2>/dev/null || printf 0)"
+    printf '%s commit(s) on %s, %s..%s:\n\n' \
+      "$n" "$MJ_DV_BRANCH" "$(printf '%.7s' "$MJ_DV_START_HEAD")" "$(printf '%.7s' "$MJ_DV_HEAD")"
+    mj_git log --reverse --no-decorate --format='- %h %s' "$MJ_DV_START_HEAD..HEAD" 2>/dev/null \
+      | mj_derive_bounded "$cap" "commit(s)"
+  elif [ "$MJ_DV_START_HEAD" = "$MJ_DV_HEAD" ]; then
+    printf 'No commit was made in this episode; %s did not move.\n' "$MJ_DV_BRANCH"
+  else
+    printf 'The history diverged during this episode: the commit it opened at (%s) is not an ancestor of %s, so the commit list cannot be computed and the front matter records `diverged`.\n' \
+      "$(printf '%.7s' "$MJ_DV_START_HEAD")" "$(printf '%.7s' "$MJ_DV_HEAD")"
+  fi
+  n="$(mj_derive_nlines "$MJ_DV_CHANGED")"
+  printf '\n%s file(s) changed since the episode opened.\n' "$n"
+  [ -n "$MJ_DV_ISSUES" ] && printf 'Plan issues this episode moved: %s.\n' "$MJ_DV_ISSUES"
+  return 0
+}
+
+# The worker's own progress notes. This is the half of the record no derivation can supply,
+# and where a model wrote none the section says so with the command that would have.
+mj_derive_ses_progress_notes() {
+  local paths f n=0 cap body
+  cap="$(mj_derive_cap)"
+  # `mj_session_field` belongs to the session module, which is what calls this. The guard
+  # is not defensive style: it keeps this file sourceable on its own, as the checkpoint and
+  # briefing paths source it without session.sh.
+  [ -n "${MJ_DV_WINDOW:-}" ] && [ -f "$MJ_DV_WINDOW" ] && command -v mj_session_field >/dev/null 2>&1 \
+    && paths="$(mj_session_field "$MJ_DV_WINDOW" 'task.checkpoint' checkpoint_path)"
+  if [ -z "${paths:-}" ]; then
+    printf 'This episode recorded no checkpoint, so it left no note of its own about what it was doing or why. Everything above and below is derived.\n'
+    printf '\nA worker that records progress with `majordomus checkpoint` puts its own words here; one that does not leaves this paragraph.\n'
+    return 0
+  fi
+  local IFS='
+'
+  for f in $paths; do
+    [ -n "$f" ] || continue
+    n=$((n + 1))
+    [ "$n" -gt "$cap" ] && continue
+    # The path itself is local state and is not named in a shared record (ADR 0014); what
+    # the worker wrote is not.
+    [ -f "$MJ_ROOT/$f" ] || { printf -- '- (a checkpoint was recorded and its file is no longer present)\n'; continue; }
+    body="$(mj_record_body "$MJ_ROOT/$f" | sed '/^$/d' | head -n 12)"
+    [ -n "$body" ] || continue
+    printf -- '- %s\n' "$(printf '%s' "$body" | head -n 1)"
+    printf '%s\n' "$body" | tail -n +2 | sed 's/^/  /'
+  done
+  unset IFS
+  [ "$n" -gt "$cap" ] && printf -- '- ... and %s more checkpoint(s)\n' "$((n - cap))"
+  return 0
+}
+
+# The decisions this episode recorded — not the repository's recent ones. `mj_derive_sec_decisions`
+# answers "what should the next worker know", which is a different question from "what did this
+# episode decide", and reusing it here put five decisions from previous weeks under the heading.
+mj_derive_ses_decisions() {
+  local list n=0 d
+  [ -n "${MJ_DV_WINDOW:-}" ] && [ -f "$MJ_DV_WINDOW" ] && command -v mj_session_field >/dev/null 2>&1 \
+    && list="$(mj_session_field "$MJ_DV_WINDOW" 'decision.recorded' decision)"
+  if [ -z "${list:-}" ]; then
+    printf 'This episode recorded no decision. `majordomus decision` is what puts one here and in the durable record; nothing infers one from a diff.\n'
+    return 0
+  fi
+  local IFS='
+'
+  for d in $list; do
+    [ -n "$d" ] || continue
+    n=$((n + 1)); printf -- '- %s\n' "$d"
+  done
+  unset IFS
+  return 0
+}
+
+# How the episode ended, in the vocabulary the front matter uses, and what it left open.
+mj_derive_ses_outcome() {
+  case "${MJ_DV_OUTCOME:-}" in
+    closed)      printf 'The episode ended on a close the provider reported: the window was closed, cleared or logged out of deliberately.\n' ;;
+    interrupted) printf 'The episode ended without a deliberate close — the provider reported an end it does not classify as one. Work in progress at that moment is in the working tree, not in this record.\n' ;;
+    *)           printf 'The episode ended; the provider reported no reason this tool classifies.\n' ;;
+  esac
+  printf '\nAt the close: on %s at %s, working tree %s.\n' \
+    "$MJ_DV_BRANCH" "$(printf '%.7s' "$MJ_DV_HEAD")" "$(mj_git_dirty)"
+  if [ "$MJ_DV_TASK_ID" = none ]; then
+    printf 'No task was active, so nothing here was measured against a declared scope.\n'
+  else
+    printf 'Task %s (profile %s) was active.\n' "$MJ_DV_TASK_ID" "$MJ_DV_PROFILE"
+    [ "$MJ_DV_N_HAND" != 0 ] && printf '%s continuation record(s) were written, which is where the next worker starts.\n' "$MJ_DV_N_HAND"
+  fi
+  local q; q="$(mj_derive_nlines "$MJ_DV_QUESTIONS")"
+  if [ "$q" = 0 ]; then printf 'Nothing was left blocking acceptance.\n'
+  else printf '%s open question(s) still block acceptance; `majordomus question list` names them.\n' "$q"; fi
+  return 0
+}
+
 # ---------------------------------------------------------------- the opening briefing
 # What the provider's start event writes to standard output, and therefore what the worker
 # is holding before it has read anything or decided anything.

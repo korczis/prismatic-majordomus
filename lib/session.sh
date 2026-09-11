@@ -175,7 +175,7 @@ usage: majordomus session <subcommand> [options]
   list [--all] [--json]                   closed episodes, newest first            (read-only)
   show <session-id> [--json]              one closed record, whole                 (read-only)
   latest [--path] [--json]                the newest that resolves here            (read-only)
-  context [<session-id>]                  the working context of an episode        (read-only)
+  context [<session-id>] [--path]         the working context of an episode, now   (read-only)
 
   One open session per provider session, not one per worktree: a second window of the same
   provider gets an episode of its own, and start refuses (15) only while YOUR episode is
@@ -190,6 +190,12 @@ usage: majordomus session <subcommand> [options]
   start freezes the context the builder resolved into .ai/local/session-contexts/, and
   close appends what the close knows to the same document. That store is local: it names
   this machine and it is a snapshot of a projection, so neither half of it is shared.
+
+  context composes the live answer instead of reading that file: the episode's identity,
+  git now against git at the open, and what the episode has recorded since — its
+  checkpoints, decisions and questions, taken from the ledger lines stamped with its own
+  session id. It is derived on every read and cached nowhere, so it cannot be stale.
+  --path prints the opening snapshot's path instead, which is what this printed before.
 
   A provider hook opens and closes the episode where one is wired (majordomus capture
   install). --if-open and --if-none are what make that safe to run on every event: a
@@ -427,6 +433,17 @@ mj_session_close() {
     mj_session_refs "$win"
     printf -- '---\n'
   } > "$rec"
+  # A record with no body is a receipt, not a record: it names ninety-four commits and says
+  # nothing about any of them. The authored summary stays optional — nothing should refuse
+  # to close an episode over prose — but its absence now composes one instead of leaving the
+  # body blank, from this episode's own checkpoints and decisions and from what git and the
+  # ledger can prove. The lifecycle closes with `< /dev/null`, so before this every
+  # automatically closed record had an empty body, which was every record.
+  if [ ! -s "$body" ]; then
+    # shellcheck source=derive.sh
+    . "$MJ_LIB_DIR/derive.sh"
+    mj_derive_session_body "$win" "$outcome" > "$body" 2>/dev/null || : > "$body"
+  fi
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
@@ -734,15 +751,33 @@ mj_session_latest() {
 }
 
 # ---------------------------------------------------------------- context
-# Where the working context of an episode is, so that a person who wants to add to it does
-# not have to know how the store names its files. Read-only, and it prints a path rather
-# than the document: the document is local evidence, and a command that pours it into a
-# terminal invites it into somebody's context, which is the one thing the local half of the
-# layer forbids.
+# The working context of an episode: what is true for it now.
+#
+# This used to print a path and nothing else, and the path it printed was to a document
+# written once, when the episode opened, and never updated. Both halves of that were wrong
+# in the same way. A command that answers "what is my working context" with a filename has
+# not answered it; and a file written at open is the context the worker had *before it did
+# anything*, which is the least useful moment to freeze.
+#
+# So the snapshot stays a snapshot — it is genuine evidence of what the worker was told, and
+# `--path` still names it — and this composes the live answer on every read: the episode's
+# identity, git now against git at the open, and everything the episode has recorded since,
+# read back out of its own ledger window. Nothing caches it, so nothing can serve a stale
+# one.
+#
+# Printing it is within the layer's contract and the old caution was a misreading of it.
+# `.ai/README.md` forbids loading `local/` *implicitly*; it names the context builder,
+# "when a worker asks it", as one of the two routes by which local state legitimately
+# reaches a model. This is a worker asking. What it prints is bounded to repository facts
+# and the worker's own records — never the prompt archive, never a transcript — which is the
+# same boundary the start-event briefing already crosses.
 mj_session_context_cmd() {
-  local sid="" a
+  local sid="" a path_only=0
   for a in "$@"; do case "$a" in
     --help|-h) mj_session_usage; return 0 ;;
+    # The old behaviour, kept by name rather than by default: a caller that wants the file
+    # on disk wants the opening snapshot, and should have to say so.
+    --path) path_only=1 ;;
     -*) mj_die "$MJ_EX_USAGE" "session context: unknown option $a" ;;
     *) [ -n "$sid" ] && mj_die "$MJ_EX_USAGE" "session context: one session id at a time"; sid="$a" ;;
   esac; done
@@ -759,13 +794,40 @@ mj_session_context_cmd() {
   fi
 
   local out; out="$(mj_session_context_path "$sid")"
-  if [ -z "$out" ]; then
-    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":null}\n' "$sid"
-    else printf 'No working context for %s under %s.\n' "$sid" "$(mj_rel "$(mj_session_context_dir)")"; fi
+
+  # An episode this checkout has never heard of is a missing answer, not a composed one.
+  # Without this the renderer happily composes a document for any string at all — git and
+  # the clock always answer — and a typo comes back as a confident heading over facts that
+  # belong to no episode. Known means: it is the open one, or it left a snapshot, or it
+  # wrote a line into the ledger.
+  if [ -z "$out" ] && [ "$sid" != "$(mj_ses session_id 2>/dev/null)" ] \
+     && [ -z "$(mj_session_window "$sid" 2>/dev/null | head -n 1)" ]; then
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","snapshot":null,"context":null}\n' "$sid"
+    else printf 'No episode %s in this checkout: it has no working context, no opening snapshot and no ledger line.\nnext: majordomus session list\n' "$sid"; fi
     return "$MJ_EX_MISSING"
   fi
-  if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":"%s"}\n' "$sid" "$(mj_json_esc "${out#"$MJ_ROOT/"}")"
-  else printf '%s\n' "${out#"$MJ_ROOT/"}"; fi
+
+  # --path is about the snapshot, so an absent snapshot is still the missing answer it
+  # always was. The composed context is not: it derives from the episode and from git, and
+  # an episode whose snapshot failed to be written still has a working context.
+  if [ "$path_only" = 1 ]; then
+    if [ -z "$out" ]; then
+      if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":null}\n' "$sid"
+      else printf 'No opening snapshot for %s under %s.\n' "$sid" "$(mj_rel "$(mj_session_context_dir)")"; fi
+      return "$MJ_EX_MISSING"
+    fi
+    if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"session_id":"%s","context":"%s"}\n' "$sid" "$(mj_json_esc "${out#"$MJ_ROOT/"}")"
+    else printf '%s\n' "${out#"$MJ_ROOT/"}"; fi
+    return 0
+  fi
+
+  if [ "$MJ_JSON" = 1 ]; then
+    printf '{"schema":1,"session_id":"%s","snapshot":%s,"context":"%s"}\n' "$sid" \
+      "$([ -n "$out" ] && printf '"%s"' "$(mj_json_esc "${out#"$MJ_ROOT/"}")" || printf null)" \
+      "$(mj_session_context_render "$sid" | mj_json_esc_lines)"
+  else
+    mj_session_context_render "$sid"
+  fi
 }
 
 mj_session_show() {
