@@ -352,6 +352,24 @@
         "status": "command"
       },
       {
+        "id": "capability:gates.completion",
+        "kind": "capability",
+        "label": "gates.completion",
+        "summary": "Whether this task may be called finished",
+        "route": "/cockpit/capabilities/gates.completion",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:gates.model",
+        "kind": "capability",
+        "label": "gates.model",
+        "summary": "The CI model",
+        "route": "/cockpit/capabilities/gates.model",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -6290,14 +6308,14 @@
           "json": true,
           "reads": [
             "share/obligations.yaml",
+            ".ai/repo/ci/gates.yaml",
             ".ai/local/state/current.yaml"
           ],
           "requires_installed": true,
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
-          "syntax": "majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]",
+          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -10791,6 +10809,13 @@
         "label": "lib/finish.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Ffinish.sh",
         "source": "lib/finish.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/gates.sh",
+        "kind": "implementation",
+        "label": "lib/gates.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fgates.sh",
+        "source": "lib/gates.sh"
       },
       {
         "id": "majordomus://implementation/lib/handover.sh",
@@ -24357,6 +24382,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "rule",
+        "label": "majordomus.completion-gates@1",
+        "summary": "Completion is gated",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.completion-gates%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/completion-gates.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.obligation-closure@1"
+          ],
+          "tags": [
+            "tasks",
+            "evidence",
+            "completion",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.context-budget@1",
         "kind": "rule",
         "label": "majordomus.context-budget@1",
@@ -28158,6 +28204,13 @@
         "source": "test/cases/12c_graph_data.sh"
       },
       {
+        "id": "majordomus://test/test/cases/131_completion_gates.sh",
+        "kind": "test",
+        "label": "test/cases/131_completion_gates.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_completion_gates.sh",
+        "source": "test/cases/131_completion_gates.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
         "kind": "test",
         "label": "test/cases/13_region_projection.sh",
@@ -30833,6 +30886,11 @@
         "label": "executions"
       },
       {
+        "id": "module:gates",
+        "kind": "module",
+        "label": "gates"
+      },
+      {
         "id": "module:graph",
         "kind": "module",
         "label": "graph"
@@ -31503,6 +31561,36 @@
       },
       {
         "source": "capability:executions.start",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38202,6 +38290,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/gates.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/handover.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -42207,6 +42300,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.completion-gates@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.completion-gates@1",
+        "target": "majordomus://rule/majordomus.obligation-closure@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.context-budget@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -43773,6 +43876,11 @@
       },
       {
         "source": "majordomus://test/test/cases/12c_graph_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/131_completion_gates.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -47087,6 +47195,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.completion",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
+        "target": "capability:gates.model",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -47328,8 +47446,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1451,
-      "edges": 3276,
+      "nodes": 1457,
+      "edges": 3288,
       "acyclic": true,
       "truncated": false
     }
