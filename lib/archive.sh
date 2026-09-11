@@ -34,6 +34,15 @@
 # The profiles are share/archive.yaml; a repository may add or replace one in
 # .ai/repo/archive.yaml without redefining what an archive is.
 
+# This file is sourced by a dispatcher that sets `-e`, so every pipeline here runs with
+# the failure of anything but its last stage discarded. That matters more than usual for a
+# command whose whole job is fidelity: a `tar` that could not read a file, piped into a
+# `tar` that unpacked what it did get, would report success and produce a short archive.
+# `set -o pipefail` is set for this command's run rather than trusted to the caller. Each
+# pipeline below that may legitimately fail — a `head` closing a pipe early, an `xargs`
+# over an empty list — says so with `|| true` rather than relying on the option's absence.
+set -o pipefail
+
 MJ_ARCHIVE_SHIPPED="$MJ_BIN_DIR/../share/archive.yaml"
 
 # The repository's name, which is not this directory's name: a linked worktree is named
@@ -279,7 +288,11 @@ mj_archive_run() { # profile out format dry force
   [ "$n" -gt 0 ] || {
     rm -f "$sel"; mj_archive_cleanup
     mj_die "$MJ_EX_CONTRACT" "profile '$profile' selects none of $MJ_ARCHIVE_TRACKED tracked file(s)"; }
-  bytes="$(cut -f2 "$sel" | (cd "$MJ_ROOT" && tr '\n' '\0' | xargs -0 wc -c 2>/dev/null) | awk '$2 != "total" { s += $1 } END { printf "%d", s + 0 }')"
+  # `|| true`: a path in the index that the working tree no longer has makes `wc` exit
+  # non-zero, and the size of the content is a thing to report, never a thing to fail on.
+  # The missing paths are counted and reported separately, where they mean something.
+  bytes="$( { cut -f2 "$sel" | (cd "$MJ_ROOT" && tr '\n' '\0' | xargs -0 wc -c 2>/dev/null) || true; } \
+    | awk '$2 != "total" { s += $1 } END { printf "%d", s + 0 }')"
 
   if [ "$dry" = 1 ]; then
     mj_archive_report "$profile" "$flat" "$idx" "$n" "$bytes" "" "$ext"
