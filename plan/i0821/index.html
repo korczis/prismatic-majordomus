@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -231,7 +231,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;sha256&gt;, keyed by the file&#39;s content hash and the flattener&#39;s own version, so a second command on unchanged files does no parsing.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">.ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;sha256&gt;, keyed by the file&#39;s content hash and the flattener&#39;s own version, so a second command on unchanged files does no parsing.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">.ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -261,7 +261,7 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">flatten_cache</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Hashing a file costs a subprocess too; the cache pays only when a flatten is materially dearer than a hash, which the counters must show before this lands.</p>
+  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Hashing a file costs a subprocess too; the cache pays only when a flatten is materially dearer than a hash, which the counters must show before this lands.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -290,7 +290,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

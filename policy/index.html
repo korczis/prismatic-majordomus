@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -302,6 +302,26 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+# The prompt archive under .ai/local/prompts/. Nothing used to bound it: the ledger, the
+# handovers and the checkpoints each rotate under a cap because each restates state that is
+# still available elsewhere, and a prompt restates nothing — so the archive grew without
+# limit, 20 MB of raw prompts in this repository before anyone measured it.
+#
+# What is bounded is the *body*, never the record. Pruning replaces the prompt text with a
+# tombstone and keeps every other field, including how the record came to be linked to its
+# episode: the archive stays a complete index of what was asked and when, and only the bytes
+# nobody can be held responsible for keeping go. A record is still never deleted.
+#
+# Two bounds, because they fail differently. `retention_max_days` is about exposure — raw
+# prompts carry credentials and customer names, and age is the only thing that reliably
+# reduces what they are worth to someone who should not have them. `retention_max_bytes` is
+# about the disk, and prunes oldest-first until the archive&#39;s bodies fit. Either alone is a
+# bound; both is the usual configuration. `majordomus capture prune` applies them, doctor
+# reports an archive over either, and nothing prunes behind a person&#39;s back.
+prompts:
+  retention_max_days: 90                 # a prompt body older than this is pruned
+  retention_max_bytes: 8388608           # 8 MiB of bodies; the oldest are pruned first
+
 # The provider&#39;s episode events do three things beyond drawing the boundary. The start event
 # hands the worker a briefing on standard output, which the provider adds to the context it
 # is about to build; the compaction event records a derived checkpoint, because a compaction
@@ -381,7 +401,7 @@ projections:
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

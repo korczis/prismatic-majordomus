@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Peers — Prismatic Majordomus</title>
-<meta name="description" content="The clients attached to this repository&#39;s shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.">
+<meta name="description" content="The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.">
 <link rel="canonical" href="https://majordomus.dev/registry/modules/peers/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Peers — Prismatic Majordomus">
-<meta property="og:description" content="The clients attached to this repository&#39;s shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.">
+<meta property="og:description" content="The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.">
 <meta property="og:url" content="https://majordomus.dev/registry/modules/peers/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -218,7 +218,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Peers</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">The clients attached to this repository&#39;s shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -236,7 +236,7 @@
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="break-words text-lg text-body">The clients attached to this repository&#39;s shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.</p>
+    <p class="break-words text-lg text-body">The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.</p>
     <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">module peers</span></li>
       <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">builtin</span></li>
@@ -246,7 +246,7 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Capabilities</h2>
     <p class="mt-2 text-sm text-body">Each composed in this module's file; each with its own page.</p>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/registry/capabilities/peers-announce/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="break-all font-mono font-semibold text-heading">peers.announce</code><span class="mt-1 break-words text-sm text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with &#39;claim&#39; and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer&#39;s one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent&#39;s session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</span><span class="mt-3 font-mono text-xs text-body-subtle">command · behaviorally_verified · majordomus_announce · POST /api/v1/peers/announce</span></a></li><li><a href="https://majordomus.dev/registry/capabilities/peers-list/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="break-all font-mono font-semibold text-heading">peers.list</code><span class="mt-1 break-words text-sm text-body">Every client attached to this shared server: id, the client&#39;s own name and version from its initialize, transport, when it attached, when it was last seen, and what it announced. In-memory, gone with the process.</span><span class="mt-3 font-mono text-xs text-body-subtle">query · behaviorally_verified · majordomus_peers · GET /api/v1/peers</span></a></li></ul>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/registry/capabilities/peers-announce/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="break-all font-mono font-semibold text-heading">peers.announce</code><span class="mt-1 break-words text-sm text-body">Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with &#39;claim&#39; and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer&#39;s one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent&#39;s session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process&#39;s memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.</span><span class="mt-3 font-mono text-xs text-body-subtle">command · behaviorally_verified · majordomus_announce · POST /api/v1/peers/announce</span></a></li><li><a href="https://majordomus.dev/registry/capabilities/peers-list/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><code class="break-all font-mono font-semibold text-heading">peers.list</code><span class="mt-1 break-words text-sm text-body">Every worker of this repository: id, the client&#39;s own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout&#39;s board out of memory, every other checkout&#39;s from the server its lease names, asked for its own board alone. &#39;boards&#39; says which checkouts were covered and &#39;complete&#39; whether every one of them could be read, so a short board is never mistaken for an empty repository. &#39;checkouts: this&#39; reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.</span><span class="mt-3 font-mono text-xs text-body-subtle">query · behaviorally_verified · majordomus_peers · GET /api/v1/peers</span></a></li></ul>
   </div>
 
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -255,7 +255,7 @@
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/peers.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/peers.rs</a></dd></div>
         <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div>
-        <div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">8a178e3c9b5c49bbb13eeabd28f3ac4c4c7b9056911d15887814d12cd5dfa3ff</dd></div>
+        <div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-heading">9cfefe94535d81b3bc2856bb4a623b7dedd43d77c61226473c984f0302dbd52b</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -278,7 +278,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

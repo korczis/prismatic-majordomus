@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -341,6 +341,15 @@ not name its claims reports.</td>
 went away is kept and listed with `attached: false`: what it said it was working on
 outlives the connection that said it, because the work does.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkout</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Which checkout of the repository this peer is attached to; see [`PeerCheckout`].
+
+The board itself never sets it — a board does not know where it is — and it is
+stamped by the reader that gathered this peer, which is the one thing that knows
+which checkout&#39;s server it asked.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">claims</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -464,6 +473,17 @@ collision later. Empty is the ordinary case.</td>
           &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;,
           &quot;type&quot;: &quot;boolean&quot;
         },
+        &quot;checkout&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/PeerCheckout&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Which checkout the other peer is attached to, when the reader knew.\n\nThe overlap that matters most is the one nobody could see before: two workers in\ntwo worktrees of one repository, each reading a board that held only itself, both\nclaiming `apps/majordomus-cli/src`. Naming the checkout is what turns \&quot;p1 is on\nyour ground\&quot; into something a reader can act on when `p1` is not on this board.&quot;
+        },
         &quot;intent&quot;: {
           &quot;description&quot;: &quot;What it said it was doing.&quot;,
           &quot;type&quot;: &quot;string&quot;
@@ -506,6 +526,36 @@ collision later. Empty is the ordinary case.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;PeerCheckout&quot;: {
+      &quot;description&quot;: &quot;Which checkout of the repository a peer is attached to.\n\nA board is one process&#39;s memory and a server serves one checkout, so a peer read from\na sibling checkout&#39;s server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker&#39;s identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server&#39;s by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \&quot;b8293f11\&quot;.into(),\n    worktree: \&quot;/repo-wt/feature/x\&quot;.into(),\n    branch: Some(\&quot;feature/x\&quot;.into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&amp;c).unwrap();\nassert_eq!(v[\&quot;branch\&quot;], \&quot;feature/x\&quot;);\nassert_eq!(v[\&quot;this_checkout\&quot;], false);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;this_checkout&quot;: {
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;worktree&quot;,
+        &quot;this_checkout&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;PeerId&quot;: {
       &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -542,6 +592,17 @@ collision later. Empty is the ordinary case.</td>
     &quot;attached&quot;: {
       &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;checkout&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/PeerCheckout&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;Which checkout of the repository this peer is attached to; see [`PeerCheckout`].\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout&#39;s server it asked.&quot;
     },
     &quot;claims&quot;: {
       &quot;description&quot;: &quot;Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.&quot;,
@@ -627,7 +688,7 @@ collision later. Empty is the ordinary case.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">AnnounceInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Announced</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">8a178e3c9b5c49bbb13eeabd28f3ac4c4c7b9056911d15887814d12cd5dfa3ff</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">9cfefe94535d81b3bc2856bb4a623b7dedd43d77c61226473c984f0302dbd52b</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
       </dl>
     </div>
@@ -659,7 +720,7 @@ collision later. Empty is the ordinary case.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

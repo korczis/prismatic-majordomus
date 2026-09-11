@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -231,7 +231,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Implement the manifest: one row per source with its path, content hash, extractor version and the node ids it produced, written beside the generated graph, compared on every sync, and used so that a sync with no source change does no extraction and says so.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Without a manifest, every query is tempted to rebuild and every rebuild is a full one. The manifest is what makes staleness detectable without mutating anything, which is what lets the read-only commands stay read-only.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Nothing is generated and nothing is cached. The site generator&#39;s --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">`knowledge sync` writes the manifest with the graph. `knowledge sync --check` compares source hashes against the manifest and exits non-zero when they differ, writing nothing. `knowledge status` reports fresh or stale and names the sources that moved. A no-op sync is measurably cheaper than a cold one, and the measurement is recorded.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Implement the manifest: one row per source with its path, content hash, extractor version and the node ids it produced, written beside the generated graph, compared on every sync, and used so that a sync with no source change does no extraction and says so.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Without a manifest, every query is tempted to rebuild and every rebuild is a full one. The manifest is what makes staleness detectable without mutating anything, which is what lets the read-only commands stay read-only.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Nothing is generated and nothing is cached. The site generator&#39;s --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">`knowledge sync` writes the manifest with the graph. `knowledge sync --check` compares source hashes against the manifest and exits non-zero when they differ, writing nothing. `knowledge status` reports fresh or stale and names the sources that moved. A no-op sync is measurably cheaper than a cold one, and the measurement is recorded.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -260,7 +260,7 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">sync_idempotent</li><li class="font-mono text-heading break-words">noop_is_cheaper</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">If a no-op sync is not materially cheaper than a cold one, the manifest has failed and should be removed rather than kept as decoration. The measurement is the acceptance criterion, not the design.</p>
+  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">If a no-op sync is not materially cheaper than a cold one, the manifest has failed and should be removed rather than kept as decoration. The measurement is the acceptance criterion, not the design.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -289,7 +289,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

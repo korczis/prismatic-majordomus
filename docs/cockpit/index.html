@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -269,6 +269,7 @@ pages still render, say so, and remain fully usable.</p>
 <tr><td><code>/cockpit/graphs</code></td><td>every graph this executable derives</td><td><code>graph.list</code></td></tr>
 <tr><td><code>/cockpit/graphs/&lt;id&gt;</code></td><td>one graph: the drawing, the vocabularies, and every node and edge as tables</td><td><code>graph.get</code></td></tr>
 <tr><td><code>/cockpit/graphs/topology</code></td><td>the registry graph in three dimensions — optional</td><td><code>graph.get</code> (<code>registry</code>)</td></tr>
+<tr><td><code>/cockpit/continuity</code></td><td>what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records</td><td><code>continuity.state</code>, <code>lifecycle.episodes</code>, <code>lifecycle.runtime</code>, <code>lifecycle.recovery</code>, <code>lifecycle.providers</code>, <code>lifecycle.closed</code></td></tr>
 <tr><td><code>/cockpit/health</code></td><td>one check per dimension, each with the engine that decided it and the command that reproduces it</td><td><code>health.report</code></td></tr>
 <tr><td><code>/cockpit/api</code></td><td>every HTTP route the registry projects, and the projection's own</td><td>the registry</td></tr>
 <tr><td><code>/cockpit/search</code></td><td>capabilities and objects matching one query</td><td>the registry, <code>objects.search</code></td></tr>
@@ -298,6 +299,47 @@ filter with it; picking a part starts that part at its first page.</li>
 listed whole: the drawing is an enhancement over those lists, a reader without JavaScript
 has only them, and a reader checking whether a path is in the manifest must be able to
 find it with the browser's own search.</p>
+<h2 id="the-one-page-that-is-about-this-machine"><a class="zola-anchor" href="#the-one-page-that-is-about-this-machine" aria-label="Anchor link for: the-one-page-that-is-about-this-machine">The one page that is about this machine</a></h2>
+<p>Every other page is about the repository: the same answer in any clone, and safe to publish.
+<code>/cockpit/continuity</code> is not. It reads <code>.ai/local/</code> — the open episodes, the resolved
+handover, the blockers of this checkout — and those records name this disk. That is the
+reason the Cockpit is bound to the loopback interface and the reason this page has no
+counterpart on the website (ADR 0014).</p>
+<p>It is also the page that has to answer two different readers, and it says which is which.</p>
+<p><strong>The worker</strong> asks <em>what am I resuming from?</em> That is <code>continuity.state</code>: one episode — the
+one <code>session-current.yaml</code> resolves to — one handover, one checkpoint, each with the
+divergence label that says how far to trust it, and the questions that refuse completion.
+(ADR 0041 adds a freshness label beside the divergence one, because <code>advanced</code> is a true
+statement about git topology and says nothing about age.)</p>
+<p><strong>The operator</strong> asks <em>is this subsystem working?</em> That is the <code>lifecycle.*</code> group, and it
+exists because the worker's answer is structurally blind to the operator's question. The
+pointer is a symlink the most recent start event re-aims; on 2026-09-11 this repository held
+five open episodes in one checkout and every surface could name one. So the page carries,
+below the briefing's own cards:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Card</th><th>What it shows</th><th>Capability</th></tr></thead><tbody>
+<tr><td>Every open episode</td><td>one row per open episode: its standing (<code>current</code>, <code>open</code>, <code>foreign</code>, <code>stranded</code>), the provider that opened it, the branch, when it opened, the last ledger line stamped with it, and the tasks it touched</td><td><code>lifecycle.episodes</code></td></tr>
+<tr><td>This process against the repository</td><td>the commit the served index was built at, against the commit <code>git</code> reports on the call, and whether they agree</td><td><code>lifecycle.runtime</code></td></tr>
+<tr><td>Recovery</td><td>episodes that cannot close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic</td><td><code>lifecycle.recovery</code></td></tr>
+<tr><td>Providers</td><td>per provider: the lifecycle events its adapter declares, whether it can archive prompts, its client configuration, and the enforcement entries this repository wires to its hook</td><td><code>lifecycle.providers</code></td></tr>
+<tr><td>Closed episodes</td><td>how many tracked records exist, how many closed on this branch, and the newest twenty, each linking to its object page</td><td><code>lifecycle.closed</code></td></tr>
+</tbody></table>
+</div>
+<p>Three rules this page keeps, and the reason for each.</p>
+<p><strong>No value is computed here.</strong> Every number, word and badge above arrives from a capability
+answer; the page decides colours and nothing else. A Cockpit that worked out for itself
+whether an episode was stranded would be a second session model, and the first thing two
+session models do is disagree.</p>
+<p><strong>No prompt is ever rendered.</strong> The prompt archive is the one part of the local half that is
+a conversation, and no card on this page reads it. What a worker typed is not operational
+state, and a surface that showed it would be a transcript with better formatting.</p>
+<p><strong>The page is a photograph, and does not poll.</strong> The executions pages follow a WebSocket
+because an execution emits events; the session store does not, and a browser asking every
+five seconds whether an episode is still open would spend the whole day answering "yes". A
+reload is the refresh, <code>Cache-Control: no-cache</code> makes it honest, and one section failing to
+read renders as a failed card rather than as a dead page — the section most likely to fail
+is a store nothing has written yet, and hiding the other five behind it would be the wrong
+trade.</p>
 <h2 id="what-makes-it-a-projection-and-not-a-dashboard"><a class="zola-anchor" href="#what-makes-it-a-projection-and-not-a-dashboard" aria-label="Anchor link for: what-makes-it-a-projection-and-not-a-dashboard">What makes it a projection and not a dashboard</a></h2>
 <p><strong>Every page asks a capability.</strong> A page calls <code>Context::execute</code>, which is the call MCP and
 the HTTP routes make. It is counted in the same perf counters, answered from the same cache
@@ -663,7 +705,7 @@ process — and it is why the probe reports the digest it was served.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

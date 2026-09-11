@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -1110,12 +1110,57 @@ so the next name is read off a real payload instead of guessed.</p>
 nothing loads it into a context, no command retrieves from it, and <code>doctor</code> fails if
 anything under it is tracked by Git. The writer emits a closed set of fields, so the
 model's half of the exchange cannot arrive through it.</p>
-<p><strong>Nothing deletes a record.</strong> The ledger, the checkpoints and the handovers rotate under a
-policy cap because each restates state that is still available elsewhere; a prompt is not —
-it existed once, was derived from nothing, and no other file can reconstruct it. So there is
-no cap to configure, the archive grows, <code>doctor</code> reports how many records and how many
-kibibytes it holds, and a person who wants it smaller deletes files themselves rather than
-discovering that the hook meant to keep their prompts had been discarding them.</p>
+<p><strong>A record carries the episode it belongs to.</strong> It used to carry the provider's own session
+identifier and nothing else, and turning that into the canonical episode id needed
+<code>state/sessions-open/&lt;provider session&gt;.yaml</code> — a file that closing the episode deletes. So
+the instant an episode ended, nothing could say which episode its prompts had belonged to.
+Measured in this repository on 2026-09-11: 974 records, 80 provider sessions, 713 prompts
+with no surviving path to an episode.</p>
+<p>Every record now carries <code>episode</code>, <code>episode_link</code>, <code>repository_id</code> and <code>worktree_id</code>,
+written while the mapping is still there, using the identity the rest of the tool computes.
+<code>episode_link</code> says how the episode was determined, and the distinction is the point:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>value</th><th>what it means</th></tr></thead><tbody>
+<tr><td><code>open</code></td><td>the episode was open under that provider session when the prompt arrived — an observation</td></tr>
+<tr><td><code>session-context</code></td><td>linked afterwards, from the frozen working context that names the provider session</td></tr>
+<tr><td><code>ledger</code></td><td>linked afterwards, because exactly one closed episode's window could contain that provider session's prompts</td></tr>
+<tr><td><code>orphan</code></td><td>no episode was open under that provider session; none was invented</td></tr>
+<tr><td><code>unlinked-legacy</code></td><td>written before records carried an episode, and nothing survives to link it</td></tr>
+</tbody></table>
+</div>
+<p><code>orphan</code> and <code>unlinked-legacy</code> carry no episode. Nothing attaches a prompt to the episode
+nearest it in time: a prompt attributed to the wrong episode is worse than one attributed to
+none, because the second is visibly missing and the first is quietly false.</p>
+<p><code>capture reconcile</code> applies those three kinds of evidence, in that order, to an archive
+written before the field existed, and <code>--dry-run</code> says what it would do. It refuses the
+moment two episodes could both be the answer, so a repository whose evidence is gone keeps a
+count of unlinked records rather than an invented attribution — and <code>doctor</code> reports that
+count rather than rounding it to zero.</p>
+<p><strong>Credential material never reaches the disk.</strong> People paste keys into prompts, and a
+record is the one file here whose content nobody vetted before it was written. The known
+credential shapes — provider API keys, GitHub tokens, AWS key ids, Slack and Stripe tokens,
+PEM headers, bearer tokens, and an assignment of a long opaque value to something called a
+key, a token or a password — are replaced on the way to the record, before the bytes are
+anywhere but a variable. Nothing downstream sees the original: not the record, not either
+rendering, not the file name, not the log, which prints a payload's key names and never a
+value. What was replaced is recorded in <code>redacted</code>, so "nothing was found" and "the secret
+is gone" are statements a reader can tell apart.</p>
+<p><strong>The archive is mode 0600, directory included.</strong> It was 0644 for its whole life, readable
+by every account on the machine — including the file names, which are the openings of the
+prompts. <code>capture render</code>, which is the archive's repair command, sets the mode over the
+whole directory on every run.</p>
+<p><strong>Retention takes the body and keeps the record.</strong> The old rule was that nothing may ever be
+removed, on the argument that a prompt is derived from nothing and no other file can
+reconstruct it. That argument is about the <em>record</em> — that it happened, when, in which
+episode, under which head — and it was being applied to the bytes of the text, which is the
+part that carries the credentials and whose risk does not decay with its value. The archive
+reached 20 MB unbounded.</p>
+<p>So the policy declares <code>prompts.retention_max_days</code> and <code>prompts.retention_max_bytes</code>, and
+<code>majordomus capture prune</code> applies them: age first, then size, oldest body first. A pruned
+record keeps every field, including the provenance of its episode link, and gains a tombstone
+saying when the body went, how long it was, and its digest. A record is still never deleted,
+<code>doctor</code> reports an archive over either bound, and nothing prunes as a side effect of the
+hook that was supposed to be keeping them.</p>
 <p><strong><code>capture status</code> reports five distinct states, and never a generic pass:</strong></p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>state</th><th>what is true</th></tr></thead><tbody>
@@ -1773,7 +1818,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

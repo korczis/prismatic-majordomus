@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -231,7 +231,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Separate the local mode that inspects a developer&#39;s repository from the hosted mode that serves a packaged layer, and report the capabilities that are unavailable in hosted mode from capability metadata rather than from a hand-written list.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Majordomus reads a repository checkout. A Machine has no developer&#39;s home directory. Without an explicit boundary the hosted process either panics on the first read or silently serves an empty layer, and a hand-maintained list of what does not work remotely would be one more thing to drift.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">The executable resolves a repository from the working directory. Nothing distinguishes a packaged deployment from a local checkout, and no absolute path scan exists.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">The hosted process serves the packaged layer, the documentation, the UI and the API; a capability that genuinely requires a writable local checkout reports itself unavailable with a reason; and no absolute developer path exists anywhere in the image or its configuration.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Separate the local mode that inspects a developer&#39;s repository from the hosted mode that serves a packaged layer, and report the capabilities that are unavailable in hosted mode from capability metadata rather than from a hand-written list.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Majordomus reads a repository checkout. A Machine has no developer&#39;s home directory. Without an explicit boundary the hosted process either panics on the first read or silently serves an empty layer, and a hand-maintained list of what does not work remotely would be one more thing to drift.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The executable resolves a repository from the working directory. Nothing distinguishes a packaged deployment from a local checkout, and no absolute path scan exists.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The hosted process serves the packaged layer, the documentation, the UI and the API; a capability that genuinely requires a writable local checkout reports itself unavailable with a reason; and no absolute developer path exists anywhere in the image or its configuration.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -256,7 +256,7 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">hosted_mode</li><li class="font-mono text-heading break-words">capability_boundary</li><li class="font-mono text-heading break-words">no_local_paths</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Packaging this repository&#39;s own layer into the image makes the public deployment a demonstration of one repository. That is the intent, and it must be stated rather than discovered.</p>
+  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Packaging this repository&#39;s own layer into the image makes the public deployment a demonstration of one repository. That is the intent, and it must be stated rather than discovered.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -285,7 +285,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

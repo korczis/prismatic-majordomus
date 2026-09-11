@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -248,7 +248,7 @@ HTTP) and says where; every later one attaches to it.</p>
 <span class="giallo-l"><span class="z-l-1 z-d-3">apps/majordomus-cli/target/debug/majordomus</span><span class="z-l-8 z-d-8"> mcp</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-standalone</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this client alone: no port, no lease, no peers</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">bin/majordomus-mcp</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the same, built first when needed: what a client configuration names</span></span></code></pre>
 <p>The log on stderr names it the moment it is up:</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server for this repository ...</span></span></code></pre>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>shared server listening on http://127.0.0.1:8741 — 7 surface(s): api http://127.0.0.1:8741/api/v1, cockpit http://127.0.0.1:8741/cockpit, docs http://127.0.0.1:8741/docs, home http://127.0.0.1:8741/, mcp http://127.0.0.1:8741/mcp, openapi http://127.0.0.1:8741/openapi.json, swagger http://127.0.0.1:8741/swagger; the one server of this checkout ...</span></span></code></pre>
 <p>It is not a daemon: nothing starts it but a client, nothing keeps it alive but clients,
 and it ends when its own client is gone and the last attached one has left. It keeps no
 state beyond its memory, needs no database, and writes one file: the lease under
@@ -258,7 +258,7 @@ registry (<a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES
 and the <code>capabilities</code> commands, and every tool and resource here is derived from a
 registry entry, none declared in the MCP code. The decision is
 <a href="../.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md"><code>.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md</code></a>.</p>
-<h2 id="one-server-per-repository"><a class="zola-anchor" href="#one-server-per-repository" aria-label="Anchor link for: one-server-per-repository">One server per repository</a></h2>
+<h2 id="one-server-per-checkout"><a class="zola-anchor" href="#one-server-per-checkout" aria-label="Anchor link for: one-server-per-checkout">One server per checkout</a></h2>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th></th><th></th></tr></thead><tbody>
 <tr><td>election</td><td>the first process to create <code>.ai/local/state/mcp/server.json</code> (atomically) is the server; it binds, writes its URL into the file, and logs it</td></tr>
@@ -266,6 +266,7 @@ registry entry, none declared in the MCP code. The decision is
 <tr><td>attaching</td><td>a later <code>majordomus mcp</code> reads the lease, checks that the server answers for this root, and bridges its stdio to <code>/mcp</code>: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds</td></tr>
 <tr><td>stale lease</td><td>a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within fifteen seconds is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out</td></tr>
 <tr><td>lifetime</td><td>the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says <code>serving until the last peer leaves</code>; when the last peer goes, the server stops, closes the port and removes the lease</td></tr>
+<tr><td>freshness</td><td>the server follows the repository it serves: before a request is answered it compares a fingerprint of the git control files (<code>HEAD</code>, the staging index, <code>packed-refs</code>, the reflog, the merge and rebase markers — one <code>stat</code> each) with the one its current reading was built at, and the request that finds them different rebuilds the layer. A commit made while the server runs is visible through the API, through MCP and in the Cockpit with no restart; a client attached before the commit keeps its session and its place on the peer board. No poll, no thread, no watcher. <code>project.the-server-sees-the-current-tree</code></td></tr>
 <tr><td>signals</td><td><code>SIGTERM</code>, <code>SIGINT</code> or <code>SIGHUP</code> (a client killing its server, Ctrl-C in a terminal) removes the lease inside the handler before the process dies of the signal; <code>kill -9</code> cannot be caught, and the next process takes the stale lease over</td></tr>
 <tr><td>takeover</td><td>a bridged peer whose server died elects again on its next message: it becomes the server itself, carrying its client's <code>initialize</code> across so that the client never notices, or attaches to whichever process won first (<code>re-attached to the shared server</code>); when it can serve neither way (its own <code>--strict</code> refuses a degraded layer) the client gets a JSON-RPC error naming why, never silence</td></tr>
 <tr><td>options</td><td>the server's <code>--discovery</code> and <code>--strict</code> apply to every session it serves; a bridge inherits them and the log says which server it attached to</td></tr>
@@ -444,7 +445,7 @@ transport, when it attached and when it was last seen. The <code>initialize</cod
 what it announced, before its first tool call.</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>tool</th><th>capability</th><th>arguments</th><th>answers</th></tr></thead><tbody>
-<tr><td><code>majordomus_peers</code></td><td><code>peers.list</code></td><td>none</td><td>every peer, the caller's own id, each peer's announcement, and every pair of claims that meet</td></tr>
+<tr><td><code>majordomus_peers</code></td><td><code>peers.list</code></td><td><code>checkouts?</code></td><td>every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered</td></tr>
 <tr><td><code>majordomus_announce</code></td><td><code>peers.announce</code></td><td><code>intent</code>, <code>scope?</code></td><td>the calling peer's record, and the peers whose claimed scope it collides with</td></tr>
 </tbody></table>
 </div>
@@ -454,6 +455,39 @@ to touch. The board lives in the server's memory and is gone with the process;
 and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
 so <code>POST /api/v1/peers/announce</code> is refused (422) and <code>GET /api/v1/peers</code> answers without
 a <code>caller</code>.</p>
+<h3 id="the-board-is-the-repository-s-adr-0044"><a class="zola-anchor" href="#the-board-is-the-repository-s-adr-0044" aria-label="Anchor link for: the-board-is-the-repository-s-adr-0044">The board is the repository's (ADR 0044)</a></h3>
+<p>A server serves a checkout, so a repository worked on through linked worktrees has one
+board per worktree — and until ADR 0044 <code>peers.list</code> answered with one of them while the
+bootstrap in <code>CLAUDE.md</code> and <code>AGENTS.md</code> told every worker it had seen the repository.
+Measured on 2026-09-11: seven live servers, one <code>git_repository_id</code>, seven boards, nine
+agents across sixty worktrees each reading a board that held itself.</p>
+<p><code>peers.list</code> now gathers. It enumerates the checkouts git registers and reads the lease of
+each — the same readers <code>server.status</code> uses — takes its own board from this process's
+memory, and asks every other checkout whose server answers for <strong>its own board alone</strong>
+(<code>checkouts=this</code>). That parameter is what keeps the gather one hop deep: a server asked
+for <code>this</code> enumerates no checkout and probes no server, so it can never ask back. There is
+no retry without it, because a server too old to know the parameter would answer its whole
+board and a cycle is the one failure this must not have; such a checkout is reported unread
+with the reason instead.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>field</th><th>what it says</th></tr></thead><tbody>
+<tr><td><code>peers[].checkout</code></td><td>the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: <code>p1</code> is the first session of <em>every</em> board, so a merged listing without it holds several <code>p1</code>s</td></tr>
+<tr><td><code>overlaps</code></td><td>every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on</td></tr>
+<tr><td><code>boards</code></td><td>one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read</td></tr>
+<tr><td><code>complete</code></td><td>whether every board covered could be read. <code>false</code> means a checkout could not be asked — a short board is never to be mistaken for an empty repository</td></tr>
+<tr><td><code>checkouts</code></td><td><code>repository</code> (the default) or <code>this</code>: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory</td></tr>
+</tbody></table>
+</div>
+<p>A peer id is a <strong>position on one board</strong>, handed out in attachment order and reassigned
+after a reconnect — a session that was <code>p3</code> this morning is <code>p1</code> once its bridge
+re-attaches. Nothing may correlate a worker across time by it; the checkout a peer carries
+is the durable half of its identity. An announcement likewise belongs to a connection: the
+bridge repeats its client's last one after a re-attach or a takeover, and a worker whose
+bridge process is replaced announces again.</p>
+<p>Costs one lease read per registered checkout, one probe per checkout whose lease names an
+address, and one round trip per server that answers. On this repository on 2026-09-11 —
+118 registered checkouts, 7 live servers — the enumeration and probing <code>server.status</code>
+already performs took 3.0s wall.</p>
 <p><strong>A claim is answered, not merely recorded.</strong> <code>peers.announce</code> compares the scope it is
 given against every other announcement and returns the peers whose claims meet it, with
 the pairs of paths that meet: two claims meet when they are equal or one is inside the
@@ -498,8 +532,10 @@ how each kind is read from the tool distribution at run time. The rest is data:<
 </div>
 <p>Consequences a repository can rely on:</p>
 <ul>
-<li>a new rule, prompt, profile, milestone, issue, claim or document is served after <code>git add</code>
-and a restart, with no change to the executable;</li>
+<li>a new rule, prompt, profile, milestone, issue, claim or document is served as soon as
+<code>git add</code> has put it in the staging index, with no change to the executable and no
+restart: staging moves a file the server watches, so the next request rebuilds the layer
+(<code>project.the-server-sees-the-current-tree</code>);</li>
 <li>a new class in <code>sources.yaml</code> naming a known kind, or a new kind with its schema under
 <code>.ai/repo/knowledge/</code>, is served the same way;</li>
 <li><code>.ai/local/</code> is never served, tracked or not;</li>
@@ -538,7 +574,7 @@ manifest section it falls under, and its size.</p>
 <tr><td><code>majordomus_scope_classify</code></td><td><code>repository.scope_classify</code></td><td><code>path</code></td><td>whether a repository-relative path is in or out of the scope, the reason, and the rule that decided</td></tr>
 <tr><td><code>majordomus_capabilities</code></td><td><code>capabilities.list</code></td><td><code>kind?</code>, <code>exposure?</code></td><td>every capability with its projections</td></tr>
 <tr><td><code>majordomus_capability</code></td><td><code>capabilities.describe</code></td><td><code>id</code></td><td>one capability: schemas, provenance, every projection</td></tr>
-<tr><td><code>majordomus_peers</code></td><td><code>peers.list</code></td><td>none</td><td>the clients attached to this shared server (above)</td></tr>
+<tr><td><code>majordomus_peers</code></td><td><code>peers.list</code></td><td><code>checkouts?</code></td><td>every worker of the repository, gathered from the board of every checkout (above)</td></tr>
 <tr><td><code>majordomus_announce</code></td><td><code>peers.announce</code></td><td><code>intent</code>, <code>scope?</code></td><td>records what the calling peer is working on (above)</td></tr>
 <tr><td><code>majordomus_perf</code></td><td><code>perf.counters</code></td><td>none</td><td>this process's work counters and phase timings: what happened once at startup, what happens per call</td></tr>
 <tr><td><code>majordomus_worktrees</code></td><td><code>worktree.topology</code></td><td>none</td><td>the <code>majordomus://worktrees</code> document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies</td></tr>
@@ -547,6 +583,30 @@ manifest section it falls under, and its size.</p>
 <tr><td><code>majordomus_worktree_migration_plan</code></td><td><code>worktree.migration_plan</code></td><td>none</td><td>every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing</td></tr>
 </tbody></table>
 </div>
+<p>The table above is the core set and not the whole of it: the tool list is a projection of
+the capability registry, it grows whenever a module is composed, and a list in prose that
+claimed to be complete would be wrong the next time one is. <code>majordomus_capabilities</code> and
+<code>docs/generated/capabilities.md</code> are the derived, total reference; what is written here is
+what a reader needs before opening it.</p>
+<h3 id="sessions-and-continuity"><a class="zola-anchor" href="#sessions-and-continuity" aria-label="Anchor link for: sessions-and-continuity">Sessions and continuity</a></h3>
+<p>Two of the tools answer about <code>.ai/local/</code> — the half of the layer that names this machine —
+and they are the reason the server binds to the loopback interface. They are served and
+never published: no generator writes them into <code>docs/generated/</code> and no site page carries
+one.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>tool</th><th>capability</th><th>answers</th></tr></thead><tbody>
+<tr><td><code>majordomus_continuity</code></td><td><code>continuity.state</code></td><td>what a worker resuming <em>here</em> would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers</td></tr>
+<tr><td><code>majordomus_lifecycle_episodes</code></td><td><code>lifecycle.episodes</code></td><td>every open episode of the store — not only the one the pointer follows — with its provider session, its standing (<code>current</code>, <code>open</code>, <code>foreign</code>, <code>stranded</code>) and the last ledger line stamped with it</td></tr>
+<tr><td><code>majordomus_lifecycle_recovery</code></td><td><code>lifecycle.recovery</code></td><td>episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic</td></tr>
+<tr><td><code>majordomus_lifecycle_runtime</code></td><td><code>lifecycle.runtime</code></td><td>the commit this process's index was built at, against the commit the repository is on right now, and whether they agree</td></tr>
+<tr><td><code>majordomus_lifecycle_providers</code></td><td><code>lifecycle.providers</code></td><td>per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook</td></tr>
+<tr><td><code>majordomus_lifecycle_closed</code></td><td><code>lifecycle.closed</code></td><td>the tracked records a clone receives: how many, how many on this branch, and the newest twenty</td></tr>
+</tbody></table>
+</div>
+<p>The first answers the worker's question and the rest answer the operator's, which is a
+different question and not a superset: <code>continuity.state</code> follows
+<code>state/session-current.yaml</code>, and that pointer is a symlink the most recent start event
+re-aims. <a href="https://majordomus.dev/docs/continuity/"><code>CONTINUITY.md</code></a> has the model and the whole path.</p>
 <p>Every query is read-only and says so in its annotations; <code>majordomus_announce</code>, the one
 command, says it is not, and it changes this process's memory and nothing else. Each tool
 carries the canonical id in <code>_meta.majordomus.id</code> and its <code>inputSchema</code> and
@@ -588,9 +648,11 @@ or ranks them, because the repository defines no merge semantics. Recorded in
 <li><strong>Any mutation of the repository</strong>, subscriptions, list-change notifications, and a
 server-initiated stream on <code>/mcp</code> (this server sends nothing unasked). The HTTP
 projection of the same registry is served by the shared server and by <code>majordomus serve</code>; see <a href="https://majordomus.dev/docs/capabilities/"><code>CAPABILITIES.md</code></a>.</li>
-<li><strong>Persistent coordination.</strong> The peer board is one process's memory: what a peer is
-working on across sessions and machines is the shell tool's task record and scope, not
-this.</li>
+<li><strong>Persistent coordination.</strong> A peer board is one process's memory, and the gathered board
+is a read of several of them at the moment of asking: what a peer is working on across
+sessions and machines is the shell tool's task record and scope, not this. A branch
+pushed before a session started carries no announcement and no less of a claim;
+<code>scripts/collision-check</code> is the reader for that.</li>
 </ul>
 <h2 id="what-proves-it"><a class="zola-anchor" href="#what-proves-it" aria-label="Anchor link for: what-proves-it">What proves it</a></h2>
 <p><code>test/cases/72_rust_mcp.sh</code> builds the executable and speaks to it over pipes inside a
@@ -625,10 +687,10 @@ under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-co
 </span><span class="text-sm text-heading">The Rust executable serves the repository&#39;s AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-data-driven/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">What the MCP server serves is decided by the manifest, the declared source classes and each file&#39;s front matter, so an object added to the layer is served with no change to the executable</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-degraded-not-silent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-shared-server/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-</span><span class="text-sm text-heading">One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-lease-resilience/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-lease-resilience/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-lease-lost/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-peers/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-</span><span class="text-sm text-heading">Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-client-autostart/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Every client attached to a checkout&#39;s server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-client-autostart/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp</span></a></li><li><a href="https://majordomus.dev/guarantees/mcp-uri-resolution/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin</span></a></li></ul></div>
 </div>
@@ -649,7 +711,7 @@ under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-co
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

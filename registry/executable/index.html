@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -426,7 +426,7 @@ enumerations ship. Dependencies: <code>clap</code>, <code>serde</code>, <code>se
 They are discovered — from <code>capability!</code> declarations and the constants in
 <code>web::discover::native_all()</code>, from <code>site/config.toml</code>, and from a <code>surface.json</code> a producer
 writes beside its output under <code>target/web/&lt;id&gt;/</code>. One resolution, held on <code>Context::web</code>
-and resolved once per process, feeds the router, the home page at <code>/</code>, the <code>web.surfaces</code>
+and resolved once per generation of the repository (<code>live::Live</code>), feeds the router, the home page at <code>/</code>, the <code>web.surfaces</code>
 capability, the validator, the publication, the startup log and <code>docs/generated/web.json</code>.</p>
 <p><strong>If you are changing anything under <code>src/http/</code>, <code>src/web/</code> or <code>src/cockpit/</code>, the
 invariant is: an HTTP surface is declared once, where its producer is, and every other
@@ -559,8 +559,8 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">majordomus-cli 0.5.0</dd></div>
-        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">84 builtin in 28 modules, 1190 declarative</dd></div>
-        <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">81 MCP tools · 83 HTTP routes · 20 commands</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">89 builtin in 29 modules, 1215 declarative</dd></div>
+        <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">86 MCP tools · 88 HTTP routes · 20 commands</dd></div>
         <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli</a></dd></div>
         <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/docs/generated" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/</a></dd></div>
       </dl>
@@ -584,7 +584,7 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

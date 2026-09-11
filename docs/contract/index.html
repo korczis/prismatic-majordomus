@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -264,14 +264,21 @@ semantic definition across projections is a design defect (<code>docs/CAPABILITI
 <p>A capability you add or change has use cases: run <code>majordomus usecase impact</code> and the
 scenarios it names, and close a coverage gap (<code>majordomus usecase coverage</code>) with a use
 case that executes (<code>.ai/repo/workflows/use-cases.md</code>); <code>finish</code> refuses a required gap.</p>
-<p>You are probably not alone. One shared server serves this repository, and every worker
-attached to it is visible to every other through <code>majordomus_peers</code>. Announce what you are
-doing and the paths you expect to touch, with <code>majordomus_announce</code>, before you start — and
-again whenever the connection is re-established, because an announcement belongs to a
-connection and a worker that reconnects keeps its work while losing its place on the board.
-Read the board before you open a mandate and before you fan work out: two workers built the
-same subsystem in one afternoon because neither looked first. A scope announced there is a
-claim, not a lock; the task's own scope and <code>check --overlap</code> are what refuse a commit.</p>
+<p>You are probably not alone. A server serves the checkout it was started in, and a linked
+worktree is a checkout with a server of its own, so this repository has as many servers as
+it has worktrees being worked in. The board, however, is the repository's:
+<code>majordomus_peers</code> gathers every checkout's board and hands you every worker of this
+repository, each stamped with the worktree it is working in (ADR 0044). Check <code>complete</code> —
+<code>false</code> means a checkout could not be asked, and <code>boards</code> says which and why; a short board
+is not proof that nobody is there. Announce what you are doing and the paths you expect to
+touch, with <code>majordomus_announce</code>, before you start — and again whenever the connection is
+re-established, because an announcement belongs to a connection and a worker that reconnects
+keeps its work while losing its place on the board. A peer id (<code>p1</code>, <code>p2</code>) is a position on
+one board, reassigned on reconnect and reused by every other board: never correlate a worker
+across time by it — the checkout a peer carries is the durable half of its identity. Read
+the board before you open a mandate and before you fan work out: two workers built the same
+subsystem in one afternoon because neither looked first. A scope announced there is a claim,
+not a lock; the task's own scope and <code>check --overlap</code> are what refuse a commit.</p>
 <p>Push what you have, early. A branch whose commits reach no remote is invisible to every
 other worker, cannot be integrated by anyone but you, and is one disk away from being lost;
 <code>majordomus doctor</code> names those branches.</p>
@@ -314,7 +321,7 @@ rule that exists here and nowhere else is a bug.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

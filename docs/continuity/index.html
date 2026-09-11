@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -492,6 +492,112 @@ the same four labels, and it never writes — the lifecycle has one writer, and 
 account of events the ledger already holds is what this design refuses.</p>
 <p>It is served and never published. Those records name this machine, so no generated document
 and no site page carries one, and a test proves it.</p>
+<h3 id="one-episode-and-then-the-rest-of-them"><a class="zola-anchor" href="#one-episode-and-then-the-rest-of-them" aria-label="Anchor link for: one-episode-and-then-the-rest-of-them">One episode, and then the rest of them</a></h3>
+<p><code>continuity.state</code> answers about <strong>one</strong> episode: the one <code>state/session-current.yaml</code>
+resolves to. That is the right answer for a briefing — a worker wants its own episode, not a
+census — and it is the wrong answer for anybody asking whether the subsystem is working,
+because the pointer is a symlink that the most recent start event re-aims. On 2026-09-11
+this repository held five open episodes in one checkout and no surface the tool has could
+name more than one of them. An episode nobody can see is an episode that never closes.</p>
+<p>So there is a second reading, <code>lifecycle.*</code>, which reads the <strong>store</strong> rather than the
+pointer and answers the operator's questions instead of the worker's:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Capability</th><th>Answers</th><th>Where the answer comes from</th></tr></thead><tbody>
+<tr><td><code>lifecycle.episodes</code></td><td>every open episode, its provider session, where it stands (<code>current</code>, <code>open</code>, <code>foreign</code>, <code>stranded</code>), the tasks it touched, and what the ledger last saw it do</td><td><code>state/sessions-open/*.yaml</code>, <code>state/session-current.yaml</code>, <code>state/ledger.jsonl</code></td></tr>
+<tr><td><code>lifecycle.recovery</code></td><td>episodes that can no longer close themselves, temporary files a killed close left in the tracked section, whether the pointer has been migrated, and whether every episode the ledger saw start is accounted for</td><td>the same store, plus the sessions section the manifest names</td></tr>
+<tr><td><code>lifecycle.runtime</code></td><td>the commit this process is answering about, against the commit the repository is on right now</td><td>the served index's git state, and <code>git</code> read on the call</td></tr>
+<tr><td><code>lifecycle.providers</code></td><td>which lifecycle events each provider's adapter declares, whether it can archive prompts, and which of this repository's enforcement entries are wired to its hook</td><td><code>share/providers.yaml</code> and the policy's <code>enforcement</code></td></tr>
+<tr><td><code>lifecycle.closed</code></td><td>the tracked records a clone receives: how many, how many on this branch, and the newest twenty</td><td>the object index, kind <code>session</code></td></tr>
+</tbody></table>
+</div>
+<p>Each is exposed over MCP and over <code>GET /api/v1/lifecycle/&lt;name&gt;</code>, and the Cockpit's
+Continuity page is their projection. None of them writes: the lifecycle has one writer, and
+a second account of events the ledger already holds is what this design refuses.</p>
+<p>Two things are deliberately <strong>not</strong> among them.</p>
+<p><strong>No clock and no thresholds.</strong> Nothing in <code>lifecycle.*</code> decides that a record is old. Age
+is <code>session.freshness</code> in the policy and <code>continuity.state</code>'s to judge; a second engine for
+it here would be the second source of truth that makes the numbers disagree. (<code>session.freshness</code>
+and the <code>fresh | aging | stale | unknown | invalid</code> labels are ADR 0041's and arrive with it;
+until they do, a record carries its divergence label and its recorded timestamp, and a reader
+does the arithmetic. The whole point of ADR 0041 is that a reader should not have to.)</p>
+<p><strong>No guess about attachment.</strong> Whether the provider that opened an episode is still attached
+to its conversation is not a fact of this repository. The episode file records no process,
+the peer board records no episode, and a client that exits without firing its end event
+leaves a file identical to one a live worker is using. What <code>lifecycle.episodes</code> reports is
+what it can observe — where the file is, whose worktree it names, whether the pointer
+follows it, and when the ledger last saw it write — and <code>stranded</code> is reserved for the one
+case the repository can actually establish: the worktree the episode opened in is gone from
+disk, so nothing can compose its record.</p>
+<h3 id="the-whole-path-once"><a class="zola-anchor" href="#the-whole-path-once" aria-label="Anchor link for: the-whole-path-once">The whole path, once</a></h3>
+<p>Everything above is one path, and it is worth seeing whole. Every box is a thing that
+exists; the labels on the arrows are what has to be true for the next box to be reached.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>  a person runs a command                a provider starts a conversation</span></span>
+<span class="giallo-l"><span>  or opens an editor                     (Claude Code: SessionStart)</span></span>
+<span class="giallo-l"><span>            |                                          |</span></span>
+<span class="giallo-l"><span>            +--------------------+---------------------+</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    ENTRY  bin/majordomus, .envrc, or the hook shim</span></span>
+<span class="giallo-l"><span>                                 |</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    RUNTIME ENSURED   `serve ensure`: one shared server per</span></span>
+<span class="giallo-l"><span>                                 |    checkout, started if none answers, never built</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    CLIENT ATTACHED   MCP over stdio or HTTP; the peer board</span></span>
+<span class="giallo-l"><span>                                 |    is what the other workers can see</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    EPISODE OPENED    keyed by the provider session, not by the</span></span>
+<span class="giallo-l"><span>                                 |    checkout: `state/sessions-open/&lt;provider session&gt;.yaml`</span></span>
+<span class="giallo-l"><span>                                 |    and the pointer aimed at it. `--if-open keep`</span></span>
+<span class="giallo-l"><span>                                 |    returns this provider session&#39;s episode and no other.</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    FRESHNESS VALIDATED   the resolved handover and checkpoint carry two</span></span>
+<span class="giallo-l"><span>                                 |        independent labels: divergence (where their commit</span></span>
+<span class="giallo-l"><span>                                 |        sits) and freshness (how old they are). A stale</span></span>
+<span class="giallo-l"><span>                                 |        record is shown as history; its `Next Action` is</span></span>
+<span class="giallo-l"><span>                                 |        not quoted as the thing to do now.  [ADR 0041]</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    CONTEXT PROJECTED   the briefing, within `session.briefing_budget_lines`,</span></span>
+<span class="giallo-l"><span>                                 |      frozen into `local/session-contexts/` as the working</span></span>
+<span class="giallo-l"><span>                                 |      context — what this episode was told, never rewritten</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    WORK AND EVENTS    every command appends one ledger line, stamped with</span></span>
+<span class="giallo-l"><span>                                 |     the episode that wrote it. A line with no episode</span></span>
+<span class="giallo-l"><span>                                 |     belongs to none: work outside a session is attributed</span></span>
+<span class="giallo-l"><span>                                 |     to nobody rather than to whoever was open nearby.</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    CHECKPOINTS        written by hand, and derived on PreCompact — the</span></span>
+<span class="giallo-l"><span>                                 |     moment the conversation stops being a place anything</span></span>
+<span class="giallo-l"><span>                                 |     is kept. An artefact of the episode: no task required.</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    CLOSE AND HANDOVER   SessionEnd closes the episode and, when work is</span></span>
+<span class="giallo-l"><span>                                 |       still open, writes the continuation record. The</span></span>
+<span class="giallo-l"><span>                                 |       envelope&#39;s reference lists are computed from the</span></span>
+<span class="giallo-l"><span>                                 |       ledger at close, never accumulated during the episode.</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    .ai/repo/sessions/&lt;stamp&gt;--&lt;episode&gt;--&lt;branch&gt;--&lt;head&gt;--&lt;digest&gt;.md</span></span>
+<span class="giallo-l"><span>                                 |     TRACKED. The only half of this that survives a clone:</span></span>
+<span class="giallo-l"><span>                                 |     everything under .ai/local/ names this machine and</span></span>
+<span class="giallo-l"><span>                                 |     travels nowhere.</span></span>
+<span class="giallo-l"><span>                                 v</span></span>
+<span class="giallo-l"><span>                    A FUTURE RESUME    locally, the next episode&#39;s briefing resolves the</span></span>
+<span class="giallo-l"><span>                                       records of this worktree and branch; elsewhere, a</span></span>
+<span class="giallo-l"><span>                                       clone receives the closed records and reads them as</span></span>
+<span class="giallo-l"><span>                                       history, because a record is evidence and never</span></span>
+<span class="giallo-l"><span>                                       authority.</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>  and, beside the path, watching it:</span></span>
+<span class="giallo-l"><span>                    lifecycle.episodes · lifecycle.recovery · lifecycle.runtime</span></span>
+<span class="giallo-l"><span>                    lifecycle.providers · lifecycle.closed · continuity.state</span></span>
+<span class="giallo-l"><span>                    projected together on the Cockpit&#39;s /cockpit/continuity</span></span></code></pre>
+<p>One box in that path is marked, because it is the newest and the one this repository most
+recently did without: <strong>freshness validated</strong> is a step, not a property of the record.
+Without it a handover that was <code>advanced</code> — a true statement about git topology, and
+identically true on the day it was written and a month later — was quoted into every new
+episode for six days after the work it described was finished. The decision, the thresholds
+and the labels are ADR 0041's, "The
+session lifecycle is the episode's, not the task's"; every other box in the path is behaviour this tree already has. And the <strong>tracked</strong> box is where the local
+half stops: a clone receives the closed records and nothing else, which is why no generated
+document and no site page may carry a briefing, a working context or an open episode.</p>
 <h2 id="where-the-lifecycle-puts-each-piece"><a class="zola-anchor" href="#where-the-lifecycle-puts-each-piece" aria-label="Anchor link for: where-the-lifecycle-puts-each-piece">Where the lifecycle puts each piece</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths&gt; [--profile &lt;name&gt;]</span></span>
 <span class="giallo-l"><span>        |                                  names any prior record for this branch</span></span>
@@ -544,7 +650,8 @@ models are shaped this way.</p>
 </span><span class="text-sm text-heading">The right prior record is resolved by worktree and branch, and an unrelated one is never offered</span></a></li><li><a href="https://majordomus.dev/guarantees/task-commit-attribution/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--planned">planned</span>
 </span><span class="text-sm text-heading">A task will know which commits it produced, rather than inferring them from a range</span></a></li><li><a href="https://majordomus.dev/guarantees/semantic-retrieval/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--rejected">rejected</span>
 </span><span class="text-sm text-heading">Ranked or semantic retrieval over durable records is deliberately not implemented</span></a></li><li><a href="https://majordomus.dev/guarantees/blocker-survives-handover/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-</span><span class="text-sm text-heading">A blocking question keeps blocking after the work is handed to a new task</span></a></li></ul></div>
+</span><span class="text-sm text-heading">A blocking question keeps blocking after the work is handed to a new task</span></a></li><li><a href="https://majordomus.dev/guarantees/session-observability/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider&#39;s adapter declares</span></a></li></ul></div>
 </div>
 
 </div>
@@ -563,7 +670,7 @@ models are shaped this way.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

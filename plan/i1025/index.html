@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -228,7 +228,7 @@
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/capability-graph/" class="text-fg-brand underline">capability-graph — One capability graph, two projections, and no second inventory of what this repository can do</a>.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Record the decision to compose the authoritative registries into one typed graph and to render it as two projections, with the alternatives that were real and the consequences that follow.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">The choices here — composing rather than centralising, generating rather than fetching, progressive enhancement rather than a client application, availability as metadata rather than a condition in a page — will each look arbitrary to somebody later. ADR 12 decided the Cockpit is a projection; this decides what it is a projection of.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">ADR 12 establishes the Cockpit as a projection of the registry. ADR 13 establishes that web surfaces are discovered from their producers. Neither covers the composed graph or the static projection.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">One record states the decision, extends rather than restates the two it follows, and says what would have to change to revisit it.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Record the decision to compose the authoritative registries into one typed graph and to render it as two projections, with the alternatives that were real and the consequences that follow.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The choices here — composing rather than centralising, generating rather than fetching, progressive enhancement rather than a client application, availability as metadata rather than a condition in a page — will each look arbitrary to somebody later. ADR 12 decided the Cockpit is a projection; this decides what it is a projection of.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">ADR 12 establishes the Cockpit as a projection of the registry. ADR 13 establishes that web surfaces are discovered from their producers. Neither covers the composed graph or the static projection.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">One record states the decision, extends rather than restates the two it follows, and says what would have to change to revisit it.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -262,7 +262,7 @@
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
       <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">adr_recorded</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bin/majordomus adr check; bin/majordomus doctor; bin/majordomus context validate; bash test/run.sh 99_adr</td><td class="px-4 py-2 text-body">adr-0018 written at .ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md: adr check accepts the whole set with every identity unique and every reference resolving, doctor reports no failure, context validate reports no problem, and the ADR behavioural case passes</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">665f1c4</td></tr></tbody>
     </table>
-  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Written last, it becomes a summary of the code. It is written when the choice between composing and centralising is still open.</p>
+  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Written last, it becomes a summary of the code. It is written when the choice between composing and centralising is still open.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -291,7 +291,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

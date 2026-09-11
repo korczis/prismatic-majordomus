@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -415,7 +415,7 @@ machine. It does not run a model and it does not route work to one.</p>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 
-        <a href="https://majordomus.dev/guarantees/mcp-shared-server/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves</a>
+        <a href="https://majordomus.dev/guarantees/mcp-shared-server/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves</a>
       </li>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
@@ -425,7 +425,7 @@ machine. It does not run a model and it does not route work to one.</p>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 
-        <a href="https://majordomus.dev/guarantees/mcp-peers/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch</a>
+        <a href="https://majordomus.dev/guarantees/mcp-peers/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Every client attached to a checkout&#39;s server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch</a>
       </li>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
@@ -505,7 +505,7 @@ machine. It does not run a model and it does not route work to one.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -16,7 +16,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=4a119a962c65433be3fa">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd73953fa39592082ed3">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -231,7 +231,7 @@
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
-  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Implement `knowledge search`, `knowledge show` and `knowledge related`: deterministic lookup over the generated index with a documented, tested match order, JSON output that names the field each result matched on, and no write of any kind.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">A query that rebuilds the index mutates the repository as a side effect of asking a question, which makes a read-only command a write and breaks every reproduce line that follows it. And a relevance order nobody can explain is one nobody can debug; the order has to be a rule, not a score.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository&#39;s canonical artifacts.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">`knowledge search` ranks by an explicit ladder — exact canonical id, exact title, title prefix, path, tag, then literal body match — and reports the matched field for every result. `knowledge show` prints one node with its source path and hash. `knowledge related` prints the edges into and out of one node with their provenance. A stale index is reported, never silently rebuilt.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Implement `knowledge search`, `knowledge show` and `knowledge related`: deterministic lookup over the generated index with a documented, tested match order, JSON output that names the field each result matched on, and no write of any kind.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A query that rebuilds the index mutates the repository as a side effect of asking a question, which makes a read-only command a write and breaks every reproduce line that follows it. And a relevance order nobody can explain is one nobody can debug; the order has to be a rule, not a score.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository&#39;s canonical artifacts.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">`knowledge search` ranks by an explicit ladder — exact canonical id, exact title, title prefix, path, tag, then literal body match — and reports the matched field for every result. `knowledge show` prints one node with its source path and hash. `knowledge related` prints the edges into and out of one node with their provenance. A stale index is reported, never silently rebuilt.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
@@ -261,7 +261,7 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">query_explainable</li><li class="font-mono text-heading break-words">readonly_proven</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Two commands now contain the word search with different corpora and different contracts. If the distinction is not stated where a worker reads it, the wrong one gets used and the answer looks like an absence.</p>
+  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Two commands now contain the word search with different corpora and different contracts. If the distinction is not stated where a worker reads it, the wrong one gets used and the answer looks like an absence.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -290,7 +290,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5ab9a48f94a7e6562d2221ee8bfc2df4dc982e99" class="font-mono underline">5ab9a48</a> · inputs <span class="font-mono">992961d040de</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/90a875cf2da68053d765fbb3f5890c98eacb5407" class="font-mono underline">90a875c</a> · inputs <span class="font-mono">006d804baa36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
