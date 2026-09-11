@@ -3160,6 +3160,45 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0041",
+        "kind": "adr",
+        "label": "adr-0041",
+        "summary": "Proof is a recorded execution, and inputs unchanged is not proven",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0041",
+        "source": ".ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "rule:project.no-claim-without-test",
+            "rule:project.never-reported-is-not-green",
+            "claim:evidence-proof-is-an-execution",
+            "claim:evidence-currency-is-not-collapsed",
+            "claim:evidence-partial-run-preserves-the-rest",
+            "claim:evidence-navigates-both-ways",
+            "claim:evidence-unsupported-guarantee-is-reported",
+            "file:docs/EVIDENCE.md",
+            "file:docs/CLAIMS.yaml",
+            "file:apps/majordomus-cli/src/evidence/mod.rs",
+            "file:apps/majordomus-cli/src/evidence/ledger.rs",
+            "file:apps/majordomus-cli/src/evidence/record.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "file:scripts/evidence-check",
+            "file:.ai/repo/evidence-baseline.txt",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:.ai/repo/evidence/README.md",
+            "test:test/cases/124_evidence.sh",
+            "file:.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md"
+          ],
+          "tags": [
+            "evidence",
+            "claims",
+            "verification",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0048",
         "kind": "adr",
         "label": "adr-0048",
@@ -3193,52 +3232,13 @@
             "test:test/cases/125_rule_proof.sh",
             "test:test/cases/133_rule_graph.sh",
             "test:test/cases/138_governance_gates.sh",
-            "file:.ai/repo/adrs/0049-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+            "file:.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
           ],
           "tags": [
             "rules",
             "governance",
             "verification",
             "evidence"
-          ]
-        }
-      },
-      {
-        "id": "majordomus://adr/adr-0049",
-        "kind": "adr",
-        "label": "adr-0049",
-        "summary": "Proof is a recorded execution, and inputs unchanged is not proven",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0049",
-        "source": ".ai/repo/adrs/0049-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md",
-        "status": "proposed",
-        "facts": {
-          "date": "2026-09-11",
-          "related": [
-            "rule:project.no-claim-without-test",
-            "rule:project.never-reported-is-not-green",
-            "claim:evidence-proof-is-an-execution",
-            "claim:evidence-currency-is-not-collapsed",
-            "claim:evidence-partial-run-preserves-the-rest",
-            "claim:evidence-navigates-both-ways",
-            "claim:evidence-unsupported-guarantee-is-reported",
-            "file:docs/EVIDENCE.md",
-            "file:docs/CLAIMS.yaml",
-            "file:apps/majordomus-cli/src/evidence/mod.rs",
-            "file:apps/majordomus-cli/src/evidence/ledger.rs",
-            "file:apps/majordomus-cli/src/evidence/record.rs",
-            "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
-            "file:scripts/evidence-check",
-            "file:.ai/repo/evidence-baseline.txt",
-            "file:.ai/repo/ci/gates.yaml",
-            "file:.ai/repo/evidence/README.md",
-            "test:test/cases/124_evidence.sh",
-            "file:.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md"
-          ],
-          "tags": [
-            "evidence",
-            "claims",
-            "verification",
-            "ci"
           ]
         }
       },
@@ -10579,7 +10579,7 @@
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0049"
+            "adr-0041"
           ],
           "areas": [
             "verification",
@@ -34254,6 +34254,106 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:.ai/repo/evidence-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "file:scripts/evidence-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://adr/adr-0030",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/evidence-currency-is-not-collapsed",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/evidence-navigates-both-ways",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/evidence-partial-run-preserves-the-rest",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/evidence-proof-is-an-execution",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://claim/worktree-topology-derived",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://context/ai.repo.evidence",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0041",
+        "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0048",
         "target": "file:.ai/repo/rule-proof-baseline.txt",
         "kind": "put_in_force"
@@ -34300,7 +34400,7 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://adr/adr-0049",
+        "target": "majordomus://adr/adr-0041",
         "kind": "put_in_force"
       },
       {
@@ -34376,106 +34476,6 @@
       {
         "source": "majordomus://adr/adr-0048",
         "target": "majordomus://test/test/cases/138_governance_gates.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:.ai/repo/evidence-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:scripts/evidence-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "kind:adr",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://adr/adr-0030",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/evidence-currency-is-not-collapsed",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/evidence-navigates-both-ways",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/evidence-partial-run-preserves-the-rest",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/evidence-proof-is-an-execution",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://claim/worktree-topology-derived",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://context/ai.repo.evidence",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://document/docs/EVIDENCE.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://rule/project.never-reported-is-not-green@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://rule/project.no-claim-without-test@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "majordomus://test/test/cases/124_evidence.sh",
         "kind": "put_in_force"
       },
       {

@@ -10525,7 +10525,7 @@
           "required": [
             "claim"
           ],
-          "description": "One claim of the matrix.\n# Example\n\nOne claim of the matrix, named exactly as `docs/CLAIMS.yaml` spells it; a name the\nmatrix does not declare is a not-found rather than an empty answer.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;\nlet i = EvidenceClaimInput { claim: \"evidence-proof-is-an-execution\".into() };\nassert!(!i.claim.is_empty());\n```",
+          "description": "One claim of the matrix, named by the id it is declared under.\n\nThe id is required, and there is no spelling of this input that means \"every claim\" —\nthat question belongs to `evidence.report`. An id the matrix does not declare is a\nnot-found from the handler rather than an empty proof.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceClaimInput;\n\nlet input: EvidenceClaimInput =\n    serde_json::from_str(r#\"{\"claim\": \"evidence-both-directions\"}\"#).unwrap();\nassert_eq!(input.claim, \"evidence-both-directions\");\n\n// no id is a usage error, never a request for all of them\nassert!(serde_json::from_str::<EvidenceClaimInput>(\"{}\").is_err());\n```",
           "title": "EvidenceClaimInput"
         }
       },
@@ -10598,7 +10598,7 @@
               "items": {
                 "type": "string"
               },
-              "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+              "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
             },
             "reproduce": {
               "type": [
@@ -10632,7 +10632,7 @@
             "executions",
             "also_proves"
           ],
-          "description": "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\n// a ClaimEvidence carries the claim's proof, whose state ranks against the others\nassert!(ProofState::Proven < ProofState::NotRun);\n```",
+          "description": "One claim with everything the repository can say about its proof, and the way back out\nto the test that carries it.\n\nThe proof is flattened in, so a client reads one claim rather than an evidence wrapper\naround one; the executions and the other claims the same test proves sit beside it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::ClaimEvidence;\nuse majordomus_cli::evidence::ClaimProof;\n\nlet proof: ClaimProof = serde_json::from_value(serde_json::json!({\n    \"id\": \"evidence-both-directions\",\n    \"claim\": \"a claim and its test answer for each other\",\n    \"status\": \"guaranteed\",\n    \"source\": null,\n    \"implementation\": null,\n    \"test_path\": \"test/cases/84_distribution_model.sh\",\n    \"test\": \"suite:84_distribution_model\",\n    \"state\": \"not_run\",\n    \"meaning\": \"no run of this test has been recorded\",\n    \"execution\": null,\n    \"changed\": [],\n    \"reproduce\": \"bash test/run.sh 84_distribution_model\"\n}))\n.unwrap();\n\nlet answer = ClaimEvidence {\n    proof,\n    executions: Vec::new(),\n    also_proves: vec![\"evidence-record-is-not-networked\".to_string()],\n};\nlet json = serde_json::to_value(&answer).unwrap();\nassert_eq!(json[\"id\"], \"evidence-both-directions\");\nassert!(json.get(\"proof\").is_none(), \"the claim is flattened in, not nested\");\nassert_eq!(json[\"also_proves\"], serde_json::json!([\"evidence-record-is-not-networked\"]));\n// a list even where the ledger keeps one: retention is a decision that may change,\n// and a client that read a bare object would break when it did\nassert_eq!(json[\"executions\"], serde_json::json!([]));\n```",
           "title": "ClaimEvidence",
           "$defs": {
             "ProofState": {
@@ -10673,7 +10673,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -10710,7 +10710,7 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
                 },
                 "at": {
                   "type": "string",
@@ -10738,7 +10738,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -10753,7 +10753,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -10783,7 +10783,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -10803,7 +10803,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             }
           }
         }
@@ -10883,7 +10883,7 @@
               "description": "Where the run happened: `local` (the default), `ci` or `release`."
             }
           },
-          "description": "A run to record into the ledger.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\nlet i = EvidenceRecordInput { suite: None, crate_output: None, origin: Some(\"ci\".into()) };\nassert_eq!(i.origin.as_deref(), Some(\"ci\"));\n```",
+          "description": "A run to record into the ledger.\n\nPaths to what the runners already wrote, not a run to perform: the recorder reads a\nreport, stamps each result with the provenance the run did not carry, and merges it.\nBoth reports are optional and may be given together; an absent origin is `local`.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceRecordInput;\n\nlet input: EvidenceRecordInput =\n    serde_json::from_str(r#\"{\"suite\": \"tmp/report.tsv\"}\"#).unwrap();\nassert_eq!(input.suite.as_deref(), Some(\"tmp/report.tsv\"));\nassert!(input.crate_output.is_none() && input.origin.is_none());\n\n// what was not given is not written back as null: the shape a client reads is the\n// shape it sent\nassert_eq!(\n    serde_json::to_string(&input).unwrap(),\n    r#\"{\"suite\":\"tmp/report.tsv\"}\"#\n);\n```",
           "title": "EvidenceRecordInput"
         }
       },
@@ -10932,7 +10932,7 @@
             "unknown",
             "ledger"
           ],
-          "description": "What a recording did.\n# Example\n\nWhat the recorder wrote, as a client sees it: how many executions, how many passed,\nthe commit they were recorded against and where the ledger lives.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\nlet r = RecordReport {\n    recorded: 1, passed: 1, commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(), unknown: vec![],\n    ledger: \".ai/repo/evidence/ledger.json\".into(),\n};\nassert_eq!(r.recorded, 1);\n```",
+          "description": "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n```",
           "title": "RecordReport"
         }
       },
@@ -11005,7 +11005,7 @@
               "description": "Only the claims whose declared status the evidence does not support, with the\nfindings. The tallies still count the whole matrix, so a filtered answer never\nmisreports how much of it was examined."
             }
           },
-          "description": "Which part of the matrix to answer for.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceReportInput;\nlet i = EvidenceReportInput { findings_only: true, ..Default::default() };\nassert!(i.findings_only);\n```",
+          "description": "Which part of the matrix to answer for.\n\nEvery field narrows, and they compose; saying nothing asks for the whole matrix. A key\nnothing recognises is refused rather than dropped, because a misspelled filter that read\nas \"no filter\" would answer a question nobody asked and look like a clean one.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceReportInput;\nuse majordomus_cli::evidence::ProofState;\n\nlet all: EvidenceReportInput = serde_json::from_str(\"{}\").unwrap();\nassert!(all.state.is_none() && all.status.is_none() && !all.findings_only);\n\nlet narrowed: EvidenceReportInput =\n    serde_json::from_str(r#\"{\"state\": \"stale\", \"findings_only\": true}\"#).unwrap();\nassert_eq!(narrowed.state, Some(ProofState::Stale));\nassert!(narrowed.findings_only);\n\nassert!(serde_json::from_str::<EvidenceReportInput>(r#\"{\"states\": \"stale\"}\"#).is_err());\n```",
           "title": "EvidenceReportInput",
           "$defs": {
             "ProofState": {
@@ -11046,7 +11046,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             }
           }
         }
@@ -11070,6 +11070,10 @@
             "ledger": {
               "$ref": "#/$defs/EvidenceLedgerSummary",
               "description": "The ledger this was joined against."
+            },
+            "subject": {
+              "$ref": "#/$defs/EvidenceSubject",
+              "description": "What the report could reach. Read this before reading the tallies: they are counts\nover the claims the index held, and an index that dropped a file holds fewer."
             },
             "claims": {
               "type": "array",
@@ -11098,11 +11102,12 @@
           "required": [
             "working_tree",
             "ledger",
+            "subject",
             "claims",
             "totals",
             "findings"
           ],
-          "description": "The whole joined picture: every claim of the matrix against every execution recorded.\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```",
+          "description": "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```",
           "title": "EvidenceReport",
           "$defs": {
             "EvidenceLedgerSummary": {
@@ -11114,7 +11119,7 @@
                 },
                 "present": {
                   "type": "boolean",
-                  "description": "Is there one?"
+                  "description": "Whether the ledger holds at least one execution.\n\nNot whether the file exists. A ledger file holding nothing and no ledger file at\nall are the same answer to the only question a reader is asking — has anything\nbeen recorded — and both make every claim read `not_run`. [`Ledger::present`]\nanswers the filesystem question, and nothing derives a proof state from it."
                 },
                 "executions": {
                   "type": "integer",
@@ -11134,7 +11139,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "The distinct commits its executions were recorded against."
+                  "description": "The distinct commits its executions were recorded against. Always emitted, empty\nincluded, for the reason [`ClaimProof::changed`] is."
                 }
               },
               "required": [
@@ -11143,7 +11148,35 @@
                 "executions",
                 "commits"
               ],
-              "description": "What the ledger is and whether it is there at all.\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```"
+              "description": "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```"
+            },
+            "EvidenceSubject": {
+              "type": "object",
+              "properties": {
+                "examined": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many claims the index held, and this report therefore examined."
+                },
+                "complete": {
+                  "type": "boolean",
+                  "description": "Whether the index that produced them carried no error diagnostic. When this is\nfalse, every count and every absence below is about a smaller world than the\nrepository, and no verdict over it means what it says."
+                },
+                "excluded": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The diagnostics that excluded something, when any did: `<path>: <code>`."
+                }
+              },
+              "required": [
+                "examined",
+                "complete",
+                "excluded"
+              ],
+              "description": "Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \"was this generated from this tree\" and cannot answer \"did the\ngenerator see everything in it\", so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\"docs/CLAIMS.yaml: unknown_key\".into()],\n};\nassert!(!partial.complete, \"a shrunken index must not report a clean verdict\");\n```"
             },
             "EvidenceClaimProof": {
               "type": "object",
@@ -11212,7 +11245,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
                 },
                 "reproduce": {
                   "type": [
@@ -11230,7 +11263,7 @@
                 "meaning",
                 "changed"
               ],
-              "description": "One claim, joined to whatever the repository actually recorded about it.\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
+              "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -11270,7 +11303,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -11307,7 +11340,7 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
                 },
                 "at": {
                   "type": "string",
@@ -11335,7 +11368,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -11350,7 +11383,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -11380,7 +11413,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -11400,7 +11433,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "EvidenceFinding": {
               "type": "object",
@@ -11435,7 +11468,7 @@
                 "state",
                 "reason"
               ],
-              "description": "A claim whose declared status the evidence does not support.\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
+              "description": "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
             }
           }
         }
@@ -11506,7 +11539,7 @@
           "required": [
             "test"
           ],
-          "description": "One test, by its stable identity or by the path a claim names it with.\n# Example\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceTestInput;\nlet i = EvidenceTestInput { test: \"suite:124_evidence\".into() };\nassert!(i.test.starts_with(\"suite:\"));\n```",
+          "description": "One test, by its stable identity or by the path a claim names it with.\n\nBoth spellings reach the same test. `docs/CLAIMS.yaml` names a path, the ledger keys on\nan identity, and a caller holding one of them should not have to know the other; the\nhandler resolves a path to the identity and reads the same derivation either way.\n\n```\nuse majordomus_cli::capability::builtin::evidence::EvidenceTestInput;\nuse majordomus_cli::evidence::{Runner, TestId};\n\nlet by_path: EvidenceTestInput =\n    serde_json::from_str(r#\"{\"test\": \"test/cases/84_distribution_model.sh\"}\"#).unwrap();\nlet id = TestId::of(&by_path.test).unwrap();\nassert_eq!(id.as_string(), \"suite:84_distribution_model\");\nassert_eq!(id.runner, Runner::Suite);\n\n// an identity is not a path: `TestId::of` reads paths, and the handler parses the\n// `<runner>:<name>` form itself\nlet by_id: EvidenceTestInput = serde_json::from_str(r#\"{\"test\": \"crate:why\"}\"#).unwrap();\nassert!(TestId::of(&by_id.test).is_none());\n```",
           "title": "EvidenceTestInput"
         }
       },
@@ -11569,7 +11602,7 @@
             "reproduce",
             "proves"
           ],
-          "description": "One test, and what it proves.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\n// a TestEvidence names the runner that owns the test it is about\nassert_eq!(Runner::Suite.prefix(), \"suite\");\n```",
+          "description": "One test, and what it proves.\n\nThe other direction of [`ClaimEvidence`], read from the test's end: its identity, its\nsource and whether that source is still the one that ran, the command that runs it\nagain, and every claim that names it.\n\n```\nuse majordomus_cli::capability::builtin::evidence::TestEvidence;\nuse majordomus_cli::evidence::TestId;\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet answer = TestEvidence {\n    test: id.as_string(),\n    runner: id.runner,\n    source: id.source(),\n    present: true,\n    reproduce: id.reproduce(),\n    execution: None,\n    digest_matches: None,\n    proves: Vec::new(),\n};\nassert_eq!(answer.test, \"crate:why\");\nassert_eq!(answer.reproduce, \"cargo test --test why\");\n\n// nothing recorded: the two provenance keys are absent rather than null, so \"no\n// execution\" cannot be read as an execution that said nothing\nlet json = serde_json::to_value(&answer).unwrap();\nassert!(json.get(\"execution\").is_none() && json.get(\"digest_matches\").is_none());\nassert_eq!(json[\"proves\"], serde_json::json!([]));\n```",
           "title": "TestEvidence",
           "$defs": {
             "EvidenceRunner": {
@@ -11585,7 +11618,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -11622,7 +11655,7 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
                 },
                 "at": {
                   "type": "string",
@@ -11650,7 +11683,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -11680,7 +11713,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -11700,7 +11733,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "EvidenceClaimProof": {
               "type": "object",
@@ -11769,7 +11802,7 @@
                   "items": {
                     "type": "string"
                   },
-                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`]."
+                  "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is [`ProofState::Stale`].\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
                 },
                 "reproduce": {
                   "type": [
@@ -11787,7 +11820,7 @@
                 "meaning",
                 "changed"
               ],
-              "description": "One claim, joined to whatever the repository actually recorded about it.\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
+              "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by [`report`]; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
             },
             "ProofState": {
               "oneOf": [
@@ -11827,7 +11860,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             }
           }
         }
@@ -25414,7 +25447,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -25451,7 +25484,7 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
                 },
                 "at": {
                   "type": "string",
@@ -25479,7 +25512,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -25494,7 +25527,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -25524,7 +25557,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -25544,7 +25577,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "RuleState": {
               "oneOf": [
@@ -26240,7 +26273,7 @@
                   "description": "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
                 }
               ],
-              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+              "description": "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
             },
             "EvidenceExecution": {
               "type": "object",
@@ -26277,7 +26310,7 @@
                 },
                 "digest": {
                   "type": "string",
-                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. A\nexecution whose test no longer hashes to this did not run the test that is there now."
+                  "description": "`sha256:<hex>` of the test's own source as it was when the run was recorded. An\nexecution whose test no longer hashes to this did not run the test that is there now."
                 },
                 "at": {
                   "type": "string",
@@ -26305,7 +26338,7 @@
                 "origin",
                 "command"
               ],
-              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+              "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
             },
             "EvidenceRunner": {
               "oneOf": [
@@ -26320,7 +26353,7 @@
                   "description": "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
                 }
               ],
-              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+              "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in [`TestId::of`]; a claim naming something neither runner produces is\nreported as [`ProofState::Unrunnable`] rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
             },
             "EvidenceOutcome": {
               "oneOf": [
@@ -26350,7 +26383,7 @@
                   "description": "The harness could not run it at all."
                 }
               ],
-              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
+              "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
             },
             "EvidenceOrigin": {
               "oneOf": [
@@ -26370,7 +26403,7 @@
                   "description": "A release run."
                 }
               ],
-              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
+              "description": "Where a run happened. The canonical model is provider-neutral: a CI adapter records\n`Ci`, and nothing here knows or cares which CI it was.\n\n```\nuse majordomus_cli::evidence::Origin;\n\nassert_eq!(Origin::parse(\"CI\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"local\"), Some(Origin::Local));\n// naming the provider is the adapter's business; the ledger records the kind of run,\n// so a repository that changes CI does not change what its old evidence says\nassert!(Origin::parse(\"github-actions\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Origin;\nassert_eq!(Origin::parse(\"ci\"), Some(Origin::Ci));\nassert_eq!(Origin::parse(\"nowhere\"), None);\n```"
             },
             "RuleState": {
               "oneOf": [

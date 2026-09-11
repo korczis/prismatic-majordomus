@@ -22,6 +22,53 @@
 //! time is taking it from the tree the run was made against, which is the same thing,
 //! provided the recording happens in that tree. A dirty tree is recorded as dirty for
 //! exactly this reason: it is the one case where the commit does not describe what ran.
+//!
+//! # A run, recorded
+//!
+//! A repository with one case, a report the runner wrote, and the execution that comes out
+//! of joining the two:
+//!
+//! ```
+//! use majordomus_cli::evidence::{record, Ledger, Origin, Outcome, RecordRequest};
+//! use std::process::Command;
+//!
+//! let root = tempfile::tempdir().unwrap();
+//! let git = |args: &[&str]| {
+//!     Command::new("git").arg("-C").arg(root.path()).args(args).output().unwrap()
+//! };
+//! git(&["init", "-q"]);
+//! git(&["config", "user.email", "t@example.com"]);
+//! git(&["config", "user.name", "t"]);
+//! std::fs::create_dir_all(root.path().join("test/cases")).unwrap();
+//! std::fs::write(root.path().join("test/cases/07_scope.sh"), "echo scope\n").unwrap();
+//! git(&["add", "-A"]);
+//! git(&["commit", "-qm", "init"]);
+//!
+//! // what `test/run.sh` already writes when `MJ_TEST_REPORT` is set; kept outside the
+//! // work tree, so the recorded tree state describes the run and not the report
+//! let reports = tempfile::tempdir().unwrap();
+//! let tsv = reports.path().join("run.tsv");
+//! std::fs::write(&tsv, "07_scope\tok\t12\tparallel\n").unwrap();
+//!
+//! let outcome = record(
+//!     root.path(),
+//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci },
+//! )
+//! .unwrap();
+//! assert_eq!(outcome.recorded, 1);
+//! assert_eq!(outcome.passed, 1);
+//! assert_eq!(outcome.commit.len(), 40, "the provenance the run did not record itself");
+//! assert_eq!(outcome.working_tree, "clean");
+//!
+//! // and it is in the ledger, stamped, with the command that produces it again
+//! let ledger = Ledger::load(root.path()).unwrap();
+//! let execution = ledger.latest("suite:07_scope").unwrap();
+//! assert_eq!(execution.outcome, Outcome::Pass);
+//! assert_eq!(execution.seconds, 12);
+//! assert_eq!(execution.origin, Origin::Ci);
+//! assert_eq!(execution.command, "bash test/run.sh 07_scope");
+//! assert_eq!(execution.digest_matches(root.path()), Some(true));
+//! ```
 
 //! # Example
 //!
@@ -41,6 +88,27 @@ use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use crate::error::{Error, Result};
 
 /// What to record, and where from.
+///
+/// Both sources are optional and independent — a run of the suite, a run of the crate, or
+/// one invocation recording both — but a request that names neither is refused rather than
+/// recording an empty run as if nothing had failed.
+///
+/// ```
+/// use majordomus_cli::evidence::{record, Origin, RecordRequest};
+///
+/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local };
+/// let root = tempfile::tempdir().unwrap();
+/// let refused = record(root.path(), &nothing).unwrap_err().to_string();
+/// assert!(refused.contains("nothing to record"), "{refused}");
+///
+/// let suite_run = RecordRequest {
+///     suite: Some("tmp/run.tsv".into()),
+///     crate_output: None,
+///     origin: Origin::Ci,
+/// };
+/// assert_eq!(suite_run.origin, Origin::Ci);
+/// assert_eq!(suite_run.suite.as_deref(), Some(std::path::Path::new("tmp/run.tsv")));
+/// ```
 #[derive(Debug, Clone)]
 /// # Example
 ///
@@ -58,7 +126,46 @@ pub struct RecordRequest {
     pub origin: Origin,
 }
 
-/// What a recording did.
+/// What a recording did: how much of the run reached the ledger, how much of it passed,
+/// the provenance every execution was stamped with, and what the run named that this
+/// repository does not have.
+///
+/// The last is the one worth reading. A report naming a test no runner here owns is
+/// counted in [`RecordOutcome::unknown`] and recorded for nobody, because an execution of
+/// a test that does not exist is evidence for nothing — and dropping it silently would
+/// hide a runner and a matrix that have drifted apart.
+///
+/// ```
+/// # use std::process::Command;
+/// # let root = tempfile::tempdir().unwrap();
+/// # let git = |args: &[&str]| {
+/// #     Command::new("git").arg("-C").arg(root.path()).args(args).output().unwrap()
+/// # };
+/// # git(&["init", "-q"]);
+/// # git(&["config", "user.email", "t@example.com"]);
+/// # git(&["config", "user.name", "t"]);
+/// # std::fs::create_dir_all(root.path().join("test/cases")).unwrap();
+/// # std::fs::write(root.path().join("test/cases/07_scope.sh"), "echo scope\n").unwrap();
+/// # std::fs::write(root.path().join("test/cases/08_other.sh"), "echo other\n").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-qm", "init"]);
+/// use majordomus_cli::evidence::{record, Ledger, Origin, RecordOutcome, RecordRequest};
+///
+/// let reports = tempfile::tempdir().unwrap();
+/// let tsv = reports.path().join("run.tsv");
+/// std::fs::write(&tsv, "07_scope\tok\t1\tparallel\n99_ghost\tok\t1\tparallel\n").unwrap();
+///
+/// let outcome: RecordOutcome = record(
+///     root.path(),
+///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local },
+/// )
+/// .unwrap();
+/// assert_eq!(outcome.recorded, 1, "only the case this repository actually has");
+/// assert_eq!(outcome.passed, 1);
+/// assert_eq!(outcome.working_tree, "clean");
+/// assert_eq!(outcome.unknown, ["suite:99_ghost"], "named here, recorded for nobody");
+/// assert!(Ledger::load(root.path()).unwrap().latest("suite:99_ghost").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// # Example
 ///
@@ -207,13 +314,55 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 
 /// Read the runs a request names, stamp each result with provenance, and merge into the
 /// ledger of `root`.
+///
+/// It decides nothing: a case that failed is a case the runner said failed. It refuses
+/// three things — a request naming no run at all, a tree with no commit to stamp, and a
+/// malformed report, which is refused rather than partly read.
+///
+/// Because it merges, a later partial run updates only what it ran:
+///
 /// ```
-/// use majordomus_cli::evidence::{record, Origin, RecordRequest};
-/// use majordomus_cli::synthetic::SyntheticRepository;
-/// let repo = SyntheticRepository::small().unwrap();
-/// let req = RecordRequest { suite: None, crate_output: None, origin: Origin::Local };
-/// // a synthetic tree is not a git repository, so there is no commit to record against
-/// assert!(record(repo.root(), &req).is_err());
+/// # use std::process::Command;
+/// # let root = tempfile::tempdir().unwrap();
+/// # let git = |args: &[&str]| {
+/// #     Command::new("git").arg("-C").arg(root.path()).args(args).output().unwrap()
+/// # };
+/// # git(&["init", "-q"]);
+/// # git(&["config", "user.email", "t@example.com"]);
+/// # git(&["config", "user.name", "t"]);
+/// # std::fs::create_dir_all(root.path().join("test/cases")).unwrap();
+/// # std::fs::write(root.path().join("test/cases/07_scope.sh"), "echo scope\n").unwrap();
+/// # std::fs::write(root.path().join("test/cases/08_other.sh"), "echo other\n").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-qm", "init"]);
+/// use majordomus_cli::evidence::{record, Ledger, Origin, Outcome, RecordRequest};
+///
+/// let reports = tempfile::tempdir().unwrap();
+/// let suite = |name: &str, rows: &str| {
+///     let p = reports.path().join(name);
+///     std::fs::write(&p, rows).unwrap();
+///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local }
+/// };
+///
+/// let both = suite("all.tsv", "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n");
+/// assert_eq!(record(root.path(), &both).unwrap().recorded, 2);
+///
+/// let again = suite("one.tsv", "07_scope\tFAIL\t9\tserial\n");
+/// assert_eq!(record(root.path(), &again).unwrap().recorded, 1);
+///
+/// let ledger = Ledger::load(root.path()).unwrap();
+/// assert_eq!(ledger.latest("suite:07_scope").unwrap().outcome, Outcome::Fail);
+/// assert_eq!(
+///     ledger.latest("suite:08_other").unwrap().outcome,
+///     Outcome::Pass,
+///     "the second run must not erase evidence it never measured",
+/// );
+///
+/// // a malformed line is refused, not skipped: an under-recorded run would report
+/// // `not run` for a test that ran
+/// let short = suite("bad.tsv", "07_scope\tok\t12\n");
+/// let refused = record(root.path(), &short).unwrap_err().to_string();
+/// assert!(refused.contains("field(s)"), "{refused}");
 /// ```
 pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     if req.suite.is_none() && req.crate_output.is_none() {
@@ -302,7 +451,14 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
 
     let mut ledger = Ledger::load(root)?;
     let recorded = ledger.merge(executions);
-    ledger.save(root)?;
+    // A run that recorded nothing writes nothing. Saving here would create a ledger
+    // holding no executions out of a report that named only tests this repository does
+    // not have — a file that says "evidence was recorded" where none was. The malformed
+    // report above is refused before any write for the same reason, and the two paths
+    // must not disagree about what an empty recording leaves behind.
+    if recorded > 0 {
+        ledger.save(root)?;
+    }
 
     unknown.sort();
     unknown.dedup();
@@ -485,6 +641,37 @@ mod tests {
         assert!(
             !Ledger::present(d.path()),
             "a refused recording wrote a ledger"
+        );
+    }
+
+    /// A report whose every result names a test this repository does not have records
+    /// nothing, and must leave nothing behind. A ledger holding no executions is a file
+    /// that says evidence was recorded where none was, and the malformed-report path
+    /// already refuses before any write — the two must not disagree.
+    #[test]
+    fn a_recording_that_recorded_nothing_writes_no_ledger() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(
+            &tsv,
+            "99_ghost\tok\t1\tparallel\n98_gone\tok\t1\tparallel\n",
+        )
+        .unwrap();
+        let got = record(
+            d.path(),
+            &RecordRequest {
+                suite: Some(tsv),
+                crate_output: None,
+                origin: Origin::Local,
+            },
+        )
+        .unwrap();
+        assert_eq!(got.recorded, 0);
+        assert_eq!(got.unknown, vec!["suite:98_gone", "suite:99_ghost"]);
+        assert!(
+            !Ledger::present(d.path()),
+            "a recording that recorded nothing created a ledger"
         );
     }
 

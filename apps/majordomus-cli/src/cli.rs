@@ -366,14 +366,26 @@ pub enum ExecutionsCommand {
 #[derive(Debug, Args)]
 /// `majordomus evidence`. The output shape is global, so it reads the way a person writes
 /// it — `evidence show --findings --format json` — and is declared once.
-/// # Example
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, EvidenceArgs};
 /// use clap::Parser;
-/// let cli = Cli::try_parse_from(["majordomus", "evidence", "show"]).unwrap();
-/// let Command::Evidence(args) = cli.command else { panic!("not the evidence command") };
-/// let _: EvidenceArgs = args;
+/// use majordomus_cli::cli::{Cli, Command, EvidenceArgs, EvidenceCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "evidence", "show", "--findings", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: EvidenceArgs = match cli.command {
+///     Command::Evidence(args) => args,
+///     other => panic!("expected `evidence`, parsed {other:?}"),
+/// };
+/// // `--format` is declared once and reaches every subcommand, so it parses where a
+/// // person writes it rather than only before the subcommand
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, EvidenceCommand::Show { findings: true, .. }));
+///
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "evidence"]).is_err());
 /// ```
 pub struct EvidenceArgs {
     #[command(flatten)]
@@ -392,15 +404,45 @@ pub struct EvidenceArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus evidence`.
-/// # Example
+/// The subcommands of `majordomus evidence`: the whole matrix, one claim, one test, and
+/// the recorder.
+///
+/// `show`, `claim` and `proves` are the command line of `evidence.report`,
+/// `evidence.claim` and `evidence.test`; `record` is the command line of
+/// `evidence.record`, which is a command line and nothing else because it writes a tracked
+/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// `proves` — `test` is a word the fish completion adapter refuses, so the command line
+/// spells the relation with the verb rather than renaming the identity.
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, EvidenceCommand};
 /// use clap::Parser;
-/// let cli = Cli::try_parse_from(["majordomus", "evidence", "claim", "some-id"]).unwrap();
-/// let Command::Evidence(args) = cli.command else { panic!("not the evidence command") };
-/// assert!(matches!(args.command, EvidenceCommand::Claim { .. }));
+/// use majordomus_cli::cli::{Cli, Command, EvidenceCommand};
+///
+/// fn parse(args: &[&str]) -> EvidenceCommand {
+///     let cli = Cli::try_parse_from(args.iter().copied()).unwrap();
+///     let Command::Evidence(args) = cli.command else { panic!("evidence") };
+///     args.command
+/// }
+///
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "show", "--state", "stale"]),
+///     EvidenceCommand::Show { state: Some(s), check: false, .. } if s == "stale"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "claim", "evidence-both-directions"]),
+///     EvidenceCommand::Claim { id } if id == "evidence-both-directions"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "proves", "crate:why"]),
+///     EvidenceCommand::Proves { id } if id == "crate:why"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "evidence", "test", "crate:why"]).is_err());
+///
+/// // recording reads a report a runner already wrote; it runs no test
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
+///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
 /// ```
 pub enum EvidenceCommand {
     /// Every claim against the evidence recorded for it

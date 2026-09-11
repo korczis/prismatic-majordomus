@@ -34,7 +34,7 @@ related:
   - test:test/cases/125_rule_proof.sh
   - test:test/cases/133_rule_graph.sh
   - test:test/cases/138_governance_gates.sh
-  - file:.ai/repo/adrs/0049-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md
+  - file:.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md
 provenance:
   origin: authored
 ---
@@ -53,7 +53,7 @@ answer. `product.rs` said it in one line: `enforced: o.metadata.get("x-majordomu
 section written for a human reader, that case could be renamed, and the rule went on
 reading as enforced everywhere. The relation ran one way, with the converse unowned — the
 shape this repository keeps rediscovering, most recently in `scripts/ci/reference-check`
-and in the claims matrix that ADR 0047 is about.
+and in the claims matrix that ADR 0041 is about.
 
 `scripts/ci/rule-proof-check` closed the naming half: a rule names its proof in front
 matter, and a named path that is not in the tree fails outright. It landed with a baseline
@@ -110,7 +110,7 @@ into a total that would hide that.
 `majordomus doctrine` asks whether the repository satisfies a rule right now — a question
 about the tree. `majordomus rules` asks whether the rule is in a state where it could be
 satisfied at all — a question about the rule. `crate::rules` answers the second by joining
-each rule to the tree and to the evidence ledger of ADR 0047, reusing that vocabulary
+each rule to the tree and to the evidence ledger of ADR 0041, reusing that vocabulary
 rather than inventing a second one, and reports ten states of which three must never
 collapse into each other: `proven` (a passing run, nothing changed since), `gated` (a
 mechanism that refuses violations, with no verdict recorded), and `reviewed`.
@@ -170,7 +170,7 @@ converts an honest absence into a dishonest pass.
 **Fold the proof graph into `majordomus doctrine`.** Rejected because they answer different
 questions and a merged command would answer both with one exit code. "The repository is
 fine" and "the rule is fine" are not the same sentence, and collapsing them is how a green
-badge stops meaning anything — the same reasoning by which ADR 0047 refuses to collapse
+badge stops meaning anything — the same reasoning by which ADR 0041 refuses to collapse
 `proven` and `inputs unchanged`.
 
 **Record a verdict for gates, so `gated` could reach `proven`.** Tempting, and rejected for
