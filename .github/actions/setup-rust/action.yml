@@ -1,9 +1,20 @@
 name: setup-rust
 description: >-
-  The pinned Rust toolchain and the crate's build cache, the same in every job that touches
+  The Rust toolchain and the crate's build cache, the same in every job that touches
   apps/majordomus-cli. The cache (Swatinem/rust-cache) holds the cargo registry, the git
   checkouts of dependencies and the target directory, keyed by the job, the OS, the
-  toolchain and Cargo.lock, restored from the default branch when a branch has none yet.
+  toolchain and Cargo.lock, restored from the default branch when a branch has never had one.
+
+  The toolchain is whatever `stable` is on the day the job runs, and this repository pins
+  nothing: apps/majordomus-cli/Cargo.toml declares rust-version = "1.85" as the minimum it
+  supports, not the compiler CI uses. That is a floating input to two gates that fail a
+  build — `cargo fmt --check` and `cargo clippy -D warnings` — so a release of Rust can turn
+  master red with no change to this repository, and has. It also means a lint a contributor
+  cannot reproduce locally, because a local toolchain is whatever asdf or rustup installed.
+  Pinning it here (a rust-toolchain.toml both rustup and this action would honour) is the
+  fix, and it is deliberately not made in the same change as a stabilisation: it swaps the
+  compiler under every gate at once, and the verdict that would prove it takes hours to
+  arrive. This description said "pinned" while pinning nothing; it now says what is true.
 inputs:
   components:
     description: rustup components to add (comma separated), e.g. rustfmt,clippy
