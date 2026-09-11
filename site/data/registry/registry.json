@@ -6,22 +6,22 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "1220b29365d27bfffb49e28908b5a9f73fb306e84b2e36da3dedcb746c3b2e13",
+    "fingerprint": "0156d80583d49c58825749e007633e41ffee28831a8da4fe02a8d48ee685bac1",
     "summary": {
-      "total": 1239,
+      "total": 1244,
       "builtin": 80,
-      "declarative": 1159,
+      "declarative": 1164,
       "by_kind": {
         "command": 3,
         "query": 77,
-        "resource": 1159
+        "resource": 1164
       },
       "by_stability": {
         "behaviorally_verified": 75,
-        "implemented": 1164
+        "implemented": 1169
       },
       "mcp_tools": 78,
-      "mcp_resources": 1187,
+      "mcp_resources": 1192,
       "http_routes": 80,
       "cli_commands": 34,
       "modules": 55,
@@ -15644,7 +15644,7 @@
         "module": "peers",
         "kind": "command",
         "title": "Announce what this peer is working on",
-        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
         "input": {
           "name": "AnnounceInput",
           "schema": {
@@ -15662,6 +15662,13 @@
                 },
                 "description": "Repository-relative paths the peer expects to touch. Informational: other peers\nread it to avoid a collision; nothing here enforces it.",
                 "default": []
+              },
+              "claim": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants."
               }
             },
             "required": [
@@ -15702,6 +15709,13 @@
                 "type": "boolean",
                 "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
               },
+              "claims": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Announcement"
+                },
+                "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+              },
               "announcement": {
                 "anyOf": [
                   {
@@ -15711,7 +15725,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Its announcement, when it made one."
+                "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
               },
               "overlaps": {
                 "type": "array",
@@ -15719,6 +15733,13 @@
                   "$ref": "#/$defs/Overlap"
                 },
                 "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case."
+              },
+              "released": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case."
               }
             },
             "required": [
@@ -15779,6 +15800,13 @@
               "Announcement": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                  },
                   "intent": {
                     "type": "string",
                     "description": "One line: the task or intent, in the peer's words."
@@ -15800,7 +15828,7 @@
                   "scope",
                   "at"
                 ],
-                "description": "What a peer said it is working on."
+                "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
               },
               "Overlap": {
                 "type": "object",
@@ -15979,6 +16007,13 @@
                     "type": "boolean",
                     "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
                   },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Announcement"
+                    },
+                    "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope."
+                  },
                   "announcement": {
                     "anyOf": [
                       {
@@ -15988,7 +16023,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Its announcement, when it made one."
+                    "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports."
                   }
                 },
                 "required": [
@@ -16044,6 +16079,13 @@
               "Announcement": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim."
+                  },
                   "intent": {
                     "type": "string",
                     "description": "One line: the task or intent, in the peer's words."
@@ -16065,7 +16107,7 @@
                   "scope",
                   "at"
                 ],
-                "description": "What a peer said it is working on."
+                "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
               },
               "Overlap": {
                 "type": "object",
@@ -29042,7 +29084,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 38,
+        "capabilities": 39,
         "capability_ids": []
       },
       {
@@ -29236,7 +29278,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 214,
+        "capabilities": 216,
         "capability_ids": []
       },
       {
@@ -29509,7 +29551,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 120,
+        "capabilities": 121,
         "capability_ids": []
       },
       {
@@ -29561,7 +29603,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 153,
+        "capabilities": 154,
         "capability_ids": []
       },
       {
@@ -29641,7 +29683,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9dada1a4a7f1dcfeedfead2537c9cb6e85ecd4a2dcdbb1d07563de1b1f5d8fac",
+    "fingerprint": "2b59cdb0f2c5f14d964ec21ce8b90676fdcf39cb6464304efc1a8a694160a693",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -29664,7 +29706,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 38,
+      "adr": 39,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -29673,7 +29715,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 214,
+      "document": 216,
       "feature": 20,
       "implementation": 45,
       "issue": 203,
@@ -29684,12 +29726,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 120,
+      "rule": 121,
       "scope": 1,
       "session": 12,
       "skill": 3,
       "taxonomy": 10,
-      "test": 153,
+      "test": 154,
       "use-case": 43,
       "workspace": 1
     },
@@ -30306,6 +30348,24 @@
           "agents",
           "governance",
           "process"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "identity": "adr-0040",
+        "title": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "description": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "path": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 13697,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "cockpit",
+          "runtime",
+          "governance"
         ]
       },
       {
@@ -32115,7 +32175,7 @@
         "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/bench",
@@ -32125,7 +32185,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/capture",
@@ -32135,7 +32195,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/check",
@@ -32145,7 +32205,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -32155,7 +32215,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/context",
@@ -32165,7 +32225,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/decision",
@@ -32175,7 +32235,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/doctor",
@@ -32185,7 +32245,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -32195,7 +32255,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/evidence",
@@ -32205,7 +32265,7 @@
         "description": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/finish",
@@ -32215,7 +32275,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/handover",
@@ -32225,7 +32285,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/help",
@@ -32235,7 +32295,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/history",
@@ -32245,7 +32305,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/init",
@@ -32255,7 +32315,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -32265,7 +32325,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/migrate",
@@ -32275,7 +32335,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/plan",
@@ -32285,7 +32345,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/prompt",
@@ -32295,7 +32355,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/question",
@@ -32305,7 +32365,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/rules",
@@ -32315,7 +32375,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/search",
@@ -32325,7 +32385,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/session",
@@ -32335,7 +32395,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/skills",
@@ -32345,7 +32405,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/start",
@@ -32355,7 +32415,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/update",
@@ -32365,7 +32425,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/usecase",
@@ -32375,7 +32435,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/version",
@@ -32385,7 +32445,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://command/watch",
@@ -32395,7 +32455,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 26642
+        "bytes": 26650
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -32954,6 +33014,15 @@
         "bytes": 26342
       },
       {
+        "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "identity": "docs/COCKPIT_IDE_AUDIT.md",
+        "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "path": "docs/COCKPIT_IDE_AUDIT.md",
+        "source_class": "document",
+        "bytes": 41219
+      },
+      {
         "uri": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "identity": "docs/COMMANDS.md",
@@ -33006,6 +33075,15 @@
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
         "bytes": 14471
+      },
+      {
+        "uri": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "identity": "docs/DEVELOPMENT_RUNTIME.md",
+        "title": "The development runtime",
+        "path": "docs/DEVELOPMENT_RUNTIME.md",
+        "source_class": "document",
+        "bytes": 37136
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -33194,7 +33272,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 14674
+        "bytes": 15577
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -33221,7 +33299,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 67394
+        "bytes": 68129
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -35039,7 +35117,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 60145
+        "bytes": 60312
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -35047,7 +35125,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 38936
+        "bytes": 39748
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -36081,7 +36159,7 @@
         "path": ".ai/repo/project/issues/I0823.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2964
+        "bytes": 2966
       },
       {
         "uri": "majordomus://issue/I0824",
@@ -37016,7 +37094,7 @@
         "path": ".ai/repo/project/issues/I1102.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2176
+        "bytes": 2178
       },
       {
         "uri": "majordomus://issue/I1103",
@@ -37603,7 +37681,7 @@
         "path": ".ai/repo/project/milestones/M003.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 6523
+        "bytes": 6525
       },
       {
         "uri": "majordomus://milestone/M004",
@@ -37647,7 +37725,7 @@
         "path": ".ai/repo/project/milestones/derived-data-integrity.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 4740
+        "bytes": 4742
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -37735,7 +37813,7 @@
         "path": ".ai/repo/project/milestones/two-folder-integration.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 5910
+        "bytes": 5912
       },
       {
         "uri": "majordomus://milestone/web-sign-in",
@@ -39497,6 +39575,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "identity": "project.development-semantics-are-canonical@1",
+        "title": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "description": "A semantic of the development lifecycle — the plan, tasks, sessions, context, executions, peers, evidence, obligations and completion — is declared once as a capability of the Rust executable's registry, and the Cockpit, the CLI, the HTTP API, OpenAPI and MCP request it rather than deciding it; a surface that computes a status, decides a transition or writes a development object itself is a second implementation and a defect.",
+        "path": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7973,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "cockpit",
+          "runtime"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "identity": "project.diagnostics-decide-the-exit@1",
@@ -40552,7 +40647,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/completion",
@@ -40563,7 +40658,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/continuity",
@@ -40574,7 +40669,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/drift",
@@ -40585,7 +40680,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/extension",
@@ -40596,7 +40691,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/knowledge",
@@ -40607,7 +40702,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/mcp",
@@ -40618,7 +40713,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/performance",
@@ -40629,7 +40724,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/policy",
@@ -40640,7 +40735,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://taxonomy/workers",
@@ -40651,7 +40746,7 @@
         "path": ".ai/repo/use-cases/taxonomy.yaml",
         "section": "use-cases",
         "source_class": "taxonomy",
-        "bytes": 1980
+        "bytes": 1984
       },
       {
         "uri": "majordomus://test/test/cases/00_yaml_flatten.sh",
@@ -40964,6 +41059,14 @@
         "path": "test/cases/123_case_bound.sh",
         "source_class": "case",
         "bytes": 3691
+      },
+      {
+        "uri": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "identity": "test/cases/128_the_subset_is_a_subset.sh",
+        "path": "test/cases/128_the_subset_is_a_subset.sh",
+        "source_class": "case",
+        "bytes": 2841
       },
       {
         "uri": "majordomus://test/test/cases/129_executable_issues.sh",
@@ -41323,7 +41426,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 6932
+        "bytes": 7763
       },
       {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -42371,7 +42474,7 @@
       "identity": [
         "id"
       ],
-      "objects": 38
+      "objects": 39
     },
     {
       "name": "application",
@@ -42457,7 +42560,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 214
+      "objects": 216
     },
     {
       "name": "feature",
@@ -42571,7 +42674,7 @@
         "id",
         "version"
       ],
-      "objects": 120
+      "objects": 121
     },
     {
       "name": "scope",
@@ -42626,7 +42729,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 153
+      "objects": 154
     },
     {
       "name": "use-case",
@@ -57341,7 +57444,7 @@
         "name": "majordomus_announce",
         "id": "peers.announce",
         "title": "Announce what this peer is working on",
-        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+        "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
         "kind": "command",
         "read_only": false,
         "input": "AnnounceInput",
