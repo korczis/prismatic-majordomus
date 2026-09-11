@@ -1337,7 +1337,13 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     }
 
     // and reads the layer through it, and sees the whole board
-    let mut boards: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
+    //
+    // One peer's row as this case compares it: the client's own id, and every peer it can
+    // see as (id, intent, scope). Named because the tuple-of-tuples is what clippy's
+    // type_complexity lint is for, and the suite is built with warnings denied.
+    type PeerRow = (String, String, String);
+    type Board = (String, Vec<PeerRow>);
+    let mut boards: Vec<Board> = Vec::new();
     for (i, m, _) in clients.iter_mut() {
         let repo = m.call("majordomus_repository", json!({}));
         assert_eq!(
