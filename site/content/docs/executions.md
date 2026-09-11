@@ -1,7 +1,7 @@
 +++
 title = "Executions"
 description = "the execution plane: running a capability as work that can be watched — the model, the lifecycle, the typed event protocol, the live channel and its guarantees, what each interface offers, the limits and what happens at each, and what it deliberately does not do"
-weight = 38
+weight = 41
 [extra]
 source = "docs/EXECUTIONS.md"
 +++

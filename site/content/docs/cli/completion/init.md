@@ -1,7 +1,7 @@
 +++
 title = "majordomus completion init"
 description = "The shell integration to load once, which carries no command of its own and asks this executable for every candidate"
-weight = 59
+weight = 62
 [extra]
 route = "/docs/cli/completion/init/"
 command = "majordomus completion init"

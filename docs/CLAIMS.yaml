@@ -232,6 +232,15 @@ claims:
     responsibility: projection
     note: update refuses, offers a diff, and overwrites only under an explicit flag.
 
+  - id: archive-fidelity
+    claim: An archive that lost the file modes fails rather than travelling
+    source: docs/ARCHIVE.md
+    implementation: lib/archive.sh
+    test: test/cases/130_archive.sh
+    status: guaranteed
+    responsibility: projection
+    note: The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns.
+
   - id: context-budget
     claim: The always-loaded instruction file has a line budget with a failing check
     source: share/skeleton/policy.yaml

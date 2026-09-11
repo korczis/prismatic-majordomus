@@ -4,7 +4,7 @@ description = "Every command this repository offers, from whichever program offe
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 51
+weight = 54
 [extra]
 route = "/docs/cli/commands/"
 command = "majordomus commands"

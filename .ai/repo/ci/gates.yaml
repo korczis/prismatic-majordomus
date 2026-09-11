@@ -50,6 +50,17 @@ gates:
     runs: scripts/liveness-check
     summary: a wait with no bound, a process spawned and never reaped, a command that pages to a terminal; a ratchet over the shell that still carries them
 
+  # Development semantics belong to the capability registry and every surface consumes them
+  # (ADR 0040). File reads only — share/commands.yaml against docs/generated/registry.json,
+  # plus the two Cockpit trees — so it belongs beside the other structure checks and needs
+  # no build. The debt is ratcheted in .ai/repo/development-semantics-baseline.txt; the gate
+  # fails on a new entry, not on the accepted ones.
+  - id: development-semantics
+    job: structure
+    always: true
+    runs: scripts/development-semantics-check
+    summary: a mutating development command is backed by a capability of the canonical runtime and a Cockpit tree reaches into no layer path; the debt ratchets down and may not grow
+
   - id: core-check
     job: structure
     always: true

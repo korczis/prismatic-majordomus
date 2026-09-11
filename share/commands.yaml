@@ -78,7 +78,7 @@ commands:
     json: false
     syntax: majordomus update [--dry-run] [--diff <target>] [--force]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, share/providers/]
-    writes: [projections[].target, .ai/local/state/ledger.jsonl]
+    writes: ["projections[].target", .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 15]
     demo: projection-fingerprint
     note: Running it twice leaves the byte-identical file. Each projection carries its own stamp, and a target whose content matches neither its stamp nor the new output is a hand edit, refused rather than overwritten.
@@ -440,7 +440,7 @@ commands:
     writes: [.ai/local/state/sessions-open/, .ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/session-contexts/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: session-episode
-    note: One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event.
+    note: "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event."
 
   - id: knowledge
     title: knowledge
@@ -462,7 +462,7 @@ commands:
 
   - id: adr
     title: adr
-    summary: The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.
+    summary: "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set."
     category: memory
     stage: conclude
     visibility: public
@@ -480,7 +480,7 @@ commands:
 
   - id: usecase
     title: usecase
-    summary: The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.
+    summary: "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold."
     category: rules
     stage: verify
     visibility: public
@@ -549,6 +549,24 @@ commands:
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: benchmark-run
     note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
+
+  - id: archive
+    title: archive
+    summary: Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+    category: system
+    stage: inspect
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]
+    reads: [share/archive.yaml, .ai/repo/archive.yaml, .gitattributes]
+    writes: [tmp/archives/]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: archive-profiles
+    note: The file set is the git index, so nothing untracked — no build output, no cache, no .ai/local/ — can travel. What a profile drops beyond that is declared in share/archive.yaml; a profile that drops the derived paths reads .gitattributes rather than keeping a second list of generated paths. Every entry's mode is taken from the index and written into the archive's manifest, and the restore script inside the archive puts the modes back and builds a local git index, because a copy whose scripts are not executable fails checks for reasons of its own.
 
   - id: help
     title: help

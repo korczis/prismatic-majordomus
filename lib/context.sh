@@ -381,14 +381,25 @@ mj_context_peers() {
   local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 0
   printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 0
 
-  # one line per peer: id, attached?, last seen, intent (first sentence), scope
+  # One line per *claim*, not per peer: a peer may hold several at once, because one MCP
+  # session is not always one piece of work — a client that fans work out to subagents shares
+  # its session with all of them. A peer that has said nothing gets its one line anyway.
+  #
+  # `.claims` is read with `.announcement` as the fallback, because the server answering may
+  # be older than this file: a checkout's server outlives the tree it was started from, and a
+  # briefing that renders nothing against a server from last week would be a worse answer
+  # than a briefing that renders the one claim that server knows about.
   local rows; rows="$(printf '%s' "$board" | jq -r '
-    .peers[]
-    | [ .id,
-        (if .attached == false then "gone" else "here" end),
-        (.last_seen_seconds_ago | tostring),
-        ((.announcement.intent // "(said nothing)") | split(". ")[0] | .[0:110]),
-        ((.announcement.scope // []) | join(" "))
+    .peers[] as $p
+    | ( $p.claims // (if $p.announcement then [$p.announcement] else [] end) ) as $claims
+    | (if ($claims | length) == 0 then [null] else $claims end)[]
+    | [ $p.id,
+        (if $p.attached == false then "gone" else "here" end),
+        ($p.last_seen_seconds_ago | tostring),
+        ( if . == null then "(said nothing)"
+          else ((if .name then .name + ": " else "" end) + .intent) | split(". ")[0] | .[0:110]
+          end ),
+        ( if . == null then "" else ((.scope // []) | join(" ")) end )
       ] | @tsv' 2>/dev/null)" || return 0
   [ -n "$rows" ] || return 0
 

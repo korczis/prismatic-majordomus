@@ -9,7 +9,7 @@ Stability: behaviorally_verified. Capabilities: 2.
 
 ## `peers.announce` — Announce what this peer is working on
 
-Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.
+Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.
 
 | | |
 |---|---|
@@ -27,6 +27,15 @@ Tell the other peers of this shared server what the calling session is doing and
 | `intent` | string | yes | One line, in the peer's words: the task, the question, the intent. |
 | `scope` | array | no | Repository-relative paths the peer expects to touch. Informational: other peers
 read it to avoid a collision; nothing here enforces it. |
+| `claim` | string or null | no | Which of this peer's claims this is, when the peer holds more than one.
+
+One MCP session is not always one piece of work — a client that fans work out to
+subagents shares its session with all of them — and without a name every
+announcement replaces the last, so the board ends up describing whichever worker
+spoke most recently and the rest of the scope silently stops being claimed. Name a
+claim and it stands beside the others; announce under that name again and it is
+updated. Leave it out and this is the peer's one unnamed claim, which is what a
+single session announcing about itself wants. |
 
 Output: `Announced`.
 
