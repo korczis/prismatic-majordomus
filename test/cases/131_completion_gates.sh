@@ -141,6 +141,31 @@ echo 'd() { :; }' >> lib/a.sh
 git checkout -q -- lib/a.sh
 [ "$(status_of unit)" = pass ] || { echo "    reverting the edit did not restore the run"; exit 1; }
 
+# ---------------------------------------------------------------- the done invariant
+# Nineteen questions, each with the source that answered it and the evidence it read.
+[ "$(completion | jq -r '.questions | length')" = 19 ] \
+  || { echo "    the done invariant is $(completion | jq -r '.questions | length') questions, not 19"; exit 1; }
+completion | jq -e '[.questions[] | select((.source | length) == 0 or (.evidence | length) == 0)] | length == 0' >/dev/null \
+  || { echo "    a question carries no source or no evidence"; exit 1; }
+# every gate has reported and passed, so the CI question passes and says what it read
+[ "$(completion | jq -r '.questions[] | select(.id == "ci") | .status')" = pass ] \
+  || { echo "    every gate passed and the ci question does not"; exit 1; }
+completion | jq -r '.questions[] | select(.id == "ci") | .evidence' | grep -q 'never reported' \
+  || { echo "    the ci question does not state its denominator"; exit 1; }
+# this task touched lib/ and test/ paths, so regression is answered from the change set
+[ "$(completion | jq -r '.questions[] | select(.id == "regression-tested") | .status')" = queued ] \
+  || { echo "    a change with no test path answered regression-tested with $(completion | jq -r '.questions[] | select(.id == "regression-tested") | .status')"; exit 1; }
+# a question nothing here reaches is unknown and names the command that answers it
+completion | jq -e '.questions[] | select(.id == "parity") | .status == "unknown"' >/dev/null \
+  || { echo "    transport parity was answered by something that cannot answer it"; exit 1; }
+completion | jq -r '.questions[] | select(.id == "issue") | .evidence' | grep -q 'majordomus plan status' \
+  || { echo "    an unreachable question does not name what would answer it"; exit 1; }
+# nothing is ever passed without something behind it
+completion | jq -e '[.questions[] | select(.status == "pass")] | length >= 1' >/dev/null \
+  || { echo "    no question passed at all on a tree where every gate passes"; exit 1; }
+expect_exit 0 "$MJ" check
+expect_grep 'done .*the done invariant is not yet answered'
+
 # ---------------------------------------------------------------- deployment: derived
 completion | jq -e '.obligations[] | select(.id == "deploy") | .applicable == false' >/dev/null \
   || { echo "    a task that deploys nothing was told it owes a deployment"; exit 1; }
