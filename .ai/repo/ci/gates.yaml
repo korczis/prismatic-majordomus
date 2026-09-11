@@ -93,8 +93,14 @@ gates:
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
+  # `always`, and it was not. No class named this gate, so the one check that catches a
+  # public command missing its reference, its fixture, its demo or its cases ran only in a
+  # full plan — which a routine push is not. A change to share/commands.yaml alone, which is
+  # exactly how a command is added, planned every gate except this one. It reads files and
+  # takes under a second, which is why it can be unconditional rather than classed.
   - id: command-furnished
     job: structure
+    always: true
     runs: scripts/ci/command-furnished
     summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
 

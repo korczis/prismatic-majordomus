@@ -214,6 +214,16 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.session-records"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.session-lifecycle",
       "target": "rule:majordomus.session-records"
     },
@@ -391,6 +401,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.session-records",
       "target": "validator:session_records"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "validator:record_changed_files"
     },
     {
       "kind": "decided_by",
@@ -681,6 +696,11 @@
       "kind": "run_by",
       "source": "validator:questions_store",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:record_changed_files",
+      "target": "command:doctor"
     },
     {
       "kind": "run_by",
@@ -981,6 +1001,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.session-records",
       "target": "test:test/cases/63_session_records.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "test:test/cases/136_changed_files_classifier.sh"
     },
     {
       "kind": "proved_by",
@@ -1449,6 +1474,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.record-changed-files",
+      "kind": "rule",
+      "label": "record-changed-files",
+      "note": "exit 10 · records",
+      "role": "warn",
+      "route": "/doctrines/record-changed-files/",
+      "status": "advisory",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.session-lifecycle",
       "kind": "rule",
       "label": "session-lifecycle",
@@ -1742,6 +1778,14 @@
     },
     {
       "external": false,
+      "id": "validator:record_changed_files",
+      "kind": "validator",
+      "label": "mj_validate_record_changed_files",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/changed.sh."
+    },
+    {
+      "external": false,
       "id": "validator:resolver",
       "kind": "validator",
       "label": "mj_validate_resolver",
@@ -1921,6 +1965,14 @@
       "id": "test:test/cases/103_obligations.sh",
       "kind": "test",
       "label": "test/cases/103_obligations.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/136_changed_files_classifier.sh",
+      "kind": "test",
+      "label": "test/cases/136_changed_files_classifier.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

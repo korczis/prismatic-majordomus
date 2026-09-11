@@ -24,6 +24,9 @@
 # the bounded working context this episode freezes when it opens
 # shellcheck source=session_context.sh
 . "$MJ_LIB_DIR/session_context.sh"
+# which of a dirty tree's files are the episode's work product rather than the tool's exhaust
+# shellcheck source=changed.sh
+. "$MJ_LIB_DIR/changed.sh"
 
 # This process's open episode: the one MJ_SESSION_KEY names, else the one the provider
 # session in the environment names when it is open here, else the one the pointer names.
@@ -418,7 +421,12 @@ mj_session_close() {
       "$closed_at" "$task" "$profile"
     printf 'repository_id: %s\nworktree_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
       "$(mj_repository_id)" "$(mj_worktree_id)" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
-    mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
+    # Classified, not copied. The record at 20260910T103933Z--s-20260909152316-024f named
+    # 122 changed files, among them the whole of site/data/generated/, its own three sibling
+    # records and its own site projection — a record claiming itself as its own work
+    # product. lib/changed.sh filters against the declarations that already say what is
+    # derived; what remains is what the episode actually wrote.
+    mj_changed_files_block
     printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
     printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
     [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"

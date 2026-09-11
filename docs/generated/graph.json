@@ -917,6 +917,13 @@
         "external": true
       },
       {
+        "id": "command:recover",
+        "kind": "command",
+        "label": "recover",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
         "id": "command:rules",
         "kind": "command",
         "label": "rules",
@@ -1577,6 +1584,14 @@
         "label": "derive",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/derive",
+        "external": true
+      },
+      {
+        "id": "file:scripts/development-semantics-check",
+        "kind": "file",
+        "label": "development-semantics-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/development-semantics-check",
         "external": true
       },
       {
@@ -2945,6 +2960,31 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0040",
+        "kind": "adr",
+        "label": "adr-0040",
+        "summary": "Development semantics are capabilities of one runtime; every surface is a consumer",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0040",
+        "source": ".ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.development-semantics-are-canonical",
+            "rule:project.rust-canonical-declaration",
+            "file:docs/DEVELOPMENT_RUNTIME.md",
+            "file:scripts/development-semantics-check"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -3037,7 +3077,8 @@
             "read-only-the-context-that-fits",
             "carry-a-blocker-across-a-handover",
             "let-the-provider-draw-the-episode-boundary",
-            "work-on-a-branch-in-its-canonical-worktree"
+            "work-on-a-branch-in-its-canonical-worktree",
+            "recover-an-episode-nobody-closed"
           ],
           "weight": 4
         }
@@ -6309,7 +6350,7 @@
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
-            ".ai/local/state/archive/",
+            ".ai/local/state/completed/",
             ".ai/local/state/ledger.jsonl"
           ]
         }
@@ -6627,6 +6668,46 @@
         }
       },
       {
+        "id": "majordomus://command/recover",
+        "kind": "command",
+        "label": "recover",
+        "summary": "recover",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcommand%2Frecover",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "system",
+          "class": "state-mutating",
+          "demo": "recovery-evidence",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12"
+          ],
+          "json": false,
+          "reads": [
+            ".ai/repo/policy.yaml",
+            ".ai/local/state/sessions-open/",
+            ".ai/local/state/ledger.jsonl",
+            ".ai/repo/sessions/",
+            ".ai/local/state/checkpoints/",
+            ".ai/local/state/handovers/"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "none",
+          "stage": "setup",
+          "summary": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
+          "syntax": "majordomus recover [status|episodes|records|orphans|all] [--check] [--older-than <duration>]",
+          "visibility": "public",
+          "writes": [
+            ".ai/repo/sessions/",
+            ".ai/local/state/sessions-open/",
+            ".ai/local/state/ledger.jsonl"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/rules",
         "kind": "command",
         "label": "rules",
@@ -6812,6 +6893,7 @@
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
+            ".ai/local/state/archive/",
             ".ai/local/state/ledger.jsonl"
           ]
         }
@@ -7827,6 +7909,14 @@
         "source": "docs/COCKPIT.md"
       },
       {
+        "id": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "kind": "document",
+        "label": "docs/COCKPIT_IDE_AUDIT.md",
+        "summary": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FCOCKPIT_IDE_AUDIT.md",
+        "source": "docs/COCKPIT_IDE_AUDIT.md"
+      },
+      {
         "id": "majordomus://document/docs/COMMANDS.md",
         "kind": "document",
         "label": "docs/COMMANDS.md",
@@ -7873,6 +7963,14 @@
         "summary": "The design system — one declaration, every surface",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDESIGN_SYSTEM.md",
         "source": "docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "id": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "document",
+        "label": "docs/DEVELOPMENT_RUNTIME.md",
+        "summary": "The development runtime",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FDEVELOPMENT_RUNTIME.md",
+        "source": "docs/DEVELOPMENT_RUNTIME.md"
       },
       {
         "id": "majordomus://document/docs/DISTRIBUTION.md",
@@ -10653,6 +10751,13 @@
         "source": "lib/capture.sh"
       },
       {
+        "id": "majordomus://implementation/lib/changed.sh",
+        "kind": "implementation",
+        "label": "lib/changed.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fchanged.sh",
+        "source": "lib/changed.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/check.sh",
         "kind": "implementation",
         "label": "lib/check.sh",
@@ -10847,6 +10952,13 @@
         "label": "lib/question.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fquestion.sh",
         "source": "lib/question.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/recover.sh",
+        "kind": "implementation",
+        "label": "lib/recover.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Frecover.sh",
+        "source": "lib/recover.sh"
       },
       {
         "id": "majordomus://implementation/lib/rules.sh",
@@ -24862,6 +24974,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.record-changed-files@1",
+        "kind": "rule",
+        "label": "majordomus.record-changed-files@1",
+        "summary": "A record's changed_files names the work, not the tool's exhaust",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.record-changed-files%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/record-changed-files.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "majordomus.session-records@1",
+            "majordomus.handover-integrity@1"
+          ],
+          "tags": [
+            "records",
+            "session",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.retention-caps@1",
         "kind": "rule",
         "label": "majordomus.retention-caps@1",
@@ -25427,6 +25560,29 @@
           "tags": [
             "safety",
             "tooling"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "rule",
+        "label": "project.development-semantics-are-canonical@1",
+        "summary": "Development semantics live in the canonical runtime; a surface only consumes them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.development-semantics-are-canonical%401",
+        "source": ".ai/repo/rules/project/development-semantics-are-canonical.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.rust-canonical-declaration@1",
+            "project.interfaces-are-projections@1",
+            "project.commands-are-projections@1"
+          ],
+          "tags": [
+            "architecture",
+            "capabilities",
+            "cockpit",
+            "runtime"
           ]
         }
       },
@@ -28051,6 +28207,13 @@
         "source": "test/cases/123_case_bound.sh"
       },
       {
+        "id": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "kind": "test",
+        "label": "test/cases/128_the_subset_is_a_subset.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F128_the_subset_is_a_subset.sh",
+        "source": "test/cases/128_the_subset_is_a_subset.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/129_executable_issues.sh",
         "kind": "test",
         "label": "test/cases/129_executable_issues.sh",
@@ -28077,6 +28240,20 @@
         "label": "test/cases/12c_graph_data.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F12c_graph_data.sh",
         "source": "test/cases/12c_graph_data.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/135_session_store_recovery.sh",
+        "kind": "test",
+        "label": "test/cases/135_session_store_recovery.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F135_session_store_recovery.sh",
+        "source": "test/cases/135_session_store_recovery.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/136_changed_files_classifier.sh",
+        "kind": "test",
+        "label": "test/cases/136_changed_files_classifier.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F136_changed_files_classifier.sh",
+        "source": "test/cases/136_changed_files_classifier.sh"
       },
       {
         "id": "majordomus://test/test/cases/13_region_projection.sh",
@@ -30227,6 +30404,37 @@
           ],
           "summary": "Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write.",
           "target": "guaranteed"
+        }
+      },
+      {
+        "id": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "kind": "use-case",
+        "label": "recover-an-episode-nobody-closed",
+        "summary": "Close an episode whose client never came back",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fuse-case%2Frecover-an-episode-nobody-closed",
+        "source": ".ai/repo/use-cases/recover-an-episode-nobody-closed.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "operator",
+            "agent"
+          ],
+          "applications": [
+            "long-running-work"
+          ],
+          "category": "continuity",
+          "claims": [],
+          "commands": [
+            "recover"
+          ],
+          "difficulty": "intermediate",
+          "doctrines": [],
+          "responsibilities": [
+            "state"
+          ],
+          "summary": "A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do.",
+          "target": "guaranteed",
+          "weight": 5
         }
       },
       {
@@ -33235,6 +33443,31 @@
       {
         "source": "majordomus://adr/adr-0039",
         "target": "majordomus://rule/project.rule-is-a-doctrine@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "file:scripts/development-semantics-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0040",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
         "kind": "put_in_force"
       },
       {
@@ -36423,6 +36656,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/recover",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/rules",
         "target": "kind:command",
         "kind": "is_a"
@@ -36948,6 +37186,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/COMMANDS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -36974,6 +37217,11 @@
       },
       {
         "source": "majordomus://document/docs/DESIGN_SYSTEM.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/DEVELOPMENT_RUNTIME.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -38023,6 +38271,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/changed.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/check.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -38159,6 +38412,11 @@
       },
       {
         "source": "majordomus://implementation/lib/question.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/recover.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -42363,6 +42621,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "majordomus://rule/majordomus.handover-integrity@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/majordomus.record-changed-files@1",
+        "target": "majordomus://rule/majordomus.session-records@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.retention-caps@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42656,6 +42929,26 @@
         "source": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.commands-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.development-semantics-are-canonical@1",
+        "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.diagnostics-decide-the-exit@1",
@@ -43618,6 +43911,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/128_the_subset_is_a_subset.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/129_executable_issues.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -43634,6 +43932,16 @@
       },
       {
         "source": "majordomus://test/test/cases/12c_graph_data.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/135_session_store_recovery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/136_changed_files_classifier.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46108,6 +46416,21 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "command:recover",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
+        "target": "majordomus://application/long-running-work",
+        "kind": "serves"
+      },
+      {
         "source": "majordomus://use-case/resume-from-a-prompt-asset",
         "target": "command:context",
         "kind": "runs"
@@ -47189,8 +47512,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1445,
-      "edges": 3264,
+      "nodes": 1459,
+      "edges": 3287,
       "acyclic": true,
       "truncated": false
     }

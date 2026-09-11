@@ -149,6 +149,62 @@ migrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)
 dry run: nothing written
 ```
 
+## `majordomus recover`
+
+Bring this checkout's record stores back to what the contract describes: close episodes
+nobody ended, fold duplicate records of one episode into one, and classify the stray files
+the stores accumulate. Recurring, idempotent maintenance — unlike `migrate`, which is the
+one-time move off the pre-`.ai` layout and refuses to run twice.
+
+**Subjects:** `status` (the default, read-only), `episodes`, `records`, `orphans`, `all`.
+
+**Reads:** `.ai/local/state/sessions-open/`, `.ai/local/state/ledger.jsonl`, the closed
+record store, and the checkpoint and handover stores.
+**Writes:** a closed record per recovered episode under `.ai/repo/sessions/`, the folded
+record where duplicates existed, a `session.recovered` ledger line per action, and the
+removal of the open records and stray temps it acted on.
+
+**Behaviour:**
+- `--check` prints the plan and the evidence behind it and writes nothing. The same
+  measurement drives the real run, so the plan is the action.
+- A stray file is judged by its age before its content: a publish temp seconds old belongs
+  to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a
+  `scripts/derive` running now. Both are reported as `live` and neither is touched; one
+  whose age cannot be read is skipped and counted.
+- An episode is *stranded* when its last sign of life — the later of its own `started_at`
+  and the newest ledger line it stamped — is older than `session.stranded_after`.
+  `--older-than <duration>` overrides the policy for one run.
+- Two guards stand between a live episode and the sweep, and neither is the other's
+  backstop. The episode this process resolves to is excluded before any predicate runs; and
+  a candidate whose evidence cannot be read as a timestamp is skipped and counted, never
+  treated as the oldest in the set (`project.destructive-sweeps-fail-closed`). An episode
+  belonging to another worktree is reported and never closed here.
+- A recovered record carries what the open record and the episode's own ledger lines prove.
+  `commits` and `changed_files` are the explicit empty list and `head` and `working_tree`
+  are absent: they describe a close that never happened, and the working tree at recovery
+  time belongs to whoever is working now. `outcome` is `interrupted`, which is what it was.
+- Duplicate records fold into the oldest by `created_at`, with the union of the lists the
+  others prove, and the superseded file names recorded in the survivor's body. Records that
+  disagree about the episode's identity or times are reported and nothing is folded.
+- Nothing is deleted for being unrecognised. A publish temp past the threshold holding the
+  only copy of a record is *published*; one whose episode is already published, or which is empty, is
+  removed; one holding content this version cannot classify is left exactly where it is and
+  counted. A directory somebody put in the checkpoint store is named, measured and left.
+- Idempotent. Running a subject twice takes its actions once, and running it after a crash
+  mid-run takes the ones that did not happen: the record is written before the open file is
+  removed, so an interruption between them costs nothing.
+
+```
+$ majordomus recover episodes --check
+episodes — open episodes in .ai/local/state/sessions-open
+  s-20260910194205-72ea  key=187c9e1e-…  last seen 2026-09-10T19:42:05Z (ledger, 13h ago)
+    stranded: 13h ago, over the 12h threshold; close with outcome interrupted
+  s-20260911063532-b41b  key=c93d195f-…  last seen 2026-09-11T08:31:02Z (ledger, 0m ago)
+    live: this process is inside it; never a candidate
+
+check: 1 action(s) would be taken and nothing was written (run: majordomus recover all)
+```
+
 ## `majordomus doctor`
 
 Is the supervisory layer real here? Read-only. Blocking by design: intended to run
