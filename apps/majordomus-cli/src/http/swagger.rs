@@ -140,14 +140,16 @@ mod tests {
     #[test]
     fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
         // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
-        // which fails in the browser and nowhere else
+        // which fails in the browser and nowhere else. Three occurrences: the stylesheet,
+        // the bundle, and the data-mj-foreign marker the surface audit reads — all from
+        // the one pin.
         let shell = page();
         assert_eq!(
             shell
                 .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
                 .count(),
-            2,
-            "the stylesheet and the bundle both come from the pinned version"
+            3,
+            "the stylesheet, the bundle and the foreign-surface marker all name the pinned version"
         );
     }
 }

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [security]
+
+x-majordomus:
+  tests: [test/cases/08_no_forbidden_constructs.sh]
 ---
 
 # Rationale

@@ -19,6 +19,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `environment` | Repository environment | behaviorally_verified | 2 | [`modules/environment.md`](modules/environment.md) |
+| `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
@@ -66,6 +67,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
 | `environment.status` | `environment` | query | behaviorally_verified | `majordomus_environment` | `majordomus://environment` | `GET /api/v1/environment` | — | — | required |
+| `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | — | required |
+| `evidence.record` | `evidence` | command | behaviorally_verified | — | — | — | `majordomus evidence record` | — | waived (destructive) |
+| `evidence.report` | `evidence` | query | behaviorally_verified | `majordomus_evidence` | `majordomus://evidence` | `GET /api/v1/evidence` | `majordomus evidence show` | — | required |
+| `evidence.test` | `evidence` | query | behaviorally_verified | `majordomus_evidence_test` | — | `GET /api/v1/evidence/test` | `majordomus evidence proves` | — | required |
 | `executions.cancel` | `executions` | command | behaviorally_verified | `majordomus_execution_cancel` | — | `POST /api/v1/executions/cancel` | `majordomus executions cancel` | — | waived (transient_state) |
 | `executions.demonstrate` | `executions` | query | behaviorally_verified | `majordomus_demonstrate_execution` | — | `GET /api/v1/executions/demonstrate` | — | — | required |
 | `executions.events` | `executions` | query | behaviorally_verified | `majordomus_execution_events` | — | `GET /api/v1/executions/events` | `majordomus executions events` | — | waived (transient_state) |

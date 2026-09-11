@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [design]
+
+x-majordomus:
+  tests: [test/cases/28_no_hardcoded_values.sh]
 ---
 
 # Rationale

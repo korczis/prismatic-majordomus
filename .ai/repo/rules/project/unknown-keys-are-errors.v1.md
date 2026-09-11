@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [schema]
+
+x-majordomus:
+  tests: [test/cases/00_yaml_flatten.sh]
 ---
 
 # Rationale
