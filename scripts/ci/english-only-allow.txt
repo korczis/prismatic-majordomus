@@ -33,4 +33,5 @@ fixture test/cases/64_knowledge_discovery.sh a case creating a file whose name c
 # not English cannot be written without them.
 fixture scripts/ci/english-only-check the check carries the list of letters it tests for; it cannot express the rule without containing what the rule refuses
 fixture docs/claims/authored-files-are-english.md the claim page names the letters the check looks for, so a reader knows what is decidable and what is not
-fixture test/cases/134_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language
+fixture test/cases/138_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language
+fixture site/content/guarantees/authored-files-are-english.md the generated rendering of docs/claims/authored-files-are-english.md, which is itself a declared fixture; the derived copy inherits the letters the source names

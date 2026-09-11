@@ -179,8 +179,10 @@ expect_no_grep 'project\.fixture-advisory'
 # The healthy line states two counts and nothing else. Under `set -o pipefail` grep -c
 # both prints its zero and exits non-zero, so the guard that used to follow it printed a
 # second zero and the clean case read "no new debt (0\n0 rule(s) known".
+# The middle count is the review-enforced tally, stated on the healthy line so that a
+# repository leaning harder on review shows that number rather than absorbing it in a total.
 clean
 expect_exit 0 "$CHECK"
-expect_grep 'no new debt \([0-9]+ rule\(s\) known, [0-9]+ rule\(s\) measured\)$'
+expect_grep 'no new debt \([0-9]+ rule\(s\) known, [0-9]+ declared review-enforced, [0-9]+ rule\(s\) measured\)$'
 expect_exit 0 "$CHECK" --write-baseline
 expect_exit 0 "$MJ" rules list
