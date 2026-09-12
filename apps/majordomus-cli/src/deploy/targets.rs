@@ -306,7 +306,11 @@ pub fn site_base_url(root: &Path) -> Option<String> {
     let text = std::fs::read_to_string(root.join("site/config.toml")).ok()?;
     text.lines().find_map(|line| {
         let line = line.trim();
-        let rest = line.strip_prefix("base_url")?.trim_start().strip_prefix('=')?.trim();
+        let rest = line
+            .strip_prefix("base_url")?
+            .trim_start()
+            .strip_prefix('=')?
+            .trim();
         let value = rest.trim_matches('"').trim_matches('\'');
         (!value.is_empty()).then(|| value.trim_end_matches('/').to_string())
     })
@@ -327,8 +331,18 @@ mod tests {
                 tag: Some("v0.5.0".into()),
             }),
             applications: vec![
-                ApplicationFact { id: "declared-only".into(), status: "declared".into(), url: None, inputs: vec!["apps/**".into()] },
-                ApplicationFact { id: "live".into(), status: "active".into(), url: Some("https://app.test".into()), inputs: vec!["apps/**".into()] },
+                ApplicationFact {
+                    id: "declared-only".into(),
+                    status: "declared".into(),
+                    url: None,
+                    inputs: vec!["apps/**".into()],
+                },
+                ApplicationFact {
+                    id: "live".into(),
+                    status: "active".into(),
+                    url: Some("https://app.test".into()),
+                    inputs: vec!["apps/**".into()],
+                },
             ],
             expected_commit: Some("def".into()),
             declared_version: Some("0.6.0".into()),
@@ -379,7 +393,13 @@ mod tests {
         assert!(!live.applicable);
         assert!(live.reason.contains("touches nothing"));
         let code = plan(&facts(), &["apps/majordomus-cli/src/lib.rs".into()], false);
-        assert!(code.targets.iter().find(|t| t.id == "live").unwrap().applicable);
+        assert!(
+            code.targets
+                .iter()
+                .find(|t| t.id == "live")
+                .unwrap()
+                .applicable
+        );
     }
 
     #[test]
@@ -408,7 +428,10 @@ mod tests {
             "title = \"x\"\nbase_url = \"https://majordomus.test/\"\n",
         )
         .unwrap();
-        assert_eq!(site_base_url(&dir).as_deref(), Some("https://majordomus.test"));
+        assert_eq!(
+            site_base_url(&dir).as_deref(),
+            Some("https://majordomus.test")
+        );
         std::fs::remove_dir_all(&dir).unwrap();
         assert_eq!(site_base_url(&dir), None);
     }

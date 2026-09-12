@@ -194,12 +194,20 @@ fn git_ok(root: &Path, args: &[&str]) -> bool {
 
 /// The remote the trunk is read from, and its default branch as `refs/remotes/<r>/HEAD`.
 fn trunk_ref(root: &Path) -> Result<String, Established> {
-    let upstream = git_out(root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"])
-        .map(|u| u.split('/').next().unwrap_or("").to_string())
-        .filter(|r| !r.is_empty());
-    let remote = match upstream.or_else(|| {
-        git_out(root, &["remote"]).and_then(|r| r.lines().next().map(str::to_string))
-    }) {
+    let upstream = git_out(
+        root,
+        &[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{upstream}",
+        ],
+    )
+    .map(|u| u.split('/').next().unwrap_or("").to_string())
+    .filter(|r| !r.is_empty());
+    let remote = match upstream
+        .or_else(|| git_out(root, &["remote"]).and_then(|r| r.lines().next().map(str::to_string)))
+    {
         Some(r) if !r.is_empty() => r,
         _ => {
             return Err(Established::Undecidable(
@@ -220,7 +228,9 @@ fn trunk_ref(root: &Path) -> Result<String, Established> {
 /// the deployed surfaces. A token this cannot settle says so and falls back to the ledger.
 fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> Established {
     if o.established_by.is_empty() || o.established_by == "none" {
-        return Established::Undecidable("nothing establishes this token; the recorded evidence stands".into());
+        return Established::Undecidable(
+            "nothing establishes this token; the recorded evidence stands".into(),
+        );
     }
     let head = match git_out(root, &["rev-parse", "HEAD"]) {
         Some(h) if !h.is_empty() => h,
@@ -258,33 +268,76 @@ fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> E
                     short(&head)
                 ));
             }
-            Established::Yes(format!("exact: the tree is clean and the branch has moved to {}", short(&head)))
+            Established::Yes(format!(
+                "exact: the tree is clean and the branch has moved to {}",
+                short(&head)
+            ))
         }
         "push" => {
             if git_out(root, &["remote"]).unwrap_or_default().is_empty() {
-                return Established::Undecidable("the checkout has no remote, so a push cannot be established here".into());
+                return Established::Undecidable(
+                    "the checkout has no remote, so a push cannot be established here".into(),
+                );
             }
-            if let Some(up) = git_out(root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]) {
-                if !up.is_empty() && git_ok(root, &["merge-base", "--is-ancestor", &head, &format!("refs/remotes/{up}")]) {
+            if let Some(up) = git_out(
+                root,
+                &[
+                    "rev-parse",
+                    "--abbrev-ref",
+                    "--symbolic-full-name",
+                    "@{upstream}",
+                ],
+            ) {
+                if !up.is_empty()
+                    && git_ok(
+                        root,
+                        &[
+                            "merge-base",
+                            "--is-ancestor",
+                            &head,
+                            &format!("refs/remotes/{up}"),
+                        ],
+                    )
+                {
                     return Established::Yes(format!("exact: {up} contains {}", short(&head)));
                 }
             }
-            match git_out(root, &["for-each-ref", "--contains", &head, "--format=%(refname:short)", "refs/remotes"]) {
+            match git_out(
+                root,
+                &[
+                    "for-each-ref",
+                    "--contains",
+                    &head,
+                    "--format=%(refname:short)",
+                    "refs/remotes",
+                ],
+            ) {
                 Some(refs) if !refs.trim().is_empty() => Established::Yes(format!(
                     "exact: {} contains {}",
                     refs.lines().next().unwrap_or(""),
                     short(&head)
                 )),
-                _ => Established::No(format!("no remote-tracking ref reaches {}; the commit has not reached the remote", short(&head))),
+                _ => Established::No(format!(
+                    "no remote-tracking ref reaches {}; the commit has not reached the remote",
+                    short(&head)
+                )),
             }
         }
         "target" => match trunk_ref(root) {
             Err(u) => u,
             Ok(trunk) => {
                 if git_ok(root, &["merge-base", "--is-ancestor", &head, &trunk]) {
-                    Established::Yes(format!("exact: {} reaches {}", trunk.trim_start_matches("refs/remotes/"), short(&head)))
+                    Established::Yes(format!(
+                        "exact: {} reaches {}",
+                        trunk.trim_start_matches("refs/remotes/"),
+                        short(&head)
+                    ))
                 } else {
-                    Established::No(format!("{} does not reach {}; the work is not integrated", trunk.trim_start_matches("refs/remotes/"), short(&head)))
+                    Established::No(format!(
+                        "{} does not reach {}; the work is not integrated",
+                        trunk.trim_start_matches("refs/remotes/"),
+                        short(&head)
+                    ))
                 }
             }
         },
@@ -298,13 +351,24 @@ fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> E
                 .current_dir(root)
                 .output();
             match out {
-                Ok(o) if o.status.success() => Established::Yes(format!("exact: the published site serves {}", short(&head))),
+                Ok(o) if o.status.success() => {
+                    Established::Yes(format!("exact: the published site serves {}", short(&head)))
+                }
                 Ok(o) if o.status.code() == Some(10) => {
-                    let text = String::from_utf8_lossy(&o.stdout).to_string() + &String::from_utf8_lossy(&o.stderr);
-                    let why = text.lines().rev().find(|l| l.starts_with("pages verify: ")).map(|l| l.trim_start_matches("pages verify: ").to_string()).unwrap_or_else(|| "the published site does not serve this commit".into());
+                    let text = String::from_utf8_lossy(&o.stdout).to_string()
+                        + &String::from_utf8_lossy(&o.stderr);
+                    let why = text
+                        .lines()
+                        .rev()
+                        .find(|l| l.starts_with("pages verify: "))
+                        .map(|l| l.trim_start_matches("pages verify: ").to_string())
+                        .unwrap_or_else(|| "the published site does not serve this commit".into());
                     Established::No(why)
                 }
-                Ok(o) => Established::Undecidable(format!("the published site could not be reached (scripts/pages verify exited {})", o.status.code().unwrap_or(-1))),
+                Ok(o) => Established::Undecidable(format!(
+                    "the published site could not be reached (scripts/pages verify exited {})",
+                    o.status.code().unwrap_or(-1)
+                )),
                 Err(e) => Established::Undecidable(format!("scripts/pages could not be run: {e}")),
             }
         }
@@ -336,7 +400,9 @@ fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> E
                 input["targets"] = serde_json::json!(apps);
             }
             match ctx.execute("deploy.verify", input) {
-                Err(e) => Established::Undecidable(format!("deploy.verify could not be executed: {e}")),
+                Err(e) => {
+                    Established::Undecidable(format!("deploy.verify could not be executed: {e}"))
+                }
                 Ok(v) => {
                     let ok = v.get("ok").and_then(|b| b.as_bool()).unwrap_or(false);
                     let asked = v.get("asked").and_then(|n| n.as_u64()).unwrap_or(0);
@@ -345,18 +411,27 @@ fn establish(ctx: &Context, root: &Path, task: &ActiveTask, o: &Obligation) -> E
                         .and_then(|a| a.as_array())
                         .map(|a| {
                             a.iter()
-                                .filter(|x| x.get("status").and_then(|s| s.as_str()) != Some("not_applicable"))
-                                .map(|x| format!(
-                                    "{}: {} — {}",
-                                    x.get("target").and_then(|s| s.as_str()).unwrap_or("?"),
-                                    x.get("status").and_then(|s| s.as_str()).unwrap_or("?"),
-                                    x.get("detail").and_then(|s| s.as_str()).unwrap_or("")
-                                ))
+                                .filter(|x| {
+                                    x.get("status").and_then(|s| s.as_str())
+                                        != Some("not_applicable")
+                                })
+                                .map(|x| {
+                                    format!(
+                                        "{}: {} — {}",
+                                        x.get("target").and_then(|s| s.as_str()).unwrap_or("?"),
+                                        x.get("status").and_then(|s| s.as_str()).unwrap_or("?"),
+                                        x.get("detail").and_then(|s| s.as_str()).unwrap_or("")
+                                    )
+                                })
                                 .collect()
                         })
                         .unwrap_or_default();
                     if ok {
-                        Established::Yes(format!("exact: every applicable surface serves {} ({})", short(&expected), detail.join("; ")))
+                        Established::Yes(format!(
+                            "exact: every applicable surface serves {} ({})",
+                            short(&expected),
+                            detail.join("; ")
+                        ))
                     } else if asked == 0 {
                         Established::Yes("no surface applies to this token here".into())
                     } else {

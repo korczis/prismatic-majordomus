@@ -236,8 +236,8 @@ impl CompletionPolicy {
     /// Read the policy from a distribution's `share/` directory.
     pub fn load(share_dir: &std::path::Path) -> Result<Self, String> {
         let path = share_dir.join(POLICY_FILE);
-        let text = std::fs::read_to_string(&path)
-            .map_err(|e| format!("{}: {e}", path.display()))?;
+        let text =
+            std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
         Self::parse(&text, &path.to_string_lossy())
     }
 
@@ -314,7 +314,10 @@ impl CompletionPolicy {
     }
 
     /// The questions of one stage, in declaration order.
-    pub fn questions_of<'a>(&'a self, stage: &'a str) -> impl Iterator<Item = &'a QuestionDecl> + 'a {
+    pub fn questions_of<'a>(
+        &'a self,
+        stage: &'a str,
+    ) -> impl Iterator<Item = &'a QuestionDecl> + 'a {
         self.questions.iter().filter(move |q| q.stage == stage)
     }
 
@@ -382,7 +385,8 @@ mod tests {
             .iter()
             .map(|o| o["id"].as_str().unwrap().to_string())
             .collect();
-        let model = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.ai/repo/ci/gates.yaml");
+        let model =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.ai/repo/ci/gates.yaml");
         let gates: Vec<String> = yaml::parse_mapping(&std::fs::read_to_string(model).unwrap())
             .unwrap()["gates"]
             .as_array()
@@ -393,8 +397,14 @@ mod tests {
         let problems = p.validate(&tokens);
         assert!(problems.is_empty(), "{problems:?}");
         let unanswered = p.unanswered_gates(&gates);
-        assert!(unanswered.is_empty(), "this repository's model answers every gate question: {unanswered:?}");
-        assert_eq!(p.unanswered_gates(&[]), ["parity:projection-closure", "changelog:release-check"]);
+        assert!(
+            unanswered.is_empty(),
+            "this repository's model answers every gate question: {unanswered:?}"
+        );
+        assert_eq!(
+            p.unanswered_gates(&[]),
+            ["parity:projection-closure", "changelog:release-check"]
+        );
     }
 
     #[test]
@@ -403,9 +413,13 @@ mod tests {
         let err = CompletionPolicy::parse(text, "t").unwrap_err();
         assert!(err.contains("stage 'b'"), "{err}");
         let dup = "version: 1\nstages:\n  - id: a\n    title: A\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: x\n    source: gates\n    remediation: r\n  - id: q\n    stage: a\n    question: y\n    source: gates\n    remediation: r\n";
-        assert!(CompletionPolicy::parse(dup, "t").unwrap_err().contains("declared twice"));
+        assert!(CompletionPolicy::parse(dup, "t")
+            .unwrap_err()
+            .contains("declared twice"));
         let v2 = "version: 2\nstages: []\nquestions: []\n";
-        assert!(CompletionPolicy::parse(v2, "t").unwrap_err().contains("version 1"));
+        assert!(CompletionPolicy::parse(v2, "t")
+            .unwrap_err()
+            .contains("version 1"));
     }
 
     #[test]
@@ -415,6 +429,8 @@ mod tests {
         let b = p.bootstrap_fragment();
         assert_eq!(a, b);
         assert!(a.contains("- Live verification: "));
-        assert!(a.lines().all(|l| l.starts_with("- ") && !l.starts_with("- **")));
+        assert!(a
+            .lines()
+            .all(|l| l.starts_with("- ") && !l.starts_with("- **")));
     }
 }

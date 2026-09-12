@@ -174,8 +174,7 @@ impl Fetcher for StaticFetcher {
 
 /// Read the identity a surface states, by the kind of surface it is.
 fn identity_of(kind: TargetKind, body: &str) -> Result<Identity, String> {
-    let v: serde_json::Value =
-        serde_json::from_str(body).map_err(|e| format!("not JSON: {e}"))?;
+    let v: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("not JSON: {e}"))?;
     let s = |key: &str| v.get(key).and_then(|x| x.as_str()).map(str::to_string);
     let id = match kind {
         TargetKind::Pages => Identity {
@@ -369,24 +368,49 @@ mod tests {
     fn a_surface_serving_the_expected_revision_is_verified_and_an_older_one_is_stale() {
         let p = plan(&facts(), &[], true);
         let fresh = StaticFetcher::default()
-            .answers("https://s.test/build.json", r#"{"commit":"bbbbbbbbbbbbcccc","source_version":"0.6.0"}"#)
-            .answers("https://s.test/releases/latest.json", r#"{"tag":"v0.5.0","version":"0.5.0","commit":"aaaa"}"#)
-            .answers("https://a.test/api/v1/distribution/build", r#"{"version":"0.6.0","commit":"bbbbbbbbbbbb","target":"x"}"#);
+            .answers(
+                "https://s.test/build.json",
+                r#"{"commit":"bbbbbbbbbbbbcccc","source_version":"0.6.0"}"#,
+            )
+            .answers(
+                "https://s.test/releases/latest.json",
+                r#"{"tag":"v0.5.0","version":"0.5.0","commit":"aaaa"}"#,
+            )
+            .answers(
+                "https://a.test/api/v1/distribution/build",
+                r#"{"version":"0.6.0","commit":"bbbbbbbbbbbb","target":"x"}"#,
+            );
         let r = verify(&p, &fresh, "now");
         assert!(r.ok, "{:?}", r.refusing);
-        assert!(r.verifications.iter().all(|v| v.status == VerificationStatus::Verified));
+        assert!(r
+            .verifications
+            .iter()
+            .all(|v| v.status == VerificationStatus::Verified));
 
         // the deploy command exited 0 and the old revision stayed live
         let stale = StaticFetcher::default()
-            .answers("https://s.test/build.json", r#"{"commit":"aaaa","source_version":"0.5.0"}"#)
-            .answers("https://s.test/releases/latest.json", r#"{"tag":"v0.5.0","version":"0.5.0","commit":"aaaa"}"#)
-            .answers("https://a.test/api/v1/distribution/build", r#"{"version":"0.5.2","commit":"aaaa"}"#);
+            .answers(
+                "https://s.test/build.json",
+                r#"{"commit":"aaaa","source_version":"0.5.0"}"#,
+            )
+            .answers(
+                "https://s.test/releases/latest.json",
+                r#"{"tag":"v0.5.0","version":"0.5.0","commit":"aaaa"}"#,
+            )
+            .answers(
+                "https://a.test/api/v1/distribution/build",
+                r#"{"version":"0.5.2","commit":"aaaa"}"#,
+            );
         let r = verify(&p, &stale, "now");
         assert!(!r.ok);
         assert_eq!(r.refusing, ["pages", "app"]);
         let pages = &r.verifications[0];
         assert_eq!(pages.status, VerificationStatus::Stale);
-        assert!(pages.detail.contains("commit aaaa is live"), "{}", pages.detail);
+        assert!(
+            pages.detail.contains("commit aaaa is live"),
+            "{}",
+            pages.detail
+        );
         assert!(pages.detail.contains("version 0.5.0 is live"));
     }
 
@@ -395,25 +419,38 @@ mod tests {
         let p = plan(&facts(), &[], true);
         let f = StaticFetcher::default()
             .refuses("https://s.test/build.json", "curl exited 22")
-            .answers("https://s.test/releases/latest.json", "<html>200 OK but not metadata</html>")
+            .answers(
+                "https://s.test/releases/latest.json",
+                "<html>200 OK but not metadata</html>",
+            )
             .answers("https://a.test/api/v1/distribution/build", r#"{"ok":true}"#);
         let r = verify(&p, &f, "now");
         assert!(!r.ok);
         assert_eq!(r.verifications[0].status, VerificationStatus::Unreachable);
         assert_eq!(r.verifications[1].status, VerificationStatus::Unreadable);
-        assert_eq!(r.verifications[2].status, VerificationStatus::Unreadable, "a 200 with no identity");
+        assert_eq!(
+            r.verifications[2].status,
+            VerificationStatus::Unreadable,
+            "a 200 with no identity"
+        );
         assert_eq!(r.refusing.len(), 3);
     }
 
     #[test]
     fn a_target_the_change_does_not_reach_is_not_asked() {
         let p = plan(&facts(), &["docs/x.md".into()], false);
-        let f = StaticFetcher::default()
-            .answers("https://s.test/build.json", r#"{"commit":"bbbbbbbbbbbb","source_version":"0.6.0"}"#);
+        let f = StaticFetcher::default().answers(
+            "https://s.test/build.json",
+            r#"{"commit":"bbbbbbbbbbbb","source_version":"0.6.0"}"#,
+        );
         let r = verify(&p, &f, "now");
         assert!(r.ok);
         assert_eq!(r.asked, 1);
-        let release = r.verifications.iter().find(|v| v.target == "release").unwrap();
+        let release = r
+            .verifications
+            .iter()
+            .find(|v| v.target == "release")
+            .unwrap();
         assert_eq!(release.status, VerificationStatus::NotApplicable);
         assert!(release.asked.is_none(), "nothing was asked");
     }
@@ -435,8 +472,10 @@ mod tests {
         f.declared_version = None;
         f.applications.clear();
         let p = plan(&f, &["docs/x.md".into()], false);
-        let fetch = StaticFetcher::default()
-            .answers("https://s.test/build.json", r#"{"commit":"cccc","source_version":"0.9.0"}"#);
+        let fetch = StaticFetcher::default().answers(
+            "https://s.test/build.json",
+            r#"{"commit":"cccc","source_version":"0.9.0"}"#,
+        );
         let r = verify(&p, &fetch, "now");
         assert_eq!(r.verifications[0].status, VerificationStatus::Unverifiable);
         assert!(r.ok, "reached and nothing contradicted");
