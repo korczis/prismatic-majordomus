@@ -64,6 +64,13 @@ gate, and the requirement then has nothing to run and says so.
 **The policy selects the requirement.** `publication_current` in `verification.finish_requires`
 is what turns it on, like every other line of the contract.
 
+**`finish` asks it, and `check` does not.** `check` is run often and cheaply, and this
+gate reaches the network and waits for a CDN; making it part of every `check` would be a
+slow, flaky `check`, which is a `check` people stop running. The session-end hook writes a
+handover rather than a finish, so a session that hands over is never asked either — for the
+same reason an honest `blocked` is not: `handed_over` is a claim about unfinished work, and
+this requirement is about a claim that the work is done.
+
 **Only the outcome `completed` is refused.** A task reporting itself `partial`, `blocked`,
 `failed` or `no_match` is being honest about unfinished work, and refusing that teaches a
 worker to claim `completed` instead — the argument `majordomus.completion-gates` already
