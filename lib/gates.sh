@@ -126,7 +126,8 @@ mj_gate_record() {
   extra="\"task\":\"$task\",\"gate\":\"$gate\",\"exit\":$exit_code,\"inputs_hash\":\"$ih\""
   [ -n "$command" ] && extra="$extra,\"command\":\"$(mj_json_esc "$command")\""
   [ -n "$result" ] && extra="$extra,\"result\":\"$(mj_json_esc "$result")\""
-  mj_ledger_append task.gate "$extra"
+  # the verb that emits the event is `evidence`, so the append is its (share/events.yaml)
+  mj_gate_append "$extra"
   if [ "$json" = 1 ]; then
     printf '{"task":"%s","gate":"%s","exit":%s,"inputs_hash":"%s"}\n' "$task" "$gate" "$exit_code" "$ih"
   else

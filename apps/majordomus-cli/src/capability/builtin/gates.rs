@@ -369,7 +369,7 @@ fn handover_standing(root: &Path, task: Option<&super::ActiveTask>) -> HandoverS
         })
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .collect();
-    names.sort();
+    crate::order::canonical_strings(&mut names);
     match names.pop() {
         Some(n) => HandoverStanding::Present(n),
         None => HandoverStanding::Absent,

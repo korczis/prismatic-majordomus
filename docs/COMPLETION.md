@@ -287,7 +287,7 @@ A definition of done that lives in a prompt is unversioned, unenforceable, and t
 exactly one tool. So the bootstrap files each AI client reads carry the policy as a
 generated fragment rather than as prose somebody maintained.
 
-`{{COMPLETION_CONTRACT}}` is the token, and it expands to one line per stage — the stage's
+`COMPLETION_CONTRACT` is the token, and it expands to one line per stage — the stage's
 title, then the ids of the questions that belong to it — into every provider template
 under [`.ai/repo/providers/`](../.ai/repo/providers/) and
 [`share/providers/`](../share/providers/). Two renderers produce it: `mj_completion_fragment`

@@ -64,7 +64,7 @@
         <p class="mt-2 max-w-3xl text-sm leading-relaxed text-body">{{ s.summary }}</p>
       </div>
       {%- if qs | length > 0 %}
-      <div class="overflow-x-auto" tabindex="0">
+      <div class="relative overflow-x-auto" tabindex="0">
         <table class="w-full min-w-[44rem] text-left text-sm">
           <caption class="sr-only">The questions the {{ s.title }} stage asks</caption>
           <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle">
@@ -145,7 +145,7 @@
   <p class="mt-2 max-w-3xl text-sm text-body">The deployment and verification stages ask whether every surface a change affects is serving the revision the task produced, and whether anybody looked afterwards. A surface can only answer that when it publishes an address saying which revision it is — the identity address below. One that publishes none can be deployed and can never be verified, and the policy treats those differently.</p>
 
   {%- if p.surfaces | length > 0 %}
-  <div class="mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <div class="relative mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[42rem] text-left text-sm">
       <caption class="sr-only">Every deployment surface, with the address that says which revision is serving</caption>
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle">
@@ -176,9 +176,9 @@
   {%- if p.deployments | length > 0 %}
   <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">What the layer declares</h3>
   <p class="mt-1 max-w-3xl text-sm text-body-subtle">Each deployment object of the layer and the status it declares for itself. A <code class="font-mono">declared</code> deployment is a description of something nobody is running yet, and nothing here pretends to verify one.</p>
-  <ul class="mt-4 grid gap-3 md:grid-cols-2" role="list">
+  <ul class="mt-4 grid min-w-0 gap-3 md:grid-cols-2" role="list">
     {%- for d in p.deployments %}
-    <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+    <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">{{ d.id }}</code>
         <span class="mj-badge mj-badge--{{ d.status }}">{{ d.status }}</span>
@@ -192,12 +192,15 @@
 
   <h2 id="verify" class="mt-12 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Ask it about your own tree</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Every figure above is this repository at one commit. The definition of done is the same file wherever the tool is installed, and the answer for your working tree comes from the same commands the policy names above &mdash; the <em>settled by</em> column is not advice, it is where each answer is taken from.</p>
-  <ul class="mt-4 grid gap-3 md:grid-cols-2" role="list">
+  <ul class="mt-4 grid min-w-0 gap-3 md:grid-cols-2" role="list">
     {%- for name in ["check", "finish", "evidence", "handover"] %}
     {%- set hit = [x for x in cmds.commands if x.name == name] -%}
     {%- if hit | length > 0 %}
-    <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <a href="{{ get_url(path="/commands/" ~ hit[0].name ~ "/", trailing_slash=true) }}" class="font-mono text-sm font-medium text-fg-brand hover:underline">{{ hit[0].syntax | default(value=hit[0].name) }}</a>
+    <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+      {#- the syntax line is one long token with no space a browser will break on, so it is
+          told it may break anywhere: a phone reads the whole invocation rather than dragging
+          the page sideways to reach the end of it. -#}
+      <a href="{{ get_url(path="/commands/" ~ hit[0].name ~ "/", trailing_slash=true) }}" class="block min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">{{ hit[0].syntax | default(value=hit[0].name) }}</a>
       <p class="mt-2 break-words text-sm leading-relaxed text-body">{{ hit[0].summary }}</p>
     </li>
     {%- endif %}

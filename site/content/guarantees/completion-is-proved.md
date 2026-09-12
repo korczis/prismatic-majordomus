@@ -41,7 +41,24 @@ policy. A question whose source the repository never declares — a gate the CI 
 a version in a repository that has published no release — is `exempt` by name, which is a
 different fact from silent.
 
-## What proves it
+## Why it is derived rather than declared
+
+A state a worker sets is a claim, and the artifact a worker learns to advance; a pile of
+booleans a report toggles is the same claim in more fields. The stage is a fold over the
+answers and `complete` is one bit read from it, so the only way to reach done is for every
+source to say its half — and the only way to fake it is to fake the source, which is the
+ledger, git, the CI model or the deployed surface, each of which says so out loud.
+
+## What it does not cover
+
+Whether the promised work is the work is a judgement, not a fact: the `implementation`
+obligation is discharged by a worker's own evidence line, held by the scope and note lines
+of the contract. A question whose source the repository never declares — a gate the CI model
+lacks, a version in a repository that has published no release — is `exempt` by name, not
+proven. With `verification.completed_means_complete` off, the same questions are reported
+and never refused.
+
+## How to see it
 
 `test/cases/280_completion_is_proved.sh` gives a disposable repository a CI model, the
 planner and the dispatcher, refuses `completed` over an owed question, runs and records

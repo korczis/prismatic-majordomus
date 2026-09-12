@@ -237,7 +237,8 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   --run-gates run every gate the task's change selects, here, with the commands the CI
               model names (scripts/ci/run-plan), and record each one's exit as it finishes;
               the same dispatcher CI runs, so the ledger line is the same either way
-  --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported, instead of
+  --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported (a task.gate
+              ledger line, written by lib/gates.sh on this verb's behalf), instead of
               an obligation. The line carries the hash of the files that select that gate, so
               a run stops discharging it the moment one of them changes. `majordomus check`
               reports every gate the task's change set selects; a gate that has never
@@ -585,3 +586,9 @@ mj_validate_obligations() {
 # does here; the obligations themselves are read through `check`, which already reports
 # what is outstanding, rather than through a second listing command nobody would run.
 mj_cmd_evidence() { mj_evidence "$@"; }
+
+# The one place a gate run reaches the ledger: `evidence --gate` computes the line in
+# lib/gates.sh and hands it here, because the event's emitter is this verb
+# (share/events.yaml: task.gate, emitted_by evidence) and the registry holds the emitter to
+# writing what it declares.
+mj_gate_append() { mj_ledger_append task.gate "$1"; }

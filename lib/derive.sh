@@ -295,7 +295,11 @@ mj_derive_sec_completion() {
     printf 'Not derived: the completion report needs the built executable and jq (`bin/majordomus-cli run gates.completion`).\n'; return 0
   fi
   local share; share="$(mj_rust_share "$MJ_ROOT")"
-  out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null)"
+  # `live: false`: a record written at an episode's end must not reach the network, and ten
+  # episodes closing at once must not each ask the published site what it serves. The stage
+  # is still derived; the live half says it is owed rather than proven, which is the truth
+  # of a record that did not ask.
+  out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run gates.completion --input '{"live":false}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null)"
   [ -n "$out" ] || { printf 'Not derived: gates.completion could not be answered here.\n'; return 0; }
   printf 'Stage: %s (%s)%s.\n' "$(printf '%s' "$out" | jq -r '.stage.title')" "$(printf '%s' "$out" | jq -r '.stage.state')" \
     "$( [ "$(printf '%s' "$out" | jq -r '.complete')" = true ] && printf ' — complete' || printf '')"

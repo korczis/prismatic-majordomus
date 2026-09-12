@@ -212,6 +212,7 @@ impl Fragments {
 /// assert!(render("{{PROFILE_TABLE}}\n", &policy, &Fragments::default()).unwrap_err().contains("PROFILE_TABLE"));
 /// // a fragment token on a line of its own is replaced by the fragment, lines for line —
 /// // the same expansion `mj_expand_blocks` performs in the shell tool
+/// use majordomus_cli::providers::Fragments;
 /// let f = Fragments { completion_contract: "- a\n- b\n".into() };
 /// assert_eq!(render("x\n{{COMPLETION_CONTRACT}}\ny\n", &policy, &f).unwrap(), "x\n- a\n- b\ny\n");
 /// ```

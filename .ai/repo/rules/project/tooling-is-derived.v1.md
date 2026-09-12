@@ -33,7 +33,7 @@ drift this layer exists to prevent.
 - Every projection the policy declares is rendered from its template, the policy and the
   shipped declarations, and carries a stamp naming the policy hash and the hash of its own
   content. `majordomus update` and `majordomus generate providers` render the same bytes.
-- The definition of done reaches every bootstrap as `{{COMPLETION_CONTRACT}}`, rendered
+- The definition of done reaches every bootstrap as `COMPLETION_CONTRACT`, rendered
   from `share/completion.yaml` — one line per stage with the questions that belong to it —
   by `mj_completion_fragment` and `CompletionPolicy::bootstrap_fragment` identically. A
   stage or a question added to the policy appears in every bootstrap on the next render.
