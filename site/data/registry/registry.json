@@ -6,23 +6,23 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "fdd0f2bed0c5df82d3d6225066aed0ef3a1b63e451b2290deb8d6e4f11f0540c",
+    "fingerprint": "f54ecf1cd4937b1b7071fff8ec75c52913a3995c72594a3b8c86114dc460ef4b",
     "summary": {
-      "total": 1415,
+      "total": 1417,
       "builtin": 108,
-      "declarative": 1307,
+      "declarative": 1309,
       "by_kind": {
         "command": 6,
         "query": 102,
-        "resource": 1307
+        "resource": 1309
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1313
+        "implemented": 1315
       },
       "mcp_tools": 105,
-      "mcp_resources": 1346,
+      "mcp_resources": 1348,
       "http_routes": 107,
       "cli_commands": 48,
       "modules": 64,
@@ -39211,7 +39211,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 132,
+        "capabilities": 133,
         "capability_ids": []
       },
       {
@@ -39290,7 +39290,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 193,
+        "capabilities": 194,
         "capability_ids": []
       },
       {
@@ -39370,7 +39370,7 @@
     ]
   },
   "index": {
-    "fingerprint": "454d3c4d7a834f323f00f3734d5dba67322ce13a380817c90ca3e1db1eabb205",
+    "fingerprint": "00eeabac35c2ac8bebd06424ece96038c55ea75eeb2f491e9856e8b67974a6f8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39414,12 +39414,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 132,
+      "rule": 133,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 193,
+      "test": 194,
       "use-case": 45,
       "workspace": 1
     },
@@ -43261,7 +43261,7 @@
         "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
         "path": "docs/ENTRY_AUDIT.md",
         "source_class": "document",
-        "bytes": 27734
+        "bytes": 28146
       },
       {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
@@ -50565,6 +50565,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.navigation-is-declared-once@1",
+        "kind": "rule",
+        "identity": "project.navigation-is-declared-once@1",
+        "title": "The site's navigation is declared once, and every projection derives from that declaration",
+        "description": "site/data/nav.toml is the one statement of what the site's navigation is — its groups, their items and the single call to action. Every surface that shows a route a visitor navigates to renders that file; no href is written twice in it, the primary navigation stays small enough to be a set of questions rather than a sitemap, and no template types a site route beside the declaration.",
+        "path": ".ai/repo/rules/project/navigation-is-declared-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 6080,
+        "tags": [
+          "web",
+          "navigation",
+          "projections",
+          "documentation"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.never-author-identity@1",
         "kind": "rule",
         "identity": "project.never-author-identity@1",
@@ -52388,6 +52405,14 @@
         "bytes": 5154
       },
       {
+        "uri": "majordomus://test/test/cases/273_navigation_is_declared_once.sh",
+        "kind": "test",
+        "identity": "test/cases/273_navigation_is_declared_once.sh",
+        "path": "test/cases/273_navigation_is_declared_once.sh",
+        "source_class": "case",
+        "bytes": 8955
+      },
+      {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "identity": "test/cases/27_foreign_task.sh",
@@ -53881,7 +53906,7 @@
         "id",
         "version"
       ],
-      "objects": 132
+      "objects": 133
     },
     {
       "name": "scope",
@@ -53936,7 +53961,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 193
+      "objects": 194
     },
     {
       "name": "use-case",
