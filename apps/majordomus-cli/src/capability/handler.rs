@@ -131,6 +131,11 @@ pub struct Context {
     /// value rather than discovering its own, so what the HTTP router serves, what the home
     /// page lists and what `web.surfaces` answers are three readings of one resolution.
     pub web: Arc<Topology>,
+    /// The mesh runtime: the discovered nodes of this process, and the machinery that
+    /// observes them. Inactive (an empty registry with a reason) until a shared server
+    /// activates it from the repository's mesh declaration; the capabilities of the
+    /// `mesh` module are its projections.
+    pub mesh: Arc<crate::mesh::MeshRuntime>,
 }
 
 impl Context {
@@ -153,6 +158,43 @@ impl Context {
             progress: crate::execution::Progress::silent(),
             caller: None,
             web,
+            mesh: Arc::new(crate::mesh::MeshRuntime::new()),
+        }
+    }
+
+    /// This context's reading of the repository, carrying on the in-memory life of an
+    /// earlier one: what [`crate::live::Live`] hands out after the repository has moved.
+    ///
+    /// A reload is not a restart. The index, the registry and everything derived from them
+    /// — the Why catalogue, the product model, the web topology — are pictures of the
+    /// repository and are replaced wholesale, which is the point. The peer board, the
+    /// executions this process is running and the capability executor are not pictures of
+    /// anything: they are this process's own life, and a peer that announced its intent
+    /// must not vanish from the board because somebody else committed. The executor is
+    /// carried because its cache is keyed by the registry's fingerprint, so the entries of
+    /// an older generation are already unreachable and the ones of an unchanged capability
+    /// are still worth having.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::capability::Context;
+    /// # fn example(before: Arc<Context>, after: Arc<Context>) {
+    /// let renewed = after.continuing(&before);
+    /// assert!(Arc::ptr_eq(&renewed.peers, &before.peers), "the board survives a reload");
+    /// assert!(Arc::ptr_eq(&renewed.index, &after.index), "the picture does not");
+    /// # }
+    /// ```
+    pub fn continuing(&self, previous: &Context) -> Self {
+        Context {
+            peers: Arc::clone(&previous.peers),
+            executions: Arc::clone(&previous.executions),
+            executor: Arc::clone(&previous.executor),
+            // The mesh runtime is this process's, not this generation's: it holds the
+            // sockets that are already announcing and the registry every observation has
+            // converged into. A rebuild that handed the surfaces a fresh one would leave
+            // the server announcing from a runtime nothing could read.
+            mesh: Arc::clone(&previous.mesh),
+            ..self.same()
         }
     }
 
@@ -195,6 +237,7 @@ impl Context {
             progress: self.progress.clone(),
             caller: self.caller.clone(),
             web: Arc::clone(&self.web),
+            mesh: Arc::clone(&self.mesh),
         }
     }
 
@@ -314,6 +357,42 @@ impl Executable {
     /// ```
     pub fn cancellable(mut self) -> Self {
         self.capability.execution = self.capability.execution.stoppable();
+        self
+    }
+
+    /// Declare that this handler writes the repository's own tracked files.
+    ///
+    /// The second thing a kind cannot decide, and for the same reason: two commands are the
+    /// same kind whether one announces a peer into this process's memory and the other
+    /// stamps a field into a record a commit will carry. The difference is the whole of what
+    /// a caller needs before saying yes, and every projection reads it from here — the
+    /// Cockpit's confirmation, and the exposure ceiling that decides which surfaces may
+    /// reach it at all.
+    ///
+    /// Declaring it is the handler author's obligation, not an optimisation. A handler that
+    /// writes a tracked file without saying so is projected as though it did not, onto
+    /// surfaces whose ceiling exists to exclude exactly that.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Effect, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In {}
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", In {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn write(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out { ok: true }) }
+    /// let e = capability! {
+    ///     id: "demo.write", kind: CapabilityKind::Command, title: "Write", description: "Writes.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: write,
+    /// }.writes_repository();
+    /// assert_eq!(e.capability.execution.effect, Effect::RepositoryMutation);
+    /// ```
+    pub fn writes_repository(mut self) -> Self {
+        self.capability.execution = self.capability.execution.writes_repository();
         self
     }
 }

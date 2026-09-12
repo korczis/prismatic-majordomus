@@ -16,7 +16,6 @@ use std::time::{Duration, Instant};
 
 use serde_json::Value;
 
-use crate::capability::Context;
 use crate::mcp::{Server, Surface};
 use crate::peers::{PeerId, Transport};
 
@@ -60,9 +59,9 @@ impl std::fmt::Debug for McpEndpoint {
 
 impl McpEndpoint {
     /// An endpoint over a context, announcing `version`, reachable at `url`.
-    pub fn new(ctx: Arc<Context>, version: &'static str, url: String) -> Self {
+    pub fn new(live: impl crate::live::IntoLive, version: &'static str, url: String) -> Self {
         McpEndpoint {
-            surface: Surface::new(ctx),
+            surface: Surface::new(live),
             version,
             url,
             sessions: Mutex::new(BTreeMap::new()),

@@ -32,6 +32,16 @@ gates:
     runs: scripts/ci/shell-lint
     summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
 
+  # The raw prompt archive is ignored and doctor refuses a repository that tracks it; neither
+  # covers a *derived* artefact that carries a prompt. One `find` in a site generator that
+  # forgot to exclude the local half would publish the archive with no prompt file committed
+  # anywhere for a reviewer to see. File reads only, so it belongs with the structure checks.
+  - id: prompt-privacy
+    job: structure
+    always: true
+    runs: scripts/ci/prompt-privacy
+    summary: no published or generated file is a prompt record, a rendering, or a copy of one; every site generator names the local half so it can exclude it
+
   - id: ui-check
     job: structure
     always: true
@@ -67,6 +77,12 @@ gates:
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, every reference a document makes, the derived site data
 
+  - id: evidence-check
+    job: structure
+    always: true
+    runs: scripts/evidence-check
+    summary: every claim that declares a guarantee, against the run actually recorded for it; a ratchet over the claims no recorded execution yet supports
+
   - id: site-basepath
     job: structure
     runs: scripts/site-basepath-check
@@ -93,8 +109,14 @@ gates:
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
+  # `always`, and it was not. No class named this gate, so the one check that catches a
+  # public command missing its reference, its fixture, its demo or its cases ran only in a
+  # full plan — which a routine push is not. A change to share/commands.yaml alone, which is
+  # exactly how a command is added, planned every gate except this one. It reads files and
+  # takes under a second, which is why it can be unconditional rather than classed.
   - id: command-furnished
     job: structure
+    always: true
     runs: scripts/ci/command-furnished
     summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
 
@@ -102,6 +124,23 @@ gates:
     job: structure
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
+
+  - id: english-only
+    job: structure
+    always: true
+    runs: scripts/ci/english-only-check
+    summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
+
+  - id: finding-reproduce
+    job: structure
+    always: true
+    runs: scripts/ci/finding-reproduce-check
+    summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
+
+  - id: rule-proof
+    job: structure
+    runs: scripts/ci/rule-proof-check
+    summary: every rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, and a named case that was renamed or deleted fails outright
 
   # A grep over the tree, so it costs nothing and runs in every plan: a second parser of
   # the lease can be introduced from a shell script, a recipe, a hook or the crate, and no
@@ -136,7 +175,7 @@ gates:
   - id: rust-coverage
     job: coverage
     runs: just coverage
-    summary: line coverage of the crate against scripts/rust-coverage-threshold
+    summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
 
   # macOS, because the one committed baseline is macOS's. On demand for the reason below:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
@@ -176,6 +215,24 @@ gates:
     job: structure
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
+
+  # The quantities that grow on their own — open pull requests, linked worktrees, local
+  # branches, running servers. None shrinks by itself and none is visible from where a person
+  # looks, so each one's absence of a command is the defect. The runner has none of these
+  # quantities; what it holds together is that the commands still exist, that the reaper is
+  # safe by construction, that .gitattributes and the site generator still agree about which
+  # trees resolve on merge, and that no document sends a reader to a merge button this
+  # repository's merge policy cannot reach.
+  - id: backlog-hygiene
+    job: structure
+    always: true
+    runs: scripts/ci/backlog-check
+    summary: every self-accumulating quantity keeps its measuring command, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
+
+  - id: mesh-check
+    job: structure
+    runs: scripts/ci/mesh-check
+    summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
 
   # The one structural gate that reads the remote. It needs a token (issues:read) and says
   # so rather than passing when it has none: a projection gate that skips quietly is the
@@ -306,14 +363,37 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check]
+
+  # the mesh: its declaration objects, their schema, the gate that holds the subsystem
+  # to ADR 0050, and the architecture document
+  - id: mesh
+    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, docs/MESH.md]
+    gates: [mesh-check, rust-integration, shell-suite]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
     gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
+
+  # governance: the rule objects themselves, the gate that holds their proof, and the
+  # baseline of the rules nothing executable proves yet. `layer` already selects the suite
+  # for anything under .ai/; this class is narrower and adds the one gate that reads the
+  # rules as a relation rather than as files. The planner takes the union of every matching
+  # class, so both apply, and the vendored package under share/ is selected here too —
+  # `share` does not name it and a doctrine's proof can go stale exactly like a rule's.
+  - id: governance
+    paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, apps/majordomus-cli/src/rules/**]
+    gates: [rule-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+
+  # the evidence fabric: the ledger of recorded executions, the join that reads it and the
+  # gate that ratchets it. A claim's proof is derived from the matrix and the ledger
+  # together, so a change to either is a change to what this repository says is proven.
+  - id: evidence
+    paths: [.ai/repo/evidence/**, .ai/repo/evidence-baseline.txt, scripts/evidence-check, docs/CLAIMS.yaml, docs/claims/**, docs/EVIDENCE.md]
+    gates: [evidence-check, core-check, shell-suite, site-build]
 
   # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
   # Read from disk by the served executable, so the crate's suites see them; the compiled
@@ -392,3 +472,10 @@ classes:
   - id: release
     paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
     gates: [release-check]
+
+  # The commands that keep the self-accumulating quantities bounded (rule
+  # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
+  # rather than the whole rules tree, so a change to one rule does not escalate every plan.
+  - id: backlog
+    paths: [scripts/reap-orphans, scripts/land, .ai/repo/rules/project/accumulation-is-measured.v1.md, test/cases/131_backlog_hygiene.sh]
+    gates: [backlog-hygiene, shell-lint, shell-suite]

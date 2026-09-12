@@ -22,6 +22,7 @@
 # a regression and does fail; a baseline line that no longer matches anything is also
 # reported, so the ratchet tightens instead of rotting.
 set -eu
+set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BASELINE="$ROOT/.ai/repo/liveness-baseline.txt"
@@ -89,11 +90,26 @@ scan() {
   # a few lines down -- after a case/esac, or after the counter that bounds the pool -- so
   # the window is six lines, not one. A spawn is supervised if something in that window
   # captures $! or waits; anything else is work started and never reaped.
+  # A heredoc body is text this script writes, not commands it runs. `test/cases/123` writes
+  # a fixture case whose whole subject is an unsupervised background process — the runner
+  # must reap it — and reading that fixture as this file's own debt reported the gate's
+  # subject as its violation. Where the written text is itself run, the debt is real and
+  # belongs to whatever runs it; it is not this file's to carry.
   awk -v f="$f" -v W=6 '
-    { line[NR] = $0 }
+    {
+      line[NR] = $0
+      inheredoc[NR] = here
+      if (here != "") { if ($0 == here || $0 == "\t" here) here = "" }
+      else if (match($0, /<<-?[[:space:]]*"?'"'"'?[A-Za-z_][A-Za-z_0-9]*"?'"'"'?/)) {
+        tag = substr($0, RSTART, RLENGTH)
+        gsub(/^<<-?[[:space:]]*|["'"'"']/, "", tag)
+        here = tag
+      }
+    }
     END {
       for (i = 1; i <= NR; i++) {
         L = line[i]
+        if (inheredoc[i] != "") continue
         if (L ~ /^[[:space:]]*#/) continue
         if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
         supervised = 0
@@ -112,10 +128,10 @@ files | while IFS= read -r f; do scan "$f"; done > "$FOUND" || true
 # --- the ratchet ----------------------------------------------------------------------
 # The baseline is keyed by path and class, not by line: a file that moves a known finding
 # by three lines has not regressed, and a ratchet that fires on that is noise.
-# LC_ALL=C on both sorts, and on the `comm` inputs below that consume them: this list is
-# compared against a baseline file somebody else's machine wrote, and two collations
-# disagreeing about where `_` falls make `comm` report a difference that is not one
-# (project.canonical-order).
+#
+# Both sides are sorted with LC_ALL=C because `comm` below compares them byte by byte: a
+# locale sort on one side and a byte sort on the other put the same two lists in different
+# orders, and `comm` then reports differences that are not there.
 key() { cut -d: -f1,3 < "$1" | LC_ALL=C sort -u; }
 
 if [ "$WRITE" = 1 ]; then

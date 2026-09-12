@@ -51,6 +51,7 @@ fn fast(root: &Path) -> RepositoryEnvironment {
             share: None,
             index: None,
             registry: None,
+            policy: None,
         },
         &EnvironmentQuery::fast().sealed(),
     )

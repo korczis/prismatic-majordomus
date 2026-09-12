@@ -448,6 +448,15 @@ mj_uc_cmd_validate() {
 # lines are replaced whole, status included, and an age in minutes, hours or days becomes
 # one token, since a scenario that ran slowly enough crosses from one unit into the next.
 #
+# A compressed size is decided by the machine that compressed it. `archive` reports the
+# bytes it wrote — "wrote tmp/archives/repo-context-<date>.tar.gz (65 KB)" — and gzip's
+# output depends on its implementation and level, so the same file set recorded 65 KB here
+# and 55 KB on CI's runner. The uncompressed total beside it ("178 KB of content") is a
+# property of the repository and stays; only the size in the parenthesis at the end of a
+# line is masked, which is the shape a command uses for what it just wrote. This one had
+# already made the site gate fail for every branch that regenerated the catalogue on a
+# developer's machine, with the artifact and the check both behaving exactly as designed.
+#
 # The EPIPE diagnostic goes for the same reason. A reader that stops early closes the pipe
 # under the writer, and bash reports the failed write on stderr, which the recorder captures
 # along with everything else. Whether the race fires depends on the machine, so recording it
@@ -483,6 +492,7 @@ mj_uc_normalise() { # repo-path
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
     -e 's/ [0-9]+[mhd] ago/ <age> ago/g' \
     -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g' \
+    -e 's/\(([0-9]+) (KB|MB)\)$/(<size> \2)/' \
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \

@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 42
+weight = 43
 [extra]
 source = "docs/WEB.md"
 +++
@@ -197,7 +197,8 @@ Over HTTP and MCP the same resolution is `/api/v1/web/surfaces`, the tool
 `majordomus_web_surfaces` and the resource `majordomus://web`. One nuance: over a served
 socket it answers the **narrowed** topology, because the router hands its capability calls a
 context whose topology is what that process serves; from the command line or a standalone
-MCP session it answers the repository's. Both read one value resolved once per process.
+MCP session it answers the repository's. Both read one value, resolved once for each
+generation of the repository a long-lived process reads (`crate::live`), never per request.
 
 `docs/generated/web.json` is the committed projection, written by `majordomus generate` and
 checked by `generate --check`. It exists because the site generator runs without a Rust

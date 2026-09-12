@@ -195,6 +195,15 @@
       "note": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves."
     },
     {
+      "id": "claim:prompt-continuity",
+      "kind": "claim",
+      "label": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
+      "status": "guaranteed",
+      "route": "/guarantees/prompt-continuity/",
+      "external": false,
+      "note": "The mapping from a provider session to an episode used to exist only while the episode was open, so a closed episode's prompts became unattributable at once — 713 of this repository's 974 records. The record now carries the episode, the provider session, the repository and the worktree, with the provenance of the link; the archive is 0600 and bounded by prompts.retention_max_days and prompts.retention_max_bytes, which prune the body and keep the record; and credential shapes are replaced before anything is persisted. The unlinked legacy records stay unlinked: the evidence for them does not exist, and this claim does not pretend otherwise."
+    },
+    {
       "id": "claim:prompt-assets",
       "kind": "claim",
       "label": "Every repository-local prompt asset renders, and an unknown token is a failure",
@@ -220,6 +229,15 @@
       "route": "/guarantees/no-silent-overwrite/",
       "external": false,
       "note": "update refuses, offers a diff, and overwrites only under an explicit flag."
+    },
+    {
+      "id": "claim:archive-fidelity",
+      "kind": "claim",
+      "label": "An archive that lost the file modes fails rather than travelling",
+      "status": "guaranteed",
+      "route": "/guarantees/archive-fidelity/",
+      "external": false,
+      "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns."
     },
     {
       "id": "claim:context-budget",
@@ -890,11 +908,11 @@
     {
       "id": "claim:mcp-shared-server",
       "kind": "claim",
-      "label": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+      "label": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
       "status": "guaranteed",
       "route": "/guarantees/mcp-shared-server/",
       "external": false,
-      "note": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client."
+      "note": "The election is one lease file under .ai/local/state/mcp/, created atomically and removed on exit; a stale lease is taken over; a bridged client whose server dies takes over or re-attaches without its client noticing. The crate's tests/mcp_shared.rs covers the socket side; --standalone keeps one process per client. A checkout, not a repository - a linked worktree is a checkout of its own and elects a server of its own (ADR 0035), which measured on 2026-09-11 meant seven live servers over one git repository. The word was wrong here until ADR 0044; what makes cooperation repository-wide is the gathered board of mcp-peers, not a shared process."
     },
     {
       "id": "claim:mcp-lease-resilience",
@@ -917,11 +935,11 @@
     {
       "id": "claim:mcp-peers",
       "kind": "claim",
-      "label": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+      "label": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
       "status": "guaranteed",
       "route": "/guarantees/mcp-peers/",
       "external": false,
-      "note": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; the board is one process's memory and is gone with it. Announcements are informational; scope is enforced by the shell tool's task record, not here."
+      "note": "Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; each board is one process's memory and is gone with it. peers.list gathers - it enumerates the checkouts git registers, reads its own board from memory and asks every other checkout's server for its own board (checkouts=this, which is what keeps the gather one hop deep), and reports in boards and complete which checkouts it covered and whether it could read them all. Before ADR 0044 it answered one checkout's board while the bootstrap told every worker it had seen the repository; measured on 2026-09-11, nine agents across sixty worktrees each read a board that held only itself. A peer id is a position on one board and is reassigned on reconnect; the checkout a peer carries is the durable half. Announcements are informational and die with the connection; scope is enforced by the shell tool's task record, not here."
     },
     {
       "id": "claim:mcp-client-autostart",
@@ -953,11 +971,11 @@
     {
       "id": "claim:rust-coverage-floor",
       "kind": "claim",
-      "label": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+      "label": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
       "status": "guaranteed",
       "route": "/guarantees/rust-coverage-floor/",
       "external": false,
-      "note": "cargo-llvm-cov over all targets, --fail-under-lines. The floor is 90; the case refuses a floor under 90, so lowering it is an edit to a test that a reviewer sees, not a quiet change to a number. Raising it when the figure rises is one edit to the file. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does; a change that cannot reach the crate does not recompile it with instrumentation."
+      "note": "cargo-llvm-cov over all targets, exported as JSON and post-processed so that tests/, benches/, examples/ and every inline `#[cfg(test)]` item leave the fraction on both sides. --ignore-filename-regex cannot do the second, which is why this is a script and not a flag. Two floors, each one integer in a file of its own, each read by CI, by scripts/rust-check and by just coverage; the domain the second measures is declared in scripts/session-coverage-domain and the script refuses a domain naming a file the export does not carry, so narrowing it to raise the number is a visible edit. Branch coverage proper needs a nightly toolchain; region coverage stands in for it and is reported under that name. The coverage job runs when the plan selects the rust-coverage gate, which the rust and share classes of .ai/repo/ci/gates.yaml select and every full plan does."
     },
     {
       "id": "claim:rust-hot-path-benchmarks",
@@ -1034,11 +1052,20 @@
     {
       "id": "claim:ci-verdict",
       "kind": "claim",
-      "label": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+      "label": "The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
       "status": "guaranteed",
       "route": "/guarantees/ci-verdict/",
       "external": false,
-      "note": "The verdict job always runs, so a required check is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition."
+      "note": "The verdict job always runs, so the status is never left pending by a job the plan skipped, and it writes a table of every gate with its job's result and the reason it was or was not planned. The case drives it with fixture plans and needs contexts through every red condition. This claim was worded \"the one status a branch rule requires\" until 2026-09-11, which asserted a branch rule that does not exist - see ci-verdict-is-required below. What scripts/ci/verdict computes was always true; what gated a merge on it was not."
+    },
+    {
+      "id": "claim:ci-verdict-is-required",
+      "kind": "claim",
+      "label": "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it",
+      "status": "planned",
+      "route": "/guarantees/ci-verdict-is-required/",
+      "external": false,
+      "note": "Named so the omission is visible rather than implied by the claim above, which asserted it. Measured on 2026-09-11 - `gh api repos/korczis/prismatic-majordomus/branches/master/protection` answers 404 Branch not protected and `gh api repos/korczis/prismatic-majordomus/rulesets` answers []. There is therefore no required status on master and every gate in this repository is advisory at the merge, which is why a red trunk can persist, why derived data can go stale across a server-side merge (docs/CI.md records both), and why the honest reading of a green run is \"nothing objected\" rather than \"nothing could object\". Closing this is a repository-settings act an operator takes, not a change to this tree; it is recorded here because a promise nobody keeps is worse when nobody can see it is unkept."
     },
     {
       "id": "claim:suite-parallel",
@@ -1239,6 +1266,15 @@
       "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
     },
     {
+      "id": "claim:session-observability",
+      "kind": "claim",
+      "label": "The session subsystem has a reading of itself — every open episode of the store and not only the one the pointer follows, the episodes that can no longer close themselves, the commit the serving process is answering about, and what each provider's adapter declares",
+      "status": "guaranteed",
+      "route": "/guarantees/session-observability/",
+      "external": false,
+      "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1356,16 +1392,153 @@
       "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository."
     },
     {
+      "id": "claim:evidence-proof-is-an-execution",
+      "kind": "claim",
+      "label": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-proof-is-an-execution/",
+      "external": false,
+      "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
+    },
+    {
+      "id": "claim:rule-proof-is-named-and-resolves",
+      "kind": "claim",
+      "label": "Every blocking rule names what proves it, and every path it names is in the tree",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-proof-is-named-and-resolves/",
+      "external": false,
+      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for."
+    },
+    {
+      "id": "claim:rule-exemption-carries-its-reason",
+      "kind": "claim",
+      "label": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-exemption-carries-its-reason/",
+      "external": false,
+      "note": "Some rules genuinely have no machine expression: the provenance of what was written, whether a mechanism earns its cost. Before `reviewed_because` those sat in a debt list beside rules that merely had not been got round to, and the two were indistinguishable. The reason is the whole declaration — there is no flag beside it, because a flag can be set and a reason cannot be set without writing one. An executable proof always wins over it, so a rule that acquires a case stops being review-enforced without anyone remembering to delete anything."
+    },
+    {
+      "id": "claim:rule-state-is-derived-from-what-ran",
+      "kind": "claim",
+      "label": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
+      "status": "guaranteed",
+      "route": "/guarantees/rule-state-is-derived-from-what-ran/",
+      "external": false,
+      "note": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass."
+    },
+    {
+      "id": "claim:authored-files-are-english",
+      "kind": "claim",
+      "label": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+      "status": "guaranteed",
+      "route": "/guarantees/authored-files-are-english/",
+      "external": false,
+      "note": "The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one."
+    },
+    {
+      "id": "claim:a-finding-names-how-to-see-it-again",
+      "kind": "claim",
+      "label": "Every finding a command reports names the command that reproduces it",
+      "status": "guaranteed",
+      "route": "/guarantees/a-finding-names-how-to-see-it-again/",
+      "external": false,
+      "note": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded."
+    },
+    {
+      "id": "claim:evidence-currency-is-not-collapsed",
+      "kind": "claim",
+      "label": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-currency-is-not-collapsed/",
+      "external": false,
+      "note": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate."
+    },
+    {
+      "id": "claim:evidence-partial-run-preserves-the-rest",
+      "kind": "claim",
+      "label": "Recording one test's result never erases the evidence recorded for any other test",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-partial-run-preserves-the-rest/",
+      "external": false,
+      "note": "The ledger is merged per test, not rewritten per run, so `bash test/run.sh 84_distribution_model` followed by a recording updates exactly that one entry. A whole-ledger write would turn a one-case run into a repository that has proven one thing, which is worse than one that has proven nothing because it looks deliberate."
+    },
+    {
+      "id": "claim:evidence-navigates-both-ways",
+      "kind": "claim",
+      "label": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-navigates-both-ways/",
+      "external": false,
+      "note": "`evidence claim` answers what proves a claim and `evidence proves` answers what a test proves, including the other claims that share it. Both read the same join, so the two directions cannot disagree; a relation that could only be walked one way is half a relation."
+    },
+    {
+      "id": "claim:evidence-unsupported-guarantee-is-reported",
+      "kind": "claim",
+      "label": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-unsupported-guarantee-is-reported/",
+      "external": false,
+      "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt so existing debt is known rather than blocking. The gate is advisory while the baseline is non-empty and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim."
+    },
+    {
+      "id": "claim:mesh-off-by-default",
+      "kind": "claim",
+      "label": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-off-by-default/",
+      "external": false,
+      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050)."
+    },
+    {
+      "id": "claim:mesh-one-registry",
+      "kind": "claim",
+      "label": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-one-registry/",
+      "external": false,
+      "note": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site."
+    },
+    {
+      "id": "claim:mesh-observation-not-authority",
+      "kind": "claim",
+      "label": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-observation-not-authority/",
+      "external": false,
+      "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only."
+    },
+    {
+      "id": "claim:models-one-declaration",
+      "kind": "claim",
+      "label": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+      "status": "guaranteed",
+      "route": "/guarantees/models-one-declaration/",
+      "external": false,
+      "note": "models.list and models.route are capability declarations, so every surface is a projection; the catalogue's own diagnostics report a duplicate alias or an undeclared vendor at first read. Declaration order is routing's preference order, verifiable by reading the file."
+    },
+    {
+      "id": "claim:models-routing-explains-itself",
+      "kind": "claim",
+      "label": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+      "status": "guaranteed",
+      "route": "/guarantees/models-routing-explains-itself/",
+      "external": false,
+      "note": "Routing is a pure function over the declared catalogue and the stated need; the unit tests prove the preference order, the fixed check order behind every exclusion reason, and that a model named outright is still checked against the requirements."
+    },
+    {
+      "id": "claim:models-no-secret-fields",
+      "kind": "claim",
+      "label": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+      "status": "guaranteed",
+      "route": "/guarantees/models-no-secret-fields/",
+      "external": false,
+      "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:.github/workflows/validate.yml",
-      "kind": "implementation",
-      "label": ".github/workflows/validate.yml",
       "route": null,
       "external": false
     },
@@ -1380,6 +1553,20 @@
       "id": "impl:apps/majordomus-cli/src/bench/coverage.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/bench/coverage.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "route": null,
       "external": false
     },
@@ -1426,6 +1613,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/ledger.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/generate.rs",
@@ -1461,9 +1662,30 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/mesh/registry.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/registry.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/trust.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/metadata/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/metadata/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/models/mod.rs",
       "route": null,
       "external": false
     },
@@ -1496,9 +1718,23 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/rules/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/rules/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/scope.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/scope.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/shared.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/shared.rs",
       "route": null,
       "external": false
     },
@@ -1562,6 +1798,13 @@
       "id": "impl:lib/adr.sh",
       "kind": "implementation",
       "label": "lib/adr.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/archive.sh",
+      "kind": "implementation",
+      "label": "lib/archive.sh",
       "route": null,
       "external": false
     },
@@ -1776,6 +2019,20 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/english-only-check",
+      "kind": "implementation",
+      "label": "scripts/ci/english-only-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/finding-reproduce-check",
+      "kind": "implementation",
+      "label": "scripts/ci/finding-reproduce-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/github-check",
       "kind": "implementation",
       "label": "scripts/ci/github-check",
@@ -1790,6 +2047,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/rule-proof-check",
+      "kind": "implementation",
+      "label": "scripts/ci/rule-proof-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/verdict",
       "kind": "implementation",
       "label": "scripts/ci/verdict",
@@ -1800,6 +2064,13 @@
       "id": "impl:scripts/derive",
       "kind": "implementation",
       "label": "scripts/derive",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/evidence-check",
+      "kind": "implementation",
+      "label": "scripts/evidence-check",
       "route": null,
       "external": false
     },
@@ -1849,6 +2120,13 @@
       "id": "impl:scripts/rust-check",
       "kind": "implementation",
       "label": "scripts/rust-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/rust-coverage",
+      "kind": "implementation",
+      "label": "scripts/rust-coverage",
       "route": null,
       "external": false
     },
@@ -1909,6 +2187,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
@@ -1920,6 +2205,13 @@
       "kind": "source",
       "label": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
       "route": null,
+      "external": false
+    },
+    {
+      "id": "source:docs/ARCHIVE.md",
+      "kind": "source",
+      "label": "docs/ARCHIVE.md",
+      "route": "/docs/archive/",
       "external": false
     },
     {
@@ -1993,6 +2285,13 @@
       "external": false
     },
     {
+      "id": "source:docs/EVIDENCE.md",
+      "kind": "source",
+      "label": "docs/EVIDENCE.md",
+      "route": "/docs/evidence/",
+      "external": false
+    },
+    {
       "id": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
       "kind": "source",
       "label": "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -2018,6 +2317,20 @@
       "kind": "source",
       "label": "docs/MCP.md",
       "route": "/docs/mcp/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MESH.md",
+      "kind": "source",
+      "label": "docs/MESH.md",
+      "route": "/docs/mesh/",
+      "external": false
+    },
+    {
+      "id": "source:docs/MODELS.md",
+      "kind": "source",
+      "label": "docs/MODELS.md",
+      "route": "/docs/models/",
       "external": false
     },
     {
@@ -2112,6 +2425,13 @@
       "external": false
     },
     {
+      "id": "test:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/src/models/mod.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/models/mod.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/cli_docs.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/cli_docs.rs",
@@ -2124,6 +2444,13 @@
       "label": "apps/majordomus-cli/tests/lease_lost.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/lease_lost.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/mesh.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mesh.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/product.rs",
@@ -2217,11 +2544,60 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/103_obligations.sh"
     },
     {
+      "id": "test:test/cases/124_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/124_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/124_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/125_rule_proof.sh",
+      "kind": "test",
+      "label": "test/cases/125_rule_proof.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/125_rule_proof.sh"
+    },
+    {
       "id": "test:test/cases/12_site_build.sh",
       "kind": "test",
       "label": "test/cases/12_site_build.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
+    },
+    {
+      "id": "test:test/cases/130_archive.sh",
+      "kind": "test",
+      "label": "test/cases/130_archive.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_archive.sh"
+    },
+    {
+      "id": "test:test/cases/130_mesh.sh",
+      "kind": "test",
+      "label": "test/cases/130_mesh.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_mesh.sh"
+    },
+    {
+      "id": "test:test/cases/131_models.sh",
+      "kind": "test",
+      "label": "test/cases/131_models.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/131_models.sh"
+    },
+    {
+      "id": "test:test/cases/133_rule_graph.sh",
+      "kind": "test",
+      "label": "test/cases/133_rule_graph.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/133_rule_graph.sh"
+    },
+    {
+      "id": "test:test/cases/138_governance_gates.sh",
+      "kind": "test",
+      "label": "test/cases/138_governance_gates.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/138_governance_gates.sh"
     },
     {
       "id": "test:test/cases/13_region_projection.sh",
@@ -2231,11 +2607,25 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/13_region_projection.sh"
     },
     {
+      "id": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "test",
+      "label": "test/cases/140_prompt_continuity.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/140_prompt_continuity.sh"
+    },
+    {
       "id": "test:test/cases/14_wiring_dispatcher.sh",
       "kind": "test",
       "label": "test/cases/14_wiring_dispatcher.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/14_wiring_dispatcher.sh"
+    },
+    {
+      "id": "test:test/cases/171_session_observability.sh",
+      "kind": "test",
+      "label": "test/cases/171_session_observability.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/171_session_observability.sh"
     },
     {
       "id": "test:test/cases/17_doctrine_enforcement.sh",
@@ -2285,6 +2675,13 @@
       "label": "test/cases/24_prompt_search.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/24_prompt_search.sh"
+    },
+    {
+      "id": "test:test/cases/250_the_board_is_repository_wide.sh",
+      "kind": "test",
+      "label": "test/cases/250_the_board_is_repository_wide.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/250_the_board_is_repository_wide.sh"
     },
     {
       "id": "test:test/cases/25_continuity_lifecycle.sh",
@@ -2732,6 +3129,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:prompt-continuity",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:prompt-assets",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -2744,6 +3146,11 @@
     {
       "source": "claim:no-silent-overwrite",
       "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:archive-fidelity",
+      "target": "source:docs/ARCHIVE.md",
       "kind": "specified_by"
     },
     {
@@ -3202,6 +3609,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:ci-verdict-is-required",
+      "target": "source:docs/CI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:suite-parallel",
       "target": "source:docs/CI.md",
       "kind": "specified_by"
@@ -3312,6 +3724,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "source:docs/CONTINUITY.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3374,6 +3791,86 @@
     {
       "source": "claim:landing-page-is-a-projection",
       "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "source:docs/DOCTRINE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-off-by-default",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "source:docs/MODELS.md",
       "kind": "specified_by"
     },
     {
@@ -3477,6 +3974,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:prompt-continuity",
+      "target": "impl:lib/capture.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:prompt-assets",
       "target": "impl:lib/prompt.sh",
       "kind": "implemented_by"
@@ -3489,6 +3991,11 @@
     {
       "source": "claim:no-silent-overwrite",
       "target": "impl:lib/update.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:archive-fidelity",
+      "target": "impl:lib/archive.sh",
       "kind": "implemented_by"
     },
     {
@@ -3858,7 +4365,7 @@
     },
     {
       "source": "claim:rust-coverage-floor",
-      "target": "impl:.github/workflows/validate.yml",
+      "target": "impl:scripts/rust-coverage",
       "kind": "implemented_by"
     },
     {
@@ -4017,6 +4524,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -4079,6 +4591,86 @@
     {
       "source": "claim:landing-page-is-a-projection",
       "target": "impl:site/templates/index.html",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "impl:scripts/ci/rule-proof-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "impl:scripts/ci/rule-proof-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "impl:apps/majordomus-cli/src/rules/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "impl:scripts/ci/english-only-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "impl:scripts/ci/finding-reproduce-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "impl:scripts/evidence-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-off-by-default",
+      "target": "impl:apps/majordomus-cli/src/shared.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "impl:apps/majordomus-cli/src/mesh/registry.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "impl:apps/majordomus-cli/src/models/mod.rs",
       "kind": "implemented_by"
     },
     {
@@ -4182,6 +4774,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:prompt-continuity",
+      "target": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:prompt-assets",
       "target": "test:test/cases/24_prompt_search.sh",
       "kind": "proved_by"
@@ -4194,6 +4791,11 @@
     {
       "source": "claim:no-silent-overwrite",
       "target": "test:test/cases/03_update.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:archive-fidelity",
+      "target": "test:test/cases/130_archive.sh",
       "kind": "proved_by"
     },
     {
@@ -4543,7 +5145,7 @@
     },
     {
       "source": "claim:mcp-peers",
-      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "target": "test:test/cases/250_the_board_is_repository_wide.sh",
       "kind": "proved_by"
     },
     {
@@ -4722,6 +5324,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:session-observability",
+      "target": "test:test/cases/171_session_observability.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "test:test/cases/99_adr.sh",
       "kind": "proved_by"
@@ -4784,6 +5391,86 @@
     {
       "source": "claim:landing-page-is-a-projection",
       "target": "test:test/cases/12_site_build.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-proof-is-an-execution",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-proof-is-named-and-resolves",
+      "target": "test:test/cases/125_rule_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-exemption-carries-its-reason",
+      "target": "test:test/cases/125_rule_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rule-state-is-derived-from-what-ran",
+      "target": "test:test/cases/133_rule_graph.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:authored-files-are-english",
+      "target": "test:test/cases/138_governance_gates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-finding-names-how-to-see-it-again",
+      "target": "test:test/cases/138_governance_gates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-currency-is-not-collapsed",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-partial-run-preserves-the-rest",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-navigates-both-ways",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-unsupported-guarantee-is-reported",
+      "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-off-by-default",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-one-registry",
+      "target": "test:test/cases/130_mesh.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-observation-not-authority",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-one-declaration",
+      "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-routing-explains-itself",
+      "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:models-no-secret-fields",
+      "target": "test:apps/majordomus-cli/src/models/mod.rs",
       "kind": "proved_by"
     }
   ]

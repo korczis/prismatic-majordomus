@@ -121,6 +121,11 @@
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends with its task still active."
         },
+        "stranded_after": {
+          "type": "string",
+          "pattern": "^[0-9]+[smh]$",
+          "description": "How long an open episode may go without a sign of life before `majordomus recover` may close it. The sign of life is the later of the episode's own started_at and the newest ledger line it stamped. Generous on purpose: closing a live episode costs the worker inside it the boundary of its work, and leaving a dead one open another hour costs nothing."
+        },
         "ensure_server_on_start": {
           "type": "boolean",
           "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."
@@ -132,6 +137,23 @@
       "additionalProperties": false,
       "properties": {
         "retention_max_lines": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "prompts": {
+      "description": "Bounds on the raw prompt archive under .ai/local/prompts/. Pruning replaces a prompt body with a tombstone and keeps every other field, including the provenance of its episode link; a record is never deleted. Either bound alone is a bound.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "retention_max_days": {
+          "description": "A prompt body older than this many days is pruned.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "retention_max_bytes": {
+          "description": "The total size of the prompt bodies the archive keeps; the oldest are pruned first past it.",
           "type": "integer",
           "minimum": 1
         }
@@ -228,11 +250,23 @@
           "properties": {
             "doctor_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus doctor`; over it the command WARNs and still exits on its findings."
             },
             "watch_ms": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "description": "Wall-time budget for `majordomus watch`; over it the command WARNs and still exits on its findings."
+            },
+            "enter_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for entering the repository (`majordomus env enter`) when a server is already serving this checkout, which is every entry but the first. Entering a directory is something a person does dozens of times a day and never chose to wait for."
+            },
+            "enter_cold_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Wall-time budget for the first entry, which additionally finds that nothing answers and starts a server \u2014 and then returns, because entry never waits for a server it started to become ready."
             }
           }
         }

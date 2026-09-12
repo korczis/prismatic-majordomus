@@ -112,10 +112,14 @@ crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' 
 #     string either way. LC_ALL=C is read from the original line, since the pin is never
 #     quoted.
 # What survives both is a bare `sort` in command position — which is sort(1), always.
-shell_sorts="$(find lib scripts bin test -type f ! -name '*.jq' 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
-  awk -v prefix="$f" -f "$HERE/scripts/lib/shell-code.awk" "$f" 2>/dev/null
-done | grep -vE 'LC_ALL=C' \
-     | grep -cE '(\|[[:space:]]*sort([[:space:]]|$))|(:[0-9]+:[[:space:]]*sort([[:space:]]|$))|([;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$)' || true)"
+shell_sorts_lines() {
+  find lib scripts bin test -type f ! -name '*.jq' 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
+    awk -v prefix="$f" -f "$HERE/scripts/lib/shell-code.awk" "$f" 2>/dev/null
+  done | grep -vE 'LC_ALL=C' \
+    | grep -E '(\|[[:space:]]*sort([[:space:]]|$))|(:[0-9]+:[[:space:]]*sort([[:space:]]|$))|([;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$)' || true
+}
+
+shell_sorts="$(shell_sorts_lines | grep -c . || true)"
 
 if [ "$UPDATE" = 1 ]; then
   {
@@ -150,6 +154,7 @@ fi
 
 if [ "$shell_sorts" -gt "$base_shell" ]; then
   fail "unpinned shell sorts rose from $base_shell to $shell_sorts — write LC_ALL=C sort, so the order does not depend on the machine"
+  shell_sorts_lines | sed 's/^/      /' >&2
 elif [ "$shell_sorts" -lt "$base_shell" ]; then
   fail "unpinned shell sorts fell from $base_shell to $shell_sorts — lower the baseline in $BASELINE (scripts/ci/order-check --update)"
 else

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.never-reported-is-not-green@1, project.empty-is-not-failure@1, project.no-counts-in-prose@1]
 tags: [evidence, governance, gates]
+
+x-majordomus:
+  tests: [test/cases/230_verdict_states_its_subject.sh]
 ---
 
 # Rationale

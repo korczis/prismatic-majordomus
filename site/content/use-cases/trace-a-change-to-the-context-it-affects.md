@@ -1,7 +1,7 @@
 +++
 title = "Trace a change to the context documents it affects"
 description = "List the scoped context documents, resolve which apply to a path and why, and find out which documents a change set touches before it lands."
-weight = 27
+weight = 29
 [extra]
 id = "trace-a-change-to-the-context-it-affects"
 source = ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md"

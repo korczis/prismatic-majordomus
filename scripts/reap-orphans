@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# reap-orphans — end the majordomus servers that nothing owns any more.
+#
+# A `majordomus serve` or `majordomus mcp` outlives its client whenever the client dies
+# without closing it: the parent is reaped, the server is re-parented to init, and it keeps
+# its port and its resident memory for as long as the machine is up. Nothing notices,
+# because a server that answers is not a server that anyone is talking to. On a machine
+# running many sessions over many worktrees they accumulate silently — this repository had
+# fourteen of them, one over a day old, together holding ~150MB and thirteen ports.
+#
+# The discipline this script exists to keep is that a process is never matched by name.
+# Sessions here are each other's instruments: `pkill -f majordomus` would kill the servers
+# that live peers are attached to. A process is reaped only when all four hold:
+#
+#   - it is a majordomus `serve` or `mcp` process, by executable path, not by a name match
+#   - its parent is init (ppid 1) — the session that started it is gone
+#   - it has zero ESTABLISHED TCP connections — no client is attached
+#   - it is older than --min-age (default 30m) — a server still being set up is not garbage
+#
+# The four are re-checked immediately before each signal, so a server that acquires a client
+# between the scan and the kill is skipped rather than killed.
+#
+#   scripts/reap-orphans              report what would be reaped, change nothing
+#   scripts/reap-orphans --kill       reap them (TERM, then KILL after --grace)
+#   scripts/reap-orphans --min-age 2h only consider processes older than two hours
+#
+# Exit: 0 clean or reaped, 10 orphans found in report mode, 12 unusable.
+set -eu
+set -o pipefail
+
+KILL=0
+MIN_AGE=1800
+GRACE=5
+
+die() { echo "reap-orphans: $*" >&2; exit 12; }
+
+# "90", "30m", "2h", "1d" -> seconds
+as_seconds() {
+  case "$1" in
+    *d) echo $(( ${1%d} * 86400 )) ;;
+    *h) echo $(( ${1%h} * 3600 )) ;;
+    *m) echo $(( ${1%m} * 60 )) ;;
+    *s) echo "${1%s}" ;;
+    *)  echo "$1" ;;
+  esac
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --kill)    KILL=1; shift ;;
+    --min-age) [ $# -ge 2 ] || die "--min-age needs a value"; MIN_AGE="$(as_seconds "$2")"; shift 2 ;;
+    --grace)   [ $# -ge 2 ] || die "--grace needs a value"; GRACE="$(as_seconds "$2")"; shift 2 ;;
+    -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) die "unknown option $1" ;;
+  esac
+done
+
+command -v lsof >/dev/null 2>&1 || die "lsof is needed to tell an attached server from an abandoned one"
+
+# ps etime (`[[dd-]hh:]mm:ss`) -> seconds
+etime_seconds() {
+  awk -v e="$1" 'BEGIN {
+    d = 0
+    if (index(e, "-")) { split(e, p, "-"); d = p[1]; e = p[2] }
+    n = split(e, t, ":")
+    s = (n == 3) ? t[1]*3600 + t[2]*60 + t[3] : t[1]*60 + t[2]
+    print s + d*86400
+  }'
+}
+
+established() { lsof -nP -a -p "$1" -iTCP -sTCP:ESTABLISHED 2>/dev/null | grep -c TCP || true; }
+ports()       { lsof -nP -a -p "$1" -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 { split($9, a, ":"); printf "%s ", a[2] }'; }
+
+# A majordomus server, by executable path and subcommand — never by a bare name match.
+candidates() {
+  ps -eo pid=,ppid=,etime=,rss=,args= | awk '
+    $2 == 1 {
+      cmd = ""
+      for (i = 5; i <= NF; i++) cmd = cmd $i " "
+      if (cmd ~ /majordomus(-cli)?[^ ]* +(serve|mcp)( |$)/) print $1, $3, $4
+    }'
+}
+
+found=0; reaped=0; skipped=0; freed=0
+printf '%-8s %-12s %-9s %-6s %s\n' PID AGE RSS PORTS STATE
+
+while read -r pid etime rss; do
+  [ -n "${pid:-}" ] || continue
+  age="$(etime_seconds "$etime")"
+  [ "$age" -ge "$MIN_AGE" ] || continue
+  est="$(established "$pid")"
+  if [ "$est" -ne 0 ]; then
+    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — $est client(s) attached"
+    skipped=$((skipped + 1)); continue
+  fi
+  found=$((found + 1))
+  if [ "$KILL" -eq 0 ]; then
+    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "would reap"
+    continue
+  fi
+  # Re-check the whole predicate against the live process, not against the scan.
+  now_ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
+  if [ "${now_ppid:-}" != "1" ] || [ "$(established "$pid")" -ne 0 ]; then
+    printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "skip — acquired an owner since the scan"
+    skipped=$((skipped + 1)); found=$((found - 1)); continue
+  fi
+  kill -TERM "$pid" 2>/dev/null || true
+  printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "TERM"
+  reaped=$((reaped + 1)); freed=$((freed + rss))
+done <<EOF
+$(candidates)
+EOF
+
+if [ "$KILL" -eq 1 ] && [ "$reaped" -gt 0 ]; then
+  sleep "$GRACE"
+  while read -r pid _ _; do
+    [ -n "${pid:-}" ] || continue
+    if ps -p "$pid" >/dev/null 2>&1; then
+      kill -KILL "$pid" 2>/dev/null || true
+      echo "KILL $pid (did not exit within ${GRACE}s)"
+    fi
+  done <<EOF
+$(candidates)
+EOF
+fi
+
+echo
+if [ "$KILL" -eq 1 ]; then
+  echo "reap-orphans: reaped $reaped, kept $skipped, freed ~$((freed/1024))MB"
+  exit 0
+fi
+echo "reap-orphans: $found abandoned, $skipped attached and kept"
+[ "$found" -eq 0 ] || { echo "reap-orphans: run with --kill to end them"; exit 10; }
+exit 0

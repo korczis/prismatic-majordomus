@@ -1,7 +1,7 @@
 +++
 title = "Durable records are searchable literally, across kinds, without an index"
 description = "majordomus search \"callback\" looks through handovers, checkpoints, decisions, open questions, prompt assets and the ledger, and prints the kind, the path, the line number and the matching line. A worker can find what was decided about a subject without reading every record."
-weight = 70
+weight = 72
 [extra]
 claim_id = "record-search"
 status = "guaranteed"

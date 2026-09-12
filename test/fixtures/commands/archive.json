@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "command": "archive",
+  "title": "A snapshot that can be read, or checked, somewhere else",
+  "intro": "A repository leaves the machine more often than it looks: to a model that will read all of it, to a reviewer who cannot clone, to an auditor who must run the gates on a copy. What travels is the git index and only the git index, so nothing untracked can escape; what is dropped beyond that is a profile in share/archive.yaml, and a profile that drops the generated projections reads .gitattributes rather than keeping a second list of them.",
+  "scenarios": [
+    {
+      "id": "profiles",
+      "title": "What snapshots there are, and which is the default",
+      "given": {
+        "layer installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "archive",
+        "--list"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "context",
+          "\\(default\\)",
+          "audit",
+          "governance"
+        ]
+      },
+      "explain": "The profiles are declarations, not flags: each one names a different reader, and the summary says what that reader is owed. A repository may add its own in .ai/repo/archive.yaml without changing the tool."
+    },
+    {
+      "id": "dry-run",
+      "title": "What would travel, and why the rest would not",
+      "given": {
+        "layer installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "archive",
+        "--dry-run"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "profile context",
+          "tracked file",
+          "nothing written"
+        ]
+      },
+      "explain": "The count of tracked files is stated beside the count archived, so a selection that quietly matched nothing cannot look like a selection that matched everything. Every file left out is attributed to the rule that left it out."
+    },
+    {
+      "id": "written",
+      "title": "Written, and then read back",
+      "given": {
+        "layer installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "archive",
+        "--format",
+        "tar.gz"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "OK   archive",
+          "read back",
+          "wrote tmp/archives/"
+        ]
+      },
+      "explain": "The archive is opened again before the command returns. The entry count must match what was staged, and executables that went in must come back out — the failure this command exists to answer is a container that silently discarded the file modes."
+    },
+    {
+      "id": "no-such-profile",
+      "title": "Asking for a snapshot nobody declared",
+      "given": {
+        "layer installed": true
+      },
+      "setup": "installed",
+      "run": [
+        "archive",
+        "nosuch"
+      ],
+      "expect": {
+        "exit": 12,
+        "stdout_contains": [
+          "no profile",
+          "archive --list"
+        ]
+      },
+      "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist rather than listing it here."
+    }
+  ]
+}

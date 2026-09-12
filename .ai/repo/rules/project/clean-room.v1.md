@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: []
 tags: [provenance]
+
+x-majordomus:
+  reviewed_because: the rule is about the provenance of what was written, which no program in this tree can read; docs/EXTRACTION_REPORT.md is the record a reviewer reads it against
 ---
 
 # Rationale

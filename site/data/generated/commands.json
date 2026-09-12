@@ -267,10 +267,13 @@
       "tests": {
         "behaviour": [
           "02_doctor_basic",
+          "130_mesh",
+          "131_models",
           "14_wiring_dispatcher",
           "15_command_surface",
           "18_doctrine_wiring",
           "19_end_to_end",
+          "223_an_unsupported_schema_is_a_finding",
           "36_command_doctrines",
           "44_model_doctrine",
           "83_doctor_budget",
@@ -281,10 +284,12 @@
           "02_doctor_basic",
           "03_update",
           "13_region_projection",
+          "140_prompt_continuity",
           "14_wiring_dispatcher",
           "18_doctrine_wiring",
           "19_end_to_end",
           "21_decision_question",
+          "223_an_unsupported_schema_is_a_finding",
           "22_history",
           "24_prompt_search",
           "25_continuity_lifecycle",
@@ -467,6 +472,7 @@
       ],
       "writes": [
         ".ai/local/state/current.yaml",
+        ".ai/local/state/archive/",
         ".ai/local/state/ledger.jsonl"
       ],
       "exit_codes": [
@@ -587,7 +593,9 @@
       "tests": {
         "behaviour": [
           "106_context_peers",
+          "127_briefing_freshness",
           "15_command_surface",
+          "224_continuity_crosses_machines",
           "23_context",
           "25_continuity_lifecycle"
         ],
@@ -681,6 +689,7 @@
       ],
       "tests": {
         "behaviour": [
+          "136_changed_files_classifier",
           "15_command_surface",
           "20_checkpoint",
           "25_continuity_lifecycle",
@@ -777,6 +786,7 @@
       "tests": {
         "behaviour": [
           "05_handover",
+          "136_changed_files_classifier",
           "15_command_surface",
           "19_end_to_end",
           "25_continuity_lifecycle",
@@ -967,7 +977,7 @@
       ],
       "writes": [
         ".ai/local/state/current.yaml",
-        ".ai/local/state/archive/",
+        ".ai/local/state/completed/",
         ".ai/local/state/ledger.jsonl"
       ],
       "exit_codes": [
@@ -1294,6 +1304,7 @@
         "behaviour": [
           "15_command_surface",
           "21_decision_question",
+          "221_the_lifecycle_under_concurrency",
           "25_continuity_lifecycle",
           "33_event_registry"
         ],
@@ -1805,7 +1816,7 @@
     },
     {
       "name": "capture",
-      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
       "category": "memory",
       "stage": "work",
       "class": "generated-output-mutating",
@@ -1816,7 +1827,7 @@
       "json_output": true,
       "syntax": "majordomus capture status [--json]",
       "demo": "capture-status",
-      "note": "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add.",
+      "note": "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add. A record carries the episode it belongs to, the provider session, the repository and the worktree, with the provenance of that link: the mapping from a provider session to an episode exists only while the episode is open, so a record that did not carry it could never be attributed afterwards. 'capture reconcile' links a record from evidence that survived the close and marks the rest unlinked rather than guessing; 'capture prune' applies prompts.retention_max_days and prompts.retention_max_bytes by taking the body and keeping the record, its identity and a tombstone. Credential shapes are replaced before anything is persisted, and the archive is mode 0600.",
       "reads": [
         ".claude/settings.json",
         ".ai/repo/policy.yaml"
@@ -1838,11 +1849,17 @@
         "behaviour": [
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
+          "140_prompt_continuity",
+          "220_exactly_once_close",
+          "221_the_lifecycle_under_concurrency",
+          "222_an_episode_nobody_ended",
+          "224_continuity_crosses_machines",
           "29_prompt_capture",
           "54_session_lifecycle_hooks"
         ],
         "negative": [
           "111_session_per_provider",
+          "140_prompt_continuity",
           "29_prompt_capture",
           "54_session_lifecycle_hooks"
         ]
@@ -2409,6 +2426,13 @@
         "behaviour": [
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
+          "127_briefing_freshness",
+          "136_changed_files_classifier",
+          "220_exactly_once_close",
+          "221_the_lifecycle_under_concurrency",
+          "222_an_episode_nobody_ended",
+          "223_an_unsupported_schema_is_a_finding",
+          "224_continuity_crosses_machines",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle",
@@ -2416,6 +2440,11 @@
         ],
         "negative": [
           "111_session_per_provider",
+          "136_changed_files_classifier",
+          "220_exactly_once_close",
+          "221_the_lifecycle_under_concurrency",
+          "222_an_episode_nobody_ended",
+          "223_an_unsupported_schema_is_a_finding",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle"
@@ -2957,9 +2986,15 @@
       ],
       "tests": {
         "behaviour": [
+          "125_rule_proof",
+          "133_rule_graph",
+          "138_governance_gates",
           "67_rule_dag"
         ],
         "negative": [
+          "125_rule_proof",
+          "133_rule_graph",
+          "138_governance_gates",
           "67_rule_dag"
         ]
       },
@@ -3037,7 +3072,7 @@
           }
         ]
       },
-      "doc_md": "\nThe effective rule set: every active rule vendored under the repository's rules section\nplus every active rule the repository wrote, resolved as a dependency graph. Read-only in\nevery subcommand except `vendor update`.\n\nA rule is a Markdown file with YAML front matter. Its identity is the front matter's `id`\nand `version`, never the file name. `docs/DOCTRINE.md` describes the format, the\n`x-majordomus` block that binds a rule to a validator, and what is authoritative today.\n\n```\n$ majordomus rules list\nmajordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch\nmajordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule\nproject.english-only                       v1  blocking  project          no validator; see the rule\n```\n\n- `list [--json]` prints the effective set in resolved order: identity, class, provenance\n  (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an\n  `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the\n  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.\n- `show <id>` prints one rule, front matter and body, with the repository-relative path it\n  was read from as the first line. An id outside the effective set exits 12.\n- `vendor status` compares the vendored baseline with the package the running executable\n  ships. It prints both revisions, then the manifest integrity of the vendored copy, then\n  whether the two packages are the same.\n- `vendor diff` is the reviewable difference between the two, as a unified diff of the two\n  directories. It exits 0 whether or not they differ; `vendor status` carries the exit code.\n- `vendor update [--force]` replaces the vendored baseline with the executable's package.\n  The write is atomic: the new package is staged beside the target and swapped in. It never\n  touches `rules/project/`.\n\n**Resolution fails closed.** A missing dependency, a dependency on a deprecated rule, a\ncycle, one `id@version` claimed by two files, a project rule in the vendor namespace,\nmalformed or incomplete front matter, an unknown front-matter key, or an `x-majordomus`\nblock that names no validator, no enforcing command or no test — each stops `list`, `show`\nand every command that reads the set, with exit 10 and the reason. Nothing is applied\npartially. The order is deterministic: two runs agree, and every dependency is listed before\nthe rule that depends on it.\n\n**The repository's vendored copy is authoritative.** A newer executable reports a newer\nbaseline through `vendor status` and `vendor diff`; it never applies one. `update`,\n`doctor` and `check` leave the vendored directory alone. The baseline changes only when\n`vendor update` is asked for.\n\n**A hand edit under `vendor/` is detected.** The package manifest names every rule file\nwith its hash. A file whose hash no longer matches, a listed file that is absent, or a file\npresent beside the manifest that it does not list, is reported by `vendor status` and\nrefused by `vendor update` until `--force`.\n\n| exit | meaning |\n|---|---|\n| 0 | the set resolves; the vendored baseline is current |\n| 2 | unknown subcommand or option; `show` without an id |\n| 10 | the set does not resolve, or the vendored copy fails its manifest |\n| 11 | `vendor status`: the executable ships a different package than the one vendored |\n| 12 | no rule with that id; nothing vendored yet; no rules section in this layout |\n| 13 | the executable ships no standard rule package: a broken install, not a repository fault |\n| 15 | `vendor update` refused over a hand-edited vendor directory (`--force` overrides) |\n\n`test/cases/67_rule_dag.sh` proves each refusal by mutation, and proves that a newer\ndistribution's package is not applied until asked, that `vendor update` leaves\n`rules/project/` byte for byte what it was, and that the resolved order is the same across\nruns."
+      "doc_md": "\nThe effective rule set: every active rule vendored under the repository's rules section\nplus every active rule the repository wrote, resolved as a dependency graph. Read-only in\nevery subcommand except `vendor update`.\n\nA rule is a Markdown file with YAML front matter. Its identity is the front matter's `id`\nand `version`, never the file name. `docs/DOCTRINE.md` describes the format, the\n`x-majordomus` block that binds a rule to a validator, and what is authoritative today.\n\n```\n$ majordomus rules list\nmajordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch\nmajordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule\nproject.english-only                       v1  blocking  project          proven by scripts/ci/english-only-check\nproject.clean-room                         v1  blocking  project          review-enforced: the rule is about the provenance of what was written, which no program in this tree can read\n```\n\n- `list [--json]` prints the effective set in resolved order: identity, class, provenance\n  (`vendor:<name>` or `project`), and how it is enforced. Three modes, which\n  [`DOCTRINE.md`](DOCTRINE.md) describes: `enforced by <commands>` for a rule the dispatcher\n  runs, `proven by <paths>` for one a gate or a case holds, and `review-enforced: <reason>`\n  for one that carries a `reviewed_because` saying why no program can express it. A rule\n  with no `x-majordomus` block at all says `no validator; see the rule` rather than hiding\n  it: the rule is normative for whoever reads it, and nothing checks it by machine.\n\n  This command answers what the rules *are*. What *proves* each one — whether the case it\n  names is still in the tree, whether a runner drives it, whether anything ever ran it, and\n  whether that run is older than what it is about — is a different question, and the\n  executable answers it: `majordomus-cli rules report`, `rules show <id>`,\n  `rules proves <test>`.\n- `show <id>` prints one rule, front matter and body, with the repository-relative path it\n  was read from as the first line. An id outside the effective set exits 12.\n- `vendor status` compares the vendored baseline with the package the running executable\n  ships. It prints both revisions, then the manifest integrity of the vendored copy, then\n  whether the two packages are the same.\n- `vendor diff` is the reviewable difference between the two, as a unified diff of the two\n  directories. It exits 0 whether or not they differ; `vendor status` carries the exit code.\n- `vendor update [--force]` replaces the vendored baseline with the executable's package.\n  The write is atomic: the new package is staged beside the target and swapped in. It never\n  touches `rules/project/`.\n\n**Resolution fails closed.** A missing dependency, a dependency on a deprecated rule, a\ncycle, one `id@version` claimed by two files, a project rule in the vendor namespace,\nmalformed or incomplete front matter, an unknown front-matter key, or an `x-majordomus`\nblock that names no validator, no enforcing command or no test — each stops `list`, `show`\nand every command that reads the set, with exit 10 and the reason. Nothing is applied\npartially. The order is deterministic: two runs agree, and every dependency is listed before\nthe rule that depends on it.\n\n**The repository's vendored copy is authoritative.** A newer executable reports a newer\nbaseline through `vendor status` and `vendor diff`; it never applies one. `update`,\n`doctor` and `check` leave the vendored directory alone. The baseline changes only when\n`vendor update` is asked for.\n\n**A hand edit under `vendor/` is detected.** The package manifest names every rule file\nwith its hash. A file whose hash no longer matches, a listed file that is absent, or a file\npresent beside the manifest that it does not list, is reported by `vendor status` and\nrefused by `vendor update` until `--force`.\n\n| exit | meaning |\n|---|---|\n| 0 | the set resolves; the vendored baseline is current |\n| 2 | unknown subcommand or option; `show` without an id |\n| 10 | the set does not resolve, or the vendored copy fails its manifest |\n| 11 | `vendor status`: the executable ships a different package than the one vendored |\n| 12 | no rule with that id; nothing vendored yet; no rules section in this layout |\n| 13 | the executable ships no standard rule package: a broken install, not a repository fault |\n| 15 | `vendor update` refused over a hand-edited vendor directory (`--force` overrides) |\n\n`test/cases/67_rule_dag.sh` proves each refusal by mutation, and proves that a newer\ndistribution's package is not applied until asked, that `vendor update` leaves\n`rules/project/` byte for byte what it was, and that the resolved order is the same across\nruns."
     },
     {
       "name": "migrate",
@@ -3153,6 +3188,145 @@
         ]
       },
       "doc_md": "\nMove a repository's project data from the pre-`.ai` layout under `.majordomus/` into the\nportable AI layer under `.ai/`, once and explicitly. No ordinary command migrates: `check`,\n`doctor`, `start` and the rest refuse (`12`) a legacy layout and name this command.\n\n**Markers:** legacy is `.ai/repo/policy.yaml`; new is `.ai/manifest.yaml`; a\n`.majordomus/bin/majordomus` is a tool installation and never project data.\n\n**Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come\nfrom it), the tool's templates (to tell an unchanged template from a customised one).\n**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into\n`.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to\n`.ai/local/state/` and taken out of the index; the rest of the layer seeded from the\nskeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;\na byte-for-byte copy of the state under `tmp/majordomus-migrate-backup/<utc>/state/`,\nand of the legacy `providers/` under `.../providers/`, verified and printed, before\neither is touched; a `layout.migrated` ledger line; then `update --force` renders the\nprojections from the tool's thin bootstraps and `doctor` judges the result, each exit\nreported on its own line.\n\n**Behaviour:**\n- `--dry-run` prints the whole plan, one line per file with its action and destination,\n  and writes nothing. The same table drives the real run.\n- `templates/*.md` identical to the tool's own are dropped; a customised one moves to\n  `.ai/repo/templates/`. `generated/` is dropped: every projection now carries its own stamp.\n- `providers/` — the provider body and the monolithic templates that asked for it — is not\n  carried into `.ai/`. The body no longer exists anywhere and `update` renders none, so an\n  old template would leave a literal token in a generated file. The directory is copied\n  to the backup, removed from the index, and reported in one line: the bootstraps are now\n  the tool's thin adapters, a repository override goes under `.ai/repo/providers/<provider>.tmpl`\n  in the new format, and the body's rules belong under `.ai/repo/rules/project/` as rule\n  objects (`DOCTRINE.md` describes the format).\n- A file under `.majordomus/` this version does not know is never deleted. It is reported,\n  and `.majordomus/` is removed only when it is empty.\n- Refuses (`15`) a `.majordomus/` that holds both `policy.yaml` and `bin/majordomus`,\n  and names the safe manual step; refuses (`15`) when a destination under `.ai/` already\n  exists, listing each one. Nothing is written in either case.\n- A legacy policy that does not parse, or is not version 1, is refused (`10`) before\n  anything moves: fix it in place first.\n- Idempotent: on a repository already on the `.ai` layout it says so and exits `0`. With\n  neither layout present it exits `12` and names `init`.\n- The state stops being tracked: its durability is the checkout plus the backup, not the\n  branch. Commit the tracked half after reviewing `git status`.\n\n```\n$ majordomus migrate --dry-run\nmigrate: .majordomus/ (pre-.ai layout) -> .ai/ (ai-repository/v1)\n  move  .ai/repo/policy.yaml -> .ai/repo/policy.yaml\n  move  .ai/repo/profiles/debugging.yaml -> .ai/repo/profiles/debugging.yaml\n  state .ai/local/state/current.yaml -> .ai/local/state/current.yaml\n  drop  .majordomus/templates/handover.md    (identical to the tool's template)\n  ...\ndry run: nothing written\n```"
+    },
+    {
+      "name": "recover",
+      "summary": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
+      "category": "system",
+      "stage": "setup",
+      "class": "state-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": false,
+      "syntax": "majordomus recover [status|episodes|records|orphans|all] [--check] [--older-than <duration>]",
+      "demo": "recovery-evidence",
+      "note": "Recurring maintenance, unlike migrate, which is the one-time move off the pre-.ai layout. Every subject is idempotent and every one has a --check that writes nothing. Nothing is deleted for being unknown - a candidate whose evidence cannot be read is reported, counted and left alone.",
+      "reads": [
+        ".ai/repo/policy.yaml",
+        ".ai/local/state/sessions-open/",
+        ".ai/local/state/ledger.jsonl",
+        ".ai/repo/sessions/",
+        ".ai/local/state/checkpoints/",
+        ".ai/local/state/handovers/"
+      ],
+      "writes": [
+        ".ai/repo/sessions/",
+        ".ai/local/state/sessions-open/",
+        ".ai/local/state/ledger.jsonl"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12
+      ],
+      "tests": {
+        "behaviour": [
+          "135_session_store_recovery"
+        ],
+        "negative": [
+          "135_session_store_recovery"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "recover",
+        "title": "An episode is closed by evidence, or not at all",
+        "intro": "A provider that is killed sends no end event, and the episode it opened stays open for ever. Recovery closes it — but only when the evidence says its client is gone, and never by guessing. Every subject has a --check that writes nothing, and the measurement that decided each verdict is printed before anything is done with it.",
+        "scenarios": [
+          {
+            "id": "check",
+            "title": "The plan, and the measurement behind it",
+            "given": {
+              "one episode stranded and one live": true
+            },
+            "setup": "session-stranded",
+            "run": [
+              "recover",
+              "episodes",
+              "--check"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "last seen 2020-01-01T00:00:00Z",
+                "stranded:",
+                "live: this process is inside it",
+                "check: 1 action"
+              ]
+            },
+            "explain": "Every candidate's last sign of life is printed, including the ones nothing will happen to, so a wrong predicate is visible in the output rather than in its consequences. The dry run writes nothing at all.",
+            "setup_sh": "# Installed, with two episodes open: one whose client is gone and one that is live.\n#\n# Both halves of the stranded episode's trail are aged, not only its open record. The last\n# sign of life is the later of started_at and the newest ledger line the episode stamped, so\n# an episode whose ledger is fresh is young however old its file claims to be — a fixture\n# that moved one half would demonstrate the command passing for the wrong reason.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --provider-session gone-client >/dev/null\n\"$MJ\" session start --provider-session this-client >/dev/null\n_S=.ai/local/state\n_dead=\"$(sed -n 's/^session_id: //p' \"$_S/sessions-open/gone-client.yaml\" | head -n 1)\"\nsed -i.bak 's/^started_at: .*/started_at: 2020-01-01T00:00:00Z/' \"$_S/sessions-open/gone-client.yaml\"\nrm -f \"$_S/sessions-open/gone-client.yaml.bak\"\nawk -v s=\"$_dead\" '{ if (index($0, \"\\\"session\\\":\\\"\" s \"\\\"\") > 0) sub(/\"ts\":\"[^\"]*\"/, \"\\\"ts\\\":\\\"2020-01-01T00:00:00Z\\\"\"); print }' \\\n  \"$_S/ledger.jsonl\" > \"$_S/ledger.mj-tmp\" && mv \"$_S/ledger.mj-tmp\" \"$_S/ledger.jsonl\"",
+            "stdin_body": null
+          },
+          {
+            "id": "recovers",
+            "title": "Closing the one whose client is gone",
+            "given": {
+              "one episode stranded and one live": true
+            },
+            "setup": "session-stranded",
+            "run": [
+              "recover",
+              "episodes"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                ".ai/repo/sessions/",
+                "recovered: 1 action"
+              ]
+            },
+            "explain": "The record carries what the open record and the episode's own ledger lines prove. Its commits and changed_files are the explicit empty list and it states no head: the working tree at recovery time belongs to whoever is working now, and stamping it onto an episode that stopped days ago would be a record that looks exactly like a true one.",
+            "setup_sh": "# Installed, with two episodes open: one whose client is gone and one that is live.\n#\n# Both halves of the stranded episode's trail are aged, not only its open record. The last\n# sign of life is the later of started_at and the newest ledger line the episode stamped, so\n# an episode whose ledger is fresh is young however old its file claims to be — a fixture\n# that moved one half would demonstrate the command passing for the wrong reason.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --provider-session gone-client >/dev/null\n\"$MJ\" session start --provider-session this-client >/dev/null\n_S=.ai/local/state\n_dead=\"$(sed -n 's/^session_id: //p' \"$_S/sessions-open/gone-client.yaml\" | head -n 1)\"\nsed -i.bak 's/^started_at: .*/started_at: 2020-01-01T00:00:00Z/' \"$_S/sessions-open/gone-client.yaml\"\nrm -f \"$_S/sessions-open/gone-client.yaml.bak\"\nawk -v s=\"$_dead\" '{ if (index($0, \"\\\"session\\\":\\\"\" s \"\\\"\") > 0) sub(/\"ts\":\"[^\"]*\"/, \"\\\"ts\\\":\\\"2020-01-01T00:00:00Z\\\"\"); print }' \\\n  \"$_S/ledger.jsonl\" > \"$_S/ledger.mj-tmp\" && mv \"$_S/ledger.mj-tmp\" \"$_S/ledger.jsonl\"",
+            "stdin_body": null
+          },
+          {
+            "id": "nothing-to-do",
+            "title": "With nothing degraded",
+            "given": {
+              "one episode stranded and one live": false
+            },
+            "setup": "installed",
+            "run": [
+              "recover"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to recover"
+              ]
+            },
+            "explain": "Absence is an answer. A clean store exits 0 and says so, rather than treating having nothing to do as a failure.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "unknown-subject",
+            "title": "A subject this command does not have",
+            "given": {
+              "one episode stranded and one live": false
+            },
+            "setup": "installed",
+            "run": [
+              "recover",
+              "everything"
+            ],
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "unknown subject"
+              ]
+            },
+            "explain": "A misspelled subject is refused rather than folded into the default. A recovery command that silently did something other than what was asked is the one that must not exist.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nBring this checkout's record stores back to what the contract describes: close episodes\nnobody ended, fold duplicate records of one episode into one, and classify the stray files\nthe stores accumulate. Recurring, idempotent maintenance — unlike `migrate`, which is the\none-time move off the pre-`.ai` layout and refuses to run twice.\n\n**Subjects:** `status` (the default, read-only), `episodes`, `records`, `orphans`, `all`.\n\n**Reads:** `.ai/local/state/sessions-open/`, `.ai/local/state/ledger.jsonl`, the closed\nrecord store, and the checkpoint and handover stores.\n**Writes:** a closed record per recovered episode under `.ai/repo/sessions/`, the folded\nrecord where duplicates existed, a `session.recovered` ledger line per action, and the\nremoval of the open records and stray temps it acted on.\n\n**Behaviour:**\n- `--check` prints the plan and the evidence behind it and writes nothing. The same\n  measurement drives the real run, so the plan is the action.\n- A stray file is judged by its age before its content: a publish temp seconds old belongs\n  to a `session close` running now, and a `.mj-stage.XXXXXX` minutes old to a\n  `scripts/derive` running now. Both are reported as `live` and neither is touched; one\n  whose age cannot be read is skipped and counted.\n- An episode is *stranded* when its last sign of life — the later of its own `started_at`\n  and the newest ledger line it stamped — is older than `session.stranded_after`.\n  `--older-than <duration>` overrides the policy for one run.\n- Two guards stand between a live episode and the sweep, and neither is the other's\n  backstop. The episode this process resolves to is excluded before any predicate runs; and\n  a candidate whose evidence cannot be read as a timestamp is skipped and counted, never\n  treated as the oldest in the set (`project.destructive-sweeps-fail-closed`). An episode\n  belonging to another worktree is reported and never closed here.\n- A recovered record carries what the open record and the episode's own ledger lines prove.\n  `commits` and `changed_files` are the explicit empty list and `head` and `working_tree`\n  are absent: they describe a close that never happened, and the working tree at recovery\n  time belongs to whoever is working now. `outcome` is `interrupted`, which is what it was.\n- Duplicate records fold into the oldest by `created_at`, with the union of the lists the\n  others prove, and the superseded file names recorded in the survivor's body. Records that\n  disagree about the episode's identity or times are reported and nothing is folded.\n- Nothing is deleted for being unrecognised. A publish temp past the threshold holding the\n  only copy of a record is *published*; one whose episode is already published, or which is empty, is\n  removed; one holding content this version cannot classify is left exactly where it is and\n  counted. A directory somebody put in the checkpoint store is named, measured and left.\n- Idempotent. Running a subject twice takes its actions once, and running it after a crash\n  mid-run takes the ones that did not happen: the record is written before the open file is\n  removed, so an interruption between them costs nothing.\n\n```\n$ majordomus recover episodes --check\nepisodes — open episodes in .ai/local/state/sessions-open\n  s-20260910194205-72ea  key=187c9e1e-…  last seen 2026-09-10T19:42:05Z (ledger, 13h ago)\n    stranded: 13h ago, over the 12h threshold; close with outcome interrupted\n  s-20260911063532-b41b  key=c93d195f-…  last seen 2026-09-11T08:31:02Z (ledger, 0m ago)\n    live: this process is inside it; never a candidate\n\ncheck: 1 action(s) would be taken and nothing was written (run: majordomus recover all)\n```"
     },
     {
       "name": "bench",
@@ -3280,6 +3454,147 @@
         ]
       },
       "doc_md": "\nTime every public command of the registry, cold and warm, and compare with the baseline.\n\nThe targets are the public commands of `share/commands.yaml` and nothing else: a command\nadded to the registry is a target from that moment, and the harness never times itself.\nEach target runs in a disposable repository. When the tool's own suite is present, the\nscenario is the first scenario of the command's fixture under `test/fixtures/commands/`,\nso what is timed is what the site demonstrates and the suite executes; otherwise it is the\nbare command in an installed repository.\n\nA read-only command is run once cold, then `benchmark.warmup` times unsampled, then\n`benchmark.samples` times warm, all in one repository. A command that mutates state gets a\nfresh repository per sample, so every sample of it is cold and it has no warm\ndistribution. A sample is the wall-clock time of the child process alone; setup is never\ninside the clock. Every distribution is recorded with its count, minimum, p50, p90, p95,\np99, maximum, mean and standard deviation; nothing is averaged away.\n\n- `bench` times every target; `bench <command>...` only those.\n- `--list` prints the targets with their class and scenario, `--format json` as data.\n- `--samples <n>`, `--warmup <n>` override the policy for this run only; `--mode cold|warm|both`\n  selects the distributions recorded.\n- `--format json` prints the run as one document with schema `majordomus/benchmark-result/v1`:\n  the run id, the commit and whether the tree was dirty, the platform, the profile and one\n  result per target and mode.\n- Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,\n  one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored\n  by git, never a baseline.\n- `--write-baseline` writes the run under `.ai/repo/benchmarks/rust/`, as\n  `baseline.<platform>.json` — one baseline per platform, since a duration compared\n  across machines compares the machines — with schema\n  `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It\n  refuses a dirty tree without `--force`, because a baseline records a commit.\n- `--check` compares the run with the baseline under `benchmark.regression`: for each target\n  and mode, a p50, p95 or p99 more than the threshold fraction over the baseline is a\n  `FAIL` naming the metric, both values and the threshold, and the command exits `10`. No\n  baseline exits `12`; a baseline with another schema is not comparable and exits `15`.\n\n`MJ_TIMING=1` on any command prints the phases and work counters of that run on stderr,\nwhich is how a slow target is taken apart.\n\n```\n$ majordomus bench --list\ncommand      class                      scenario\ninit         generated-output-mutating  fixture fresh\ndoctor       read-only                  fixture not-wired\n...\n\n$ majordomus bench doctor version\ncommand      mode  status       n     p50     p95     p99     max  scenario\ndoctor       cold  ok           1    2711    2711    2711    2711  fixture not-wired\ndoctor       warm  ok          10    2640    2790    2790    2790  fixture not-wired\nversion      cold  ok           1      41      41      41      41  fixture prints\nversion      warm  ok          10      38      45      45      45  fixture prints\n\nslowest by warm p95 (cold where warm does not apply):\n  doctor       p95 2790 ms\n  version      p95 45 ms\n\nrun b-20260905T031200Z-9f1c saved as .ai/local/benchmarks/runs/b-20260905T031200Z-9f1c.json\n```\n\nExit `2` on a usage error, `12` when a named target is not a public command of the\nregistry, `13` when a target did not run cleanly (its row says `setup-failed` or the exit\ncode it produced), `10`, `12` and `15` from `--check` as above."
+    },
+    {
+      "name": "archive",
+      "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+      "category": "system",
+      "stage": "inspect",
+      "class": "generated-output-mutating",
+      "read_only": false,
+      "requires_task": "none",
+      "requires_repository": true,
+      "requires_installed": true,
+      "json_output": true,
+      "syntax": "majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]",
+      "demo": "archive-profiles",
+      "note": "The file set is the git index, so nothing untracked — no build output, no cache, no .ai/local/ — can travel. What a profile drops beyond that is declared in share/archive.yaml; a profile that drops the derived paths reads .gitattributes rather than keeping a second list of generated paths. Every entry's mode is taken from the index and written into the archive's manifest, and the restore script inside the archive puts the modes back and builds a local git index, because a copy whose scripts are not executable fails checks for reasons of its own.",
+      "reads": [
+        "share/archive.yaml",
+        ".ai/repo/archive.yaml",
+        ".gitattributes"
+      ],
+      "writes": [
+        "tmp/archives/"
+      ],
+      "exit_codes": [
+        0,
+        2,
+        10,
+        12,
+        13,
+        15
+      ],
+      "tests": {
+        "behaviour": [
+          "130_archive"
+        ],
+        "negative": [
+          "130_archive"
+        ]
+      },
+      "demo_data": {
+        "schema": 1,
+        "command": "archive",
+        "title": "A snapshot that can be read, or checked, somewhere else",
+        "intro": "A repository leaves the machine more often than it looks: to a model that will read all of it, to a reviewer who cannot clone, to an auditor who must run the gates on a copy. What travels is the git index and only the git index, so nothing untracked can escape; what is dropped beyond that is a profile in share/archive.yaml, and a profile that drops the generated projections reads .gitattributes rather than keeping a second list of them.",
+        "scenarios": [
+          {
+            "id": "profiles",
+            "title": "What snapshots there are, and which is the default",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--list"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "context",
+                "\\(default\\)",
+                "audit",
+                "governance"
+              ]
+            },
+            "explain": "The profiles are declarations, not flags: each one names a different reader, and the summary says what that reader is owed. A repository may add its own in .ai/repo/archive.yaml without changing the tool.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "dry-run",
+            "title": "What would travel, and why the rest would not",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--dry-run"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "profile context",
+                "tracked file",
+                "nothing written"
+              ]
+            },
+            "explain": "The count of tracked files is stated beside the count archived, so a selection that quietly matched nothing cannot look like a selection that matched everything. Every file left out is attributed to the rule that left it out.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "written",
+            "title": "Written, and then read back",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "--format",
+              "tar.gz"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "OK   archive",
+                "read back",
+                "wrote tmp/archives/"
+              ]
+            },
+            "explain": "The archive is opened again before the command returns. The entry count must match what was staged, and executables that went in must come back out — the failure this command exists to answer is a container that silently discarded the file modes.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          },
+          {
+            "id": "no-such-profile",
+            "title": "Asking for a snapshot nobody declared",
+            "given": {
+              "layer installed": true
+            },
+            "setup": "installed",
+            "run": [
+              "archive",
+              "nosuch"
+            ],
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no profile",
+                "archive --list"
+              ]
+            },
+            "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist rather than listing it here.",
+            "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
+            "stdin_body": null
+          }
+        ]
+      },
+      "doc_md": "\nTake a snapshot of the tracked tree that can be read, or checked, somewhere else.\n\nA repository leaves the machine more often than it looks: to a language model that will\nread all of it at once, to a reviewer who cannot clone, to an auditor who has to run the\ngates on a copy. Those were being done by hand, differently each time, and the hand-made\nversion got two things wrong that only surface at the far end.\n\n**What travels is the git index and only the git index.** Nothing untracked is ever\narchived — not the build output, not the caches, and not `.ai/local/`, which is this\ncheckout's own state and is never shared. That is one rule instead of a list of\nexclusions, and it is what makes the command safe to point at a repository nobody has\nread.\n\n**What is left out beyond that is declared, not coded.** `share/archive.yaml` holds the\nprofiles; a repository may add or replace one in an `archive.yaml` of its own under `.ai/repo/`. A profile that\ndrops the derived paths reads `.gitattributes` — every projection in this repository is\nalready marked `merge=derived` there, for a different reason — rather than keeping a\nsecond list of generated paths, which is the duplication\n`.ai/repo/rules/project/commands-are-projections.v1.md` refuses.\n\n**Modes are carried explicitly.** `zip -X` strips the extra fields that hold the Unix\nmode, and the unpacked tree then has no executable in it: every script fails to run, and\nat the far end that is indistinguishable from the repository being broken. So the mode of\neach entry is read from the index — the authority, not the working tree — written into\n`_ARCHIVE/MANIFEST.txt`, and `_ARCHIVE/restore.sh` inside the archive puts the modes back\nand creates a local git index, because the checks here enumerate the repository with\n`git ls-files` and without an index they examine nothing and report that nothing is wrong.\n\nEvery archive is read back before the command returns: the entry count must match what\nwas staged, and if executables went in and none came out, that is a failure rather than a\nsurprise for the recipient.\n\n**Reads:** `share/archive.yaml`, an `archive.yaml` under `.ai/repo/` when the repository has one,\n`.gitattributes`, and the git index.\n**Writes:** `tmp/archives/` — or wherever `--out` says.\n\n**The profiles shipped:**\n\n| Profile | For |\n|---|---|\n| `context` | A model that will read the repository. Every tracked source, without the projections generated from it. |\n| `audit` | Running the repository's own checks on a copy. Every tracked file, nothing dropped, modes and a git index restored. |\n| `governance` | The operating contract alone: `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`, and no code. |\n\n```\n$ majordomus archive --dry-run\narchive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content\n         left out: 10 (binary)\n         left out: 443 (derived)\n         left out: 5 (excluded)\n         nothing written (--dry-run)\n\n$ majordomus archive\nOK   archive     prismatic-majordomus-context-20260911.zip — 2303 entr(ies) read back, 76 of them executable\narchive: profile context — 2299 of 2757 tracked file(s), 12919 KB of content\n         wrote tmp/archives/prismatic-majordomus-context-20260911.zip (5044 KB)\n```\n\n**Behaviour:**\n- `--list` prints the profiles with what each one is for, and marks the default.\n- `--dry-run` reports the selection and the reason every file was left out, and writes\n  nothing.\n- `--out` overrides the destination; `--format zip|tar.gz` overrides the container.\n- An existing output file is refused with `15` unless `--force` is given, so an archive\n  someone is uploading cannot be replaced underneath them.\n- A path the index names and the working tree no longer has is counted and reported, not\n  silently absent.\n- `--json` emits one object with the counts, the reasons and the path.\n\nExit `2` on a usage error, `12` when there is no such profile or `zip` is not on `PATH`,\n`10` when a profile selects none of the tracked files, `15` when the output exists, `13`\nwhen the container could not be written or does not read back as what went in."
     }
   ]
 }

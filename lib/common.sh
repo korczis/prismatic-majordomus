@@ -806,8 +806,10 @@ mj_provider_session_env() {
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
     local n v
     for n in $(mj_lifecycle_session_vars); do
-      # the name comes from the adapter table, never from anything a payload carries
-      eval "v=\${$n:-}"
+      # the name comes from the adapter table, never from anything a payload carries.
+      # Indirect expansion, not eval: eval would run whatever the name expanded to, and
+      # SECURITY.md forbids it outright (test/cases/08_no_forbidden_constructs.sh).
+      v="${!n:-}"
       if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
     done
   fi
@@ -905,8 +907,69 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() {
+  mj_timing_report
+  rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
+  # A lock this process is holding goes with it. Releasing here and not only at the end of
+  # the critical section is what makes the lock crash-safe for every exit a command has:
+  # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
+  [ -n "${MJ_HELD_LOCK:-}" ] && rmdir "${MJ_HELD_LOCK}" 2>/dev/null
+  return 0
+}
 trap mj_cleanup EXIT
+
+# ---------------------------------------------------------------- mutual exclusion
+# One named lock, taken by creating a directory, which is the one filesystem operation
+# POSIX guarantees is atomic and which works on every filesystem this tool runs on. The
+# shape is `adr propose`'s, generalised here because a second command needed it: a
+# check-then-write over a shared store is not exactly-once unless the check and the write
+# are inside the same critical section, and `session close` proved that by publishing two
+# canonical records for one episode when two of a provider's end events arrived together.
+#
+# It never blocks for ever and it never refuses. A lock older than MJ_LOCK_STALE seconds
+# belonged to a process that died holding it, and waiting on a dead process is a worse
+# failure than proceeding without the guarantee — so the wait is bounded, a stale lock is
+# broken, and the caller is told which happened through the return value rather than being
+# stopped. The guard inside the section stays correct without the lock; it is only narrower.
+#
+#   mj_lock_take PATH   -> 0 took it · 1 proceeded without it (bounded wait expired)
+#   mj_lock_release     -> releases whatever this process holds
+MJ_HELD_LOCK=""
+MJ_LOCK_WAIT="${MJ_LOCK_WAIT:-100}"      # tenths of a second
+MJ_LOCK_STALE="${MJ_LOCK_STALE:-60}"     # seconds before a held lock is called abandoned
+mj_lock_take() {
+  local lock="$1" waited=0 age
+  mkdir -p "$(dirname "$lock")" 2>/dev/null || true
+  while ! mkdir "$lock" 2>/dev/null; do
+    age="$(mj_file_age_secs "$lock")"
+    if [ -n "$age" ] && [ "$age" -gt "$MJ_LOCK_STALE" ]; then
+      rmdir "$lock" 2>/dev/null || true
+      continue
+    fi
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$MJ_LOCK_WAIT" ]; then
+      mj_err "warning: $(mj_rel "$lock") has been held for $((waited / 10))s; continuing without it"
+      return 1
+    fi
+    sleep 0.1 2>/dev/null || sleep 1
+  done
+  MJ_HELD_LOCK="$lock"
+  return 0
+}
+mj_lock_release() {
+  [ -n "${MJ_HELD_LOCK:-}" ] || return 0
+  rmdir "$MJ_HELD_LOCK" 2>/dev/null || true
+  MJ_HELD_LOCK=""
+  return 0
+}
+# Seconds since a path was last modified, or nothing when it cannot be read. GNU stat first,
+# then BSD; the two disagree about every flag they share.
+mj_file_age_secs() {
+  local t
+  t="$(stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null)" || return 0
+  [ -n "$t" ] || return 0
+  printf '%s' "$(( $(date +%s) - t ))"
+}
 
 # ---------------------------------------------------------------- records
 # A record is a Markdown file with computed YAML front matter and an authored body.
@@ -968,19 +1031,34 @@ mj_reject_identity() {
   grep -qE '^(schema_version|created_at|task_id|repository_id|worktree|branch|head|working_tree|changed_files):' "$1"
 }
 
+# collect staging files an earlier writer was killed before it could unlink. A SIGKILL runs
+# no trap, and the file it leaves sits in a tracked directory looking like repository content.
+# An hour of grace, so that a sibling publishing right now is never robbed of the file it is
+# about to link: the window between mktemp and ln is microseconds.
+mj_sweep_record_temps() {
+  find "$1" -maxdepth 1 -type f -name '.tmp.??????' -mmin +60 -exec rm -f {} + 2>/dev/null || true
+}
+
 # publish content as a new file in a directory, atomically, mode 0600, never overwriting.
 # mj_publish_record DIR NAME_PREFIX CONTENT_FILE -> prints the final path
+#
+# The staging file is created inside DIR because the hard link that publishes it cannot cross
+# a filesystem, and DIR is tracked — so an abort between mktemp and the unlink below dirties a
+# record section. Three things stop that: MJ_REC_TMP puts the file on the EXIT trap's list, the
+# sweep above collects what a kill left on an earlier run, and .gitignore makes either
+# uncommittable in the meantime. A leftover must never be able to reach a commit.
 mj_publish_record() {
-  local dir="$1" prefix="$2" src="$3" tmp final n=0 head
+  local dir="$1" prefix="$2" src="$3" final n=0 head
   mkdir -p "$dir"
-  tmp="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$tmp"; cat "$src" > "$tmp"
+  mj_sweep_record_temps "$dir"
+  MJ_REC_TMP="$(mktemp "$dir/.tmp.XXXXXX")"; chmod 600 "$MJ_REC_TMP"; cat "$src" > "$MJ_REC_TMP"
   head="$(mj_git_head)"
   while :; do
     final="$dir/$(mj_now_compact)--${prefix:+$prefix--}$(mj_branch_key)--${head:0:7}--$(mj_rand16).md"
-    ln "$tmp" "$final" 2>/dev/null && break
-    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$tmp"; return 1; }
+    ln "$MJ_REC_TMP" "$final" 2>/dev/null && break
+    n=$((n + 1)); [ "$n" -lt 10 ] || { rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""; return 1; }
   done
-  rm -f "$tmp"
+  rm -f "$MJ_REC_TMP"; MJ_REC_TMP=""
   printf '%s\n' "$final"
 }
 
@@ -992,7 +1070,14 @@ mj_record_front_matter() {
     "$(mj_now)" "$task_id" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
   printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
     "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
-  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
+  # The work, not the exhaust. This was `git status --porcelain` verbatim, which is the
+  # dirty tree and not the episode's work product: running the tool dirties the tree, and a
+  # checkpoint written after a `scripts/derive` named every generated file as something the
+  # worker had done. lib/changed.sh classifies against the five declarations that already
+  # say what is derived; it is sourced here rather than at the top because this is on the
+  # record-writing path and nothing else in common.sh needs it.
+  [ -n "${MJ_LIB_changed:-}" ] || . "$MJ_LIB_DIR/changed.sh"
+  mj_changed_files_block
   local extra; for extra in "$@"; do printf '%s\n' "$extra"; done
   printf -- '---\n\n'
 }
@@ -1007,7 +1092,7 @@ mj_record_front_matter() {
 MJ_RES_PATH=""; MJ_RES_TIER=""; MJ_RES_MATCH=""; MJ_RES_HEAD=""; MJ_RES_BRANCH=""
 MJ_RES_DIRTY=""; MJ_RES_CREATED=""; MJ_RES_TASK=""; MJ_RES_SKIPPED=0
 mj_resolve_latest() {
-  local dir="$1" want_task="${2:-}" f fm flat tier key best="" best_key=""
+  local dir="$1" want_task="${2:-}" f fm flat tier key best="" best_key="" rversion
   local my_id my_branch; my_id="$(mj_git_repo_id)"; my_branch="$(mj_git_branch)"
   MJ_RES_PATH=""; MJ_RES_SKIPPED=0
   [ -d "$dir" ] || return 1
@@ -1022,7 +1107,19 @@ mj_resolve_latest() {
     # A record carries a version, a head and a time. `schema_version: 1` is what the local
     # records have always said; a shared session record says `schema: <kind>/v1` instead,
     # and both are versions this resolver reads (ADR 0014).
-    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$(mj_yget "$flat" schema)" ]; } \
+    #
+    # The version has to be one this executable reads, not merely present. The test used to
+    # be "`schema:` is non-empty", which accepts `session/v2` — a record written by a newer
+    # Majordomus — and offers it to the next worker as the thing to resume from, under a
+    # contract that no longer describes its fields. A record from the future is not a record
+    # this version can read, and being handed one silently is worse than being handed none:
+    # the worker cannot tell it is wrong until it has acted on it.
+    rversion="$(mj_yget "$flat" schema)"
+    if [ -n "$rversion" ] && [ "${rversion##*/}" != v1 ]; then
+      rm -f "$fm" "$flat"
+      mj_err "warning: skipped $f: schema '$rversion', and this executable reads v1 (run: majordomus doctor)"
+      MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
+    if { [ "$(mj_yget "$flat" schema_version)" != 1 ] && [ -z "$rversion" ]; } \
        || [ -z "$(mj_yget "$flat" head)" ] || [ -z "$(mj_yget "$flat" created_at)" ]; then
       rm -f "$fm" "$flat"; mj_err "warning: skipped $f: missing required fields"; MJ_RES_SKIPPED=$((MJ_RES_SKIPPED+1)); continue; fi
     if [ -n "$want_task" ] && [ "$(mj_yget "$flat" task_id)" != "$want_task" ]; then rm -f "$fm" "$flat"; continue; fi
