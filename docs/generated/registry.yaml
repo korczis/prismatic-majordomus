@@ -19942,7 +19942,10 @@ capabilities:
                 description: "`0.5.0`."
               reference:
                 type: string
-                description: "`v0.5.0`: the ref whose registry was read."
+                description: "`v0.5.0`: the release, as a reader recognises it."
+              read_at:
+                type: string
+                description: "The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not."
               commit:
                 type: string
                 description: The commit that ref resolved to.
@@ -19960,6 +19963,7 @@ capabilities:
             required:
               - version
               - reference
+              - read_at
               - commit
               - recorded
               - atoms

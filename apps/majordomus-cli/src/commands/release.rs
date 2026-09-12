@@ -345,7 +345,8 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
     Ok(())
 }
 
-/// Raise the version in both places, to at least what the public contract requires.
+/// Raise the version in every place that states it, to at least what the public contract
+/// requires.
 ///
 /// # The authority this no longer has
 ///
@@ -362,100 +363,134 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
 /// `--level` and `--exact` name a *higher* version than the measured minimum, never a lower
 /// one. An override that could go under the requirement would not be an override; it would
 /// be the hole that makes the whole measurement decorative.
+///
+/// # When the contract cannot be measured
+///
+/// A repository that has published nothing, or whose last release predates the committed
+/// registry, has no baseline — so there is no floor, and the honest thing is to say so
+/// rather than to invent one. A version named explicitly is still written: refusing would
+/// make the command unusable in exactly the repositories that most need to cut a first
+/// release. A *derived* bump is refused, because there is nothing to derive it from.
 fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: bool) -> Result<u8> {
+    // Arguments are validated before anything is read, so a typo is an exit 2 whatever the
+    // state of the repository around it.
+    let wanted_exact = match exact {
+        Some(v) => Some(version::Version::parse(v).ok_or_else(|| Error::Refused {
+            code: 2,
+            reason: format!("'{v}' is not a version; it must be three numbers, `1.2.3`"),
+        })?),
+        None => None,
+    };
+    let wanted_level = match level {
+        Some(word) => Some(Impact::parse(word).ok_or_else(|| Error::Refused {
+            code: 2,
+            reason: format!("'{word}' is not a level; it is one of major, minor, patch, none"),
+        })?),
+        None => None,
+    };
+
     let app = App::load(&args.repo)?;
     let root = std::path::Path::new(&app.index().repository.root).to_path_buf();
-    let plan = plan_of(&app, None)?;
-
-    // A plan that could not be trusted cannot authorise a write. The diagnostics say which
-    // fact was unreadable, and they are printed rather than summarised away.
-    if plan.has_errors() {
-        let stdout = std::io::stdout();
-        let mut out = stdout.lock();
-        writeln!(
-            out,
-            "release: the version cannot be raised from a plan that is not sound"
-        )
-        .map_err(Error::Transport)?;
-        for d in plan
-            .diagnostics
-            .iter()
-            .filter(|d| d.severity == Severity::Error)
-        {
-            writeln!(out, "         {}", d.message).map_err(Error::Transport)?;
-        }
-        return Ok(EXIT_UNREADABLE);
-    }
-
-    let base = version::Version::parse(&plan.baseline.version).ok_or_else(|| Error::Refused {
-        code: EXIT_UNREADABLE,
-        reason: format!(
-            "the baseline version '{}' is not three numbers, so nothing can be raised from it",
-            plan.baseline.version
-        ),
-    })?;
-    let current =
-        version::Version::parse(&plan.declared_version).ok_or_else(|| Error::Refused {
-            code: EXIT_UNREADABLE,
-            reason: format!(
-                "the declared version '{}' is not three numbers, so it cannot be raised",
-                plan.declared_version
-            ),
-        })?;
-    // The floor: the baseline raised by what the contract requires. Every candidate below is
-    // measured against this one value.
-    let floor = base.raised_to(plan.required);
-
-    let (to, source) = match (exact, level) {
-        (Some(v), _) => {
-            let wanted = version::Version::parse(v).ok_or_else(|| Error::Refused {
-                code: 2,
-                reason: format!("'{v}' is not a version; it must be three numbers, `1.2.3`"),
-            })?;
-            (wanted, "explicit --exact")
-        }
-        (None, Some(word)) => {
-            let impact = Impact::parse(word).ok_or_else(|| Error::Refused {
-                code: 2,
-                reason: format!("'{word}' is not a level; it is one of major, minor, patch, none"),
-            })?;
-            (current.raised_to(impact), "explicit --level")
-        }
-        // The measured minimum, which is the whole point: with no argument at all, the
-        // contract decides.
-        (None, None) => (
-            if current >= floor { current } else { floor },
-            "the public contract",
-        ),
-    };
+    // A plan that cannot be made is not an error here — it is the absence of a floor, which
+    // the branches below handle explicitly and report.
+    let plan = plan_of(&app, None).ok();
 
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
 
-    // An override may go above the floor and never below it.
-    if to < floor {
-        writeln!(
-            out,
-            "release: REFUSED {to} is below {floor}, which is the smallest version this tree may declare"
-        )
-        .map_err(Error::Transport)?;
-        writeln!(
-            out,
-            "         the contract requires a {} release since {} and {} was asked for",
-            plan.required.as_str(),
-            plan.baseline.reference,
-            to
-        )
-        .map_err(Error::Transport)?;
-        for c in plan.changes.iter().take(8) {
-            writeln!(out, "         {c}").map_err(Error::Transport)?;
+    // A plan that could not be trusted cannot authorise a write. The diagnostics say which
+    // fact was unreadable, and they are printed rather than summarised away.
+    if let Some(p) = &plan {
+        if p.has_errors() {
+            writeln!(
+                out,
+                "release: the version cannot be raised from a plan that is not sound"
+            )
+            .map_err(Error::Transport)?;
+            for d in p
+                .diagnostics
+                .iter()
+                .filter(|d| d.severity == Severity::Error)
+            {
+                writeln!(out, "         {}", d.message).map_err(Error::Transport)?;
+            }
+            return Ok(EXIT_UNREADABLE);
         }
-        writeln!(
-            out,
-            "         nothing was written; see `majordomus release analyze --explain`"
-        )
-        .map_err(Error::Transport)?;
-        return Ok(EXIT_UNDER_VERSIONED);
+    }
+
+    let current = version::declared(&root)
+        .and_then(|v| version::Version::parse(&v))
+        .ok_or_else(|| Error::Refused {
+            code: EXIT_UNREADABLE,
+            reason: format!(
+                "{} declares no version that is three numbers, so nothing can be raised",
+                version::MANIFEST
+            ),
+        })?;
+
+    // The floor: the baseline raised by what the contract requires. `None` when no baseline
+    // could be read — which is a different thing from a floor of zero, and is said so.
+    let floor = plan.as_ref().and_then(|p| {
+        version::Version::parse(&p.baseline.version).map(|base| base.raised_to(p.required))
+    });
+
+    let (to, source) = match (wanted_exact, wanted_level) {
+        (Some(v), _) => (v, "explicit --exact"),
+        (None, Some(impact)) => (current.raised_to(impact), "explicit --level"),
+        // The measured minimum, which is the whole point: with no argument at all, the
+        // contract decides. With no measurable contract there is nothing to decide from.
+        (None, None) => match floor {
+            Some(f) => (
+                if current >= f { current } else { f },
+                "the public contract",
+            ),
+            None => {
+                writeln!(
+                    out,
+                    "release: the public contract cannot be measured here, so there is no bump to derive"
+                )
+                .map_err(Error::Transport)?;
+                writeln!(
+                    out,
+                    "         {}",
+                    plan_refusal(&app).unwrap_or_else(|| "no baseline could be read".into())
+                )
+                .map_err(Error::Transport)?;
+                writeln!(
+                    out,
+                    "         name the version deliberately: `majordomus release bump --level minor` or `--exact <version>`"
+                )
+                .map_err(Error::Transport)?;
+                return Ok(EXIT_UNREADABLE);
+            }
+        },
+    };
+
+    // An override may go above the floor and never below it.
+    if let (Some(f), Some(p)) = (floor, plan.as_ref()) {
+        if to < f {
+            writeln!(
+                out,
+                "release: REFUSED {to} is below {f}, which is the smallest version this tree may declare"
+            )
+            .map_err(Error::Transport)?;
+            writeln!(
+                out,
+                "         the contract requires a {} release since {} and {to} was asked for",
+                p.required.as_str(),
+                p.baseline.reference
+            )
+            .map_err(Error::Transport)?;
+            for c in p.changes.iter().take(8) {
+                writeln!(out, "         {c}").map_err(Error::Transport)?;
+            }
+            writeln!(
+                out,
+                "         nothing was written; see `majordomus release analyze --explain`"
+            )
+            .map_err(Error::Transport)?;
+            return Ok(EXIT_UNDER_VERSIONED);
+        }
     }
     if to < current {
         writeln!(
@@ -467,41 +502,51 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
 
     let to = to.to_string();
-    if to == plan.declared_version {
-        writeln!(
-            out,
-            "release: the version is already {to}, which covers the {} the contract requires since {}; nothing written",
-            plan.required.as_str(),
-            plan.baseline.reference
-        )
+    let declared = current.to_string();
+    if to == declared {
+        match plan.as_ref() {
+            Some(p) => writeln!(
+                out,
+                "release: the version is already {to}, which covers the {} the contract requires since {}; nothing written",
+                p.required.as_str(),
+                p.baseline.reference
+            ),
+            None => writeln!(out, "release: the version is already {to}; nothing written"),
+        }
         .map_err(Error::Transport)?;
         return Ok(0);
     }
 
-    writeln!(
-        out,
-        "release: {} -> {to} ({} required since {}, from {})",
-        plan.declared_version,
-        plan.required.as_str(),
-        plan.baseline.reference,
-        source
-    )
+    match plan.as_ref() {
+        Some(p) => writeln!(
+            out,
+            "release: {declared} -> {to} ({} required since {}, from {source})",
+            p.required.as_str(),
+            p.baseline.reference
+        ),
+        None => writeln!(
+            out,
+            "release: would raise {declared} -> {to} (from {source}; the contract is not measurable here)"
+        ),
+    }
     .map_err(Error::Transport)?;
     if source != "the public contract" {
-        // Provenance: a version larger than the measurement is allowed and is never silent.
-        writeln!(
-            out,
-            "         required {}, selected {}; source: explicit override",
-            floor, to
-        )
-        .map_err(Error::Transport)?;
+        if let Some(f) = floor {
+            // Provenance: a version larger than the measurement is allowed and never silent.
+            writeln!(
+                out,
+                "         required {f}, selected {to}; source: explicit override"
+            )
+            .map_err(Error::Transport)?;
+        }
     }
-    if plan.understated {
+    if plan.as_ref().is_some_and(|p| p.understated) {
+        let p = plan.as_ref().expect("checked just above");
         writeln!(
             out,
             "         note: the commit subjects classify this window as {} and the contract moved by {}",
-            plan.commits.implied.as_str(),
-            plan.implied.as_str()
+            p.commits.implied.as_str(),
+            p.implied.as_str()
         )
         .map_err(Error::Transport)?;
     }
@@ -516,7 +561,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     for f in &written {
         writeln!(out, "         {f} written").map_err(Error::Transport)?;
     }
-    // Read both sites back. A half-applied bump is exactly the failure the one-writer rule
+    // Read every site back. A half-applied bump is exactly the failure the one-writer rule
     // exists to prevent, so the writer proves its own work rather than leaving it to the
     // release that finds out at its first step.
     let after_manifest = version::declared(&root).unwrap_or_default();
@@ -537,8 +582,17 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     }
     writeln!(
         out,
-        "         every site states {to}; `majordomus generate changelog` renders the new section"
+        "         both writers agree; every site states {to}. `majordomus generate changelog` renders the new section"
     )
     .map_err(Error::Transport)?;
     Ok(0)
+}
+
+/// Why the plan could not be made, for the message that says a floor is unmeasurable.
+fn plan_refusal(app: &App) -> Option<String> {
+    match plan_of(app, None) {
+        Ok(_) => None,
+        Err(Error::Refused { reason, .. }) => Some(reason),
+        Err(e) => Some(e.to_string()),
+    }
 }

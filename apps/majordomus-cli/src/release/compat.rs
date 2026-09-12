@@ -1010,8 +1010,11 @@ impl Policy {
 pub struct Baseline {
     /// `0.5.0`.
     pub version: String,
-    /// `v0.5.0`: the ref whose registry was read.
+    /// `v0.5.0`: the release, as a reader recognises it.
     pub reference: String,
+    /// The ref the surface was actually read from — the commit the release record names,
+    /// which a clone always has, rather than a tag it may not.
+    pub read_at: String,
     /// The commit that ref resolved to.
     pub commit: String,
     /// Whether the layer holds a release record for it, which is what makes it canonical
@@ -1151,16 +1154,24 @@ fn resolve_baseline(
         });
     }
 
-    // The ref to read the surface from.
-    let (version, reference) = match since {
+    // The ref to read the surface from. For a record, that is the *commit* it names rather
+    // than its tag: a record always carries the commit it published, and a tag is git's copy
+    // of that fact — absent from a shallow clone, absent from a fork, and movable. The tag
+    // stays the name the reports print, because that is what a reader recognises.
+    let (version, reference, read_at) = match since {
         Some(r) => (
             Version::parse(r.trim_start_matches('v')).map_or_else(String::new, |v| v.to_string()),
             r.to_string(),
+            r.to_string(),
         ),
         None => match records.last() {
-            Some((_, raw, tag, _)) => (
+            Some((_, raw, tag, commit)) => (
                 raw.clone(),
                 tag.clone().unwrap_or_else(|| format!("v{raw}")),
+                commit
+                    .clone()
+                    .or_else(|| tag.clone())
+                    .unwrap_or_else(|| format!("v{raw}")),
             ),
             None => match tags.last() {
                 Some(t) => {
@@ -1171,14 +1182,14 @@ fn resolve_baseline(
                             "the layer records no release, so {t} was taken as the baseline from git's tags alone"
                         ),
                     });
-                    (t.trim_start_matches('v').to_string(), t.clone())
+                    (t.trim_start_matches('v').to_string(), t.clone(), t.clone())
                 }
                 None => return Err(SurfaceError::NothingPublished),
             },
         },
     };
 
-    let surface = Surface::read_ref(root, &reference)?;
+    let surface = Surface::read_ref(root, &read_at)?;
     let commit = match &surface.origin {
         super::surface::Origin::Ref { commit, .. } => commit.clone(),
         super::surface::Origin::WorkingTree => String::new(),
@@ -1205,6 +1216,7 @@ fn resolve_baseline(
     Ok(Baseline {
         version,
         reference,
+        read_at,
         commit,
         recorded: recorded.is_some(),
         atoms: surface.atoms(),
@@ -1473,7 +1485,7 @@ pub fn analyze(
 ) -> Result<VersionPlan, SurfaceError> {
     let mut diagnostics = Vec::new();
     let baseline = resolve_baseline(root, objects, since, &mut diagnostics)?;
-    let base = Surface::read_ref(root, &baseline.reference)?;
+    let base = Surface::read_ref(root, &baseline.read_at)?;
     let head = Surface::of_registry(registry);
     let changes = diff(&base, &head);
 

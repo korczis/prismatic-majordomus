@@ -6,7 +6,7 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "40c88e5c3167c46f072abcb116513f03b922c3f556a8467461f5ae52ab7ed9cc",
+    "fingerprint": "0d91a53f0aa4a8b429fb8020ae0fb36b5637f2f09c59658ac69c48dac04a99ee",
     "summary": {
       "total": 1397,
       "builtin": 106,
@@ -27393,7 +27393,11 @@
                   },
                   "reference": {
                     "type": "string",
-                    "description": "`v0.5.0`: the ref whose registry was read."
+                    "description": "`v0.5.0`: the release, as a reader recognises it."
+                  },
+                  "read_at": {
+                    "type": "string",
+                    "description": "The ref the surface was actually read from — the commit the release record names,\nwhich a clone always has, rather than a tag it may not."
                   },
                   "commit": {
                     "type": "string",
@@ -27417,6 +27421,7 @@
                 "required": [
                   "version",
                   "reference",
+                  "read_at",
                   "commit",
                   "recorded",
                   "atoms",
@@ -38506,7 +38511,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9f6d4f92b4ab78e49ac3e4b332958adcc2ea5ffd36764486b3c8b6db87a5a897",
+    "fingerprint": "c537929ea694325fefd57a3b1dc06e1bbd4db55036f8e700867292cfa659ecca",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -50746,7 +50751,7 @@
         "identity": "test/cases/103_release_projection.sh",
         "path": "test/cases/103_release_projection.sh",
         "source_class": "case",
-        "bytes": 23749
+        "bytes": 24799
       },
       {
         "uri": "majordomus://test/test/cases/104_published_site.sh",
