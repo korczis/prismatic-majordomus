@@ -1,0 +1,46 @@
++++
+title = "Every public command is benchmarkable from the registry"
+description = "Every public command is benchmarkable from the registry"
+weight = 61
+[extra]
+kind = "rule"
+slug = "project-benchmarkable-commands-1"
+identity = "project.benchmarkable-commands@1"
+status = "active"
+source = ".ai/repo/rules/project/benchmarkable-commands.v1.md"
++++
+{% raw %}
+
+## Rationale
+
+A benchmark list kept by hand goes stale the day a command is added, which is the day the
+new command's cost goes unmeasured. The registry already knows the surface, the fixtures
+already describe one scenario per command, and `majordomus bench` reads both, so adding a
+command adds its benchmark with no further step. Cold and warm are different facts about a
+command: the first run after a fresh installation and the steady state under a warm
+filesystem and shell. A single average of the two describes neither.
+
+## Required behaviour
+
+`majordomus bench` derives its targets from `share/commands.yaml` (every public command
+except the harness), its scenarios from `test/fixtures/commands/<command>.json` when the
+suite is present, and records for each target and mode the count, minimum, p50, p90, p95,
+p99, maximum, mean and standard deviation. A read-only command is sampled warm in one
+repository after one cold run; a command that mutates state is sampled cold in a fresh
+repository per sample and has no warm distribution. Runs are local evidence under
+`.ai/local/benchmarks/`; the baseline is `baseline.json` under `.ai/repo/benchmarks/`, written only
+by `--write-baseline` on a clean tree; `--check` refuses a regression over the policy's
+`benchmark.regression` thresholds by exit code.
+
+## Failure behaviour
+
+`bench` exits `12` for a target that is not a public command and `13` when a target does
+not run cleanly, naming the target and its status. Case `test/cases/79_bench_command.sh`
+proves that the target list follows a registry mutation and that the distributions are
+separate and complete.
+
+## Verification
+
+`bash test/run.sh 79_bench_command`, and `majordomus bench --list` against
+`majordomus doctrine list` when a command is added.
+{% endraw %}

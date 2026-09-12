@@ -136,13 +136,16 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
 | [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
+| [`majordomus entity`](#majordomus-entity) | `/docs/cli/entity/` | Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names |
+| [`majordomus entity kinds`](#majordomus-entity-kinds) | `/docs/cli/entity/kinds/` | Every kind of the layer, the route of its index, and every route collision there is |
+| [`majordomus entity show`](#majordomus-entity-show) | `/docs/cli/entity/show/` | One entity: its route, what it references, what references it, where it is served |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules), [`majordomus entity`](#majordomus-entity).
 
 ```text
 majordomus <COMMAND>
@@ -3769,4 +3772,86 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
+
+<a id="majordomus-entity"></a>
+## `majordomus entity`
+
+Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
+
+Subcommands: [`majordomus entity kinds`](#majordomus-entity-kinds), [`majordomus entity show`](#majordomus-entity-show).
+
+```text
+majordomus entity [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-entity-kinds"></a>
+## `majordomus entity kinds`
+
+Every kind of the layer, the route of its index, and every route collision there is
+
+```text
+majordomus entity kinds [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every kind of the layer, and whether every object of it has an address** — The catalogue the Cockpit's navigation and the site's indexes are both derived from. Nothing enumerates kinds: each one is here because the index holds an object of it, and each carries the route of its own listing. `collisions` is the one way an object can fail to be addressable — two identities of one kind that reduce to one route — and the healthy answer is none.
+
+  ```console
+  $ majordomus entity kinds --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /kinds, /count, /routable.
+
+<a id="majordomus-entity-show"></a>
+## `majordomus entity show`
+
+One entity: its route, what it references, what references it, where it is served
+
+```text
+majordomus entity show [OPTIONS] <ADDRESS>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ADDRESS>` | `<ADDRESS>` | required | The entity, as `majordomus://<kind>/<identity>` or as `<kind>/<slug>` |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One entity at its own address** — The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.
+
+  ```console
+  $ majordomus entity show rule/project-alpha-1 --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /uri, /route, /relations, /surfaces, /evidence/state.
+
+- **An address the layer does not serve** — An entity nothing declares is a not-found rather than an empty answer, for the reason `rules show` gives: a typo that read as `this entity is joined to nothing` is indistinguishable from the finding the page exists to show.
+
+  ```console
+  $ majordomus entity show rule/no-such-rule
+  ```
+
+  Verified: exits 12.
 

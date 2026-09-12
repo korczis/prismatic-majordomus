@@ -148,6 +148,12 @@
           "command": "majordomus rules",
           "name": "rules",
           "route": "/docs/cli/rules/"
+        },
+        {
+          "about": "Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names",
+          "command": "majordomus entity",
+          "name": "entity",
+          "route": "/docs/cli/entity/"
         }
       ],
       "command": "majordomus",
@@ -19950,13 +19956,423 @@
       ],
       "route": "/docs/cli/rules/proves/",
       "usage": "majordomus rules proves [OPTIONS] <ID>"
+    },
+    {
+      "about": "Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every kind of the layer, the route of its index, and every route collision there is",
+          "command": "majordomus entity kinds",
+          "name": "kinds",
+          "route": "/docs/cli/entity/kinds/"
+        },
+        {
+          "about": "One entity: its route, what it references, what references it, where it is served",
+          "command": "majordomus entity show",
+          "name": "show",
+          "route": "/docs/cli/entity/show/"
+        }
+      ],
+      "command": "majordomus entity",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "entity",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "entity"
+      ],
+      "route": "/docs/cli/entity/",
+      "usage": "majordomus entity [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every kind of the layer, the route of its index, and every route collision there is",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus entity",
+          "name": "entity",
+          "route": "/docs/cli/entity/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus entity kinds",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "entity",
+            "kinds",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus entity kinds --format json",
+          "description": "The catalogue the Cockpit's navigation and the site's indexes are both derived from. Nothing enumerates kinds: each one is here because the index holds an object of it, and each carries the route of its own listing. `collisions` is the one way an object can fail to be addressable — two identities of one kind that reduce to one route — and the healthy answer is none.",
+          "expectation": "exits 0; prints one JSON document carrying /kinds, /count, /routable",
+          "id": "entity-kinds-json",
+          "setup": [],
+          "title": "Every kind of the layer, and whether every object of it has an address"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "kinds",
+      "parent_route": "/docs/cli/entity/",
+      "path": [
+        "majordomus",
+        "entity",
+        "kinds"
+      ],
+      "route": "/docs/cli/entity/kinds/",
+      "usage": "majordomus entity kinds [OPTIONS]"
+    },
+    {
+      "about": "One entity: its route, what it references, what references it, where it is served",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus entity",
+          "name": "entity",
+          "route": "/docs/cli/entity/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The entity, as `majordomus://<kind>/<identity>` or as `<kind>/<slug>`",
+          "name": "address",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ADDRESS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus entity show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "entity",
+            "show",
+            "rule/project-alpha-1",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus entity show rule/project-alpha-1 --format json",
+          "description": "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
+          "expectation": "exits 0; prints one JSON document carrying /uri, /route, /relations, /surfaces, /evidence/state",
+          "id": "entity-show-rule",
+          "setup": [],
+          "title": "One entity at its own address"
+        },
+        {
+          "argv": [
+            "entity",
+            "show",
+            "rule/no-such-rule"
+          ],
+          "command": "majordomus entity show rule/no-such-rule",
+          "description": "An entity nothing declares is a not-found rather than an empty answer, for the reason `rules show` gives: a typo that read as `this entity is joined to nothing` is indistinguishable from the finding the page exists to show.",
+          "expectation": "exits 12",
+          "id": "entity-show-absent",
+          "setup": [],
+          "title": "An address the layer does not serve"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/entity/",
+      "path": [
+        "majordomus",
+        "entity",
+        "show"
+      ],
+      "route": "/docs/cli/entity/show/",
+      "usage": "majordomus entity show [OPTIONS] <ADDRESS>"
     }
   ],
   "counts": {
-    "arguments": 877,
-    "commands": 122,
-    "examples": 128,
-    "runnable": 111
+    "arguments": 893,
+    "commands": 125,
+    "examples": 131,
+    "runnable": 113
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.6.0",

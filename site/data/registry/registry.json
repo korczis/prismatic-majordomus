@@ -6,27 +6,27 @@
     "version": "0.6.0"
   },
   "registry": {
-    "fingerprint": "b8ce7fa9a098822bf80d0f6940e7ce2fb3d0794eda4b898c9f3242e31842f05f",
+    "fingerprint": "8d63a54cb4d968c6c7f5c478612fbe3ca69736e7df88ecaee8a4f405cc68d9b6",
     "summary": {
-      "total": 1417,
-      "builtin": 108,
-      "declarative": 1309,
+      "total": 1422,
+      "builtin": 110,
+      "declarative": 1312,
       "by_kind": {
         "command": 6,
-        "query": 102,
-        "resource": 1309
+        "query": 104,
+        "resource": 1312
       },
       "by_stability": {
         "behaviorally_verified": 95,
         "experimental": 7,
-        "implemented": 1315
+        "implemented": 1320
       },
-      "mcp_tools": 105,
-      "mcp_resources": 1348,
-      "http_routes": 107,
-      "cli_commands": 48,
-      "modules": 64,
-      "benchmark_required": 103,
+      "mcp_tools": 107,
+      "mcp_resources": 1351,
+      "http_routes": 109,
+      "cli_commands": 50,
+      "modules": 65,
+      "benchmark_required": 105,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -11218,6 +11218,648 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+      },
+      {
+        "id": "entity.kinds",
+        "module": "entity",
+        "kind": "query",
+        "title": "Every kind, and whether every object of it is addressable",
+        "description": "The kinds the layer holds, each with the route of its index and how many objects it carries, and every route collision there is. A collision is the only way an object of the index can fail to have an address of its own; the healthy answer is none.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "KindList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many kinds."
+              },
+              "kinds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/KindEntry"
+                },
+                "description": "The kinds, in the index's order."
+              },
+              "routable": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many objects have a route. Every object does, unless it is in `collisions`."
+              },
+              "collisions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/RouteCollision"
+                },
+                "description": "Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts."
+              }
+            },
+            "required": [
+              "count",
+              "kinds",
+              "routable"
+            ],
+            "description": "Every kind of the layer, each with its route, and every route collision there is.",
+            "title": "KindList",
+            "$defs": {
+              "KindEntry": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "The kind."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many objects of it the index holds."
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Where its index is served."
+                  },
+                  "example": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ObjectSummary"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "One of its objects, so a reader has somewhere to go."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "count",
+                  "route"
+                ],
+                "description": "One kind of the layer, with its address and how many objects it holds."
+              },
+              "ObjectSummary": {
+                "type": "object",
+                "properties": {
+                  "uri": {
+                    "type": "string",
+                    "description": "`majordomus://<kind>/<identity>`."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "The capability id, `<kind>.<identity>`."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The kind the object was read as."
+                  },
+                  "identity": {
+                    "type": "string",
+                    "description": "The identity within the kind."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The title, when the kind's title rule found one."
+                  },
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The one-line description, when the kind holds one."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative source path."
+                  }
+                },
+                "required": [
+                  "uri",
+                  "id",
+                  "kind",
+                  "identity",
+                  "path"
+                ],
+                "description": "One object, summarised for a listing."
+              },
+              "RouteCollision": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "The kind they share."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug they both reduce to; empty when an identity reduces to nothing."
+                  },
+                  "identities": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The identities that collide, in index order."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The files that declared them."
+                  },
+                  "correction": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "slug",
+                  "identities",
+                  "paths",
+                  "correction"
+                ],
+                "description": "Two objects of one kind whose identities reduce to the same route."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::entity"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_kinds"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/entity/kinds"
+          },
+          "cli": {
+            "path": [
+              "entity",
+              "kinds"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "objects",
+          "governance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs"
+      },
+      {
+        "id": "entity.show",
+        "module": "entity",
+        "kind": "query",
+        "title": "Read one entity",
+        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+        "input": {
+          "name": "EntityInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "uri": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "`majordomus://<kind>/<identity>`. Either this, or `kind` and `slug` together."
+              },
+              "kind": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The kind, when addressing by route."
+              },
+              "slug": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The last segment of the entity's route, when addressing by route."
+              }
+            },
+            "description": "Which entity: by URI, or by the address it is served at.",
+            "title": "EntityInput"
+          }
+        },
+        "output": {
+          "name": "EntityView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "description": "`majordomus://<kind>/<identity>`."
+              },
+              "id": {
+                "type": "string",
+                "description": "The capability id, `<kind>.<identity>`."
+              },
+              "kind": {
+                "type": "string",
+                "description": "The kind."
+              },
+              "identity": {
+                "type": "string",
+                "description": "The identity within the kind."
+              },
+              "slug": {
+                "type": "string",
+                "description": "The last segment of its route, derived from the identity."
+              },
+              "route": {
+                "type": "string",
+                "description": "Its route in the Cockpit."
+              },
+              "kind_route": {
+                "type": "string",
+                "description": "The route of its kind's index."
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The title, when the kind's title rule found one."
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The one-line description, when the kind holds one."
+              },
+              "provenance": {
+                "$ref": "#/$defs/ObjectProvenance",
+                "description": "Where it came from."
+              },
+              "metadata": {
+                "description": "The parsed front matter or YAML, keys in the file's order."
+              },
+              "media_type": {
+                "type": "string",
+                "description": "IANA media type of `content`."
+              },
+              "content": {
+                "type": "string",
+                "description": "The file as read."
+              },
+              "relations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EntityEdge"
+                },
+                "description": "The references it declares, and the references that resolve to it."
+              },
+              "surfaces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EntitySurface"
+                },
+                "description": "Every surface that answers for it."
+              },
+              "evidence": {
+                "$ref": "#/$defs/EntityEvidence",
+                "description": "What can be said about its enforcement without running anything."
+              }
+            },
+            "required": [
+              "uri",
+              "id",
+              "kind",
+              "identity",
+              "slug",
+              "route",
+              "kind_route",
+              "provenance",
+              "metadata",
+              "media_type",
+              "content",
+              "relations",
+              "surfaces",
+              "evidence"
+            ],
+            "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.",
+            "title": "EntityView",
+            "$defs": {
+              "ObjectProvenance": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Repository-relative path, forward slashes, as the version-control index names it."
+                  },
+                  "directory": {
+                    "type": "string",
+                    "description": "The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied."
+                  },
+                  "source_class": {
+                    "type": "string",
+                    "description": "The `sources.yaml` class that discovered the file (`rule`, `readme`, ...)."
+                  },
+                  "section": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none."
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Size of the file in bytes."
+                  },
+                  "member": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "For an object that is one member of a collection file: the member's key path in\nthe file (`claims.3`)."
+                  }
+                },
+                "required": [
+                  "path",
+                  "directory",
+                  "source_class",
+                  "bytes"
+                ],
+                "description": "Where an object came from. Every field is computed from the repository, never authored."
+              },
+              "EntityEdge": {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "$ref": "#/$defs/RelationDirection",
+                    "description": "Which way it runs from the entity that was asked for."
+                  },
+                  "edge": {
+                    "type": "string",
+                    "description": "The relationship, in the graph's vocabulary (`depends_on`, `put_in_force`, ...)."
+                  },
+                  "field": {
+                    "type": "string",
+                    "description": "The front matter key the reference was declared under."
+                  },
+                  "uri": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The object at the other end: its URI when the layer holds it."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`)."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "What to show: the identity of an object, or the name of something outside."
+                  },
+                  "title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its title, when it is an object that has one."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its entity route, when it has one; absent for something outside the layer."
+                  },
+                  "external": {
+                    "type": "boolean",
+                    "description": "True when the other end is not an object of this index."
+                  }
+                },
+                "required": [
+                  "direction",
+                  "edge",
+                  "field",
+                  "kind",
+                  "label",
+                  "external"
+                ],
+                "description": "One edge, as an entity page reads it."
+              },
+              "RelationDirection": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "outgoing",
+                    "description": "This entity declared the reference."
+                  },
+                  {
+                    "type": "string",
+                    "const": "incoming",
+                    "description": "Another entity named this one. Never declared: derived by reading every other\nobject's references and keeping the ones that resolve here."
+                  }
+                ],
+                "description": "Which way a relation runs from the entity being read."
+              },
+              "EntitySurface": {
+                "type": "object",
+                "properties": {
+                  "surface": {
+                    "type": "string",
+                    "description": "Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "The address on it: a URI, a route, a command line."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What a reader does with it."
+                  }
+                },
+                "required": [
+                  "surface",
+                  "address",
+                  "detail"
+                ],
+                "description": "One place this entity can be reached, and how."
+              },
+              "EntityEvidence": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/EntityEvidenceState",
+                    "description": "The state, which is never rounded up."
+                  },
+                  "meaning": {
+                    "type": "string",
+                    "description": "That state in one sentence, for a reader."
+                  },
+                  "artifacts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ClaimedArtifact"
+                    },
+                    "description": "Every artefact named, with whether the tree holds it."
+                  },
+                  "proof": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/EntityProofRef"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The capability that can say more, when this kind has one."
+                  }
+                },
+                "required": [
+                  "state",
+                  "meaning"
+                ],
+                "description": "What can be said about an object's enforcement without running anything."
+              },
+              "EntityEvidenceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dangling",
+                    "description": "It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement."
+                  },
+                  {
+                    "type": "string",
+                    "const": "resolved",
+                    "description": "Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked."
+                  }
+                ],
+                "description": "What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run."
+              },
+              "ClaimedArtifact": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "description": "The front matter key it was named under (`x-majordomus.tests`, `test`, ...)."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The repository-relative path as named."
+                  },
+                  "present": {
+                    "type": "boolean",
+                    "description": "Whether the tree holds it."
+                  }
+                },
+                "required": [
+                  "field",
+                  "path",
+                  "present"
+                ],
+                "description": "One executable artefact an object names, and whether the tree holds it."
+              },
+              "EntityProofRef": {
+                "type": "object",
+                "properties": {
+                  "capability": {
+                    "type": "string",
+                    "description": "The capability that answers it."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "How to ask it here."
+                  }
+                },
+                "required": [
+                  "capability",
+                  "title",
+                  "address"
+                ],
+                "description": "Where a fuller answer about this entity's enforcement lives."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::entity"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_entity"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/entity"
+          },
+          "cli": {
+            "path": [
+              "entity",
+              "show"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "implemented",
+        "tags": [
+          "objects",
+          "governance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs"
       },
       {
         "id": "environment.explain",
@@ -38655,7 +39297,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 49,
+        "capabilities": 50,
         "capability_ids": []
       },
       {
@@ -38865,6 +39507,19 @@
         "source": "declarative",
         "capabilities": 241,
         "capability_ids": []
+      },
+      {
+        "id": "entity",
+        "title": "Entities",
+        "description": "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object.",
+        "stability": "implemented",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "entity.kinds",
+          "entity.show"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs"
       },
       {
         "id": "environment",
@@ -39219,7 +39874,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 133,
+        "capabilities": 134,
         "capability_ids": []
       },
       {
@@ -39298,7 +39953,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 194,
+        "capabilities": 195,
         "capability_ids": []
       },
       {
@@ -39378,7 +40033,7 @@
     ]
   },
   "index": {
-    "fingerprint": "216cd36ee5f0e733f3a5ada6748484187879e9c99efeacdc1efe2933ca46b8de",
+    "fingerprint": "2805134cb73321a060a49784e2eafe4bb7a25aeeab183c406a28394883ef5b02",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -39401,7 +40056,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 49,
+      "adr": 50,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -39422,12 +40077,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 133,
+      "rule": 134,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 194,
+      "test": 195,
       "use-case": 45,
       "workspace": 1
     },
@@ -40231,6 +40886,22 @@
         "tags": [
           "coordination",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0056",
+        "kind": "adr",
+        "identity": "adr-0056",
+        "title": "Every object of the layer has a derived address, both directions of every relation, and a declared place of publication",
+        "description": "Every object of the layer has a derived address, both directions of every relation, and a declared place of publication",
+        "path": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7404,
+        "tags": [
+          "governance",
+          "routing",
+          "web"
         ]
       },
       {
@@ -42550,7 +43221,7 @@
         "description": "The protocol of the layer: what it holds, who owns which half, how it is discovered, and what outranks what.",
         "path": ".ai/README.md",
         "source_class": "context",
-        "bytes": 8795
+        "bytes": 9515
       },
       {
         "uri": "majordomus://context/ai.repo",
@@ -43134,7 +43805,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 35974
+        "bytes": 37021
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -43341,7 +44012,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 41612
+        "bytes": 42502
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -50346,6 +51017,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.entities-are-routable@1",
+        "kind": "rule",
+        "identity": "project.entities-are-routable@1",
+        "title": "Every object of the layer has an address of its own, and every kind says where it is published",
+        "description": "A decision, a rule, a skill or a command that can only be read by opening a file in the repository is not part of the system that reads it. Every object the index holds has a deterministic address derived from its kind and identity, every surface resolves that one address, and no consumer carries a list of entities, kinds or routes of its own. A kind added to the layer reaches every surface because it was added, not because someone remembered to register it.",
+        "path": ".ai/repo/rules/project/entities-are-routable.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4783,
+        "tags": [
+          "governance",
+          "routing",
+          "projections",
+          "web"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.entry-converges@2",
         "kind": "rule",
         "identity": "project.entry-converges@2",
@@ -52421,6 +53109,14 @@
         "bytes": 8955
       },
       {
+        "uri": "majordomus://test/test/cases/277_entities_are_routable.sh",
+        "kind": "test",
+        "identity": "test/cases/277_entities_are_routable.sh",
+        "path": "test/cases/277_entities_are_routable.sh",
+        "source_class": "case",
+        "bytes": 5273
+      },
+      {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "test",
         "identity": "test/cases/27_foreign_task.sh",
@@ -53704,7 +54400,7 @@
       "identity": [
         "id"
       ],
-      "objects": 49
+      "objects": 50
     },
     {
       "name": "application",
@@ -53914,7 +54610,7 @@
         "id",
         "version"
       ],
-      "objects": 133
+      "objects": 134
     },
     {
       "name": "scope",
@@ -53969,7 +54665,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 194
+      "objects": 195
     },
     {
       "name": "use-case",
@@ -71275,6 +71971,358 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "entity"
+        ],
+        "route": "/docs/cli/entity/",
+        "executable": false,
+        "usage": "majordomus entity [OPTIONS] <COMMAND>",
+        "about": "Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "entity",
+              "kinds"
+            ],
+            "route": "/docs/cli/entity/kinds/",
+            "executable": true,
+            "usage": "majordomus entity kinds [OPTIONS]",
+            "about": "Every kind of the layer, the route of its index, and every route collision there is",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "entity-kinds-json",
+                "title": "Every kind of the layer, and whether every object of it has an address",
+                "description": "The catalogue the Cockpit's navigation and the site's indexes are both derived from. Nothing enumerates kinds: each one is here because the index holds an object of it, and each carries the route of its own listing. `collisions` is the one way an object can fail to be addressable — two identities of one kind that reduce to one route — and the healthy answer is none.",
+                "argv": [
+                  "entity",
+                  "kinds",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus entity kinds --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /kinds, /count, /routable"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "entity",
+              "show"
+            ],
+            "route": "/docs/cli/entity/show/",
+            "executable": true,
+            "usage": "majordomus entity show [OPTIONS] <ADDRESS>",
+            "about": "One entity: its route, what it references, what references it, where it is served",
+            "args": [
+              {
+                "name": "address",
+                "positional": true,
+                "help": "The entity, as `majordomus://<kind>/<identity>` or as `<kind>/<slug>`",
+                "value_name": "ADDRESS",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "entity-show-rule",
+                "title": "One entity at its own address",
+                "description": "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
+                "argv": [
+                  "entity",
+                  "show",
+                  "rule/project-alpha-1",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus entity show rule/project-alpha-1 --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /uri, /route, /relations, /surfaces, /evidence/state"
+              },
+              {
+                "id": "entity-show-absent",
+                "title": "An address the layer does not serve",
+                "description": "An entity nothing declares is a not-found rather than an empty answer, for the reason `rules show` gives: a typo that read as `this entity is joined to nothing` is indistinguishable from the finding the page exists to show.",
+                "argv": [
+                  "entity",
+                  "show",
+                  "rule/no-such-rule"
+                ],
+                "command": "majordomus entity show rule/no-such-rule",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -71545,6 +72593,26 @@
         "read_only": true,
         "input": "Empty",
         "output": "InstallabilityReport"
+      },
+      {
+        "name": "majordomus_kinds",
+        "id": "entity.kinds",
+        "title": "Every kind, and whether every object of it is addressable",
+        "description": "The kinds the layer holds, each with the route of its index and how many objects it carries, and every route collision there is. A collision is the only way an object of the index can fail to have an address of its own; the healthy answer is none.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "KindList"
+      },
+      {
+        "name": "majordomus_entity",
+        "id": "entity.show",
+        "title": "Read one entity",
+        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+        "kind": "query",
+        "read_only": true,
+        "input": "EntityInput",
+        "output": "EntityView"
       },
       {
         "name": "majordomus_environment_explain",
@@ -72770,6 +73838,18 @@
         "method": "GET",
         "path": "/api/v1/distribution/status",
         "id": "distribution.status",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/entity/kinds",
+        "id": "entity.kinds",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/entity",
+        "id": "entity.show",
         "kind": "query"
       },
       {
@@ -74495,6 +75575,64 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/distribution/status"
+      },
+      {
+        "key": "entity.kinds|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "entity.kinds",
+        "module": "entity",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "entity.kinds|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "entity.kinds",
+        "module": "entity",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_kinds"
+      },
+      {
+        "key": "entity.kinds|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "entity.kinds",
+        "module": "entity",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/entity/kinds"
+      },
+      {
+        "key": "entity.show|direct|first-object",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "entity.show",
+        "module": "entity",
+        "case": "first-object",
+        "cached": false
+      },
+      {
+        "key": "entity.show|mcp|first-object",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "entity.show",
+        "module": "entity",
+        "case": "first-object",
+        "cached": false,
+        "tool": "majordomus_entity"
+      },
+      {
+        "key": "entity.show|http|first-object",
+        "kind": "capability",
+        "transport": "http",
+        "id": "entity.show",
+        "module": "entity",
+        "case": "first-object",
+        "cached": false,
+        "route": "GET /api/v1/entity"
       },
       {
         "key": "environment.explain|direct|all",
@@ -78395,6 +79533,48 @@
           "cases": 1
         },
         {
+          "subject": "entity.kinds",
+          "module": "entity",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "entity.kinds",
+          "module": "entity",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "entity.kinds",
+          "module": "entity",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "entity.show",
+          "module": "entity",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "entity.show",
+          "module": "entity",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "entity.show",
+          "module": "entity",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "environment.explain",
           "module": "environment",
           "transport": "direct",
@@ -80195,20 +81375,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 108,
-          "covered": 103,
+          "required": 110,
+          "covered": 105,
           "missing": 0,
           "waived": 5
         },
         "http": {
-          "required": 107,
-          "covered": 103,
+          "required": 109,
+          "covered": 105,
           "missing": 0,
           "waived": 4
         },
         "mcp": {
-          "required": 105,
-          "covered": 101,
+          "required": 107,
+          "covered": 103,
           "missing": 0,
           "waived": 4
         },
@@ -80219,8 +81399,8 @@
           "waived": 0
         },
         "total": {
-          "required": 333,
-          "covered": 320,
+          "required": 339,
+          "covered": 326,
           "missing": 0,
           "waived": 13
         }

@@ -65,6 +65,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 5
+  - id: entity
+    title: Entities
+    description: "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object."
+    stability: implemented
+    source: builtin
+    capabilities: 2
   - id: environment
     title: Repository environment
     description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
@@ -8136,6 +8142,472 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: entity.kinds
+    module: entity
+    kind: query
+    title: "Every kind, and whether every object of it is addressable"
+    description: "The kinds the layer holds, each with the route of its index and how many objects it carries, and every route collision there is. A collision is the only way an object of the index can fail to have an address of its own; the healthy answer is none."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: KindList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many kinds.
+          kinds:
+            type: array
+            items:
+              "$ref": "#/$defs/KindEntry"
+            description: "The kinds, in the index's order."
+          routable:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many objects have a route. Every object does, unless it is in `collisions`."
+          collisions:
+            type: array
+            items:
+              "$ref": "#/$defs/RouteCollision"
+            description: "Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts."
+        required:
+          - count
+          - kinds
+          - routable
+        description: "Every kind of the layer, each with its route, and every route collision there is."
+        title: KindList
+        "$defs":
+          KindEntry:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: The kind.
+              count:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many objects of it the index holds.
+              route:
+                type: string
+                description: Where its index is served.
+              example:
+                anyOf:
+                  - "$ref": "#/$defs/ObjectSummary"
+                  - type: "null"
+                description: "One of its objects, so a reader has somewhere to go."
+            required:
+              - kind
+              - count
+              - route
+            description: "One kind of the layer, with its address and how many objects it holds."
+          ObjectSummary:
+            type: object
+            properties:
+              uri:
+                type: string
+                description: "`majordomus://<kind>/<identity>`."
+              id:
+                type: string
+                description: "The capability id, `<kind>.<identity>`."
+              kind:
+                type: string
+                description: The kind the object was read as.
+              identity:
+                type: string
+                description: The identity within the kind.
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "The title, when the kind's title rule found one."
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "The one-line description, when the kind holds one."
+              path:
+                type: string
+                description: Repository-relative source path.
+            required:
+              - uri
+              - id
+              - kind
+              - identity
+              - path
+            description: "One object, summarised for a listing."
+          RouteCollision:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: The kind they share.
+              slug:
+                type: string
+                description: The slug they both reduce to; empty when an identity reduces to nothing.
+              identities:
+                type: array
+                items:
+                  type: string
+                description: "The identities that collide, in index order."
+              paths:
+                type: array
+                items:
+                  type: string
+                description: The files that declared them.
+              correction:
+                type: string
+                description: What to do about it.
+            required:
+              - kind
+              - slug
+              - identities
+              - paths
+              - correction
+            description: Two objects of one kind whose identities reduce to the same route.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::entity
+    exposure:
+      mcp:
+        tool: majordomus_kinds
+      http:
+        method: GET
+        path: /api/v1/entity/kinds
+      cli:
+        path:
+          - entity
+          - kinds
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - objects
+      - governance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/entity.rs
+  - id: entity.show
+    module: entity
+    kind: query
+    title: Read one entity
+    description: "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names."
+    input:
+      name: EntityInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          uri:
+            type:
+              - string
+              - "null"
+            description: "`majordomus://<kind>/<identity>`. Either this, or `kind` and `slug` together."
+          kind:
+            type:
+              - string
+              - "null"
+            description: "The kind, when addressing by route."
+          slug:
+            type:
+              - string
+              - "null"
+            description: "The last segment of the entity's route, when addressing by route."
+        description: "Which entity: by URI, or by the address it is served at."
+        title: EntityInput
+    output:
+      name: EntityView
+      schema:
+        type: object
+        properties:
+          uri:
+            type: string
+            description: "`majordomus://<kind>/<identity>`."
+          id:
+            type: string
+            description: "The capability id, `<kind>.<identity>`."
+          kind:
+            type: string
+            description: The kind.
+          identity:
+            type: string
+            description: The identity within the kind.
+          slug:
+            type: string
+            description: "The last segment of its route, derived from the identity."
+          route:
+            type: string
+            description: Its route in the Cockpit.
+          kind_route:
+            type: string
+            description: "The route of its kind's index."
+          title:
+            type:
+              - string
+              - "null"
+            description: "The title, when the kind's title rule found one."
+          description:
+            type:
+              - string
+              - "null"
+            description: "The one-line description, when the kind holds one."
+          provenance:
+            "$ref": "#/$defs/ObjectProvenance"
+            description: Where it came from.
+          metadata:
+            description: "The parsed front matter or YAML, keys in the file's order."
+          media_type:
+            type: string
+            description: "IANA media type of `content`."
+          content:
+            type: string
+            description: The file as read.
+          relations:
+            type: array
+            items:
+              "$ref": "#/$defs/EntityEdge"
+            description: "The references it declares, and the references that resolve to it."
+          surfaces:
+            type: array
+            items:
+              "$ref": "#/$defs/EntitySurface"
+            description: Every surface that answers for it.
+          evidence:
+            "$ref": "#/$defs/EntityEvidence"
+            description: What can be said about its enforcement without running anything.
+        required:
+          - uri
+          - id
+          - kind
+          - identity
+          - slug
+          - route
+          - kind_route
+          - provenance
+          - metadata
+          - media_type
+          - content
+          - relations
+          - surfaces
+          - evidence
+        description: "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement."
+        title: EntityView
+        "$defs":
+          ObjectProvenance:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Repository-relative path, forward slashes, as the version-control index names it."
+              directory:
+                type: string
+                description: "The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied."
+              source_class:
+                type: string
+                description: "The `sources.yaml` class that discovered the file (`rule`, `readme`, ...)."
+              section:
+                type:
+                  - string
+                  - "null"
+                description: "The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Size of the file in bytes.
+              member:
+                type:
+                  - string
+                  - "null"
+                description: "For an object that is one member of a collection file: the member's key path in\nthe file (`claims.3`)."
+            required:
+              - path
+              - directory
+              - source_class
+              - bytes
+            description: "Where an object came from. Every field is computed from the repository, never authored."
+          EntityEdge:
+            type: object
+            properties:
+              direction:
+                "$ref": "#/$defs/RelationDirection"
+                description: Which way it runs from the entity that was asked for.
+              edge:
+                type: string
+                description: "The relationship, in the graph's vocabulary (`depends_on`, `put_in_force`, ...)."
+              field:
+                type: string
+                description: The front matter key the reference was declared under.
+              uri:
+                type:
+                  - string
+                  - "null"
+                description: "The object at the other end: its URI when the layer holds it."
+              kind:
+                type: string
+                description: "Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`)."
+              label:
+                type: string
+                description: "What to show: the identity of an object, or the name of something outside."
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "Its title, when it is an object that has one."
+              route:
+                type:
+                  - string
+                  - "null"
+                description: "Its entity route, when it has one; absent for something outside the layer."
+              external:
+                type: boolean
+                description: True when the other end is not an object of this index.
+            required:
+              - direction
+              - edge
+              - field
+              - kind
+              - label
+              - external
+            description: "One edge, as an entity page reads it."
+          RelationDirection:
+            oneOf:
+              - type: string
+                const: outgoing
+                description: This entity declared the reference.
+              - type: string
+                const: incoming
+                description: "Another entity named this one. Never declared: derived by reading every other\nobject's references and keeping the ones that resolve here."
+            description: Which way a relation runs from the entity being read.
+          EntitySurface:
+            type: object
+            properties:
+              surface:
+                type: string
+                description: "Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`."
+              address:
+                type: string
+                description: "The address on it: a URI, a route, a command line."
+              detail:
+                type: string
+                description: What a reader does with it.
+            required:
+              - surface
+              - address
+              - detail
+            description: "One place this entity can be reached, and how."
+          EntityEvidence:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/EntityEvidenceState"
+                description: "The state, which is never rounded up."
+              meaning:
+                type: string
+                description: "That state in one sentence, for a reader."
+              artifacts:
+                type: array
+                items:
+                  "$ref": "#/$defs/ClaimedArtifact"
+                description: "Every artefact named, with whether the tree holds it."
+              proof:
+                anyOf:
+                  - "$ref": "#/$defs/EntityProofRef"
+                  - type: "null"
+                description: "The capability that can say more, when this kind has one."
+            required:
+              - state
+              - meaning
+            description: "What can be said about an object's enforcement without running anything."
+          EntityEvidenceState:
+            oneOf:
+              - type: string
+                const: unclaimed
+                description: "The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything."
+              - type: string
+                const: dangling
+                description: "It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement."
+              - type: string
+                const: resolved
+                description: "Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked."
+            description: "What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run."
+          ClaimedArtifact:
+            type: object
+            properties:
+              field:
+                type: string
+                description: "The front matter key it was named under (`x-majordomus.tests`, `test`, ...)."
+              path:
+                type: string
+                description: The repository-relative path as named.
+              present:
+                type: boolean
+                description: Whether the tree holds it.
+            required:
+              - field
+              - path
+              - present
+            description: "One executable artefact an object names, and whether the tree holds it."
+          EntityProofRef:
+            type: object
+            properties:
+              capability:
+                type: string
+                description: The capability that answers it.
+              title:
+                type: string
+                description: Its title.
+              address:
+                type: string
+                description: How to ask it here.
+            required:
+              - capability
+              - title
+              - address
+            description: "Where a fuller answer about this entity's enforcement lives."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::entity
+    exposure:
+      mcp:
+        tool: majordomus_entity
+      http:
+        method: GET
+        path: /api/v1/entity
+      cli:
+        path:
+          - entity
+          - show
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - objects
+      - governance
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/entity.rs
   - id: environment.explain
     module: environment
     kind: query

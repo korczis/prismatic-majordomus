@@ -19,6 +19,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
+| `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 2 | [`modules/environment.md`](modules/environment.md) |
 | `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
@@ -75,6 +76,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.model` | `distribution` | query | behaviorally_verified | `majordomus_distribution` | — | `GET /api/v1/distribution` | `majordomus distribution show` | — | required |
 | `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | — | required |
 | `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
+| `entity.kinds` | `entity` | query | implemented | `majordomus_kinds` | — | `GET /api/v1/entity/kinds` | `majordomus entity kinds` | — | required |
+| `entity.show` | `entity` | query | implemented | `majordomus_entity` | — | `GET /api/v1/entity` | `majordomus entity show` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
 | `environment.status` | `environment` | query | behaviorally_verified | `majordomus_environment` | `majordomus://environment` | `GET /api/v1/environment` | — | — | required |
 | `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | — | required |

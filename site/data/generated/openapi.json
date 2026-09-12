@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 107,
-    "schemas": 504,
-    "tags": 35
+    "operations": 109,
+    "schemas": 515,
+    "tags": 36
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -2971,6 +2971,41 @@
       "used_by": [],
       "used_by_schemas": [
         "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One executable artefact an object names, and whether the tree holds it.",
+      "is_enum": false,
+      "name": "ClaimedArtifact",
+      "properties": [
+        {
+          "description": "The front matter key it was named under (`x-majordomus.tests`, `test`, ...).",
+          "name": "field",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository-relative path as named.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the tree holds it.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityEvidence"
       ],
       "values": [],
       "variants": []
@@ -8215,6 +8250,363 @@
       "variants": []
     },
     {
+      "description": "One edge, as an entity page reads it.",
+      "is_enum": false,
+      "name": "EntityEdge",
+      "properties": [
+        {
+          "description": "Which way it runs from the entity that was asked for.",
+          "name": "direction",
+          "refs": [
+            "RelationDirection"
+          ],
+          "required": true,
+          "type": "RelationDirection"
+        },
+        {
+          "description": "The relationship, in the graph's vocabulary (`depends_on`, `put_in_force`, ...).",
+          "name": "edge",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The front matter key the reference was declared under.",
+          "name": "field",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The object at the other end: its URI when the layer holds it.",
+          "name": "uri",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`).",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to show: the identity of an object, or the name of something outside.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title, when it is an object that has one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its entity route, when it has one; absent for something outside the layer.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "True when the other end is not an object of this index.",
+          "name": "external",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What can be said about an object's enforcement without running anything.",
+      "is_enum": false,
+      "name": "EntityEvidence",
+      "properties": [
+        {
+          "description": "The state, which is never rounded up.",
+          "name": "state",
+          "refs": [
+            "EntityEvidenceState"
+          ],
+          "required": true,
+          "type": "EntityEvidenceState"
+        },
+        {
+          "description": "That state in one sentence, for a reader.",
+          "name": "meaning",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every artefact named, with whether the tree holds it.",
+          "name": "artifacts",
+          "refs": [
+            "ClaimedArtifact"
+          ],
+          "required": false,
+          "type": "array of ClaimedArtifact"
+        },
+        {
+          "description": "The capability that can say more, when this kind has one.",
+          "name": "proof",
+          "refs": [
+            "EntityProofRef"
+          ],
+          "required": false,
+          "type": "EntityProofRef | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run.",
+      "is_enum": true,
+      "name": "EntityEvidenceState",
+      "properties": [],
+      "type": "\"unclaimed\" | \"dangling\" | \"resolved\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityEvidence"
+      ],
+      "values": [
+        {
+          "description": "The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything.",
+          "value": "unclaimed"
+        },
+        {
+          "description": "It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement.",
+          "value": "dangling"
+        },
+        {
+          "description": "Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked.",
+          "value": "resolved"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where a fuller answer about this entity's enforcement lives.",
+      "is_enum": false,
+      "name": "EntityProofRef",
+      "properties": [
+        {
+          "description": "The capability that answers it.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How to ask it here.",
+          "name": "address",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityEvidence"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One place this entity can be reached, and how.",
+      "is_enum": false,
+      "name": "EntitySurface",
+      "properties": [
+        {
+          "description": "Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`.",
+          "name": "surface",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The address on it: a URI, a route, a command line.",
+          "name": "address",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What a reader does with it.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.",
+      "is_enum": false,
+      "name": "EntityView",
+      "properties": [
+        {
+          "description": "`majordomus://<kind>/<identity>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The capability id, `<kind>.<identity>`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The kind.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity within the kind.",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The last segment of its route, derived from the identity.",
+          "name": "slug",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its route in the Cockpit.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The route of its kind's index.",
+          "name": "kind_route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title, when the kind's title rule found one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The one-line description, when the kind holds one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where it came from.",
+          "name": "provenance",
+          "refs": [
+            "ObjectProvenance"
+          ],
+          "required": true,
+          "type": "ObjectProvenance"
+        },
+        {
+          "description": "The parsed front matter or YAML, keys in the file's order.",
+          "name": "metadata",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "IANA media type of `content`.",
+          "name": "media_type",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file as read.",
+          "name": "content",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The references it declares, and the references that resolve to it.",
+          "name": "relations",
+          "refs": [
+            "EntityEdge"
+          ],
+          "required": true,
+          "type": "array of EntityEdge"
+        },
+        {
+          "description": "Every surface that answers for it.",
+          "name": "surfaces",
+          "refs": [
+            "EntitySurface"
+          ],
+          "required": true,
+          "type": "array of EntitySurface"
+        },
+        {
+          "description": "What can be said about its enforcement without running anything.",
+          "name": "evidence",
+          "refs": [
+            "EntityEvidence"
+          ],
+          "required": true,
+          "type": "EntityEvidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "entity.show"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own [`crate::model::Provenance`], carried rather than restated.",
       "is_enum": false,
       "name": "EntryProvenance",
@@ -8778,6 +9170,8 @@
         "distribution.build",
         "distribution.releases",
         "distribution.status",
+        "entity.show",
+        "entity.kinds",
         "environment.status",
         "environment.explain",
         "evidence.report",
@@ -13347,6 +13741,96 @@
       "variants": []
     },
     {
+      "description": "One kind of the layer, with its address and how many objects it holds.",
+      "is_enum": false,
+      "name": "KindEntry",
+      "properties": [
+        {
+          "description": "The kind.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many objects of it the index holds.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Where its index is served.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One of its objects, so a reader has somewhere to go.",
+          "name": "example",
+          "refs": [
+            "ObjectSummary"
+          ],
+          "required": false,
+          "type": "ObjectSummary | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KindList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every kind of the layer, each with its route, and every route collision there is.",
+      "is_enum": false,
+      "name": "KindList",
+      "properties": [
+        {
+          "description": "How many kinds.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The kinds, in the index's order.",
+          "name": "kinds",
+          "refs": [
+            "KindEntry"
+          ],
+          "required": true,
+          "type": "array of KindEntry"
+        },
+        {
+          "description": "How many objects have a route. Every object does, unless it is in `collisions`.",
+          "name": "routable",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Two objects of one kind whose identities reduce to one route, which is the only way\nan object can fail to be addressable. Empty is the healthy answer and the only one\n`scripts/ci/entity-check` accepts.",
+          "name": "collisions",
+          "refs": [
+            "RouteCollision"
+          ],
+          "required": false,
+          "type": "array of RouteCollision"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "entity.kinds"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One object kind the feature names, with how many objects of it the layer holds.",
       "is_enum": false,
       "name": "KindRef",
@@ -15881,6 +16365,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "EntityView",
         "ObjectView"
       ],
       "values": [],
@@ -15974,6 +16459,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "KindEntry",
         "ObjectList"
       ],
       "values": [],
@@ -20052,6 +20538,28 @@
       "variants": []
     },
     {
+      "description": "Which way a relation runs from the entity being read.",
+      "is_enum": true,
+      "name": "RelationDirection",
+      "properties": [],
+      "type": "\"outgoing\" | \"incoming\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityEdge"
+      ],
+      "values": [
+        {
+          "description": "This entity declared the reference.",
+          "value": "outgoing"
+        },
+        {
+          "description": "Another entity named this one. Never declared: derived by reading every other\nobject's references and keeping the ones that resolve here.",
+          "value": "incoming"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The artifact a target and a tag name, and the directory it unpacks into.",
       "is_enum": false,
       "name": "ReleaseArtifactView",
@@ -22309,6 +22817,55 @@
       "used_by": [],
       "used_by_schemas": [
         "HealthRoutes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Two objects of one kind whose identities reduce to the same route.",
+      "is_enum": false,
+      "name": "RouteCollision",
+      "properties": [
+        {
+          "description": "The kind they share.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The slug they both reduce to; empty when an identity reduces to nothing.",
+          "name": "slug",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identities that collide, in index order.",
+          "name": "identities",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The files that declared them.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "correction",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "KindList"
       ],
       "values": [],
       "variants": []
@@ -29332,6 +29889,143 @@
           "result_schema": "InstallabilityReport",
           "stability": "behaviorally_verified",
           "summary": "Whether the published installation works"
+        }
+      ]
+    },
+    {
+      "description": "Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object.",
+      "name": "entity",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "entity show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/entity?uri=majordomus%3A%2F%2Fadr%2Fadr-0001\"",
+          "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+          "id": "entity.show",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_entity",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "`majordomus://<kind>/<identity>`. Either this, or `kind` and `slug` together.",
+              "examples": [
+                {
+                  "case": "first-object",
+                  "value": "\"majordomus://adr/adr-0001\""
+                }
+              ],
+              "name": "uri",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The kind, when addressing by route.",
+              "examples": [],
+              "name": "kind",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The last segment of the entity's route, when addressing by route.",
+              "examples": [],
+              "name": "slug",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/entity",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::entity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Read one entity: the result.",
+              "schema": "EntityView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EntityView",
+          "stability": "implemented",
+          "summary": "Read one entity"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "entity kinds",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/entity/kinds\"",
+          "description": "The kinds the layer holds, each with the route of its index and how many objects it carries, and every route collision there is. A collision is the only way an object of the index can fail to have an address of its own; the healthy answer is none.",
+          "id": "entity.kinds",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_kinds",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/entity/kinds",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::entity",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every kind, and whether every object of it is addressable: the result.",
+              "schema": "KindList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "KindList",
+          "stability": "implemented",
+          "summary": "Every kind, and whether every object of it is addressable"
         }
       ]
     },

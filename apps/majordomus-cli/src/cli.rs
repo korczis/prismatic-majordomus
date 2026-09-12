@@ -84,6 +84,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
+    Entity(EntityArgs),
 }
 
 #[derive(Debug, Args)]
@@ -627,6 +629,57 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus entity`. Every object of the layer as an addressable node.
+///
+/// The command-line half of the projection the Cockpit renders and the HTTP and MCP
+/// surfaces answer: `kinds` is every kind with the route of its index, and `show` is one
+/// entity with everything joined to it. Neither enumerates anything — both read the index.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, EntityArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "entity", "kinds"]).unwrap();
+/// let Command::Entity(args) = cli.command else { panic!("not the entity command") };
+/// let _: EntityArgs = args;
+/// ```
+pub struct EntityArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `kinds` or `show`. Required: the group runs nothing of its own, so that every
+    /// runnable path here is one a capability declares.
+    pub command: EntityCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus entity`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, EntityCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "entity", "show", "majordomus://adr/adr-0004"]).unwrap();
+/// let Command::Entity(args) = cli.command else { panic!("not the entity command") };
+/// assert!(matches!(args.command, EntityCommand::Show { .. }));
+/// ```
+pub enum EntityCommand {
+    /// Every kind of the layer, the route of its index, and every route collision there is
+    Kinds,
+    /// One entity: its route, what it references, what references it, where it is served
+    Show {
+        /// The entity, as `majordomus://<kind>/<identity>` or as `<kind>/<slug>`
+        address: String,
     },
 }
 
@@ -2133,6 +2186,44 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::ExitCode(13),
         }],
+    },
+    CommandExamples {
+        command: "entity kinds",
+        examples: &[ExampleDoc {
+            id: "entity-kinds-json",
+            title: "Every kind of the layer, and whether every object of it has an address",
+            description: "The catalogue the Cockpit's navigation and the site's indexes are both derived from. Nothing enumerates kinds: each one is here because the index holds an object of it, and each carries the route of its own listing. `collisions` is the one way an object can fail to be addressable — two identities of one kind that reduce to one route — and the healthy answer is none.",
+            argv: &["entity", "kinds", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/kinds", "/count", "/routable"]),
+        }],
+    },
+    CommandExamples {
+        command: "entity show",
+        examples: &[
+            ExampleDoc {
+                id: "entity-show-rule",
+                title: "One entity at its own address",
+                description: "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
+                argv: &["entity", "show", "rule/project-alpha-1", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&[
+                    "/uri",
+                    "/route",
+                    "/relations",
+                    "/surfaces",
+                    "/evidence/state",
+                ]),
+            },
+            ExampleDoc {
+                id: "entity-show-absent",
+                title: "An address the layer does not serve",
+                description: "An entity nothing declares is a not-found rather than an empty answer, for the reason `rules show` gives: a typo that read as `this entity is joined to nothing` is indistinguishable from the finding the page exists to show.",
+                argv: &["entity", "show", "rule/no-such-rule"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+        ],
     },
     CommandExamples {
         command: "rules report",

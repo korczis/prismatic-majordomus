@@ -393,12 +393,22 @@ PROOF            ▼
 <section class="border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="13" kicker="the layer" title={m.write_once.title} lead={m.write_once.lead} /> }}
+    {#- A kind is a link when the site publishes a page per object of it, plain text when it
+        does not. Which is which is site/data/publication.toml, declared once for every kind
+        the index holds and checked both ways by scripts/ci/entity-check — so a kind cannot
+        quietly stop being published, and this list cannot quietly stop naming one. -#}
+    {%- set pubkinds = load_data(path="data/generated/entities.json") -%}
     <ul class="flex flex-wrap gap-2">
       {%- for kind, n in model.telemetry.by_kind %}
+      {%- set published = [k for k in pubkinds.kinds if k.kind == kind] %}
+      {%- if published | length > 0 %}
+      <li><a href="{{ get_url(path=published[0].route, trailing_slash=true) }}" class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 hover:bg-neutral-secondary-medium"><code class="font-mono text-sm text-fg-brand">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></a></li>
+      {%- else %}
       <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
+      {%- endif %}
       {%- endfor %}
     </ul>
-    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
+    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. Each object has an address derived from its kind and its identity, the same one on the command line, over HTTP, over MCP and in the Cockpit; the kinds linked above publish a page per object here too. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
   </div>
 </section>
 
