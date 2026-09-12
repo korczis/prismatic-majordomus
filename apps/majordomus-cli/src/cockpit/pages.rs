@@ -249,10 +249,10 @@ pub fn overview(ctx: &Context) -> Page {
                     row(vec![
                         cell(mono(kind)),
                         text_cell(count.to_string()),
-                        cell(link(
-                            format!("/cockpit/objects?kind={}", percent_encode(kind)),
-                            "browse",
-                        )),
+                        // the kind's own address, from the function the router resolves
+                        // with — not `?kind=`, which still answers and is the spelling
+                        // this page was written against before a kind had an address
+                        cell(link(crate::entity::kind_route(kind), "browse")),
                     ])
                 })
                 .collect(),
