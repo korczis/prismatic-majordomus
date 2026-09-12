@@ -106,7 +106,33 @@ pub fn route(kind: &str, identity: &str) -> String {
     format!("{}/{}", kind_route(kind), slug(identity))
 }
 
-/// The route of an object.
+/// The route of an object, from the object itself.
+///
+/// [`route`] asks for the kind and the identity separately, because the Cockpit's router
+/// has those two strings out of a path and no object yet. This is the same function for
+/// every caller that is already holding the object, and it exists so that no consumer
+/// reaches for `o.kind` and `o.identity` and spells the address a second time.
+///
+/// ```
+/// # use majordomus_cli::{Object, Provenance};
+/// # fn object(kind: &str, identity: &str) -> Object {
+/// #     Object { kind: kind.into(), identity: identity.into(),
+/// #         uri: format!("majordomus://{kind}/{identity}"), title: None, description: None,
+/// #         metadata: serde_json::json!({}), body: String::new(), content: String::new(),
+/// #         media_type: "text/markdown",
+/// #         provenance: Provenance { path: "x.md".into(), directory: "x".into(),
+/// #             source_class: kind.into(), section: None, bytes: 0, member: None } }
+/// # }
+/// use majordomus_cli::entity::{object_route, route};
+///
+/// let rule = object("rule", "project.entities-are-routable@1");
+/// assert_eq!(
+///     object_route(&rule),
+///     "/cockpit/objects/rule/project-entities-are-routable-1"
+/// );
+/// // and it is the same address the router resolves with
+/// assert_eq!(object_route(&rule), route(&rule.kind, &rule.identity));
+/// ```
 pub fn object_route(o: &Object) -> String {
     route(&o.kind, &o.identity)
 }
@@ -116,6 +142,27 @@ pub fn object_route(o: &Object) -> String {
 /// Linear over the kind's objects, which is what the Cockpit needs (a lookup per request,
 /// over at most a few hundred objects of one kind) and what keeps this function free of a
 /// cache nobody invalidates.
+///
+/// ```
+/// # use majordomus_cli::{Object, Provenance};
+/// # fn object(kind: &str, identity: &str) -> Object {
+/// #     Object { kind: kind.into(), identity: identity.into(),
+/// #         uri: format!("majordomus://{kind}/{identity}"), title: None, description: None,
+/// #         metadata: serde_json::json!({}), body: String::new(), content: String::new(),
+/// #         media_type: "text/markdown",
+/// #         provenance: Provenance { path: "x.md".into(), directory: "x".into(),
+/// #             source_class: kind.into(), section: None, bytes: 0, member: None } }
+/// # }
+/// use majordomus_cli::entity::find;
+///
+/// let objects = vec![object("rule", "project.x@1"), object("adr", "adr-0056")];
+///
+/// let found = find(&objects, "rule", "project-x-1").expect("the slug resolves");
+/// assert_eq!(found.identity, "project.x@1");
+/// // the kind is part of the address, so the same slug under another kind is not it
+/// assert!(find(&objects, "adr", "project-x-1").is_none());
+/// assert!(find(&objects, "rule", "no-such-rule").is_none());
+/// ```
 pub fn find<'a>(objects: &'a [Object], kind: &str, slug_wanted: &str) -> Option<&'a Object> {
     objects
         .iter()
@@ -123,6 +170,34 @@ pub fn find<'a>(objects: &'a [Object], kind: &str, slug_wanted: &str) -> Option<
 }
 
 /// Two objects of one kind whose identities reduce to the same route.
+///
+/// Carries both identities and both files, because the reader who has to fix it needs to
+/// know which two things collided and where they are written — a count would tell them
+/// only that the tree is refused. `correction` is the sentence [`collisions`] wrote about
+/// this particular pair.
+///
+/// ```
+/// # use majordomus_cli::{Object, Provenance};
+/// # fn object(kind: &str, identity: &str) -> Object {
+/// #     Object { kind: kind.into(), identity: identity.into(),
+/// #         uri: format!("majordomus://{kind}/{identity}"), title: None, description: None,
+/// #         metadata: serde_json::json!({}), body: String::new(), content: String::new(),
+/// #         media_type: "text/markdown",
+/// #         provenance: Provenance { path: format!("{identity}.md"), directory: "x".into(),
+/// #             source_class: kind.into(), section: None, bytes: 0, member: None } }
+/// # }
+/// use majordomus_cli::entity::{collisions, Collision};
+///
+/// // `a.b` and `a-b` are two identities and one slug
+/// let objects = vec![object("rule", "a.b"), object("rule", "a-b")];
+/// let found: Vec<Collision> = collisions(&objects);
+///
+/// assert_eq!(found.len(), 1);
+/// assert_eq!(found[0].kind, "rule");
+/// assert_eq!(found[0].slug, "a-b");
+/// assert_eq!(found[0].identities, ["a.b", "a-b"]);
+/// assert!(!found[0].correction.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "RouteCollision")]
 pub struct Collision {
@@ -179,6 +254,26 @@ pub fn collisions(objects: &[Object]) -> Vec<Collision> {
 // ---------------------------------------------------------------- relations
 
 /// Which way a relation runs from the entity being read.
+///
+/// The direction is a property of the *reading*, not of the relation: one edge in
+/// [`graph::RELATIONS`] is outgoing on the page of the object that declared it and incoming
+/// on the page of the object it names. Nothing in the layer writes `Incoming` down.
+///
+/// ```
+/// use majordomus_cli::entity::Direction;
+///
+/// // the wire spelling, which every surface shows and the site template reads
+/// assert_eq!(
+///     serde_json::to_string(&Direction::Outgoing).unwrap(),
+///     "\"outgoing\""
+/// );
+/// assert_eq!(
+///     serde_json::to_string(&Direction::Incoming).unwrap(),
+///     "\"incoming\""
+/// );
+/// // declared before derived, which is the order an entity page renders the two sections
+/// assert!((Direction::Outgoing as u8) < (Direction::Incoming as u8));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[schemars(rename = "RelationDirection")]
@@ -191,6 +286,35 @@ pub enum Direction {
 }
 
 /// One edge, as an entity page reads it.
+///
+/// Everything a reader needs about the other end is here — what to show, what kind of thing
+/// it is, and the address to send them to — so the page renders a relation without going
+/// back to the index for it. `route` is `None` exactly when `external` is true: a `file`, a
+/// `test` or a `command` is named by the layer and is not an object of it, so there is no
+/// entity page to link to and the template shows plain text instead of a dead link.
+///
+/// ```
+/// use majordomus_cli::entity::{Direction, Edge};
+/// use majordomus_cli::order::Ordered;
+///
+/// let edge = Edge {
+///     direction: Direction::Incoming,
+///     edge: "depends_on".into(),
+///     field: "depends_on".into(),
+///     uri: Some("majordomus://rule/project.x@1".into()),
+///     kind: "rule".into(),
+///     label: "project.x@1".into(),
+///     title: Some("A rule".into()),
+///     route: Some("/cockpit/objects/rule/project-x-1".into()),
+///     external: false,
+/// };
+///
+/// // the relation is the group and the direction ranks inside it; see the `Ordered` impl
+/// let key = edge.order_key();
+/// assert_eq!(key.group, Some("depends_on"));
+/// assert_eq!(key.rank, Direction::Incoming as i64);
+/// assert_eq!(key.identity, "majordomus://rule/project.x@1");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EntityEdge")]
 pub struct Edge {
@@ -217,6 +341,32 @@ pub struct Edge {
     pub external: bool,
 }
 
+/// An edge is ordered by the relation it is, then by which way it runs, then by what a
+/// reader sees.
+///
+/// The relation is the group, because that is the bucket the reader is actually scanning —
+/// every `depends_on` together, every `put_in_force` together — and the direction is a rank
+/// inside it rather than the most significant part, because every consumer of this
+/// collection filters to one direction before it renders (the entity page draws the
+/// declared references and the backlinks as two sections). The URI is the tie-breaker, and
+/// an external end that has none falls back to its label; `edges` dedups, so two edges that
+/// compare equal here were the same edge twice.
+///
+/// This is the whole order of the collection. There was a `sort_by` here beside the
+/// building of it, which is the second opinion [`crate::order`] exists to remove — the
+/// natural comparison it brings is also the one every other surface of this repository
+/// shows, so `case-2` precedes `case-10` on an entity page as it does everywhere else.
+impl crate::order::Ordered for Edge {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(
+            &self.edge,
+            &self.label,
+            self.uri.as_deref().unwrap_or(&self.label),
+        )
+        .ranked(self.direction as i64)
+    }
+}
+
 /// Every edge of one object: the references it declares, and the references that resolve
 /// to it.
 ///
@@ -225,6 +375,45 @@ pub struct Edge {
 /// declared twice and no bidirectional bookkeeping in the layer. A reference that resolves
 /// to nothing is not an edge; it is a finding, and
 /// [`graph::unresolved_relations`](crate::graph::unresolved_relations) is what reports it.
+///
+/// A rule that depends on another produces one edge on each of the two pages, from the one
+/// `depends_on` the first of them declared:
+///
+/// ```
+/// # use majordomus_cli::{Object, Provenance};
+/// # fn rule(identity: &str, metadata: serde_json::Value) -> Object {
+/// #     Object { kind: "rule".into(), identity: identity.into(),
+/// #         uri: format!("majordomus://rule/{identity}"), title: None, description: None,
+/// #         metadata, body: String::new(), content: String::new(),
+/// #         media_type: "text/markdown",
+/// #         provenance: Provenance { path: format!("{identity}.md"), directory: "x".into(),
+/// #             source_class: "rule".into(), section: None, bytes: 0, member: None } }
+/// # }
+/// use majordomus_cli::capability::builtin;
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+/// use majordomus_cli::entity::{edges, Direction};
+///
+/// let registry = CapabilityRegistry::builder()
+///     .with_builtin(builtin::all())
+///     .build()
+///     .unwrap();
+///
+/// let dependant = rule("project.a@1", serde_json::json!({ "depends_on": ["project.b@1"] }));
+/// let dependency = rule("project.b@1", serde_json::json!({}));
+/// let objects = vec![dependant.clone(), dependency.clone()];
+///
+/// // the declaring end sees it run outwards
+/// let out = edges(&registry, &objects, &dependant);
+/// assert!(out.iter().any(|e| e.direction == Direction::Outgoing
+///     && e.edge == "depends_on"
+///     && e.label == "project.b@1"));
+///
+/// // the named end sees the same relation as a backlink, declared nowhere
+/// let back = edges(&registry, &objects, &dependency);
+/// assert!(back.iter().any(|e| e.direction == Direction::Incoming
+///     && e.edge == "depends_on"
+///     && e.label == "project.a@1"));
+/// ```
 pub fn edges(registry: &CapabilityRegistry, objects: &[Object], subject: &Object) -> Vec<Edge> {
     let resolver = graph::Resolver::new(registry, objects);
     let by_uri: BTreeMap<&str, &Object> = objects.iter().map(|o| (o.uri.as_str(), o)).collect();
@@ -319,14 +508,7 @@ pub fn edges(registry: &CapabilityRegistry, objects: &[Object], subject: &Object
             }
         }
     }
-    out.sort_by(|a, b| {
-        (a.direction as u8, &a.edge, &a.kind, &a.label).cmp(&(
-            b.direction as u8,
-            &b.edge,
-            &b.kind,
-            &b.label,
-        ))
-    });
+    crate::order::canonical(&mut out);
     out.dedup();
     out
 }
@@ -334,6 +516,24 @@ pub fn edges(registry: &CapabilityRegistry, objects: &[Object], subject: &Object
 // ---------------------------------------------------------------- surfaces
 
 /// One place this entity can be reached, and how.
+///
+/// A row of the "where else this is answered" table on an entity page. `surface` is the
+/// interface's own name, so a reader who works on the command line and a reader who works
+/// over MCP each find their own line rather than a route they have to translate.
+///
+/// ```
+/// use majordomus_cli::entity::Surface;
+///
+/// let s = Surface {
+///     surface: "mcp".into(),
+///     address: "majordomus://rule/project.x@1".into(),
+///     detail: "the file as read".into(),
+/// };
+/// assert_eq!(
+///     serde_json::to_value(&s).unwrap()["surface"],
+///     serde_json::json!("mcp")
+/// );
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "EntitySurface")]
 pub struct Surface {
@@ -351,6 +551,33 @@ pub struct Surface {
 /// The MCP line is the object's own resource exposure; the HTTP and command-line lines are
 /// the exposures of the capability that reads an object by URI, whichever capability that
 /// is and whatever route it is mounted at, so a route that moves moves here too.
+///
+/// ```
+/// # use majordomus_cli::{Object, Provenance};
+/// # fn object(kind: &str, identity: &str) -> Object {
+/// #     Object { kind: kind.into(), identity: identity.into(),
+/// #         uri: format!("majordomus://{kind}/{identity}"), title: None, description: None,
+/// #         metadata: serde_json::json!({}), body: String::new(), content: String::new(),
+/// #         media_type: "text/markdown",
+/// #         provenance: Provenance { path: "x.md".into(), directory: "x".into(),
+/// #             source_class: kind.into(), section: None, bytes: 0, member: None } }
+/// # }
+/// use majordomus_cli::capability::builtin;
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+/// use majordomus_cli::entity::surfaces;
+///
+/// let registry = CapabilityRegistry::builder()
+///     .with_builtin(builtin::all())
+///     .build()
+///     .unwrap();
+///
+/// let found = surfaces(&registry, &object("rule", "project.x@1"));
+/// // the Cockpit always answers, because an address is derived and never registered
+/// assert!(found.iter().any(|s| s.surface == "cockpit"
+///     && s.address == "/cockpit/objects/rule/project-x-1"));
+/// // and nothing here is written down: every line came out of the registry's exposures
+/// assert!(found.iter().all(|s| !s.address.is_empty()));
+/// ```
 pub fn surfaces(registry: &CapabilityRegistry, o: &Object) -> Vec<Surface> {
     let mut out = Vec::new();
     let id = format!("{}.{}", o.kind, o.identity);
