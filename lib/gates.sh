@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034  # MJ_DOCTRINE_SKIPPED is read by the dispatcher in doctrine.sh
 # gates — the validation gates a task's change set must pass, recorded and enforced.
 #
 # `evidence --covers` records that an *obligation* was discharged; this records that a
@@ -239,7 +240,7 @@ mj_validate_completion_gates() {
   # nineteen-line block would be scrolled past; the whole set is in the JSON.
   local owing
   owing="$(printf '%s' "$out" | jq -r '[(.questions // [])[] | select(.status != "pass" and .status != "exempt") | "\(.id)=\(.status)"] | join(" ")' 2>/dev/null)"
-  [ -z "$owing" ] || mj_doctrine_skip done "$id" "the done invariant is not yet answered: $owing" \
+  [ -z "$owing" ] || mj_doctrine_skip "done" "$id" "the done invariant is not yet answered: $owing" \
     "$bin run gates.completion --input '{}' --format json | jq '.output.questions'"
 
   if [ -z "$blocking" ] && [ -z "$unverified" ]; then
