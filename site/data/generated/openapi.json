@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 107,
-    "schemas": 504,
-    "tags": 35
+    "operations": 111,
+    "schemas": 521,
+    "tags": 36
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -2752,6 +2752,32 @@
       "variants": []
     },
     {
+      "description": "Where one path stands between the index and the working tree.",
+      "is_enum": true,
+      "name": "ChangeStage",
+      "properties": [],
+      "type": "\"staged\" | \"unstaged\" | \"untracked\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathChange"
+      ],
+      "values": [
+        {
+          "description": "Different in the index from HEAD: it would be in the next commit.",
+          "value": "staged"
+        },
+        {
+          "description": "Different in the working tree from the index: it would not.",
+          "value": "unstaged"
+        },
+        {
+          "description": "Not tracked at all.",
+          "value": "untracked"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Which releases an unpinned installation may resolve to.",
       "is_enum": true,
       "name": "Channel",
@@ -4663,6 +4689,212 @@
       "variants": []
     },
     {
+      "description": "Why a commit was not judged.",
+      "is_enum": true,
+      "name": "CommitExemption",
+      "properties": [],
+      "type": "\"git_authored\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitVerdict",
+        "JudgedCommit"
+      ],
+      "values": [
+        {
+          "description": "git composed the subject: a merge, a revert, a fixup.",
+          "value": "git_authored"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One commit a plan proposes.",
+      "is_enum": false,
+      "name": "CommitGroup",
+      "properties": [
+        {
+          "description": "The message as proposed. The summary is the one field a person is expected to\nreplace: nothing here can know *why* a change was made, and a planner that wrote a\nconfident sentence about it would be writing fiction into the history.",
+          "name": "message",
+          "refs": [
+            "CommitMessage"
+          ],
+          "required": true,
+          "type": "CommitMessage"
+        },
+        {
+          "description": "The paths, in order.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Why these paths are one commit, in evidence a reader can check.",
+          "name": "rationale",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The scope suggestion and what it was derived from, when there was one.",
+          "name": "scope_from",
+          "refs": [
+            "ScopeSuggestion"
+          ],
+          "required": false,
+          "type": "ScopeSuggestion | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The header of a commit message: its first line, taken apart.\n\n`word` is the type as the author wrote it and `kind` is what that word names; they\ndiffer exactly when the word is not one of the eleven the convention defines, and\nkeeping both is what lets a reader see `wip(site): halfway through` as its author typed\nit while a judge still reports that `wip` is not a type.",
+      "is_enum": false,
+      "name": "CommitHeader",
+      "properties": [
+        {
+          "description": "The type as written: `feat`, `fix`, `wip`, or the empty string when the subject\ncarries no `type: ` head at all.",
+          "name": "word",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What [`Self::word`] names; [`ChangeKind::Other`] for a word the convention does not\ndefine, and for a subject with no head.",
+          "name": "kind",
+          "refs": [
+            "ReleaseChangeKind"
+          ],
+          "required": true,
+          "type": "ReleaseChangeKind"
+        },
+        {
+          "description": "The parenthesised scope, when there is one.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the head carried the `!` that marks a breaking change. The `BREAKING CHANGE:`\ntrailer is a property of the body and is read by [`crate::commit::CommitMessage`].",
+          "name": "breaking",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What the commit says it did. For a header that does not parse this is the whole\nfirst line, unchanged, and for an unknown type word it keeps the word: nothing that\nthe author wrote is dropped on the way through.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitMessage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A commit message taken apart: header, body, trailers.",
+      "is_enum": false,
+      "name": "CommitMessage",
+      "properties": [
+        {
+          "description": "The first line, parsed.",
+          "name": "header",
+          "refs": [
+            "CommitHeader"
+          ],
+          "required": true,
+          "type": "CommitHeader"
+        },
+        {
+          "description": "Everything between the header and the trailer block, with surrounding blank lines\nremoved. Empty when the message is a subject alone.",
+          "name": "body",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The `Key: value` lines of the final paragraph, in the order they were written.",
+          "name": "trailers",
+          "refs": [
+            "CommitTrailer"
+          ],
+          "required": true,
+          "type": "array of CommitTrailer"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitGroup",
+        "CommitVerdict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A plan over a working tree.",
+      "is_enum": false,
+      "name": "CommitPlan",
+      "properties": [
+        {
+          "description": "What the plan was derived from, and what makes it stale.",
+          "name": "fingerprint",
+          "refs": [
+            "PlanFingerprint"
+          ],
+          "required": true,
+          "type": "PlanFingerprint"
+        },
+        {
+          "description": "The tree as it stood.",
+          "name": "tree",
+          "refs": [
+            "WorkingTreeState"
+          ],
+          "required": true,
+          "type": "WorkingTreeState"
+        },
+        {
+          "description": "The commits proposed, in the order they should be made.",
+          "name": "groups",
+          "refs": [
+            "CommitGroup"
+          ],
+          "required": true,
+          "type": "array of CommitGroup"
+        },
+        {
+          "description": "What a person should know before acting on it.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commit.plan"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call.",
       "is_enum": false,
       "name": "CommitRef",
@@ -4744,6 +4976,82 @@
       "used_by_schemas": [
         "GitContext"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One `Key: value` line in the trailer block at the end of a commit message.",
+      "is_enum": false,
+      "name": "CommitTrailer",
+      "properties": [
+        {
+          "description": "The key, as written: `Refs`, `Co-Authored-By`, `BREAKING CHANGE`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Everything after the colon and one space.",
+          "name": "value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitMessage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the judge concluded.",
+      "is_enum": false,
+      "name": "CommitVerdict",
+      "properties": [
+        {
+          "description": "The message as parsed; what was judged, not what was typed.",
+          "name": "message",
+          "refs": [
+            "CommitMessage"
+          ],
+          "required": true,
+          "type": "CommitMessage"
+        },
+        {
+          "description": "Whether nothing of error severity was found.",
+          "name": "passed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why the commit was not judged, when it was not.",
+          "name": "exempt",
+          "refs": [
+            "CommitExemption"
+          ],
+          "required": false,
+          "type": "CommitExemption | null"
+        },
+        {
+          "description": "Every finding, in [`CommitRule::ALL`] order.",
+          "name": "findings",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commit.validate"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -7272,7 +7580,10 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "CommitPlan",
+        "CommitVerdict",
         "CompiledContext",
+        "JudgedCommit",
         "RepositoryEnvironment",
         "RepositoryReport"
       ],
@@ -8752,6 +9063,10 @@
         "commands.get",
         "commands.list",
         "commands.graph",
+        "commit.history",
+        "commit.plan",
+        "commit.scopes",
+        "commit.validate",
         "continuity.state",
         "deploy.get",
         "deploy.list",
@@ -12714,6 +13029,57 @@
       "variants": []
     },
     {
+      "description": "A range of history, judged.",
+      "is_enum": false,
+      "name": "HistoryReport",
+      "properties": [
+        {
+          "description": "The range as asked for.",
+          "name": "range",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many commits were read.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many were exempt because git composed their subject.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many carry a finding of error severity.",
+          "name": "failing",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every commit that carries a finding, newest first. A commit with nothing to say is\ncounted and not listed: a report that printed a thousand passing commits would be a\nreport nobody reads.",
+          "name": "commits",
+          "refs": [
+            "JudgedCommit"
+          ],
+          "required": true,
+          "type": "array of JudgedCommit"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commit.history"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a capability appears over HTTP. `GET` binds every top-level input property as a\nquery parameter; `POST` binds the input as the JSON request body. Paths are absolute\nand live under [`HttpExposure::PREFIX`].",
       "is_enum": false,
       "name": "HttpExposure",
@@ -13307,6 +13673,59 @@
       ],
       "used_by_schemas": [
         "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One commit of the history, judged.",
+      "is_enum": false,
+      "name": "JudgedCommit",
+      "properties": [
+        {
+          "description": "The commit name, as git gave it.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its subject line.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it passed.",
+          "name": "passed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it was not judged, when it was not.",
+          "name": "exempt",
+          "refs": [
+            "CommitExemption"
+          ],
+          "required": false,
+          "type": "CommitExemption | null"
+        },
+        {
+          "description": "Every finding.",
+          "name": "findings",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HistoryReport"
       ],
       "values": [],
       "variants": []
@@ -16787,6 +17206,50 @@
       "variants": []
     },
     {
+      "description": "One path, and where it stands.",
+      "is_enum": false,
+      "name": "PathChange",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it is staged, unstaged or untracked. A path modified both in the index and\nin the working tree appears once, as [`ChangeStage::Staged`], with `partial` set.",
+          "name": "stage",
+          "refs": [
+            "ChangeStage"
+          ],
+          "required": true,
+          "type": "ChangeStage"
+        },
+        {
+          "description": "The two-letter status git reported, verbatim.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Set when the path is staged *and* modified again since: committing it commits the\nstaged half only, which is a thing a person should be told rather than discover.",
+          "name": "partial",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkingTreeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One peer as the board lists it.",
       "is_enum": false,
       "name": "Peer",
@@ -17218,6 +17681,48 @@
         "Plan",
         "PlanValidation",
         "PlanWaveReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a plan was derived from.\n\nCompared, never trusted: a plan whose fingerprint differs from the tree in front of it\ndescribes a tree that no longer exists.",
+      "is_enum": false,
+      "name": "PlanFingerprint",
+      "properties": [
+        {
+          "description": "The repository: git's common directory, which every worktree of one repository\nshares and no two repositories do.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worktree: this checkout's own path. Two worktrees of one repository have the\nsame repository and different worktrees, which is what keeps their plans apart.",
+          "name": "worktree",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "HEAD when the plan was derived, or `unborn`.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "SHA-256 over every change, its stage and its status, in order. Restaging one file\nchanges it; touching a file the plan does not contain does not.",
+          "name": "changes",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitPlan"
       ],
       "values": [],
       "variants": []
@@ -20308,9 +20813,10 @@
       "is_enum": true,
       "name": "ReleaseChangeKind",
       "properties": [],
-      "type": "\"feat\" | \"fix\" | \"perf\" | \"refactor\" | \"docs\" | \"test\" | \"chore\" | \"ci\" | \"style\" | \"build\" | \"revert\" | \"other\"",
+      "type": "\"feat\" | \"fix\" | \"perf\" | \"refactor\" | \"docs\" | \"test\" | \"chore\" | \"ci\" | \"style\" | \"build\" | \"revert\" | \"merge\" | \"other\"",
       "used_by": [],
       "used_by_schemas": [
+        "CommitHeader",
         "ReleaseChange",
         "ReleaseChangeGroup"
       ],
@@ -20358,6 +20864,10 @@
         {
           "description": "A change that undoes another.",
           "value": "revert"
+        },
+        {
+          "description": "An integration: one line of work brought into another.\n\nNot in the conventional-commit specification, and in this repository's history 38\ntimes and counting, because integration here is a deliberate act with a subject\nsomebody writes — `merge: bring origin/master into feature/x` — and not the sentence\n`git merge` composes. Declaring it is what lets the validator hold those subjects to\nthe same width and the same references as every other commit, instead of either\nrefusing a convention this project practises or exempting it from being checked at\nall. The changelog never renders it: `commits::in_range` reads the log with\n`--no-merges`, so a merge commit is not a release entry however its subject is\nspelled.",
+          "value": "merge"
         },
         {
           "description": "A commit whose subject does not parse as a conventional commit.",
@@ -23503,6 +24013,150 @@
       "type": "object",
       "used_by": [
         "repository.scope"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which scope a set of paths belongs to, and the evidence for it.",
+      "is_enum": false,
+      "name": "ScopeSuggestion",
+      "properties": [
+        {
+          "description": "The scope.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many prior commits associate this scope with directories these paths are in.",
+          "name": "commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory prefix the association was strongest at.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether another scope was as strongly associated. A tie is reported rather than\nbroken silently: a planner that guessed would be inventing the one field of a commit\nmessage that a reader uses to navigate.",
+          "name": "ambiguous",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitGroup"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One scope the history uses, and how much.",
+      "is_enum": false,
+      "name": "ScopeUse",
+      "properties": [
+        {
+          "description": "The scope word, as commits spell it.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of the sampled commits used it.",
+          "name": "commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory prefixes those commits touched, most often first, at most five.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ScopeVocabulary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The vocabulary as observed, with what was observed.",
+      "is_enum": false,
+      "name": "ScopeVocabulary",
+      "properties": [
+        {
+          "description": "Every scope, by how often it is used, then by name. The order is the answer to\n\"which scopes does this repository use\", so it is the order a person reads.",
+          "name": "scopes",
+          "refs": [
+            "ScopeUse"
+          ],
+          "required": true,
+          "type": "array of ScopeUse"
+        },
+        {
+          "description": "How many commits were read to learn it.",
+          "name": "sampled",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Set when git could not be asked; the vocabulary is then empty rather than wrong.",
+          "name": "unavailable",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ScopesReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The vocabulary, with the policy that reads it.",
+      "is_enum": false,
+      "name": "ScopesReport",
+      "properties": [
+        {
+          "description": "Every scope the history uses, most used first, with the directories it is used about.",
+          "name": "vocabulary",
+          "refs": [
+            "ScopeVocabulary"
+          ],
+          "required": true,
+          "type": "ScopeVocabulary"
+        },
+        {
+          "description": "How many commits back the vocabulary is learned from.",
+          "name": "sample",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commit.scopes"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -27370,6 +28024,71 @@
       "variants": []
     },
     {
+      "description": "What git says about the working tree right now.",
+      "is_enum": false,
+      "name": "WorkingTreeState",
+      "properties": [
+        {
+          "description": "The branch, or `None` when HEAD is detached.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "HEAD's full name, or `None` in a repository with no commits.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The upstream ref, when the branch has one.",
+          "name": "upstream",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Commits this branch has that its upstream does not.",
+          "name": "ahead",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Commits the upstream has that this branch does not.",
+          "name": "behind",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "A merge, rebase, cherry-pick or bisect in progress, when there is one.",
+          "name": "in_progress",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every change, ordered by stage then path.",
+          "name": "changes",
+          "refs": [
+            "PathChange"
+          ],
+          "required": true,
+          "type": "array of PathChange"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a work tree held at one moment, reduced to digests.",
       "is_enum": false,
       "name": "WorktreeFingerprint",
@@ -28129,6 +28848,267 @@
           "result_schema": "CommandGraphReport",
           "stability": "implemented",
           "summary": "The whole command graph"
+        }
+      ]
+    },
+    {
+      "description": "The commit as a value: the scope vocabulary this repository's own history yields, what the working tree would commit and how it divides, and the verdict on one message against the repository's commit policy.",
+      "name": "commit",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "commit history",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/history?range=HEAD~50..HEAD\"",
+          "description": "Every commit in a git range against the commit policy, in one pass: how many were read, how many git composed and are exempt, how many carry an error, and every commit that has a finding with what it is. What the gate reads to refuse new debt, and what answers `is the history of this branch clean?` without a process per commit.",
+          "id": "commit.history",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_commit_history",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`.\nDefault `HEAD`, which is the whole history reachable from here.",
+              "examples": [
+                {
+                  "case": "recent",
+                  "value": "\"HEAD~50..HEAD\""
+                }
+              ],
+              "name": "range",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/commit/history",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commit",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge a range of history: the result.",
+              "schema": "HistoryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "HistoryReport",
+          "stability": "behaviorally_verified",
+          "summary": "Judge a range of history"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "commit plan",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/plan\"",
+          "description": "The working tree as git reports it — branch, upstream, divergence, every staged, unstaged and untracked path, and any merge or rebase in progress — divided into the commits the history's own scoping supports, each with the evidence for it, under a fingerprint of the repository, the worktree, HEAD and the exact change set, so that a plan acted on later can be refused rather than applied to a tree it was not made for.",
+          "id": "commit.plan",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "commit-plan",
+            "uri": "majordomus://commit/plan"
+          },
+          "mcp_tool": "majordomus_commit_plan",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/commit/plan",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commit",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the working tree would commit: the result.",
+              "schema": "CommitPlan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommitPlan",
+          "stability": "behaviorally_verified",
+          "summary": "What the working tree would commit"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "commit scopes",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/scopes\"",
+          "description": "Every scope this repository's commit history uses, how often, and the directories each one is written about — learned from the history rather than declared in a table, so that a subsystem committed today is in the vocabulary today and one nobody has touched falls to the bottom on its own.",
+          "id": "commit.scopes",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "commit-scopes",
+            "uri": "majordomus://commit/scopes"
+          },
+          "mcp_tool": "majordomus_commit_scopes",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/commit/scopes",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commit",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The scope vocabulary: the result.",
+              "schema": "ScopesReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ScopesReport",
+          "stability": "behaviorally_verified",
+          "summary": "The scope vocabulary"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "commit validate",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commit/validate?message=feat%28commit%29%3A%20the%20rule%20is%20decided%20by%20a%20command\"",
+          "description": "One message against this repository's commit policy: the grammar, the subject width, whether the scope is one the history uses, whether every record the message names exists, whether a fix carries a test, and whether a breaking change explains itself — as typed findings with severities, or an exemption for a subject git composed. The same verdict the commit-msg hook refuses with and the gate reads the history through.",
+          "id": "commit.validate",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_commit_validate",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The commit message, as it would be stored. Comment lines are ignored, as git ignores\nthem, so what is judged is what would be committed.",
+              "examples": [
+                {
+                  "case": "conventional",
+                  "value": "\"feat(commit): the rule is decided by a command\""
+                },
+                {
+                  "case": "merge",
+                  "value": "\"Merge pull request #249 from korczis/fix\""
+                },
+                {
+                  "case": "not-conventional",
+                  "value": "\"update stuff\""
+                }
+              ],
+              "name": "message",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The paths the commit would contain. Omit them and the judgements that need them —\nwhether a fix carries a test — are not made rather than guessed.",
+              "examples": [],
+              "name": "paths",
+              "required": false,
+              "type": "array of string"
+            }
+          ],
+          "path": "/api/v1/commit/validate",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commit",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Judge one commit message: the result.",
+              "schema": "CommitVerdict",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommitVerdict",
+          "stability": "behaviorally_verified",
+          "summary": "Judge one commit message"
         }
       ]
     },

@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+# commit-policy — every commit in this history against the repository's commit policy.
+#
+# The subject is the commit message, and the judge is the executable's own
+# `commit.history` capability: the same grammar the changelog parses with, the same policy
+# the `commit-msg` hook refuses with, the same findings an MCP client or the HTTP route is
+# handed. Nothing here decides anything about a commit — this script chooses the range,
+# compares the count with the baseline, and reports. A second regular expression in a gate
+# is exactly what the commit subsystem exists to remove.
+#
+# Two modes, because two questions are being asked:
+#
+#   the branch    every commit this branch adds over the trunk must pass, outright. New work
+#                 has no excuse: the hook refused these messages while they were being
+#                 written, so a failure here means the hook was bypassed or the policy moved.
+#   the history   the whole history is measured against a baseline. 54 commits predate the
+#                 policy and are recorded in .ai/repo/commit-policy-baseline.txt; they block
+#                 nobody, and the count may not grow. Rewriting them is not on the table —
+#                 every one of them is published — so the ratchet is the honest instrument.
+#
+#   scripts/ci/commit-policy                     both; fail on a branch failure or new debt
+#   MJ_ROOT=<dir> scripts/ci/commit-policy       measure another tree (the case does)
+#   scripts/ci/commit-policy --write-baseline    record today's debt (a deliberate act)
+#   scripts/ci/commit-policy --strict            fail on any failing commit, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 a failing branch commit or new debt, 12 unusable.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/commit-policy-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "commit-policy: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+MJ="${MAJORDOMUS_BIN:-$ROOT/bin/majordomus-cli}"
+if [ ! -x "$MJ" ]; then
+  echo "commit-policy: no executable at $MJ; set MAJORDOMUS_BIN or run from a checkout" >&2
+  exit 12
+fi
+
+# The whole history, judged in one pass. `--format json` so the count is read rather than
+# parsed out of prose.
+HISTORY="$("$MJ" commit history --format json 2>/dev/null || true)"
+if [ -z "$HISTORY" ]; then
+  echo "commit-policy: the executable could not judge this history" >&2
+  exit 12
+fi
+failing() { printf '%s' "$1" | sed -n 's/.*"failing": *\([0-9][0-9]*\).*/\1/p' | head -1; }
+DEBT="$(failing "$HISTORY")"
+[ -n "$DEBT" ] || { echo "commit-policy: no verdict in the report" >&2; exit 12; }
+
+if [ "$MODE" = "write" ]; then
+  printf '%s\n' "$DEBT" > "$BASELINE"
+  echo "commit-policy: baseline written, $DEBT commit(s) of recorded debt"
+  exit 0
+fi
+
+# The branch's own commits, against the trunk. A branch with no trunk to compare against
+# (the trunk itself, a clone with no remote) measures nothing here rather than guessing a
+# base — and says so, because a check that cannot reach its subject must not report a pass.
+BASE=""
+for candidate in origin/master origin/main master main; do
+  if git rev-parse --verify --quiet "$candidate" >/dev/null 2>&1; then BASE="$candidate"; break; fi
+done
+BRANCH_FAILING=0
+BRANCH_SCOPE="not measured (no trunk to compare against)"
+if [ -n "$BASE" ]; then
+  MERGE_BASE="$(git merge-base "$BASE" HEAD 2>/dev/null || true)"
+  if [ -n "$MERGE_BASE" ]; then
+    BRANCH="$("$MJ" commit history "$MERGE_BASE..HEAD" --format json 2>/dev/null || true)"
+    if [ -n "$BRANCH" ]; then
+      BRANCH_FAILING="$(failing "$BRANCH")"
+      [ -n "$BRANCH_FAILING" ] || BRANCH_FAILING=0
+      BRANCH_SCOPE="$MERGE_BASE..HEAD"
+      if [ "$BRANCH_FAILING" != "0" ]; then
+        "$MJ" commit history "$MERGE_BASE..HEAD" 2>/dev/null || true
+      fi
+    fi
+  fi
+fi
+
+RECORDED=0
+[ -f "$BASELINE" ] && RECORDED="$(tr -d '[:space:]' < "$BASELINE")"
+[ -n "$RECORDED" ] || RECORDED=0
+
+echo "commit-policy: branch $BRANCH_SCOPE, $BRANCH_FAILING failing"
+echo "commit-policy: history $DEBT failing, baseline $RECORDED"
+
+STATUS=0
+if [ "$BRANCH_FAILING" != "0" ]; then
+  echo "commit-policy: $BRANCH_FAILING commit(s) on this branch do not satisfy the policy" >&2
+  echo "  majordomus commit history $BRANCH_SCOPE    # what each one says" >&2
+  STATUS=10
+fi
+if [ "$MODE" = "strict" ]; then
+  if [ "$DEBT" != "0" ]; then
+    echo "commit-policy: $DEBT failing commit(s) under --strict" >&2
+    STATUS=10
+  fi
+elif [ "$DEBT" -gt "$RECORDED" ]; then
+  echo "commit-policy: the history's debt grew from $RECORDED to $DEBT" >&2
+  echo "  majordomus commit history                  # what each one says" >&2
+  STATUS=10
+elif [ "$DEBT" -lt "$RECORDED" ]; then
+  echo "commit-policy: the debt fell from $RECORDED to $DEBT; run --write-baseline to keep it there"
+fi
+exit "$STATUS"

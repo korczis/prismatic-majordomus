@@ -156,6 +156,16 @@ gates:
     runs: scripts/ci/rule-proof-check
     summary: every rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, and a named case that was renamed or deleted fails outright
 
+  # The commit policy over the history (rule project.conventional-commits). Needs the
+  # executable, because the judge is the executable's — the gate chooses a range and
+  # compares a count, and carries no grammar of its own. The branch's own commits must pass
+  # outright; the history's existing debt is ratcheted in
+  # .ai/repo/commit-policy-baseline.txt.
+  - id: commit-policy
+    job: structure
+    runs: scripts/ci/commit-policy
+    summary: every commit this branch adds satisfies the repository's commit policy, and the history's recorded debt does not grow
+
   # A grep over the tree, so it costs nothing and runs in every plan: a second parser of
   # the lease can be introduced from a shell script, a recipe, a hook or the crate, and no
   # one path class names all four.
@@ -412,6 +422,14 @@ classes:
   - id: governance
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, apps/majordomus-cli/src/rules/**]
     gates: [rule-proof, english-only, finding-reproduce, shell-suite, rust-integration]
+
+  # the commit policy: the subsystem that judges a message, the gate that reads the history
+  # through it, the hook that refuses with it, and the baseline of the commits that predate
+  # it. A change to the grammar, the policy or the vocabulary changes what every commit made
+  # afterwards is held to, so the gate and both suites run.
+  - id: commit-policy
+    paths: [apps/majordomus-cli/src/commit/**, apps/majordomus-cli/src/capability/builtin/commit.rs, apps/majordomus-cli/src/commands/commit.rs, scripts/ci/commit-policy, .ai/repo/commit-policy-baseline.txt, .githooks/commit-msg, test/cases/274_commit_policy.sh]
+    gates: [commit-policy, rust-integration, shell-suite, rust-quality]
 
   # the evidence fabric: the ledger of recorded executions, the join that reads it and the
   # gate that ratchets it. A claim's proof is derived from the matrix and the ledger

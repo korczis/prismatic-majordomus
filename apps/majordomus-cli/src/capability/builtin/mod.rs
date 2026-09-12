@@ -32,6 +32,7 @@
 
 pub mod artifacts;
 pub(crate) mod capabilities;
+pub mod commit;
 pub mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
@@ -145,6 +146,7 @@ pub use worktree::{
 pub fn modules() -> Vec<ModuleDescriptor> {
     compose_modules![
         release,
+        commit,
         repository,
         objects,
         capabilities,

@@ -179,6 +179,38 @@ enforcement:
     path: bin/majordomus-cli
     args: [worktree, guard]
     wired_by: git-hook:pre-commit
+  # The commit policy (rule project.conventional-commits). The message is judged at the one
+  # moment its whole evidence exists — written, with the files staged — by the same
+  # capability the gate reads the history through. The hook asks; the judge decides.
+  - name: commit-policy-on-message
+    path: bin/majordomus-cli
+    args: [commit, validate]
+    wired_by: git-hook:commit-msg
+
+# What a commit message is held to. Read by the Rust executable's commit subsystem, which
+# is what the `commit-msg` hook refuses with and what `scripts/ci/commit-policy` reads the
+# history through — one declaration, one judge, every surface.
+#
+# `subject_max_chars` is measured, not chosen. The git convention is 72 and the distribution
+# says this repository has never written that way: over 1161 non-merge commits the median
+# subject is 73 characters and the 95th percentile is 98. 100 is what this project declares
+# for a line of anything, and it is a width this history can actually meet — a limit half the
+# history violates is not a limit, it is noise that teaches people to ignore the check.
+#
+# The three levels below are the judgements a repository can reasonably disagree about.
+# `scope_unknown` is a warning because the vocabulary is learned from history and must not
+# refuse the first commit of a new subsystem. `fix_requires_test` is a warning for the same
+# reason it exists at all: it is the cheapest possible reminder that a bug which can come
+# back needs a regression test, and it is not evidence enough to refuse a commit on. The two
+# errors are the ones with no judgement in them: a record id the layer does not hold cannot
+# be told from a good one until somebody follows it, and a breaking change that explains
+# nothing produces a release note saying a thing broke.
+commit:
+  subject_max_chars: 100
+  scope_unknown: warning
+  fix_requires_test: warning
+  reference_unresolved: error
+  breaking_unexplained: error
 
 projections:
   - provider: agents

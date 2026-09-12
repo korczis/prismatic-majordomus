@@ -1,7 +1,7 @@
 +++
 title = "Backlog"
 description = "the four quantities that grow on their own — open pull requests, worktrees, branches, running servers; why GitHub can never merge a pull request of this repository and what lands one instead; the commands that measure and reduce each"
-weight = 45
+weight = 46
 [extra]
 source = "docs/BACKLOG.md"
 +++

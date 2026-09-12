@@ -64,6 +64,8 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
+    Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
     /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
@@ -1872,6 +1874,71 @@ pub struct CommandExamples {
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
     CommandExamples {
+        command: "commit",
+        examples: &[ExampleDoc {
+            id: "commit-default-plan",
+            title: "What this tree would commit, and why",
+            description: "`commit` with nothing after it plans, because that is what a person wants when they ask about committing. The branch, its upstream and divergence, what is staged and what is not, and the commits the history's own scoping supports — each with the evidence for it rather than an assertion. A clean tree says so.",
+            argv: &["commit"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["branch", "tree", "fingerprint"]),
+        }],
+    },
+    CommandExamples {
+        command: "commit plan",
+        examples: &[
+            ExampleDoc {
+                id: "commit-plan",
+                title: "The plan, with the fingerprint that makes it refusable",
+                description: "The fingerprint is the repository, the worktree, HEAD and a hash over every change with its stage. A caller holding a plan compares it with the tree in front of it and is told what moved — `HEAD moved from a1b2c3d4e to e4f5a6b70` — rather than being told nothing and committing somebody else's staged work.",
+                argv: &["commit", "plan"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["fingerprint", "nothing staged"]),
+            },
+            ExampleDoc {
+                id: "commit-plan-json",
+                title: "The same answer, as the shape the API and MCP return",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/commit/plan` returns and what the `majordomus_commit_plan` tool answers, with the working tree, every group with its rationale, and the fingerprint.",
+                argv: &["commit", "plan", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/fingerprint/repository", "/fingerprint/worktree", "/tree/changes"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "commit scopes",
+        examples: &[ExampleDoc {
+            id: "commit-scopes",
+            title: "The scope vocabulary, learned rather than declared",
+            description: "Every scope this repository's own commits use, how often, and the directories each one is written about — read from at most 1500 commits of the log. Nothing here is configured: a subsystem committed today is in the vocabulary today, and one nobody has touched sinks on its own. A repository whose history is not conventional yields an empty vocabulary and says how many commits it read.",
+            argv: &["commit", "scopes"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["learned from"]),
+        }],
+    },
+    CommandExamples {
+        command: "commit validate",
+        examples: &[ExampleDoc {
+            id: "commit-validate-rev",
+            title: "The verdict on a commit that is already made",
+            description: "`--rev` judges the message of any revision `git show` accepts; without it the message is read from a file or from standard input, which is the shape the `commit-msg` hook has. The exit code is the verdict: 0 when nothing of error severity was found, 10 when something was. Here the repository's first commit is subject `install`, which is not `type(scope): subject`, so the answer is 10 and the finding names the eleven type words.",
+            argv: &["commit", "validate", "--rev", "HEAD"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "commit history",
+        examples: &[ExampleDoc {
+            id: "commit-history",
+            title: "A whole range judged in one pass",
+            description: "One process for the range rather than one per commit: this reads 1755 commits of this repository's own history in about three and a half seconds, which is what lets `scripts/ci/commit-policy` be a gate rather than a nightly job. It reports how many were read, how many git composed and are therefore exempt, and how many carry an error — and exits 10 when any does.",
+            argv: &["commit", "history"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "product",
         examples: &[ExampleDoc {
             id: "product-default-list",
@@ -3289,3 +3356,53 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
 ];
+
+#[derive(Debug, clap::Args)]
+/// `majordomus commit`: the commit as a value.
+///
+/// Three questions, all read-only: what the working tree would commit, which scopes the
+/// history uses, and whether one message passes. Making the commit is `git commit`, which
+/// the `commit-msg` hook puts the third of these in front of — the executable proposes and
+/// judges, and a person commits.
+pub struct CommitArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `plan`.
+    pub command: Option<CommitCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus commit`.
+pub enum CommitCommand {
+    /// What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves
+    Plan,
+    /// Every scope this repository's commit history uses, how often, and the directories each one is written about
+    Scopes,
+    /// Judge every commit in a range of history against the commit policy, in one pass; exit 10 when any carries an error
+    History {
+        /// Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`. None is `HEAD`
+        #[arg(value_name = "RANGE")]
+        range: Option<String>,
+    },
+    /// Judge one commit message against the repository's commit policy; exit 10 when a finding is an error
+    Validate {
+        /// The file holding the message; none reads standard input, which is what the `commit-msg` hook has
+        #[arg(value_name = "FILE")]
+        file: Option<String>,
+
+        /// Judge it as a commit of these paths, comma-separated: what needs them — whether a fix carries a test — is otherwise not judged rather than guessed
+        #[arg(long, value_name = "PATHS", value_delimiter = ',')]
+        paths: Vec<String>,
+
+        /// Judge the message of this commit instead of a file: any revision `git show` accepts
+        #[arg(long, value_name = "REV", conflicts_with = "file")]
+        rev: Option<String>,
+    },
+}

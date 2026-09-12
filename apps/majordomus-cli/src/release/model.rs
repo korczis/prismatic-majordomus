@@ -43,27 +43,72 @@ pub enum ChangeKind {
     Build,
     /// A change that undoes another.
     Revert,
+    /// An integration: one line of work brought into another.
+    ///
+    /// Not in the conventional-commit specification, and in this repository's history 38
+    /// times and counting, because integration here is a deliberate act with a subject
+    /// somebody writes — `merge: bring origin/master into feature/x` — and not the sentence
+    /// `git merge` composes. Declaring it is what lets the validator hold those subjects to
+    /// the same width and the same references as every other commit, instead of either
+    /// refusing a convention this project practises or exempting it from being checked at
+    /// all. The changelog never renders it: `commits::in_range` reads the log with
+    /// `--no-merges`, so a merge commit is not a release entry however its subject is
+    /// spelled.
+    Merge,
     /// A commit whose subject does not parse as a conventional commit.
     Other,
 }
 
 impl ChangeKind {
+    /// Every type word the convention defines, with the kind it names.
+    ///
+    /// One list, read in both directions: [`ChangeKind::parse`] maps a word to a kind, and
+    /// [`ChangeKind::WORDS`] is what a validator quotes back to somebody who typed a word
+    /// that is not one. A second copy of these eleven words in the validator is exactly the
+    /// duplication that lets a type added here go unmentioned there.
+    const TABLE: &'static [(&'static str, ChangeKind)] = &[
+        ("feat", ChangeKind::Feat),
+        ("fix", ChangeKind::Fix),
+        ("perf", ChangeKind::Perf),
+        ("refactor", ChangeKind::Refactor),
+        ("docs", ChangeKind::Docs),
+        ("test", ChangeKind::Test),
+        ("chore", ChangeKind::Chore),
+        ("ci", ChangeKind::Ci),
+        ("style", ChangeKind::Style),
+        ("build", ChangeKind::Build),
+        ("revert", ChangeKind::Revert),
+        ("merge", ChangeKind::Merge),
+    ];
+
+    /// The type words, in the order [`Self::TABLE`] declares them.
+    ///
+    /// ```
+    /// use majordomus_cli::release::ChangeKind;
+    /// assert_eq!(ChangeKind::WORDS.first(), Some(&"feat"));
+    /// assert!(ChangeKind::WORDS.iter().all(|w| ChangeKind::parse(w) != ChangeKind::Other));
+    /// ```
+    pub const WORDS: &'static [&'static str] = &[
+        "feat", "fix", "perf", "refactor", "docs", "test", "chore", "ci", "style", "build",
+        "revert", "merge",
+    ];
+
     /// The kind one conventional-commit type word names.
     pub fn parse(word: &str) -> ChangeKind {
-        match word {
-            "feat" => ChangeKind::Feat,
-            "fix" => ChangeKind::Fix,
-            "perf" => ChangeKind::Perf,
-            "refactor" => ChangeKind::Refactor,
-            "docs" => ChangeKind::Docs,
-            "test" => ChangeKind::Test,
-            "chore" => ChangeKind::Chore,
-            "ci" => ChangeKind::Ci,
-            "style" => ChangeKind::Style,
-            "build" => ChangeKind::Build,
-            "revert" => ChangeKind::Revert,
-            _ => ChangeKind::Other,
-        }
+        ChangeKind::TABLE
+            .iter()
+            .find(|(w, _)| *w == word)
+            .map(|(_, k)| *k)
+            .unwrap_or(ChangeKind::Other)
+    }
+
+    /// The word this kind is written as, or `None` for [`ChangeKind::Other`], which is not
+    /// a type anybody writes.
+    pub fn word(self) -> Option<&'static str> {
+        ChangeKind::TABLE
+            .iter()
+            .find(|(_, k)| *k == self)
+            .map(|(w, _)| *w)
     }
 
     /// The heading this kind is rendered under, and the order the headings appear in.
@@ -83,6 +128,7 @@ impl ChangeKind {
             ChangeKind::Style => "Formatting",
             ChangeKind::Build => "Build",
             ChangeKind::Revert => "Reverted",
+            ChangeKind::Merge => "Integration",
             ChangeKind::Other => "Other",
         }
     }
@@ -103,6 +149,7 @@ impl ChangeKind {
             ChangeKind::Revert => 2,
             ChangeKind::Build => 6,
             ChangeKind::Style => 7,
+            ChangeKind::Merge => 8,
             ChangeKind::Other => 8,
         }
     }
@@ -339,4 +386,28 @@ pub struct VersionReport {
     /// How many commits since the last release, and of what kind — the evidence for the
     /// bump, so that a surprising answer can be checked rather than believed.
     pub changes: Vec<Change>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_type_vocabulary_reads_the_same_in_both_directions() {
+        // `WORDS` is what a validator quotes and `TABLE` is what the parser reads. They are
+        // two spellings of one list, and this is the assertion that keeps them one: a type
+        // added to the table and forgotten in the words, or the reverse, fails here rather
+        // than in a validator that quietly stops mentioning it.
+        let from_table: Vec<&str> = ChangeKind::TABLE.iter().map(|(w, _)| *w).collect();
+        assert_eq!(from_table, ChangeKind::WORDS);
+        for word in ChangeKind::WORDS {
+            let kind = ChangeKind::parse(word);
+            assert_ne!(kind, ChangeKind::Other, "{word} parses to nothing");
+            assert_eq!(kind.word(), Some(*word), "{word} does not render back");
+        }
+        // every kind but `Other` is reachable from a word, so no variant is orphaned
+        assert_eq!(ChangeKind::TABLE.len(), ChangeKind::WORDS.len());
+        assert_eq!(ChangeKind::Other.word(), None);
+        assert_eq!(ChangeKind::parse("wip"), ChangeKind::Other);
+    }
 }

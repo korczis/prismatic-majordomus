@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit as a development surface: baseline, archaeology and gap matrix"
 description = "forensic finding, 2026-09-10: what the Cockpit would need in order to become a development surface — the governance preflight and its two defects, the two-program split, the system run end to end with every command and response recorded, the gap matrix, the drift audit, and the phased plan with the failures that must be fixed first"
-weight = 34
+weight = 35
 [extra]
 source = "docs/COCKPIT_IDE_AUDIT.md"
 +++

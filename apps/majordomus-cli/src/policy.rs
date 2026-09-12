@@ -101,6 +101,10 @@ pub struct Policy {
     /// `projections:`.
     #[serde(default)]
     pub projections: Vec<Projection>,
+    /// `commit:` — what this repository holds a commit message to. Absent is the default,
+    /// which is what this repository's own history already satisfies.
+    #[serde(default)]
+    pub commit: crate::commit::CommitPolicy,
 }
 
 /// `session:` — what the episode boundary does beyond drawing itself.
