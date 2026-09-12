@@ -996,6 +996,7 @@ impl Policy {
 /// let baseline = Baseline {
 ///     version: "0.5.0".into(),
 ///     reference: "v0.5.0".into(),
+///     read_at: "3a032c1e033b".into(),
 ///     commit: "3a032c1e033b".into(),
 ///     recorded: true,
 ///     atoms: 300,
@@ -1284,8 +1285,8 @@ pub enum Status {
 /// let plan = VersionPlan {
 ///     policy: Policy::for_version(Version::parse("0.5.0").unwrap()),
 ///     baseline: Baseline {
-///         version: "0.5.0".into(), reference: "v0.5.0".into(), commit: "3a032c1e".into(),
-///         recorded: true, atoms: 300, fingerprint: "sha256:a".into(),
+///         version: "0.5.0".into(), reference: "v0.5.0".into(), read_at: "3a032c1e".into(),
+///         commit: "3a032c1e".into(), recorded: true, atoms: 300, fingerprint: "sha256:a".into(),
 ///     },
 ///     declared_version: "0.5.0".into(),
 ///     tool_version: "0.5.0".into(),
@@ -1357,7 +1358,8 @@ impl VersionPlan {
     /// # fn plan(changes: Vec<SurfaceChange>) -> VersionPlan {
     /// #   VersionPlan { policy: Policy::for_version(Version::parse("0.5.0").unwrap()),
     /// #     baseline: Baseline { version: "0.5.0".into(), reference: "v0.5.0".into(),
-    /// #       commit: "c".into(), recorded: true, atoms: 1, fingerprint: "sha256:a".into() },
+    /// #       read_at: "c".into(), commit: "c".into(), recorded: true, atoms: 1,
+    /// #       fingerprint: "sha256:a".into() },
     /// #     declared_version: "0.5.0".into(), tool_version: "0.5.0".into(), writers_agree: true,
     /// #     atoms: 1, fingerprint: "sha256:b".into(), implied: Impact::Minor,
     /// #     required: Impact::Minor, declared: Impact::None, required_version: "0.6.0".into(),
@@ -1392,7 +1394,8 @@ impl VersionPlan {
     /// # let additive = SurfaceChange { impact: Impact::Minor, ..breaking.clone() };
     /// # let plan = VersionPlan { policy: Policy::for_version(Version::parse("1.0.0").unwrap()),
     /// #   baseline: Baseline { version: "1.0.0".into(), reference: "v1.0.0".into(),
-    /// #     commit: "c".into(), recorded: true, atoms: 1, fingerprint: "sha256:a".into() },
+    /// #     read_at: "c".into(), commit: "c".into(), recorded: true, atoms: 1,
+    /// #     fingerprint: "sha256:a".into() },
     /// #   declared_version: "1.0.0".into(), tool_version: "1.0.0".into(), writers_agree: true,
     /// #   atoms: 1, fingerprint: "sha256:b".into(), implied: Impact::Major,
     /// #   required: Impact::Major, declared: Impact::None, required_version: "2.0.0".into(),
@@ -1412,7 +1415,8 @@ impl VersionPlan {
     /// # use majordomus_cli::release::version::Version;
     /// # let mut plan = VersionPlan { policy: Policy::for_version(Version::parse("0.5.0").unwrap()),
     /// #   baseline: Baseline { version: "0.5.0".into(), reference: "v0.5.0".into(),
-    /// #     commit: "c".into(), recorded: true, atoms: 1, fingerprint: "sha256:a".into() },
+    /// #     read_at: "c".into(), commit: "c".into(), recorded: true, atoms: 1,
+    /// #     fingerprint: "sha256:a".into() },
     /// #   declared_version: "0.5.0".into(), tool_version: "0.5.0".into(), writers_agree: true,
     /// #   atoms: 1, fingerprint: "sha256:b".into(), implied: Impact::None,
     /// #   required: Impact::None, declared: Impact::None, required_version: "0.5.0".into(),

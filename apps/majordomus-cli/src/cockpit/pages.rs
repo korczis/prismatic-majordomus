@@ -2783,9 +2783,27 @@ pub fn health(ctx: &Context) -> Page {
 pub fn release(ctx: &Context) -> Page {
     let plan: VersionPlan = match ask(ctx, "release.analysis", json!({})) {
         Ok(p) => p,
-        // A repository that has published nothing cannot be measured, and says so. An empty
-        // diff here would read as "nothing changed", which is the one wrong answer.
-        Err(e) => return failed(Area::Release, "Release", e),
+        // Not `failed`, which answers 500. Every way this capability refuses is a *state of
+        // the repository* — it has published nothing, or its last release predates the
+        // committed registry — and a repository that has not released yet is not a server
+        // error. It is still never rendered as an empty diff, which would read as "nothing
+        // changed": the page says what could not be measured and why.
+        Err(reason) => {
+            return Page::new(
+                Area::Release,
+                "Release",
+                el("div").class("mj-grid").child(card(
+                    "Nothing to measure against yet",
+                    el("div")
+                        .child(el("p").class("mj-prose").text(&reason))
+                        .child(el("p").class("mj-note").text(
+                            "The smallest allowed version is measured against the surface the last release published. Until there is one — a release record, and the registry committed at its commit — there is no baseline, and no bump can be derived. A version named deliberately is still written: `majordomus release bump --level minor`.",
+                        )),
+                )),
+            )
+            .subtitle("The smallest version this tree may declare, measured from the public capability surface against the last release.")
+            .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)]);
+        }
     };
     let (added, changed, removed) = plan.counts();
     let blocked = plan.status == ReleaseStatus::Blocked;
@@ -2848,17 +2866,23 @@ pub fn release(ctx: &Context) -> Page {
                         plan.changes
                             .iter()
                             .map(|c| {
+                                // The badge and the atom on one line, the reason on its
+                                // own. An inline note beside a `mono` chip cannot wrap, and
+                                // a change id plus a clause is wider than a 320px viewport.
                                 el("li")
-                                    .child(badge(
-                                        match c.impact {
-                                            Impact::Major => "fail",
-                                            Impact::Minor => "warn",
-                                            _ => "ok",
-                                        },
-                                        c.impact.as_str(),
-                                    ))
-                                    .child(mono(c.to_string()))
-                                    .child(el("span").class("mj-note").text(&c.detail))
+                                    .child(
+                                        el("div")
+                                            .child(badge(
+                                                match c.impact {
+                                                    Impact::Major => "fail",
+                                                    Impact::Minor => "warn",
+                                                    _ => "ok",
+                                                },
+                                                c.impact.as_str(),
+                                            ))
+                                            .child(mono(c.to_string())),
+                                    )
+                                    .child(el("div").class("mj-note").text(&c.detail))
                             })
                             .collect::<Vec<_>>(),
                     ),

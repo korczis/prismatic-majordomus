@@ -60,14 +60,9 @@ use super::{get, mcp, post};
 /// [`super::server::ServerStatusInput`], because it is the same question asked of the same
 /// set of checkouts, and a caller should not have to learn it twice.
 ///
-/// ```
-/// use majordomus_cli::capability::builtin::peers::PeerListInput;
-/// use majordomus_cli::capability::builtin::server::Checkouts;
-/// let asked_nothing: PeerListInput = serde_json::from_str("{}").unwrap();
-/// assert_eq!(asked_nothing.checkouts, Checkouts::Repository, "the board is the repository's");
-/// let narrow: PeerListInput = serde_json::from_str(r#"{"checkouts":"this"}"#).unwrap();
-/// assert_eq!(narrow.checkouts, Checkouts::This);
-/// ```
+/// The evidence for that is `the_default_board_is_the_repositorys` below rather than a doc
+/// example here: this module is `pub(crate)`, so a doc test — which compiles as an external
+/// crate — cannot name the type at all.
 pub struct PeerListInput {
     // The whole of "why `this` exists" is in this module's own documentation: kept to one
     // line here because a field's doc is rendered into a table cell, and a paragraph
@@ -373,6 +368,22 @@ pub fn module() -> ModuleDescriptor {
 
 #[cfg(test)]
 mod tests {
+    /// The default is the repository's board, and the narrow word still parses — the same
+    /// question, the same word and the same default as `server::ServerStatusInput`.
+    #[test]
+    fn the_default_board_is_the_repositorys() {
+        use super::*;
+        let asked_nothing: PeerListInput = serde_json::from_str("{}").expect("an empty object");
+        assert_eq!(
+            asked_nothing.checkouts,
+            Checkouts::Repository,
+            "the board is the repository's"
+        );
+        let narrow: PeerListInput =
+            serde_json::from_str(r#"{"checkouts":"this"}"#).expect("the narrow word");
+        assert_eq!(narrow.checkouts, Checkouts::This);
+    }
+
     use super::*;
 
     /// The declaration is the only place these names exist, and every projection — the MCP
