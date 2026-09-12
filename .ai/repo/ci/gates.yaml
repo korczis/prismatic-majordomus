@@ -547,5 +547,5 @@ classes:
   # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
   # rather than the whole rules tree, so a change to one rule does not escalate every plan.
   - id: backlog
-    paths: [scripts/reap-orphans, scripts/land, .ai/repo/rules/project/accumulation-is-measured.v1.md, test/cases/131_backlog_hygiene.sh]
+    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]

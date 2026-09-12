@@ -268,3 +268,84 @@ mj_rust_bin_missing() {
     printf '%s  Build your own: cargo build --manifest-path %s/apps/majordomus-cli/Cargo.toml\n' "$mj_bm_p" "$mj_bm_root"
   } >&2
 }
+
+# ------------------------------------------------------------------------------ the floor
+#
+# How much free space a build of this crate must find before it starts.
+#
+# This repository already bounds every wait (project.every-wait-is-bounded): a wait without a
+# timeout is a hang with a nicer name. A build with no bound on the disk it may consume is
+# the same shape, and on 2026-09-12 it ended the same way — the volume reached zero bytes
+# free while several sessions were building at once, and every one of them died at a moment
+# when nobody could run `df` any more. What fails in that state is not the build: it is the
+# harness writing its own task files, which reads like tooling breaking rather than a full
+# disk. A diagnostic that arrives afterwards helps the next person; a bound that refuses to
+# start is what helps the person about to be stuck.
+#
+#   MAJORDOMUS_MIN_FREE_MB   free MiB below which a build refuses to start (default 5120);
+#                            0 disables the bound entirely.
+#
+# The default is measured, not chosen. On 2026-09-12 a full `cargo build --locked` of
+# apps/majordomus-cli into an empty target/, with a warm sccache, wrote 2,566,652 KiB —
+# 2.45GiB. The floor is two of those: a build that passes this test has the room to finish,
+# and the tree it finishes in still has room for the release and test artifacts the same
+# session adds on top. The build directories on this machine that day held between 2.4GB and
+# 23.4GB each, median 3.4GB, which is what a worktree costs over its working life.
+MJ_MIN_FREE_MB_DEFAULT=5120
+
+# mj_free_mb <path>
+#
+# MiB free on the volume that path is on, or nothing at all when it cannot be read. The path
+# need not exist yet — a build directory usually does not — so the nearest existing ancestor
+# is what is measured. Nothing, never a number that was not measured: a bound that invents
+# its input is the defect project.destructive-sweeps-fail-closed names, one domain over.
+mj_free_mb() {
+  mj_fm_path="$1"
+  while [ -n "$mj_fm_path" ] && [ "$mj_fm_path" != "/" ] && [ ! -d "$mj_fm_path" ]; do
+    mj_fm_path="$(dirname "$mj_fm_path")"
+  done
+  [ -d "$mj_fm_path" ] || return 1
+  df -k "$mj_fm_path" 2>/dev/null | awk 'NR == 2 && $4 ~ /^[0-9]+$/ { printf "%d", $4/1024; exit }'
+}
+
+# mj_rust_space_check <repository-root> [what]
+#
+# May a build start here? True (0) to proceed, false (1) to refuse — and it says why on
+# stderr, in the words that make the next move obvious.
+#
+# The asymmetry with a deleting sweep is deliberate. A sweep whose predicate cannot be
+# measured must treat that as "do not delete"; a bound whose input cannot be measured must
+# not treat it as "nobody may build", because refusing every build on a machine whose `df`
+# is unreadable stops all work to prevent a hypothetical. So: unreadable says so out loud
+# and lets the build run; measured-and-below refuses.
+mj_rust_space_check() {
+  mj_sc_root="$1"
+  mj_sc_what="${2:-a build}"
+  mj_sc_floor="${MAJORDOMUS_MIN_FREE_MB:-$MJ_MIN_FREE_MB_DEFAULT}"
+  case "$mj_sc_floor" in ''|*[!0-9]*) mj_sc_floor="$MJ_MIN_FREE_MB_DEFAULT" ;; esac
+  [ "$mj_sc_floor" -gt 0 ] || return 0
+
+  # the volume the build writes to, which is not necessarily the one the checkout is on
+  mj_sc_target="$(mj_cargo_target_dir "$mj_sc_root/apps/majordomus-cli")"
+  mj_sc_free="$(mj_free_mb "$mj_sc_target" || true)"
+  if [ -z "$mj_sc_free" ]; then
+    printf 'majordomus: free space on %s could not be measured; %s is starting anyway\n' \
+      "$mj_sc_target" "$mj_sc_what" >&2
+    return 0
+  fi
+  [ "$mj_sc_free" -lt "$mj_sc_floor" ] || return 0
+
+  {
+    printf 'majordomus: refusing to start %s: %sMB free, floor %sMB.\n' \
+      "$mj_sc_what" "$mj_sc_free" "$mj_sc_floor"
+    printf '  Where it would write:  %s\n' "$mj_sc_target"
+    printf '  What one build costs:  2.45GB into target/ (measured 2026-09-12: empty target, warm sccache)\n'
+    printf '  A build started below this floor does not fail by itself. It fills the volume, and every\n'
+    printf '  other session on this machine dies at a point where nothing can write a file any more,\n'
+    printf '  which reads to each of them as broken tooling rather than as a full disk.\n'
+    printf '  Reclaim first:         scripts/reap-orphans --targets    (what is reclaimable; changes nothing)\n'
+    printf '                         scripts/reap-orphans --reclaim    (build output of landed, unattended worktrees)\n'
+    printf '  To override:           MAJORDOMUS_MIN_FREE_MB=0\n'
+  } >&2
+  return 1
+}
