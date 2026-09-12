@@ -13,7 +13,10 @@
     <a href="{{ get_url(path="/", trailing_slash=true) }}" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">{{ project.short_name }}</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v{{ project.version }}</span>
+      {# Shown at every width. Which version a reader is looking at is the one fact that
+         decides whether anything else on the page is true of the tool they have, and a
+         phone is where most people meet this page first. #}
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ project.version }}</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       {% include "partials/theme-toggle.html" %}

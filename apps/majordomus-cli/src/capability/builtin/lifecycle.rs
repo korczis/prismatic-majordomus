@@ -945,7 +945,7 @@ pub struct ClosedSessions {
     pub total: usize,
     /// How many of them closed on the branch this checkout is on.
     pub on_this_branch: usize,
-    /// The newest [`CLOSED_WINDOW`], newest first.
+    /// The newest `CLOSED_WINDOW`, newest first.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub newest: Vec<ClosedSession>,
     /// How many are carried in `newest`, against the total.
