@@ -693,8 +693,16 @@ mj_recover_orphans() {
     case "$rdy" in 1) continue ;; 2) MJ_RECOVER_SKIPPED=$((${MJ_RECOVER_SKIPPED:-0} + 1)); continue ;; esac
     printf '  orphan      %s — a staging directory of scripts/generate-site-data, %s old; the run that made it did not finish\n' \
       "$(mj_rel "$f")" "$(mj_age_human $(( $(mj_recover_age_secs "$f") / 60 )))"
-    MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-    [ "$MJ_RECOVER_CHECK" = 1 ] || rm -rf "$f"
+    # Reported and left where it is. This tool removes no directory tree: SECURITY.md
+    # states "no recursive deletion", and a directory is the one stray this command cannot
+    # account for file by file before removing — which is the same reason an unfinished
+    # write whose target is absent is reported rather than swept.
+    # Counted as neither an action nor a skip: an action is something this command did, and
+    # a skip is a candidate whose evidence could not be read. This one was read and
+    # understood, and leaving it is the policy rather than a failure to classify.
+    mj_warn recover "$(mj_rel "$f")" \
+      "a stale staging directory is reported and left in place; look at it, then remove it yourself" \
+      "ls -la $(mj_rel "$f")"
   done
 
   # 4. anything in the checkpoint store that is not a checkpoint. The store holds files
