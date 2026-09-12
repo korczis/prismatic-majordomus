@@ -283,3 +283,7 @@ mj_report_overlap_from_current() {
 . "$MJ_LIB_DIR/usecase.sh"
 # shellcheck source=evidence.sh
 . "$MJ_LIB_DIR/evidence.sh"
+# the completion-gate doctrine: which validation gates the change selects, what each said,
+# and whether that verdict still describes this tree
+# shellcheck source=gates.sh
+. "$MJ_LIB_DIR/gates.sh"
