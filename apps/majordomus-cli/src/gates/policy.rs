@@ -42,8 +42,9 @@
 //! ";
 //! let policy = CompletionPolicy::parse(text, "share/completion.yaml").unwrap();
 //! assert_eq!(policy.stages.len(), 2);
-//! assert_eq!(policy.questions[0].source, QuestionSource::Obligation("commit".into()));
-//! assert_eq!(policy.questions[1].source, QuestionSource::Gates);
+//! assert_eq!(policy.questions[0].source, "obligation:commit", "carried as the file states it");
+//! assert_eq!(policy.questions[0].kind(), QuestionSource::Obligation("commit".into()));
+//! assert_eq!(policy.questions[1].kind(), QuestionSource::Gates);
 //!
 //! // a token the vocabulary lacks is a defect of the distribution, named by question
 //! let problems = policy.validate(&["push".into()]);
@@ -155,6 +156,12 @@ impl std::fmt::Display for QuestionSource {
 }
 
 /// One question of the policy, as declared.
+///
+/// `source` is carried as the text the file states (`obligation:tests`, `gates`,
+/// `release:impact`), never as a structure: every projection — the report, the site's
+/// dataset written with or without the executable, the bootstrap fragment — then states the
+/// same bytes for the same question, and a reader compares the two by eye. [`Self::kind`]
+/// parses it; [`CompletionPolicy::parse`] has already refused a text nothing answers.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct QuestionDecl {
     /// The question's identity, stable across reports.
@@ -163,10 +170,20 @@ pub struct QuestionDecl {
     pub stage: String,
     /// The question, as a person would ask it.
     pub question: String,
-    /// What answers it.
-    pub source: QuestionSource,
+    /// What answers it, as the policy states it.
+    pub source: String,
     /// What would settle it, as a command.
     pub remediation: String,
+}
+
+impl QuestionDecl {
+    /// The source, parsed. A text the parser refuses — impossible for a policy that came
+    /// through [`CompletionPolicy::parse`] — is answered by nothing, which is what
+    /// [`QuestionSource::Elsewhere`] means.
+    pub fn kind(&self) -> QuestionSource {
+        QuestionSource::parse(&self.source)
+            .unwrap_or_else(|_| QuestionSource::Elsewhere(self.source.clone()))
+    }
 }
 
 /// The policy, as read.
@@ -210,13 +227,13 @@ impl CompletionPolicy {
         }
         let mut questions = Vec::with_capacity(raw.questions.len());
         for q in raw.questions {
-            let parsed = QuestionSource::parse(&q.source)
+            QuestionSource::parse(&q.source)
                 .map_err(|e| format!("{source}: question '{}': {e}", q.id))?;
             questions.push(QuestionDecl {
                 id: q.id,
                 stage: q.stage,
                 question: q.question,
-                source: parsed,
+                source: q.source.trim().to_string(),
                 remediation: q.remediation,
             });
         }
@@ -286,8 +303,8 @@ impl CompletionPolicy {
     pub fn validate(&self, obligations: &[String]) -> Vec<String> {
         let mut out = self.structural_problems();
         for q in &self.questions {
-            if let QuestionSource::Obligation(token) = &q.source {
-                if !obligations.iter().any(|o| o == token) {
+            if let QuestionSource::Obligation(token) = q.kind() {
+                if !obligations.iter().any(|o| *o == token) {
                     out.push(format!(
                         "question '{}' is answered by obligation '{token}', which \
                          share/obligations.yaml does not declare",
@@ -304,8 +321,8 @@ impl CompletionPolicy {
     pub fn unanswered_gates(&self, gates: &[String]) -> Vec<String> {
         self.questions
             .iter()
-            .filter_map(|q| match &q.source {
-                QuestionSource::Gate(g) if !gates.iter().any(|x| x == g) => {
+            .filter_map(|q| match q.kind() {
+                QuestionSource::Gate(g) if !gates.iter().any(|x| *x == g) => {
                     Some(format!("{}:{g}", q.id))
                 }
                 _ => None,

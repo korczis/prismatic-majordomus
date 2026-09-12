@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 109,
-    "schemas": 519,
+    "schemas": 518,
     "tags": 35
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -19894,7 +19894,7 @@
       "variants": []
     },
     {
-      "description": "One question of the policy, as declared.",
+      "description": "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`release:impact`), never as a structure: every projection — the report, the site's\ndataset written with or without the executable, the bootstrap fragment — then states the\nsame bytes for the same question, and a reader compares the two by eye. [`Self::kind`]\nparses it; [`CompletionPolicy::parse`] has already refused a text nothing answers.",
       "is_enum": false,
       "name": "QuestionDecl",
       "properties": [
@@ -19920,13 +19920,11 @@
           "type": "string"
         },
         {
-          "description": "What answers it.",
+          "description": "What answers it, as the policy states it.",
           "name": "source",
-          "refs": [
-            "QuestionSource"
-          ],
+          "refs": [],
           "required": true,
-          "type": "QuestionSource"
+          "type": "string"
         },
         {
           "description": "What would settle it, as a command.",
@@ -19943,145 +19941,6 @@
       ],
       "values": [],
       "variants": []
-    },
-    {
-      "description": "Where a question's answer is taken from.\n\n```\nuse majordomus_cli::gates::QuestionSource;\nassert_eq!(QuestionSource::parse(\"obligation:tests\").unwrap(), QuestionSource::Obligation(\"tests\".into()));\nassert_eq!(QuestionSource::parse(\"gate:release-check\").unwrap(), QuestionSource::Gate(\"release-check\".into()));\nassert_eq!(QuestionSource::parse(\"gates\").unwrap(), QuestionSource::Gates);\nassert_eq!(QuestionSource::parse(\"release:impact\").unwrap(), QuestionSource::ReleaseImpact);\nassert!(QuestionSource::parse(\"magic\").is_err(), \"a source nothing answers is refused\");\nassert_eq!(QuestionSource::Elsewhere(\"x y\".into()).to_string(), \"elsewhere:x y\");\n```",
-      "is_enum": false,
-      "name": "QuestionSource",
-      "properties": [],
-      "type": "one of 8 variants",
-      "used_by": [],
-      "used_by_schemas": [
-        "QuestionDecl"
-      ],
-      "values": [],
-      "variants": [
-        {
-          "description": "A token of `share/obligations.yaml`, judged by `obligations.closure`.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"obligation\""
-            },
-            {
-              "description": "",
-              "name": "name",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "The aggregate of every gate the change selects.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"gates\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "One gate of the CI model, by id.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"gate\""
-            },
-            {
-              "description": "",
-              "name": "name",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "The change set itself: whether a test path is among the touched files.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"change-test-path\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "The structural version analysis, `release.analysis`.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"release-impact\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "The task record's `issue` field, resolved against the plan.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"task-issue\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "A continuation record for this task.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"session-handover\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "Nothing reachable from the report; the command that answers it.",
-          "properties": [
-            {
-              "description": "",
-              "name": "kind",
-              "refs": [],
-              "required": true,
-              "type": "\"elsewhere\""
-            },
-            {
-              "description": "",
-              "name": "name",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            }
-          ],
-          "type": "object"
-        }
-      ]
     },
     {
       "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.",

@@ -186,7 +186,7 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
         .questions
         .iter()
         .map(|decl| {
-            let (status, evidence, source) = match &decl.source {
+            let (status, evidence, source) = match &decl.kind() {
                 QuestionSource::Obligation(token) => obligation(token, inputs),
                 QuestionSource::Gates => gates(inputs.gates),
                 QuestionSource::Gate(gate) => match inputs.gates.iter().find(|g| &g.id == gate) {
