@@ -27,6 +27,7 @@
 # Exit 0 clean, 10 on a finding. The trees are the ones a release publishes: docs/,
 # site/content/, site/data/, site/static/ and site/public/ when a build has left one.
 set -eu
+set -o pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 SCHEMA='majordomus.capture/v1'
