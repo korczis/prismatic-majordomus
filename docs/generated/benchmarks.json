@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 108,
-      "covered": 103,
+      "required": 110,
+      "covered": 104,
+      "missing": 0,
+      "waived": 6
+    },
+    {
+      "scope": "http",
+      "required": 109,
+      "covered": 104,
       "missing": 0,
       "waived": 5
     },
     {
-      "scope": "http",
-      "required": 107,
-      "covered": 103,
-      "missing": 0,
-      "waived": 4
-    },
-    {
       "scope": "mcp",
-      "required": 105,
-      "covered": 101,
+      "required": 107,
+      "covered": 102,
       "missing": 0,
-      "waived": 4
+      "waived": 5
     },
     {
       "scope": "system",
@@ -33,10 +33,10 @@
     },
     {
       "scope": "total",
-      "required": 333,
-      "covered": 320,
+      "required": 339,
+      "covered": 323,
       "missing": 0,
-      "waived": 13
+      "waived": 16
     }
   ],
   "capabilities": [
@@ -176,6 +176,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "deploy.verify",
+      "module": "deploy",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "design.contrast",
@@ -545,6 +555,18 @@
       ]
     },
     {
+      "id": "gates.policy",
+      "module": "gates",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -816,7 +838,8 @@
       "mcp": "covered",
       "http": "covered",
       "cases": [
-        "default"
+        "live",
+        "recorded-only"
       ]
     },
     {

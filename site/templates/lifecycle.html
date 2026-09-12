@@ -1,0 +1,208 @@
+{% extends "page.html" %}
+{#- The lifecycle, from data/generated/completion.json — the site's projection of the one
+    definition of done. The stages, the questions, the source that answers each one and the
+    command that would settle it are what share/completion.yaml declares, read through the
+    executable's own policy capability; the release provenance beside them is the structural
+    version analysis and the newest release record the layer holds, reduced by the generator.
+
+    Nothing on this page is written here. A stage, a question, a version, a release or a
+    deployment surface that is not in that dataset does not exist on this page, and no
+    heading below names one. Where the generator could not reach the executable — a fresh
+    clone with no toolchain — the provenance says so in its own words and the page renders
+    the absence rather than a number nobody derived. -#}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set c = load_data(path="data/generated/completion.json") -%}
+{%- set p = c.provenance -%}
+{%- set v = p.version -%}
+{%- set cmds = load_data(path="data/generated/commands.json") -%}
+{%- set build = load_data(path="data/build.json") -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto min-w-0 max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <article class="format max-w-3xl break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal">
+    <p>Nothing here is a checklist a person ticks. A question names a <em>source</em>, and its answer is taken from that source and from nowhere else — an obligation's standing, a gate's report, the change set itself, the structural version analysis, the task record. A question whose source has not spoken is queued or unknown, never passed; one the change makes irrelevant is exempt.</p>
+    <p>The stage a task stands at is derived from those answers in the order below: the first stage with an unanswered question is where it is. Nobody writes that down, and nobody can move it by saying so.</p>
+  </article>
+
+  <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
+    <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+    <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+      <dt class="text-body-subtle">stages</dt><dd class="min-w-0 font-mono text-heading">{{ c.policy.counts.stages }}</dd>
+      <dt class="text-body-subtle">questions</dt><dd class="min-w-0 font-mono text-heading">{{ c.policy.counts.questions }}</dd>
+      <dt class="text-body-subtle">generator</dt><dd class="min-w-0 break-all font-mono text-heading">{{ c.generator }}</dd>
+      <dt class="text-body-subtle">declared in</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="inline-block py-1 text-fg-brand hover:underline">{{ c.source }}</a></dd>
+      <dt class="text-body-subtle">derived at</dt><dd class="min-w-0 break-all font-mono text-heading">{{ build.commit | truncate(length=9, end="") }}{% if build.dirty %} <span class="mj-badge mj-badge--dirty">dirty</span>{% else %} <span class="mj-badge mj-badge--clean">clean</span>{% endif %}</dd>
+    </dl>
+    <p class="mt-3 text-sm text-body-subtle">Every figure on this page was derived when the site was built, from the repository at the commit above — the same commit <code class="font-mono">/build.json</code> serves. It is not a live reading of any deployment, and it is not the state of your working tree.</p>
+  </div>
+
+  {%- if not p.available %}
+  <div class="mt-4 rounded-base border border-warning bg-warning-soft p-4 text-sm text-body">
+    <p><span class="font-medium text-heading">The lifecycle provenance was not derived here.</span> {{ p.reason }}. The policy below is the whole definition of done and is read from the file itself; the release, version and deployment facts that would sit beside it need the executable, and this build had none.</p>
+  </div>
+  {%- endif %}
+
+  <h2 id="policy" class="mt-12 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">The stages, in order</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each stage below carries the questions filed under it. A stage with no question is a stage this policy names and does not yet ask anything about — it is shown rather than hidden, because an empty stage is a hole in the definition and not a tidy absence.</p>
+
+  <ol class="mt-6 space-y-4">
+    {%- for s in c.policy.stages %}
+    {%- set qs = [q for q in c.policy.questions if q.stage == s.id] -%}
+    <li id="stage-{{ s.id }}" class="scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft">
+      <div class="border-b border-default px-5 py-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">{{ loop.index }} / {{ c.policy.counts.stages }}</span>
+          <h3 class="text-lg font-semibold tracking-tight text-heading">{{ s.title }}</h3>
+          <code class="font-mono text-xs text-body-subtle">{{ s.id }}</code>
+          <span class="font-mono text-xs text-body-subtle">{{ qs | length }} question(s)</span>
+        </div>
+        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-body">{{ s.summary }}</p>
+      </div>
+      {%- if qs | length > 0 %}
+      <div class="overflow-x-auto" tabindex="0">
+        <table class="w-full min-w-[44rem] text-left text-sm">
+          <caption class="sr-only">The questions the {{ s.title }} stage asks</caption>
+          <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle">
+            <tr><th scope="col" class="px-4 py-2">question</th><th scope="col" class="px-4 py-2">answered by</th><th scope="col" class="px-4 py-2">settled by</th></tr>
+          </thead>
+          <tbody>
+            {%- for q in qs %}
+            {%- set first = q.remediation | split(pat=" ") -%}
+            {%- set sub = first[1] | default(value="") -%}
+            {%- set hit = [x for x in cmds.commands if first[0] == "majordomus" and x.name == sub] -%}
+            <tr id="question-{{ q.id }}" class="scroll-mt-24 border-t border-default align-top">
+              <td class="px-4 py-3">
+                <code class="font-mono text-xs text-fg-brand">{{ q.id }}</code>
+                <p class="mt-1 min-w-0 break-words text-body">{{ q.question }}</p>
+              </td>
+              <td class="px-4 py-3"><code class="break-all font-mono text-xs text-heading">{{ q.source }}</code></td>
+              <td class="px-4 py-3">
+                {%- if hit | length > 0 %}
+                <a href="{{ get_url(path="/commands/" ~ hit[0].name ~ "/", trailing_slash=true) }}" class="break-all font-mono text-xs text-fg-brand hover:underline">{{ q.remediation }}</a>
+                {%- else %}
+                <code class="break-all font-mono text-xs text-body">{{ q.remediation }}</code>
+                {%- endif %}
+              </td>
+            </tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+      </div>
+      {%- else %}
+      <p class="px-5 py-3 text-sm text-body-subtle">No question is filed under this stage yet.</p>
+      {%- endif %}
+    </li>
+    {%- endfor %}
+  </ol>
+
+  <h2 id="release" class="mt-12 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Where this repository stands</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">The version stage above asks whether the declared version has moved as far as the public surface has. That comparison is structural, not a reading of commit messages: the executable takes the public contract apart into atoms, compares them against the atoms of the last release, and the difference implies a version step. What follows is that answer at the commit this page was built from.</p>
+
+  {%- if v %}
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <span class="mb-3 block font-mono text-xs uppercase tracking-wide text-body-subtle">the version this tree declares</span>
+      <p class="font-mono text-3xl font-bold text-fg-brand-strong">{{ v.declared_version }}</p>
+      <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+        <dt class="text-body-subtle">the surface implies</dt><dd class="min-w-0 font-mono text-heading">{{ v.implied }}</dd>
+        <dt class="text-body-subtle">the policy requires</dt><dd class="min-w-0 font-mono text-heading">{{ v.required }} &rarr; {{ v.required_version }}</dd>
+        <dt class="text-body-subtle">the tree declares</dt><dd class="min-w-0 font-mono text-heading">{{ v.declared }}</dd>
+        <dt class="text-body-subtle">agreement</dt><dd class="min-w-0"><span class="mj-badge mj-badge--{{ v.status }}">{{ v.status }}</span></dd>
+        <dt class="text-body-subtle">breaking</dt><dd class="min-w-0 font-mono text-heading">{% if v.breaking %}yes{% else %}no{% endif %}</dd>
+        <dt class="text-body-subtle">contract changes</dt><dd class="min-w-0 font-mono text-heading">{{ v.changes }}</dd>
+        {%- if v.policy_mode %}<dt class="text-body-subtle">policy</dt><dd class="min-w-0 font-mono text-heading">{{ v.policy_mode }}</dd>{% endif %}
+      </dl>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <span class="mb-3 block font-mono text-xs uppercase tracking-wide text-body-subtle">the release it was measured against</span>
+      {%- if p.baseline %}
+      <p class="font-mono text-3xl font-bold text-heading">{{ p.baseline.tag | default(value=p.baseline.version) }}</p>
+      <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+        <dt class="text-body-subtle">version</dt><dd class="min-w-0 font-mono text-heading">{{ p.baseline.version }}</dd>
+        <dt class="text-body-subtle">published</dt><dd class="min-w-0 font-mono text-heading">{{ p.baseline.published_at | split(pat="T") | first }}</dd>
+        <dt class="text-body-subtle">commit</dt><dd class="min-w-0 break-all font-mono text-heading">{{ p.baseline.commit | truncate(length=9, end="") }}</dd>
+        {%- if p.baseline.channel %}<dt class="text-body-subtle">channel</dt><dd class="min-w-0 font-mono text-heading">{{ p.baseline.channel }}</dd>{% endif %}
+        {%- if p.baseline.targets | length > 0 %}<dt class="text-body-subtle">targets</dt><dd class="min-w-0 font-mono text-heading">{{ p.baseline.targets | length }}</dd>{% endif %}
+        <dt class="text-body-subtle">read as baseline</dt><dd class="min-w-0 font-mono text-heading">{{ v.baseline_reference | default(value=v.baseline_version) }}</dd>
+      </dl>
+      {%- if p.baseline.notes_url %}<p class="mt-4 text-sm"><a href="{{ p.baseline.notes_url }}" class="font-medium text-fg-brand hover:underline">The release on GitHub &rarr;</a></p>{% endif %}
+      {%- else %}
+      <p class="text-sm text-body">The layer holds no release record, so there is no baseline to measure against here.</p>
+      {%- endif %}
+    </div>
+  </div>
+  <p class="mt-4 max-w-3xl text-sm"><a href="{{ get_url(path="/changelog/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Every version, with the decisions and commits it carried &rarr;</a></p>
+  {%- else %}
+  <p class="mt-6 max-w-3xl rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body">The structural version analysis was not derived here, so no version, impact or baseline figure is shown. Ask the repository for your own tree rather than reading a number off a page that could not compute one.</p>
+  {%- endif %}
+
+  <h2 id="deployment" class="mt-12 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">The surfaces a change has to reach</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">The deployment and verification stages ask whether every surface a change affects is serving the revision the task produced, and whether anybody looked afterwards. A surface can only answer that when it publishes an address saying which revision it is — the identity address below. One that publishes none can be deployed and can never be verified, and the policy treats those differently.</p>
+
+  {%- if p.surfaces | length > 0 %}
+  <div class="mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[42rem] text-left text-sm">
+      <caption class="sr-only">Every deployment surface, with the address that says which revision is serving</caption>
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle">
+        <tr><th scope="col" class="px-4 py-2">surface</th><th scope="col" class="px-4 py-2">kind</th><th scope="col" class="px-4 py-2">address</th><th scope="col" class="px-4 py-2">identity</th><th scope="col" class="px-4 py-2">verification</th></tr>
+      </thead>
+      <tbody>
+        {%- for s in p.surfaces %}
+        {%- set dep = [d for d in p.deployments if d.id == s.id] -%}
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-3"><code class="font-mono text-heading">{{ s.id }}</code>{% if dep | length > 0 %}<p class="mt-1 break-words text-body">{{ dep[0].title }}</p>{% endif %}</td>
+          <td class="px-4 py-3"><code class="font-mono text-xs text-body">{{ s.kind }}</code></td>
+          <td class="px-4 py-3">{% if s.url %}<a href="{{ s.url }}" class="break-all font-mono text-xs text-fg-brand hover:underline">{{ s.url }}</a>{% else %}<span class="text-body-subtle">not addressed here</span>{% endif %}</td>
+          <td class="px-4 py-3">{% if s.identity_url %}<a href="{{ s.identity_url }}" class="break-all font-mono text-xs text-fg-brand hover:underline">{{ s.identity_url }}</a>{% else %}<span class="text-body-subtle">none published</span>{% endif %}</td>
+          <td class="px-4 py-3">
+            {%- if s.verifiable %}<span class="mj-badge mj-badge--verify">verifiable</span>
+            {%- elif dep | length > 0 %}<span class="mj-badge mj-badge--{{ dep[0].status }}">{{ dep[0].status }}</span>
+            {%- else %}<span class="mj-badge mj-badge--unknown">unknown</span>{% endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+  {%- else %}
+  <p class="mt-6 max-w-3xl rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body">The deployment surfaces were not derived here. What each one is, and whether it publishes an address that says which revision it is serving, is a question for the repository rather than for this page.</p>
+  {%- endif %}
+
+  {%- if p.deployments | length > 0 %}
+  <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">What the layer declares</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body-subtle">Each deployment object of the layer and the status it declares for itself. A <code class="font-mono">declared</code> deployment is a description of something nobody is running yet, and nothing here pretends to verify one.</p>
+  <ul class="mt-4 grid gap-3 md:grid-cols-2" role="list">
+    {%- for d in p.deployments %}
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">{{ d.id }}</code>
+        <span class="mj-badge mj-badge--{{ d.status }}">{{ d.status }}</span>
+        {%- if d.provider %}<code class="font-mono text-xs text-body-subtle">{{ d.provider }}</code>{% endif %}
+      </div>
+      <p class="mt-2 break-words text-sm leading-relaxed text-body">{{ d.title }}</p>
+    </li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
+
+  <h2 id="verify" class="mt-12 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Ask it about your own tree</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Every figure above is this repository at one commit. The definition of done is the same file wherever the tool is installed, and the answer for your working tree comes from the same commands the policy names above &mdash; the <em>settled by</em> column is not advice, it is where each answer is taken from.</p>
+  <ul class="mt-4 grid gap-3 md:grid-cols-2" role="list">
+    {%- for name in ["check", "finish", "evidence", "handover"] %}
+    {%- set hit = [x for x in cmds.commands if x.name == name] -%}
+    {%- if hit | length > 0 %}
+    <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <a href="{{ get_url(path="/commands/" ~ hit[0].name ~ "/", trailing_slash=true) }}" class="font-mono text-sm font-medium text-fg-brand hover:underline">{{ hit[0].syntax | default(value=hit[0].name) }}</a>
+      <p class="mt-2 break-words text-sm leading-relaxed text-body">{{ hit[0].summary }}</p>
+    </li>
+    {%- endif %}
+    {%- endfor %}
+  </ul>
+  <p class="mt-6 text-sm"><a href="{{ get_url(path="/contract/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The contract this repository operates under &rarr;</a></p>
+</div>
+{% endblock content %}

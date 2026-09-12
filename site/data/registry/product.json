@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.6.0"
   },
-  "fingerprint": "d6297566ea651523e43aefa5ec5a4f67978a9ecba498868ca55a78524808698c",
+  "fingerprint": "a47cb3025527e4e5f1ad0394981e70241664b837f7498572887b11e46d7b3759",
   "route": "/features/",
   "counts": {
     "features": 22,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 169
+          "objects": 172
         }
       ],
       "rule_refs": [
@@ -537,11 +537,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 227,
+        "mcp_resources": 230,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 223,
+        "objects": 226,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2803,7 +2803,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 50
+          "objects": 51
         },
         {
           "name": "knowledge",
@@ -2811,7 +2811,7 @@
         },
         {
           "name": "document",
-          "objects": 241
+          "objects": 245
         }
       ],
       "rule_refs": [
@@ -3060,11 +3060,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 293,
+        "mcp_resources": 298,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 292,
+        "objects": 297,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3274,7 +3274,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 133
+          "objects": 136
         }
       ],
       "rule_refs": [
@@ -3636,11 +3636,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 135,
+        "mcp_resources": 138,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 133,
+        "objects": 136,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -5523,11 +5523,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 19
+          "objects": 20
         },
         {
           "name": "issue",
-          "objects": 215
+          "objects": 216
         }
       ],
       "rule_refs": [
@@ -5670,11 +5670,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 235,
+        "mcp_resources": 237,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 234,
+        "objects": 236,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -7545,6 +7545,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.verify",
+              "title": "What the deployed surfaces are serving",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deploy_verify",
+              "route": "GET /api/v1/deployments/verify"
             }
           ]
         }
@@ -7575,10 +7583,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
+        "capabilities": 4,
+        "mcp_tools": 4,
         "mcp_resources": 2,
-        "http_routes": 3,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 0,
         "objects": 1,
@@ -8494,7 +8502,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (50)",
+        "title": "adr (51)",
         "features": [
           "knowledge"
         ]
@@ -8522,7 +8530,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (169)",
+        "title": "claim (172)",
         "features": [
           "declare-once"
         ]
@@ -8562,7 +8570,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (215)",
+        "title": "issue (216)",
         "features": [
           "planning"
         ]
@@ -8581,7 +8589,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (19)",
+        "title": "milestone (20)",
         "features": [
           "planning"
         ]
@@ -8621,7 +8629,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (133)",
+        "title": "rule (136)",
         "features": [
           "doctrine"
         ]
@@ -9388,6 +9396,11 @@
       "route": "/cockpit/continuity"
     },
     {
+      "id": "completion",
+      "title": "Completion",
+      "route": "/cockpit/completion"
+    },
+    {
       "id": "worktrees",
       "title": "Worktrees",
       "route": "/cockpit/worktrees"
@@ -9429,45 +9442,45 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1419,
-    "builtin": 108,
-    "declarative": 1311,
+    "capabilities": 1437,
+    "builtin": 110,
+    "declarative": 1327,
     "modules": 35,
-    "mcp_tools": 105,
-    "mcp_resources": 1350,
-    "http_routes": 107,
+    "mcp_tools": 107,
+    "mcp_resources": 1367,
+    "http_routes": 109,
     "cli_commands": 111,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1311,
+    "objects": 1327,
     "by_kind": {
-      "adr": 50,
+      "adr": 51,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 169,
+      "claim": 172,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 241,
+      "document": 245,
       "feature": 23,
       "implementation": 49,
-      "issue": 215,
+      "issue": 216,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 133,
+      "rule": 136,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 195,
+      "test": 198,
       "use-case": 45,
       "workspace": 1
     },

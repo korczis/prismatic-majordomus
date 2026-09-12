@@ -65,6 +65,14 @@ jobs:
           apps/majordomus-cli/target/debug/majordomus distribution validate
           apps/majordomus-cli/target/debug/majordomus generate distribution --check
 
+      # The contract phase of .ai/repo/ci/release.yaml: the version the tag names is at
+      # least what the public contract requires since the last release. The same adapter
+      # over the same engine the validate pipeline runs; a tag was the one way past it.
+      - name: the version is at least what the public contract requires
+        env:
+          MAJORDOMUS_BIN: apps/majordomus-cli/target/debug/majordomus
+        run: scripts/ci/version-matches-surface
+
       - id: matrix
         name: the build matrix, generated from the model
         run: |

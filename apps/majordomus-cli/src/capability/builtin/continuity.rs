@@ -405,6 +405,11 @@ pub struct ActiveTask {
     /// The commit it started at.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub head: String,
+    /// The issue of the plan this work serves, or `none` for work the plan does not track,
+    /// declared as such. Absent means the task never said, which the completion report
+    /// reports as owed rather than as nothing.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub issue: String,
 }
 
 /// What the lifecycle of this checkout is holding.
@@ -874,6 +879,7 @@ pub(crate) fn read_task(path: &Path) -> Option<ActiveTask> {
         requires,
         started_at: s("started_at"),
         head: s("head"),
+        issue: s("issue"),
     })
 }
 

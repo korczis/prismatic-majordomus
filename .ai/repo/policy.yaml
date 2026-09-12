@@ -24,6 +24,11 @@ verification:
     - note_present
     - obligations_met
     - gates_passed
+  # `completed` is earned, not claimed: refused unless the completion report says every
+  # question of share/completion.yaml passes or is exempt and every gate the change selects
+  # has reported over this tree (rule project.completion-is-proved). A task that is not
+  # there says so with another outcome — partial, blocked — and records where it stands.
+  completed_means_complete: true
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report

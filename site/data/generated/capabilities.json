@@ -1698,6 +1698,45 @@
       "test_case": "95_skills"
     },
     {
+      "id": "completion-is-proved",
+      "claim": "The outcome completed is refused while the completion report says complete is false, naming each question of share/completion.yaml still owed and the command that settles it; the stage a task stands at is derived from the answers and never written; and every surface reads that one report",
+      "source": "docs/COMPLETION.md",
+      "implementation": "lib/gates.sh",
+      "test": "test/cases/280_completion_is_proved.sh",
+      "status": "guaranteed",
+      "note": "share/completion.yaml is the one definition of done; gates.policy answers it and gates.completion answers each question from the source it names. The policy key verification.completed_means_complete turns the refusal on (this repository) or off (the skeleton, with the reason); with it off the same questions are reported and never refused. `majordomus evidence --run-gates` runs the selected gates through scripts/ci/run-plan and records each exit, and a weaker outcome records the stage it stopped at.",
+      "responsibility": "finish",
+      "source_route": "/docs/completion/",
+      "command": null,
+      "test_case": "280_completion_is_proved"
+    },
+    {
+      "id": "deployment-verified-live",
+      "claim": "Every surface a change reaches — the published site, the release metadata, each active deployment — is asked for the identity it states at its own address and compared with the trunk's revision; a stale, unreachable or unreadable surface refuses, and neither a deploy command's exit code nor an HTTP 200 counts as verification",
+      "source": "docs/COMPLETION.md",
+      "implementation": "apps/majordomus-cli/src/deploy/verify.rs",
+      "test": "test/cases/281_deploy_verify_live.sh",
+      "status": "guaranteed",
+      "note": "deploy.verify derives the targets from the CI model's path classes, site/config.toml, the release records and the deployment objects; the deploy and verify obligations are established live by it once the trunk reaches the task's commit. The request carries no header and the evidence no body beyond the fields compared. A declared deployment object is named as not asked, never pretended about.",
+      "responsibility": "finish",
+      "source_route": "/docs/completion/",
+      "command": null,
+      "test_case": "281_deploy_verify_live"
+    },
+    {
+      "id": "tooling-derived",
+      "claim": "The definition of done reaches every generated provider bootstrap as a fragment rendered from share/completion.yaml by the shell tool and the executable to the same bytes; a bootstrap whose source moved fails generate --check, a hand-edited one fails doctor, and regeneration is the only remedy",
+      "source": "docs/COMPLETION.md",
+      "implementation": "apps/majordomus-cli/src/providers.rs",
+      "test": "test/cases/282_tooling_is_derived.sh",
+      "status": "guaranteed",
+      "note": "The fragment is {{COMPLETION_CONTRACT}} in every template under share/providers/ and .ai/repo/providers/, one plain list item per stage with the questions that belong to it; mj_completion_fragment (lib/update.sh) and CompletionPolicy::bootstrap_fragment (apps/majordomus-cli/src/gates/policy.rs) render it, and the stamp of the rendered body is what holds the two to the same bytes.",
+      "responsibility": "projection",
+      "source_route": "/docs/completion/",
+      "command": null,
+      "test_case": "282_tooling_is_derived"
+    },
+    {
       "id": "obligation-closure",
       "claim": "A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything",
       "source": "docs/CLI.md",
@@ -1712,7 +1751,7 @@
     },
     {
       "id": "obligation-establishment",
-      "claim": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it",
+      "claim": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it, a deployed surface that states it — and a hand-recorded line neither discharges it nor rescues it",
       "source": "docs/CLI.md",
       "implementation": "lib/evidence.sh",
       "test": "test/cases/103_obligations.sh",

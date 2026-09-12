@@ -25,6 +25,8 @@ OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s
 OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)
 FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]
 OK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md
+OK   obligations   t-20260903193012-a4f1 — 4 of 4 closed
+OK   gates         t-20260903193012-a4f1 — 6 selected, 6 passed
 finish: refused, 1 unmet
 ```
 

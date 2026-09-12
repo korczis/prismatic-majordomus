@@ -490,6 +490,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/deployments",
+      "kind": "artifact",
+      "label": "repo/deployments",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/finish.sh",
       "kind": "module",
       "label": "finish",
@@ -957,6 +967,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": ".ai/repo/deployments",
+      "kind": "reads"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "reads"
@@ -1338,6 +1353,11 @@
     },
     {
       "source": "lib/derive.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
       "target": "lib/session.sh",
       "kind": "sources"
     },
@@ -1419,6 +1439,11 @@
     {
       "source": "lib/evidence.sh",
       "target": "lib/gates.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/evidence.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -2039,6 +2064,11 @@
     {
       "source": "lib/common.sh",
       "target": ".ai/local/state/ledger.jsonl",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/evidence.sh",
+      "target": ".ai/local/state/current.yaml",
       "kind": "writes"
     },
     {

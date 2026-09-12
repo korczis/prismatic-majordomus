@@ -275,7 +275,12 @@ Begin a scoped task.
 
 **Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile
 <name>` default from `policy.profiles.default`. `--owner <string>` free-form, default
-`$USER`.
+`$USER`. `--requires <token>[,<token>...]` what the task owes before `completed` is
+available (`share/obligations.yaml`). `--issue <id>|none` the issue of the plan this work
+serves, or `none` for work the plan does not track, declared as such; recorded as `issue:`
+on the task record, and the completion report's `issue` question resolves it against the
+plan — a task that names nothing is told it owes one, a task naming an issue the plan does
+not hold is refused by that question.
 
 **Reads:** policy, profile, git state.
 **Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.
@@ -722,7 +727,15 @@ validation gate of the CI model that has reported.
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
 majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+majordomus evidence --run-gates
 ```
+
+`--run-gates` runs every gate the task's change selects, here, with the commands the CI
+model names — `scripts/ci/run-plan` over the affected plan, the same dispatcher CI runs —
+and records each gate's exit as it finishes through the `--gate` form (`MJ_GATE_RECORD`).
+A gate that fails is recorded as failing, which is the point: the completion report refuses
+over it until the gate reports again. The exit status is the dispatcher's, non-zero when a
+gate failed.
 
 The two forms record different kinds of fact and are never one invocation. An obligation is
 a promise the task made; a gate is what the validation pipeline said about the tree. A line
@@ -735,20 +748,24 @@ before the outcome `completed` is available. The tokens are declared in
 target, pages, deploy, verify — each naming the command that discharges it and, where the
 fact is local, the pathspecs its evidence is taken over.
 
-Four of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the
+Six of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the
 tool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that
-reaches it, a published site that serves it — and `check` and `finish` settle those live at
-HEAD instead of asking a worker to transcribe them. Recording one has no effect: an
-established obligation discharges by being true and refuses by being false. Where the
-checkout cannot settle it (no remote, no default branch recorded, a site that never
-answered) the token falls back to the recorded line, and the finding says which it was.
-`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:
-a deployment is a fact about a machine this repository never contacts.
+reaches it, a published site that serves it — and `deploy` and `verify` name what the
+deployed surfaces state at their own addresses, asked by `deploy.verify` against the trunk's
+head once the trunk reaches the task's commit (rule `project.deployment-is-verified-live`).
+`check` and `finish` settle all six live at HEAD instead of asking a worker to transcribe
+them. Recording one has no effect: an established obligation discharges by being true and
+refuses by being false. Where the checkout cannot settle it (no remote, no default branch
+recorded, a site that never answered, no deployment object to ask) the token falls back to
+the recorded line, and the finding says which it was.
 
 `--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
-does not declare exits `2`; a token the active task never promised exits `15`, because
-recording evidence for something nobody asked for is how a checklist grows entries nobody
-wanted.
+does not declare exits `2`. A token the active task never promised is accepted when the
+change set implies it — the completion report's `obligations` say which, derived from the
+token's own inputs and the deployment plan — and is declared on the task record by the
+act, so that the closure judges it from then on exactly as one declared at `start`; a
+token neither promised nor implied exits `15`, because recording evidence for something
+nobody asked for is how a checklist grows entries nobody wanted.
 
 **Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,
 the command or artifact, and the hash of the tracked files the obligation names. Nothing
@@ -810,9 +827,10 @@ branch-breaking defects overnight because they looked identical
 (`majordomus.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the nineteen questions of the done invariant with the source that answered each
-— is one document, `gates.completion`, read the same way by the command line, the HTTP API,
-MCP and the Cockpit:
+implies, and every question of the completion policy (`share/completion.yaml`) with the
+source that answered each, folded into the lifecycle stage the task stands at — is one
+document, `gates.completion`, read the same way by the command line, the HTTP API, MCP and
+the Cockpit ([`COMPLETION.md`](@/docs/completion.md)):
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'

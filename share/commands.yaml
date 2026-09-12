@@ -130,7 +130,7 @@ commands:
     requires_installed: true
     requires_task: none
     json: false
-    syntax: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]
+    syntax: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, share/obligations.yaml, git worktree list]
     writes: [.ai/local/state/current.yaml, .ai/local/state/archive/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 15]
@@ -310,7 +310,7 @@ commands:
     requires_installed: true
     requires_task: required
     json: true
-    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]"
+    syntax: majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates
     reads: [share/obligations.yaml, .ai/repo/ci/gates.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 12, 13, 15]

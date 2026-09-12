@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 use crate::model::Object;
 
 pub mod render;
+pub mod targets;
+pub mod verify;
 
 /// The kind a deployment object is discovered as.
 pub const KIND: &str = "deployment";
@@ -449,6 +451,11 @@ pub struct Deployment {
     pub status: Option<Status>,
     /// The application's name at the provider.
     pub application: String,
+    /// Where it answers, once it is active: the public origin a verifier asks for
+    /// `/api/v1/distribution/build`. Stated only for an active deployment; a declared one
+    /// has nothing to ask.
+    #[serde(default)]
+    pub url: Option<String>,
     /// What is shipped and what it is built from.
     pub build: Build,
     /// The address the process listens on.

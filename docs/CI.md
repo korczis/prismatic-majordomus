@@ -130,6 +130,30 @@ SITE_PROBE_JOBS=4 scripts/site-probe   # every route at three widths, four route
 
 `just ci-plan`, `just ci-structure`, `just ci-fast` and `just ci-full` are the recipes.
 
+### Running the gates as evidence a task can be finished over
+
+A gate that ran and was not recorded proves nothing about a task. `majordomus evidence
+--run-gates` runs every gate the *active task's own change set* selects — through
+`scripts/ci/run-plan`, the dispatcher above, so it is the same command with the same
+verdict CI would reach — and records each one's exit as it finishes:
+
+```bash
+majordomus evidence --run-gates
+```
+
+It records through `MJ_GATE_RECORD`, which `run-plan` reads: set to an executable, the
+dispatcher calls `<bin> evidence --gate <id> --exit <status> --command <cmd>` after every
+gate, writing a `task.gate` ledger line carrying the hash of the files that select that
+gate. A run whose files change afterwards goes `stale` rather than staying green, which is
+the same staleness rule the obligation evidence uses. The runs are recorded whether they
+pass or fail: a failing gate refusing `completed` is the point, and
+[`COMPLETION.md`](COMPLETION.md) is where that refusal is documented. `--run-gates` takes
+no `--gate` and no `--covers` — it is the running of the whole selected plan, not the
+recording of one fact — and a checkout with no active task is told so.
+
+A run in CI reaches the same ledger line the same way, because nothing about the recording
+is local to a workstation: it is one environment variable on one dispatcher.
+
 ## The suite in parallel
 
 `test/run.sh` runs the cases through a bounded pool when `MJ_TEST_JOBS` is set: that many
@@ -372,6 +396,7 @@ scripts/site-build && scripts/site-check && SITE_PROBE_JOBS=4 scripts/site-probe
 MJ_TEST_JOBS=4 bash test/run.sh                     # the suite in parallel
 bash test/run.sh                                    # serially
 scripts/ci-baseline --runs 10                       # record what GitHub observed
+majordomus evidence --run-gates                     # the gates this task's change selects, run and recorded
 ```
 
 `scripts/ci/verdict --plan plan.json --needs needs.json` renders the same verdict CI

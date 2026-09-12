@@ -176,7 +176,9 @@ matrix:
 
 ```text
 plan     the tag, the crate and the shell tool state one version; the model and every
-         recorded release hold their invariants; the matrix is emitted
+         recorded release hold their invariants; the version the tag names is at least what
+         the public contract requires since the last release (the `contract` phase,
+         `scripts/ci/version-matches-surface`); the matrix is emitted
 build    one archive per supported target, on the runner the model names, verified where
          it was built (fail-fast: a release missing a platform is not a release)
 publish  digests, the GitHub release, the record written from what was uploaded, the

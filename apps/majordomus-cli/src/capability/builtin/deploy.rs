@@ -14,9 +14,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
+use crate::deploy::targets::DeploymentPlan;
+use crate::deploy::verify::{self, CurlFetcher, VerificationReport};
 use crate::deploy::{Deployment, Refusal, Workspace, KIND};
 use crate::{capability, module};
 
@@ -159,6 +161,69 @@ impl BenchmarkCases for GetDeploymentInput {
 }
 
 /// The module.
+/// The default asks every published surface whether it serves this checkout's HEAD; a
+/// caller names another commit, a subset of targets, or the change set to derive
+/// applicability from.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What to verify, and against which revision.
+pub struct VerifyInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The commit every target is expected to serve. Absent means this checkout's HEAD.
+    pub expected_commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The targets to ask, by id (`pages`, `release`, a deployment's id). Absent means
+    /// every target that applies.
+    pub targets: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The changed paths to derive applicability from. Absent means every target that
+    /// exists is asked, which is the question after a deployment.
+    pub changed: Option<Vec<String>>,
+}
+
+impl BenchmarkCases for VerifyInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new("every-target", VerifyInput::default())]
+    }
+}
+
+/// The plan and the live answers, as one document: what would be asked, what was, and
+/// what each surface stated.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct DeploymentVerification {
+    /// The commit the targets were expected to serve, when one was known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_commit: Option<String>,
+    /// Which targets exist and which apply.
+    pub plan: DeploymentPlan,
+    /// What each was found to serve.
+    #[serde(flatten)]
+    pub report: VerificationReport,
+}
+
+fn deploy_verify(ctx: &Context, input: VerifyInput) -> Result<DeploymentVerification, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let expected = match input.expected_commit {
+        Some(c) => Some(c),
+        None => crate::gates::head_of(&root),
+    };
+    let model = crate::gates::GateModel::load(&root).ok();
+    let everything = input.changed.is_none();
+    let changed = input.changed.unwrap_or_default();
+    let mut plan = super::gates::deployment_plan(ctx, model.as_ref(), &changed, expected.clone(), everything);
+    if let Some(only) = &input.targets {
+        for t in &mut plan.targets {
+            if !only.iter().any(|o| o == &t.id) {
+                t.applicable = false;
+                t.reason = "not among the targets asked for".into();
+            }
+        }
+    }
+    let now = crate::peers::rfc3339(std::time::SystemTime::now());
+    let report = verify::verify(&plan, &CurlFetcher, &now);
+    Ok(DeploymentVerification { expected_commit: expected, plan, report })
+}
+
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "deploy",
@@ -207,6 +272,26 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) },
                 handler: deploy_check,
             },
+            capability! {
+                id: "deploy.verify",
+                title: "What the deployed surfaces are serving",
+                description: "Live verification: every surface the change reaches — the published site, the published release metadata, each active deployment — is asked for the identity it states (the commit, version or tag at its own address) and compared with what this checkout expects. A surface stating an older identity is stale, one that does not answer is unreachable, and neither is a pass: a deploy command that exited 0 with the old revision still live is exactly what this refuses. The request carries no header and the evidence carries no body beyond the fields compared. The one capability of this executable that reaches the network, and it reaches only addresses the repository itself declares.",
+                input: VerifyInput,
+                output: DeploymentVerification,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_deploy_verify".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/deployments/verify"),
+                    cli: None,
+                },
+                tags: ["deployments", "verification", "evidence", "live"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: deploy_verify,
+            },
         ],
     }
 }
@@ -245,13 +330,21 @@ mod tests {
     /// second list would be the defect; this one pins that the module composes what it
     /// says it does.
     #[test]
-    fn the_module_declares_the_reads_and_nothing_else() {
+    fn the_default_verification_asks_everything_against_head() {
+        let i = VerifyInput::default();
+        assert!(i.expected_commit.is_none() && i.targets.is_none() && i.changed.is_none());
+        let json = serde_json::to_string(&i).unwrap();
+        assert_eq!(json, "{}", "nothing is serialised that was not asked");
+    }
+
+    #[test]
+    fn the_module_declares_the_reads_and_the_one_live_verification() {
         let ids: Vec<String> = module()
             .capabilities
             .iter()
             .map(|c| c.capability.id.to_string())
             .collect();
-        assert_eq!(ids, ["deploy.list", "deploy.get", "deploy.check"]);
+        assert_eq!(ids, ["deploy.list", "deploy.get", "deploy.check", "deploy.verify"]);
     }
 
     /// A deployment id the layer does not have is refused by name rather than answered

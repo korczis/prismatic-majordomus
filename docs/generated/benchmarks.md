@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 108 | 103 | 0 | 5 |
-| http | 107 | 103 | 0 | 4 |
-| mcp | 105 | 101 | 0 | 4 |
+| direct | 110 | 104 | 0 | 6 |
+| http | 109 | 104 | 0 | 5 |
+| mcp | 107 | 102 | 0 | 5 |
 | system | 13 | 13 | 0 | 0 |
-| total | 333 | 320 | 0 | 13 |
+| total | 339 | 323 | 0 | 16 |
 
 ## Capabilities
 
@@ -30,6 +30,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
+| `deploy.verify` | deploy | query | — | waived | waived | waived | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
@@ -60,6 +61,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
@@ -81,7 +83,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
-| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `live`, `recorded-only` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
