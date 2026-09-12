@@ -3,7 +3,6 @@ title = "How this site is derived"
 description = "The website is a projection of the repository, built the way the tool asks projects to build their own instructions."
 template = "architecture.html"
 +++
-{% raw %}
 ## Ownership
 
 <div class="overflow-x-auto" tabindex="0">
@@ -37,4 +36,3 @@ same diagram, and the two already named different things.
 ## What is never edited by hand
 
 `site/data/generated/**`, `site/content/docs/**`, `site/static/app.css`, `site/static/js/**`, `site/public/**`. Change the canonical file; rebuild.
-{% endraw %}
