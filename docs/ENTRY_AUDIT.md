@@ -270,10 +270,15 @@ flowchart TD
   h["H gates: cold start through the configured path,<br>storm, crash, two worktrees, two providers,<br>drift; rule + ADR; docs"]
   a --> c
   b --> c
-  c --> d
   c --> f
   f --> g
 ```
+
+D, E and H carry no edge on purpose. The drawing this replaced ran a single vertical rail
+down from C and touched D, F and G with it, which reads as `C → D`; the paragraph below
+states the opposite and gives its reason — D "is independent of A–C and blocks the pack's
+*session registers automatically* on its own". The rail was a layout device, not a
+dependency, and the reasoned sentence is the one that survives.
 
 A must land first: every later step that says "the repository" means the git repository,
 and today the code means the checkout. ADR 0035 takes A and B: the election stays per
