@@ -13,7 +13,7 @@
 # to be a refusal, one young enough not to be — and pins the verdict to the older. Reading
 # the newer one passes, so the two commits are what make the assertion discriminating.
 . "$ROOT/test/lib.sh"
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj278.XXXXXX")"; trap 'rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj279.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
 R="$S/repo"; mkdir -p "$R"
 git init -q -b master "$R"
