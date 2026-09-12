@@ -4,6 +4,8 @@
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc;
 
 use super::error::Result;
 use super::git;
@@ -18,6 +20,70 @@ pub fn dirty_state(worktree: &Path) -> Result<DirtyState> {
     let mut state = parse_status_z(&bytes);
     state.in_progress = operation_in_progress(worktree);
     Ok(state)
+}
+
+/// The dirty state of many work trees, measured at once.
+///
+/// Each measurement is a `git status` subprocess of a few tens of milliseconds and none of
+/// them depends on another, so they are taken on a small pool of threads rather than one
+/// after the next. The measurement that motivated this: on a repository with 128
+/// registered work trees the sequence cost 6.2–9.9 s (n=3, shared machine), which was
+/// most of what the whole topology cost.
+///
+/// A `None` in the input means "do not measure this one"; a `None` in the output means it
+/// was not measured, or git refused to say. The answers come back in the order the work
+/// trees were given, whatever order they finished in, so what this feeds is byte-identical
+/// to reading them one at a time.
+pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
+    let mut out: Vec<Option<DirtyState>> = vec![None; worktrees.len()];
+    let wanted: Vec<usize> = worktrees
+        .iter()
+        .enumerate()
+        .filter_map(|(i, w)| w.map(|_| i))
+        .collect();
+    // One measurement is not worth a thread, and none is not worth a channel.
+    if wanted.len() < 2 {
+        for i in wanted {
+            out[i] = worktrees[i].and_then(|p| dirty_state(p).ok());
+        }
+        return out;
+    }
+    let next = AtomicUsize::new(0);
+    let (tx, rx) = mpsc::channel();
+    std::thread::scope(|scope| {
+        for _ in 0..probe_threads(wanted.len()) {
+            let tx = tx.clone();
+            let next = &next;
+            let wanted = &wanted;
+            scope.spawn(move || loop {
+                let Some(&i) = wanted.get(next.fetch_add(1, Ordering::Relaxed)) else {
+                    return;
+                };
+                let measured = worktrees[i].and_then(|p| dirty_state(p).ok());
+                if tx.send((i, measured)).is_err() {
+                    return;
+                }
+            });
+        }
+        // The receiver below ends when the last sender is gone, so this one must go first.
+        drop(tx);
+        for (i, measured) in rx {
+            out[i] = measured;
+        }
+    });
+    out
+}
+
+/// How many work trees to measure at once. Each measurement waits on a git subprocess
+/// rather than on this process's CPU, but the pool is still the machine's parallelism and
+/// no more: a development machine runs other people's sessions, and a pool that
+/// oversubscribes it makes their commands slower to make this one faster.
+fn probe_threads(work: usize) -> usize {
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(4)
+        .clamp(1, 16)
+        .min(work)
 }
 
 /// Parse the NUL-separated porcelain v1 status. Renames are disabled by the caller
@@ -59,11 +125,7 @@ pub fn parse_status_z(bytes: &[u8]) -> DirtyState {
 /// would report as "rebase in progress" and so on, read from the per-worktree git
 /// directory the way git itself does.
 pub fn operation_in_progress(worktree: &Path) -> Option<String> {
-    let out = git::try_run(worktree, &["rev-parse", "--absolute-git-dir"]).ok()?;
-    if out.status != Some(0) {
-        return None;
-    }
-    let dir = PathBuf::from(out.text().ok()?);
+    let dir = git_dir_of(worktree)?;
     let probes: &[(&str, &str)] = &[
         ("rebase-merge", "rebase"),
         ("rebase-apply", "rebase"),
@@ -76,6 +138,56 @@ pub fn operation_in_progress(worktree: &Path) -> Option<String> {
         .iter()
         .find(|(file, _)| dir.join(file).exists())
         .map(|(_, op)| (*op).to_string())
+}
+
+/// The git directory of one work tree, read the way git records it rather than by asking
+/// git for it: `.git` is that directory in the primary checkout and a file holding
+/// `gitdir: <path>` in a linked one. `git rev-parse --absolute-git-dir` answers the same
+/// question, but it is a subprocess, and a subprocess is what this costs — 128 of the
+/// cheapest possible `git rev-parse` took 1.5–2.2 s on this machine (n=3) — paid once per
+/// work tree for a question one `stat` and one small read answer. Git is asked only when
+/// `.git` is not there to read, so a checkout arranged some other way still gets an answer.
+fn git_dir_of(worktree: &Path) -> Option<PathBuf> {
+    let dot = worktree.join(".git");
+    match std::fs::metadata(&dot) {
+        Ok(m) if m.is_dir() => return Some(dot),
+        Ok(_) => {
+            if let Some(p) = std::fs::read_to_string(&dot)
+                .ok()
+                .as_deref()
+                .and_then(gitdir_link)
+            {
+                return Some(if p.is_absolute() { p } else { worktree.join(p) });
+            }
+        }
+        Err(_) => {}
+    }
+    let out = git::try_run(worktree, &["rev-parse", "--absolute-git-dir"]).ok()?;
+    if out.status != Some(0) {
+        return None;
+    }
+    Some(PathBuf::from(out.text().ok()?))
+}
+
+/// The path a linked work tree's `.git` file names, when it names one. Git writes exactly
+/// one line, `gitdir: <path>`, and the path is normally absolute.
+///
+/// ```
+/// use majordomus_cli::worktree::state::gitdir_link;
+/// use std::path::PathBuf;
+/// assert_eq!(gitdir_link("gitdir: /a/.git/worktrees/x\n"), Some(PathBuf::from("/a/.git/worktrees/x")));
+/// assert_eq!(gitdir_link("gitdir: ../elsewhere"), Some(PathBuf::from("../elsewhere")));
+/// assert_eq!(gitdir_link("gitdir:\n"), None);
+/// assert_eq!(gitdir_link("something else\n"), None);
+/// assert_eq!(gitdir_link(""), None);
+/// ```
+pub fn gitdir_link(text: &str) -> Option<PathBuf> {
+    let rest = text.lines().next()?.strip_prefix("gitdir:")?.trim();
+    if rest.is_empty() {
+        None
+    } else {
+        Some(PathBuf::from(rest))
+    }
 }
 
 /// One local branch as `for-each-ref` reports it.

@@ -923,6 +923,97 @@ fn the_command_line_and_the_capability_registry_see_one_topology() {
     assert!(err.to_string().contains("refused"), "{err}");
 }
 
+// ------------------------------------------------------- what the topology costs to read
+
+/// The topology takes every work tree's `git status` at once rather than one after the
+/// next, and a plan that moves nothing does not take them at all. Both are answers about
+/// speed, and both are only allowed if the answer is the same one: this fixes what each
+/// work tree is reported to hold, so a batch that returned an answer against the wrong
+/// row — or a plan that reported a clean tree because it never looked — fails here rather
+/// than on somebody's page.
+#[test]
+fn every_worktree_is_reported_with_its_own_uncommitted_work_however_they_are_measured() {
+    let f = Fixture::new();
+    let root = f.root();
+    // Enough work trees that the measurement is a batch and not a single reading, each
+    // dirty in a way no other one is.
+    for i in 0..6 {
+        ok(&root, &["worktree", "create", &format!("feature/w{i}")]);
+        let wt = f.container().join(format!("feature/w{i}"));
+        for n in 0..=i {
+            std::fs::write(wt.join(format!("untracked{n}.txt")), "x\n").unwrap();
+        }
+    }
+    let t = json(&root, &["worktree", "topology"]);
+    let worktrees = t["worktrees"].as_array().unwrap();
+    for i in 0..6 {
+        let w = worktrees
+            .iter()
+            .find(|w| w["branch"] == format!("feature/w{i}"))
+            .unwrap_or_else(|| panic!("feature/w{i} is in the topology"));
+        assert_eq!(
+            w["dirty"]["untracked"],
+            i + 1,
+            "feature/w{i} was given another work tree's answer: {w:#}"
+        );
+        assert_eq!(w["dirty"]["clean"], false);
+    }
+    // The primary checkout is clean and stays clean: reading the topology moves nothing.
+    let primary = worktrees.iter().find(|w| w["kind"] == "primary").unwrap();
+    assert_eq!(primary["dirty"]["clean"], true, "{primary:#}");
+
+    // Nothing is misplaced, so the plan has no step to carry work for and never asks.
+    let plan = json(&root, &["worktree", "migrate", "--plan"]);
+    assert_eq!(plan["steps"].as_array().unwrap().len(), 0);
+    assert_eq!(plan["movable"], 0);
+    assert_eq!(plan["container"], t["container"]["path"]);
+}
+
+/// An operation left half-finished is read from the work tree's own git directory rather
+/// than from a `git rev-parse` subprocess. A linked work tree's git directory is not the
+/// `.git` beside it — it is named by that file — so this is the case a wrong derivation
+/// would silently report as "nothing in progress".
+#[test]
+fn an_unfinished_merge_in_a_linked_worktree_is_reported_as_in_progress() {
+    let f = Fixture::new();
+    let root = f.root();
+    let commit: &[&str] = &["-c", "user.email=t@example.com", "-c", "user.name=t"];
+    // Two branches that change the same line, so merging one into the other conflicts.
+    ok(&root, &["worktree", "create", "feature/theirs"]);
+    let theirs = f.container().join("feature/theirs");
+    std::fs::write(theirs.join("README.md"), "theirs\n").unwrap();
+    git(&theirs, &["add", "README.md"]);
+    git(&theirs, &[commit, &["commit", "-qm", "theirs"]].concat());
+
+    ok(&root, &["worktree", "create", "feature/ours"]);
+    let ours = f.container().join("feature/ours");
+    std::fs::write(ours.join("README.md"), "ours\n").unwrap();
+    git(&ours, &["add", "README.md"]);
+    git(&ours, &[commit, &["commit", "-qm", "ours"]].concat());
+
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(&ours)
+        .args(["merge", "--no-edit", "feature/theirs"])
+        .output()
+        .expect("run git merge");
+    assert!(!out.status.success(), "the merge was meant to conflict");
+    assert!(
+        ours.join(".git").is_file(),
+        "a linked worktree's .git is a file"
+    );
+
+    let t = json(&root, &["worktree", "topology"]);
+    let w = t["worktrees"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|w| w["branch"] == "feature/ours")
+        .unwrap();
+    assert_eq!(w["dirty"]["in_progress"], "merge", "{w:#}");
+    assert_eq!(w["dirty"]["conflicted"], 1, "{w:#}");
+}
+
 // ---------------------------------------------------------------- cleanup and issues
 
 #[test]

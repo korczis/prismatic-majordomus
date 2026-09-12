@@ -22,9 +22,9 @@ use super::git;
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
 use super::lock::WorktreeLock;
 use super::model::{
-    BranchState, ContainerView, DiagnosticCode, GuardVerdict, InspectReport, RepairReport,
-    RepositoryTopology, RepositoryView, Severity, Standing, StatusReport, TopologyDiagnostic,
-    TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
+    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
+    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
+    TopologyDiagnostic, TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
 };
 use super::path::{self, BranchName, CONTAINER_SUFFIX};
 use super::state::{self, BranchRef};
@@ -198,6 +198,28 @@ impl WorktreeService {
         record: &WorktreeRecord,
         detail: Detail,
         branches: &BTreeMap<String, BranchRef>,
+    ) -> WorktreeState {
+        let dirty = Self::measures_dirty(record, detail)
+            .then(|| state::dirty_state(&record.path).ok())
+            .flatten();
+        self.judge_with(record, branches, dirty)
+    }
+
+    /// Does the topology take a `git status` of this work tree at this detail? The one
+    /// place the condition is written, because the whole topology takes these measurements
+    /// at once ([`state::dirty_states`]) and the batch must select exactly the work trees
+    /// [`Self::judge`] would have measured one at a time.
+    fn measures_dirty(record: &WorktreeRecord, detail: Detail) -> bool {
+        detail == Detail::Full && record.path.is_dir() && !record.bare
+    }
+
+    /// [`Self::judge`] with the uncommitted work already measured — or deliberately not
+    /// measured, which is what `None` means here, exactly as it does in the answer.
+    fn judge_with(
+        &self,
+        record: &WorktreeRecord,
+        branches: &BTreeMap<String, BranchRef>,
+        dirty: Option<DirtyState>,
     ) -> WorktreeState {
         let resolved = ResolvedPath::of(&record.path);
         let is_primary = self.identity.is_primary(record);
@@ -409,12 +431,6 @@ impl WorktreeService {
             });
         }
 
-        let dirty = if detail == Detail::Full && exists && !record.bare {
-            state::dirty_state(&record.path).ok()
-        } else {
-            None
-        };
-
         WorktreeState {
             path: path_text,
             kind: if is_primary {
@@ -554,11 +570,19 @@ impl WorktreeService {
             None => None,
         };
 
-        let mut worktrees: Vec<WorktreeState> = self
-            .identity
-            .registered_worktrees()
+        // Every `git status` this topology needs, taken at once rather than one work tree
+        // after the next: the measurements do not depend on one another, and on a
+        // repository with a hundred-odd registered work trees the sequence was most of
+        // what a topology cost. Judging itself runs no subprocess.
+        let records = self.identity.registered_worktrees();
+        let probes: Vec<Option<&Path>> = records
             .iter()
-            .map(|r| self.judge(r, detail, &branches))
+            .map(|r| Self::measures_dirty(r, detail).then_some(r.path.as_path()))
+            .collect();
+        let mut worktrees: Vec<WorktreeState> = records
+            .iter()
+            .zip(state::dirty_states(&probes))
+            .map(|(r, d)| self.judge_with(r, &branches, d))
             .collect();
 
         // repository-wide facts
