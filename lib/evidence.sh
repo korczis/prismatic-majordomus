@@ -157,7 +157,9 @@ mj_evidence() {
     [ -n "$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --gate needs --exit <status>; a gate that reported nothing is not evidence"
     # shellcheck source=gates.sh
     . "$MJ_LIB_DIR/gates.sh"
-    mj_gate_record "$gate" "$gexit" "$ecmd" "$eres" "$json"
+    mj_gate_prepare "$gate" "$gexit" "$ecmd" "$eres"
+    mj_ledger_append task.gate "$MJ_GATE_EXTRA"
+    mj_gate_report "$gate" "$gexit" "$json"
     return 0
   fi
   [ -z "$gexit" ] || mj_die "$MJ_EX_USAGE" "--exit is the exit status of a gate; it needs --gate <id>"

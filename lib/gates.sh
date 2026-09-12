@@ -12,8 +12,10 @@
 #
 #   1. a reader of the CI model, `.ai/repo/ci/gates.yaml`, for the two questions recording
 #      needs: does this gate exist, and which files is a run of it evidence over;
-#   2. the recording itself, as a `task.gate` ledger line carrying the hash of those files,
-#      so that changing one of them makes the run stale rather than merely old;
+#   2. what a recording carries: the `task.gate` payload with the hash of those files, so
+#      that changing one of them makes the run stale rather than merely old. The line
+#      itself is appended by lib/evidence.sh, the module of the `evidence` command that
+#      share/events.yaml declares as its emitter;
 #   3. the finish/check validator, which asks the Rust executable for the judgement rather
 #      than making one of its own.
 #
@@ -109,8 +111,14 @@ mj_gate_inputs_hash() {
 # Called from `evidence --gate`. The option shape is `evidence`'s because a gate run is
 # evidence: the verb a worker reaches for is the same, and adding a second command for the
 # same act would be a second place to look.
-mj_gate_record() {
-  local gate="$1" exit_code="$2" command="$3" result="$4" json="$5"
+#
+# Two halves around the append, which lib/evidence.sh performs: share/events.yaml names
+# `evidence` as the emitter of `task.gate`, and the registry is only worth reading if the
+# module it names is the one that writes the line. mj_gate_prepare validates and sets
+# MJ_GATE_TASK, MJ_GATE_IH and MJ_GATE_EXTRA; mj_gate_report prints what was recorded.
+MJ_GATE_TASK=""; MJ_GATE_IH=""; MJ_GATE_EXTRA=""
+mj_gate_prepare() {
+  local gate="$1" exit_code="$2" command="$3" result="$4"
   mj_gate_model_load || mj_die "$MJ_EX_MISSING" \
     "this repository declares no CI model at .ai/repo/ci/gates.yaml, so no gate can be recorded"
   mj_gate_known "$gate" || mj_die "$MJ_EX_USAGE" \
@@ -120,13 +128,16 @@ mj_gate_record() {
   esac
   mj_load_current || mj_die "$MJ_EX_MISSING" \
     "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
-  local task ih extra
-  task="$(mj_cur id)"
-  ih="$(mj_gate_inputs_hash "$gate")"
-  extra="\"task\":\"$task\",\"gate\":\"$gate\",\"exit\":$exit_code,\"inputs_hash\":\"$ih\""
-  [ -n "$command" ] && extra="$extra,\"command\":\"$(mj_json_esc "$command")\""
-  [ -n "$result" ] && extra="$extra,\"result\":\"$(mj_json_esc "$result")\""
-  mj_ledger_append task.gate "$extra"
+  MJ_GATE_TASK="$(mj_cur id)"
+  MJ_GATE_IH="$(mj_gate_inputs_hash "$gate")"
+  MJ_GATE_EXTRA="\"task\":\"$MJ_GATE_TASK\",\"gate\":\"$gate\",\"exit\":$exit_code,\"inputs_hash\":\"$MJ_GATE_IH\""
+  [ -n "$command" ] && MJ_GATE_EXTRA="$MJ_GATE_EXTRA,\"command\":\"$(mj_json_esc "$command")\""
+  [ -n "$result" ] && MJ_GATE_EXTRA="$MJ_GATE_EXTRA,\"result\":\"$(mj_json_esc "$result")\""
+  return 0
+}
+
+mj_gate_report() {
+  local gate="$1" exit_code="$2" json="$3" task="$MJ_GATE_TASK" ih="$MJ_GATE_IH"
   if [ "$json" = 1 ]; then
     printf '{"task":"%s","gate":"%s","exit":%s,"inputs_hash":"%s"}\n' "$task" "$gate" "$exit_code" "$ih"
   else
@@ -259,7 +270,7 @@ mj_validate_completion_gates() {
 # is the only thing that ever asked it, and a full plan runs on a push to master, which is
 # before the publication it would judge. `finish` is where the question is worth asking.
 #
-# Run, not recorded. mj_gate_record hashes the files a gate was run over so the run expires
+# Run, not recorded. mj_gate_prepare hashes the files a gate was run over so the run expires
 # when they change; that mechanism cannot hold this verdict, because its subject is not in
 # the tree. A publication check from ten minutes ago describes a site that may have been
 # superseded since, with every file untouched. There is no hash to expire against, so the

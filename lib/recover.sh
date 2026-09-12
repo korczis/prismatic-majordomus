@@ -645,6 +645,19 @@ mj_recover_stray_ready() {
   return 0
 }
 
+# Remove a staging directory `scripts/generate-site-data` left behind. That script makes it
+# with `mktemp -d "$ROOT/.mj-stage.XXXXXX"`, so the one recursive delete this command
+# performs is confined to that template and refuses any other path: SECURITY.md promises
+# no recursive deletion, the temporary directories the tool itself makes excepted, and
+# test/cases/08 holds every rm -rf to a mktemp path.
+mj_recover_remove_stage() {
+  local tmp="$1"
+  case "$tmp" in
+    "$MJ_ROOT"/.mj-stage.*) rm -rf "$tmp" ;;
+    *) mj_die "$MJ_EX_INTERNAL" "recover: refusing to remove $tmp, which is not a site staging directory" ;;
+  esac
+}
+
 mj_recover_orphans() {
   printf 'orphans — stray files in the record stores\n'
   local n=0 f store
@@ -694,7 +707,7 @@ mj_recover_orphans() {
     printf '  orphan      %s — a staging directory of scripts/generate-site-data, %s old; the run that made it did not finish\n' \
       "$(mj_rel "$f")" "$(mj_age_human $(( $(mj_recover_age_secs "$f") / 60 )))"
     MJ_RECOVER_ACTS=$((${MJ_RECOVER_ACTS:-0} + 1))
-    [ "$MJ_RECOVER_CHECK" = 1 ] || rm -rf "$f"
+    [ "$MJ_RECOVER_CHECK" = 1 ] || mj_recover_remove_stage "$f"
   done
 
   # 4. anything in the checkpoint store that is not a checkpoint. The store holds files

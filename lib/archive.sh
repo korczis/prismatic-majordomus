@@ -189,14 +189,13 @@ mj_archive_list() {
 # The index, then three subtractions and one re-inclusion, in that order. Every decision
 # is recorded against the path so that --dry-run can say why a file is not there: a
 # selection that can only be believed is not evidence.
-mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCHIVE_DROPPED
-  local flat="$1" idx="$2" out="$3"
-  local derived binary tmpd
+mj_archive_select() { # flat idx outfile tmpdir -> "<mode>\t<path>" lines; sets MJ_ARCHIVE_DROPPED
+  local flat="$1" idx="$2" out="$3" tmpd="$4"
+  local derived binary
 
   derived="$(mj_yget "$flat" "profiles.$idx.derived")"
   binary="$(mj_yget "$flat" "profiles.$idx.binary")"
 
-  tmpd="$(mktemp -d "${TMPDIR:-/tmp}/mj.arcsel.XXXXXX")"
   mj_git ls-files -s > "$tmpd/index" || mj_die "$MJ_EX_INTERNAL" "git ls-files failed"
   # "<mode> <sha> <stage>\t<path>" -> "<mode>\t<path>", gitlinks (160000) dropped: a
   # submodule's content is not in this index and cannot be archived from it
@@ -262,13 +261,12 @@ mj_archive_select() { # flat idx outfile -> "<mode>\t<path>" lines; sets MJ_ARCH
   # awk creates neither output file when it writes no line to it
   [ -f "$out" ] || : > "$out"
   [ -f "$MJ_ARCHIVE_DROPPED" ] || : > "$MJ_ARCHIVE_DROPPED"
-  MJ_ARCHIVE_TMPD="$tmpd"
 }
 
 # ---------------------------------------------------------------- the run
 mj_archive_run() { # profile out format dry force
   local profile="$1" out="$2" format="$3" dry="$4" force="$5"
-  local spec flat idx ext stage sel n bytes missing=0 rc=0
+  local spec flat idx ext stage sel tmp n bytes missing=0 rc=0
 
   spec="$(mj_archive_find "$profile")" || {
     mj_archive_cleanup
@@ -283,7 +281,13 @@ mj_archive_run() { # profile out format dry force
   esac
 
   sel="$(mktemp "${TMPDIR:-/tmp}/mj.arcs.XXXXXX")"
-  mj_archive_select "$flat" "$idx" "$sel"
+  # The working directory is made here, in the function that removes it, so that every
+  # recursive delete below is visibly of a path this function took from mktemp and of
+  # nothing else (SECURITY.md: no recursive deletion; test/cases/08 holds the shape).
+  # MJ_ARCHIVE_TMPD names the same directory for mj_archive_furnish.
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.arcsel.XXXXXX")"
+  MJ_ARCHIVE_TMPD="$tmp"
+  mj_archive_select "$flat" "$idx" "$sel" "$tmp"
   n="$(mj_lines "$sel")"
   [ "$n" -gt 0 ] || {
     rm -f "$sel"; mj_archive_cleanup
@@ -296,7 +300,7 @@ mj_archive_run() { # profile out format dry force
 
   if [ "$dry" = 1 ]; then
     mj_archive_report "$profile" "$flat" "$idx" "$n" "$bytes" "" "$ext"
-    rm -f "$sel"; rm -rf "$MJ_ARCHIVE_TMPD"; mj_archive_cleanup
+    rm -f "$sel"; rm -rf "$tmp"; mj_archive_cleanup
     return 0
   fi
 
@@ -305,7 +309,7 @@ mj_archive_run() { # profile out format dry force
   fi
   case "$out" in /*) ;; *) out="$PWD/$out" ;; esac
   if [ -e "$out" ] && [ "$force" != 1 ]; then
-    rm -f "$sel"; rm -rf "$MJ_ARCHIVE_TMPD"; mj_archive_cleanup
+    rm -f "$sel"; rm -rf "$tmp"; mj_archive_cleanup
     mj_die "$MJ_EX_REFUSED" "archive: $out exists (--force to replace it)"
   fi
   mkdir -p "$(dirname "$out")" || mj_die "$MJ_EX_INTERNAL" "cannot create $(dirname "$out")"
@@ -331,14 +335,14 @@ mj_archive_run() { # profile out format dry force
 
   mj_archive_furnish "$stage" "$profile" "$flat" "$idx" "$sel" "$n" "$missing"
   mj_archive_pack "$stage" "$out" "$ext" || rc=$?
-  [ "$rc" = 0 ] || { rm -f "$sel"; rm -rf "$MJ_ARCHIVE_TMPD"; mj_archive_cleanup; return "$rc"; }
+  [ "$rc" = 0 ] || { rm -f "$sel"; rm -rf "$tmp"; mj_archive_cleanup; return "$rc"; }
   mj_archive_verify "$out" "$ext" "$stage" || rc=$?
 
   mj_archive_report "$profile" "$flat" "$idx" "$n" "$bytes" "$out" "$ext"
   [ "$missing" = 0 ] || mj_warn archive "$profile" \
     "$missing tracked path(s) are in the index and not in the working tree; they are not in the archive" \
     "git status --porcelain"
-  rm -f "$sel"; rm -rf "$MJ_ARCHIVE_TMPD"; mj_archive_cleanup
+  rm -f "$sel"; rm -rf "$tmp"; mj_archive_cleanup
   return "$rc"
 }
 
