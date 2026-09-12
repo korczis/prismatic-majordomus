@@ -1,7 +1,7 @@
 +++
 title = "Completion"
 description = "done as a state the repository decides rather than a word a worker uses: the one completion policy and the source each of its questions is answered from, the lifecycle stage folded from those answers and written down by nobody, the three words `finishable`, `verified` and `complete`, the workflow and what the refusal of `completed` looks like, what a change actually owes, the deployment targets and how each is verified live, the definition of done generated into every AI bootstrap, and how to explain a refused completion"
-weight = 55
+weight = 56
 [extra]
 source = "docs/COMPLETION.md"
 +++

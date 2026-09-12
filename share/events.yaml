@@ -145,15 +145,15 @@ events:
     title: Provider lifecycle event received
     summary: A provider's lifecycle event reached this repository, recorded before anything decided what to do about it.
     emitted_by: capture
-    requires: [provider, event]
+    requires: [provider, provider_event]
     public: true
-    note: "The first act of every lifecycle adapter, written before any guard runs. A hook must not block the person's work, so it returns success whatever happens inside it; that is not permission to leave no evidence the event arrived. Before this existed, an adapter that skipped its work wrote a line to stderr nobody keeps, and the difference between an event that never fired and one that fired and did nothing could not be recovered afterwards — which is the difference the 2026-09-05 outage turned on. Carries provider_session when the provider named one."
+    note: "The first act of every lifecycle adapter, written before any guard runs. A hook must not block the person's work, so it returns success whatever happens inside it; that is not permission to leave no evidence the event arrived. Before this existed, an adapter that skipped its work wrote a line to stderr nobody keeps, and the difference between an event that never fired and one that fired and did nothing could not be recovered afterwards — which is the difference the 2026-09-05 outage turned on. Carries provider_session when the provider named one. The provider's own event name is provider_event and not event: this field was declared as event until 2026-09-12, so every receipt carried the envelope key twice and history --validate read the second one and refused the line."
 
   - id: provider.event.failed
     title: Provider lifecycle event failed
     summary: A lifecycle event arrived and the work it should have done did not complete.
     emitted_by: capture
-    requires: [provider, event, reason]
+    requires: [provider, provider_event, reason]
     public: true
     note: "Paired with provider.event.received: a receipt with no resulting record and no failure beside it is itself a finding. The hook still exits 0, because the exit status belongs to the provider and the truth belongs here."
 
