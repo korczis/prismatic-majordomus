@@ -782,6 +782,24 @@ pub fn listing_hash(listing: &str) -> String {
 /// taken over, or `None` when the token declares none — which is the empty string in the
 /// ledger and is compared as such.
 pub(crate) fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usize)> {
+    inputs_hash_with(root, specs, &mut FileHashes::default())
+}
+
+/// The content hash of every file read so far, by repository-relative path. One report
+/// hashes the inputs of many tokens, and those inputs overlap: the gates of a CI model
+/// select the same sources forty times over. A file is read and hashed once per report
+/// and looked up after that; `None` records a file that could not be read, so it is not
+/// tried again either.
+#[derive(Debug, Default)]
+pub(crate) struct FileHashes(BTreeMap<String, Option<String>>);
+
+/// `inputs_hash` over a cache shared by every token of one report: the listing is the
+/// same, file by file, and the reading is done once.
+pub(crate) fn inputs_hash_with(
+    root: &Path,
+    specs: &[String],
+    cache: &mut FileHashes,
+) -> Option<(String, usize)> {
     if specs.is_empty() {
         return None;
     }
@@ -794,12 +812,17 @@ pub(crate) fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usiz
     }
     let mut listing = String::new();
     for file in &files {
-        let Ok(bytes) = std::fs::read(root.join(file)) else {
+        let hash = cache.0.entry(file.clone()).or_insert_with(|| {
+            std::fs::read(root.join(file))
+                .ok()
+                .map(|bytes| crate::policy::sha256_bytes_hex(&bytes))
+        });
+        let Some(hash) = hash else {
             continue;
         };
         listing.push_str(file);
         listing.push(' ');
-        listing.push_str(&crate::policy::sha256_bytes_hex(&bytes));
+        listing.push_str(hash);
         listing.push('\n');
     }
     Some((listing_hash(&listing), files.len()))
