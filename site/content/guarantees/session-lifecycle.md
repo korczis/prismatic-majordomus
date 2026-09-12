@@ -1,7 +1,7 @@
 +++
 title = "A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope"
 description = "Where a provider fires session events, the episode boundary is drawn by that provider's own hook rather than by the model working inside it. SessionStart opens the episode and hands the worker the briefing the policy declares, PreCompact records what the conversation is about to stop holding, SessionEnd writes a continuation record and closes the episode into the shared record under .ai/repo/sessions/, and none of it depends on a worker remembering to run a command. At the open, the context the builder resolved is written to .ai/local/session-contexts/ and kept for the episode, so what the worker was told is evidence rather than recollection."
-weight = 150
+weight = 152
 [extra]
 claim_id = "session-lifecycle"
 status = "guaranteed"

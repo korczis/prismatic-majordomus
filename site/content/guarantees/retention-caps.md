@@ -1,7 +1,7 @@
 +++
 title = "The append-only ledger and handover store have retention caps that are checked"
 description = "state/ledger.jsonl and state/handovers/ only ever grow. The policy sets a cap for each (ledger.retention_max_lines, handover.retention_max_files); doctor and watch report when a cap is exceeded. Nothing is deleted by Majordomus; the cap makes growth visible before it becomes a problem."
-weight = 41
+weight = 43
 [extra]
 claim_id = "retention-caps"
 status = "guaranteed"

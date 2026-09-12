@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "command": "recover",
+  "title": "An episode is closed by evidence, or not at all",
+  "intro": "A provider that is killed sends no end event, and the episode it opened stays open for ever. Recovery closes it — but only when the evidence says its client is gone, and never by guessing. Every subject has a --check that writes nothing, and the measurement that decided each verdict is printed before anything is done with it.",
+  "scenarios": [
+    {
+      "id": "check",
+      "title": "The plan, and the measurement behind it",
+      "given": {
+        "one episode stranded and one live": true
+      },
+      "setup": "session-stranded",
+      "run": [
+        "recover",
+        "episodes",
+        "--check"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "last seen 2020-01-01T00:00:00Z",
+          "stranded:",
+          "live: this process is inside it",
+          "check: 1 action"
+        ]
+      },
+      "explain": "Every candidate's last sign of life is printed, including the ones nothing will happen to, so a wrong predicate is visible in the output rather than in its consequences. The dry run writes nothing at all."
+    },
+    {
+      "id": "recovers",
+      "title": "Closing the one whose client is gone",
+      "given": {
+        "one episode stranded and one live": true
+      },
+      "setup": "session-stranded",
+      "run": [
+        "recover",
+        "episodes"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          ".ai/repo/sessions/",
+          "recovered: 1 action"
+        ]
+      },
+      "explain": "The record carries what the open record and the episode's own ledger lines prove. Its commits and changed_files are the explicit empty list and it states no head: the working tree at recovery time belongs to whoever is working now, and stamping it onto an episode that stopped days ago would be a record that looks exactly like a true one."
+    },
+    {
+      "id": "nothing-to-do",
+      "title": "With nothing degraded",
+      "given": {
+        "one episode stranded and one live": false
+      },
+      "setup": "installed",
+      "run": [
+        "recover"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "nothing to recover"
+        ]
+      },
+      "explain": "Absence is an answer. A clean store exits 0 and says so, rather than treating having nothing to do as a failure."
+    },
+    {
+      "id": "unknown-subject",
+      "title": "A subject this command does not have",
+      "given": {
+        "one episode stranded and one live": false
+      },
+      "setup": "installed",
+      "run": [
+        "recover",
+        "everything"
+      ],
+      "expect": {
+        "exit": 2,
+        "stdout_contains": [
+          "unknown subject"
+        ]
+      },
+      "explain": "A misspelled subject is refused rather than folded into the default. A recovery command that silently did something other than what was asked is the one that must not exist."
+    }
+  ]
+}

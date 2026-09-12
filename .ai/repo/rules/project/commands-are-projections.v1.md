@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.hot-path-reads-once@1]
 tags: [commands, projections, completion, workflows]
+
+x-majordomus:
+  tests: [scripts/ci/command-graph, test/cases/101_command_graph.sh]
 ---
 
 # Rationale

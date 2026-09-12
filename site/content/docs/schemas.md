@@ -1407,6 +1407,7 @@ Events and their extra fields:
 | `question.resolved` | `question`, `answer` |
 | `session.started` | `owner`, `worker` when one was supplied |
 | `session.closed` | `outcome`, `session_path` |
+| `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |
 | `projections.updated` | `policy_sha256`, `targets` (count) |
 | `use_cases.ran` | `ran`, `failed` (counts; the evidence under `.ai/local/evidence/use-cases/` carries the steps) |

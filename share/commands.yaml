@@ -132,7 +132,7 @@ commands:
     json: false
     syntax: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, share/obligations.yaml, git worktree list]
-    writes: [.ai/local/state/current.yaml, .ai/local/state/ledger.jsonl]
+    writes: [.ai/local/state/current.yaml, .ai/local/state/archive/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 15]
     demo: start-scope
     note: One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused. --requires records what the task owes, from the vocabulary in share/obligations.yaml; a token it does not declare is refused here rather than at the moment a worker tries to discharge it.
@@ -222,7 +222,7 @@ commands:
     json: true
     syntax: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, .ai/local/state/open-questions.md, .ai/local/state/handovers/, git status, git diff]
-    writes: [.ai/local/state/current.yaml, .ai/local/state/archive/, .ai/local/state/ledger.jsonl]
+    writes: [.ai/local/state/current.yaml, .ai/local/state/completed/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 15]
     demo: finish-contract
     note: --check evaluates without writing and exits 0 when no task is active, so a pre-push hook never blocks a repository with nothing to enforce.
@@ -336,7 +336,7 @@ commands:
 
   - id: capture
     title: capture
-    summary: Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.
+    summary: Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.
     category: memory
     stage: work
     visibility: public
@@ -350,7 +350,7 @@ commands:
     writes: [.ai/local/prompts/, .ai/local/session-contexts/, .claude/hooks/majordomus-capture, .claude/settings.json]
     exit_codes: [0, 2, 12, 13, 15]
     demo: capture-status
-    note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add."
+    note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add. A record carries the episode it belongs to, the provider session, the repository and the worktree, with the provenance of that link: the mapping from a provider session to an episode exists only while the episode is open, so a record that did not carry it could never be attributed afterwards. 'capture reconcile' links a record from evidence that survived the close and marks the rest unlinked rather than guessing; 'capture prune' applies prompts.retention_max_days and prompts.retention_max_bytes by taking the body and keeping the record, its identity and a tombstone. Credential shapes are replaced before anything is persisted, and the archive is mode 0600."
 
   - id: search
     title: search
@@ -532,6 +532,24 @@ commands:
     demo: layout-migration
     note: Runs on the legacy layout only. It copies the local state aside before anything moves, never deletes a file it does not know, and refuses a directory that holds both project data and a tool installation.
 
+  - id: recover
+    title: recover
+    summary: Close episodes nobody ended, fold duplicate records, classify the stores' stray files.
+    category: system
+    stage: setup
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: false
+    syntax: majordomus recover [status|episodes|records|orphans|all] [--check] [--older-than <duration>]
+    reads: [.ai/repo/policy.yaml, .ai/local/state/sessions-open/, .ai/local/state/ledger.jsonl, .ai/repo/sessions/, .ai/local/state/checkpoints/, .ai/local/state/handovers/]
+    writes: [.ai/repo/sessions/, .ai/local/state/sessions-open/, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12]
+    demo: recovery-evidence
+    note: Recurring maintenance, unlike migrate, which is the one-time move off the pre-.ai layout. Every subject is idempotent and every one has a --check that writes nothing. Nothing is deleted for being unknown - a candidate whose evidence cannot be read is reported, counted and left alone.
+
   - id: bench
     title: bench
     summary: Time every public command of the registry, cold and warm, and compare with the baseline.
@@ -549,6 +567,24 @@ commands:
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: benchmark-run
     note: The targets are the registry's public commands; the scenarios are the command fixtures when the suite is present. A run is local evidence; only --write-baseline writes the tracked baseline, and --check refuses a regression over the policy's thresholds.
+
+  - id: archive
+    title: archive
+    summary: Take a snapshot of the tracked tree that can be read, or checked, somewhere else.
+    category: system
+    stage: inspect
+    visibility: public
+    class: generated-output-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: none
+    json: true
+    syntax: majordomus archive [<profile>] [--out <path>] [--format zip|tar.gz] [--dry-run] [--force] [--json] | majordomus archive --list [--json]
+    reads: [share/archive.yaml, .ai/repo/archive.yaml, .gitattributes]
+    writes: [tmp/archives/]
+    exit_codes: [0, 2, 10, 12, 13, 15]
+    demo: archive-profiles
+    note: The file set is the git index, so nothing untracked — no build output, no cache, no .ai/local/ — can travel. What a profile drops beyond that is declared in share/archive.yaml; a profile that drops the derived paths reads .gitattributes rather than keeping a second list of generated paths. Every entry's mode is taken from the index and written into the archive's manifest, and the restore script inside the archive puts the modes back and builds a local git index, because a copy whose scripts are not executable fails checks for reasons of its own.
 
   - id: help
     title: help

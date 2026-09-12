@@ -5,18 +5,18 @@
     "id": "majordomus-cli",
     "version": "0.5.0"
   },
-  "fingerprint": "29fb0066cee48e5f03297db24558afbe0c8f1c5a601d03f30926339ce7ccee7c",
+  "fingerprint": "0dd19ad0ef1c7086cdb44dc184af8b5c7010ed590247a92bfb2b68592e0d1a6f",
   "route": "/features/",
   "counts": {
-    "features": 19,
-    "features_all": 20,
-    "featured": 9,
+    "features": 22,
+    "features_all": 23,
+    "featured": 11,
     "providers": 6,
-    "modules": 27,
-    "modules_covered": 17,
-    "commands": 28,
-    "commands_covered": 27,
-    "kinds": 25,
+    "modules": 34,
+    "modules_covered": 21,
+    "commands": 30,
+    "commands_covered": 28,
+    "kinds": 26,
     "kinds_covered": 22
   },
   "surfaces": [
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 18
+      "features": 21
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 13
+      "features": 16
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 17
+      "features": 20
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 14
+      "features": 17
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 19
+      "features": 22
     }
   ],
   "features": [
@@ -266,15 +266,15 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 20
+          "objects": 23
         },
         {
           "name": "command",
-          "objects": 29
+          "objects": 31
         },
         {
           "name": "claim",
-          "objects": 149
+          "objects": 168
         }
       ],
       "rule_refs": [
@@ -283,7 +283,7 @@
           "identity": "project.interfaces-are-projections@1",
           "title": "External interfaces are projections of one capability definition",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
         },
         {
@@ -291,7 +291,7 @@
           "identity": "project.rust-canonical-declaration@1",
           "title": "One canonical declaration; modules compose capabilities; the root composes modules",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md"
         },
         {
@@ -299,7 +299,7 @@
           "identity": "project.derived-files-regenerated@1",
           "title": "Derived files are regenerated, never edited",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/derived-files-regenerated.v1.md"
         },
         {
@@ -307,7 +307,7 @@
           "identity": "project.generated-artifacts-are-typed@1",
           "title": "A generated artifact declares its document, its encoding, its contract and its source",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/generated-artifacts-are-typed.v1.md"
         },
         {
@@ -528,6 +528,7 @@
       "backlinks": [
         "benchmarks",
         "cockpit",
+        "evidence",
         "interfaces",
         "policy",
         "skills",
@@ -536,13 +537,13 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 202,
+        "mcp_resources": 226,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 198,
+        "objects": 222,
         "rules": 5,
-        "enforced_rules": 0,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 4,
         "claims": 9,
@@ -748,7 +749,7 @@
           "identity": "project.web-surface-declared-once@1",
           "title": "A web surface is declared once and every web projection is derived from it",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/web-surface-declared-once.v1.md"
         },
         {
@@ -756,7 +757,7 @@
           "identity": "project.web-surface-topology@1",
           "title": "A web surface is discovered from its producer, never registered twice",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/web-surface-topology.v1.md"
         },
         {
@@ -764,7 +765,7 @@
           "identity": "project.native-cli-documented@1",
           "title": "A native command line command exists only with its documentation and its executable examples",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/native-cli-documented.v1.md"
         },
         {
@@ -772,7 +773,7 @@
           "identity": "project.shared-server-resilience@1",
           "title": "Nothing a client leaves behind locks another client out",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
         }
       ],
@@ -823,7 +824,7 @@
         },
         {
           "id": "mcp-shared-server",
-          "claim": "One shared server serves a repository: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later one attaches to it, and it ends when the last client leaves",
+          "claim": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
           "status": "guaranteed"
         },
         {
@@ -833,7 +834,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1124,7 +1125,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 4,
-        "enforced_rules": 0,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 3,
         "claims": 11,
@@ -1222,7 +1223,7 @@
         {
           "id": "peers",
           "title": "Peers",
-          "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process.",
+          "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/peers.rs",
           "capabilities": [
@@ -1361,7 +1362,7 @@
           "identity": "project.worktree-topology@1",
           "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/worktree-topology.v1.md"
         },
         {
@@ -1369,7 +1370,7 @@
           "identity": "project.shared-server-resilience@1",
           "title": "Nothing a client leaves behind locks another client out",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
         }
       ],
@@ -1419,7 +1420,7 @@
         },
         {
           "id": "mcp-peers",
-          "claim": "Every client attached to the shared server is a peer named by its own initialize, listed by majordomus_peers, and majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
           "status": "guaranteed"
         },
         {
@@ -1545,6 +1546,7 @@
         "continuity",
         "finish-contract",
         "interfaces",
+        "mesh",
         "worktrees"
       ],
       "counts": {
@@ -1556,7 +1558,7 @@
         "commands": 3,
         "objects": 0,
         "rules": 5,
-        "enforced_rules": 1,
+        "enforced_rules": 3,
         "docs": 3,
         "adrs": 2,
         "claims": 5,
@@ -1687,7 +1689,7 @@
           "identity": "project.worktree-topology@1",
           "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/worktree-topology.v1.md"
         },
         {
@@ -1695,7 +1697,7 @@
           "identity": "project.no-machine-paths@1",
           "title": "Nothing this repository commits names a path of the machine it was written on",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-machine-paths.v1.md"
         }
       ],
@@ -1783,7 +1785,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 2,
-        "enforced_rules": 0,
+        "enforced_rules": 2,
         "docs": 1,
         "adrs": 1,
         "claims": 3,
@@ -1796,6 +1798,348 @@
         },
         "modules": {
           "behaviorally_verified": 1
+        }
+      }
+    },
+    {
+      "id": "mesh",
+      "title": "Running instances find each other, and prove who they are",
+      "short_title": "Mesh",
+      "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
+      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "status": "stable",
+      "weight": 45,
+      "featured": true,
+      "areas": [
+        "coordination"
+      ],
+      "audiences": [],
+      "modules": [
+        "mesh"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [
+        "project.mesh-is-observation-not-authority"
+      ],
+      "docs": [
+        "docs/MESH.md"
+      ],
+      "adrs": [
+        "adr-0050"
+      ],
+      "claims": [
+        "mesh-observation-not-authority",
+        "mesh-one-registry",
+        "mesh-off-by-default"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "mesh"
+      ],
+      "web": [],
+      "related": [
+        "coordination"
+      ],
+      "tags": [
+        "mesh",
+        "discovery",
+        "network",
+        "security"
+      ],
+      "route": "/features/mesh/",
+      "source": ".ai/repo/features/mesh.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "mesh",
+          "title": "Mesh",
+          "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+          "capabilities": [
+            {
+              "id": "mesh.doctor",
+              "title": "The mesh self-check",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_doctor",
+              "route": "GET /api/v1/mesh/doctor",
+              "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.identity",
+              "title": "This machine's node identity",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_identity",
+              "route": "GET /api/v1/mesh/identity",
+              "cli": "majordomus mesh identity"
+            },
+            {
+              "id": "mesh.nodes",
+              "title": "The discovered nodes",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_nodes",
+              "route": "GET /api/v1/mesh/nodes"
+            },
+            {
+              "id": "mesh.register",
+              "title": "Register with this node's mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_register",
+              "route": "POST /api/v1/mesh/register"
+            },
+            {
+              "id": "mesh.status",
+              "title": "The mesh, at a glance",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh",
+              "resource": "majordomus://mesh",
+              "route": "GET /api/v1/mesh"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [
+        {
+          "id": "project.mesh-is-observation-not-authority",
+          "identity": "project.mesh-is-observation-not-authority@1",
+          "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+        }
+      ],
+      "doc_refs": [
+        {
+          "path": "docs/MESH.md",
+          "title": "The mesh: discovery of running Majordomus instances"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0050",
+          "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "mesh-observation-not-authority",
+          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-one-registry",
+          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-off-by-default",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "mesh",
+          "title": "Mesh",
+          "route": "/cockpit/mesh"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [
+        "models"
+      ],
+      "counts": {
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 1,
+        "http_routes": 5,
+        "cli_paths": 2,
+        "commands": 0,
+        "objects": 0,
+        "rules": 1,
+        "enforced_rules": 1,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 3
+        },
+        "modules": {
+          "experimental": 1
+        }
+      }
+    },
+    {
+      "id": "models",
+      "title": "The models the world offers, declared once and routed with reasons",
+      "short_title": "Models",
+      "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
+      "summary": "share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.",
+      "status": "stable",
+      "weight": 46,
+      "featured": true,
+      "areas": [
+        "coordination"
+      ],
+      "audiences": [],
+      "modules": [
+        "models"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/MODELS.md"
+      ],
+      "adrs": [
+        "adr-0049"
+      ],
+      "claims": [
+        "models-one-declaration",
+        "models-routing-explains-itself",
+        "models-no-secret-fields"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "models"
+      ],
+      "web": [],
+      "related": [
+        "mesh"
+      ],
+      "tags": [
+        "models",
+        "catalogue",
+        "routing"
+      ],
+      "route": "/features/models/",
+      "source": ".ai/repo/features/models.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "models",
+          "title": "Models",
+          "description": "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/models.rs",
+          "capabilities": [
+            {
+              "id": "models.list",
+              "title": "The model catalogue",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_models",
+              "resource": "majordomus://models",
+              "route": "GET /api/v1/models",
+              "cli": "majordomus models list"
+            },
+            {
+              "id": "models.route",
+              "title": "Route a need to a model",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_models_route",
+              "route": "GET /api/v1/models/route",
+              "cli": "majordomus models route"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/MODELS.md",
+          "title": "The model catalogue"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0049",
+          "title": "The model catalogue is declarative data, and routing is an explainable projection of it",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0049-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "models-one-declaration",
+          "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+          "status": "guaranteed"
+        },
+        {
+          "id": "models-routing-explains-itself",
+          "claim": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+          "status": "guaranteed"
+        },
+        {
+          "id": "models-no-secret-fields",
+          "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "models",
+          "title": "Models",
+          "route": "/cockpit/models"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 2,
+        "mcp_tools": 2,
+        "mcp_resources": 1,
+        "http_routes": 2,
+        "cli_paths": 2,
+        "commands": 0,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 3
+        },
+        "modules": {
+          "experimental": 1
         }
       }
     },
@@ -1938,7 +2282,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -1952,7 +2296,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         },
         {
           "name": "prompt",
@@ -2013,7 +2357,7 @@
           "identity": "project.never-store-transcripts@1",
           "title": "Never store or summarise transcripts",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/never-store-transcripts.v1.md"
         },
         {
@@ -2285,13 +2629,13 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 17,
+        "mcp_resources": 27,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 16,
+        "objects": 26,
         "rules": 8,
-        "enforced_rules": 6,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 4,
         "claims": 11,
@@ -2459,7 +2803,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 39
+          "objects": 46
         },
         {
           "name": "knowledge",
@@ -2467,7 +2811,7 @@
         },
         {
           "name": "document",
-          "objects": 216
+          "objects": 240
         }
       ],
       "rule_refs": [
@@ -2492,7 +2836,7 @@
           "identity": "majordomus.decision-threshold@1",
           "title": "The decision threshold",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/vendor/majordomus/rules/decision-threshold.v1.md"
         },
         {
@@ -2716,13 +3060,13 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 257,
+        "mcp_resources": 288,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 256,
+        "objects": 287,
         "rules": 4,
-        "enforced_rules": 2,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 2,
         "claims": 8,
@@ -2745,7 +3089,7 @@
       "title": "Rules a machine decides, wired, tested and CI-blocking",
       "short_title": "Doctrine",
       "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
-      "summary": "Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.",
+      "summary": "Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.",
       "status": "stable",
       "weight": 70,
       "featured": true,
@@ -2755,7 +3099,8 @@
       ],
       "audiences": [],
       "modules": [
-        "health"
+        "health",
+        "rules"
       ],
       "commands": [
         "rules",
@@ -2772,7 +3117,9 @@
         "majordomus.doctrine-wiring-integrity",
         "majordomus.enforcement-wiring",
         "majordomus.rule-package-integrity",
-        "project.no-claim-without-test"
+        "project.no-claim-without-test",
+        "project.english-only",
+        "project.finding-carries-reproduce"
       ],
       "docs": [
         "docs/DOCTRINE.md",
@@ -2786,7 +3133,12 @@
         "wiring-reconciliation",
         "vendored-rule-package",
         "rule-resolution",
-        "drift-watch"
+        "drift-watch",
+        "rule-proof-is-named-and-resolves",
+        "rule-exemption-carries-its-reason",
+        "rule-state-is-derived-from-what-ran",
+        "authored-files-are-english",
+        "a-finding-names-how-to-see-it-again"
       ],
       "use_cases": [
         "prove-a-rule-is-enforced",
@@ -2848,6 +3200,43 @@
               "route": "GET /api/v1/health"
             }
           ]
+        },
+        {
+          "id": "rules",
+          "title": "Rules",
+          "description": "What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/rules.rs",
+          "capabilities": [
+            {
+              "id": "rules.proves",
+              "title": "What this test proves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rule_proves",
+              "route": "GET /api/v1/rules/proves",
+              "cli": "majordomus rules proves"
+            },
+            {
+              "id": "rules.report",
+              "title": "Every rule against the proof there is for it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rules",
+              "resource": "majordomus://rules",
+              "route": "GET /api/v1/rules",
+              "cli": "majordomus rules report"
+            },
+            {
+              "id": "rules.show",
+              "title": "What proves this rule",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_rule",
+              "route": "GET /api/v1/rules/rule",
+              "cli": "majordomus rules show"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -2885,7 +3274,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 121
+          "objects": 128
         }
       ],
       "rule_refs": [
@@ -2894,7 +3283,7 @@
           "identity": "project.rule-is-a-doctrine@1",
           "title": "A new enforced rule is a doctrine, not an inline check",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
         },
         {
@@ -2926,8 +3315,24 @@
           "identity": "project.no-claim-without-test@1",
           "title": "No claim without a test",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-claim-without-test.v1.md"
+        },
+        {
+          "id": "project.english-only",
+          "identity": "project.english-only@1",
+          "title": "English only",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/english-only.v1.md"
+        },
+        {
+          "id": "project.finding-carries-reproduce",
+          "identity": "project.finding-carries-reproduce@1",
+          "title": "Every finding carries a reproduce command",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
         }
       ],
       "doc_refs": [
@@ -2975,6 +3380,31 @@
         {
           "id": "drift-watch",
           "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-proof-is-named-and-resolves",
+          "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-exemption-carries-its-reason",
+          "claim": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
+          "status": "guaranteed"
+        },
+        {
+          "id": "rule-state-is-derived-from-what-ran",
+          "claim": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
+          "status": "guaranteed"
+        },
+        {
+          "id": "authored-files-are-english",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "status": "guaranteed"
+        },
+        {
+          "id": "a-finding-names-how-to-see-it-again",
+          "claim": "Every finding a command reports names the command that reproduces it",
           "status": "guaranteed"
         }
       ],
@@ -3204,27 +3634,27 @@
         "use-cases"
       ],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 1,
-        "mcp_resources": 122,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "capabilities": 6,
+        "mcp_tools": 4,
+        "mcp_resources": 130,
+        "http_routes": 6,
+        "cli_paths": 3,
         "commands": 5,
-        "objects": 121,
-        "rules": 5,
-        "enforced_rules": 3,
+        "objects": 128,
+        "rules": 7,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 0,
-        "claims": 7,
+        "claims": 12,
         "use_cases": 4,
         "moments": 31
       },
       "evidence": {
         "claims": {
-          "guaranteed": 7
+          "guaranteed": 12
         },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 2
         }
       }
     },
@@ -3379,7 +3809,7 @@
           "identity": "project.finding-carries-reproduce@1",
           "title": "Every finding carries a reproduce command",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
         }
       ],
@@ -3590,7 +4020,7 @@
         "commands": 4,
         "objects": 0,
         "rules": 7,
-        "enforced_rules": 4,
+        "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
         "claims": 8,
@@ -3770,7 +4200,7 @@
           "identity": "project.unknown-keys-are-errors@1",
           "title": "Unknown configuration keys are errors",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/unknown-keys-are-errors.v1.md"
         }
       ],
@@ -4019,7 +4449,7 @@
         "commands": 3,
         "objects": 5,
         "rules": 7,
-        "enforced_rules": 6,
+        "enforced_rules": 7,
         "docs": 2,
         "adrs": 1,
         "claims": 14,
@@ -4140,7 +4570,7 @@
           "identity": "project.interfaces-are-projections@1",
           "title": "External interfaces are projections of one capability definition",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
         }
       ],
@@ -4311,7 +4741,7 @@
         "commands": 0,
         "objects": 0,
         "rules": 1,
-        "enforced_rules": 0,
+        "enforced_rules": 1,
         "docs": 1,
         "adrs": 2,
         "claims": 0,
@@ -4419,7 +4849,7 @@
         },
         {
           "id": "capture",
-          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+          "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
           "stage": "work",
           "read_only": false
         },
@@ -4433,7 +4863,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 12
+          "objects": 22
         }
       ],
       "rule_refs": [
@@ -4450,7 +4880,7 @@
           "identity": "project.never-author-identity@1",
           "title": "Never author identity fields",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/never-author-identity.v1.md"
         },
         {
@@ -4659,13 +5089,13 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 12,
+        "mcp_resources": 22,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 12,
+        "objects": 22,
         "rules": 4,
-        "enforced_rules": 3,
+        "enforced_rules": 4,
         "docs": 2,
         "adrs": 2,
         "claims": 9,
@@ -4839,7 +5269,7 @@
           "identity": "project.distribution-canonical@1",
           "title": "Distribution has one canonical model",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/distribution-canonical.v1.md"
         },
         {
@@ -4847,7 +5277,7 @@
           "identity": "project.portable-shell@1",
           "title": "Portable shell",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/portable-shell.v1.md"
         },
         {
@@ -4855,7 +5285,7 @@
           "identity": "project.no-network-no-eval@1",
           "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/no-network-no-eval.v1.md"
         }
       ],
@@ -4962,7 +5392,7 @@
         "commands": 3,
         "objects": 1,
         "rules": 3,
-        "enforced_rules": 0,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 8,
@@ -5093,11 +5523,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 18
+          "objects": 19
         },
         {
           "name": "issue",
-          "objects": 203
+          "objects": 215
         }
       ],
       "rule_refs": [
@@ -5240,11 +5670,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 222,
+        "mcp_resources": 235,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 221,
+        "objects": 234,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5407,7 +5837,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 27
+          "objects": 29
         },
         {
           "name": "scope",
@@ -5436,7 +5866,7 @@
           "identity": "project.context-locality@1",
           "title": "Context locality",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/context-locality.v1.md"
         },
         {
@@ -5444,7 +5874,7 @@
           "identity": "project.scope-is-declared@1",
           "title": "What a worker reads is declared once, and nothing outside it is read or served",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/scope-is-declared.v1.md"
         },
         {
@@ -5687,13 +6117,13 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 31,
+        "mcp_resources": 33,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 28,
+        "objects": 30,
         "rules": 6,
-        "enforced_rules": 3,
+        "enforced_rules": 5,
         "docs": 2,
         "adrs": 1,
         "claims": 9,
@@ -5785,7 +6215,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 43
+          "objects": 45
         },
         {
           "name": "application",
@@ -5802,7 +6232,7 @@
           "identity": "project.use-case-evidence@1",
           "title": "A use case is proved by execution, and a capability is covered by a use case",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/use-case-evidence.v1.md"
         },
         {
@@ -5897,13 +6327,13 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 58,
+        "mcp_resources": 60,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 58,
+        "objects": 60,
         "rules": 3,
-        "enforced_rules": 2,
+        "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 4,
@@ -6209,7 +6639,7 @@
           "identity": "project.why-catalogue-is-canonical@1",
           "title": "An operational failure mode is a catalogue object, never a page",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/why-catalogue-is-canonical.v1.md"
         }
       ],
@@ -6266,7 +6696,7 @@
         "commands": 0,
         "objects": 55,
         "rules": 1,
-        "enforced_rules": 0,
+        "enforced_rules": 1,
         "docs": 1,
         "adrs": 1,
         "claims": 3,
@@ -6276,6 +6706,192 @@
       "evidence": {
         "claims": {
           "guaranteed": 3
+        },
+        "modules": {
+          "behaviorally_verified": 1
+        }
+      }
+    },
+    {
+      "id": "evidence",
+      "title": "A claim is proven by a run that happened, not by a file that exists",
+      "short_title": "Evidence",
+      "headline": "Every claim is joined to the execution recorded for its test — the outcome, the commit, the tree, the digest and the command that produces it again — and a run against this commit is never reported as the same thing as a run whose inputs merely have not changed.",
+      "summary": "The claims matrix binds a claim to a test by path, and a path resolving says a file exists rather than that anything ran. The ledger records the latest execution of every test with its provenance; the join is derived on every read and answers, per claim, whether the repository can honestly call it proven, only-not-invalidated, stale, failing or never run.",
+      "status": "stable",
+      "weight": 175,
+      "featured": false,
+      "areas": [
+        "verification",
+        "governance"
+      ],
+      "audiences": [],
+      "modules": [
+        "evidence"
+      ],
+      "commands": [
+        "evidence"
+      ],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/EVIDENCE.md"
+      ],
+      "adrs": [
+        "adr-0041"
+      ],
+      "claims": [
+        "evidence-proof-is-an-execution",
+        "evidence-currency-is-not-collapsed",
+        "evidence-partial-run-preserves-the-rest",
+        "evidence-navigates-both-ways",
+        "evidence-unsupported-guarantee-is-reported"
+      ],
+      "use_cases": [],
+      "cockpit": [],
+      "web": [],
+      "related": [
+        "benchmarks",
+        "ci",
+        "declare-once"
+      ],
+      "tags": [
+        "evidence",
+        "claims",
+        "tests",
+        "verification",
+        "provenance"
+      ],
+      "route": "/features/evidence/",
+      "source": ".ai/repo/features/evidence.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "evidence",
+          "title": "Evidence",
+          "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "capabilities": [
+            {
+              "id": "evidence.claim",
+              "title": "What proves this claim",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_claim",
+              "route": "GET /api/v1/evidence/claim",
+              "cli": "majordomus evidence claim"
+            },
+            {
+              "id": "evidence.record",
+              "title": "Record a run that happened",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence record"
+            },
+            {
+              "id": "evidence.report",
+              "title": "Every claim against the evidence recorded for it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence",
+              "resource": "majordomus://evidence",
+              "route": "GET /api/v1/evidence",
+              "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.test",
+              "title": "What this test proves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_evidence_test",
+              "route": "GET /api/v1/evidence/test",
+              "cli": "majordomus evidence proves"
+            }
+          ]
+        }
+      ],
+      "command_refs": [
+        {
+          "id": "evidence",
+          "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+          "stage": "work",
+          "read_only": false
+        }
+      ],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/EVIDENCE.md",
+          "title": "Evidence — what ran, against which commit, and whether it still proves anything"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0041",
+          "title": "Proof is a recorded execution, and inputs unchanged is not proven",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "evidence-proof-is-an-execution",
+          "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-currency-is-not-collapsed",
+          "claim": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-partial-run-preserves-the-rest",
+          "claim": "Recording one test's result never erases the evidence recorded for any other test",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-navigates-both-ways",
+          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-unsupported-guarantee-is-reported",
+          "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 3,
+        "mcp_resources": 1,
+        "http_routes": 3,
+        "cli_paths": 4,
+        "commands": 1,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 5,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 5
         },
         "modules": {
           "behaviorally_verified": 1
@@ -6389,7 +7005,7 @@
           "identity": "project.rust-benchmark-coverage@1",
           "title": "No endpoint of the Rust executable without a benchmark, and no number without evidence",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md"
         },
         {
@@ -6397,7 +7013,7 @@
           "identity": "project.benchmarkable-commands@1",
           "title": "Every public command is benchmarkable from the registry",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/benchmarkable-commands.v1.md"
         },
         {
@@ -6405,7 +7021,7 @@
           "identity": "project.rust-hot-path@1",
           "title": "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-hot-path.v1.md"
         },
         {
@@ -6467,7 +7083,7 @@
         },
         {
           "id": "rust-coverage-floor",
-          "claim": "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
           "status": "guaranteed"
         }
       ],
@@ -6519,7 +7135,8 @@
         }
       ],
       "backlinks": [
-        "ci"
+        "ci",
+        "evidence"
       ],
       "counts": {
         "capabilities": 1,
@@ -6530,7 +7147,7 @@
         "commands": 1,
         "objects": 0,
         "rules": 6,
-        "enforced_rules": 0,
+        "enforced_rules": 3,
         "docs": 1,
         "adrs": 1,
         "claims": 6,
@@ -6630,7 +7247,7 @@
           "identity": "project.blocking-checks-cheap@1",
           "title": "Blocking checks are deterministic and cheap",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/blocking-checks-cheap.v1.md"
         },
         {
@@ -6638,7 +7255,7 @@
           "identity": "project.tests-run-in-disposable-repos@1",
           "title": "Tests run in disposable repositories",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md"
         },
         {
@@ -6646,7 +7263,7 @@
           "identity": "project.rust-cli-evidence@1",
           "title": "The Rust executable carries its evidence with it",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-cli-evidence.v1.md"
         },
         {
@@ -6654,7 +7271,7 @@
           "identity": "project.rust-command-tested-in-file@1",
           "title": "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered",
           "class": "blocking",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/rust-command-tested-in-file.v1.md"
         }
       ],
@@ -6828,7 +7445,8 @@
         }
       ],
       "backlinks": [
-        "benchmarks"
+        "benchmarks",
+        "evidence"
       ],
       "counts": {
         "capabilities": 0,
@@ -6839,7 +7457,7 @@
         "commands": 2,
         "objects": 0,
         "rules": 4,
-        "enforced_rules": 0,
+        "enforced_rules": 4,
         "docs": 2,
         "adrs": 1,
         "claims": 6,
@@ -7046,6 +7664,46 @@
         "id": "worktrees",
         "label": "Worktrees",
         "route": "/features/worktrees/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
+        "id": "mesh",
+        "label": "Mesh",
+        "route": "/features/mesh/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
+        "id": "models",
+        "label": "Models",
+        "route": "/features/models/",
         "status": "stable",
         "surfaces": {
           "cli": true,
@@ -7312,6 +7970,26 @@
         ]
       },
       {
+        "id": "evidence",
+        "label": "Evidence",
+        "route": "/features/evidence/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "benchmarks",
         "label": "Benchmarks",
         "route": "/features/benchmarks/",
@@ -7405,6 +8083,11 @@
         "features": []
       },
       {
+        "id": "devcontext",
+        "title": "Development context",
+        "features": []
+      },
+      {
         "id": "devtask",
         "title": "Executable development scopes",
         "features": []
@@ -7429,6 +8112,13 @@
         "features": []
       },
       {
+        "id": "evidence",
+        "title": "Evidence",
+        "features": [
+          "evidence"
+        ]
+      },
+      {
         "id": "executions",
         "title": "Executions",
         "features": []
@@ -7446,6 +8136,25 @@
         "features": [
           "doctrine",
           "cockpit"
+        ]
+      },
+      {
+        "id": "lifecycle",
+        "title": "Session lifecycle",
+        "features": []
+      },
+      {
+        "id": "mesh",
+        "title": "Mesh",
+        "features": [
+          "mesh"
+        ]
+      },
+      {
+        "id": "models",
+        "title": "Models",
+        "features": [
+          "models"
         ]
       },
       {
@@ -7505,11 +8214,23 @@
         ]
       },
       {
+        "id": "rules",
+        "title": "Rules",
+        "features": [
+          "doctrine"
+        ]
+      },
+      {
         "id": "server",
         "title": "Server",
         "features": [
           "coordination"
         ]
+      },
+      {
+        "id": "session_domain",
+        "title": "The session domain",
+        "features": []
       },
       {
         "id": "trace",
@@ -7548,6 +8269,11 @@
         "features": [
           "knowledge"
         ]
+      },
+      {
+        "id": "archive",
+        "title": "archive",
+        "features": []
       },
       {
         "id": "bench",
@@ -7615,7 +8341,9 @@
       {
         "id": "evidence",
         "title": "evidence",
-        "features": []
+        "features": [
+          "evidence"
+        ]
       },
       {
         "id": "finish",
@@ -7683,6 +8411,11 @@
           "knowledge",
           "finish-contract"
         ]
+      },
+      {
+        "id": "recover",
+        "title": "recover",
+        "features": []
       },
       {
         "id": "rules",
@@ -7756,7 +8489,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (39)",
+        "title": "adr (46)",
         "features": [
           "knowledge"
         ]
@@ -7784,21 +8517,21 @@
       },
       {
         "id": "claim",
-        "title": "claim (149)",
+        "title": "claim (168)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "command",
-        "title": "command (29)",
+        "title": "command (31)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "context",
-        "title": "context (27)",
+        "title": "context (29)",
         "features": [
           "context"
         ]
@@ -7817,14 +8550,14 @@
       },
       {
         "id": "feature",
-        "title": "feature (20)",
+        "title": "feature (23)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (203)",
+        "title": "issue (215)",
         "features": [
           "planning"
         ]
@@ -7837,8 +8570,13 @@
         ]
       },
       {
+        "id": "mesh-declaration",
+        "title": "mesh-declaration (1)",
+        "features": []
+      },
+      {
         "id": "milestone",
-        "title": "milestone (18)",
+        "title": "milestone (19)",
         "features": [
           "planning"
         ]
@@ -7873,12 +8611,12 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (1)",
+        "title": "release-record (2)",
         "features": []
       },
       {
         "id": "rule",
-        "title": "rule (121)",
+        "title": "rule (128)",
         "features": [
           "doctrine"
         ]
@@ -7892,7 +8630,7 @@
       },
       {
         "id": "session",
-        "title": "session (12)",
+        "title": "session (22)",
         "features": [
           "continuity",
           "provenance"
@@ -7914,7 +8652,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (43)",
+        "title": "use-case (45)",
         "features": [
           "use-cases"
         ]
@@ -8084,7 +8822,7 @@
       "identity": "majordomus.decision-threshold@1",
       "title": "The decision threshold",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/vendor/majordomus/rules/decision-threshold.v1.md"
     },
     {
@@ -8332,7 +9070,7 @@
       "identity": "project.benchmarkable-commands@1",
       "title": "Every public command is benchmarkable from the registry",
       "class": "advisory",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/benchmarkable-commands.v1.md"
     },
     {
@@ -8340,7 +9078,7 @@
       "identity": "project.blocking-checks-cheap@1",
       "title": "Blocking checks are deterministic and cheap",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/blocking-checks-cheap.v1.md"
     },
     {
@@ -8348,7 +9086,7 @@
       "identity": "project.context-locality@1",
       "title": "Context locality",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/context-locality.v1.md"
     },
     {
@@ -8356,7 +9094,7 @@
       "identity": "project.derived-files-regenerated@1",
       "title": "Derived files are regenerated, never edited",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/derived-files-regenerated.v1.md"
     },
     {
@@ -8372,15 +9110,23 @@
       "identity": "project.distribution-canonical@1",
       "title": "Distribution has one canonical model",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/distribution-canonical.v1.md"
+    },
+    {
+      "id": "project.english-only",
+      "identity": "project.english-only@1",
+      "title": "English only",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/english-only.v1.md"
     },
     {
       "id": "project.finding-carries-reproduce",
       "identity": "project.finding-carries-reproduce@1",
       "title": "Every finding carries a reproduce command",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/finding-carries-reproduce.v1.md"
     },
     {
@@ -8388,7 +9134,7 @@
       "identity": "project.generated-artifacts-are-typed@1",
       "title": "A generated artifact declares its document, its encoding, its contract and its source",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/generated-artifacts-are-typed.v1.md"
     },
     {
@@ -8404,15 +9150,23 @@
       "identity": "project.interfaces-are-projections@1",
       "title": "External interfaces are projections of one capability definition",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
+    },
+    {
+      "id": "project.mesh-is-observation-not-authority",
+      "identity": "project.mesh-is-observation-not-authority@1",
+      "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
     },
     {
       "id": "project.native-cli-documented",
       "identity": "project.native-cli-documented@1",
       "title": "A native command line command exists only with its documentation and its executable examples",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/native-cli-documented.v1.md"
     },
     {
@@ -8420,7 +9174,7 @@
       "identity": "project.never-author-identity@1",
       "title": "Never author identity fields",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/never-author-identity.v1.md"
     },
     {
@@ -8428,7 +9182,7 @@
       "identity": "project.never-store-transcripts@1",
       "title": "Never store or summarise transcripts",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/never-store-transcripts.v1.md"
     },
     {
@@ -8436,7 +9190,7 @@
       "identity": "project.no-claim-without-test@1",
       "title": "No claim without a test",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-claim-without-test.v1.md"
     },
     {
@@ -8444,7 +9198,7 @@
       "identity": "project.no-machine-paths@1",
       "title": "Nothing this repository commits names a path of the machine it was written on",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-machine-paths.v1.md"
     },
     {
@@ -8452,7 +9206,7 @@
       "identity": "project.no-network-no-eval@1",
       "title": "No network, no telemetry, no eval, no silent overwrite, no recursive deletion",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/no-network-no-eval.v1.md"
     },
     {
@@ -8468,7 +9222,7 @@
       "identity": "project.portable-shell@1",
       "title": "Portable shell",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/portable-shell.v1.md"
     },
     {
@@ -8476,7 +9230,7 @@
       "identity": "project.rule-is-a-doctrine@1",
       "title": "A new enforced rule is a doctrine, not an inline check",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rule-is-a-doctrine.v1.md"
     },
     {
@@ -8484,7 +9238,7 @@
       "identity": "project.rust-benchmark-coverage@1",
       "title": "No endpoint of the Rust executable without a benchmark, and no number without evidence",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-benchmark-coverage.v1.md"
     },
     {
@@ -8492,7 +9246,7 @@
       "identity": "project.rust-canonical-declaration@1",
       "title": "One canonical declaration; modules compose capabilities; the root composes modules",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md"
     },
     {
@@ -8500,7 +9254,7 @@
       "identity": "project.rust-cli-evidence@1",
       "title": "The Rust executable carries its evidence with it",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-cli-evidence.v1.md"
     },
     {
@@ -8508,7 +9262,7 @@
       "identity": "project.rust-command-tested-in-file@1",
       "title": "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-command-tested-in-file.v1.md"
     },
     {
@@ -8516,7 +9270,7 @@
       "identity": "project.rust-hot-path@1",
       "title": "A request never rebuilds canonical state, and a cache is never trusted without an equivalence test",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/rust-hot-path.v1.md"
     },
     {
@@ -8524,7 +9278,7 @@
       "identity": "project.scope-is-declared@1",
       "title": "What a worker reads is declared once, and nothing outside it is read or served",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/scope-is-declared.v1.md"
     },
     {
@@ -8532,7 +9286,7 @@
       "identity": "project.shared-server-resilience@1",
       "title": "Nothing a client leaves behind locks another client out",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/shared-server-resilience.v1.md"
     },
     {
@@ -8540,7 +9294,7 @@
       "identity": "project.tests-run-in-disposable-repos@1",
       "title": "Tests run in disposable repositories",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/tests-run-in-disposable-repos.v1.md"
     },
     {
@@ -8548,7 +9302,7 @@
       "identity": "project.unknown-keys-are-errors@1",
       "title": "Unknown configuration keys are errors",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/unknown-keys-are-errors.v1.md"
     },
     {
@@ -8556,7 +9310,7 @@
       "identity": "project.use-case-evidence@1",
       "title": "A use case is proved by execution, and a capability is covered by a use case",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/use-case-evidence.v1.md"
     },
     {
@@ -8564,7 +9318,7 @@
       "identity": "project.web-surface-declared-once@1",
       "title": "A web surface is declared once and every web projection is derived from it",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/web-surface-declared-once.v1.md"
     },
     {
@@ -8572,7 +9326,7 @@
       "identity": "project.web-surface-topology@1",
       "title": "A web surface is discovered from its producer, never registered twice",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/web-surface-topology.v1.md"
     },
     {
@@ -8580,7 +9334,7 @@
       "identity": "project.why-catalogue-is-canonical@1",
       "title": "An operational failure mode is a catalogue object, never a page",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/why-catalogue-is-canonical.v1.md"
     },
     {
@@ -8588,7 +9342,7 @@
       "identity": "project.worktree-topology@1",
       "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
       "class": "blocking",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/worktree-topology.v1.md"
     }
   ],
@@ -8634,6 +9388,16 @@
       "route": "/cockpit/worktrees"
     },
     {
+      "id": "mesh",
+      "title": "Mesh",
+      "route": "/cockpit/mesh"
+    },
+    {
+      "id": "models",
+      "title": "Models",
+      "route": "/cockpit/models"
+    },
+    {
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
@@ -8655,49 +9419,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1244,
-    "builtin": 80,
-    "declarative": 1164,
-    "modules": 27,
-    "mcp_tools": 78,
-    "mcp_resources": 1192,
-    "http_routes": 80,
-    "cli_commands": 93,
-    "shell_commands": 28,
-    "kinds": 28,
-    "objects": 1164,
+    "capabilities": 1395,
+    "builtin": 105,
+    "declarative": 1290,
+    "modules": 34,
+    "mcp_tools": 102,
+    "mcp_resources": 1327,
+    "http_routes": 104,
+    "cli_commands": 110,
+    "shell_commands": 30,
+    "kinds": 29,
+    "objects": 1290,
     "by_kind": {
-      "adr": 39,
+      "adr": 46,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 149,
-      "command": 29,
-      "context": 27,
+      "claim": 168,
+      "command": 31,
+      "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 216,
-      "feature": 20,
-      "implementation": 45,
-      "issue": 203,
+      "document": 240,
+      "feature": 23,
+      "implementation": 48,
+      "issue": 215,
       "knowledge": 1,
-      "milestone": 18,
+      "mesh-declaration": 1,
+      "milestone": 19,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 1,
-      "rule": 121,
+      "release-record": 2,
+      "rule": 128,
       "scope": 1,
-      "session": 12,
+      "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 154,
-      "use-case": 43,
+      "test": 186,
+      "use-case": 45,
       "workspace": 1
     },
     "providers": 6,
-    "features": 19,
+    "features": 22,
     "web_surfaces": 9
   },
   "valid": true

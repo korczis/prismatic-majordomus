@@ -1,7 +1,7 @@
 +++
 title = "Refuse a directory of the layer that documents nothing"
 description = "A directory added under the layer without a context document fails validation by name, nothing resolves against the tree until it says what it is for, and the same hierarchy is readable over MCP and the API without running the gate."
-weight = 26
+weight = 28
 [extra]
 id = "document-every-directory-of-the-layer"
 source = ".ai/repo/use-cases/document-every-directory-of-the-layer.md"

@@ -1,7 +1,7 @@
 +++
 title = "See which rules apply here and what enforces them"
 description = "List the effective rule set, read one rule as the tool reads it, and see which of them the tool enforces and from where."
-weight = 41
+weight = 43
 [extra]
 id = "read-the-rules-the-tool-applies"
 source = ".ai/repo/use-cases/read-the-rules-the-tool-applies.md"

@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# rule-proof-check — a rule names what proves it, and what it names exists.
+#
+# The subject is every rule object under the repository's rules section. A rule carries an
+# enforcement block in one of two modes: DISPATCHED, which names a validator the doctrine
+# dispatcher calls at run time, and GATED, which names only the behavioural cases that prove
+# it. Either way the block names tests, and this script is what makes that naming load-
+# bearing: before it, a rule could name test/cases/28_no_hardcoded_values.sh in English prose
+# and nothing noticed when that case was renamed or deleted.
+#
+# Two findings, and they are different failures:
+#
+#   dangling  the block names a path that is not in the tree. Always a failure, never
+#             ratcheted: a proof that does not exist is worse than no proof, because the
+#             rule reads as proven. This is the one-way relation the repository keeps
+#             rediscovering — a reference verified in one direction with the converse
+#             unowned.
+#   unproven  a blocking rule names neither a validator nor a test. Ratcheted: the rules
+#             that are review-enforced today are recorded in the baseline, so existing debt
+#             blocks nobody and a new blocking rule cannot arrive without proof.
+#
+# On the overlap, because a reader will find it: scripts/ci/reference-check already refuses
+# a path named in any authored document that is not in the tree, and a rule's front matter
+# is prose to it, so today it catches the dangling half too — measured, not assumed. It is
+# kept here for two reasons. Its exemption list is a policy about documents (sessions, ADRs
+# and generated trees are exempt); the moment rules join that list the proof relation would
+# lose its guard silently, which is the one-way dependency this gate exists to refuse. And
+# the diagnosis differs: reference-check says a document names a missing path, which is true
+# of a typo in prose; this says a rule's proof is gone, which is the thing to act on. The
+# `unproven` finding is the half nothing else can express — no other check knows that a
+# blocking rule is supposed to name anything at all.
+#
+# The denominator is read from the tree, so a rule added tomorrow is measured tomorrow and
+# this script never carries a list of what exists.
+#
+#   scripts/ci/rule-proof-check                    report, and fail on new debt
+#   MJ_ROOT=<dir> scripts/ci/rule-proof-check      measure another tree (the case does)
+#   scripts/ci/rule-proof-check --write-baseline   record today's debt (a deliberate act)
+#   scripts/ci/rule-proof-check --strict           fail on any finding, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure. The counting
+# helper below pipes, and `grep -c` exits 1 when it counts none, so every pipeline that may
+# legitimately find nothing says `|| true` for itself.
+set -eu
+# pipefail, so a pipeline reports the failure of any stage rather than the success of its
+# last. Every counting pipeline below therefore ends in `|| echo 0` or `|| true`, because
+# grep exits 1 on no match and "no findings" is the healthy case, not an error.
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+RULES=".ai/repo/rules"
+BASELINE=".ai/repo/rule-proof-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "rule-proof-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+[ -d "$RULES" ] || { echo "rule-proof-check: no rules section here; nothing to measure"; exit 0; }
+
+# Every rule file, in a deterministic order. find is used rather than a glob because the
+# section nests (project/, vendor/<ns>/rules/) and the depth is not this script's business.
+files="$(find "$RULES" -name '*.md' ! -name 'README.md' | LC_ALL=C sort)"
+[ -n "$files" ] || { echo "rule-proof-check: the rules section holds no rule"; exit 12; }
+
+# One pass per file: the identity, the class, and the enforcement block flattened to
+#   <id>\t<class>\t<has-validator>\t<declares-review>\t<test-path>
+# with one row per named test and a single row carrying "-" when the block names none.
+#
+# `declares-review` is the third mode, and it is not an absence dressed up. A rule may say,
+# in its own front matter, that nothing executable can express it, by carrying a
+# `reviewed_because:` giving the reason. The reason is the declaration; there is no matching
+# flag, because a flag can be set and a reason cannot be set without writing one, and an
+# exemption nobody had to justify is the debt this gate exists to hold. A rule that declares
+# it is reported as `reviewed` on every run and never fails, and it is counted apart, so
+# that this list growing is visible as governance getting weaker rather than as a shorter
+# baseline. An executable proof always wins over the declaration, which is why the reader
+# sets this flag and the caller checks the validator and the tests first.
+# Both YAML spellings of a list are read: the inline [a, b] the rules use and the block
+# form, because a rule written by hand may use either and a parser that knows one is a
+# parser that silently drops the other.
+read_rules() {
+  awk '
+    FNR == 1 { id = ""; cls = ""; val = 0; rb = 0; nt = 0; inblk = 0; inlist = 0; fm = 0 }
+    FNR == 1 && $0 == "---" { fm = 1; next }
+    fm == 1 && $0 == "---" {
+      fm = 2
+      if (id != "") {
+        rev = rb
+        if (nt == 0) printf "%s\t%s\t%d\t%d\t-\n", id, cls, val, rev
+        else for (i = 1; i <= nt; i++) printf "%s\t%s\t%d\t%d\t%s\n", id, cls, val, rev, t[i]
+      }
+      next
+    }
+    fm != 1 { next }
+    /^id:/    { if (id  == "") { id  = $0; sub(/^id:[ \t]*/,  "", id)  } }
+    /^class:/ { if (cls == "") { cls = $0; sub(/^class:[ \t]*/, "", cls) } }
+    /^x-majordomus:/ { inblk = 1; next }
+    inblk && /^[^ \t]/ { inblk = 0; inlist = 0 }
+    inblk && /^[ \t]+validator:[ \t]*[^ \t]/ { val = 1; inlist = 0; next }
+    inblk && /^[ \t]+reviewed_because:[ \t]*[^ \t]/ { rb = 1; inlist = 0; next }
+    inblk && /^[ \t]+tests:/ {
+      line = $0; sub(/^[ \t]+tests:[ \t]*/, "", line)
+      if (line ~ /^\[/) {                       # inline: tests: [a, b]
+        gsub(/^\[|\]$/, "", line); n = split(line, a, ",")
+        for (i = 1; i <= n; i++) { gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", a[i]); if (a[i] != "") t[++nt] = a[i] }
+        inlist = 0
+      } else if (line == "") inlist = 1          # block form follows
+      next
+    }
+    inblk && inlist && /^[ \t]+-[ \t]*[^ \t]/ {
+      line = $0; sub(/^[ \t]+-[ \t]*/, "", line); gsub(/^[ \t"\047]+|[ \t"\047]+$/, "", line)
+      if (line != "") t[++nt] = line
+      next
+    }
+    inblk && inlist && /^[ \t]+[A-Za-z_-]+:/ { inlist = 0 }
+  ' $files
+}
+
+# How many non-empty lines a newline-joined list holds. grep -c prints the count and exits
+# 1 when that count is zero, which under pipefail is a failure rather than an answer, so
+# the count is taken once here and every caller reads a number instead of guarding its own
+# pipeline. Getting this wrong printed the healthy case as "0\n0 rule(s) known".
+nlines() { printf '%s\n' "$1" | grep -c '[^[:space:]]' || true; }
+
+findings=""   # one "<id>\t<kind>\t<what>" per line
+add() { findings="$findings$1	$2	$3
+"; }
+
+rows="$(read_rules)"
+[ -n "$rows" ] || { echo "rule-proof-check: no rule front matter parsed; the reader is broken" >&2; exit 12; }
+
+# dangling: the block names a path the tree does not hold
+while IFS="	" read -r id cls val rev path; do
+  [ -n "$id" ] || continue
+  [ "$path" = "-" ] && continue
+  [ -e "$path" ] || add "$id" dangling "names $path, which is not in the tree"
+done <<EOF
+$rows
+EOF
+
+# reviewed: the rule says a reader enforces it, and says why. Reported on every run and
+# never a failure; counted apart so the number is visible.
+while IFS="	" read -r id cls val rev path; do
+  [ -n "$id" ] || continue
+  [ "$rev" = 1 ] || continue
+  [ "$path" = "-" ] || continue
+  [ "$val" = 1 ] && continue
+  add "$id" reviewed "declares that a reader enforces it, with its reason"
+done <<EOF
+$rows
+EOF
+
+# unproven: a blocking rule names neither a validator nor a test
+while IFS="	" read -r id cls val rev path; do
+  [ -n "$id" ] || continue
+  [ "$cls" = blocking ] || continue
+  [ "$path" = "-" ] || continue
+  [ "$val" = 1 ] && continue
+  [ "$rev" = 1 ] && continue
+  add "$id" unproven "is blocking and names neither a validator nor a test that proves it"
+done <<EOF
+$rows
+EOF
+
+dangling="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "dangling" { print $1 }' | LC_ALL=C sort -u || true)"
+unproven="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "unproven" { print $1 }' | LC_ALL=C sort -u || true)"
+reviewed="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "reviewed" { print $1 }' | LC_ALL=C sort -u || true)"
+
+if [ "$MODE" = write ]; then
+  { echo "# Blocking rules that name no executable proof: enforced by review today."
+    echo "# Written by scripts/ci/rule-proof-check --write-baseline. The list may shrink;"
+    echo "# a blocking rule not on it that names no proof fails the gate. Do not add by hand."
+    printf '%s\n' "$unproven" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "rule-proof-check: baseline written with $(nlines "$unproven") rule(s)"
+  exit 0
+fi
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
+
+# A finding the baseline already excused is not a failure of this run, and printing it as
+# one is how a green gate comes to read as red. FAIL is what fails; KNOWN is the debt this
+# gate is holding flat. Under --strict nothing is excused, so everything is FAIL.
+label() { # id kind -> FAIL, KNOWN or NOTE
+  [ "$2" = dangling ] && { printf 'FAIL'; return; }
+  [ "$2" = reviewed ] && { printf 'NOTE'; return; }
+  [ "$MODE" = strict ] && { printf 'FAIL'; return; }
+  case "
+$known
+" in *"
+$1
+"*) printf 'KNOWN' ;; *) printf 'FAIL' ;; esac
+}
+[ -n "$findings" ] && printf '%s' "$findings" | grep -v '^$' | while IFS="	" read -r id kind what; do
+  printf '%s rule-proof %-9s %-46s %s  [reproduce: scripts/ci/rule-proof-check]\n' "$(label "$id" "$kind")" "$kind" "$id" "$what"
+done
+
+# A dangling proof is never ratcheted: the rule reads as proven and is not.
+if [ -n "$dangling" ]; then
+  echo >&2
+  echo "rule-proof-check: $(nlines "$dangling") rule(s) name a proof that is not in the tree." >&2
+  echo "  Either the case was renamed and the rule was not, or it was deleted and the rule still claims it." >&2
+  exit 10
+fi
+
+if [ "$MODE" = strict ]; then
+  [ -z "$unproven" ] && { echo "rule-proof-check: every blocking rule names what proves it, and every proof is in the tree"; exit 0; }
+  echo "rule-proof-check: $(nlines "$unproven") blocking rule(s) name no proof (--strict)" >&2
+  exit 10
+fi
+
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$unproven" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$unproven" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+[ -n "$gone" ] && { echo; echo "rule-proof-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "rule-proof-check: new debt, not in $BASELINE:" >&2
+  printf '  %s\n' $new >&2
+  echo "  A blocking rule nobody can prove is a rule nobody enforces. Name the behavioural" >&2
+  echo "  case in its x-majordomus block: tests: [test/cases/NN_name.sh]." >&2
+  exit 10
+fi
+echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{print $1}' | LC_ALL=C sort -u)") rule(s) measured)"

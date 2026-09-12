@@ -1,0 +1,177 @@
+#!/usr/bin/env bash
+# finding-reproduce-check — a finding names the command that reproduces it.
+#
+# `project.finding-carries-reproduce` says that every finding a command reports names how to
+# see it again. Until this script, nothing decided it: `mj_finding` in lib/common.sh takes
+# the reproduce command as its fifth argument and prints the finding without it when it is
+# absent, so a caller that forgot one produced a finding that reads exactly like a finding
+# that could not have one. A reviewer was the only thing between the two.
+#
+# What it measures. Every call to a reporting helper in the shell tool and the scripts:
+#
+#   mj_fail / mj_drift / mj_warn   a finding a reader is expected to act on. The reproduce
+#   mj_doctrine_fail               command is required, and a call with fewer than four
+#                                  arguments does not have one. The doctrine helper takes
+#                                  the same four and decides the level from the rule's
+#                                  class, so it is measured with them.
+#   mj_ok / mj_info                a statement, not a finding. Nothing to reproduce; not
+#                                  measured.
+#   mj_fail "$@" and friends       a forwarding call: the count belongs to whoever called
+#                                  it, and the caller is measured where it is written.
+#
+# The scan runs under LC_ALL=C: the prose in this repository is UTF-8 and the shapes this
+# gate reads are ASCII, so bytes are the right unit and a multibyte locale only gives awk a
+# way to fail on an em dash in a message it was never measuring.
+#
+# Counting the arguments of a shell call from the outside is not something a regular
+# expression can do in general — `"$a" "$b"` is two, `"$*"` may be any number. What it can do
+# reliably is the shape the repository actually writes: a call on one line whose arguments are
+# quoted strings or bare words. A call it cannot parse is reported as `unreadable` and counted,
+# never silently passed: an unparsed call that read as compliant would be the same defect this
+# gate exists to catch, one level up.
+#
+#   scripts/ci/finding-reproduce-check                 report, and fail on new debt
+#   MJ_ROOT=<dir> scripts/ci/finding-reproduce-check   measure another tree (the case does)
+#   scripts/ci/finding-reproduce-check --write-baseline record today's debt (a deliberate act)
+#   scripts/ci/finding-reproduce-check --strict        fail on any finding, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure. Every pipeline
+# below whose last stage may legitimately find nothing — `grep` exits 1 on no match — says
+# `|| true` for itself, so the option catches a real break rather than the empty case.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/finding-reproduce-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "finding-reproduce-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# How many non-blank lines a list holds. Written once because the obvious spelling is wrong
+# in a way that prints: `grep -c` exits 1 when it counts none, so `grep -vc "^$" || echo 0`
+# prints the count *and* the fallback, and a summary reads "0\n0 rule(s)".
+count_lines() { printf '%s\n' "${1:-}" | grep -c '[^[:space:]]' || true; }
+
+# The subject: the shell tool and the scripts it ships. Not the cases — a case asserts on
+# findings, it does not report them — and not the vendored package, which carries its own.
+files="$(find lib scripts -type f ! -name '*.awk' 2>/dev/null | LC_ALL=C sort || true)"
+[ -n "$files" ] || { echo "finding-reproduce-check: no shell tool here; nothing to measure"; exit 0; }
+
+# One awk pass over every file. A call is a line naming one of the three reporting helpers;
+# its arguments are counted by walking the rest of the line and treating a quoted run as one
+# argument. The definition of the helper itself, and a line that only mentions the name in
+# prose or in a comment, are not calls.
+findings="$(LC_ALL=C awk '
+  # Walk a line outside its quoted runs. A helper named inside a string is prose about the
+  # helper, not a call to it, and treating the two alike is how this gate would report
+  # itself. The scan is the only way to tell them apart without a shell parser.
+  function scan(line,   i, c, q, w, start, rest, n) {
+    q = ""; w = 1
+    for (i = 1; i <= length(line); i++) {
+      c = substr(line, i, 1)
+      if (q != "") { if (c == q) q = ""; continue }
+      if (c == "\"" || c == "\047") { q = c; w = 1; continue }
+      if (c == "#" && w) return                       # a trailing comment
+      if (c ~ /[ \t;&|(){}]/) { w = 1; continue }
+      if (w) {
+        start = i
+        if (substr(line, i, 8) == "mj_fail " || substr(line, i, 9) == "mj_drift " ||
+            substr(line, i, 8) == "mj_warn " || substr(line, i, 17) == "mj_doctrine_fail ") {
+          rest = substr(line, start)
+          sub(/^[a-z_]+[ \t]+/, "", rest)
+          # a forwarding call passes whatever it was given; the count is the caller\047s
+          if (rest ~ /\$@/) return
+          n = count_args(rest)
+          if (n < 0)      printf "%s\t%d\tunreadable\n", FILENAME, FNR
+          else if (n < 4) printf "%s\t%d\tno-reproduce\n", FILENAME, FNR
+          return
+        }
+      }
+      w = 0
+    }
+  }
+  function count_args(rest,   n, i, c, q, tok) {
+    n = 0; q = ""; tok = 0
+    for (i = 1; i <= length(rest); i++) {
+      c = substr(rest, i, 1)
+      if (q != "") { if (c == q) q = ""; continue }
+      if (c == "\"" || c == "\047") { q = c; if (!tok) { n++; tok = 1 } ; continue }
+      if (c == " " || c == "\t") { tok = 0; continue }
+      if (c == "#" && !tok) break
+      if (c == ";" || c == "&" || c == "|") break     # the call ends here
+      if (!tok) { n++; tok = 1 }
+    }
+    return (q == "") ? n : -1        # an unterminated quote: the call runs past this line
+  }
+  /^[ \t]*#/ { next }
+  # A call split over several lines is one call. Join the continuation before scanning, and
+  # report it at the line it started on, which is where a reader would look.
+  {
+    if (buf != "") { buf = buf " " $0; at = at } else { buf = $0; at = FNR }
+    if (buf ~ /\\$/) { sub(/\\$/, "", buf); next }
+    saved = FNR; FNR = at
+    scan(buf)
+    FNR = saved; buf = ""
+  }
+  END { if (buf != "") scan(buf) }
+' $files || true)"
+
+subjects="$(printf '%s\n' "$findings" | grep -v '^$' | awk -F'\t' '{print $1}' | LC_ALL=C sort -u || true)"
+
+if [ "$MODE" = write ]; then
+  { echo "# Files with a finding that names no reproduce command: enforced by review today."
+    echo "# Written by scripts/ci/finding-reproduce-check --write-baseline. The list may shrink;"
+    echo "# a file not on it whose finding names none fails the gate. Do not add by hand."
+    printf '%s\n' "$subjects" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "finding-reproduce-check: baseline written with $(count_lines "$subjects") file(s)"
+  exit 0
+fi
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^[[:space:]]*(#|$)' "$BASELINE" || true)"
+
+label() { # file -> FAIL or KNOWN
+  [ "$MODE" = strict ] && { printf 'FAIL'; return; }
+  case "
+$known
+" in *"
+$1
+"*) printf 'KNOWN' ;; *) printf 'FAIL' ;; esac
+}
+[ -n "$findings" ] && printf '%s\n' "$findings" | grep -v '^$' | while IFS="	" read -r file ln kind; do
+  case "$kind" in
+    unreadable) what="reports a finding this gate cannot parse; put the call on one line" ;;
+    *)          what="reports a finding that names no command to reproduce it" ;;
+  esac
+  printf '%s finding-reproduce %-40s %s  [reproduce: scripts/ci/finding-reproduce-check]\n' \
+    "$(label "$file")" "$file:$ln" "$what"
+done
+
+count="$(count_lines "$findings")"
+measured="$(count_lines "$files")"
+
+if [ "$MODE" = strict ]; then
+  [ "$count" -eq 0 ] && { echo "finding-reproduce-check: every finding names how to reproduce it ($measured file(s) measured)"; exit 0; }
+  echo "finding-reproduce-check: $count finding(s) name no reproduce command (--strict)" >&2
+  exit 10
+fi
+
+new="$(LC_ALL=C comm -23 <(printf '%s\n' "$subjects" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+gone="$(LC_ALL=C comm -13 <(printf '%s\n' "$subjects" | grep -v '^$' | LC_ALL=C sort -u) <(printf '%s\n' "$known" | grep -v '^$' | LC_ALL=C sort -u) || true)"
+
+[ -n "$gone" ] && { echo; echo "finding-reproduce-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "finding-reproduce-check: new debt, not in $BASELINE:" >&2
+  printf '  %s\n' $new >&2
+  echo "  A finding without a way to see it again is an opinion. Pass the command that" >&2
+  echo "  reproduces it as the fifth argument: mj_fail CAT SUBJECT MESSAGE 'the command'." >&2
+  exit 10
+fi
+echo "finding-reproduce-check: no new debt ($(count_lines "$known") file(s) known, $measured file(s) measured)"

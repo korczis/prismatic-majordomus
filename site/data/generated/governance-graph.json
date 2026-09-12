@@ -214,6 +214,21 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "rule:majordomus.prompt-capture"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.session-records"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.session-lifecycle",
       "target": "rule:majordomus.session-records"
     },
@@ -354,6 +369,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "validator:prompt_continuity"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.prompt-integrity",
       "target": "validator:prompts"
     },
@@ -391,6 +411,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.session-records",
       "target": "validator:session_records"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "validator:record_changed_files"
     },
     {
       "kind": "decided_by",
@@ -664,6 +689,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:doctor"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:prompt_continuity",
+      "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:prompts",
       "target": "command:doctor"
     },
@@ -681,6 +716,11 @@
       "kind": "run_by",
       "source": "validator:questions_store",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:record_changed_files",
+      "target": "command:doctor"
     },
     {
       "kind": "run_by",
@@ -944,6 +984,11 @@
     },
     {
       "kind": "proved_by",
+      "source": "rule:majordomus.prompt-continuity",
+      "target": "test:test/cases/140_prompt_continuity.sh"
+    },
+    {
+      "kind": "proved_by",
       "source": "rule:majordomus.prompt-integrity",
       "target": "test:test/cases/24_prompt_search.sh"
     },
@@ -981,6 +1026,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.session-records",
       "target": "test:test/cases/63_session_records.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "test:test/cases/136_changed_files_classifier.sh"
     },
     {
       "kind": "proved_by",
@@ -1361,6 +1411,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.prompt-continuity",
+      "kind": "rule",
+      "label": "prompt-continuity",
+      "note": "exit 10 · prompts",
+      "role": "text",
+      "route": "/doctrines/prompt-continuity/",
+      "status": "blocking",
+      "summary": "Every captured prompt names the episode it belongs to or says why it cannot; the archive is readable by its owner alone, bounded by a declared retention policy, and never holds credential material verbatim."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.prompt-integrity",
       "kind": "rule",
       "label": "prompt-integrity",
@@ -1446,6 +1507,17 @@
       "route": "/doctrines/session-records/",
       "status": "blocking",
       "summary": "A closed execution episode is written once, into the layer's sessions section, against a schema that admits what the repository can prove and nothing else."
+    },
+    {
+      "external": false,
+      "id": "rule:majordomus.record-changed-files",
+      "kind": "rule",
+      "label": "record-changed-files",
+      "note": "exit 10 · records",
+      "role": "warn",
+      "route": "/doctrines/record-changed-files/",
+      "status": "advisory",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own."
     },
     {
       "external": false,
@@ -1726,6 +1798,14 @@
     },
     {
       "external": false,
+      "id": "validator:prompt_continuity",
+      "kind": "validator",
+      "label": "mj_validate_prompt_continuity",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/capture.sh."
+    },
+    {
+      "external": false,
       "id": "validator:prompts",
       "kind": "validator",
       "label": "mj_validate_prompts",
@@ -1739,6 +1819,14 @@
       "label": "mj_validate_questions_store",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:record_changed_files",
+      "kind": "validator",
+      "label": "mj_validate_record_changed_files",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/changed.sh."
     },
     {
       "external": false,
@@ -1921,6 +2009,22 @@
       "id": "test:test/cases/103_obligations.sh",
       "kind": "test",
       "label": "test/cases/103_obligations.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/136_changed_files_classifier.sh",
+      "kind": "test",
+      "label": "test/cases/136_changed_files_classifier.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/140_prompt_continuity.sh",
+      "kind": "test",
+      "label": "test/cases/140_prompt_continuity.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

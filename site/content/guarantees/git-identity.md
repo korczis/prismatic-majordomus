@@ -1,7 +1,7 @@
 +++
 title = "Identity fields on every state record are computed from git and never authored"
 description = "repository_id, branch, head, working_tree and changed_files on the task record and on every handover are computed from git rev-parse and git status at the moment of writing. The worker cannot set them, and a handover body that contains a line looking like one of these fields is rejected. A model will confidently invent a branch name; git will not."
-weight = 46
+weight = 48
 [extra]
 claim_id = "git-identity"
 status = "guaranteed"
