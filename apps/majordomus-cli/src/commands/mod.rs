@@ -36,6 +36,7 @@ pub(crate) mod completion;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
+pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
@@ -83,6 +84,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Entity(args) => entity::run(args),
     }
 }
 

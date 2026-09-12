@@ -164,6 +164,8 @@ impl Cockpit {
             "/cockpit/capabilities" => pages::capabilities(ctx, query),
             "/cockpit/commands" => pages::commands(ctx, query),
             "/cockpit/objects" => pages::objects(ctx, query),
+            // the address an object was reachable at before it had one of its own; kept
+            // so that a link written against it still lands on the entity it named
             "/cockpit/object" => match query.iter().find(|(k, _)| k == "uri") {
                 Some((_, uri)) => pages::object(ctx, uri),
                 None => pages::objects(ctx, query),
@@ -193,6 +195,15 @@ impl Cockpit {
                     pages::command(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
                     pages::graph(ctx, &percent_decode(id))
+                } else if let Some(rest) = other.strip_prefix("/cockpit/objects/") {
+                    // one kind per segment, one entity per two. No kind and no entity is
+                    // named here: both are read from the index, which is what makes adding
+                    // an object add its page.
+                    let rest = percent_decode(rest);
+                    match rest.split_once('/') {
+                        Some((kind, slug)) => pages::entity(ctx, kind, slug),
+                        None => pages::objects_of_kind(ctx, &rest, query),
+                    }
                 } else {
                     pages::not_found(other)
                 }

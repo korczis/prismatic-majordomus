@@ -1544,6 +1544,112 @@ i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | 
     mj_record_body "$ROOT/$path" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
       | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/skills/$id.md"; done
+# ---------------------------------------------------------------- entities.json and one page per entity
+GEN_T0="$(mj_phase_begin "gen:entities")"
+# Every object of the layer's index that this site publishes as a page of its own.
+#
+# The canonical input is docs/generated/graph.json — the composed graph the Rust executable
+# writes, whose nodes are the objects and whose edges are the references the one relation
+# table resolves. Nothing is re-read here and no relation is restated: the route on each node
+# is the address the Cockpit serves it at, and the backlinks below are that graph's edges
+# read from the other end.
+#
+# Which kinds become pages is declared once, in site/data/publication.toml, for every kind
+# the index holds — as an entity projection, as an editorial section that already publishes
+# it, or as not published with the reason. scripts/ci/entity-check reads that file and
+# `majordomus entity kinds` and refuses either direction going stale.
+GRAPH="$ROOT/docs/generated/graph.json"
+[ -f "$GRAPH" ] || { echo "generate-site-data: $GRAPH is missing; run: majordomus generate" >&2; exit 10; }
+PUB="$ROOT/site/data/publication.toml"
+[ -f "$PUB" ] || { echo "generate-site-data: $PUB is missing; it declares where each kind is published" >&2; exit 10; }
+# the publication declaration as JSON: one object per [[kinds]] table, values unquoted
+awk '
+  /^[[:space:]]*#/ { next }
+  /^\[\[kinds\]\]/ { if (n++) printf "},"; printf "{"; first = 1; next }
+  /^[a-z_]+[[:space:]]*=/ {
+    key = $0; sub(/[[:space:]]*=.*/, "", key)
+    val = $0; sub(/^[a-z_]+[[:space:]]*=[[:space:]]*/, "", val)
+    if (!first) printf ","
+    first = 0
+    if (val ~ /^"/) { printf "\"%s\":%s", key, val } else { printf "\"%s\":%s", key, val }
+  }
+  END { if (n) printf "}" }
+' "$PUB" | sed 's/^/[/; s/$/]/' > "$STAGE/publication.json"
+jq -e 'length > 0' "$STAGE/publication.json" >/dev/null \
+  || { echo "generate-site-data: site/data/publication.toml declares no kind" >&2; exit 10; }
+# every declared kind is spelled once, and a projection is one of the three words
+jq -e '[.[].kind] | (length == (unique | length))' "$STAGE/publication.json" >/dev/null \
+  || { echo "generate-site-data: site/data/publication.toml declares a kind twice" >&2; exit 10; }
+for bad in $(jq -r '.[] | select((.projection | IN("entity","section","none")) | not) | .kind' "$STAGE/publication.json"); do
+  echo "generate-site-data: publication.toml gives kind '$bad' a projection that is not entity, section or none" >&2; exit 10; done
+# entities.json: the published kinds, and every object of them with its references and the
+# references that resolve to it. The backlinks are the forward edges read backwards, which
+# is why nothing declares them.
+jq --slurpfile pub "$STAGE/publication.json" '
+  .graph as $g
+  | $pub[0] as $pubs
+  | ($pubs | map(select(.projection == "entity"))) as $pubkinds
+  | ($pubkinds | map(.kind)) as $kinds
+  | ($pubs | INDEX(.kind)) as $bykind
+  | ($g.nodes | map(select(.external | not)) | INDEX(.id)) as $byid
+  | ($g.edges | map(select(.kind != "is_a"))) as $edges
+  # the public address of a node, which is not its Cockpit route: a kind published as entity
+  # pages has one per object, a kind an editorial section publishes has that section, and a
+  # kind that is not published has none and is shown as plain text rather than a dead link
+  | def public($id):
+      ($byid[$id]) as $n
+      | if $n == null then null
+        else ($bykind[$n.kind]) as $k
+        | if $k == null then null
+          elif $k.projection == "entity" then $k.route + ($n.route | split("/") | last) + "/"
+          elif $k.projection == "section" then $k.route
+          else null end
+        end;
+    def side($id): {label: ($byid[$id].label // ($id | sub("^[a-z-]+:"; ""))),
+                    kind: ($byid[$id].kind // ($id | split(":")[0])),
+                    route: public($id),
+                    external: ($byid[$id] == null)};
+    def entity($n):
+      {kind: $n.kind, id: $n.id, identity: $n.label, slug: ($n.route | split("/") | last),
+       cockpit: $n.route, title: ($n.summary // $n.label), status: $n.status,
+       tags: ($n.facts.tags // []), source: $n.source,
+       references: [ $edges[] | select(.source == $n.id) | {edge: .kind} + side(.target) ],
+       referenced_by: [ $edges[] | select(.target == $n.id) | {edge: .kind} + side(.source) ]};
+    {schema: 1,
+     source: "docs/generated/graph.json",
+     kinds: [ $pubkinds[] as $k
+              | ([$g.nodes[] | select(.kind == $k.kind and (.external | not))]) as $own
+              | $k + {count: ($own | length),
+                      dir: ($k.route | ltrimstr("/") | rtrimstr("/")),
+                      statuses: [ $own[] | .status | select(. != null) ] | unique } ],
+     entities: [ $g.nodes[] | select((.external | not) and (.kind | IN($kinds[]))) | entity(.) ]}
+' "$GRAPH" > "$OUT/entities.json"
+# a section per published kind, and a page per entity of it. The directory is the route, so
+# a kind that changes address changes it here and nowhere else.
+jq -r '.kinds[] | [.kind, .route, .title, .description, (.weight|tostring)] | @tsv' "$OUT/entities.json" \
+  | while IFS="$MJ_TAB" read -r kind route title desc weight; do
+  dir="${route#/}"; dir="${dir%/}"
+  [ -n "$dir" ] || { echo "generate-site-data: publication.toml gives kind '$kind' an empty route" >&2; exit 10; }
+  rm -rf "${CONTENT_ROOT:?}/$dir"; mkdir -p "$CONTENT_ROOT/$dir"
+  # not mk_section: an entity index carries the kind it is an index of, so that the one
+  # template serves every kind without being told which by the pages it is listing
+  printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "entities-section.html"\npage_template = "entity.html"\nweight = %s\n[extra]\nkind = %s\n+++\n' \
+    "$(jstr "$title")" "$(jstr "$desc")" "$weight" "$(jstr "$kind")" > "$CONTENT_ROOT/$dir/_index.md"
+  i=0
+  jq -r --arg k "$kind" '.entities[] | select(.kind == $k) | [.slug, .title, .identity, .source, (.status // "")] | @tsv' "$OUT/entities.json" \
+    | while IFS="$MJ_TAB" read -r slug etitle identity source status; do
+    i=$((i+1))
+    [ -f "$ROOT/$source" ] || { echo "generate-site-data: $kind $identity names source $source, which is not in the tree" >&2; exit 10; }
+    { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nkind = %s\nslug = %s\nidentity = %s\nstatus = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+        "$(jstr "$etitle")" "$(printf '%s' "$etitle" | jline)" "$i" "$(jstr "$kind")" "$(jstr "$slug")" "$(jstr "$identity")" "$(jstr "$status")" "$(jstr "$source")"
+      # the body is the object's own file; the page template renders the title as the one
+      # h1, so the file's level-one sections step down one level, and fenced code is left alone
+      mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+        | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
+      printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/$dir/$slug.md"
+  done
+done
+mj_phase_end "gen:entities" "$GEN_T0"
 # The Why catalogue's routes: the section, one page per moment, and a page per audience
 # and per area, all from site/data/registry/why.json. Nothing here names an entry: adding
 # .ai/repo/why/moments/<id>.md and regenerating is what puts /why/<id>/ on the site, in the

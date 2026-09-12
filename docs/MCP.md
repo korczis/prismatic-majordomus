@@ -373,6 +373,12 @@ as JSON text; read through `majordomus_get` it is the report as data (`answer`) 
 same text beside it (`content`). The registry refuses a query exposed as a resource whose
 input requires anything, because a read supplies none.
 
+An object also has an *address*, which the URI is not: `majordomus://rule/project.x@1` is an
+identity and `/cockpit/objects/rule/project-x-1` is where a reader is sent. The address is
+derived from the kind and the identity by one function, so it exists for every object and is
+the same on every surface; `majordomus_entity` answers to either spelling, and
+`majordomus_kinds` reports any two identities of one kind that reduce to one address.
+
 Identity is the kind's identity fields joined with `@` — `majordomus.scope-integrity@1`
 for a rule, `continue` for a prompt, `implementation` for a profile, `M001` for a
 milestone — or, for a kind with no identity fields (policy, document), the
@@ -387,6 +393,8 @@ manifest section it falls under, and its size.
 | `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
 | `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
 | `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
+| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, and the state of the executable artefacts it names |
+| `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
 | `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
 | `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |

@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# entity-check — every object of the layer is addressable, and every kind says where it is
+# published.
+#
+# The repository indexes every file under `.ai/` as an object of some kind. Two things have
+# to stay true of that index for the rest of the architecture to mean anything, and neither
+# was checked before this gate existed:
+#
+#   1. **Every object has an address of its own.** The address is derived — the kind and the
+#      identity reduced to one path segment — so it cannot be forgotten. It can, however,
+#      collide: two identities of one kind that reduce to the same segment. A route that
+#      answers with one of two objects is worse than no route, because the reader cannot tell
+#      which one they were given. `majordomus entity kinds` reports every collision and this
+#      gate refuses the tree while one exists.
+#
+#   2. **Every kind says where it is published.** `site/data/publication.toml` declares, for
+#      every kind of the index, whether the public site generates a page per object for it,
+#      whether an editorial section already publishes it, or that it is not published and
+#      why. Without that declaration a kind could be added to the layer and reach no public
+#      page with nothing saying so — the silent-discovery-failure class this repository has
+#      hit before.
+#
+# Both directions are checked, because a one-way check is the defect this repository keeps
+# finding in itself: a kind the index holds and the declaration does not mention is a
+# finding, and so is a kind the declaration names and the index does not hold.
+#
+# It also refuses the thing the whole subsystem exists to prevent: a *second* inventory. A
+# kind published as entity pages must not also carry an editorial section under the same
+# route, and no template that renders entity pages may name a kind — if it does, adding a
+# kind would mean editing a consumer, which is the invariant's negation.
+#
+#   scripts/ci/entity-check          check
+#
+# Exit 0 when every finding list is empty; 10 with an actionable finding per line otherwise.
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+
+FAIL=0
+fail() { printf 'entity-check: %s\n' "$1" >&2; FAIL=1; }
+
+command -v jq >/dev/null || { echo "entity-check: jq is required" >&2; exit 12; }
+
+# The executable answers for the index; it is built the way every other gate builds it.
+MJ="${MAJORDOMUS_BIN:-}"
+if [ -z "$MJ" ]; then
+  MJ="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+  [ -x "$MJ" ] || (cd "$ROOT/apps/majordomus-cli" && cargo build --quiet)
+fi
+[ -x "$MJ" ] || { echo "entity-check: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
+
+KINDS="$(mktemp)"; PUB="$(mktemp)"
+trap 'rm -f "$KINDS" "$PUB"' EXIT
+
+# MAJORDOMUS_SHARE pointing at another checkout makes this tree look like it disagrees with
+# itself; every gate here unsets it for the same reason.
+env -u MAJORDOMUS_SHARE "$MJ" entity kinds --format json > "$KINDS" 2>/dev/null \
+  || { echo "entity-check: \`majordomus entity kinds\` did not answer" >&2; exit 12; }
+
+# ---------------------------------------------------------------- 1. every object is addressable
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  fail "$line"
+done <<EOF
+$(jq -r '.collisions[]? | "route collision  " + .correction + "  (" + (.paths | join(", ")) + ")"' "$KINDS")
+EOF
+
+TOTAL="$(jq -r '[.kinds[].count] | add // 0' "$KINDS")"
+ROUTABLE="$(jq -r '.routable' "$KINDS")"
+[ "$TOTAL" = "$ROUTABLE" ] \
+  || fail "$((TOTAL - ROUTABLE)) of $TOTAL object(s) have no address of their own; see the collisions above"
+
+# ---------------------------------------------------------------- 2. every kind says where it is published
+# The declaration, overridable so that a test can hand this gate a broken one without
+# writing into the tree it is checking. A gate that had to be proved by mutating the
+# repository would be a gate nobody dares prove.
+DECL="${MAJORDOMUS_PUBLICATION:-site/data/publication.toml}"
+[ -f "$DECL" ] || { echo "entity-check: $DECL is missing; it declares where each kind is published" >&2; exit 10; }
+
+# the declaration as JSON, the same reading scripts/generate-site-data makes
+awk '
+  /^[[:space:]]*#/ { next }
+  /^\[\[kinds\]\]/ { if (n++) printf "},"; printf "{"; first = 1; next }
+  /^[a-z_]+[[:space:]]*=/ {
+    key = $0; sub(/[[:space:]]*=.*/, "", key)
+    val = $0; sub(/^[a-z_]+[[:space:]]*=[[:space:]]*/, "", val)
+    if (!first) printf ","
+    first = 0
+    printf "\"%s\":%s", key, val
+  }
+  END { if (n) printf "}" }
+'  "$DECL" | sed 's/^/[/; s/$/]/' > "$PUB"
+jq -e 'length > 0' "$PUB" >/dev/null 2>&1 || { echo "entity-check: $DECL parsed to nothing" >&2; exit 10; }
+
+for k in $(jq -r '.kinds[].kind' "$KINDS"); do
+  jq -e --arg k "$k" 'any(.[]; .kind == $k)' "$PUB" >/dev/null \
+    || fail "the index holds kind '$k' and $DECL does not declare it; add a [[kinds]] entry saying whether it is published, and how"
+done
+for k in $(jq -r '.[].kind' "$PUB"); do
+  jq -e --arg k "$k" 'any(.kinds[]; .kind == $k)' "$KINDS" >/dev/null \
+    || fail "$DECL declares kind '$k' and the index holds no object of it; remove the entry or add the source class that discovers it"
+done
+
+# a projection is one of three words, and each carries what it needs
+for bad in $(jq -r '.[] | select((.projection | IN("entity","section","none")) | not) | .kind' "$PUB"); do
+  fail "$DECL gives kind '$bad' a projection that is not entity, section or none"
+done
+for bad in $(jq -r '.[] | select(.projection == "entity" and ((.route | not) or (.title | not) or (.description | not) or (.weight | not))) | .kind' "$PUB"); do
+  fail "$DECL publishes kind '$bad' as entity pages without a route, title, description and weight"
+done
+for bad in $(jq -r '.[] | select(.projection == "section" and (.route | not)) | .kind' "$PUB"); do
+  fail "$DECL says an editorial section publishes kind '$bad' and names no route"
+done
+for bad in $(jq -r '.[] | select(.projection == "none" and (.reason | not)) | .kind' "$PUB"); do
+  fail "$DECL does not publish kind '$bad' and gives no reason; a silence is not a decision"
+done
+
+# ---------------------------------------------------------------- 3. no second inventory
+# a kind published as entity pages must not also have an editorial section at its route:
+# two pages for one object is exactly the duplication the subsystem removes
+for route in $(jq -r '.[] | select(.projection == "entity") | .route' "$PUB"); do
+  dir="site/content/${route#/}"; dir="${dir%/}"
+  if [ -f "$dir/_index.md" ] && ! grep -q 'template = "entities-section.html"' "$dir/_index.md"; then
+    fail "$dir/_index.md is an editorial section at an entity route; one object may not have two pages"
+  fi
+done
+
+# and the two templates that render entity pages name no kind: if one did, adding a kind
+# would mean editing a consumer, which is the invariant's negation
+for t in site/templates/entity.html site/templates/entities-section.html; do
+  [ -f "$t" ] || { fail "$t is missing; the entity projection has no template"; continue; }
+  for k in $(jq -r '.[] | select(.projection == "entity") | .kind' "$PUB"); do
+    grep -q "\"$k\"" "$t" && fail "$t names the kind '$k'; the entity templates are generic and read the kind from the page"
+  done
+done
+
+if [ "$FAIL" = 0 ]; then
+  printf 'entity-check: OK   %s object(s) of %s kind(s), every one addressable; every kind declares where it is published\n' \
+    "$TOTAL" "$(jq -r '.count' "$KINDS")"
+  exit 0
+fi
+printf 'entity-check: the rule is project.entities-are-routable; see site/data/publication.toml and `majordomus entity kinds`\n' >&2
+exit 10
