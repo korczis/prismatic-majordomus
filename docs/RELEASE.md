@@ -361,6 +361,35 @@ second answer in the arithmetic is the shape this subsystem was built to remove.
 The version the crate declares is also the `current` field of the changelog, so a bump that
 was made and a changelog that was not regenerated disagree, and `generate --check` says so.
 
+### The contract gate is on the release path
+
+The structural analysis used to run only when a change *landed*: `validate.yml` selected
+`version-surface` from the path classes, and `release.yml` ran `scripts/release-version
+--check --tag` and nothing else. A tag whose number matched both writers was never asked
+whether the public contract had moved further than the number says, which made pushing a
+tag the one way past the measurement.
+
+[`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml) now carries a `contract` phase in
+the `plan` job, and [`.github/workflows/release.yml`](../.github/workflows/release.yml) is
+the adapter over it, running `scripts/ci/version-matches-surface` against the executable the
+plan job has already built. It is the same adapter over the same engine the validate
+pipeline runs — `compat.rs` over `surface.rs`, one answer — and it runs **before a single
+artifact is built**, so a release under-versioned against its baseline publishes nothing.
+
+### `next` is raised from the last release, never from the declared version
+
+`majordomus release version` also reports what the conventional commits in the window
+imply, as evidence beside the structural verdict and never above it. That field used to
+raise the *declared* version by the implied bump, which overstates a tree that has already
+been bumped for its window: 0.6.0 declared over 0.5.0 released, with a minor implied, was
+answered "0.7.0" — a second bump for the same window.
+
+`next` is now the greater of what the tree declares and the last release raised by the
+implied bump, so a tree already at or above what the commits imply keeps its number. With
+no release to measure against, the declared version raised by the bump is still the answer,
+because there is no baseline to raise from instead. The structural analysis remains the
+authority either way; this field says what the commit subjects say.
+
 ## Which surface carries what
 
 | | command line | `generate` | HTTP · MCP | Cockpit |

@@ -23,7 +23,12 @@ Every obligation the active task declared, joined with what the vocabulary says 
 | provenance | builtin majordomus_cli::capability::builtin::obligations |
 | tags | obligations, completion, continuity |
 
-Input: none.
+| input | type | required | description |
+|---|---|---|---|
+| `live` | boolean or null | no | Settle every token whose fact something can establish — a commit, a push, the
+trunk, the published site, the deployed surfaces — live, at HEAD, before reading
+the ledger. On by default: a page rendered from a cache may pass `false` to read
+the ledger alone, and such a report says a live token is owed rather than proven. |
 
 Output: `Closure`.
 

@@ -1,7 +1,7 @@
 +++
-title = "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it"
+title = "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it, a deployed surface that states it — and a hand-recorded line neither discharges it nor rescues it"
 description = "Six of the eleven obligation tokens name a fact that lives outside the working tree:"
-weight = 146
+weight = 149
 [extra]
 claim_id = "obligation-establishment"
 status = "guaranteed"
@@ -17,7 +17,7 @@ discharged the same way — a person ran something, or said they had, and typed
 `majordomus evidence --covers push --command 'git push'`. The ledger held the sentence. Git
 held the answer, and nobody asked it.
 
-Four of the six are now asked rather than recorded:
+All six are asked rather than recorded:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -27,12 +27,14 @@ Four of the six are now asked rather than recorded:
 | `push` | the branch head exists on the remote it tracks | a remote-tracking ref reaches HEAD |
 | `target` | the repository's default branch reaches the commit | `refs/remotes/<remote>/HEAD` reaches HEAD |
 | `pages` | the published site serves this commit | `scripts/pages verify --timeout 0` — one probe of the identity document the site publishes |
+| `deploy` | every active deployment object serves the trunk's revision | `deploy.verify`, asking each object's `/api/v1/distribution/build`, once the trunk reaches HEAD |
+| `verify` | every surface the change reaches states the trunk's revision | `deploy.verify` over the site, the release metadata and the active deployments (claim `deployment-verified-live`) |
 
 </div>
 
 
-`deploy` and `verify` stay hand-recorded, and the vocabulary says why in one line rather
-than leaving a reader to infer it.
+The last two were hand-recorded until ADR 0057, and the vocabulary said why in one line;
+now it names what asks.
 
 An established obligation discharges by being true and refuses by being false. Recording
 evidence for one has no effect in either direction: a `task.evidence` line saying `push`

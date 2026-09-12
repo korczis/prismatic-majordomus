@@ -50,6 +50,7 @@ pub fn artifacts(
     policy: &LoadedPolicy,
 ) -> Result<Vec<Artifact>> {
     let mut out = Vec::with_capacity(policy.policy.projections.len());
+    let fragments = Fragments::from_share(share)?;
     for projection in &policy.policy.projections {
         let target = &projection.target;
         if !is_safe_relative(target) {
@@ -75,10 +76,11 @@ pub fn artifacts(
             }
         })?;
         let text = std::fs::read_to_string(&template).map_err(|e| Error::io(&template, e))?;
-        let body = render(&text, policy).map_err(|reason| Error::InvalidProjection {
-            target: target.clone(),
-            reason: format!("{}: {reason}", template.display()),
-        })?;
+        let body =
+            render(&text, policy, &fragments).map_err(|reason| Error::InvalidProjection {
+                target: target.clone(),
+                reason: format!("{}: {reason}", template.display()),
+            })?;
         let content_sha = sha256_hex(&body);
         let content = match projection.mode {
             ProjectionMode::File => {
@@ -146,6 +148,84 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
     )
 }
 
+/// The multi-line fragments a template may include as a line of its own, each derived
+/// from a shipped declaration rather than written into the template.
+///
+/// The shell tool builds the same fragments in `mj_build_fragments` (`lib/update.sh`) from
+/// the same files, and a projection is stamped with the hash of its rendered body — so the
+/// two renderers are held to the same bytes by `generate --check` rather than by trust.
+///
+/// ```
+/// use majordomus_cli::providers::Fragments;
+/// let f = Fragments { completion_contract: "- **Gates** — ci\n".into() };
+/// assert_eq!(f.get("COMPLETION_CONTRACT"), Some("- **Gates** — ci\n"));
+/// assert_eq!(f.get("PROFILE_TABLE"), None, "a fragment nothing here builds is not filled");
+/// ```
+#[derive(Debug, Clone, Default)]
+pub struct Fragments {
+    /// `{{COMPLETION_CONTRACT}}`: the definition of done, one line per stage of
+    /// `share/completion.yaml` with the questions that belong to it.
+    pub completion_contract: String,
+}
+
+impl Fragments {
+    /// Build every fragment from the distribution's `share/` directory. The completion
+    /// contract is read from `share/completion.yaml` through [`crate::gates::CompletionPolicy`],
+    /// and a distribution whose policy is missing or malformed is an error naming that
+    /// file, because a bootstrap rendered without its definition of done would be a stale
+    /// projection from the moment it was written.
+    ///
+    /// ```
+    /// use majordomus_cli::providers::Fragments;
+    /// use majordomus_cli::share::{Share, KINDS_FILE};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// std::fs::write(dir.path().join(KINDS_FILE), "kinds: []\n").unwrap();
+    /// std::fs::write(
+    ///     dir.path().join("completion.yaml"),
+    ///     "version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gates\n    remediation: run it\n",
+    /// )
+    /// .unwrap();
+    /// let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+    /// let fragments = Fragments::from_share(&share).unwrap();
+    /// assert_eq!(fragments.completion_contract, "- Alpha: q\n");
+    ///
+    /// // a distribution without the policy cannot render a bootstrap, and the error says which file
+    /// std::fs::remove_file(dir.path().join("completion.yaml")).unwrap();
+    /// assert!(Fragments::from_share(&share).unwrap_err().to_string().contains("completion.yaml"));
+    /// ```
+    pub fn from_share(share: &Share) -> Result<Self> {
+        let policy = crate::gates::CompletionPolicy::load(share.dir()).map_err(|reason| {
+            Error::InvalidProjection {
+                target: crate::gates::POLICY_FILE.into(),
+                reason,
+            }
+        })?;
+        Ok(Self {
+            completion_contract: policy.bootstrap_fragment(),
+        })
+    }
+
+    /// The fragment a whole-line token names, when one is built here. A token nothing
+    /// builds is `None`, and [`render`] then treats the line as an ordinary one, so an
+    /// unknown inline token is still refused by the inline pass rather than silently kept.
+    ///
+    /// ```
+    /// use majordomus_cli::providers::Fragments;
+    ///
+    /// let f = Fragments { completion_contract: "- Build: committed\n".into() };
+    /// assert_eq!(f.get("COMPLETION_CONTRACT"), Some("- Build: committed\n"));
+    /// assert_eq!(f.get("DEFAULT_PROFILE"), None, "an inline token is the policy's, not a fragment");
+    /// assert_eq!(Fragments::default().get("COMPLETION_CONTRACT"), Some(""));
+    /// ```
+    pub fn get(&self, token: &str) -> Option<&str> {
+        match token {
+            "COMPLETION_CONTRACT" => Some(self.completion_contract.as_str()),
+            _ => None,
+        }
+    }
+}
+
 /// Fill a template: `{{DEFAULT_PROFILE}}`, `{{CHECKPOINT_DEFAULT}}` and `{{POLICY_SHA}}`
 /// come from the policy; any other `{{TOKEN}}` is an error, because a template that asks
 /// for something the policy does not carry cannot be rendered deterministically.
@@ -162,12 +242,35 @@ pub fn stamp_line(policy_path: &str, policy_sha: &str, content_sha: &str) -> Str
 ///     sha256: "0123456789abcdef0123456789abcdef".into(),
 /// };
 /// assert_eq!(
-///     render("profile {{DEFAULT_PROFILE}}, every {{CHECKPOINT_DEFAULT}}, policy {{POLICY_SHA}}\n", &policy).unwrap(),
+///     render("profile {{DEFAULT_PROFILE}}, every {{CHECKPOINT_DEFAULT}}, policy {{POLICY_SHA}}\n", &policy, &Fragments::default()).unwrap(),
 ///     "profile implementation, every 15m, policy 0123456789ab\n"
 /// );
-/// assert!(render("{{PROFILE_TABLE}}\n", &policy).unwrap_err().contains("PROFILE_TABLE"));
+/// assert!(render("{{PROFILE_TABLE}}\n", &policy, &Fragments::default()).unwrap_err().contains("PROFILE_TABLE"));
+/// // a fragment token on a line of its own is replaced by the fragment, lines for line —
+/// // the same expansion `mj_expand_blocks` performs in the shell tool
+/// use majordomus_cli::providers::Fragments;
+/// let f = Fragments { completion_contract: "- a\n- b\n".into() };
+/// assert_eq!(render("x\n{{COMPLETION_CONTRACT}}\ny\n", &policy, &f).unwrap(), "x\n- a\n- b\ny\n");
 /// ```
-pub fn render(template: &str, policy: &LoadedPolicy) -> std::result::Result<String, String> {
+pub fn render(
+    template: &str,
+    policy: &LoadedPolicy,
+    fragments: &Fragments,
+) -> std::result::Result<String, String> {
+    // whole-line fragment tokens first, so that the inline pass below never meets one
+    let mut expanded = String::with_capacity(template.len());
+    for line in template.split_inclusive('\n') {
+        let bare = line.strip_suffix('\n').unwrap_or(line);
+        let token = bare
+            .strip_prefix("{{")
+            .and_then(|t| t.strip_suffix("}}"))
+            .filter(|t| !t.is_empty() && t.bytes().all(|b| b.is_ascii_uppercase() || b == b'_'));
+        match token.and_then(|t| fragments.get(t)) {
+            Some(fragment) => expanded.push_str(fragment),
+            None => expanded.push_str(line),
+        }
+    }
+    let template = expanded.as_str();
     let mut out = String::with_capacity(template.len());
     let mut rest = template;
     while let Some(start) = rest.find("{{") {
@@ -183,7 +286,7 @@ pub fn render(template: &str, policy: &LoadedPolicy) -> std::result::Result<Stri
             "POLICY_SHA" => Some(policy.sha256[..12.min(policy.sha256.len())].to_string()),
             _ => {
                 return Err(format!(
-                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, POLICY_SHA)"
+                    "token {{{{{token}}}}} is not one the policy can fill (DEFAULT_PROFILE, CHECKPOINT_DEFAULT, POLICY_SHA; COMPLETION_CONTRACT on a line of its own)"
                 ))
             }
         };

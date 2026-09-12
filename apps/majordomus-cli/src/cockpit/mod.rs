@@ -172,6 +172,7 @@ impl Cockpit {
             "/cockpit/graphs" => pages::graphs(ctx),
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
+            "/cockpit/completion" => pages::completion(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
             "/cockpit/models" => pages::models(ctx),

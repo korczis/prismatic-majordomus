@@ -171,6 +171,7 @@
         2,
         10,
         12,
+        13,
         15
       ],
       "tests": {
@@ -179,6 +180,7 @@
           "13_region_projection",
           "15_command_surface",
           "19_end_to_end",
+          "282_tooling_is_derived",
           "284_a_record_reads_the_whole_declaration",
           "33_event_registry"
         ],
@@ -277,6 +279,7 @@
           "18_doctrine_wiring",
           "19_end_to_end",
           "223_an_unsupported_schema_is_a_finding",
+          "282_tooling_is_derived",
           "284_a_record_reads_the_whole_declaration",
           "36_command_doctrines",
           "44_model_doctrine",
@@ -298,6 +301,7 @@
           "22_history",
           "24_prompt_search",
           "25_continuity_lifecycle",
+          "282_tooling_is_derived",
           "29_prompt_capture",
           "32_schema_integrity",
           "36_command_doctrines",
@@ -465,7 +469,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": false,
-      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]",
       "demo": "start-scope",
       "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused. --requires records what the task owes, from the vocabulary in share/obligations.yaml; a token it does not declare is refused here rather than at the moment a worker tries to discharge it.",
       "reads": [
@@ -560,7 +564,7 @@
           }
         ]
       },
-      "doc_md": "\nBegin a scoped task.\n\n**Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile\n<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default\n`$USER`.\n\n**Reads:** policy, profile, git state.\n**Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.\n\n**Behaviour:**\n- Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One\n  active task per checkout: hand the existing task over (`handover --close`) or finish\n  it first. No flag discards an active task.\n- Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside\n  the repository. Records the normalised form.\n- Reads every other worktree from `git worktree list` and, where one has an active\n  task, reports any scope that contains or is contained by this scope. Reported, not\n  blocked: that is a coordination fact for the person, not a rule. Git is the registry;\n  there is no sidecar file.\n- Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from\n  arguments.\n\n```\n$ majordomus start \"fix OAuth callback\" --scope lib/auth --profile debugging\nstarted t-20260903-193012-a4f1  profile=debugging  scope=lib/auth\nINFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]\nnext: worker reads AGENTS.md; checkpoint every 15m; majordomus check\n```"
+      "doc_md": "\nBegin a scoped task.\n\n**Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile\n<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default\n`$USER`. `--requires <token>[,<token>...]` what the task owes before `completed` is\navailable (`share/obligations.yaml`). `--issue <id>|none` the issue of the plan this work\nserves, or `none` for work the plan does not track, declared as such; recorded as `issue:`\non the task record, and the completion report's `issue` question resolves it against the\nplan — a task that names nothing is told it owes one, a task naming an issue the plan does\nnot hold is refused by that question.\n\n**Reads:** policy, profile, git state.\n**Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.\n\n**Behaviour:**\n- Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One\n  active task per checkout: hand the existing task over (`handover --close`) or finish\n  it first. No flag discards an active task.\n- Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside\n  the repository. Records the normalised form.\n- Reads every other worktree from `git worktree list` and, where one has an active\n  task, reports any scope that contains or is contained by this scope. Reported, not\n  blocked: that is a coordination fact for the person, not a rule. Git is the registry;\n  there is no sidecar file.\n- Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from\n  arguments.\n\n```\n$ majordomus start \"fix OAuth callback\" --scope lib/auth --profile debugging\nstarted t-20260903-193012-a4f1  profile=debugging  scope=lib/auth\nINFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]\nnext: worker reads AGENTS.md; checkpoint every 15m; majordomus check\n```"
     },
     {
       "name": "context",
@@ -798,6 +802,7 @@
           "15_command_surface",
           "19_end_to_end",
           "25_continuity_lifecycle",
+          "280_completion_is_proved",
           "32_refusal_lifecycle",
           "33_event_registry"
         ],
@@ -896,6 +901,8 @@
           "17_doctrine_enforcement",
           "19_end_to_end",
           "25_continuity_lifecycle",
+          "280_completion_is_proved",
+          "281_deploy_verify_live",
           "32_refusal_lifecycle"
         ],
         "negative": [
@@ -1006,6 +1013,7 @@
           "19_end_to_end",
           "25_continuity_lifecycle",
           "275_publication_is_current",
+          "280_completion_is_proved",
           "32_refusal_lifecycle",
           "33_event_registry"
         ],
@@ -1019,6 +1027,7 @@
           "21_decision_question",
           "25_continuity_lifecycle",
           "275_publication_is_current",
+          "280_completion_is_proved",
           "32_refusal_lifecycle"
         ]
       },
@@ -1581,7 +1590,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
+      "syntax": "majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates",
       "demo": "obligation-evidence",
       "note": null,
       "reads": [
@@ -1602,7 +1611,8 @@
       "tests": {
         "behaviour": [
           "103_obligations",
-          "131_completion_gates"
+          "131_completion_gates",
+          "280_completion_is_proved"
         ],
         "negative": [
           "103_obligations",
@@ -1716,7 +1726,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord evidence against the active task: one obligation it declared, discharged, or one\nvalidation gate of the CI model that has reported.\n\n```\nmajordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]\nmajordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]\n```\n\nThe two forms record different kinds of fact and are never one invocation. An obligation is\na promise the task made; a gate is what the validation pipeline said about the tree. A line\nclaiming to be both would be readable as neither, so passing `--covers` and `--gate`\ntogether exits `2`.\n\nA task's `scope` says where a worker may write; its `requires` says what the worker owes\nbefore the outcome `completed` is available. The tokens are declared in\n`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,\ntarget, pages, deploy, verify — each naming the command that discharges it and, where the\nfact is local, the pathspecs its evidence is taken over.\n\nFour of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the\ntool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that\nreaches it, a published site that serves it — and `check` and `finish` settle those live at\nHEAD instead of asking a worker to transcribe them. Recording one has no effect: an\nestablished obligation discharges by being true and refuses by being false. Where the\ncheckout cannot settle it (no remote, no default branch recorded, a site that never\nanswered) the token falls back to the recorded line, and the finding says which it was.\n`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:\na deployment is a fact about a machine this repository never contacts.\n\n`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary\ndoes not declare exits `2`; a token the active task never promised exits `15`, because\nrecording evidence for something nobody asked for is how a checklist grows entries nobody\nwanted.\n\n**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,\nthe command or artifact, and the hash of the tracked files the obligation names. Nothing\nelse is written; the ledger is already append-only, ordered and integrity-checked, and its\nenvelope already carries the head, the branch and the session.\n\nThat hash is the point. Evidence discharges an obligation only while the recomputed hash of\nits inputs equals the recorded one, so a change to any file the obligation names takes the\nproof away rather than leaving it behind — the same currency question the site's own\n`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an\nintegration, a publication, a deployment) has no inputs and is bound instead to the commit\nit was taken at, judged `exact | advanced | diverged | different_context` like every other\nrecord here.\n\n`check` and `finish` evaluate every obligation on every run through the doctrine\n`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on\nit; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,\nand refusing that would teach them to claim `completed` instead.\n\n### Recording a gate\n\n`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`\nthe status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does\nan `--exit` that is not a number.\n\n```\nmajordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'\n```\n\n**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash\nof the files that select it. Those files are derived from the model rather than declared:\nthe union of the paths of every class that names the gate, and everything for a gate every\nplan selects, because a gate every plan selects is a gate any change can invalidate. Change\none of them and the run stops discharging the gate — committed or not, since the change set\na task is judged over includes its working tree.\n\n`check` and `finish` evaluate every gate the task's own change set selects, through the\ndoctrine `majordomus.completion-gates`, and report each in one vocabulary:\n\n| status | meaning |\n|--------|---------|\n| `pass` | it ran over these inputs and exited `0` |\n| `fail` | it ran over these inputs and did not |\n| `stale` | it ran, and the files that select it have changed since |\n| `blocked` | something it cannot run without has not passed |\n| `queued` | the plan selects it and no run has ever reported |\n| `exempt` | nothing this change did can make it true or false |\n| `unknown` | it cannot be judged here at all — no model, no reader |\n\nOnly `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by\nname, never accepted as a pass and never refused: a verdict that never arrived and a verdict\nthat said pass are different facts, and on 2026-09-10 this repository's trunk carried three\nbranch-breaking defects overnight because they looked identical\n(`majordomus.never-reported-is-not-green`).\n\nThe whole judgement — every gate, the plan that selected it, which obligations the change\nimplies, and the nineteen questions of the done invariant with the source that answered each\n— is one document, `gates.completion`, read the same way by the command line, the HTTP API,\nMCP and the Cockpit:\n\n```\nmajordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'\n```"
+      "doc_md": "\nRecord evidence against the active task: one obligation it declared, discharged, or one\nvalidation gate of the CI model that has reported.\n\n```\nmajordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]\nmajordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]\nmajordomus evidence --run-gates\n```\n\n`--run-gates` runs every gate the task's change selects, here, with the commands the CI\nmodel names — `scripts/ci/run-plan` over the affected plan, the same dispatcher CI runs —\nand records each gate's exit as it finishes through the `--gate` form (`MJ_GATE_RECORD`).\nA gate that fails is recorded as failing, which is the point: the completion report refuses\nover it until the gate reports again. The exit status is the dispatcher's, non-zero when a\ngate failed.\n\nThe two forms record different kinds of fact and are never one invocation. An obligation is\na promise the task made; a gate is what the validation pipeline said about the tree. A line\nclaiming to be both would be readable as neither, so passing `--covers` and `--gate`\ntogether exits `2`.\n\nA task's `scope` says where a worker may write; its `requires` says what the worker owes\nbefore the outcome `completed` is available. The tokens are declared in\n`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,\ntarget, pages, deploy, verify — each naming the command that discharges it and, where the\nfact is local, the pathspecs its evidence is taken over.\n\nSix of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the\ntool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that\nreaches it, a published site that serves it — and `deploy` and `verify` name what the\ndeployed surfaces state at their own addresses, asked by `deploy.verify` against the trunk's\nhead once the trunk reaches the task's commit (rule `project.deployment-is-verified-live`).\n`check` and `finish` settle all six live at HEAD instead of asking a worker to transcribe\nthem. Recording one has no effect: an established obligation discharges by being true and\nrefuses by being false. Where the checkout cannot settle it (no remote, no default branch\nrecorded, a site that never answered, no deployment object to ask) the token falls back to\nthe recorded line, and the finding says which it was.\n\n`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary\ndoes not declare exits `2`. A token the active task never promised is accepted when the\nchange set implies it — the completion report's `obligations` say which, derived from the\ntoken's own inputs and the deployment plan — and is declared on the task record by the\nact, so that the closure judges it from then on exactly as one declared at `start`; a\ntoken neither promised nor implied exits `15`, because recording evidence for something\nnobody asked for is how a checklist grows entries nobody wanted.\n\n**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,\nthe command or artifact, and the hash of the tracked files the obligation names. Nothing\nelse is written; the ledger is already append-only, ordered and integrity-checked, and its\nenvelope already carries the head, the branch and the session.\n\nThat hash is the point. Evidence discharges an obligation only while the recomputed hash of\nits inputs equals the recorded one, so a change to any file the obligation names takes the\nproof away rather than leaving it behind — the same currency question the site's own\n`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an\nintegration, a publication, a deployment) has no inputs and is bound instead to the commit\nit was taken at, judged `exact | advanced | diverged | different_context` like every other\nrecord here.\n\n`check` and `finish` evaluate every obligation on every run through the doctrine\n`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on\nit; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,\nand refusing that would teach them to claim `completed` instead.\n\n### Recording a gate\n\n`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`\nthe status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does\nan `--exit` that is not a number.\n\n```\nmajordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'\n```\n\n**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash\nof the files that select it. Those files are derived from the model rather than declared:\nthe union of the paths of every class that names the gate, and everything for a gate every\nplan selects, because a gate every plan selects is a gate any change can invalidate. Change\none of them and the run stops discharging the gate — committed or not, since the change set\na task is judged over includes its working tree.\n\n`check` and `finish` evaluate every gate the task's own change set selects, through the\ndoctrine `majordomus.completion-gates`, and report each in one vocabulary:\n\n| status | meaning |\n|--------|---------|\n| `pass` | it ran over these inputs and exited `0` |\n| `fail` | it ran over these inputs and did not |\n| `stale` | it ran, and the files that select it have changed since |\n| `blocked` | something it cannot run without has not passed |\n| `queued` | the plan selects it and no run has ever reported |\n| `exempt` | nothing this change did can make it true or false |\n| `unknown` | it cannot be judged here at all — no model, no reader |\n\nOnly `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by\nname, never accepted as a pass and never refused: a verdict that never arrived and a verdict\nthat said pass are different facts, and on 2026-09-10 this repository's trunk carried three\nbranch-breaking defects overnight because they looked identical\n(`majordomus.never-reported-is-not-green`).\n\nThe whole judgement — every gate, the plan that selected it, which obligations the change\nimplies, and every question of the completion policy (`share/completion.yaml`) with the\nsource that answered each, folded into the lifecycle stage the task stands at — is one\ndocument, `gates.completion`, read the same way by the command line, the HTTP API, MCP and\nthe Cockpit ([`COMPLETION.md`](COMPLETION.md)):\n\n```\nmajordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'\n```"
     },
     {
       "name": "skills",
@@ -1859,6 +1869,7 @@
       "exit_codes": [
         0,
         2,
+        10,
         12,
         13,
         15

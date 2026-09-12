@@ -34,6 +34,18 @@ phases:
     runs: scripts/release-version --check --tag "$TAG"
     summary: the tag, the crate and the shell tool state one version, and the distribution model and every recorded release hold their invariants
 
+  # The compatibility gate, on the release path. Until this phase the structural analysis
+  # ran only when a change landed; a tag whose version matched both writers was never asked
+  # whether the public contract had moved further than the number says, and tagging was
+  # the one way past `version-surface`. The plan job already builds the executable, so the
+  # same adapter the validate pipeline runs asks the same engine here (rule
+  # project.the-version-is-measured): a release under-versioned against its baseline does
+  # not build a single artifact.
+  - id: contract
+    job: plan
+    runs: scripts/ci/version-matches-surface
+    summary: the version the tag names is at least what the public contract requires since the last release, measured by the one engine every surface renders
+
   - id: build
     job: build
     runs: scripts/release-package --target "$TARGET" --tag "$TAG" --out dist

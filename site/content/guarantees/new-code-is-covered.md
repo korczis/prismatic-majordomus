@@ -1,7 +1,7 @@
 +++
 title = "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone"
 description = "Coverage across the whole crate sits below 100% and the legacy debt is real, so a single"
-weight = 184
+weight = 187
 [extra]
 claim_id = "new-code-is-covered"
 status = "guaranteed"

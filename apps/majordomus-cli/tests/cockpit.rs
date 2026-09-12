@@ -20,6 +20,7 @@ const PAGES: &[&str] = &[
     "/cockpit/graphs",
     "/cockpit/graphs/topology",
     "/cockpit/continuity",
+    "/cockpit/completion",
     "/cockpit/health",
     "/cockpit/artifacts",
     "/cockpit/api",
@@ -779,4 +780,198 @@ fn a_listing_is_read_a_page_at_a_time_and_entered_by_its_parts() {
 
 fn urlencode(s: &str) -> String {
     majordomus_cli::http::router::percent_encode(s)
+}
+
+/// The stage titles the distribution's completion policy declares, read from the file
+/// rather than written here: a stage added to `share/completion.yaml` is a stage this test
+/// requires the page to name, with no edit.
+fn policy_stage_titles() -> Vec<String> {
+    let text = std::fs::read_to_string(common::dist_share().join("completion.yaml"))
+        .expect("the distribution ships share/completion.yaml");
+    let mut titles = Vec::new();
+    let mut in_stages = false;
+    for line in text.lines() {
+        if !line.starts_with(' ') && !line.starts_with('-') && !line.trim().is_empty() {
+            in_stages = line.starts_with("stages:");
+            continue;
+        }
+        if in_stages {
+            if let Some(title) = line.trim().strip_prefix("title: ") {
+                titles.push(title.trim().to_string());
+            }
+        }
+    }
+    assert!(
+        titles.len() > 3,
+        "the completion policy declares stages: {titles:?}"
+    );
+    titles
+}
+
+/// Every status word the completion document itself carried, gathered from the fields the
+/// page renders as badges. The page may show no status word this set does not hold.
+fn document_status_words(document: &serde_json::Value) -> std::collections::BTreeSet<String> {
+    let mut words = std::collections::BTreeSet::new();
+    let mut take = |v: &serde_json::Value| {
+        if let Some(s) = v.as_str() {
+            words.insert(s.to_string());
+        }
+    };
+    take(&document["stage"]["state"]);
+    for stage in document["stage"]["stages"].as_array().into_iter().flatten() {
+        take(&stage["state"]);
+    }
+    for q in document["questions"].as_array().into_iter().flatten() {
+        take(&q["status"]);
+    }
+    for g in document["gates"].as_array().into_iter().flatten() {
+        take(&g["status"]);
+    }
+    for t in document["deployment"]["targets"]
+        .as_array()
+        .into_iter()
+        .flatten()
+    {
+        take(&t["kind"]);
+    }
+    take(&document["version"]["status"]);
+    take(&document["version"]["impact"]);
+    take(&document["plan"]["mode"]);
+    words
+}
+
+#[test]
+fn the_completion_page_names_every_stage_the_policy_declares_and_answers_over_the_document() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, page) = html(&s, "/cockpit/completion");
+    assert_eq!(status, 200);
+
+    // 1. the lifecycle is the policy's, stage for stage, in the policy's own words
+    for title in policy_stage_titles() {
+        assert!(
+            page.contains(&title),
+            "the completion page does not name the stage '{title}'"
+        );
+    }
+
+    // 2. the three words a reader acts on are stated as facts, each as its own fact
+    for word in ["Finishable", "Verified", "Complete"] {
+        assert!(page.contains(word), "the page does not state '{word}'");
+    }
+
+    // 3. the page says how the live half is established, because it did not establish it
+    assert!(
+        page.contains("majordomus check"),
+        "a page rendered without the network must name what establishes it live"
+    );
+    assert!(
+        page.contains("/cockpit/capabilities/deploy.verify"),
+        "the live verification is offered through the runner, not called during a render"
+    );
+    assert!(
+        page.contains("/cockpit/capabilities/gates.completion"),
+        "the live report is offered through the runner"
+    );
+
+    // 4. and every one of those sections is a reading of the one judgement, which is the
+    //    same execution the HTTP route serves
+    let (status, document) = s.get("/api/v1/gates/completion?live=false");
+    assert_eq!(status, 200);
+    assert!(document["present"].as_bool().unwrap());
+    let stages = document["stage"]["stages"].as_array().unwrap();
+    assert_eq!(
+        stages.len(),
+        policy_stage_titles().len(),
+        "the report folds every stage of the policy"
+    );
+    for q in document["questions"].as_array().unwrap() {
+        let question = q["question"].as_str().unwrap();
+        // as the page carries it: the markup builder escapes, so an apostrophe in a
+        // question is `&#39;` on the page and the comparison is made in that spelling
+        let escaped = majordomus_cli::cockpit::html::escape(question);
+        assert!(
+            page.contains(&escaped),
+            "the page does not carry the question '{question}'"
+        );
+    }
+}
+
+#[test]
+fn the_completion_page_renders_the_no_task_state_rather_than_an_empty_table() {
+    let f = Fixture::new();
+    // the fixture opens a task; a checkout that has none is the other half of the page,
+    // and it must say so rather than render every table with nothing in it
+    std::fs::remove_file(f.path(".ai/local/state/current.yaml")).expect("the fixture's task");
+    let s = Served::start(&f.root(), &[]);
+
+    let (status, page) = html(&s, "/cockpit/completion");
+    assert_eq!(status, 200);
+    assert!(
+        page.contains("No active task in this checkout"),
+        "the page must name the state it is in:\n{page}"
+    );
+    assert!(
+        page.contains("majordomus start"),
+        "an empty state names what would fill it"
+    );
+    // and nothing is invented to fill the page: no lifecycle, no gate table
+    assert!(
+        !page.contains("The lifecycle"),
+        "there is no lifecycle without a task"
+    );
+
+    let (status, document) = s.get("/api/v1/gates/completion?live=false");
+    assert_eq!(status, 200);
+    assert_eq!(document["present"], false);
+}
+
+#[test]
+fn the_completion_page_speaks_only_the_documents_own_status_vocabulary() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    let (_, page) = html(&s, "/cockpit/completion");
+    let (_, document) = s.get("/api/v1/gates/completion?live=false");
+    let vocabulary = document_status_words(&document);
+    assert!(
+        !vocabulary.is_empty(),
+        "the document carries status words to compare against"
+    );
+
+    // Every badge the page renders, by its own class. A badge whose word is not one the
+    // document carried would be a status vocabulary written in the page, which is the
+    // defect this test exists for. `yes` and `no` are the renderings of the report's own
+    // booleans — finishable, verified, complete, applicable, declared, breaking — and are
+    // the page's rendering of a fact rather than a status word of its own.
+    //
+    // A badge is `<span class="mj-badge mj-badge--X"><span class="mj-badge-dot" …></span>
+    // WORD</span>`: the word is what stands between the dot's close and the badge's own.
+    const DOT: &str = "<span class=\"mj-badge-dot\" aria-hidden=\"true\"></span>";
+    let mut rendered: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for chunk in page.split("<span class=\"mj-badge mj-badge--").skip(1) {
+        let word = chunk
+            .split_once(DOT)
+            .and_then(|(_, rest)| rest.split_once("</span>"))
+            .map(|(word, _)| word.trim().to_string())
+            .unwrap_or_default();
+        if !word.is_empty() {
+            rendered.insert(word);
+        }
+    }
+    assert!(
+        !rendered.is_empty(),
+        "the page renders badges at all:\n{page}"
+    );
+    let booleans = ["yes", "no"];
+    let invented: Vec<&String> = rendered
+        .iter()
+        .filter(|w| !vocabulary.contains(*w) && !booleans.contains(&w.as_str()))
+        .collect();
+    assert!(
+        invented.is_empty(),
+        "the completion page renders status words the document never said: {invented:?}\n\
+         the document's vocabulary was {vocabulary:?}"
+    );
 }

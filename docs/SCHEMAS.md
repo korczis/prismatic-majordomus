@@ -1360,7 +1360,10 @@ Events and their extra fields:
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved; `task_id` when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0052) |
 | `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
-| `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
+| `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count), and — when the gate doctrine ran — `stage` (the completion policy's stage the task stood at) and `complete` (whether every question of it passed or was exempt) |
+| `prompts.pruned` | `records`, `pruned`, `bytes_left` — prompt bodies over the declared age or size bound replaced with a tombstone; every record, its identity and its provenance stayed |
+| `task.gate` | `task`, `gate`, `exit`, `inputs_hash` — One gate of the repository's CI model ran and reported an exit status, over the files whose hash is recorded. |
+| `prompts.reconciled` | `records`, `linked`, `unlinked` — Every record in the prompt archive was re-examined and linked to the episode it belongs to, from evidence that still exists. |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`); `task_id` when a task was open, absent otherwise |
 | `decision.recorded` | `decision` (the entry's title) |
 | `question.opened` | `question` |

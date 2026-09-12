@@ -122,12 +122,13 @@ mj_obligation_evidence() {
 # state of one checkout and the ledger is what already survives it.
 mj_evidence() {
   local covers="" etype="manual" ecmd="" eart="" eres="" json=0 task ih
-  local gate="" gexit=""
+  local gate="" gexit="" run_gates=0
   # a bare `evidence` is a question, not a mistake: it prints what it needs, as every
   # other command here does, and exits 2
   [ $# -gt 0 ] || { mj_evidence_usage >&2; return "$MJ_EX_USAGE"; }
   while [ $# -gt 0 ]; do
     case "$1" in
+      --run-gates) run_gates=1; shift ;;
       --covers) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--covers needs a token"; covers="$2"; shift 2 ;;
       --covers=*) covers="${1#--covers=}"; shift ;;
       --gate) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--gate needs a gate id"; gate="$2"; shift 2 ;;
@@ -148,6 +149,19 @@ mj_evidence() {
     esac
   done
   mj_require_installed
+  # Run every gate the change selects, here, with the commands the CI model names, and
+  # record each one's exit as it finishes. One dispatcher: scripts/ci/run-plan is what CI
+  # runs too, told to record through this verb (MJ_GATE_RECORD), so a gate recorded here
+  # and a gate CI ran are the same command with the same verdict. The runs are recorded
+  # whether they pass or fail — a failing gate refusing `completed` is the point.
+  if [ "$run_gates" = 1 ]; then
+    [ -z "$gate$covers" ] || mj_die "$MJ_EX_USAGE" "--run-gates runs and records every selected gate; it takes no --gate or --covers"
+    mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
+    [ -x "$MJ_ROOT/scripts/ci/run-plan" ] || mj_die "$MJ_EX_MISSING" "this repository has no scripts/ci/run-plan to run its gates with"
+    local base; base="$(mj_cur head)"
+    ( cd "$MJ_ROOT" && MJ_GATE_RECORD="$MJ_BIN_DIR/majordomus" scripts/ci/run-plan ${base:+--base "$base"} )
+    return $?
+  fi
   # A gate run and an obligation are both evidence, and both are recorded by this verb; what
   # differs is what the record is about. The two are never one invocation: a gate is a fact
   # about the validation pipeline and an obligation is a promise a task made, and a line
@@ -168,10 +182,21 @@ mj_evidence() {
   [ -n "$ecmd" ] || [ -n "$eart" ] || mj_die "$MJ_EX_USAGE" "evidence needs --command or --artifact; narrative is not evidence"
   mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
   task="$(mj_cur id)"
-  # The task must have declared the obligation. Recording evidence for something nobody
-  # promised is how a checklist grows entries nobody asked for.
-  mj_task_requires | grep -qx -- "$covers" || mj_die "$MJ_EX_REFUSED" \
-    "the active task does not require '$covers' (it requires: $(mj_task_requires | paste -sd, -))"
+  # The task must have declared the obligation, or the change must imply it. Recording
+  # evidence for something nobody promised is how a checklist grows entries nobody asked
+  # for — but a token the change set itself implies (the completion report's `obligations`,
+  # derived from the token's own inputs and the deployment plan) was asked for by the
+  # change, and a task cannot be restarted to say so. Such a token is declared here, on the
+  # record, so that the closure judges it from now on exactly as one declared at start.
+  if ! mj_task_requires | grep -qx -- "$covers"; then
+    if mj_obligation_implied "$covers"; then
+      mj_task_require_add "$covers"
+      mj_info evidence "$covers" "declared on the task record: the change implies it (majordomus check reports which)" "majordomus check"
+    else
+      mj_die "$MJ_EX_REFUSED" \
+        "the active task does not require '$covers' and the change does not imply it (it requires: $(mj_task_requires | paste -sd, -))"
+    fi
+  fi
   ih="$(mj_obligation_inputs_hash "$covers")"
   local extra="\"task\":\"$task\",\"covers\":\"$covers\",\"kind\":\"$etype\",\"inputs_hash\":\"$ih\""
   [ -n "$ecmd" ] && extra="$extra,\"command\":\"$(mj_json_esc "$ecmd")\""
@@ -198,6 +223,7 @@ mj_evidence_usage() {
   cat <<USAGE
 usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
        majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+       majordomus evidence --run-gates
 
   Record that one obligation the active task declared has been discharged. The evidence is
   a ledger line carrying the hash of the files the obligation names, so that changing any
@@ -208,7 +234,11 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   --command   the command that produced it — narrative is not evidence
   --artifact  a reference the evidence points at, such as a published URL
   --result    what it said, when a command's output is the point
-  --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported, instead of
+  --run-gates run every gate the task's change selects, here, with the commands the CI
+              model names (scripts/ci/run-plan), and record each one's exit as it finishes;
+              the same dispatcher CI runs, so the ledger line is the same either way
+  --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported (a task.gate
+              ledger line, written by lib/gates.sh on this verb's behalf), instead of
               an obligation. The line carries the hash of the files that select that gate, so
               a run stops discharging it the moment one of them changes. `majordomus check`
               reports every gate the task's change set selects; a gate that has never
@@ -222,6 +252,35 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
 
   exit 0 recorded, 2 on usage, 11 when no task is active or the task did not promise it
 USAGE
+}
+
+# Does the change set imply this token? Asked of the executable's completion report — the
+# one derivation of applicability — never re-derived here.
+mj_obligation_implied() {
+  local tok="$1" bin out
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  [ -x "$bin" ] && command -v jq >/dev/null 2>&1 || return 1
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run gates.completion --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -r --arg t "$tok" '.output.obligations[]? | select(.id == $t) | .applicable' 2>/dev/null)"
+  [ "$out" = true ]
+}
+
+# Add a token to the active task's `requires`, in place: after the last entry of the list
+# when there is one, else as a new list before `started_at`. The record stays the shell
+# tool's to write; this is the one place besides `start` that writes that field.
+mj_task_require_add() {
+  local tok="$1"
+  awk -v tok="$tok" '
+    /^requires:$/ { inlist=1; print; next }
+    inlist && /^  - / { print; next }
+    inlist { printf "  - %s\n", tok; inlist=0; added=1 }
+    /^started_at:/ && !added && !seen { printf "requires:\n  - %s\n", tok; added=1 }
+    { print }
+    END { }
+  ' "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+  mj_load_current
 }
 
 # ---------------------------------------------------------------- establishing the fact
@@ -368,6 +427,55 @@ mj_obl_est_pages() {
   esac
 }
 
+# Deployment and verification, asked of the deployed surfaces. `deploy.verify` is the one
+# capability of the executable that reaches the network, and it reaches only the addresses
+# the repository declares: the site's origin, the release metadata, each active deployment
+# object. It compares what each states with the trunk's head, so the fact is established
+# only once the trunk reaches the task's commit — a branch that is not integrated has
+# nothing deployed to look at, and the finding says so rather than asking the site about a
+# commit it was never sent.
+mj_obl_est_live() { # <token> <targets json array or empty>
+  local tok="$1" only="$2" head def remote expected out rc=0 ok refusing detail bin
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  [ -x "$bin" ] || { mj_obl_say "the executable is not built, so nothing can ask the deployed surfaces" "bin/majordomus-cli --help"; return 2; }
+  command -v jq >/dev/null 2>&1 || { mj_obl_say "jq is not installed, so the verification cannot be read here" "brew install jq"; return 2; }
+  head="$(mj_git_head)"
+  [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit; nothing of this task can be deployed" "git log -1"; return 1; }
+  remote="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"; remote="${remote%%/*}"
+  [ -n "$remote" ] || remote="$(mj_git remote 2>/dev/null | head -1)"
+  [ -n "$remote" ] || { mj_obl_say "the checkout has no remote, so what is deployed cannot be compared with anything" "git remote -v"; return 2; }
+  def="$(mj_git symbolic-ref --short "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
+  [ -n "$def" ] || { mj_obl_say "the checkout records no default branch for '$remote'" "git remote set-head $remote -a"; return 2; }
+  if ! mj_git merge-base --is-ancestor "$head" "refs/remotes/$def" 2>/dev/null; then
+    mj_obl_say "the trunk ($def) does not reach ${head:0:12}, so nothing deployed can be serving this task yet" "open a pull request and land it"; return 1
+  fi
+  expected="$(mj_git rev-parse "refs/remotes/$def" 2>/dev/null)"
+  local input="{\"expected_commit\":\"$expected\"${only:+,\"targets\":$only}}"
+  local share; share="$(mj_rust_share "$MJ_ROOT")"
+  out="$( ( export MAJORDOMUS_SHARE="$share"; "$bin" run deploy.verify --input "$input" --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null | jq -c '.output // empty' 2>/dev/null)" || rc=$?
+  [ "$rc" = 0 ] && [ -n "$out" ] || { mj_obl_say "deploy.verify could not be executed (exit $rc), so the deployed surfaces could not be asked" "$bin run deploy.verify --input '$input'"; return 2; }
+  ok="$(printf '%s' "$out" | jq -r '.ok')"
+  detail="$(printf '%s' "$out" | jq -r '[.verifications[] | select(.status != "not_applicable") | "\(.target): \(.status) — \(.detail)"] | join("; ")')"
+  refusing="$(printf '%s' "$out" | jq -r '(.refusing // []) | join(" ")')"
+  if [ "$ok" = true ]; then
+    mj_obl_say "exact: every applicable surface serves ${expected:0:12} ($detail)" "$bin run deploy.verify --input '$input'"; return 0
+  fi
+  if [ -z "$refusing" ] && [ "$(printf '%s' "$out" | jq -r '.asked')" = 0 ]; then
+    mj_obl_say "no surface applies to this token here ($(printf '%s' "$out" | jq -r '[.verifications[] | .reason // .detail] | join("; ")'))" "$bin run deploy.verify --input '$input'"; return 0
+  fi
+  mj_obl_say "$detail" "$bin run deploy.verify --input '$input'"; return 1
+}
+mj_obl_est_verify() { mj_obl_est_live verify ""; }
+# the application half alone: the deployment objects, never the site
+mj_obl_est_deploy() {
+  local apps
+  apps="$(ls "$MJ_AI_REPO_DIR"/deployments/*.yaml 2>/dev/null | sed 's#.*/##; s#\.yaml$##' | sed 's/^/"/; s/$/"/' | paste -sd, -)"
+  [ -n "$apps" ] || { mj_obl_say "this repository declares no deployment object, so nothing here can establish a deployment; the recorded evidence stands" "ls .ai/repo/deployments/"; return 2; }
+  mj_obl_est_live deploy "[$apps]"
+}
+
 # The dispatcher. The vocabulary declares *that* a token can be established and by what;
 # which function does it is this one line, keyed by the token's own id, so a token declared
 # establishable with nothing to establish it is a reported defect rather than a silent pass.
@@ -478,3 +586,9 @@ mj_validate_obligations() {
 # does here; the obligations themselves are read through `check`, which already reports
 # what is outstanding, rather than through a second listing command nobody would run.
 mj_cmd_evidence() { mj_evidence "$@"; }
+
+# The one place a gate run reaches the ledger: `evidence --gate` computes the line in
+# lib/gates.sh and hands it here, because the event's emitter is this verb
+# (share/events.yaml: task.gate, emitted_by evidence) and the registry holds the emitter to
+# writing what it declares.
+mj_gate_append() { mj_ledger_append task.gate "$1"; }

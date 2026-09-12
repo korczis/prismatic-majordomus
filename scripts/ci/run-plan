@@ -18,6 +18,10 @@
 #                                                            one job's gates of a written plan
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
+#   MJ_GATE_RECORD=BIN   record each gate's exit as evidence of the active task through
+#                        `BIN evidence --gate <id> --exit <status>` (what `majordomus
+#                        evidence --run-gates` sets), so a run here and a run in CI are
+#                        the same command reaching the same ledger line
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
@@ -70,8 +74,12 @@ for g in $gates; do
   fi
   printf '\n==> %s: %s\n' "$g" "$cmd"
   t0="$(date +%s)"
-  if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
-  else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
+  if bash -c "$cmd"; then rc=0; printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
+  else rc=$?; printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
+  if [ -n "${MJ_GATE_RECORD:-}" ]; then
+    "$MJ_GATE_RECORD" evidence --gate "$g" --exit "$rc" --command "$cmd" >/dev/null \
+      || printf '==> %s: the run could not be recorded (%s evidence --gate %s --exit %s)\n' "$g" "$MJ_GATE_RECORD" "$g" "$rc"
+  fi
   [ -n "${MJ_CI_TIMINGS:-}" ] && printf '%s\t%s\t%s\n' "${job:-plan}" "$g" "$(( $(date +%s) - t0 ))" >> "$MJ_CI_TIMINGS"
   ran=$((ran+1))
 done

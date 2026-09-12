@@ -1185,6 +1185,33 @@
       "note": "share/kinds.yaml declares the kind, share/schemas/majordomus/skill/skill.v1.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow."
     },
     {
+      "id": "claim:completion-is-proved",
+      "kind": "claim",
+      "label": "The outcome completed is refused while the completion report says complete is false, naming each question of share/completion.yaml still owed and the command that settles it; the stage a task stands at is derived from the answers and never written; and every surface reads that one report",
+      "status": "guaranteed",
+      "route": "/guarantees/completion-is-proved/",
+      "external": false,
+      "note": "share/completion.yaml is the one definition of done; gates.policy answers it and gates.completion answers each question from the source it names. The policy key verification.completed_means_complete turns the refusal on (this repository) or off (the skeleton, with the reason); with it off the same questions are reported and never refused. `majordomus evidence --run-gates` runs the selected gates through scripts/ci/run-plan and records each exit, and a weaker outcome records the stage it stopped at."
+    },
+    {
+      "id": "claim:deployment-verified-live",
+      "kind": "claim",
+      "label": "Every surface a change reaches — the published site, the release metadata, each active deployment — is asked for the identity it states at its own address and compared with the trunk's revision; a stale, unreachable or unreadable surface refuses, and neither a deploy command's exit code nor an HTTP 200 counts as verification",
+      "status": "guaranteed",
+      "route": "/guarantees/deployment-verified-live/",
+      "external": false,
+      "note": "deploy.verify derives the targets from the CI model's path classes, site/config.toml, the release records and the deployment objects; the deploy and verify obligations are established live by it once the trunk reaches the task's commit. The request carries no header and the evidence no body beyond the fields compared. A declared deployment object is named as not asked, never pretended about."
+    },
+    {
+      "id": "claim:tooling-derived",
+      "kind": "claim",
+      "label": "The definition of done reaches every generated provider bootstrap as a fragment rendered from share/completion.yaml by the shell tool and the executable to the same bytes; a bootstrap whose source moved fails generate --check, a hand-edited one fails doctor, and regeneration is the only remedy",
+      "status": "guaranteed",
+      "route": "/guarantees/tooling-derived/",
+      "external": false,
+      "note": "The fragment is COMPLETION_CONTRACT in every template under share/providers/ and .ai/repo/providers/, one plain list item per stage with the questions that belong to it; mj_completion_fragment (lib/update.sh) and CompletionPolicy::bootstrap_fragment (apps/majordomus-cli/src/gates/policy.rs) render it, and the stamp of the rendered body is what holds the two to the same bytes."
+    },
+    {
       "id": "claim:obligation-closure",
       "kind": "claim",
       "label": "A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything",
@@ -1196,7 +1223,7 @@
     {
       "id": "claim:obligation-establishment",
       "kind": "claim",
-      "label": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it — and a hand-recorded line neither discharges it nor rescues it",
+      "label": "An obligation whose fact the tool can hold is established live rather than recorded — a clean tree, a remote-tracking ref that reaches the head, a trunk that reaches it, a published site that serves it, a deployed surface that states it — and a hand-recorded line neither discharges it nor rescues it",
       "status": "guaranteed",
       "route": "/guarantees/obligation-establishment/",
       "external": false,
@@ -1663,6 +1690,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/deploy/verify.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/deploy/verify.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/distribution/mod.rs",
@@ -1939,6 +1973,13 @@
       "id": "impl:lib/finish.sh",
       "kind": "implementation",
       "label": "lib/finish.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/gates.sh",
+      "kind": "implementation",
+      "label": "lib/gates.sh",
       "route": null,
       "external": false
     },
@@ -2297,6 +2338,13 @@
       "kind": "source",
       "label": "docs/COMMIT.md",
       "route": "/docs/commit/",
+      "external": false
+    },
+    {
+      "id": "source:docs/COMPLETION.md",
+      "kind": "source",
+      "label": "docs/COMPLETION.md",
+      "route": "/docs/completion/",
       "external": false
     },
     {
@@ -2781,6 +2829,27 @@
       "label": "test/cases/27_foreign_task.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/27_foreign_task.sh"
+    },
+    {
+      "id": "test:test/cases/280_completion_is_proved.sh",
+      "kind": "test",
+      "label": "test/cases/280_completion_is_proved.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/280_completion_is_proved.sh"
+    },
+    {
+      "id": "test:test/cases/281_deploy_verify_live.sh",
+      "kind": "test",
+      "label": "test/cases/281_deploy_verify_live.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/281_deploy_verify_live.sh"
+    },
+    {
+      "id": "test:test/cases/282_tooling_is_derived.sh",
+      "kind": "test",
+      "label": "test/cases/282_tooling_is_derived.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/282_tooling_is_derived.sh"
     },
     {
       "id": "test:test/cases/28_catalogue.sh",
@@ -3764,6 +3833,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:completion-is-proved",
+      "target": "source:docs/COMPLETION.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:deployment-verified-live",
+      "target": "source:docs/COMPLETION.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:tooling-derived",
+      "target": "source:docs/COMPLETION.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:obligation-closure",
       "target": "source:docs/CLI.md",
       "kind": "specified_by"
@@ -4584,6 +4668,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:completion-is-proved",
+      "target": "impl:lib/gates.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:deployment-verified-live",
+      "target": "impl:apps/majordomus-cli/src/deploy/verify.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:tooling-derived",
+      "target": "impl:apps/majordomus-cli/src/providers.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:obligation-closure",
       "target": "impl:lib/evidence.sh",
       "kind": "implemented_by"
@@ -5401,6 +5500,21 @@
     {
       "source": "claim:skill-catalogue",
       "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:completion-is-proved",
+      "target": "test:test/cases/280_completion_is_proved.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:deployment-verified-live",
+      "target": "test:test/cases/281_deploy_verify_live.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:tooling-derived",
+      "target": "test:test/cases/282_tooling_is_derived.sh",
       "kind": "proved_by"
     },
     {

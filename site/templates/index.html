@@ -362,6 +362,117 @@
   </div>
 </section>
 
+{#- 7. completion — the definition of done as one file, the pipeline it declares, and what
+    this repository's own lifecycle says at the commit this page was built from. Every stage,
+    version, release and deployment surface below comes from data/generated/completion.json,
+    which the generator derives from share/completion.yaml, the release records and the
+    deployment objects of the tree alone. This template names no stage, no version and no
+    surface: adding one to that file is what changes this section. A fact the generator
+    could not derive renders as the sentence saying so, never as a placeholder. -#}
+{%- set done = load_data(path="data/generated/completion.json") -%}
+{%- set prov = done.provenance -%}
+<section id="completion" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="07" kicker={m.completion.kicker} title={m.completion.title} lead={m.completion.lead} /> }}
+
+    {#- the pipeline: Intent, then every stage the policy declares, in its own order. The
+        arrow between two stages is a separator and not a stage, so it is hidden from a
+        screen reader rather than read out as punctuation. -#}
+    <ol class="flex flex-wrap items-center gap-x-2 gap-y-2" aria-label="The stages of the lifecycle, in order">
+      <li class="rounded-base border border-brand-subtle bg-brand-softer px-3 py-1.5 font-mono text-sm font-medium text-fg-brand">Intent</li>
+      {%- for s in done.policy.stages %}
+      <li aria-hidden="true" class="font-mono text-xs text-body-subtle">&rarr;</li>
+      <li class="rounded-base border border-default bg-neutral-primary px-3 py-1.5 font-mono text-sm text-heading" title="{{ s.summary }}">{{ s.title }}</li>
+      {%- endfor %}
+    </ol>
+    <p class="mt-4 max-w-3xl text-sm text-body-subtle">Each stage asks its own questions, and each question names the source its answer is taken from. The first stage with an unanswered question is where a task stands; nobody writes that down.</p>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start">
+      <div class="min-w-0">
+        {#- the indicators: what the repository's own lifecycle says. Every value is the
+            dataset's; where it holds none, the cell says what was not derived. -#}
+        <dl class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-base border border-default bg-neutral-primary p-4">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">version declared</dt>
+            {%- if prov.version %}
+            <dd class="mt-1 font-mono text-2xl font-bold text-fg-brand-strong">{{ prov.version.declared_version }}</dd>
+            <dd class="mt-1 text-sm text-body">measured against <span class="font-mono text-heading">{{ prov.version.baseline_reference | default(value=prov.version.baseline_version) }}</span> by <span class="font-mono text-heading">{{ prov.version.measured_by }}</span></dd>
+            {%- else %}
+            <dd class="mt-1 text-sm text-body">not derived here</dd>
+            {%- endif %}
+          </div>
+          <div class="rounded-base border border-default bg-neutral-primary p-4">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">last release</dt>
+            {%- if prov.baseline %}
+            <dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ prov.baseline.tag | default(value=prov.baseline.version) }}</dd>
+            <dd class="mt-1 font-mono text-sm text-body">{{ prov.baseline.published_at | split(pat="T") | first }}</dd>
+            {%- else %}
+            <dd class="mt-1 text-sm text-body">the layer holds no release record</dd>
+            {%- endif %}
+          </div>
+          <div class="rounded-base border border-default bg-neutral-primary p-4 sm:col-span-2">
+            <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">inferred impact</dt>
+            {%- if prov.version and prov.version.measured %}
+            <dd class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span class="font-mono text-2xl font-bold text-heading">{{ prov.version.implied }}</span>
+              <span class="mj-badge mj-badge--{{ prov.version.status }}">{{ prov.version.status }}</span>
+              {%- if prov.version.breaking %}<span class="mj-badge mj-badge--bad">breaking</span>{% endif %}
+            </dd>
+            <dd class="mt-2 text-sm text-body">Taken structurally: the public contract broken into atoms and compared against the atoms of the last release, not read off commit messages.</dd>
+            {%- else %}
+            <dd class="mt-1 text-sm text-body">not derived here &mdash; the structural analysis needs the executable, and this build had none</dd>
+            {%- endif %}
+          </div>
+        </dl>
+
+        {#- the surfaces, and the difference between one that can be verified and one that
+            can only be declared. The word beside each is the dataset's, never a judgement
+            this template makes. -#}
+        <h3 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Where a change has to land</h3>
+        {%- if prov.surfaces | length > 0 %}
+        <ul class="mt-3 space-y-2" role="list">
+          {%- for s in prov.surfaces %}
+          {%- set dep = [d for d in prov.deployments if d.id == s.id] -%}
+          <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary px-4 py-3 text-sm">
+            <code class="font-mono text-heading">{{ s.id }}</code>
+            <span class="font-mono text-xs text-body-subtle">{{ s.kind }}</span>
+            {%- if s.verifiable %}
+            <span class="mj-badge mj-badge--verify">verified live</span>
+            <span class="min-w-0 break-all font-mono text-xs text-body-subtle">{{ s.identity_url }}</span>
+            {%- elif dep | length > 0 %}
+            <span class="mj-badge mj-badge--{{ dep[0].status }}">{{ dep[0].status }}</span>
+            <span class="min-w-0 text-body-subtle">no identity address is published, so nothing here verifies it</span>
+            {%- else %}
+            <span class="mj-badge mj-badge--unknown">unknown</span>
+            {%- endif %}
+          </li>
+          {%- endfor %}
+        </ul>
+        {%- else %}
+        <p class="mt-3 rounded-base border border-default bg-neutral-primary px-4 py-3 text-sm text-body">The deployment surfaces were not derived here.</p>
+        {%- endif %}
+        <p class="mt-4 text-sm"><a href="{{ get_url(path="/lifecycle/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">{{ m.completion.proof }} &rarr;</a></p>
+      </div>
+
+      {#- the finish contract as the README works it through: the argument the stages above
+          make, run once and captured. -#}
+      <div class="min-w-0">
+        <p class="max-w-3xl text-sm leading-relaxed text-body">{{ m.contract.caption }}</p>
+        <figure class="mt-4 min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+          <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
+          <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+        </figure>
+        <ol class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary">
+          {%- for c in readme.finish_checks %}
+          <li class="flex items-baseline gap-3 px-4 py-2 font-mono text-xs text-body"><span class="text-body-subtle">{{ loop.index }}</span><span class="text-heading">{{ c }}</span></li>
+          {%- endfor %}
+        </ol>
+        <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
 {#- 9. the doctrine, the rest of the argument, and the one action.
 
     The disclosures below are the sections this page used to spend a full-bleed band on each:

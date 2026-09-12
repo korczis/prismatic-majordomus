@@ -79,7 +79,7 @@ commands:
     syntax: majordomus update [--dry-run] [--diff <target>] [--force]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, share/providers/]
     writes: ["projections[].target", .ai/local/state/ledger.jsonl]
-    exit_codes: [0, 2, 10, 12, 15]
+    exit_codes: [0, 2, 10, 12, 13, 15]
     demo: projection-fingerprint
     note: Running it twice leaves the byte-identical file. Each projection carries its own stamp, and a target whose content matches neither its stamp nor the new output is a hand edit, refused rather than overwritten.
 
@@ -130,7 +130,7 @@ commands:
     requires_installed: true
     requires_task: none
     json: false
-    syntax: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]
+    syntax: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]
     reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, .ai/local/state/current.yaml, share/obligations.yaml, git worktree list]
     writes: [.ai/local/state/current.yaml, .ai/local/state/archive/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 15]
@@ -310,7 +310,7 @@ commands:
     requires_installed: true
     requires_task: required
     json: true
-    syntax: "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]"
+    syntax: majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates
     reads: [share/obligations.yaml, .ai/repo/ci/gates.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 12, 13, 15]
@@ -348,7 +348,7 @@ commands:
     syntax: majordomus capture status [--json]
     reads: [.claude/settings.json, .ai/repo/policy.yaml]
     writes: [.ai/local/prompts/, .ai/local/session-contexts/, .claude/hooks/majordomus-capture, .claude/settings.json]
-    exit_codes: [0, 2, 12, 13, 15]
+    exit_codes: [0, 2, 10, 12, 13, 15]
     demo: capture-status
     note: "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add. A record carries the episode it belongs to, the provider session, the repository and the worktree, with the provenance of that link: the mapping from a provider session to an episode exists only while the episode is open, so a record that did not carry it could never be attributed afterwards. 'capture reconcile' links a record from evidence that survived the close and marks the rest unlinked rather than guessing; 'capture prune' applies prompts.retention_max_days and prompts.retention_max_bytes by taking the body and keeping the record, its identity and a tombstone. Credential shapes are replaced before anything is persisted, and the archive is mode 0600."
 

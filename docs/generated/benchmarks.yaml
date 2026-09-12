@@ -6,30 +6,30 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.6.0
 coverage:
   - scope: direct
-    required: 112
-    covered: 107
+    required: 114
+    covered: 108
+    missing: 0
+    waived: 6
+  - scope: http
+    required: 113
+    covered: 108
     missing: 0
     waived: 5
-  - scope: http
-    required: 111
-    covered: 107
-    missing: 0
-    waived: 4
   - scope: mcp
-    required: 109
-    covered: 105
+    required: 111
+    covered: 106
     missing: 0
-    waived: 4
+    waived: 5
   - scope: system
     required: 13
     covered: 13
     missing: 0
     waived: 0
   - scope: total
-    required: 345
-    covered: 332
+    required: 351
+    covered: 335
     missing: 0
-    waived: 13
+    waived: 16
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -173,6 +173,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.verify
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: design.contrast
     module: design
     kind: query
@@ -454,6 +462,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: gates.policy
+    module: gates
+    kind: query
+    cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: graph.get
     module: graph
     kind: query
@@ -662,7 +679,8 @@ capabilities:
     mcp: covered
     http: covered
     cases:
-      - default
+      - live
+      - recorded-only
   - id: obligations.vocabulary
     module: obligations
     kind: query

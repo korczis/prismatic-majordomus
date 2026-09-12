@@ -256,6 +256,23 @@
       "tool": "majordomus_deployments"
     },
     {
+      "api_anchor": "/docs/api/#op-deploy-verify",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.verify",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-verify/",
+      "slug": "deploy-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "What the deployed surfaces are serving",
+      "tool": "majordomus_deploy_verify"
+    },
+    {
       "api_anchor": "/docs/api/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -804,6 +821,23 @@
       "tests": [],
       "title": "The CI model",
       "tool": "majordomus_gates"
+    },
+    {
+      "api_anchor": "/docs/api/#op-gates-policy",
+      "claims": [],
+      "cli": null,
+      "id": "gates.policy",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/policy",
+      "route": "/registry/capabilities/gates-policy/",
+      "slug": "gates-policy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "The completion policy",
+      "tool": "majordomus_completion_policy"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -2161,6 +2195,20 @@
         "test": "test/cases/93_scope_policy.sh"
       },
       {
+        "id": "deployment-verified-live",
+        "implementation": "apps/majordomus-cli/src/deploy/verify.rs",
+        "route": "/guarantees/deployment-verified-live/",
+        "status": "guaranteed",
+        "test": "test/cases/281_deploy_verify_live.sh"
+      },
+      {
+        "id": "tooling-derived",
+        "implementation": "apps/majordomus-cli/src/providers.rs",
+        "route": "/guarantees/tooling-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/282_tooling_is_derived.sh"
+      },
+      {
         "id": "why-catalogue-discovered",
         "implementation": "apps/majordomus-cli/src/why.rs",
         "route": "/guarantees/why-catalogue-discovered/",
@@ -2384,8 +2432,8 @@
     ]
   },
   "counts": {
-    "capabilities": 112,
-    "claims": 51,
+    "capabilities": 114,
+    "claims": 53,
     "modules": 36
   },
   "generator": "majordomus-cli 0.6.0",
@@ -2521,6 +2569,11 @@
           "id": "deploy.list",
           "route": "/registry/capabilities/deploy-list/",
           "slug": "deploy-list"
+        },
+        {
+          "id": "deploy.verify",
+          "route": "/registry/capabilities/deploy-verify/",
+          "slug": "deploy-verify"
         }
       ],
       "claims": [],
@@ -2778,6 +2831,11 @@
           "id": "gates.model",
           "route": "/registry/capabilities/gates-model/",
           "slug": "gates-model"
+        },
+        {
+          "id": "gates.policy",
+          "route": "/registry/capabilities/gates-policy/",
+          "slug": "gates-policy"
         }
       ],
       "claims": [],

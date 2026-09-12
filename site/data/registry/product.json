@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.6.0"
   },
-  "fingerprint": "f4cd92771af3a735df145fcdd7ebb6f4d418058694c4eb4ca524b03869784a4b",
+  "fingerprint": "9a896cca123c660f50bdac600098a8d6442019f248d765a29857c6484d057d79",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -274,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 173
+          "objects": 176
         }
       ],
       "rule_refs": [
@@ -538,11 +538,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 233,
+        "mcp_resources": 236,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 229,
+        "objects": 232,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2804,7 +2804,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 51
+          "objects": 52
         },
         {
           "name": "knowledge",
@@ -2812,7 +2812,7 @@
         },
         {
           "name": "document",
-          "objects": 247
+          "objects": 251
         }
       ],
       "rule_refs": [
@@ -3061,11 +3061,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 300,
+        "mcp_resources": 305,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 299,
+        "objects": 304,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3275,7 +3275,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 135
+          "objects": 138
         }
       ],
       "rule_refs": [
@@ -3639,11 +3639,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 137,
+        "mcp_resources": 140,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 135,
+        "objects": 138,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -5628,11 +5628,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 19
+          "objects": 20
         },
         {
           "name": "issue",
-          "objects": 215
+          "objects": 216
         }
       ],
       "rule_refs": [
@@ -5775,11 +5775,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 235,
+        "mcp_resources": 237,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 234,
+        "objects": 236,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -7651,6 +7651,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.verify",
+              "title": "What the deployed surfaces are serving",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deploy_verify",
+              "route": "GET /api/v1/deployments/verify"
             }
           ]
         }
@@ -7681,10 +7689,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
+        "capabilities": 4,
+        "mcp_tools": 4,
         "mcp_resources": 2,
-        "http_routes": 3,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 0,
         "objects": 1,
@@ -8875,7 +8883,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (51)",
+        "title": "adr (52)",
         "features": [
           "knowledge"
         ]
@@ -8903,7 +8911,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (173)",
+        "title": "claim (176)",
         "features": [
           "declare-once"
         ]
@@ -8943,7 +8951,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (215)",
+        "title": "issue (216)",
         "features": [
           "planning"
         ]
@@ -8962,7 +8970,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (19)",
+        "title": "milestone (20)",
         "features": [
           "planning"
         ]
@@ -9002,7 +9010,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (135)",
+        "title": "rule (138)",
         "features": [
           "doctrine"
         ]
@@ -9785,6 +9793,11 @@
       "route": "/cockpit/continuity"
     },
     {
+      "id": "completion",
+      "title": "Completion",
+      "route": "/cockpit/completion"
+    },
+    {
       "id": "worktrees",
       "title": "Worktrees",
       "route": "/cockpit/worktrees"
@@ -9826,51 +9839,51 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1449,
-    "builtin": 112,
-    "declarative": 1337,
+    "capabilities": 1467,
+    "builtin": 114,
+    "declarative": 1353,
     "modules": 36,
-    "mcp_tools": 109,
-    "mcp_resources": 1378,
-    "http_routes": 111,
+    "mcp_tools": 111,
+    "mcp_resources": 1395,
+    "http_routes": 113,
     "cli_commands": 116,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1337,
+    "objects": 1353,
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 173,
+      "claim": 176,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 247,
+      "document": 251,
       "feature": 25,
       "implementation": 49,
-      "issue": 215,
+      "issue": 216,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 2,
-      "rule": 135,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 205,
+      "test": 208,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
     "features": 24,
-    "web_surfaces": 9
+    "web_surfaces": 10
   },
   "valid": true
 }

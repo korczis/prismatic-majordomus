@@ -1,12 +1,14 @@
 {
   "schema": 1,
-  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nfinish: refused, 1 unmet",
+  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nOK   obligations   t-20260903193012-a4f1 — 4 of 4 closed\nOK   gates         t-20260903193012-a4f1 — 6 selected, 6 passed\nfinish: refused, 1 unmet",
   "finish_checks": [
     "scope",
     "verification",
     "state",
     "blockers",
-    "note"
+    "note",
+    "obligations",
+    "gates"
   ],
   "problem_md": "\nMost AI-assisted work fails for boring reasons. Too much context. The wrong rules for\nthe tool that happens to be open. Reasoning at maximum by default. Sessions that never\nend. Two agents editing the same file. No definition of done, so \"done\" means the\nworker said so.\n\nThese are operational-control problems, and the environments this tool was distilled\nfrom had them at scale:\n\n- instruction files for two AI tools in the same repository sharing **0–9 %** of their\n  content: not duplicates, disjoint rule sets\n- an always-loaded operating contract oscillating between **0 and about 1,100 lines**\n  across roughly 200 hand edits, until a hard budget with a failing check pinned it\n- **seventeen** independent cases of a check documented as blocking, present on disk,\n  executable, and invoked by nothing\n- full worktree isolation still producing about **3,200** concurrently modified files\n  and **67** duplicated patches across forty worktrees, with nine ever merged\n- **10 GB** of session notes standing in for a database, recovered by a hand-written\n  runbook\n\nBetter prompts do not fix any of this.",
   "problem_bullets_md": "- instruction files for two AI tools in the same repository sharing **0–9 %** of their\n  content: not duplicates, disjoint rule sets\n- an always-loaded operating contract oscillating between **0 and about 1,100 lines**\n  across roughly 200 hand edits, until a hard budget with a failing check pinned it\n- **seventeen** independent cases of a check documented as blocking, present on disk,\n  executable, and invoked by nothing\n- full worktree isolation still producing about **3,200** concurrently modified files\n  and **67** duplicated patches across forty worktrees, with nine ever merged\n- **10 GB** of session notes standing in for a database, recovered by a hand-written\n  runbook",
@@ -84,7 +86,8 @@
         "archive-fidelity",
         "context-budget",
         "bootstrap-chain",
-        "provider-projections-one-renderer"
+        "provider-projections-one-renderer",
+        "tooling-derived"
       ],
       "doctrine_ids": [
         "majordomus.bootstrap-integrity",
@@ -240,6 +243,8 @@
         "typed-outcome",
         "open-question-gate",
         "blocker-survives-handover",
+        "completion-is-proved",
+        "deployment-verified-live",
         "obligation-closure",
         "obligation-establishment"
       ],

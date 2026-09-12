@@ -1,0 +1,255 @@
+{
+  "generator": "generate-site-data 1",
+  "policy": {
+    "counts": {
+      "questions": 18,
+      "stages": 11
+    },
+    "questions": [
+      {
+        "id": "implemented",
+        "question": "Is all the work this task promised present in the tree?",
+        "remediation": "majordomus check",
+        "source": "obligation:implementation",
+        "stage": "implementation"
+      },
+      {
+        "id": "tested",
+        "question": "Were the cases the change obliges run, and did they pass?",
+        "remediation": "majordomus usecase impact",
+        "source": "obligation:tests",
+        "stage": "validation"
+      },
+      {
+        "id": "regression-tested",
+        "question": "Does the change touch a test of its own?",
+        "remediation": "add a case under test/cases/ or a test beside the code",
+        "source": "change:test-path",
+        "stage": "validation"
+      },
+      {
+        "id": "documented",
+        "question": "Were the documents a reader needs updated?",
+        "remediation": "scripts/ci/reference-check",
+        "source": "obligation:docs",
+        "stage": "documentation"
+      },
+      {
+        "id": "generated",
+        "question": "Is every derived artifact current with its canonical source?",
+        "remediation": "majordomus generate --check",
+        "source": "obligation:generated",
+        "stage": "documentation"
+      },
+      {
+        "id": "openapi",
+        "question": "Are the OpenAPI document and the transport registries current?",
+        "remediation": "majordomus generate --check",
+        "source": "obligation:generated",
+        "stage": "documentation"
+      },
+      {
+        "id": "parity",
+        "question": "Does every surface (command line, HTTP, MCP, Cockpit) agree with the registry?",
+        "remediation": "scripts/ci/projection-check",
+        "source": "gate:projection-closure",
+        "stage": "documentation"
+      },
+      {
+        "id": "committed",
+        "question": "Are the changes in the branch's history rather than in the working tree?",
+        "remediation": "git commit",
+        "source": "obligation:commit",
+        "stage": "commit"
+      },
+      {
+        "id": "pushed",
+        "question": "Has the commit reached the remote?",
+        "remediation": "git push",
+        "source": "obligation:push",
+        "stage": "commit"
+      },
+      {
+        "id": "ci",
+        "question": "Has every gate the change selects reported, and did it pass?",
+        "remediation": "majordomus evidence --run-gates",
+        "source": "gates",
+        "stage": "gates"
+      },
+      {
+        "id": "version",
+        "question": "Has the declared version moved as far as the public surface has?",
+        "remediation": "majordomus release bump",
+        "source": "release:impact",
+        "stage": "version"
+      },
+      {
+        "id": "changelog",
+        "question": "Is the release's own record current with the tree?",
+        "remediation": "scripts/ci/release-check",
+        "source": "gate:release-check",
+        "stage": "version"
+      },
+      {
+        "id": "integrated",
+        "question": "Does the trunk reach this commit?",
+        "remediation": "open a pull request and land it",
+        "source": "obligation:target",
+        "stage": "integration"
+      },
+      {
+        "id": "published",
+        "question": "Does the published site serve this commit?",
+        "remediation": "scripts/pages verify --commit HEAD",
+        "source": "obligation:pages",
+        "stage": "deployment"
+      },
+      {
+        "id": "deployed",
+        "question": "Is the environment this change targets running it?",
+        "remediation": "majordomus deployment verify",
+        "source": "obligation:deploy",
+        "stage": "deployment"
+      },
+      {
+        "id": "deployment-verified",
+        "question": "Was the deployed result looked at after it was deployed?",
+        "remediation": "majordomus deployment verify",
+        "source": "obligation:verify",
+        "stage": "verification"
+      },
+      {
+        "id": "handover",
+        "question": "Is the session's continuation record written?",
+        "remediation": "majordomus handover < note.md",
+        "source": "session:handover",
+        "stage": "provenance"
+      },
+      {
+        "id": "issue",
+        "question": "Do the issue and milestone this work belongs to say so?",
+        "remediation": "majordomus start <task> --issue <id>",
+        "source": "task:issue",
+        "stage": "provenance"
+      }
+    ],
+    "stages": [
+      {
+        "id": "context",
+        "summary": "The task exists, its scope is claimed, and the rules that apply are loaded.",
+        "title": "Context and governance"
+      },
+      {
+        "id": "implementation",
+        "summary": "The promised work is present in the tree.",
+        "title": "Implementation"
+      },
+      {
+        "id": "validation",
+        "summary": "The cases the change obliges ran and passed, and the change carries a test of its own.",
+        "title": "Tests and validation"
+      },
+      {
+        "id": "documentation",
+        "summary": "The documents a reader needs are written and every derived artifact is current.",
+        "title": "Documentation and generated artifacts"
+      },
+      {
+        "id": "commit",
+        "summary": "The work is in the branch's history and the branch has reached the remote.",
+        "title": "Commit and push"
+      },
+      {
+        "id": "gates",
+        "summary": "Every gate the change selects has reported over this tree, and none refuses.",
+        "title": "Gates"
+      },
+      {
+        "id": "version",
+        "summary": "The public contract was measured against the last release and the declared version is at least what it requires.",
+        "title": "Version impact"
+      },
+      {
+        "id": "integration",
+        "summary": "The trunk reaches the commit.",
+        "title": "Integration"
+      },
+      {
+        "id": "deployment",
+        "summary": "Every surface the change affects is serving the revision the task produced.",
+        "title": "Deployment"
+      },
+      {
+        "id": "verification",
+        "summary": "The deployed result was looked at after it was deployed, and it is the expected revision.",
+        "title": "Live verification"
+      },
+      {
+        "id": "provenance",
+        "summary": "The session, the issue and the continuation record say what happened.",
+        "title": "Provenance"
+      }
+    ]
+  },
+  "provenance": {
+    "available": true,
+    "baseline": {
+      "channel": "stable",
+      "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
+      "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.5.0",
+      "published_at": "2026-09-11T13:36:34Z",
+      "tag": "v0.5.0",
+      "targets": [
+        "macos-aarch64",
+        "macos-x86_64",
+        "linux-x86_64-gnu",
+        "linux-x86_64-musl",
+        "linux-aarch64-gnu",
+        "linux-aarch64-musl"
+      ],
+      "version": "0.5.0"
+    },
+    "deployments": [
+      {
+        "application": "majordomus",
+        "id": "majordomus",
+        "provider": "fly",
+        "status": "declared",
+        "title": "The Majordomus layer, served from one machine"
+      }
+    ],
+    "derived_from": "derived from the tree alone",
+    "surfaces": [
+      {
+        "id": "pages",
+        "identity_url": "https://majordomus.dev/build.json",
+        "kind": "pages",
+        "url": "https://majordomus.dev",
+        "verifiable": true
+      },
+      {
+        "id": "release",
+        "identity_url": "https://majordomus.dev/releases/latest.json",
+        "kind": "release",
+        "url": "https://majordomus.dev/releases/",
+        "verifiable": true
+      },
+      {
+        "id": "majordomus",
+        "identity_url": null,
+        "kind": "application",
+        "url": null,
+        "verifiable": false
+      }
+    ],
+    "version": {
+      "baseline_reference": "v0.5.0",
+      "baseline_version": "0.5.0",
+      "declared_version": "0.6.0",
+      "measured": false,
+      "measured_by": "majordomus release analyze"
+    }
+  },
+  "schema": 1,
+  "source": "share/completion.yaml"
+}

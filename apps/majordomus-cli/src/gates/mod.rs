@@ -58,6 +58,8 @@
 pub(crate) mod done;
 pub(crate) mod judge;
 pub(crate) mod model;
+pub(crate) mod policy;
+pub(crate) mod stage;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -69,15 +71,79 @@ use crate::capability::builtin::obligations::Obligation;
 use crate::capability::builtin::ActiveTask;
 use crate::discovery::glob::Glob;
 
-pub use done::{DoneQuestion, ObligationStanding};
+pub use done::{
+    DoneInputs, DoneQuestion, HandoverStanding, IssueStanding, ObligationStanding, ReleaseStanding,
+};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
 pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode};
+pub use policy::{CompletionPolicy, QuestionDecl, QuestionSource, StageDecl, POLICY_FILE};
+pub use stage::{derive_stage, LifecycleStage, StageReport, StageState};
+
+use crate::deploy::targets::DeploymentPlan;
+
+/// ```
+/// use majordomus_cli::gates::VersionSummary;
+/// let v: VersionSummary = serde_json::from_value(serde_json::json!({
+///     "baseline": "0.5.0", "declared": "0.6.0", "required": "0.6.0",
+///     "impact": "minor", "status": "ok", "breaking": false, "changes": 12
+/// })).unwrap();
+/// // the one sentence every surface shows about the version, reduced from the plan
+/// // `release.analysis` answers with; nothing here is measured a second time
+/// assert!(v.ok());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The structural version analysis, reduced to what a completion report states.
+pub struct VersionSummary {
+    /// The last released version the tree was measured against.
+    pub baseline: String,
+    /// The version the tree declares.
+    pub declared: String,
+    /// The smallest version the contract allows the tree to declare.
+    pub required: String,
+    /// The impact the contract movement requires (`none`, `patch`, `minor`, `major`).
+    pub impact: String,
+    /// `ok` when the declared version is at least the required one, else `blocked`.
+    pub status: String,
+    /// Whether anything a caller could hold is gone.
+    pub breaking: bool,
+    /// How many movements of the contract were found.
+    pub changes: usize,
+}
+
+impl VersionSummary {
+    /// Whether the declared version satisfies the contract.
+    pub fn ok(&self) -> bool {
+        self.status == "ok"
+    }
+}
+
+/// The judgements the done invariant is composed from, each made by the subsystem that
+/// owns the fact. Passed as one value so that the capability, a test and a benchmark drive
+/// [`complete`] identically.
+pub(crate) struct Sources<'a> {
+    /// The completion policy, `share/completion.yaml`.
+    pub policy: &'a CompletionPolicy,
+    /// The obligation closure's word per token.
+    pub standing: &'a BTreeMap<String, ObligationStanding>,
+    /// Whether the closure could be read at all.
+    pub closure_reachable: bool,
+    /// The release analysis, reduced.
+    pub release: ReleaseStanding,
+    /// The same analysis, as the report states it.
+    pub version: Option<VersionSummary>,
+    /// The issue the task names.
+    pub issue: IssueStanding,
+    /// The continuation record.
+    pub handover: HandoverStanding,
+    /// Which deployment targets the change reaches.
+    pub deployment: DeploymentPlan,
+}
 
 /// The local half of the layer, relative to the repository root. The same constant
 /// `obligations` and `continuity` state, for the same reason: the shell tool decides where
 /// its state lives and a second opinion about the path would be a second source of truth.
-const STATE_DIR: &str = ".ai/local/state";
+pub(crate) const STATE_DIR: &str = ".ai/local/state";
 
 // ---------------------------------------------------------------- derived obligations
 
@@ -123,8 +189,8 @@ pub struct ImpliedObligation {
     pub remediation: String,
 }
 
-/// Which obligations a change set implies, against the shipped vocabulary and the task's
-/// own declaration.
+/// Which obligations a change set implies, against the shipped vocabulary, the task's
+/// own declaration and the deployment plan.
 ///
 /// The derivation, in one sentence each:
 ///
@@ -132,17 +198,33 @@ pub struct ImpliedObligation {
 ///   modification comes to imply `tests`, a document change to imply `docs`, and a change
 ///   under `share/` or `.ai/repo/` to imply `generated` — every one of those from the
 ///   token's own data and none from a table here;
-/// - `commit` is owed whenever anything changed at all, because work that exists only in a
-///   working tree is not work the repository has;
-/// - every other token names a fact outside this tree, so it is owed exactly when the task
-///   declared it: a deployment-scoped task declares `deploy` and owes verification, and a
-///   task that deploys nothing does not, which is the difference between "not applicable"
-///   and "unknown".
+/// - `commit`, `push` and `target` are owed whenever anything changed at all, because work
+///   that exists only in a working tree, or only on a branch, is not work the repository
+///   has: a completed task's work is on the trunk;
+/// - `pages`, `deploy` and `verify` are owed when the deployment plan says the change
+///   reaches the published site, an active deployment, or any surface at all — the plan is
+///   derived from the CI model's path classes and the deployment objects, so a task that
+///   touches what the site is built from owes its publication whether or not it said so;
+/// - every other token is owed exactly when the task declared it, which is the difference
+///   between "not applicable" and "unknown".
 pub(crate) fn implied(
     vocabulary: &[Obligation],
     changed: &[String],
     task: Option<&ActiveTask>,
+    deployment: &DeploymentPlan,
 ) -> Vec<ImpliedObligation> {
+    let reaches =
+        |pred: &dyn Fn(&crate::deploy::targets::DeploymentTarget) -> bool| -> Vec<String> {
+            deployment
+                .targets
+                .iter()
+                .filter(|t| t.applicable && pred(t))
+                .map(|t| t.id.clone())
+                .collect()
+        };
+    let pages = reaches(&|t| t.kind == crate::deploy::targets::TargetKind::Pages);
+    let apps = reaches(&|t| t.kind == crate::deploy::targets::TargetKind::Application);
+    let any = reaches(&|_| true);
     let declared: BTreeSet<&str> = task
         .map(|t| t.requires.iter().map(String::as_str).collect())
         .unwrap_or_default();
@@ -166,6 +248,35 @@ pub(crate) fn implied(
             (
                 true,
                 "the change exists, so it owes being in the branch's history".to_string(),
+            )
+        } else if (o.id == "push" || o.id == "target") && !changed.is_empty() {
+            (
+                true,
+                "the change exists, so it owes reaching the remote and the trunk: a branch \
+                 nobody integrated is not finished work"
+                    .to_string(),
+            )
+        } else if o.id == "pages" && !pages.is_empty() {
+            (
+                true,
+                "the deployment plan says the change reaches the published site".to_string(),
+            )
+        } else if o.id == "deploy" && !apps.is_empty() {
+            (
+                true,
+                format!(
+                    "the deployment plan says the change reaches an active deployment ({})",
+                    apps.join(", ")
+                ),
+            )
+        } else if o.id == "verify" && !any.is_empty() {
+            (
+                true,
+                format!(
+                    "the deployment plan says the change reaches {}; what was deployed is \
+                     looked at afterwards",
+                    any.join(", ")
+                ),
             )
         } else if is_declared {
             (true, "the task's own `requires` declares it".to_string())
@@ -225,12 +336,22 @@ pub(crate) fn implied(
 ///     "tallies": { "queued": 1 },
 ///     "gates": [],
 ///     "obligations": [],
-///     "questions": []
+///     "questions": [],
+///     "policy": "share/completion.yaml",
+///     "stage": { "id": "gates", "title": "Gates", "state": "pending", "complete": false,
+///                "owing": ["ci"], "stages": [] },
+///     "verified": false,
+///     "complete": false,
+///     "deployment": { "targets": [] }
 /// }))
 /// .unwrap();
 /// assert!(c.finishable, "absence of a verdict does not refuse");
 /// assert_eq!(c.unverified, ["reference-check"], "and it is never silently accepted");
 /// assert!(c.blocking.is_empty());
+/// // and the three words a reader acts on are three different facts
+/// assert!(!c.verified, "finishable and unverified: nothing refused, something never reported");
+/// assert!(!c.complete, "and nothing is complete while a question is owed");
+/// assert_eq!(c.stage.id, "gates");
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// Whether the active task may be called finished, and everything the answer rests on.
@@ -270,6 +391,22 @@ pub struct Completion {
     /// from the obligation closure, the gates and the change set; a question nothing here
     /// reaches is `unknown` and names the command that would answer it.
     pub questions: Vec<DoneQuestion>,
+    /// The completion policy the questions were taken from.
+    pub policy: String,
+    /// Where the task stands in the lifecycle, derived from the questions in the policy's
+    /// order: the first stage blocked, else the first stage pending, else complete.
+    pub stage: LifecycleStage,
+    /// True when `finishable` holds and every required gate has reported over this tree:
+    /// nothing refuses and nothing is silent.
+    pub verified: bool,
+    /// True only when every question of the policy passes or is exempt. This is the one
+    /// field that may be read as "done", and no surface computes it a second time.
+    pub complete: bool,
+    /// The structural version analysis, when it could be made.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<VersionSummary>,
+    /// Which deployment targets the change reaches, and why each applies or does not.
+    pub deployment: DeploymentPlan,
     /// What could not be established, each as one line. Never empty when something was
     /// skipped: a gap is reported rather than left to be inferred.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -332,8 +469,7 @@ pub(crate) fn complete(
     vocabulary: &[Obligation],
     runs: &BTreeMap<String, GateRun>,
     hashes: &BTreeMap<String, Option<String>>,
-    standing: &BTreeMap<String, ObligationStanding>,
-    closure_reachable: bool,
+    sources: &Sources<'_>,
     on_demand: bool,
     now: &str,
     mut findings: Vec<String>,
@@ -365,7 +501,7 @@ pub(crate) fn complete(
             unverified.join(" ")
         ));
     }
-    let obligations = implied(vocabulary, changed, task);
+    let obligations = implied(vocabulary, changed, task, &sources.deployment);
     for o in &obligations {
         if o.applicable && !o.declared {
             findings.push(format!(
@@ -376,22 +512,64 @@ pub(crate) fn complete(
         }
     }
 
-    let questions = done::answer(standing, &obligations, &gates, changed, closure_reachable);
+    let questions = done::answer(
+        sources.policy,
+        &DoneInputs {
+            standing: sources.standing,
+            implied: &obligations,
+            gates: &gates,
+            changed,
+            closure_reachable: sources.closure_reachable,
+            release: sources.release.clone(),
+            issue: sources.issue.clone(),
+            handover: sources.handover.clone(),
+        },
+    );
+    let stage = derive_stage(&sources.policy.stages, &questions);
+    let finishable = blocking.is_empty();
+    let verified = finishable && unverified.is_empty();
+    // `complete` is the stage fold's word and nothing else: every question pass or exempt.
+    // It implies `verified` (the ci question is one of them) and is never recomputed by a
+    // surface from the parts.
+    let complete = task.is_some() && stage.complete;
 
     Completion {
         present: task.is_some(),
         task: task.cloned(),
         model: model::MODEL_PATH.to_string(),
         plan,
-        finishable: blocking.is_empty(),
+        finishable,
         blocking,
         unverified,
         tallies,
         gates,
         obligations,
         questions,
+        policy: sources.policy.source.clone(),
+        stage,
+        verified,
+        complete,
+        version: sources.version.clone(),
+        deployment: sources.deployment.clone(),
         findings,
     }
+}
+
+/// The commit this checkout is at, as git states it; `None` outside a repository or
+/// before the first commit. What a deployment target is expected to serve when nothing
+/// names another revision.
+pub(crate) fn head_of(root: &Path) -> Option<String> {
+    let out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "HEAD"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let head = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (!head.is_empty()).then_some(head)
 }
 
 /// Where this checkout's ledger is.
@@ -459,6 +637,27 @@ classes:
             requires: requires.iter().map(|s| (*s).to_string()).collect(),
             started_at: "2026-09-11T00:00:00Z".into(),
             head: "0123456789ab".into(),
+            issue: String::new(),
+        }
+    }
+
+    fn sources() -> Sources<'static> {
+        use std::sync::OnceLock;
+        static POLICY: OnceLock<CompletionPolicy> = OnceLock::new();
+        static STANDING: OnceLock<BTreeMap<String, ObligationStanding>> = OnceLock::new();
+        let policy = POLICY.get_or_init(|| {
+            let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+            CompletionPolicy::load(&root).unwrap()
+        });
+        Sources {
+            policy,
+            standing: STANDING.get_or_init(BTreeMap::new),
+            closure_reachable: false,
+            release: ReleaseStanding::Unknown("not asked".into()),
+            version: None,
+            issue: IssueStanding::Unknown("no plan".into()),
+            handover: HandoverStanding::Unknown("no store".into()),
+            deployment: DeploymentPlan::default(),
         }
     }
 
@@ -472,13 +671,23 @@ classes:
     #[test]
     fn source_modification_implies_tests_and_a_document_change_does_not() {
         let v = vocabulary();
-        let i = implied(&v, &["apps/majordomus-cli/src/lib.rs".into()], None);
+        let i = implied(
+            &v,
+            &["apps/majordomus-cli/src/lib.rs".into()],
+            None,
+            &DeploymentPlan::default(),
+        );
         let tests = i.iter().find(|o| o.id == "tests").unwrap();
         assert!(tests.applicable, "{}", tests.reason);
         assert!(!tests.declared, "the task declared nothing");
         assert!(!i.iter().find(|o| o.id == "docs").unwrap().applicable);
         // and the reverse
-        let i = implied(&v, &["docs/CLI.md".into()], None);
+        let i = implied(
+            &v,
+            &["docs/CLI.md".into()],
+            None,
+            &DeploymentPlan::default(),
+        );
         assert!(i.iter().find(|o| o.id == "docs").unwrap().applicable);
         assert!(!i.iter().find(|o| o.id == "tests").unwrap().applicable);
     }
@@ -488,28 +697,78 @@ classes:
         let v = vocabulary();
         let changed = vec!["apps/x.rs".to_string()];
 
-        let none = implied(&v, &changed, Some(&task(&[])));
+        let none = implied(&v, &changed, Some(&task(&[])), &DeploymentPlan::default());
         let d = none.iter().find(|o| o.id == "deploy").unwrap();
         assert!(!d.applicable, "no change to a tree can imply a deployment");
         assert!(d.reason.contains("outside this tree"));
 
-        let declared = implied(&v, &changed, Some(&task(&["deploy"])));
+        let declared = implied(
+            &v,
+            &changed,
+            Some(&task(&["deploy"])),
+            &DeploymentPlan::default(),
+        );
         let d = declared.iter().find(|o| o.id == "deploy").unwrap();
         assert!(d.applicable && d.declared);
+    }
+
+    #[test]
+    fn the_deployment_plan_implies_publication_and_verification_without_a_declaration() {
+        use crate::deploy::targets::{DeploymentTarget, Identity, TargetKind};
+        let v: Vec<Obligation> = serde_json::from_str(
+            r#"[
+              {"id":"pages","title":"p","summary":"s","discharged_by":"scripts/pages verify","remote":true},
+              {"id":"verify","title":"v","summary":"s","discharged_by":"deploy.verify","remote":true},
+              {"id":"deploy","title":"d","summary":"s","discharged_by":"deploy.verify","remote":true},
+              {"id":"push","title":"u","summary":"s","discharged_by":"git","remote":true},
+              {"id":"target","title":"t","summary":"s","discharged_by":"git","remote":true}
+            ]"#,
+        )
+        .unwrap();
+        let target = |id: &str, kind: TargetKind, applicable: bool| DeploymentTarget {
+            id: id.into(),
+            kind,
+            url: None,
+            identity_url: None,
+            applicable,
+            reason: "r".into(),
+            expected: Identity::default(),
+            inputs: vec![],
+            because: vec![],
+        };
+        let plan = DeploymentPlan {
+            targets: vec![
+                target("pages", TargetKind::Pages, true),
+                target("majordomus", TargetKind::Application, false),
+            ],
+            findings: vec![],
+        };
+        let i = implied(&v, &["docs/x.md".into()], None, &plan);
+        let by = |id: &str| i.iter().find(|o| o.id == id).unwrap().clone();
+        assert!(by("pages").applicable, "{}", by("pages").reason);
+        assert!(by("verify").applicable, "{}", by("verify").reason);
+        assert!(!by("deploy").applicable, "no active deployment is reached");
+        assert!(
+            by("push").applicable && by("target").applicable,
+            "a change owes the trunk"
+        );
+        // and nothing changed: nothing owed
+        let none = implied(&v, &[], None, &DeploymentPlan::default());
+        assert!(none.iter().all(|o| !o.applicable));
     }
 
     #[test]
     fn anything_changed_owes_being_committed() {
         let v = vocabulary();
         assert!(
-            implied(&v, &["apps/x.rs".into()], None)
+            implied(&v, &["apps/x.rs".into()], None, &DeploymentPlan::default())
                 .iter()
                 .find(|o| o.id == "commit")
                 .unwrap()
                 .applicable
         );
         assert!(
-            !implied(&v, &[], None)
+            !implied(&v, &[], None, &DeploymentPlan::default())
                 .iter()
                 .find(|o| o.id == "commit")
                 .unwrap()
@@ -532,8 +791,7 @@ classes:
             &v,
             &BTreeMap::new(),
             &hashes(&m, "aaaa"),
-            &BTreeMap::new(),
-            false,
+            &sources(),
             false,
             "now",
             vec![],
@@ -563,8 +821,7 @@ classes:
             &v,
             &runs,
             &hashes(&m, "aaaa"),
-            &BTreeMap::new(),
-            false,
+            &sources(),
             false,
             "now",
             vec![],
@@ -601,8 +858,7 @@ classes:
             &v,
             &runs,
             &hashes(&m, "aaaa"),
-            &BTreeMap::new(),
-            false,
+            &sources(),
             false,
             "now",
             vec![],
@@ -618,8 +874,7 @@ classes:
             &v,
             &runs,
             &hashes(&m, "bbbb"),
-            &BTreeMap::new(),
-            false,
+            &sources(),
             false,
             "now",
             vec![],
@@ -643,8 +898,7 @@ classes:
             &v,
             &BTreeMap::new(),
             &hashes(&m, "aaaa"),
-            &BTreeMap::new(),
-            false,
+            &sources(),
             false,
             "now",
             vec![],

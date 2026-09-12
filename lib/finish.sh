@@ -12,6 +12,7 @@
 . "$MJ_LIB_DIR/handover.sh"
 
 MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
+MJ_COMPLETION_STAGE=""; MJ_COMPLETION_COMPLETE=""
 MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
 export MJ_FINISH_OUTCOME
 
@@ -93,7 +94,11 @@ H
   [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
-  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
+  # the stage the completion report derived, when the gate doctrine ran: a record that says
+  # `partial` and nothing else sends the next worker back to rediscover what was left
+  local stagej=""
+  [ -z "${MJ_COMPLETION_STAGE:-}" ] || stagej=",\"stage\":\"$MJ_COMPLETION_STAGE\",\"complete\":${MJ_COMPLETION_COMPLETE:-false}"
+  mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps$stagej"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
 
