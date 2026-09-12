@@ -528,7 +528,7 @@ fn provider_states(
     // projections are still known — the policy declares them — but whether each file is
     // current is not, and `Unknown` says exactly that.
     let rendered = share.and_then(|share| {
-        crate::providers::artifacts(repository, share, &policy)
+        crate::providers::artifacts(repository, share, policy)
             .ok()
             .map(|artifacts| {
                 artifacts

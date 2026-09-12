@@ -574,7 +574,9 @@ fn pointer(dir: &Path) -> (Pointer, String) {
 
 /// Every open record in the store, as `(path, fields)`, sorted by file name so that the
 /// answer does not depend on the order the filesystem happened to hand them back.
-fn open_records(dir: &Path) -> (Vec<(PathBuf, BTreeMap<String, String>)>, Vec<String>) {
+type OpenRecord = (PathBuf, BTreeMap<String, String>);
+
+fn open_records(dir: &Path) -> (Vec<OpenRecord>, Vec<String>) {
     let mut out = Vec::new();
     let mut findings = Vec::new();
     let Ok(entries) = std::fs::read_dir(dir) else {

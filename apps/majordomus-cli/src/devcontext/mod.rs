@@ -583,7 +583,7 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
     if let Some(d) = compiled
         .deduplicated
         .iter()
-        .find(|d| d.dropped.iter().any(|u| *u == uri))
+        .find(|d| d.dropped.contains(&uri))
     {
         return Ok(Explanation {
             uri,

@@ -559,12 +559,11 @@ fn enter_command(
 /// leave direnv reporting that the whole environment failed — over a process the next `cd`
 /// will start.
 fn ensure_runtime(repository: &Repository, policy: Option<&LoadedPolicy>, wait: Duration) {
-    match std::env::var(RUNTIME_ENV).as_deref() {
-        Ok("off") => return,
-        // Anything else is `auto`: an unset variable, and a value nobody here understands.
-        // A typo in a shell profile must not silently turn the runtime off, and it must not
-        // fail the entry either.
-        _ => {}
+    // Anything but "off" is `auto`: an unset variable, and a value nobody here
+    // understands. A typo in a shell profile must not silently turn the runtime off,
+    // and it must not fail the entry either.
+    if let Ok("off") = std::env::var(RUNTIME_ENV).as_deref() {
+        return;
     }
     if policy.is_some_and(|p| !p.policy.session.ensure_server_on_start) {
         return;

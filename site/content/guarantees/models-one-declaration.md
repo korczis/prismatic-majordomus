@@ -1,7 +1,7 @@
 +++
 title = "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own"
 description = "Which models exist, what each can do, how large its context is, and which name is an"
-weight = 180
+weight = 181
 [extra]
 claim_id = "models-one-declaration"
 status = "guaranteed"
