@@ -65,6 +65,41 @@ pub const COMPLETION_URI: &str = "majordomus://gates/completion";
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// The CI model this repository declares: what may refuse a change, and what selects each.
+///
+/// Two things about this report are worth knowing before reading one. `count` is measured
+/// from `gates` rather than written down, so the two can never disagree the way a
+/// hand-maintained total does. And `unreadable` is how a reader tells "this repository
+/// declares no CI model" from "the call failed": a repository of the layer is not obliged
+/// to declare gates, so the empty model is an answer, and it says why it is empty.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::gates::GateModelReport;
+/// use serde_json::json;
+///
+/// // the shape every surface serves: `unreadable` is skipped when the model was read
+/// let r: GateModelReport = serde_json::from_value(json!({
+///     "version": 1,
+///     "source": ".ai/repo/ci/gates.yaml",
+///     "count": 0,
+///     "on_demand": [],
+///     "gates": [],
+///     "classes": [],
+/// })).unwrap();
+/// assert_eq!(r.count, r.gates.len(), "the total is measured, never declared");
+/// assert!(r.unreadable.is_none(), "read, and it declares nothing");
+///
+/// // and the other empty answer, which a reader must not confuse with that one
+/// let absent: GateModelReport = serde_json::from_value(json!({
+///     "version": 0,
+///     "source": ".ai/repo/ci/gates.yaml",
+///     "count": 0,
+///     "on_demand": [],
+///     "gates": [],
+///     "classes": [],
+///     "unreadable": "no such file",
+/// })).unwrap();
+/// assert_eq!(absent.unreadable.as_deref(), Some("no such file"));
+/// ```
 pub struct GateModelReport {
     /// The schema version the file states.
     pub version: u32,

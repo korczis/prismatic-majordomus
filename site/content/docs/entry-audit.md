@@ -1,7 +1,7 @@
 +++
 title = "Repository entry: what is automatic, what is decorative, and where it breaks"
 description = "forensic finding, 2026-09-10: what converges on its own when a person or an agent enters this repository — executable, shared server, episode, peer, continuation — and what does not; the root causes ranked, the matrix, the dependency graph, and the plan by stage"
-weight = 29
+weight = 30
 [extra]
 source = "docs/ENTRY_AUDIT.md"
 +++

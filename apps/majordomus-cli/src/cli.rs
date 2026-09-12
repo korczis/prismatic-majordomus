@@ -64,6 +64,8 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
+    Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
     /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
@@ -1703,6 +1705,33 @@ pub enum CompletionShell {
 #[derive(Debug, Args)]
 /// `majordomus devcontext`. Every subcommand is the projection of one `devcontext.*`
 /// capability; the request flags are declared once and shared by `compile` and `explain`.
+///
+/// `--format` is `global`, so it parses where a person writes it rather than only before
+/// the subcommand, and the group itself runs nothing: every runnable path here is a
+/// capability's.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextArgs, DevcontextCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "devcontext", "compile", "--intent", "explain the budget",
+///     "--budget-tokens", "4000", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: DevcontextArgs = match cli.command {
+///     Command::Devcontext(args) => args,
+///     other => panic!("expected `devcontext`, parsed {other:?}"),
+/// };
+/// // written after the subcommand and picked up all the same
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// let DevcontextCommand::Compile(request) = args.command else { panic!("compile") };
+/// assert_eq!(request.intent.as_deref(), Some("explain the budget"));
+/// assert_eq!(request.budget_tokens, Some(4000));
+///
+/// // the group has no behaviour of its own, so it refuses to be run bare
+/// assert!(Cli::try_parse_from(["majordomus", "devcontext"]).is_err());
+/// ```
 pub struct DevcontextArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -1718,7 +1747,43 @@ pub struct DevcontextArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// What to ask of the context compiler.
+/// What to ask of the context compiler: compile an answer, ask why one identifier is or is
+/// not in it, or read the rules the compiler decides by.
+///
+/// `Explain` takes the identifier positionally and then the same request flags as
+/// `Compile`, because the question it answers is *about* a compiled answer — "why is this
+/// not in it" is only meaningful against the request that left it out. `Policy` takes
+/// nothing: it is the compiler's own table, not a question about a repository.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextCommand};
+///
+/// let parse = |argv: &[&str]| {
+///     let cli = Cli::try_parse_from(argv).unwrap();
+///     let Command::Devcontext(args) = cli.command else { panic!("devcontext") };
+///     args.command
+/// };
+///
+/// // the identifier is positional and the request flags follow it, so the budget the
+/// // judgement is made under is part of the question
+/// let explain = parse(&[
+///     "majordomus", "devcontext", "explain", "majordomus://rule/x@1", "--max-depth", "1",
+/// ]);
+/// let DevcontextCommand::Explain { uri, request } = explain else { panic!("explain") };
+/// assert_eq!(uri, "majordomus://rule/x@1");
+/// assert_eq!(request.max_depth, Some(1));
+///
+/// // `policy` is about the compiler and not about a request, so it accepts no request flag
+/// assert!(matches!(
+///     parse(&["majordomus", "devcontext", "policy"]),
+///     DevcontextCommand::Policy
+/// ));
+/// assert!(
+///     Cli::try_parse_from(["majordomus", "devcontext", "policy", "--intent", "x"]).is_err(),
+///     "the rules do not depend on what is being asked about"
+/// );
+/// ```
 pub enum DevcontextCommand {
     /// Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget
     Compile(DevcontextRequest),
@@ -1735,7 +1800,56 @@ pub enum DevcontextCommand {
 }
 
 #[derive(Debug, Clone, Args)]
-/// What to compile a context about; every flag is optional.
+/// What to compile a context about; every flag is optional, and naming nothing is a
+/// legitimate request.
+///
+/// This is the command-line half of
+/// [`CompileInput`](crate::devcontext::CompileInput), field for field, which is why the
+/// repeated flags are `--path` and `--uri` singular while the fields behind them are
+/// plural: a person adds one path at a time, and the request holds the set. A request that
+/// names nothing still compiles — to the governance the layer applies to everything, plus
+/// what the last session left.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DevcontextCommand, DevcontextRequest};
+///
+/// // one type behind both subcommands, which is why `explain` can judge an identifier
+/// // under exactly the request `compile` would have used
+/// let request_of = |argv: &[&str]| -> DevcontextRequest {
+///     let cli = Cli::try_parse_from(argv).unwrap();
+///     let Command::Devcontext(args) = cli.command else { panic!("devcontext") };
+///     match args.command {
+///         DevcontextCommand::Compile(request) => request,
+///         DevcontextCommand::Explain { request, .. } => request,
+///         DevcontextCommand::Policy => panic!("`policy` takes no request"),
+///     }
+/// };
+///
+/// let compiling = request_of(&[
+///     "majordomus", "devcontext", "compile",
+///     "--path", "apps/majordomus-cli/src", "--path", "lib",
+///     "--uri", "majordomus://adr/0052",
+///     "--floor", "0.4", "--all-blocking-rules",
+/// ]);
+///
+/// // repeated singular flags accumulate into the set the compiler seeds from
+/// assert_eq!(compiling.paths, ["apps/majordomus-cli/src", "lib"]);
+/// assert_eq!(compiling.uris, ["majordomus://adr/0052"]);
+/// assert_eq!(compiling.floor, Some(0.4));
+/// assert!(compiling.all_blocking_rules);
+///
+/// // the same flags reach `explain`, after its positional identifier
+/// let explaining = request_of(&[
+///     "majordomus", "devcontext", "explain", "majordomus://adr/0052", "--max-depth", "1",
+/// ]);
+/// assert_eq!(explaining.max_depth, Some(1));
+///
+/// // and nothing is required: the smallest true context there is
+/// let silent = request_of(&["majordomus", "devcontext", "compile"]);
+/// assert!(silent.issue.is_none() && silent.paths.is_empty());
+/// assert!(!silent.all_blocking_rules && silent.floor.is_none());
+/// ```
 pub struct DevcontextRequest {
     /// An issue id (`I0301`) or its canonical identifier
     #[arg(long)]
@@ -1871,6 +1985,71 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "commit",
+        examples: &[ExampleDoc {
+            id: "commit-default-plan",
+            title: "What this tree would commit, and why",
+            description: "`commit` with nothing after it plans, because that is what a person wants when they ask about committing. The branch, its upstream and divergence, what is staged and what is not, and the commits the history's own scoping supports — each with the evidence for it rather than an assertion. A clean tree says so.",
+            argv: &["commit"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["branch", "tree", "fingerprint"]),
+        }],
+    },
+    CommandExamples {
+        command: "commit plan",
+        examples: &[
+            ExampleDoc {
+                id: "commit-plan",
+                title: "The plan, with the fingerprint that makes it refusable",
+                description: "The fingerprint is the repository, the worktree, HEAD and a hash over every change with its stage. A caller holding a plan compares it with the tree in front of it and is told what moved — `HEAD moved from a1b2c3d4e to e4f5a6b70` — rather than being told nothing and committing somebody else's staged work.",
+                argv: &["commit", "plan"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["fingerprint", "nothing staged"]),
+            },
+            ExampleDoc {
+                id: "commit-plan-json",
+                title: "The same answer, as the shape the API and MCP return",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/commit/plan` returns and what the `majordomus_commit_plan` tool answers, with the working tree, every group with its rationale, and the fingerprint.",
+                argv: &["commit", "plan", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/fingerprint/repository", "/fingerprint/worktree", "/tree/changes"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "commit scopes",
+        examples: &[ExampleDoc {
+            id: "commit-scopes",
+            title: "The scope vocabulary, learned rather than declared",
+            description: "Every scope this repository's own commits use, how often, and the directories each one is written about — read from at most 1500 commits of the log. Nothing here is configured: a subsystem committed today is in the vocabulary today, and one nobody has touched sinks on its own. A repository whose history is not conventional yields an empty vocabulary and says how many commits it read.",
+            argv: &["commit", "scopes"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["learned from"]),
+        }],
+    },
+    CommandExamples {
+        command: "commit validate",
+        examples: &[ExampleDoc {
+            id: "commit-validate-rev",
+            title: "The verdict on a commit that is already made",
+            description: "`--rev` judges the message of any revision `git show` accepts; without it the message is read from a file or from standard input, which is the shape the `commit-msg` hook has. The exit code is the verdict: 0 when nothing of error severity was found, 10 when something was. Here the repository's first commit is subject `install`, which is not `type(scope): subject`, so the answer is 10 and the finding names the eleven type words.",
+            argv: &["commit", "validate", "--rev", "HEAD"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "commit history",
+        examples: &[ExampleDoc {
+            id: "commit-history",
+            title: "A whole range judged in one pass",
+            description: "One process for the range rather than one per commit: this reads 1755 commits of this repository's own history in about three and a half seconds, which is what lets `scripts/ci/commit-policy` be a gate rather than a nightly job. It reports how many were read, how many git composed and are therefore exempt, and how many carry an error — and exits 10 when any does.",
+            argv: &["commit", "history"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
     CommandExamples {
         command: "product",
         examples: &[ExampleDoc {
@@ -3289,3 +3468,108 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
 ];
+
+#[derive(Debug, clap::Args)]
+/// `majordomus commit`: the commit as a value.
+///
+/// Three questions, all read-only: what the working tree would commit, which scopes the
+/// history uses, and whether one message passes. Making the commit is `git commit`, which
+/// the `commit-msg` hook puts the third of these in front of — the executable proposes and
+/// judges, and a person commits.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, CommitArgs, CommitCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "commit", "history", "origin/master..HEAD", "--format", "json",
+/// ])
+/// .unwrap();
+/// let args: CommitArgs = match cli.command {
+///     Command::Commit(args) => args,
+///     other => panic!("expected `commit`, parsed {other:?}"),
+/// };
+/// // `--format` is global, so it parses after the subcommand, where a person writes it
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(
+///     args.command,
+///     Some(CommitCommand::History { range: Some(ref r) }) if r == "origin/master..HEAD"
+/// ));
+///
+/// // unlike the other groups this one does answer bare, because planning is what somebody
+/// // asking about committing wants; `None` is `plan` rather than a usage error
+/// let bare = Cli::try_parse_from(["majordomus", "commit"]).unwrap();
+/// assert!(matches!(bare.command, Command::Commit(CommitArgs { command: None, .. })));
+/// ```
+pub struct CommitArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `plan`.
+    pub command: Option<CommitCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus commit`: `plan`, `scopes`, `history` and `validate`.
+///
+/// All four are read-only. `validate` is the one the `commit-msg` hook runs, and its shape
+/// is the hook's: the file git will take the message from, and the paths that are staged,
+/// so that a `fix` carrying no test among its files is judged rather than guessed at.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, CommitCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "commit", "validate", ".git/COMMIT_EDITMSG",
+///     "--paths", "apps/majordomus-cli/src/commit/mod.rs,test/cases/274_commit_policy.sh",
+/// ])
+/// .unwrap();
+/// let args = match cli.command {
+///     Command::Commit(args) => args,
+///     other => panic!("expected `commit`, parsed {other:?}"),
+/// };
+/// // `--paths` is comma-delimited, so the hook can hand over one `git diff --cached` line
+/// assert!(matches!(
+///     args.command,
+///     Some(CommitCommand::Validate { file: Some(ref f), ref paths, rev: None })
+///         if f == ".git/COMMIT_EDITMSG" && paths.len() == 2
+/// ));
+///
+/// // a revision instead of a file judges a commit already made, and the two are exclusive
+/// assert!(Cli::try_parse_from(["majordomus", "commit", "validate", "--rev", "HEAD"]).is_ok());
+/// assert!(Cli::try_parse_from(["majordomus", "commit", "validate", "m.txt", "--rev", "HEAD"])
+///     .is_err());
+/// ```
+pub enum CommitCommand {
+    /// What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves
+    Plan,
+    /// Every scope this repository's commit history uses, how often, and the directories each one is written about
+    Scopes,
+    /// Judge every commit in a range of history against the commit policy, in one pass; exit 10 when any carries an error
+    History {
+        /// Anything `git log` accepts: `origin/master..HEAD`, `v0.6.0..`, a bare `HEAD`. None is `HEAD`
+        #[arg(value_name = "RANGE")]
+        range: Option<String>,
+    },
+    /// Judge one commit message against the repository's commit policy; exit 10 when a finding is an error
+    Validate {
+        /// The file holding the message; none reads standard input, which is what the `commit-msg` hook has
+        #[arg(value_name = "FILE")]
+        file: Option<String>,
+
+        /// Judge it as a commit of these paths, comma-separated: what needs them — whether a fix carries a test — is otherwise not judged rather than guessed
+        #[arg(long, value_name = "PATHS", value_delimiter = ',')]
+        paths: Vec<String>,
+
+        /// Judge the message of this commit instead of a file: any revision `git show` accepts
+        #[arg(long, value_name = "REV", conflicts_with = "file")]
+        rev: Option<String>,
+    },
+}

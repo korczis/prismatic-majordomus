@@ -1,7 +1,7 @@
 +++
 title = "The catalogue"
 description = "the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them"
-weight = 25
+weight = 26
 [extra]
 source = "docs/CATALOGUE.md"
 +++

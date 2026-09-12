@@ -234,9 +234,10 @@ const ASCII: Glyphs = Glyphs {
 
 /// Render a banner, or nothing when the mode says nothing.
 ///
-/// `seen_before` is the digest of the last snapshot shown to this person, which decides
-/// what `auto` does: a repository that has not changed since they last looked gets the
-/// two-line form, and a first look or a changed repository gets the box.
+/// `seen_before` is the [`RepositoryEnvironment::news_digest`] of the last snapshot shown to
+/// this person, which decides what `auto` does: a repository that has not changed since
+/// they last looked gets the two-line form, and a first look or a changed repository gets
+/// the box. A server that only came up or went away is not a changed repository.
 pub fn banner(
     environment: &RepositoryEnvironment,
     mode: BannerMode,
@@ -250,7 +251,7 @@ pub fn banner(
                 return None;
             }
             match seen_before {
-                Some(digest) if digest == environment.digest() => BannerMode::Compact,
+                Some(digest) if digest == environment.news_digest() => BannerMode::Compact,
                 _ => BannerMode::Full,
             }
         }
@@ -888,7 +889,7 @@ mod tests {
         let first = banner(&env, BannerMode::Auto, &plain(78), None).expect("a banner");
         assert!(first.lines().count() > 5, "a first look gets the box");
         let again =
-            banner(&env, BannerMode::Auto, &plain(78), Some(&env.digest())).expect("a banner");
+            banner(&env, BannerMode::Auto, &plain(78), Some(&env.news_digest())).expect("a banner");
         assert!(again.lines().count() <= 3, "a return gets the short form");
         let changed = banner(
             &env,
@@ -900,6 +901,30 @@ mod tests {
         assert!(
             changed.lines().count() > 5,
             "a changed repository is news again"
+        );
+    }
+
+    #[test]
+    fn a_server_coming_up_after_the_box_is_not_a_second_box() {
+        // What direnv did on a cold entry: the box with no server, then the lease moved
+        // under `watch_file` and entry ran again with the address published.
+        let seen = environment();
+        let mut arrived = seen.clone();
+        for service in &mut arrived.services {
+            service.url = None;
+            service.availability = ServiceAvailability::NotRunning;
+        }
+        assert_ne!(seen.digest(), arrived.digest(), "the snapshots do differ");
+        let again = banner(
+            &arrived,
+            BannerMode::Auto,
+            &plain(78),
+            Some(&seen.news_digest()),
+        )
+        .expect("a banner");
+        assert!(
+            again.lines().count() <= 3,
+            "a server coming or going redrew the box:\n{again}"
         );
     }
 

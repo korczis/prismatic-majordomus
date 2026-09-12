@@ -21,6 +21,22 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
+
+# A distribution belongs to a checkout. direnv exports the primary checkout's share into
+# every linked worktree, so a gate dispatched from a worktree would read another tree's
+# schemas and allow-lists and report what they disagree about as this tree's drift — two
+# passing gates were reported as failures that way, and `claim-proof` called a policy block
+# invalid because the other checkout's schema predated it. Two gates already cleared the
+# variable by hand for their own commands, which is the duplication that says it belongs
+# here: the dispatcher clears it once, for every gate it runs. MJ_KEEP_SHARE=1 keeps it,
+# for the one case that wants it — running the gates against a distribution deliberately.
+if [ -z "${MJ_KEEP_SHARE:-}" ]; then
+  if [ -n "${MAJORDOMUS_SHARE:-}" ] && [ "$MAJORDOMUS_SHARE" != "$ROOT/share" ]; then
+    printf 'run-plan: MAJORDOMUS_SHARE named %s, which is not this checkout'"'"'s share (%s/share); cleared for every gate. MJ_KEEP_SHARE=1 keeps it.\n' \
+      "$MAJORDOMUS_SHARE" "$ROOT" >&2
+  fi
+  unset MAJORDOMUS_SHARE
+fi
 given=""; job=""; skip=""; rest=()
 while [ $# -gt 0 ]; do
   case "$1" in

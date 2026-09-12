@@ -118,7 +118,7 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
-    /// Every projection of the design system (see [`crate::design::render`]): the
+    /// Every projection of the design system (see `design::render`): the
     /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
     /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.

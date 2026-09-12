@@ -116,6 +116,28 @@ impl Divergence {
 /// would be a second source of truth for a number the policy owns, and a repository whose
 /// policy predates the key is reported as [`Freshness::Unknown`] naming the missing key
 /// rather than judged against a default nobody declared.
+///
+/// The five words divide into two groups, and the division is the one a caller acts on:
+/// `fresh` and `aging` are current and may be presented as the instruction, `stale` and
+/// `invalid` must be shown as history, and `unknown` is neither — a record nobody can date
+/// is not thereby an old record, and treating it as one would quietly discard a briefing
+/// that is perfectly good. [`Freshness::history`] is that division, and it is the only
+/// place it is decided.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::continuity::Freshness;
+///
+/// // the two renderings are one value: the serialised word is the word `as_str` gives,
+/// // so a reader who met `stale` from MCP and from the command line met one fact
+/// let stale = serde_json::to_value(Freshness::Stale).unwrap();
+/// assert_eq!(stale, serde_json::json!("stale"));
+/// assert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));
+///
+/// // and the division a caller acts on: absence of a judgement is not a bad judgement
+/// assert!(Freshness::Stale.history() && Freshness::Invalid.history());
+/// assert!(!Freshness::Unknown.history(), "undated is not old");
+/// assert!(!Freshness::Fresh.history() && !Freshness::Aging.history());
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -134,11 +156,18 @@ pub enum Freshness {
 }
 
 impl Freshness {
-    /// The word as serialised.
+    /// The word this verdict is reported and serialised under, which is the shell tool's
+    /// own vocabulary rather than a second one invented here — a reader who meets `aging`
+    /// from a briefing and from this executable has met one fact, not two.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::continuity::Freshness;
     /// assert_eq!(Freshness::Stale.as_str(), "stale");
+    /// // the serialised form is this word and not a second rendering of the same value
+    /// assert_eq!(
+    ///     serde_json::to_value(Freshness::Aging).unwrap(),
+    ///     serde_json::json!(Freshness::Aging.as_str()),
+    /// );
     /// ```
     pub fn as_str(self) -> &'static str {
         match self {
@@ -195,7 +224,32 @@ pub fn epoch_seconds(ts: &str) -> Option<i64> {
     Some(days * 86_400 + h * 3600 + mi * 60 + sec)
 }
 
-/// The thresholds a record is judged against, as the policy declares them.
+/// The thresholds a record is judged against, read from `session.freshness:` of the policy
+/// and never defaulted here.
+///
+/// Both fields are `Option` because the policy is allowed to be silent, and the silence is
+/// carried rather than filled in: a constant in this file would be a second source of truth
+/// for a number the policy owns. So the default value of this type is not "judge nothing
+/// old" — it is "this repository has not said", and [`Thresholds::judge`] answers
+/// [`Freshness::Unknown`] naming the missing key, which is a fact a reader can act on by
+/// declaring it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::continuity::{epoch_seconds, Freshness, Thresholds};
+///
+/// let then = epoch_seconds("2026-09-05T12:00:00Z").unwrap();
+///
+/// // undeclared: the age is still reported, and the verdict withholds itself
+/// let (verdict, age, why) = Thresholds::default().judge("2026-09-05T12:00:00Z", then + 3600);
+/// assert_eq!(verdict, Freshness::Unknown);
+/// assert_eq!(age, Some(60), "the age is measurable without a threshold to judge it by");
+/// assert!(why.contains("session.freshness"), "it names the key to declare: {why}");
+///
+/// // declared: the same record, now placed in a band
+/// let policy = Thresholds { fresh_minutes: Some(30), stale_minutes: Some(240) };
+/// let (verdict, _, _) = policy.judge("2026-09-05T12:00:00Z", then + 3600);
+/// assert_eq!(verdict, Freshness::Aging);
+/// ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Thresholds {
     /// `session.freshness.fresh_minutes`.
@@ -209,6 +263,45 @@ impl Thresholds {
     /// Returns the verdict, the age in whole minutes when there is one, and the reason —
     /// which is never empty, because a verdict a reader cannot act on is the failure this
     /// whole subsystem is being corrected for.
+    ///
+    /// Both bands are closed at the bottom: a record exactly `fresh_minutes` old is already
+    /// `aging`, and one exactly `stale_minutes` old is already `stale`. `now` is a parameter
+    /// rather than a clock read inside, which is what makes the judgement a pure function of
+    /// two recorded facts and lets a test pin the instant.
+    ///
+    /// The three ways there is nothing to judge are kept apart, because they call for
+    /// different actions: no timestamp and no declared threshold are `unknown` — go and
+    /// declare one — while a timestamp that does not parse, or one in the future, is
+    /// `invalid`, which means a writer produced a record this reader should not trust.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::continuity::{epoch_seconds, Freshness, Thresholds};
+    ///
+    /// let policy = Thresholds { fresh_minutes: Some(30), stale_minutes: Some(240) };
+    /// let at = "2026-09-05T12:00:00Z";
+    /// let then = epoch_seconds(at).unwrap();
+    /// let verdict = |minutes: i64| policy.judge(at, then + minutes * 60).0;
+    ///
+    /// // the bands, and the boundaries, which are closed at the bottom
+    /// assert_eq!(verdict(29), Freshness::Fresh);
+    /// assert_eq!(verdict(30), Freshness::Aging, "at the threshold it has already aged");
+    /// assert_eq!(verdict(239), Freshness::Aging);
+    /// assert_eq!(verdict(240), Freshness::Stale);
+    ///
+    /// // the age comes back measured, and the reason says it in the tool's own words
+    /// let (_, age, why) = policy.judge(at, then + 1500 * 60);
+    /// assert_eq!(age, Some(1500));
+    /// assert!(why.contains("25h"), "spans read as the shell tool writes them: {why}");
+    ///
+    /// // a record from the future is not old, it is wrong, and it says so
+    /// let (verdict, _, why) = policy.judge(at, then - 600);
+    /// assert_eq!(verdict, Freshness::Invalid);
+    /// assert!(why.contains("future"), "{why}");
+    /// assert_eq!(policy.judge("the day before", then).0, Freshness::Invalid);
+    ///
+    /// // and nothing to judge at all is `unknown`, which is not a complaint about the record
+    /// assert_eq!(policy.judge("", then).0, Freshness::Unknown);
+    /// ```
     pub fn judge(self, created_at: &str, now: i64) -> (Freshness, Option<i64>, String) {
         if created_at.is_empty() {
             return (Freshness::Unknown, None, "no timestamp".into());

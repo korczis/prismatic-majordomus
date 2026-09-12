@@ -16,6 +16,14 @@
 //! namespace is flat and why two types with one title are a build-time conflict rather
 //! than a document that silently describes one of them twice.
 //!
+//! # One shape under two names
+//!
+//! A `#[serde(transparent)]` newtype — a module's input named for its operation over a
+//! domain type named for the domain — has a schema whose root is a `$ref` into its own
+//! `$defs`. [`CanonicalSchema::resolved`] follows that reference, and every projection
+//! that binds properties reads it through [`CanonicalSchema::properties`], so the wrapper
+//! names the component and the inner type supplies the shape.
+//!
 //! # Query strings
 //!
 //! An HTTP `GET` binds each top-level property from the query string, where everything is
@@ -53,6 +61,7 @@
 //! assert!(components.contains_key("SearchInput"));
 //! ```
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 use schemars::JsonSchema;
@@ -111,16 +120,91 @@ impl CanonicalSchema {
         }
     }
 
+    /// This schema with a root `$ref` followed into its own `$defs`: the object the type
+    /// describes, rather than the reference that names it.
+    ///
+    /// A `#[serde(transparent)]` newtype is one shape under two names, and that is how
+    /// schemars writes it: the wrapper's title and description at the root, the shape
+    /// under `$defs`, and nothing but a `$ref` between them. Every projection that binds
+    /// *properties* — a `GET` operation's query parameters, the router's coercion of the
+    /// query string, the Cockpit's form, the generated module reference — reads the root,
+    /// and a root that is a reference has no properties. Unfollowed, the document says the
+    /// operation takes nothing while the route still binds every field of the inner
+    /// struct, and the router coerces each one against an empty schema: every integer and
+    /// boolean parameter then arrives as a string and the call is refused as invalid.
+    ///
+    /// The `$defs` travel with the resolved schema, so a nested reference still resolves
+    /// and [`for_openapi`](Self::for_openapi) still hoists every definition.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CanonicalSchema;
+    /// use schemars::JsonSchema;
+    /// use serde::{Deserialize, Serialize};
+    ///
+    /// /// What to look for.
+    /// #[derive(Serialize, Deserialize, JsonSchema)]
+    /// struct SearchInput {
+    ///     /// The words.
+    ///     query: String,
+    ///     /// How many hits at most.
+    ///     limit: Option<u32>,
+    /// }
+    ///
+    /// /// The input of `fixture.search`.
+    /// #[derive(Serialize, Deserialize, JsonSchema)]
+    /// #[serde(transparent)]
+    /// struct Wrapper(SearchInput);
+    ///
+    /// let schema = CanonicalSchema::of::<Wrapper>();
+    /// // the wrapper names the component, and its root is a reference
+    /// assert_eq!(schema.name.as_deref(), Some("Wrapper"));
+    /// assert_eq!(schema.schema["$ref"], "#/$defs/SearchInput");
+    /// // and the properties every projection binds are the inner type's
+    /// let (properties, required) = schema.properties();
+    /// let names: Vec<&str> = properties.iter().map(|(n, _)| n.as_str()).collect();
+    /// assert_eq!(names, ["query", "limit"]);
+    /// assert_eq!(required, ["query"]);
+    /// // a schema whose root is already the object is its own resolution
+    /// let plain = CanonicalSchema::of::<SearchInput>();
+    /// assert_eq!(plain.resolved().schema, plain.schema);
+    /// ```
+    pub fn resolved(&self) -> Cow<'_, CanonicalSchema> {
+        let target = self
+            .schema
+            .get("$ref")
+            .and_then(Value::as_str)
+            .and_then(|r| r.strip_prefix("#/$defs/"));
+        let definition = target.and_then(|t| {
+            self.schema
+                .get("$defs")
+                .and_then(Value::as_object)
+                .and_then(|defs| defs.get(t))
+                .cloned()
+        });
+        let Some(mut schema) = definition else {
+            return Cow::Borrowed(self);
+        };
+        if let (Value::Object(m), Some(defs)) = (&mut schema, self.schema.get("$defs")) {
+            m.insert("$defs".into(), defs.clone());
+        }
+        Cow::Owned(CanonicalSchema {
+            name: self.name.clone(),
+            schema,
+        })
+    }
+
     /// Top-level properties with their schemas, and which are required, for a schema that
-    /// describes an object. Order is the schema's.
+    /// describes an object. Order is the schema's. A root `$ref` is followed first, so a
+    /// transparent newtype yields the properties of the type it wraps.
     pub fn properties(&self) -> (Vec<(String, Value)>, Vec<String>) {
-        let props = self
+        let resolved = self.resolved();
+        let props = resolved
             .schema
             .get("properties")
             .and_then(Value::as_object)
             .map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
             .unwrap_or_default();
-        let required = self
+        let required = resolved
             .schema
             .get("required")
             .and_then(Value::as_array)
@@ -368,6 +452,49 @@ mod tests {
         assert!(s.openapi_ref(&mut components).is_ok());
         components.insert("Inner".into(), serde_json::json!({ "type": "string" }));
         assert!(s.openapi_ref(&mut components).is_err());
+    }
+
+    /// A module's input over a domain type: one shape, the wrapper's name.
+    #[derive(JsonSchema)]
+    #[serde(transparent)]
+    #[allow(dead_code)]
+    struct Wrapped(Outer);
+
+    #[test]
+    fn a_transparent_newtype_projects_the_shape_it_wraps() {
+        let s = CanonicalSchema::of::<Wrapped>();
+        // the root is a reference, and the name is still the wrapper's
+        assert_eq!(s.name.as_deref(), Some("Wrapped"));
+        assert_eq!(s.schema["$ref"], "#/$defs/Outer");
+        // the properties a projection binds are the wrapped type's, not none
+        let (props, required) = s.properties();
+        assert_eq!(
+            props.iter().map(|(k, _)| k.as_str()).collect::<Vec<_>>(),
+            ["name", "inner", "maybe"]
+        );
+        assert_eq!(required, ["name", "inner"]);
+        // and a query parameter carries the wrapped type's own schema, so the router
+        // coerces `maybe` to a number rather than leaving it a string
+        assert_eq!(
+            props.iter().find(|(k, _)| k == "maybe").unwrap().1["type"],
+            serde_json::json!(["integer", "null"])
+        );
+        // the OpenAPI projection of the resolved schema is the object, with every nested
+        // definition still hoisted
+        let mut components = BTreeMap::new();
+        let top = s.resolved().for_openapi(&mut components).unwrap();
+        assert!(top["properties"]["name"].is_object());
+        assert_eq!(
+            top["properties"]["inner"]["$ref"],
+            "#/components/schemas/Inner"
+        );
+        assert!(components.contains_key("Inner") && components.contains_key("Outer"));
+        // the unresolved schema is still what names the component, for a request body
+        let mut components = BTreeMap::new();
+        assert_eq!(
+            s.openapi_ref(&mut components).unwrap(),
+            serde_json::json!({ "$ref": "#/components/schemas/Wrapped" })
+        );
     }
 
     #[test]

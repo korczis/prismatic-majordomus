@@ -71,6 +71,7 @@ usage: majordomus adr list [--status <status>] [--json]      every decision: id,
   over a body with the sections $(printf '%s' "$MJ_ADR_SECTIONS" | sed -e 's/ /, # /g' -e 's/^/# /')
   propose writes 'proposed' and refuses to write any other status: accepting a decision is a person's act
   an identity is allocated above the high-water mark and never recycled: 'next' says which source set it
+  'next' also names the identities allocated on another ref and not landed, and what it cannot reach
   check reads the other refs too and refuses an identity this branch adds that another ref already carries
   a --from reference is <type>:<value>, the type one of $(printf '%s' "$MJ_ADR_REF_TYPES" | sed 's/ /, /g')
   discovery is the source class 'adr' in $(mj_rel "$MJ_KNOWLEDGE_DIR")/sources.yaml, shared with the Rust executable
@@ -519,6 +520,92 @@ mj_adr_next_id() {
     END { printf "%04d\n", max + 1 }'
 }
 
+# The identities something claims that the base ref does not carry: allocated, and not yet
+# landed where the next worker will look.
+#
+# This is the half of the survey a high-water mark cannot express, and the reason the state
+# of this repository was misread twice in one day. On 2026-09-12 master's decisions ran to
+# 0055 and the refs to 0059, and two separate readings of that gap — one counting four
+# unlanded identities, one counting seven — were each derived from a scan that stopped at
+# the branches its author already knew about. The high-water mark is one number and hides
+# every one of them: it says 0060 is free, which is true, and says nothing about the seven
+# identities between 0042 and 0059 that are spoken for on branches nobody on master can see.
+#
+# Naming them is the whole mechanism. Which of the seven will land, which should be released
+# back, and which belongs to a session that has stopped are not questions a survey can
+# answer — an identity on an open branch and an identity on an abandoned one are the same
+# bytes — so nothing here decides anything. It reports the holders and lets the person who
+# can tell those apart see that there is something to tell apart.
+#
+# A holder is named the way its source can be acted on, which is why the ref case costs a
+# second look. The `where` a ref claim carries in the survey is the command that found it —
+# one `git log --all`, deliberately, because four hundred refs is one process — so it names
+# no branch. An outstanding identity whose holder reads `git log --all` tells the reader
+# nothing they can go and look at, so the branch is resolved here, for the outstanding
+# identities only, of which there are a handful where the survey has hundreds of claims.
+#
+# mj_adr_outstanding ROWS BASE. The base is passed in rather than resolved here because the
+# caller runs this in a command substitution and a subshell cannot hand a variable back: the
+# first version set the base in here and printed "not landed on " with the name missing,
+# which is the same class of defect as the rest of this file — a verdict that failed to name
+# its own subject.
+#
+# One row per outstanding identity: NNNN <TAB> <holder>[, <holder>...]
+mj_adr_outstanding() {
+  local rows="$1" base="$2" rel basenums idents num paths path commit refs holders
+  [ -n "$base" ] || return 1
+  rel="${MJ_ADRS_DIR#$MJ_ROOT/}"
+  basenums=" $(git -C "$MJ_ROOT" ls-tree -r --name-only "$base" -- "$rel/" 2>/dev/null \
+    | sed -n 's|.*/\([0-9][0-9][0-9][0-9]\)-.*\.md$|\1|p' | LC_ALL=C sort -u | tr '\n' ' ')"
+  idents="$(awk -F"$MJ_TAB" -v base="$basenums" '
+    !index(base, " " $1 " ") && !seen[$1]++ { print $1 }' "$rows" | LC_ALL=C sort)"
+  [ -n "$idents" ] || return 0
+
+  # every (path, commit) that ever added a decision on any ref, once — the same one-process
+  # survey `adr check` uses, so the two never disagree about what a ref carries
+  local seen; seen="$(mktemp "${TMPDIR:-/tmp}/mj.ao.XXXXXX")"
+  git -C "$MJ_ROOT" log --all --no-renames --diff-filter=A --name-only --pretty=tformat:'commit %H' -- "$rel" 2>/dev/null \
+    | awk -v tab="$MJ_TAB" '/^commit /{ c = $2; next } /\.md$/ { if (c != "") printf "%s%s%s\n", $0, tab, c }' \
+    > "$seen"
+
+  for num in $idents; do
+    holders=""
+    # the sources that name something a person can open directly
+    # The tree claim names no path: the decisions directory is the only place it could be,
+    # so the informative half is that the claim is here and has not landed on the base.
+    holders="$(awk -F"$MJ_TAB" -v n="$num" '$1 == n && $2 != "ref" && !s[$2 $3]++ {
+      if ($2 == "tree") print "this working tree"
+      else printf "%s %s\n", ($2 == "worktree" ? "worktree" : "board"), $3 }' "$rows")"
+    # and the refs, resolved from the commits that added the document
+    paths="$(awk -F"$MJ_TAB" -v p="$rel/$num-" 'index($1, p) == 1 { print $1 }' "$seen" | LC_ALL=C sort -u)"
+    for path in $paths; do
+      # A ref that once added the document is not a ref that still carries it. The high-water
+      # survey is deliberately monotonic over history — a withdrawn identity stays spent — but
+      # "who holds this now" is a question about current trees, and answering it from the
+      # add-log names the branch that deleted the file as one of its holders. So each
+      # containing ref is asked whether the path is still there. This is the `ls-tree` per
+      # ref the obvious implementation does over all four hundred; here it is asked only of
+      # the refs that contain an add-commit for one of the handful of outstanding identities.
+      refs="$(awk -F"$MJ_TAB" -v w="$path" '$1 == w { print $2 }' "$seen" \
+        | while IFS= read -r commit; do
+            git -C "$MJ_ROOT" for-each-ref --contains "$commit" \
+              --format='%(refname:short)' refs/remotes/origin refs/heads refs/tags 2>/dev/null
+          done | LC_ALL=C sort -u \
+        | while IFS= read -r ref; do
+            [ -n "$(git -C "$MJ_ROOT" ls-tree --name-only "$ref" -- "$path" 2>/dev/null)" ] \
+              && printf '%s\n' "$ref"
+          done | head -4 | tr '\n' ' ')"
+      [ -n "$refs" ] || continue
+      holders="$(printf '%s\n%s' "$holders" "${refs% }")"
+    done
+    # every holder the add-log suggested has since dropped the document, and no tree or board
+    # claims it either: it is spent, which the holes section already reports, and not outstanding
+    [ -n "$(printf '%s' "$holders" | sed '/^$/d')" ] || continue
+    printf '%s%s%s\n' "$num" "$MJ_TAB" "$(printf '%s' "$holders" | sed '/^$/d' | paste -sd',' - | sed 's/,/, /g')"
+  done
+  rm -f "$seen"
+}
+
 # Which authored files cite an identity nothing writes. Only ever asked about the gaps, so
 # it is one `grep` over the tracked tree and not a per-identity scan; it is evidence for the
 # reader, never the mechanism — a gap is spent whether or not anything is found to cite it.
@@ -560,6 +647,11 @@ mj_adr_next() {
   # the holes below the high-water mark, which are spent and not free
   local gaps; gaps="$(awk -F"$MJ_TAB" '{ n = $1 + 0; seen[n] = 1; if (n > max) max = n }
     END { for (i = 1; i < max; i++) if (!(i in seen)) printf "%04d\n", i }' "$rows")"
+  # the identities allocated somewhere the base ref does not carry: spoken for, not landed
+  local outstanding obase outstanding_read=1
+  obase="$(mj_adr_base_ref)" || obase=""
+  [ -n "$obase" ] || outstanding_read=0
+  outstanding="$(mj_adr_outstanding "$rows" "$obase")" || outstanding_read=0
 
   if [ "$MJ_JSON" = 1 ]; then
     local first=1 g src cnt
@@ -573,6 +665,17 @@ $counted
 EOF
     printf '],"spent_gaps":['; first=1
     for g in $gaps; do [ "$first" = 1 ] || printf ','; first=0; printf '"%s"' "$g"; done
+    printf '],"outstanding_base":%s,"outstanding":[' \
+      "$([ "$outstanding_read" = 1 ] && printf '"%s"' "$obase" || printf null)"
+    first=1
+    local onum oholders
+    while IFS="$MJ_TAB" read -r onum oholders; do
+      [ -n "$onum" ] || continue
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '{"id":"%s","held_by":"%s"}' "$onum" "$(mj_json_esc "$oholders")"
+    done <<EOF
+$outstanding
+EOF
     printf ']}\n'
   else
     printf 'next free identity: adr-%s\n\n' "$next"
@@ -610,6 +713,38 @@ EOF
         else printf '  %s  nothing cites it here; it was taken and withdrawn, or taken and not yet written\n' "$g"; fi
       done
     fi
+    # The identities that are spoken for and have not landed. A high-water mark of 0060 is a
+    # true answer that hides these completely, and hiding them is how the same gap in this
+    # repository's own sequence was measured as four unlanded identities and as seven within
+    # one hour. Nothing is decided here: an identity on an open branch and an identity on an
+    # abandoned one are indistinguishable to any survey, and which of the two a number is
+    # can only be settled by a person.
+    if [ "$outstanding_read" != 1 ]; then
+      printf '\noutstanding allocations were NOT surveyed: no base ref resolves here'
+      printf ' (%s); fetch first\n' "${MJ_ADR_BASE:-origin/master, origin/main, master, main}"
+    elif [ -n "$outstanding" ]; then
+      local onum oholders n_out
+      n_out="$(printf '%s\n' "$outstanding" | sed '/^$/d' | wc -l | tr -d ' ')"
+      printf '\n%s allocated and not landed on %s — spoken for, and invisible to anyone reading %s:\n' \
+        "$n_out" "$obase" "$obase"
+      while IFS="$MJ_TAB" read -r onum oholders; do
+        [ -n "$onum" ] || continue
+        printf '  %s  held by: %s\n' "$onum" "$oholders"
+      done <<EOF
+$outstanding
+EOF
+      printf 'whether each lands, or its number should be released, is a person'"'"'s call: an identity\n'
+      printf 'on an open branch and one on an abandoned branch are the same bytes to this survey.\n'
+    fi
+    # What the survey cannot reach, said once and plainly. Two of these four sources are
+    # complete and two cannot be: a ref scan sees only what was pushed, and the board is
+    # per-connection, so an announcement dies when a session reconnects and a reservation
+    # there is soft by construction. Neither gap is removable and they are complementary,
+    # so this number is a best reading and not a guarantee (project.a-verdict-states-its-subject).
+    printf '\nnot surveyed, and not surveyable: an identity a session has taken but neither pushed\n'
+    printf 'nor announced. A ref scan sees what was pushed; the board sees what was announced on a\n'
+    printf 'live connection and forgets it on reconnect. Two sessions allocating in the same minute\n'
+    printf 'are invisible to both.\n'
     printf '\nannounce it before you write it: majordomus_announce, naming the identity as well as the paths\n'
   fi
   rm -f "$rows"

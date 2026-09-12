@@ -1165,13 +1165,16 @@ Current version: **0.6.0**
 - **rust**: cargo fmt over the merged tree (`088ba7c86`)
 - **tests**: one line rustfmt rewraps, so the rust gate can reach the rest (`6a2509c21`)
 
+### Integration
+
+- the rule, the case, the base-path gate and the generated route reference (`90ec4556c`)
+- the contract-working hero (`99b117832`)
+
 ### Other
 
 - **cockpit**: wip: the legibility work as the working tree held it (`643e75ea2`)
 - Merge origin/master into fix/home-path-gate (`d63e2467d`)
 - Merge origin/master into fix/derived-merge-driver-enforced (`e37f21a03`)
-- merge: the rule, the case, the base-path gate and the generated route reference (`90ec4556c`)
-- merge: the contract-working hero (`99b117832`)
 
 ### Published
 

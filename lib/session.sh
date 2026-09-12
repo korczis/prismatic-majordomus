@@ -574,10 +574,11 @@ mj_session_window() {
   local sid="$1" led
   led="$MJ_STATE_DIR/ledger.jsonl"
   [ -f "$led" ] || return 0
-  awk -v s="$sid" '{ v = $0
-      if (index(v, "\"session\":\"") == 0) next
-      sub(/^.*"session":"/, "", v); sub(/".*$/, "", v)
-      if (v == s) print }' "$led"
+  # A line with no `session` belongs to no episode, so it is skipped rather than compared:
+  # mjfield answers "" for an absent key as well as for an empty one, and a caller that
+  # ever passed an empty id would otherwise collect every unattributed line in the file.
+  awk -v s="$sid" "$MJ_LEDGER_FIELD_AWK"'
+    { v = mjfield($0, "session"); if (v != "" && v == s) print }' "$led"
 }
 
 # Commits between the opening commit and this one, shortest form. When the opening commit
@@ -630,9 +631,9 @@ mj_session_refs() {
   mj_session_field "$win" 'question.opened|question.resolved' question > "$tmp"
   mj_session_emit_list questions "$tmp"
 
-  awk '/"event":"plan_evidence"/ {
-        i = $0; sub(/^.*"issue":"/, "", i); sub(/".*$/, "", i)
-        c = $0; sub(/^.*"covers":"/, "", c); sub(/".*$/, "", c)
+  awk "$MJ_LEDGER_FIELD_AWK"'
+      mjfield($0, "event") == "plan_evidence" {
+        i = mjfield($0, "issue"); c = mjfield($0, "covers")
         if (i != "" && c != "" && !((i ":" c) in seen)) { seen[i ":" c] = 1; print i ":" c } }' "$win" > "$tmp"
   mj_session_emit_list evidence "$tmp"
 
@@ -644,11 +645,10 @@ mj_session_refs() {
 # sequence a worker moved through is itself information, and sorting throws it away.
 mj_session_field() {
   local win="$1" events="$2" key="$3"
-  awk -v ev="$events" -v k="$key" '
-    { e = $0; sub(/^.*"event":"/, "", e); sub(/".*$/, "", e)
+  awk -v ev="$events" -v k="$key" "$MJ_LEDGER_FIELD_AWK"'
+    { e = mjfield($0, "event")
       if (e !~ "^(" ev ")$") next
-      if (index($0, "\"" k "\":\"") == 0) next
-      v = $0; sub("^.*\"" k "\":\"", "", v); sub(/".*$/, "", v)
+      v = mjfield($0, k)
       if (v != "" && !(v in seen)) { seen[v] = 1; print v } }' "$win"
 }
 
@@ -687,11 +687,31 @@ mj_session_milestones_of() {
 # label, and none of them invents a fourth vocabulary for staleness: `exact`, `advanced`,
 # `diverged` and `different_context` already mean something everywhere else in this tool.
 #
-# Ordering is by the recorded timestamp, with ledger position breaking a tie inside one
-# second. Filesystem modification time is never read: it does not survive a clone and it is
-# not the time the record asserts.
+# Ordering is by the recorded timestamp, with the record's own file name breaking a tie
+# inside one second. Filesystem modification time is never read: it does not survive a clone
+# and it is not the time the record asserts.
+#
+# The tie-break is the record's name and nothing else, because this order is published. It
+# decides site/data/generated/sessions.json and the `weight` of every page under
+# site/content/sessions/, both of which are committed and both of which `--check` compares
+# byte for byte — so every input to it must be a fact about the tracked tree.
+#
+# It used to be mj_record_rank: the line number of the record's file name inside
+# .ai/local/state/ledger.jsonl. That file is gitignored, machine-local and rotated under a
+# retention cap, so the published order of the six records this repository holds that share
+# a created_at second was decided by a number no clone can reproduce. CI stayed green by
+# luck — a runner's ledger names none of them, every rank came back 000000, and the tie fell
+# through to the path, which is the order that happens to be committed. The first developer
+# to commit generated output from a machine whose ledger did name them would have moved
+# those records and turned the check red for everyone.
+#
+# The name is the identity: the writer composes it from the closing timestamp, the session
+# id, the branch, the head and a content hash, it is unique within the section by
+# construction, and it is the same on every clone. It is also exactly what the clean
+# checkout was already ordering by — every record in this section shares one directory, so
+# ordering on the name is ordering on the path — which is why nothing committed moves.
 
-# One sort key per record: "<created_at>|<ledger rank>|<path>", newest first.
+# One sort key per record: "<created_at>|<record name>|<path>", newest first.
 mj_session_keys() {
   local dir f fm flat created
   dir="$(mj_session_store)"
@@ -702,7 +722,7 @@ mj_session_keys() {
     fm="$(mktemp "${TMPDIR:-/tmp}/mj.slf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.slg.XXXXXX")"
     if mj_record_front "$f" > "$fm" 2>/dev/null && mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then
       created="$(mj_yget "$flat" created_at)"
-      if [ -n "$created" ]; then printf '%s|%s|%s\n' "$created" "$(mj_record_rank "$f")" "$f"
+      if [ -n "$created" ]; then printf '%s|%s|%s\n' "$created" "${f##*/}" "$f"
       else mj_err "warning: skipped ${f#"$MJ_ROOT/"}: no created_at"; fi
     else
       mj_err "warning: skipped ${f#"$MJ_ROOT/"}: malformed record"

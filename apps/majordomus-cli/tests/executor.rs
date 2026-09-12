@@ -70,15 +70,36 @@ fn every_cached_capability_answers_the_same_from_the_handler_the_cold_cache_and_
             let before = snapshot();
             let uncached = fresh.execute(id, input.clone()).unwrap();
             let after = snapshot();
-            assert_eq!(
-                after.handler_invocations,
-                before.handler_invocations + 1,
-                "{id}/{case}: the handler ran"
+            // The handler ran, and every execution the cache did not answer ran exactly
+            // one handler. That identity — not `+ 1` — is the statement, because a handler
+            // may *compose* another capability through the executor: `devcontext.compile`
+            // reads `continuity.state` that way, so one call is two executions and two
+            // handlers. The counter is right to count both. Counting only the outermost
+            // would make composition invisible in the one instrument that shows it goes
+            // through the executor at all rather than reaching into another module behind
+            // it — and `executions - cache_hits` is already that number. What the counter
+            // exists to catch is an execution that ran a handler twice, and that still
+            // breaks this equality at any depth.
+            let executions = after.executions - before.executions;
+            let handlers = after.handler_invocations - before.handler_invocations;
+            let hits = after.cache_hits - before.cache_hits;
+            let misses = after.cache_misses - before.cache_misses;
+            assert!(
+                executions >= 1,
+                "{id}/{case}: the call reached the executor"
             );
             assert_eq!(
-                after.cache_misses,
-                before.cache_misses + 1,
-                "{id}/{case}: a miss"
+                handlers,
+                executions - hits,
+                "{id}/{case}: the handler ran, once per execution the cache did not answer"
+            );
+            assert!(handlers >= 1, "{id}/{case}: the handler ran");
+            // this capability is cached and its cache is empty, so at least one miss; a
+            // composing call can add one per cached capability it reaches, never more than
+            // the handlers that ran
+            assert!(
+                (1..=handlers).contains(&misses),
+                "{id}/{case}: a miss ({misses} of {handlers} handler runs)"
             );
             // cold, then warm, in the shared executor
             ctx.executor.clear();

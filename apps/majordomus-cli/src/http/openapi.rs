@@ -114,7 +114,10 @@ pub fn document(
         *tagged.entry(c.id.namespace().to_string()).or_default() += 1;
         match http.method {
             HttpMethod::Get => {
-                let input = c.input.for_openapi(&mut components)?;
+                // resolved first: an input whose schema root is a `$ref` — the
+                // `#[serde(transparent)]` newtype a module wraps a domain type in — has no
+                // properties at its root, and this is the projection that binds them
+                let input = c.input.resolved().for_openapi(&mut components)?;
                 let (props, required) = CanonicalSchema {
                     name: None,
                     schema: input,

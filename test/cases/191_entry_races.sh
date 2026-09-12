@@ -188,7 +188,14 @@ if [ -s "$T/port" ]; then
   mkdir -p "$(dirname "$lease")"
   printf '{"schema":"majordomus-mcp-lease/v1","pid":%s,"token":"t","root":"%s","url":"http://127.0.0.1:%s","started_at":"2026-01-01T00:00:00Z"}\n' \
     "$stranger" "$TT" "$sport" > "$lease"
-  enter >/dev/null 2>"$T/unhealthy.err" || { echo "    entry failed on a lease naming a live stranger"; cat "$T/unhealthy.err"; exit 1; }
+  enter >"$T/unhealthy.out" 2>"$T/unhealthy.err" || { echo "    entry failed on a lease naming a live stranger"; cat "$T/unhealthy.err"; exit 1; }
+  # The snapshot read that lease before the ensure replaced it, and a connection attempt
+  # cannot tell a stranger from our server: the entry that replaced it must not hand the
+  # shell the stranger's address, nor say that nothing was there.
+  ! grep -q "MAJORDOMUS_URL='http://127.0.0.1:$sport'" "$T/unhealthy.out" \
+    || { echo "    entry exported the address of the process it had just replaced:"; cat "$T/unhealthy.out"; exit 1; }
+  ! grep -q 'nothing was serving' "$T/unhealthy.err" \
+    || { echo "    entry said nothing was serving while a lease named a live process:"; cat "$T/unhealthy.err"; exit 1; }
   converged_on_one "a live pid that is not our server" || exit 1
   our_url="$("$RB" serve status --repo "$T" --checkouts this 2>/dev/null | sed -n 's/^this  *\(http:[^ ]*\).*/\1/p')"
   [ "$our_url" != "http://127.0.0.1:$sport" ] || { echo "    entry attached to a process that is not a server of this checkout"; exit 1; }

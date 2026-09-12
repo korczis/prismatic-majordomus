@@ -4,7 +4,7 @@ description = "What this project has shipped and what it would ship next: the ch
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 88
+weight = 93
 [extra]
 route = "/docs/cli/release/"
 command = "majordomus release"

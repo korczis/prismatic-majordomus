@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 108 | 103 | 0 | 5 |
-| http | 107 | 103 | 0 | 4 |
-| mcp | 105 | 101 | 0 | 4 |
+| direct | 112 | 107 | 0 | 5 |
+| http | 111 | 107 | 0 | 4 |
+| mcp | 109 | 105 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 333 | 320 | 0 | 13 |
+| total | 345 | 332 | 0 | 13 |
 
 ## Capabilities
 
@@ -26,6 +26,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
 | `commands.graph` | commands | query | — | covered | covered | covered | `default` |
 | `commands.list` | commands | query | — | covered | covered | covered | `all`, `read-only`, `one-program` |
+| `commit.history` | commit | query | — | covered | covered | covered | `whole-history` |
+| `commit.plan` | commit | query | — | covered | covered | covered | `default` |
+| `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
+| `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
