@@ -743,7 +743,7 @@ impl Catalogue {
                 .iter()
                 .filter_map(|c| of_claim.get(c.as_str()).map(|s| s.to_string()))
                 .collect();
-            r.sort();
+            crate::order::canonical(&mut r);
             r.dedup();
             if !r.is_empty() {
                 self.responsibilities.insert(m.id.clone(), r);
