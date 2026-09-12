@@ -38,8 +38,8 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>106 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>48 of 106</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>105 of 106</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>103 of 106</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
-    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>42 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>42 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>108 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>48 of 108</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>107 of 108</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>105 of 108</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>43 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>43 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
     "claims": 5,
@@ -220,6 +220,13 @@
         "cli": 0,
         "http": 2,
         "mcp": 2,
+        "module": "gates"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
         "module": "graph"
       },
       {
@@ -300,10 +307,10 @@
         "module": "web"
       }
     ],
-    "capabilities": 106,
+    "capabilities": 108,
     "combinations": [
       {
-        "count": 56,
+        "count": 58,
         "surfaces": "http + mcp"
       },
       {
@@ -319,7 +326,7 @@
         "surfaces": "cli"
       }
     ],
-    "modules": 34,
+    "modules": 35,
     "surfaces": [
       {
         "count": 48,
@@ -327,12 +334,12 @@
         "label": "Command line"
       },
       {
-        "count": 105,
+        "count": 107,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 103,
+        "count": 105,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
@@ -340,7 +347,7 @@
   },
   "governance": {
     "advisory": 5,
-    "blocking": 37,
+    "blocking": 38,
     "commands": [
       "check",
       "doctor",
@@ -357,7 +364,7 @@
       "Execution depth is not output verbosity",
       "Parallel work requires isolation"
     ],
-    "rules": 42,
+    "rules": 43,
     "rules_without_principle": [
       {
         "route": "/doctrines/deployment-contract/",
@@ -383,11 +390,16 @@
         "route": "/doctrines/obligation-closure/",
         "slug": "obligation-closure",
         "title": "Obligation closure"
+      },
+      {
+        "route": "/doctrines/completion-gates/",
+        "slug": "completion-gates",
+        "title": "Completion is gated"
       }
     ],
     "rules_without_test": [],
-    "tests": 34,
-    "validators": 42
+    "tests": 35,
+    "validators": 43
   },
   "layers": [
     {
@@ -410,7 +422,7 @@
     },
     {
       "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
-      "count": 42,
+      "count": 43,
       "level": "Rule",
       "lifetime": "months",
       "question": "What exactly must, or must not, be?",
@@ -419,7 +431,7 @@
     },
     {
       "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
-      "count": 42,
+      "count": 43,
       "level": "Enforcement",
       "lifetime": "the implementation that answers it",
       "question": "How does a machine decide it?",

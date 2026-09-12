@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 106,
-      "covered": 101,
+      "required": 108,
+      "covered": 103,
       "missing": 0,
       "waived": 5
     },
     {
       "scope": "http",
-      "required": 105,
-      "covered": 101,
+      "required": 107,
+      "covered": 103,
       "missing": 0,
       "waived": 4
     },
     {
       "scope": "mcp",
-      "required": 103,
-      "covered": 99,
+      "required": 105,
+      "covered": 101,
       "missing": 0,
       "waived": 4
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 327,
-      "covered": 314,
+      "required": 333,
+      "covered": 320,
       "missing": 0,
       "waived": 13
     }
@@ -515,6 +515,33 @@
       "http": "covered",
       "cases": [
         "demonstrate"
+      ]
+    },
+    {
+      "id": "gates.completion",
+      "module": "gates",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "this-task",
+        "one-source-file",
+        "a-document",
+        "everything-on-demand"
+      ]
+    },
+    {
+      "id": "gates.model",
+      "module": "gates",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
       ]
     },
     {

@@ -704,6 +704,40 @@
       "tool": "majordomus_execution_start"
     },
     {
+      "api_anchor": "/docs/api/#op-gates-completion",
+      "claims": [],
+      "cli": null,
+      "id": "gates.completion",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/completion",
+      "route": "/registry/capabilities/gates-completion/",
+      "slug": "gates-completion",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "Whether this task may be called finished",
+      "tool": "majordomus_completion"
+    },
+    {
+      "api_anchor": "/docs/api/#op-gates-model",
+      "claims": [],
+      "cli": null,
+      "id": "gates.model",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates",
+      "route": "/registry/capabilities/gates-model/",
+      "slug": "gates-model",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "The CI model",
+      "tool": "majordomus_gates"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -2261,9 +2295,9 @@
     ]
   },
   "counts": {
-    "capabilities": 106,
+    "capabilities": 108,
     "claims": 48,
-    "modules": 34
+    "modules": 35
   },
   "generator": "majordomus-cli 0.6.0",
   "modules": [
@@ -2612,6 +2646,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
       "title": "Executions"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "gates.completion",
+          "route": "/registry/capabilities/gates-completion/",
+          "slug": "gates-completion"
+        },
+        {
+          "id": "gates.model",
+          "route": "/registry/capabilities/gates-model/",
+          "slug": "gates-model"
+        }
+      ],
+      "claims": [],
+      "id": "gates",
+      "route": "/registry/modules/gates/",
+      "slug": "gates",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "title": "Completion gates"
     },
     {
       "capabilities": [

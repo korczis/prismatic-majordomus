@@ -253,6 +253,10 @@ documents:
     source: "the `executions` module of the canonical Majordomus capability registry"
     formats:
       - markdown
+  - id: modules/gates
+    source: "the `gates` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
   - id: modules/graph
     source: "the `graph` module of the canonical Majordomus capability registry"
     formats:
@@ -491,7 +495,7 @@ artifacts:
     format: markdown
     source: "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
     bytes: 1476
-    sha256: de015f1ff7a5cdddbd7f1208e55d702056c15af61d310c08227500d4021ba116
+    sha256: 6e13024f7cae327d3de447402feecc7b8d884f5daf4e8f745f1b9dadd8a3f1b0
   - path: .dockerignore
     document: deployment
     format: text
@@ -503,13 +507,13 @@ artifacts:
     format: markdown
     source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
     bytes: 6099
-    sha256: d39a4cf9e60b4426b54ad0b1d69205b0e728830169df41e8cced694c3c804900
+    sha256: aacca36735ed187ba327eae94059d84ef1e0c8a6c2be4977242e8ac562dae0e6
   - path: CLAUDE.md
     document: providers/claude-code
     format: markdown
     source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
     bytes: 5388
-    sha256: 68aa1be69f03ffed049d2e55297325bd73770495d935dc9caf43070ff40bf33c
+    sha256: 86948bf9f4e97f5cec38fb8d25af47fbc4498ea1ad66c1e4279758a7b1fa491d
   - path: apps/majordomus-cli/src/cockpit/logo-mark.svg
     document: design-mark
     format: text
@@ -562,27 +566,27 @@ artifacts:
     format: json
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 29190
-    sha256: f22c3612085ad8b7b59c3e5fbcef0972b96059214a8c8ade9a55d11429bbf161
+    bytes: 29756
+    sha256: 4fb646e4926e063d97e424f60b45c0d870e12b1c3df2af49e6400208b3557c5c
   - path: docs/generated/benchmarks.md
     document: benchmarks
     format: markdown
     source: the benchmark projection of the canonical capability registry
-    bytes: 13003
-    sha256: 135e2d99cf5932fc88c6dd15c10481a0eb6fe4f3797632950d8815917624f750
+    bytes: 13251
+    sha256: fa6d7d070e1a0767e7eaf98c68a9c3a1731400faa0ee7d9464a51c71f93c959c
   - path: docs/generated/benchmarks.yaml
     document: benchmarks
     format: yaml
     schema: majordomus/benchmark-matrix/v1
     source: the benchmark projection of the canonical capability registry
-    bytes: 20571
-    sha256: daea6be2183f2dac31fcda84d9508d99bfe5449d4920f4afaf7100d032064e43
+    bytes: 20976
+    sha256: ccd03539e8b3c1af4a8b1eadba3f596cc71d42dab1b3e197cb1625a69da2197c
   - path: docs/generated/capabilities.md
     document: capabilities
     format: markdown
     source: the canonical Majordomus capability registry
-    bytes: 24114
-    sha256: 60e3cde567282cf3d467cb118031ee7d204751b0091d49b85884bdb755f4d401
+    bytes: 24563
+    sha256: 22687bcb30db24647037a0179c269d129af1dfdf552d42f8c1b6d11b9f8d13a7
   - path: docs/generated/changelog.json
     document: changelog
     format: json
@@ -654,8 +658,8 @@ artifacts:
     format: json
     schema: majordomus/capability-graph/v1
     source: the composed graph of the registry and the index
-    bytes: 2002515
-    sha256: eb390483a993930e5e441d84d7dbf178ee3b64ffb1af67783a98aefd55fd9f18
+    bytes: 2009913
+    sha256: 3f80147c9ab0e9c5a53a14b05274d731a860be9f84819a1f01d2aef9ae012532
   - path: docs/generated/graph.schema.json
     document: graph-schema
     format: json
@@ -740,6 +744,12 @@ artifacts:
     source: "the `executions` module of the canonical Majordomus capability registry"
     bytes: 7358
     sha256: 6831be6efe5f61b43bb3a664848a4eefaefa812cdf62e2d4a4226f3958c08e38
+  - path: docs/generated/modules/gates.md
+    document: modules/gates
+    format: markdown
+    source: "the `gates` module of the canonical Majordomus capability registry"
+    bytes: 3259
+    sha256: 4d2184e29fb84ba3bd909a441d026ba55d344978b3859d5382d2c328265e8bc0
   - path: docs/generated/modules/graph.md
     document: modules/graph
     format: markdown
@@ -870,14 +880,14 @@ artifacts:
     document: openapi
     format: json
     source: the canonical Majordomus capability registry
-    bytes: 1137079
-    sha256: 8e660d80e1031be42e60f797b37130c17a362e6861b69ad921950add8e15f69d
+    bytes: 1173678
+    sha256: 19f9705d7646035652b6cc9128db79800cb6c84d443c509c48247e678b04177a
   - path: docs/generated/openapi.yaml
     document: openapi
     format: yaml
     source: the canonical Majordomus capability registry
-    bytes: 900731
-    sha256: 4925280e722d984eef2c474b72a40e1a6e34961dfd2c40cf65193a259ee07fa4
+    bytes: 931025
+    sha256: e7aa7b550890b5076e4f0ec6d8c048a832bb2e011833d805fc470af859900266
   - path: docs/generated/providers.json
     document: providers
     format: json
@@ -903,15 +913,15 @@ artifacts:
     format: json
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 1532777
-    sha256: 998593a9fc82f838a1fcc6b5335274d7949bd2897c50f0d6503a173e705979ab
+    bytes: 1571726
+    sha256: a7f181562a31db2e7d9c4b875723be0234a73dfb38979e033fe93eb563cd5d0a
   - path: docs/generated/registry.yaml
     document: registry
     format: yaml
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 1208329
-    sha256: 3300b3c2b39a994e41c0e809d090d8b4f78a25038833f1530bd4e27a2f0109dd
+    bytes: 1240462
+    sha256: 70e8895c1f63b7a2744d5aa8ff9b2b812bd01f662f759c264778912c75cbb214
   - path: docs/generated/web.json
     document: web
     format: json
@@ -1231,22 +1241,22 @@ artifacts:
     document: site-product-graph
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
-    bytes: 67900
-    sha256: 676eddc82b9d22ebe43753d52235b1cf0e3d098a04d21ea5761f11edc431a183
+    bytes: 67970
+    sha256: 91c31fa61c274550bddd1ebede8536be976f3ced40f226d95bf062f5bff902ff
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 332247
-    sha256: e10cee4b43c4b62714213a63f6cccd792337c77c9c89e83fee65f430986668ef
+    bytes: 332398
+    sha256: 04b4d43bf9d851316bc81f3e0ce015c5be2c363a281bddaab78b6b2260660683
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 3235101
-    sha256: 04cc7a2b2aac20e2460112c48b386be950204129dc3c7b89e3beeeead4539bc6
+    bytes: 3287383
+    sha256: 6ca45dccb74231727cb151028b44617f0c97e488e59156869919b942c4c21ef8
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json

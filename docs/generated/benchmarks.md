@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 106 | 101 | 0 | 5 |
-| http | 105 | 101 | 0 | 4 |
-| mcp | 103 | 99 | 0 | 4 |
+| direct | 108 | 103 | 0 | 5 |
+| http | 107 | 103 | 0 | 4 |
+| mcp | 105 | 101 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 327 | 314 | 0 | 13 |
+| total | 333 | 320 | 0 | 13 |
 
 ## Capabilities
 
@@ -58,6 +58,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.list` | executions | query | — | covered | covered | covered | `recent` |
 | `executions.protocol` | executions | query | — | covered | covered | covered | `default` |
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
+| `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
+| `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
