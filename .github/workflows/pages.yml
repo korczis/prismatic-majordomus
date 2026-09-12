@@ -107,11 +107,26 @@ permissions:
 # the recovery path — it is run *because* the automatic one did not publish — and a recovery
 # that kills a deploy which is mid-`git push` to gh-pages, to publish the same tree a moment
 # later, is a race with nothing to win. With the expression false for a dispatch, a manual run
-# waits for the run in flight instead of cancelling it; a push still supersedes everything,
-# because a push always carries a newer tree than whatever is running.
+# waits for the run in flight instead of cancelling it.
+#
+# A push no longer supersedes a run in flight either, and that is a correction. The reasoning
+# it replaces — a push always carries a newer tree, so cancelling costs nothing — holds for one
+# push and fails for a sequence of them. On 2026-09-12 master gained four merges in forty-five
+# minutes while a deploy took longer than the gap between them, so each run was cancelled by
+# the next push and *none* published: 19:55 cancelled by the merge at 20:02, which was itself
+# cancelled. The site stayed on a77c35a74 for over an hour with nothing failing and nothing to
+# report, because a cancelled run is neither a failure nor a stale publication anybody can see.
+# The cost the comment above names is a successor that *fails*; this is a successor that is
+# *cancelled*, and it does not converge.
+#
+# With cancel-in-progress false, GitHub lets the run in flight finish and keeps only the newest
+# pending run in the group, discarding the ones it superseded. So a burst of merges costs one
+# extra deploy of a tree that is one commit stale, and then publishes the current one. A deploy
+# that publishes late is recoverable; a deploy that never runs is the outage this repository
+# keeps having.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: false
 
 jobs:
   # The bound is over two different kinds of second, so it is written twice, and the two
