@@ -1,4 +1,6 @@
 # majordomus-covers: none
+# This case is the proof for claim new-code-is-covered (docs/CLAIMS.yaml): it is the
+# test that claim names, and this line is where it names the claim back.
 # The differential coverage gate of #214, driven against a synthetic, self-consistent
 # fixture so it is deterministic and needs no instrumented rebuild. The fixture is a tiny
 # source file (test/fixtures/coverage/sample.rs) and a hand-written llvm-cov export
