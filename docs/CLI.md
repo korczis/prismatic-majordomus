@@ -690,11 +690,18 @@ EOF
 
 ## `majordomus evidence`
 
-Record that one obligation the active task declared has been discharged.
+Record evidence against the active task: one obligation it declared, discharged, or one
+validation gate of the CI model that has reported.
 
 ```
 majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
+majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
 ```
+
+The two forms record different kinds of fact and are never one invocation. An obligation is
+a promise the task made; a gate is what the validation pipeline said about the tree. A line
+claiming to be both would be readable as neither, so passing `--covers` and `--gate`
+together exits `2`.
 
 A task's `scope` says where a worker may write; its `requires` says what the worker owes
 before the outcome `completed` is available. The tokens are declared in
@@ -734,6 +741,51 @@ record here.
 `majordomus.obligation-closure`, so a stale evidence is visible before someone builds on
 it; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,
 and refusing that would teach them to claim `completed` instead.
+
+### Recording a gate
+
+`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`
+the status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does
+an `--exit` that is not a number.
+
+```
+majordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'
+```
+
+**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash
+of the files that select it. Those files are derived from the model rather than declared:
+the union of the paths of every class that names the gate, and everything for a gate every
+plan selects, because a gate every plan selects is a gate any change can invalidate. Change
+one of them and the run stops discharging the gate — committed or not, since the change set
+a task is judged over includes its working tree.
+
+`check` and `finish` evaluate every gate the task's own change set selects, through the
+doctrine `majordomus.completion-gates`, and report each in one vocabulary:
+
+| status | meaning |
+|--------|---------|
+| `pass` | it ran over these inputs and exited `0` |
+| `fail` | it ran over these inputs and did not |
+| `stale` | it ran, and the files that select it have changed since |
+| `blocked` | something it cannot run without has not passed |
+| `queued` | the plan selects it and no run has ever reported |
+| `exempt` | nothing this change did can make it true or false |
+| `unknown` | it cannot be judged here at all — no model, no reader |
+
+Only `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by
+name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
+that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
+branch-breaking defects overnight because they looked identical
+(`majordomus.never-reported-is-not-green`).
+
+The whole judgement — every gate, the plan that selected it, which obligations the change
+implies, and the nineteen questions of the done invariant with the source that answered each
+— is one document, `gates.completion`, read the same way by the command line, the HTTP API,
+MCP and the Cockpit:
+
+```
+majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
+```
 
 ## `majordomus checkpoint`
 

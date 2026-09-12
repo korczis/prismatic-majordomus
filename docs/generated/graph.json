@@ -416,6 +416,24 @@
         "status": "command"
       },
       {
+        "id": "capability:gates.completion",
+        "kind": "capability",
+        "label": "gates.completion",
+        "summary": "Whether this task may be called finished",
+        "route": "/cockpit/capabilities/gates.completion",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:gates.model",
+        "kind": "capability",
+        "label": "gates.model",
+        "summary": "The CI model",
+        "route": "/cockpit/capabilities/gates.model",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -4517,7 +4535,7 @@
         "id": "majordomus://claim/ci-verdict",
         "kind": "claim",
         "label": "ci-verdict",
-        "summary": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+        "summary": "The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fci-verdict",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -4526,6 +4544,22 @@
           "responsibility": "none",
           "source": "docs/CI.md",
           "test": "test/cases/94_ci_plan.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/ci-verdict-is-required",
+        "kind": "claim",
+        "label": "ci-verdict-is-required",
+        "summary": "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fci-verdict-is-required",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it",
+          "implementation": "-",
+          "responsibility": "none",
+          "source": "docs/CI.md",
+          "test": "-"
         }
       },
       {
@@ -7301,14 +7335,14 @@
           "json": true,
           "reads": [
             "share/obligations.yaml",
+            ".ai/repo/ci/gates.yaml",
             ".ai/local/state/current.yaml"
           ],
           "requires_installed": true,
           "requires_repository": true,
           "requires_task": "required",
           "stage": "work",
-          "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
-          "syntax": "majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]",
+          "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/ledger.jsonl"
@@ -9479,10 +9513,18 @@
         "source": "docs/claims/ci-planned-gates.md"
       },
       {
+        "id": "majordomus://document/docs/claims/ci-verdict-is-required.md",
+        "kind": "document",
+        "label": "docs/claims/ci-verdict-is-required.md",
+        "summary": "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fci-verdict-is-required.md",
+        "source": "docs/claims/ci-verdict-is-required.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/ci-verdict.md",
         "kind": "document",
         "label": "docs/claims/ci-verdict.md",
-        "summary": "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+        "summary": "The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fci-verdict.md",
         "source": "docs/claims/ci-verdict.md"
       },
@@ -12246,6 +12288,13 @@
         "label": "lib/finish.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Ffinish.sh",
         "source": "lib/finish.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/gates.sh",
+        "kind": "implementation",
+        "label": "lib/gates.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fimplementation%2Flib%2Fgates.sh",
+        "source": "lib/gates.sh"
       },
       {
         "id": "majordomus://implementation/lib/handover.sh",
@@ -26423,6 +26472,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "rule",
+        "label": "majordomus.completion-gates@1",
+        "summary": "Completion is gated",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.completion-gates%401",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/completion-gates.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.obligation-closure@1"
+          ],
+          "tags": [
+            "tasks",
+            "evidence",
+            "completion",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.context-budget@1",
         "kind": "rule",
         "label": "majordomus.context-budget@1",
@@ -27309,6 +27379,29 @@
           "tags": [
             "derived",
             "safety"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "kind": "rule",
+        "label": "project.a-verdict-states-its-subject@1",
+        "summary": "A verdict states what it is a verdict about",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-verdict-states-its-subject%401",
+        "source": ".ai/repo/rules/project/a-verdict-states-its-subject.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.never-reported-is-not-green@1",
+            "project.empty-is-not-failure@1",
+            "project.no-counts-in-prose@1"
+          ],
+          "statement": "A verdict names its denominator, and a detector distinguishes its subject from what merely looks like its subject.",
+          "tags": [
+            "evidence",
+            "governance",
+            "gates"
           ]
         }
       },
@@ -31273,6 +31366,13 @@
         "source": "test/cases/131_backlog_hygiene.sh"
       },
       {
+        "id": "majordomus://test/test/cases/131_completion_gates.sh",
+        "kind": "test",
+        "label": "test/cases/131_completion_gates.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F131_completion_gates.sh",
+        "source": "test/cases/131_completion_gates.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/131_models.sh",
         "kind": "test",
         "label": "test/cases/131_models.sh",
@@ -31502,6 +31602,13 @@
         "label": "test/cases/22_history.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F22_history.sh",
         "source": "test/cases/22_history.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/230_verdict_states_its_subject.sh",
+        "kind": "test",
+        "label": "test/cases/230_verdict_states_its_subject.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F230_verdict_states_its_subject.sh",
+        "source": "test/cases/230_verdict_states_its_subject.sh"
       },
       {
         "id": "majordomus://test/test/cases/23_context.sh",
@@ -34196,6 +34303,11 @@
         "label": "executions"
       },
       {
+        "id": "module:gates",
+        "kind": "module",
+        "label": "gates"
+      },
+      {
         "id": "module:graph",
         "kind": "module",
         "label": "graph"
@@ -35021,6 +35133,36 @@
       },
       {
         "source": "capability:executions.start",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.completion",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.model",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -38098,6 +38240,16 @@
         "source": "majordomus://claim/ci-verdict",
         "target": "majordomus://test/test/cases/94_ci_plan.sh",
         "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/ci-verdict-is-required",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/ci-verdict-is-required",
+        "target": "majordomus://document/docs/CI.md",
+        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/cli-documentation-executable",
@@ -41965,6 +42117,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/ci-verdict-is-required.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/ci-verdict.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -42931,6 +43088,11 @@
       },
       {
         "source": "majordomus://implementation/lib/finish.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/gates.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -47105,6 +47267,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/majordomus.completion-gates@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.completion-gates@1",
+        "target": "majordomus://rule/majordomus.obligation-closure@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/majordomus.context-budget@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -47547,6 +47719,26 @@
       {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "target": "majordomus://rule/project.no-counts-in-prose@1",
         "kind": "depends_on"
       },
       {
@@ -48845,6 +49037,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/131_completion_gates.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/131_models.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -49006,6 +49203,11 @@
       },
       {
         "source": "majordomus://test/test/cases/22_history.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/230_verdict_states_its_subject.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -52350,6 +52552,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.completion",
+        "kind": "composes"
+      },
+      {
+        "source": "module:gates",
+        "target": "capability:gates.model",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -52681,8 +52893,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1640,
-      "edges": 3669,
+      "nodes": 1650,
+      "edges": 3689,
       "acyclic": true,
       "truncated": false
     }
