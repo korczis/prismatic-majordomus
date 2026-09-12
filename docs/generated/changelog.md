@@ -7,6 +7,268 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.6.0**
 
+## v0.6.0 — 2026-09-12
+
+### Decisions
+
+- **ADR-0055** Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts _(proposed)_
+- **ADR-0054** A commit message is a judged value, not a convention and not a prompt _(proposed)_
+- **ADR-0053** An identity is allocated above the high-water mark, and a collision is refused on the branch _(proposed)_
+- **ADR-0051** The minimum release version is measured from the public contract, and conventional commits are demoted to evidence _(proposed)_
+- **ADR-0048** A rule declares how it is enforced, and review is one of the three ways _(proposed)_
+- **ADR-0047** The session domain is typed, its identities are not interchangeable, and closing is exactly once _(proposed)_
+- **ADR-0044** Cooperation is repository-wide because the board is gathered, not because the server is shared _(accepted)_
+- **ADR-0043** Entering the repository brings its runtime up, through one bootstrap command the entry file calls _(proposed)_
+- **ADR-0041** Proof is a recorded execution, and inputs unchanged is not proven _(proposed)_
+
+### Added
+
+- **adr**: an allocation names what is outstanding, and what it cannot reach (`595a5aa6d`)
+- **coverage**: the changed-code coverage gate of #214 (`dbb6c26cf`)
+- **reap**: disk is the fifth quantity — reclaim landed build output, bound a build before it starts (`f4c320de6`)
+- **commit**: the commit message is a value this repository judges (`b59988774`)
+- **finish**: a session does not finish behind its own published site (`043c5c85f`)
+- **site**: the navigation is declared once, and every projection derives from it (`a8e002b5b`)
+- **site**: nine top-level categories become five intents and one action (`8357b37c9`)
+- **docs**: every hand-drawn diagram becomes mermaid, and the baseline reaches zero (`e51600d73`)
+- **docs**: an architectural relationship is drawn, not typed in box art (`cbe3e3917`)
+- **adr**: allocate an identity above the high-water mark, and refuse a collision on the branch (`3733e94ad`)
+- **merge**: the merge policy is a projection of what the generators write (`d4325fafd`)
+- **release**: the public contract decides the version, not the commit subjects (`ea05dc261`)
+- **plan**: an issue moves through the lifecycle as a capability, not only a command (`a946ae06d`)
+- **rules**: a rule declares how it is enforced, and review is one of the three ways (`080349f5b`)
+- **backlog**: bound the four quantities that grow on their own (`d65cc145d`)
+- **capture**: a prompt record carries its episode, and the archive is private and bounded (`842f93159`)
+- **gates**: the done invariant, answered from what already knows (`38157e00b`)
+- **gates**: completion is a state the repository decides, not a claim (`6f6293ebc`)
+- **peers**: the board is the repository's, gathered from every checkout (ADR 0044) (`853bf6369`)
+- **session**: the session domain is typed, and closing an episode is exactly once (`acf06af46`)
+- **models**: the model catalogue is one declaration, and routing explains itself (`387e22dcf`)
+- **mesh**: every surface projects the one mesh runtime, off until declared (`21aed93fd`)
+- **rules**: project.a-verdict-states-its-subject, with its case and its CI gate (`ad4d19c0e`)
+- **entry**: entering the repository brings its runtime up, through one bootstrap command (`ad434114b`)
+- **ci**: a promise names a proof a machine can follow (`faa9107a4`)
+- **session**: the subsystem gets a reading of itself, and the docs stop describing a lifecycle it does not have (`bf51ca0dc`)
+- **evidence**: a claim is proven by a run that happened, not by a file that exists (`a65a21951`)
+- **mesh**: the mesh core — identity, protocol, registry, trust, providers (`e1cb97992`)
+- **recover**: close episodes nobody ended, and stop records claiming the tool's exhaust (`9d87da3b1`)
+- **rules**: a rule names what proves it, and the naming is load-bearing (`c2efe3368`)
+- **session**: the briefing an episode opened with is checked against git (`c9f40810f`)
+- **devcontext**: compile a session's context from the repository, structured (`802dfb670`)
+
+### Fixed
+
+- **test**: a dedup assertion compares two lengths, and could never pass (`75f09c04c`)
+- **site**: the version is visible on a phone, not only from 640px up (`df4cfe7e3`)
+- **cockpit**: the mesh reason sits beside the facts list, not inside it (`275ffbe3c`)
+- **recover**: a stale staging directory is reported and left, not deleted (`ce7339594`)
+- **docs**: every intra-doc link resolves, so the crate documents itself again (`5a81aa0c2`)
+- **commit**: the commit subsystem orders through one place (`0384f21b6`)
+- **docs**: an example path is not a machine path (`dc1a18f92`)
+- **environment**: entry draws one banner and never names a server it just replaced (`ff36cacfb`)
+- **commit**: a record id in a code span is shown, not cited (`d5efa5cdd`)
+- **records**: a record reads the whole declaration, and absence is not damage (`60326fcb0`)
+- **capture**: capture status names the providers it has no adapter for (`f258a0e75`)
+- **ledger**: the published order and the envelope are facts, not accidents (`ac4e27037`)
+- **pages**: the age of an owed publication is the oldest debt, not the newest (`e0c309df3`)
+- **site**: a collapsed badge is not a gone badge (`0c05c07da`)
+- **ci**: the gate dispatcher clears a share that names another checkout (`eeb5797d4`)
+- **site**: the generator supplies the raw wrapper, so the source must not (`1c8548673`)
+- **evidence**: the ratchet refuses a lost proof, not a new claim (`454d7a908`)
+- **schema**: a transparent newtype input projects the shape it wraps (`bfa04d4c5`)
+- **executor**: the handler counter counts every handler, at every depth (`b8f6606b2`)
+- **liveness**: six waits are bounded, and the supervision window counts code (`139558f2e`)
+- **github-sync**: a human-written title is not a record id (`6c291d082`)
+- **development-semantics**: a finding key is an identity, not a coordinate (`5a39369fc`)
+- **site**: the two diagrams the widened gate found — back to a measured zero (`8021a7e27`)
+- **git**: a read must not move the repository (`d39cf280d`)
+- **ci**: diagram-check was honest about a corpus it did not look at — 0 becomes 2 (`706214a63`)
+- **claims**: the seventeen guaranteed claims whose test never named them back (`ed077cb13`)
+- **site**: the matrix is shown whole and the questionnaire is grouped (`d098c88f9`)
+- **commit**: the history benchmark case runs in a repository with two commits (`5957bbc78`)
+- **commit**: the use case asserts what it is about, and not that the repository is healthy (`b747440af`)
+- **capture**: the archive mode is read GNU-first, so Linux reads a mode and not a filesystem (`ff00a4b9c`)
+- **commit**: the crate's own lints, at the pinned toolchain (`f9c4da433`)
+- **rules**: the vendored package installs the doctrine, and no count is written by hand (`b8a7a07d1`)
+- **pages**: a run that published is no longer indistinguishable from one that did not (`32c6fb606`)
+- **gates**: one reader per property, and a citation that survives a rename (`fffcd32b4`)
+- **commands**: every command says once whether it is a capability or why it is not (`c90b8c66d`)
+- **gates**: one verdict on enforcement — the duplicate rule reader is removed (`cdb25a2cc`)
+- **site**: two headings that boasted, dated, or were written twice (`18d58852d`)
+- **lint**: five dead names removed, one directive restored, one exit code put to work (`ea19b5ad2`)
+- **ci**: two pipelines stop hiding their own failures (`7a0747e6a`)
+- **ci**: the order ratchet goes back to 92; raising it was moving the goalpost (`b45e86e28`)
+- **test**: the gate is executed, not handed to sh, and a rule's citation follows its file (`f7f0aad3b`)
+- **cockpit**: the page CI actually renders is the refusal, and it overflowed too (`cc87fc11e`)
+- the ADR statuses I had no right to write, and a 320px overflow (`2e0bd9341`)
+- **release**: the three defects CI found, two of them mine (`4fe78bf96`)
+- **release**: the writer stays usable where no contract can be measured (`f562bf5cb`)
+- **lint**: the newer clippy is answered, not baselined (`0aef4f140`)
+- **merge**: restore master's files the merge had reverted (`7928fbe50`)
+- **site**: the API page has one title, and a scenario's record stops depending on the date (`ccc1404d1`)
+- **session**: an example path stops looking like somebody's home directory (`11e6749df`)
+- **rules**: three blocking rules name the case that proves them, and the derived-merge glob stops eating hand-written schemas (`0cc5a114e`)
+- **schema**: restore the policy schema's prompts block the derived driver dropped (`ec680346d`)
+- **adr**: the session domain decision moves to 0047, because 0044 was claimed twice (`5ba6dd15e`)
+- **test**: case 133 builds its fixture in the harness's repository (`94fad98c5`)
+- **rules**: three references the merge and the rename left pointing at the wrong thing (`b5e1c628e`)
+- **ci**: the pages paths follow the model, and 09 stops depending on run order (`f6b35877b`)
+- **usecase**: a compressed size is decided by the machine that compressed it (`456f3b647`)
+- **test**: the help assertion holds the claim that is true now (`d57b3e1dc`)
+- **test**: name the peer-board tuples so clippy's type_complexity passes under -D warnings (`d8ed512bd`)
+- **evidence**: a verdict carries the denominator it was reached over (`7837275c7`)
+- **rules**: yield ADR 0047 and case 134 to their earlier claimant; take master's release fix (`a24629655`)
+- **merge**: the design system's ten projections resolve on merge (`cdac4f5b4`)
+- **release**: the release schema declares the key the release automation writes (`b9c91d9e8`)
+- **release**: the schema is told about the field its writer and reader already share (`65fb52d6d`)
+- **evidence**: three defects review found in the fabric's first cut (`3a20fe9a1`)
+- **gates**: answer where the model is absent, and add no debt to three ratchets (`3f987bde0`)
+- **merge**: declare the thirteen derived site/content trees the generator rewrites (`7444f0209`)
+- **recover**: stat -f is a different flag on GNU, and the event was undocumented (`0eabc4109`)
+- **ci**: rule-proof-check pipes under pipefail, and counts once (`29329afee`)
+- **entry**: a server entry starts inherits none of the caller's descriptors (`69fd5641a`)
+- **records**: a killed writer no longer leaves its staging file in a tracked section (`613608904`)
+- **order**: the ratchet counts what ships, and a jq filter is not sort(1) (`9d57fe1ab`)
+- **claims**: ci-verdict asserted a branch rule that does not exist (`6e9f223f0`)
+- **doctrine**: `doctrine status` reports the registry beside the set it is a subset of (`8b7043366`)
+- **ci**: a cancelled job says why it carries no verdict, and the bound cites its measurement (`29a9e38dc`)
+- **ci**: three ratchets that were counting something other than their subject (`02fd25c41`)
+- **cockpit**: the two findings this branch added to the structure gate (`6c1cb8634`)
+- **rules**: the rule that landed while this branch was open names its proof (`c6977d99c`)
+- **ci**: pin the toolchain, and four more gates that could not run (`04320b329`)
+- **doctor**: the rule and doctrine verdicts state their own denominators (`815116686`)
+- **cockpit**: the graph drawing is chosen from the graph's shape, not one name for all eight (`3b1c1a6d3`)
+- **rules**: the cases and the governing rule describe both enforcement modes (`83198d51d`)
+- **pages**: an errored Pages build is a failed deploy, and nothing local is published (`5b59e18ce`)
+- **session**: the lifecycle is the episode's, not the task's (`d5d541850`)
+- **ci**: a gate CI cannot run, three fixtures that inherited the machine (`5544c1afb`)
+- **server**: the shared server follows the repository instead of freezing it (`a8adc5a56`)
+- **ci**: the gates that were red on master read the evidence they meant to (`b7eee54a2`)
+
+### Performance
+
+- **policy**: the doctor and watch budgets are derived from runs, on both their subjects (`66fef5f21`)
+
+### Changed
+
+- **site**: the homepage is nine sections, not twenty-two (`ac1e6e32e`)
+- **order**: fifteen collections adopt the canonical order, and the baseline falls to 90 (`eb7f1fad2`)
+- **order**: ten of the collections that arrived ordered beside their renderer (`bb4abafd8`)
+- **order**: fourteen collections take the canonical order, and the baseline falls to 92 (`4803476f2`)
+
+### Documentation
+
+- **commit**: the subsystem's three new exported items carry an executable example (`212935e02`)
+- **quality**: the new surface documents itself (`9d1734595`)
+- **commit**: the architecture diagram is drawn, not typed (`4e57c3675`)
+- **commit**: the timings are measured, and the hot paths are measured not to pay them (`76a1615d8`)
+- **commit**: every exported item of the subsystem carries an executable example (`ce1d5f2fb`)
+- **rule**: say why check does not ask the publication gate (`2b0abbc37`)
+- **plan,ledger**: an executable example on every public item this branch adds (`dadf7ab36`)
+- **mesh**: the claim pages carry their full contract, and the site tells the story (`60037f4ce`)
+- **evidence**: an executable example on every exported item of the fabric (`c4cd7cf9b`)
+- **claims**: the detail pages for the split ci-verdict claim (`672f08fa2`)
+- **order**: the rule says what the shell ratchet does not count (`86469fbbf`)
+- **cockpit**: the gap matrix is re-verified and the gaps are in the plan (`34794c73e`)
+
+### Tests
+
+- **commit**: the three claims carry a recorded execution, not only a named test (`3239df657`)
+- **budget**: the two cases stop naming the budget value they widen (`0f1aa6a11`)
+- **commit**: the fixture's temporary worktree is named after the case it belongs to (`b7082d8aa`)
+- **rust**: every exported item of the rule and evidence modules carries an example (`8b6a844af`)
+- **release**: the writer and the schema are tied, so the next field cannot slip through (`53d995eff`)
+- **design**: case 107 asserts the graph viewer's exemption is gone, not that it holds (`965d4df5d`)
+- **session**: the subsystem is covered, and the coverage says what it means (`2783a5556`)
+
+### Housekeeping
+
+- **derive**: the projections follow the merge with master 33a792ec7 (`4776118c0`)
+- **derive**: the projections follow the merge with master 19b275520 (`7406c6638`)
+- **derive**: the projections follow the merge with master a77c35a74 (`c07c510f4`)
+- **derive**: the projections follow the merge with master df244393d (`0995772eb`)
+- **derive**: the projections follow the merge with master (`c668bbbb0`)
+- **derive**: the projections follow the merge with master 623ff738e (`26818260e`)
+- **derive**: the projections follow the merge with master 687a23f4d (`555d0887a`)
+- **derive**: the projections follow the merge with master cd04012f1 (`dd5f81493`)
+- **derive**: the projections follow the merge with master 5e31dd498 (`02d3212c0`)
+- **derive**: the projections follow the merge with master 33806c04e (`74430913e`)
+- **derive**: the projections follow the merge with master 9f7644fb0 (`c7aa6c32b`)
+- **derive**: the projections follow the merge with master 958bd1fb7 (`c8fca0049`)
+- **derive**: the projections follow the merge with master 958bd1fb7 (`034ffaa4c`)
+- **test**: cases 278 and 279 become 281 and 282, and the merge with master 860951619 (`ae3320046`)
+- **derive**: the projections follow the merge with master 860951619 (`0dfb1aa4e`)
+- **derive**: the projections follow the merge with master 860951619 (`4b531558e`)
+- **derive**: the projections follow the merge with master 860951619 (`9b754cd3a`)
+- **derive**: the projections follow the merge with master be8b66672, and case 278 becomes 279 (`7d225fe35`)
+- **derive**: the projections follow the merge with master 6739f4668 (`0fb04b2c6`)
+- **derive**: the projections follow the merge with master 593de20f8 (`490818e42`)
+- **derive**: the projections follow the evidence gate (`860132db0`)
+- **derive**: the projections carry the two devcontext parameter lists (`eb3efc3f3`)
+- **evidence**: the baseline records both halves, at the number the corrected predicate earns (`c1299e268`)
+- **development-semantics**: the baseline retires the two entries that closed (`5bd5016ca`)
+- **derive**: refresh derived data a stale merge left on master (`1e3b47e04`)
+- **derive**: projections follow the merge of master (`d1c4d063c`)
+- **derive**: the projections follow the merge with master e2de2e5ec (`23fc77fcf`)
+- **coverage**: mark the differential gate work under task t-20260912105728-7385 (`9f7aea390`)
+- **derive**: the projections follow the merge with master f9bee12bc (`1fb0d74ea`)
+- **derive**: the projections follow the merge with master 04d9910e4 (`120affcdf`)
+- **derive**: the projections follow the merge with master 3407ca2d4 (`b1d71d0d2`)
+- **derive**: the projections follow the merge with master f22f34dde (`e9031a9b7`)
+- **site**: the doctrine reaches the site as a page, like every other (`ce767b18a`)
+- **derive**: the projections follow the merge with master b8d3eb59b (`aa8b2e78a`)
+- **derive**: the projections follow the merge of master (`d80967756`)
+- **derive**: the projections follow the navigation change (`b2d4efe90`)
+- **derive**: the projections follow the diagram conversion (`dd67c01d4`)
+- **derive**: the projections follow the merge of the allocator and the merge policy (`16c83c67f`)
+- **derive**: the projections follow the merge with master (`a523bcf5f`)
+- **derive**: the projections follow the fifth batch (`966b141ca`)
+- **derive**: the projections follow the fourth batch (`c099fadf0`)
+- **derive**: the derived tree for the merge of master (`187bc625c`)
+- **derive**: the projections follow the third batch (`445e783ed`)
+- **derive**: the projections follow the batch of seven (`870825d9a`)
+- **derive**: the projections follow the merge of master (`b5736b605`)
+- **derive**: the projections follow the fifth merge of master (`efddd1289`)
+- **evidence**: the first recorded runs, and six claims that are proven (`36a6f1da0`)
+- **derive**: the registry dataset follows the fabric's new documentation (`3d3cdcc27`)
+- **derive**: the projections follow the third merge of master (`b45d52718`)
+- **release**: record v0.5.0 and the metadata it publishes (`8128683c0`)
+- **derived**: regenerate after merging master (`4d40de2a7`)
+- **derive**: regenerate over master@3a032c1e0 (`f320b46b7`)
+- **derive**: the projections follow the second merge of master (`e3ee16de3`)
+- **derive**: the projections follow the merge of master (`cbc2c72cd`)
+- **derive**: regenerate the projections over master@87b9ac659 (`fbea3d9dd`)
+- **derive**: regenerate the derived artifacts for the merge result (`2c3d3a75c`)
+- **derive**: the projections follow the merge with master (`d6b9d90d6`)
+- **derive**: the projections follow the merge of master (`7cb8f8e6c`)
+- **quality**: the baseline stops accepting three findings that no longer exist (`c7f47c667`)
+
+### Formatting
+
+- **rust**: the two test files rustfmt still rewrites (`67f6f66de`)
+- **rust**: format the crate, and name the type clippy could not read (`c15e45aa5`)
+
+### Integration
+
+- **commit**: bring origin/master 3407ca2d4 into feature/the-commit-is-an-intent (`16eac16e7`)
+- **commit**: bring origin/master 98a1f0800 into feature/the-commit-is-an-intent (`bd9be64a8`)
+- **entry**: take master's batch of seven, restoring the policy schema's prompts block (`77225cbb9`)
+- origin/master (#221) (`fe66b4b7e`)
+
+### Other
+
+- Merge origin/master into feature/canonical-versioning (`73386b837`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.6.0-aarch64-apple-darwin.tar.gz (`3efdd7125063`)
+- `macos-x86_64` — majordomus-v0.6.0-x86_64-apple-darwin.tar.gz (`a7801c74905b`)
+- `linux-x86_64-gnu` — majordomus-v0.6.0-x86_64-unknown-linux-gnu.tar.gz (`9b77678d697c`)
+- `linux-x86_64-musl` — majordomus-v0.6.0-x86_64-unknown-linux-musl.tar.gz (`300c92c9c0c7`)
+- `linux-aarch64-gnu` — majordomus-v0.6.0-aarch64-unknown-linux-gnu.tar.gz (`d7415dbfb6cc`)
+- `linux-aarch64-musl` — majordomus-v0.6.0-aarch64-unknown-linux-musl.tar.gz (`01521975b729`)
+
+
 ## v0.5.0 — 2026-09-11
 
 ### Decisions
