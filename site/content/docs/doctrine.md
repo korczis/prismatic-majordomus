@@ -119,6 +119,22 @@ the rule. A rule without the block is normative for whoever reads it and enforce
 nobody, and `majordomus rules list` says `not machine-enforced` for it rather than
 implying otherwise. The class still says what a violation means.
 
+A rule that is `class: blocking` *and* has no block is therefore a promise this tool cannot
+keep by itself, and most of this repository's blocking rules are in that position — measure
+it with `majordomus doctrine status`, which prints the registry's size beside the effective
+set's and names the count on its own line. The count is large, it predates the report, and
+the numbers must be read carefully: most of those rules *are* enforced, by a gate under
+`scripts/ci/` or by a case under `test/cases/` named in their `# Verification` section. What
+the doctrine registry cannot see is not the same as what nothing enforces, and a surface
+that reports one while the reader hears the other is the defect
+`project.a-verdict-states-its-subject` exists to stop.
+
+`scripts/ci/enforcement-check` is what decides the difference: a blocking rule must carry
+either an `x-majordomus` block or a `# Verification` path that exists and runs, and the
+handful that carry neither are ratcheted in `.ai/repo/enforcement-baseline.txt` so the set
+can shrink and cannot grow. It is answered by wiring the enforcement, never by changing the
+rule's class — moving a promise is not keeping it.
+
 ### Resolution
 
 `majordomus rules list` resolves the effective set as a dependency graph, deterministically:
