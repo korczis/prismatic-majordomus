@@ -46,7 +46,12 @@
           <span class="font-mono text-xs text-body-subtle">$ majordomus product matrix</span>
           <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ model.counts.features }} × {{ model.surfaces | length }}</span>
         </figcaption>
-        <div class="relative max-h-[26rem] overflow-x-auto overflow-y-auto" tabindex="0">
+        {#- No vertical scroll: the matrix is the evidence this section is making, and a reader
+            who has to scroll a box inside a page to reach the last four features is being shown
+            a sample of it. Every row is on the page. The horizontal scroll stays, because six
+            columns of marks cannot narrow past a phone and a table is the one thing allowed its
+            own `overflow-x` — so the sticky header stays with it. -#}
+        <div class="relative overflow-x-auto" tabindex="0">
           <table class="w-full border-collapse font-mono text-xs">
             <caption class="sr-only">Every feature of the product against the interfaces it is exposed through</caption>
             <thead class="sticky top-0 bg-neutral-primary-soft">
@@ -142,9 +147,10 @@
   </div>
 </section>
 
-{#- 5. the pipeline — the execution model, as a stepper that advances until a reader takes it
-    over. Without JavaScript every stage and every one of its parts is on the page; the script
-    only decides which one is emphasised. -#}
+{#- 5. the pipeline — the execution model, as a stepper the reader drives. Nothing moves on
+    its own: the section changes only when someone clicks a stage. Without JavaScript every
+    stage and every one of its parts is on the page; the script only decides which one is
+    emphasised. -#}
 <section id="loop" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="03" kicker={x.pipeline.kicker} title={x.pipeline.title} lead={x.pipeline.lead} /> }}
@@ -152,13 +158,17 @@
         as well would win or lose by stylesheet order rather than by state, and the active stage
         would be indistinguishable from the rest. Without JavaScript no branch is applied, every
         panel is on the page, and the section reads as six stages in order — which is why no panel
-        carries a static `hidden` and why x-cloak is absent. It advances on its own only when the
-        reader has not asked for reduced motion, and a control stops it either way (WCAG 2.2.2). -#}
-    <div x-data="{ active: 0, paused: false, n: {{ x.pipeline.stages | length }}, motion: true, tick() { if (!this.paused) { this.active = (this.active + 1) % this.n } } , start() { this.motion = !window.matchMedia('(prefers-reduced-motion: reduce)').matches; this.paused = !this.motion; setInterval(() => this.tick(), 3800) } }" x-init="start()">
+        carries a static `hidden` and why x-cloak is absent.
+
+        It does not advance on its own. A reader who has not clicked anything is not being shown
+        a slideshow: the page holds still, and the only thing that changes a stage is a click. That
+        also retires the reduced-motion query and the play/pause control this section used to
+        need — WCAG 2.2.2 governs content that moves by itself, and none here does. -#}
+    <div x-data="{ active: 0, n: {{ x.pipeline.stages | length }} }">
       <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {%- for s in x.pipeline.stages %}
         <li class="min-w-0">
-          <button type="button" x-on:click="active = {{ loop.index0 }}; paused = true"
+          <button type="button" x-on:click="active = {{ loop.index0 }}"
             :aria-pressed="active === {{ loop.index0 }} ? 'true' : 'false'" aria-controls="stage-{{ s.id }}"
             :class="active === {{ loop.index0 }} ? 'ring-2 ring-brand shadow-xs' : ''"
             class="flex h-full w-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 text-start hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
@@ -186,9 +196,6 @@
         {%- endfor %}
       </div>
       <div x-cloak class="mt-4 flex flex-wrap items-center gap-3">
-        <button type="button" x-on:click="paused = !paused" class="inline-flex items-center gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">
-          <span x-text="paused ? 'Play the stages' : 'Pause the stages'">Pause the stages</span>
-        </button>
         <span class="font-mono text-xs text-body-subtle" x-text="(active + 1) + ' / ' + n"></span>
       </div>
       <p class="mt-4 text-sm text-body-subtle">{{ x.pipeline.caption }}</p>
