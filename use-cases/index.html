@@ -216,8 +216,8 @@
 </nav>
 <h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Use cases</h1><p class="mt-3 max-w-3xl text-lg text-body">What people do with it: a task, the commands that answer it, and what you are left holding, each one proved against the tool. Every step is a real invocation, every rule and promise a real object, and every example below was executed to make this page.</p>
   <dl class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">44</dd></div>
-    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">described</dt><dd class="font-mono text-heading">44</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://majordomus.dev/use-cases/coverage/" class="text-fg-brand hover:underline">140 of 212 targets</a></dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">45</dd></div>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">categories</dt><dd class="font-mono text-heading">10</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">described</dt><dd class="font-mono text-heading">45</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">coverage</dt><dd class="font-mono text-heading"><a href="https://majordomus.dev/use-cases/coverage/" class="text-fg-brand hover:underline">141 of 224 targets</a></dd></div>
   </dl>
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><div x-data="{ q: '', app: 'all', actor: 'all', m: 'all' }">
@@ -279,7 +279,7 @@
     </section>
     <section class="mt-10" aria-labelledby="cat-continuity">
       <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="cat-continuity" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/use-cases/continuity/" class="hover:underline">Sessions and handover</a> <span class="font-mono text-sm text-body-subtle">10</span></h2>
+        <h2 id="cat-continuity" class="text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/use-cases/continuity/" class="hover:underline">Sessions and handover</a> <span class="font-mono text-sm text-body-subtle">11</span></h2>
         <p class="text-sm text-body">Stopping and resuming work across sessions and workers from durable state, never a transcript.</p>
       </div>
       <ul class="mt-4 grid gap-4 md:grid-cols-2" role="list">
@@ -353,6 +353,15 @@
             <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Read only the context that fits the budget, and know what was dropped</h3>
             <p class="text-sm leading-relaxed text-body">Assemble the context a worker needs now in authority order, cut it to a line budget, and see every dropped section named with its reason.</p>
             <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">context · check</span>
+          </a>
+        </li>
+        <li x-show="(app === 'all' || 'long-running-work'.includes(app)) && (actor === 'all' || 'operator agent'.includes(actor)) && (m === 'all' || m === 'described') && ('recover-an-episode-nobody-closed close an episode whose client never came back recover '.includes(q.toLowerCase()))">
+          <a href="https://majordomus.dev/use-cases/recover-an-episode-nobody-closed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+            <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+</span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
+            <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Close an episode whose client never came back</h3>
+            <p class="text-sm leading-relaxed text-body">A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do.</p>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">recover</span>
           </a>
         </li>
         <li x-show="(app === 'all' || 'long-running-work several-agents-one-repository'.includes(app)) && (actor === 'all' || 'agent'.includes(actor)) && (m === 'all' || m === 'described') && ('resume-from-a-prompt-asset start a session from a rendered framing, not a pasted transcript prompt context majordomus.prompt-integrity majordomus.context-budget'.includes(q.toLowerCase()))">
@@ -722,7 +731,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ce9d3157590ada9db8aad11f4e61e919a069764" class="font-mono underline">8ce9d31</a> · inputs <span class="font-mono">65209381c10d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e98bfd44a311554d05a0274c6ca1ba6b8c5c9bf3" class="font-mono underline">e98bfd4</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

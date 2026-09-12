@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rules a machine decides, wired, tested and CI-blocking — Prismatic Majordomus</title>
-<meta name="description" content="Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.">
+<meta name="description" content="Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.">
 <link rel="canonical" href="https://majordomus.dev/features/doctrine/">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Rules a machine decides, wired, tested and CI-blocking — Prismatic Majordomus">
-<meta property="og:description" content="Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.">
+<meta property="og:description" content="Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.">
 <meta property="og:url" content="https://majordomus.dev/features/doctrine/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -218,7 +218,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Rules a machine decides, wired, tested and CI-blocking</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every rule is a portable Markdown object with front matter; a rule the tool enforces names its validator, the commands that dispatch it and the tests that prove it, and doctor walks that chain from the source, refusing a validator nobody declares and a declaration nothing runs; a blocking violation stops the command and an advisory one is reported.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -292,6 +292,37 @@ no override: a project rule may add a constraint and may never weaken a vendored
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/health.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/rules/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Rules</a>
+          <code class="font-mono text-xs text-body-subtle">rules</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/rules.proves/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What this test proves</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus rules proves</span><span>GET /api/v1/rules/proves</span><span>majordomus_rule_proves</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/rules.report/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every rule against the proof there is for it</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus rules report</span><span>GET /api/v1/rules</span><span>majordomus_rules</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/rules.show/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What proves this rule</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus rules show</span><span>GET /api/v1/rules/rule</span><span>majordomus_rule</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/rules.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
@@ -334,7 +365,7 @@ no override: a project rule may add a constraint and may never weaken a vendored
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
     <p class="mt-2 text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
     <ul class="mt-4 flex flex-wrap gap-2">
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">rule</code><span class="font-mono text-xs text-body-subtle">126</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">rule</code><span class="font-mono text-xs text-body-subtle">128</span></li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
     <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
@@ -387,6 +418,12 @@ no override: a project rule may add a constraint and may never weaken a vendored
       </li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--blocking">blocking</span>
 <span class="min-w-0 text-sm text-heading">No claim without a test</span><code class="ms-auto font-mono text-xs text-body-subtle">project.no-claim-without-test</code>
+      </li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--blocking">blocking</span>
+<span class="min-w-0 text-sm text-heading">English only</span><code class="ms-auto font-mono text-xs text-body-subtle">project.english-only</code>
+      </li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--blocking">blocking</span>
+<span class="min-w-0 text-sm text-heading">Every finding carries a reproduce command</span><code class="ms-auto font-mono text-xs text-body-subtle">project.finding-carries-reproduce</code>
       </li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
@@ -426,6 +463,31 @@ no override: a project rule may add a constraint and may never weaken a vendored
 
         <a href="https://majordomus.dev/guarantees/drift-watch/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">watch reports policy, projection, state, scope, handover, verification, staleness and retention drift</a>
       </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
+        <a href="https://majordomus.dev/guarantees/rule-proof-is-named-and-resolves/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Every blocking rule names what proves it, and every path it names is in the tree</a>
+      </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
+        <a href="https://majordomus.dev/guarantees/rule-exemption-carries-its-reason/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate</a>
+      </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
+        <a href="https://majordomus.dev/guarantees/rule-state-is-derived-from-what-ran/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">A rule&#39;s proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed</a>
+      </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
+        <a href="https://majordomus.dev/guarantees/authored-files-are-english/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check</a>
+      </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
+        <a href="https://majordomus.dev/guarantees/a-finding-names-how-to-see-it-again/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Every finding a command reports names the command that reproduces it</a>
+      </li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable use cases</h2>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -437,12 +499,13 @@ no override: a project rule may add a constraint and may never weaken a vendored
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">3</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">1</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">3</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">126</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">5</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">6</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">4</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">6</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">128</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">12</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">31</dd></div>
     </dl>
     <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">In the Cockpit</h2>
@@ -473,7 +536,7 @@ no override: a project rule may add a constraint and may never weaken a vendored
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ce9d3157590ada9db8aad11f4e61e919a069764" class="font-mono underline">8ce9d31</a> · inputs <span class="font-mono">65209381c10d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e98bfd44a311554d05a0274c6ca1ba6b8c5c9bf3" class="font-mono underline">e98bfd4</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

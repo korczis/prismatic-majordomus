@@ -221,30 +221,30 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">109</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">121</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">101</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">110</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">805</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">870</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">118</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">127</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
-  <p class="mt-8 max-w-3xl break-words text-sm text-body">Majordomus control plane: a data-driven MCP server over the repository&#39;s .ai/ layer</p><p class="mt-3 max-w-3xl whitespace-pre-line break-words text-sm text-body">The Rust executable of Majordomus. It reads the repository&#39;s provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.
+  <p class="mt-8 max-w-3xl break-words text-sm text-body">Majordomus control plane: a data-driven MCP server over the repository&#39;s .ai/ layer</p><p class="mt-3 max-w-3xl whitespace-pre-line break-words text-sm text-body">The Rust executable of Majordomus. It reads the repository&#39;s provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.
 
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Every command</h2>
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Every command</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each has its own page with its usage, its arguments, their defaults and accepted values, and at least one example that the crate's tests run against the built executable.</p>
   <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft"><li><a href="https://majordomus.dev/docs/cli/mcp/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus mcp</span>
-      <span class="break-words text-sm text-body sm:flex-1">Serve the repository&#39;s AI layer to an MCP client over stdio (read-only)</span>
+      <span class="break-words text-sm text-body sm:flex-1">Serve the repository&#39;s AI layer to an MCP client over stdio</span>
       <span class="font-mono text-xs text-body-subtle">3 examples</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/serve/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus serve</span>
-      <span class="break-words text-sm text-body sm:flex-1">Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)</span>
+      <span class="break-words text-sm text-body sm:flex-1">Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/serve/status/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus serve status</span>
@@ -650,6 +650,38 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
       <span class="break-words font-mono text-sm text-heading">majordomus devcontext policy</span>
       <span class="break-words text-sm text-body sm:flex-1">The compiler&#39;s own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh</span>
+      <span class="break-words text-sm text-body sm:flex-1">The mesh: the nodes this repository&#39;s running server has discovered on the network, this machine&#39;s node identity, and the self-check that proves the prerequisites on this machine alone</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/status/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh status</span>
+      <span class="break-words text-sm text-body sm:flex-1">Whether the mesh runs in this checkout&#39;s server and why not when it does not, with every provider&#39;s state and the registry&#39;s tallies</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/nodes/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh nodes</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/identity/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh identity</span>
+      <span class="break-words text-sm text-body sm:flex-1">This machine&#39;s node identity, public half only; absent is an answer, not an error</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/mesh/doctor/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus mesh doctor</span>
+      <span class="break-words text-sm text-body sm:flex-1">Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/models/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus models</span>
+      <span class="break-words text-sm text-body sm:flex-1">The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/models/list/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus models list</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every declared vendor and model, optionally narrowed; the order is the declaration&#39;s, which is routing&#39;s preference order</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/models/route/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus models route</span>
+      <span class="break-words text-sm text-body sm:flex-1">Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/evidence/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus evidence</span>
       <span class="break-words text-sm text-body sm:flex-1">What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim&#39;s proof, one test&#39;s claims, and the recording of a run that happened</span>
@@ -669,6 +701,22 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
     </a></li><li><a href="https://majordomus.dev/docs/cli/evidence/record/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus evidence record</span>
       <span class="break-words text-sm text-body sm:flex-1">Record a run that happened into the ledger</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/rules/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus rules</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about</span>
+      <span class="font-mono text-xs text-body-subtle">group</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/rules/report/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus rules report</span>
+      <span class="break-words text-sm text-body sm:flex-1">Every rule against the proof there is for it</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/rules/show/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus rules show</span>
+      <span class="break-words text-sm text-body sm:flex-1">One rule: what proves it, what it depends on, and what is missing</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/rules/proves/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus rules proves</span>
+      <span class="break-words text-sm text-body sm:flex-1">One test: every rule it proves, and the rules that would be left with none</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li></ul>
 
@@ -691,7 +739,7 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ce9d3157590ada9db8aad11f4e61e919a069764" class="font-mono underline">8ce9d31</a> · inputs <span class="font-mono">65209381c10d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e98bfd44a311554d05a0274c6ca1ba6b8c5c9bf3" class="font-mono underline">e98bfd4</a> · inputs <span class="font-mono">55c5a886fc22</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
