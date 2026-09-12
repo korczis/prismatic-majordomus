@@ -180,7 +180,7 @@ head_after="$(sed -n 's/.*"head": "\([0-9a-f]*\)".*/\1/p' plan3.json | head -1)"
 echo "  two worktrees of one repository share a repository and not a plan"
 # Beside the fixture and not inside it: a checkout inside a work tree is an embedded
 # repository, which `git add -A` then tries to add and the harness's own commits trip over.
-WT="$(mktemp -d "${TMPDIR:-/tmp}/mj-272-wt.XXXXXX")" && rmdir "$WT"
+WT="$(mktemp -d "${TMPDIR:-/tmp}/mj-274-wt.XXXXXX")" && rmdir "$WT"
 run_quiet wt.err git worktree add -q -b other-272 "$WT"
 run_quiet other.err "$RB" commit plan --repo "$WT" --format json > other.json
 repo_here="$(sed -n 's/.*"repository": "\(.*\)",/\1/p' plan3.json | head -1)"
