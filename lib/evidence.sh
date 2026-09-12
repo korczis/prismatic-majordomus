@@ -220,7 +220,7 @@ mj_evidence() {
 }
 
 mj_evidence_usage() {
-  cat <<USAGE
+  cat <<'USAGE'
 usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
        majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
        majordomus evidence --run-gates
