@@ -102,7 +102,13 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, Capability
 // ---------------------------------------------------------------- mesh.doctor
 
 fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityError> {
-    Ok(crate::mesh::doctor::doctor(declaration(ctx)))
+    // The runtime's verdict is reported only where a shared server made one: in the
+    // command line's process nothing activates the mesh, and that absence is not news.
+    let status = ctx.mesh.decided().then(|| ctx.mesh.status());
+    Ok(crate::mesh::doctor::doctor(
+        declaration(ctx),
+        status.as_ref(),
+    ))
 }
 
 /// The repository's mesh declaration, as the index discovered it: `None` when no object
@@ -201,7 +207,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.doctor",
                 title: "The mesh self-check",
-                description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+                description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads and is on the declaration's own allowlist, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory — then, in a shared server, whether an enabled declaration actually activated and why not when it did not. Deterministic, no second node required.",
                 input: Empty,
                 output: MeshDoctorReport,
                 stability: Stability::Experimental,
