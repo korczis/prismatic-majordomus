@@ -11,7 +11,7 @@
 //!
 //! The repository already knows the answer. Every commit in the history is a worked example
 //! of which scope a set of paths belongs to, decided by whoever made the change and kept by
-//! whoever reviewed it. [`derive`] reads those examples: the scopes the history uses, how
+//! whoever reviewed it. [`fn@derive`] reads those examples: the scopes the history uses, how
 //! often, and which directories each one is written about. A scope is not configured. It is
 //! observed, with the observation attached, so that the answer can be checked rather than
 //! believed.
@@ -257,7 +257,7 @@ pub fn derive(root: &Path) -> ScopeVocabulary {
 impl ScopeVocabulary {
     /// Record that `commits` commits scoped changes under `prefix` as `scope`.
     ///
-    /// [`derive`] is how a vocabulary is normally built, from the history. This is the same
+    /// [`fn@derive`] is how a vocabulary is normally built, from the history. This is the same
     /// association stated directly, for a caller that has the evidence by another route —
     /// and for tests, which must be able to state a history rather than construct one.
     /// ```
