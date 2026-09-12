@@ -487,8 +487,13 @@ pub fn select(ctx: &Context, graph: &Graph, req: &Request<'_>) -> Selection {
             ),
         ));
     }
-    sel.unresolved.sort();
-    sel.unresolved.dedup();
+    // Deduplicated without being ordered. This list is consumed once, by the budget, which
+    // turns each entry into a diagnostic and sorts the diagnostics; no surface ever renders
+    // the sequence built here. Sorting to make `dedup()` work was an opinion about an order
+    // nobody reads, and two opinions about one collection is what `project.canonical-order`
+    // exists to prevent — so the duplicates go and the discovery order stays.
+    let mut seen = std::collections::HashSet::new();
+    sel.unresolved.retain(|entry| seen.insert(entry.clone()));
 
     sel
 }
