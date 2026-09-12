@@ -27910,6 +27910,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-number-names-one-case@1",
+        "kind": "rule",
+        "label": "project.a-number-names-one-case@1",
+        "summary": "A case number names one case",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-number-names-one-case%401",
+        "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.a-verdict-states-its-subject@1"
+          ],
+          "tags": [
+            "tests",
+            "identifiers",
+            "coordination"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -32381,6 +32402,13 @@
         "label": "test/cases/28_no_hardcoded_values.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F28_no_hardcoded_values.sh",
         "source": "test/cases/28_no_hardcoded_values.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/291_a_case_number_names_one_case.sh",
+        "kind": "test",
+        "label": "test/cases/291_a_case_number_names_one_case.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F291_a_case_number_names_one_case.sh",
+        "source": "test/cases/291_a_case_number_names_one_case.sh"
       },
       {
         "id": "majordomus://test/test/cases/29_prompt_capture.sh",
@@ -48994,6 +49022,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -50670,6 +50713,11 @@
       },
       {
         "source": "majordomus://test/test/cases/28_no_hardcoded_values.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/291_a_case_number_names_one_case.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54390,8 +54438,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1708,
-      "edges": 3836,
+      "nodes": 1710,
+      "edges": 3840,
       "acyclic": true,
       "truncated": false
     }
