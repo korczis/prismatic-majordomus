@@ -68,9 +68,31 @@ mj_skills_examples_cache() {
 # mj_skill_load FILE — flattens the front matter into MJ_SKILL_FLAT; exit 1 with a reason
 # printed when there is none or it does not parse.
 MJ_SKILL_FLAT=""
+# whether MJ_SKILL_FLAT points into the prefetched cache, which the next load must not unlink
+MJ_SKILL_FLAT_CACHED=0
+MJ_SKILLS_CACHE=""
+# Every discovered skill flattened in one process; the catalogue calls this before its
+# loop, and `skill validate <file>` does not, for the reason mj_adr_prefetch gives.
+mj_skills_prefetch() {
+  local path
+  [ -n "$MJ_SKILLS_CACHE" ] && return 0
+  MJ_SKILLS_CACHE="$(mktemp -d "${TMPDIR:-/tmp}/mj.skc.XXXXXX")"
+  set --
+  while IFS="$MJ_TAB" read -r path _; do
+    [ -n "$path" ] && set -- "$@" "$MJ_ROOT/$path"
+  done < <(mj_skills_files)
+  mj_front_cache_build "$MJ_SKILLS_CACHE" "$@"
+}
 mj_skill_load() {
-  local f="$1" fm flat
-  [ -n "$MJ_SKILL_FLAT" ] && rm -f "$MJ_SKILL_FLAT"
+  local f="$1" fm flat hit=0
+  [ -n "$MJ_SKILL_FLAT" ] && [ "$MJ_SKILL_FLAT_CACHED" = 0 ] && rm -f "$MJ_SKILL_FLAT"
+  MJ_SKILL_FLAT_CACHED=0
+  mj_front_cache_get "$f" || hit=$?
+  if [ "$hit" != 2 ]; then
+    MJ_SKILL_FLAT="$MJ_FRONT_FLAT"; MJ_SKILL_FLAT_CACHED=1
+    [ "$hit" = 0 ] && return 0
+    printf '%s\n' "$MJ_FRONT_ERROR"; return 1
+  fi
   fm="$(mktemp "${TMPDIR:-/tmp}/mj.sf.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.sl.XXXXXX")"; MJ_SKILL_FLAT="$flat"
   if ! mj_record_front "$f" > "$fm" 2>/dev/null; then rm -f "$fm"; printf 'no front matter\n'; return 1; fi
   if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then rm -f "$fm"; printf 'malformed front matter\n'; return 1; fi
@@ -132,6 +154,7 @@ mj_skill_validate_loaded() {
 mj_skills_catalogue() {
   local path sha dir reason valid id rf
   rf="$(mktemp "${TMPDIR:-/tmp}/mj.sr.XXXXXX")"
+  mj_skills_prefetch
   while IFS=$'\t' read -r path sha dir; do
     [ -n "$path" ] || continue
     valid=1

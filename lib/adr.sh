@@ -91,10 +91,35 @@ mj_adr_files() {
 # caller reading the previous record's fields.
 MJ_ADR_FLAT=""
 MJ_ADR_ERROR=""
+# whether MJ_ADR_FLAT points into the prefetched cache, which the next load must not unlink
+MJ_ADR_FLAT_CACHED=0
+MJ_ADR_CACHE=""
+# Every discovered decision flattened in one process, so that mj_adr_load below is a
+# lookup. The walkers call this; `adr validate <file>` deliberately does not, because
+# reading one record must not cost the discovery of fifty.
+mj_adr_prefetch() {
+  local f
+  [ -n "$MJ_ADR_CACHE" ] && return 0
+  MJ_ADR_CACHE="$(mktemp -d "${TMPDIR:-/tmp}/mj.adrc.XXXXXX")"
+  set --
+  while IFS="$MJ_TAB" read -r f _; do
+    [ -n "$f" ] && set -- "$@" "$MJ_ROOT/$f"
+  done < <(mj_adr_files)
+  mj_front_cache_build "$MJ_ADR_CACHE" "$@"
+}
 mj_adr_load() {
-  local f="$1" fm flat
+  local f="$1" fm flat hit=0
   MJ_ADR_ERROR=""
-  [ -n "$MJ_ADR_FLAT" ] && rm -f "$MJ_ADR_FLAT"
+  [ -n "$MJ_ADR_FLAT" ] && [ "$MJ_ADR_FLAT_CACHED" = 0 ] && rm -f "$MJ_ADR_FLAT"
+  MJ_ADR_FLAT_CACHED=0
+  mj_front_cache_get "$f" || hit=$?
+  if [ "$hit" != 2 ]; then
+    # the cache's own output file, empty exactly where the per-record path left an empty
+    # one, so that every reader below sees what it always saw
+    MJ_ADR_FLAT="$MJ_FRONT_FLAT"; MJ_ADR_FLAT_CACHED=1
+    [ "$hit" = 0 ] && return 0
+    MJ_ADR_ERROR="$MJ_FRONT_ERROR"; return 1
+  fi
   fm="$(mktemp "${TMPDIR:-/tmp}/mj.af.XXXXXX")"; flat="$(mktemp "${TMPDIR:-/tmp}/mj.al.XXXXXX")"; MJ_ADR_FLAT="$flat"
   if ! mj_record_front "$f" > "$fm" 2>/dev/null; then rm -f "$fm"; MJ_ADR_ERROR="no front matter"; return 1; fi
   if ! mj_yaml_flatten "$fm" > "$flat" 2>/dev/null; then rm -f "$fm"; MJ_ADR_ERROR="malformed front matter"; return 1; fi
@@ -237,6 +262,7 @@ mj_adr_catalogue() {
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ac.XXXXXX")"
   out="$(mktemp "${TMPDIR:-/tmp}/mj.ao.XXXXXX")"; MJ_ADR_ROWS="$out"
   MJ_ADR_N=0; MJ_ADR_INVALID=0
+  mj_adr_prefetch
   # The loop stays in this shell so that the counts survive it, and the front matter is
   # loaded here rather than inside the validator's command substitution: a subshell would
   # take MJ_ADR_FLAT with it and every field below would read the previous record's.
@@ -287,6 +313,7 @@ mj_adr_affected() {
     || mj_die "$MJ_EX_USAGE" "adr affected: --base '$base' is not a commit in this repository"
   changed="$(mj_change_set "$mode" "$base" | awk -F"$MJ_TAB" '{ print $2; if ($3 != "") print $3 }' | LC_ALL=C sort -u)"
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.adraff.XXXXXX")"
+  mj_adr_prefetch
   while IFS="$MJ_TAB" read -r f _; do
     [ -n "$f" ] || continue
     mj_adr_load "$MJ_ROOT/$f" || continue
