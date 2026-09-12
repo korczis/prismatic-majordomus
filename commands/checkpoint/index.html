@@ -288,12 +288,12 @@ git add . &amp;&amp; git commit -qm base</pre></div>
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus checkpoint &lt; body.md</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
-        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">no active task</li></ul>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">.ai/local/state/checkpoints/</li></ul>
         <p class="mt-3 text-sm">
           <span class="text-body-subtle">exit</span>
-          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-danger-soft text-fg-danger-strong">12</code>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
         </p>
-        <p class="mt-4 text-sm text-body">A checkpoint belongs to a task. Writing one with nothing to attach it to would produce a record that no later reader could place.</p>
+        <p class="mt-4 text-sm text-body">A checkpoint belongs to the episode, not to a task. The record is written and its `task_id` is `none`, which is a fact a later reader can place; the ledger event it emits carries no `task_id` at all, because every reader of that event collects the field&#39;s distinct values as task identifiers. This scenario expected exit 12 until ADR 0052: refusing here meant that finishing a task silenced progress records for every episode after it, which is exactly what happened to this repository for six days from 2026-09-05.</p>
       </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>Record compact progress inside an active task. Append-only; the body arrives on stdin.</p>
 <p>A checkpoint is not a small handover. A handover is a deliberate continuation package
@@ -315,11 +315,21 @@ then, and the count of blockers. It stays inside the same cap, and it is what th
 provider's compaction event runs — a compaction discards the conversation while the work
 continues, and the moment it is announced is the only moment anything can be written about
 a context that is about to stop being reachable.</li>
-<li><code>--show</code> prints the newest checkpoint for the active task in this worktree and branch.</li>
+<li><code>--show</code> prints the newest checkpoint for this worktree and branch — for the active task
+when there is one, and otherwise the newest whatever task it names.</li>
 <li><code>--list</code> lists this worktree's checkpoints, newest first, with each one's git label.</li>
 </ul>
-<p>Exit <code>12</code> with no active task, <code>15</code> when the task is no longer active, <code>10</code> when the body
-carries identity fields or exceeds the cap.</p>
+<p>A checkpoint belongs to the <strong>episode</strong>, not to a task. It is written whether or not a task
+is open and whatever outcome the last one reached; the record's <code>task_id</code> is the task when
+there is one and <code>none</code> otherwise, and the ledger event omits the field entirely rather than
+writing a literal <code>none</code> that every reader of that event would collect as a task by that
+name. Only the task's own <code>checkpoint_at</code> is left alone when the task is over, because that
+field is the task's.</p>
+<p>This refused with <code>12</code> (no active task) and <code>15</code> (the task is no longer active) until ADR
+0052. Those two refusals are the 2026-09-05 outage: a task marked <code>handed_over</code> and never
+replaced silenced this repository's progress records for six days, while episodes went on
+opening and closing and every health check passed.</p>
+<p>Exit <code>10</code> when the body carries identity fields or exceeds the cap.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>$ majordomus checkpoint &lt;&lt;&#39;EOF&#39;</span></span>
 <span class="giallo-l"><span>OAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.</span></span>
 <span class="giallo-l"><span>Cause is in callback normalisation, not in the comparison.</span></span>
@@ -330,7 +340,7 @@ carries identity fields or exceeds the cap.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/15_command_surface.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">15_command_surface</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/20_checkpoint.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">20_checkpoint</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">25_continuity_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">33_event_registry</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_lifecycle_survives_a_stale_task.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">130_lifecycle_survives_a_stale_task</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/15_command_surface.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">15_command_surface</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/20_checkpoint.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">20_checkpoint</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">25_continuity_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">33_event_registry</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
@@ -380,7 +390,7 @@ carries identity fields or exceeds the cap.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

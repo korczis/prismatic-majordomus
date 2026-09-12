@@ -330,10 +330,20 @@ prompts:
 session:
   briefing_on_start: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
-  checkpoint_on_compact: true
+  checkpoint_on_compact: true            # also the checkpoint the close records, for the
+                                         # same reason: both are moments at which what the
+                                         # episode knows stops being reachable
   handover_on_end: true
   ensure_server_on_start: true           # the start event converges on a ready shared server
   stranded_after: 12h                    # an open episode silent this long may be recovered
+  # How old a continuation record may be before it stops being current. Divergence
+  # (exact/advanced/diverged/different_context) is a fact about git topology and says
+  # nothing about age; a record can be `advanced` and six days dead at the same time, and
+  # that combination is what carried a finished instruction into every new episode for a
+  # week (ADR 0052). Declared once and read by every surface.
+  freshness:
+    fresh_minutes: 720                   # 12h: within a working day either side, current
+    stale_minutes: 2880                  # 48h: beyond this it is history, never current
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline&#39;s
@@ -404,7 +414,7 @@ projections:
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -5146,7 +5146,7 @@ identity the index holds.</td>
           <a href="#op-session_domain-machine" class="font-mono text-xs text-body-subtle hover:underline">session_domain.machine</a>
         </div>
         <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The episode lifecycle, as data</h3>
-        <p class="mt-1 break-words text-sm text-body">Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.</p>
+        <p class="mt-1 break-words text-sm text-body">Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.</p>
         <ul class="mt-3 flex flex-wrap gap-2 text-xs">
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
@@ -6748,7 +6748,7 @@ was read from, a capability id, or a command. Never a machine path.</td>
           <h3 class="font-mono text-base font-semibold text-heading">Balance</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
         </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the ledger says about episode lifecycle against what the store holds.</p>
-<p>The invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode
+<p>The invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode
 that started either closed or is still open. When <code>started</code> exceeds <code>closed + open</code>, the
 difference is episodes whose close was never recorded — the shape of the outage that ADR
 describes, where events kept arriving and the records they should have produced did not.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -11302,7 +11302,7 @@ Empty when it has written none.</td>
 span three episodes; the two are joined here by what the ledger recorded rather than
 by either one owning the other. An episode with no task is ordinary — work outside a
 task is permitted — and it is emphatically not a reason for the episode's own records
-to go unwritten, which is the premise ADR 0041 removes.</td>
+to go unwritten, which is the premise ADR 0052 removes.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">note</td>
                 <td class="px-3 py-2 font-mono text-body">string</td>
@@ -13260,7 +13260,22 @@ there is one. A finding always carries enough to fix it without searching.</div>
                 <td class="px-3 py-2 text-body">The monospace stack.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DesignReport" class="font-mono text-fg-brand underline">DesignReport</a></p></article><article id="schema-Gate" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-DesignReport" class="font-mono text-fg-brand underline">DesignReport</a></p></article><article id="schema-Freshness" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Freshness</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;fresh&quot; | &quot;aging&quot; | &quot;stale&quot; | &quot;unknown&quot; | &quot;invalid&quot;</span>
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How old a record is, judged against <code>session.freshness</code> in the policy.</p>
+<p>This is the second of two independent judgements every record carries, and it exists
+because the first one cannot answer this question. [<code>Divergence</code>] says where a record's
+commit sits relative to HEAD; <code>advanced</code> means that commit is an ancestor of this one,
+which sounds like agreement and is identically true on the day the record is written and
+a month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that
+was <code>advanced</code> and six days dead, and every surface that read this model — MCP, the HTTP
+API, the Cockpit — presented its <code>Next Action</code> as the thing to do (ADR 0052).</p>
+<p>The thresholds are policy and are read, never restated here: a constant in this file
+would be a second source of truth for a number the policy owns, and a repository whose
+policy predates the key is reported as [<code>Freshness::Unknown</code>] naming the missing key
+rather than judged against a default nobody declared.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">fresh</code><span class="min-w-0 text-body">Inside `session.freshness.fresh_minutes`. Current; act on it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">aging</code><span class="min-w-0 text-body">Between the two thresholds. Still current, but its age is worth stating.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 text-body">At or beyond `session.freshness.stale_minutes`. History, never current.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 text-body">Nothing to judge it by: no timestamp, or no thresholds declared.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">invalid</code><span class="min-w-0 text-body">A timestamp that does not parse, or one in the future.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Record" class="font-mono text-fg-brand underline">Record</a></p></article><article id="schema-Gate" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Gate</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -18738,10 +18753,37 @@ to open the file.</div><div class="mt-3 overflow-x-auto rounded-base border bord
                 <td class="px-3 py-2 font-mono text-body">yes</td>
                 <td class="px-3 py-2 text-body">How far its commit is from this one.</td>
               </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">freshness</td>
+                <td class="px-3 py-2 font-mono text-body">Freshness <span class="text-body-subtle">→</span> <a href="#schema-Freshness" class="text-fg-brand underline">Freshness</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How old it is, judged against <code>session.freshness</code>. Independent of <code>divergence</code>: a
+record is routinely <code>advanced</code> and <code>stale</code> at once, and that pair is what a reader
+must not collapse into "trustworthy".</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">age_minutes</td>
+                <td class="px-3 py-2 font-mono text-body">integer | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Its age in whole minutes, when it has a timestamp that parses.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">freshness_reason</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Why it was judged that way, in one phrase. Never empty: a verdict a reader cannot
+act on is the failure this subsystem is being corrected for.</td>
+              </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">next_action</td>
                 <td class="px-3 py-2 font-mono text-body">string</td>
                 <td class="px-3 py-2 font-mono text-body">no</td>
-                <td class="px-3 py-2 text-body">The section a resuming worker acts on, when the record has one. A handover's <code>Next Action</code>; empty for a record that carries no sections.</td>
+                <td class="px-3 py-2 text-body">The section a resuming worker acts on, when the record has one and is still current.
+A handover's <code>Next Action</code>; empty for a record that carries no sections, and
+deliberately empty for one that is <code>stale</code> or <code>invalid</code> — see <code>next_action_withheld</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">next_action_withheld</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Why <code>next_action</code> is empty despite the record having one. Set only when it was
+withheld, never when the record simply carries no such section, so that a reader can
+tell "there is nothing to do" from "what there was to do is six days old".</td>
               </tr></tbody>
           </table>
         </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Continuity" class="font-mono text-fg-brand underline">Continuity</a></p></article><article id="schema-RecordedSpelling" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -22679,7 +22721,7 @@ nobody has started has no branch yet.</td>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Transition</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;open&quot; | &quot;resume&quot; | &quot;checkpoint&quot; | &quot;detach&quot; | &quot;close&quot; | &quot;recover&quot;</span>
-        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What moved an episode. The vocabulary the ADR 0041 audit needs: <code>open</code>, <code>resume</code>,
+        </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What moved an episode. The vocabulary the ADR 0052 audit needs: <code>open</code>, <code>resume</code>,
 <code>checkpoint</code>, <code>detach</code>, <code>close</code>, <code>recover</code>.</p>
 <p>One of them does not change the state, and it is a transition anyway. A checkpoint
 leaves an open episode open — but it is one of the two events whose <em>absence</em> is what
@@ -22709,7 +22751,7 @@ which that outage is invisible.</p>
 again on a resume and on a compaction against an episode that is still open; that
 is the same transition observed from `Open`, and the honest answer to &quot;your episode
 is already open&quot; is to keep it rather than to open a second one.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">checkpoint</code><span class="min-w-0 text-body">A progress note was recorded against the episode. An artefact of the episode and
-not of a task (ADR 0041): a checkpoint outside a task records `task: none` and is a
+not of a task (ADR 0052): a checkpoint outside a task records `task: none` and is a
 normal record, not a refusal.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">detach</code><span class="min-w-0 text-body">The connection went away without an end event.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">close</code><span class="min-w-0 text-body">The worker ended the episode and the immutable record was published.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">recover</code><span class="min-w-0 text-body">Nobody ended it and its last sign of life is older than the stranded threshold, so
 maintenance closed it. The record says so: an episode closed this way is
 `interrupted`, because a reader resuming from it needs to know it may be incomplete.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-TransitionView" class="font-mono text-fg-brand underline">TransitionView</a></p></article><article id="schema-TransitionView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -23421,7 +23463,7 @@ is inferred from similarity.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -345,13 +345,22 @@ session asserts only that the episode ended.</p>
 nothing else; every other record is written exactly as before.</p>
 <h2 id="checkpoint-and-handover-are-different-objects"><a class="zola-anchor" href="#checkpoint-and-handover-are-different-objects" aria-label="Anchor link for: checkpoint-and-handover-are-different-objects">Checkpoint and handover are different objects</a></h2>
 <p>They are easy to conflate and expensive to conflate.</p>
-<p>A <strong>checkpoint</strong> is a progress note inside an active task. It is written often, it is
-short by policy (<code>checkpoint.max_body_lines</code>), and its job is to be quotable whole into
-the next briefing. "Reproduced the fault with the fixture; the cause is in normalisation,
-not comparison; next, write the regression test."</p>
+<p>A <strong>checkpoint</strong> is a progress note of an episode. It is written often, it is short by
+policy (<code>checkpoint.max_body_lines</code>), and its job is to be quotable whole into the next
+briefing. "Reproduced the fault with the fixture; the cause is in normalisation, not
+comparison; next, write the regression test."</p>
 <p>A <strong>handover</strong> is a deliberate continuation package written when a worker stops. It has
 required sections, it is refused if any of them is empty, and it is the thing another
 worker resumes from. It is written rarely.</p>
+<p><strong>Neither of them belongs to a task.</strong> Both name the task they were written under when
+there is one, and both are written when there is not. A task is a unit of intended work
+that somebody opens and closes; an episode is a provider's conversation boundary that
+begins when a client attaches and ends when it detaches. Making the records depend on the
+first means that the ordinary act of finishing a task disables continuity for every episode
+after it — which is not a hypothetical. Between 2026-09-05 and 2026-09-11 this repository
+wrote neither record, because a task had been marked <code>handed_over</code> and three separate
+guards each asked, correctly against their own contract, whether a task was <code>active</code>. ADR
+0052 removed the premise they shared.</p>
 <p>A checkpoint that grows into a report is refused rather than truncated, with the
 suggestion to write a handover instead. The cap is the mechanism that keeps the two
 objects distinct.</p>
@@ -454,7 +463,8 @@ automatically and one that is also read.</p>
 <span class="giallo-l"><span>        +--&gt; session opens (or the open one is kept)</span></span>
 <span class="giallo-l"><span>        +--&gt; the working context is frozen</span></span>
 <span class="giallo-l"><span>        +--&gt; the briefing goes to stdout: the episode, the resolved handover with its</span></span>
-<span class="giallo-l"><span>        |    divergence label, the blockers, and the one section to act on</span></span>
+<span class="giallo-l"><span>        |    divergence label AND its freshness, the blockers, and — only when the record</span></span>
+<span class="giallo-l"><span>        |    is still current — the one section to act on</span></span>
 <span class="giallo-l"><span>        v</span></span>
 <span class="giallo-l"><span>   work happens</span></span>
 <span class="giallo-l"><span>        |</span></span>
@@ -462,8 +472,31 @@ automatically and one that is also read.</p>
 <span class="giallo-l"><span>        +--&gt; a derived checkpoint, because the conversation is about to stop holding it</span></span>
 <span class="giallo-l"><span>        |</span></span>
 <span class="giallo-l"><span>provider fires SessionEnd</span></span>
-<span class="giallo-l"><span>        +--&gt; a derived handover, when the task is still active</span></span>
+<span class="giallo-l"><span>        +--&gt; a derived checkpoint, for the same reason: the close is the other moment at</span></span>
+<span class="giallo-l"><span>        |    which what the episode knows stops being reachable</span></span>
+<span class="giallo-l"><span>        +--&gt; a derived handover</span></span>
 <span class="giallo-l"><span>        +--&gt; the episode closes into its envelope of references</span></span></code></pre>
+<p>Every one of those arrows fires whether or not a task is open and whatever outcome the last
+task reached, and each event writes a <code>provider.event.received</code> line to the ledger <em>before</em>
+any of them is decided. A hook must return success to its provider — blocking somebody's
+work is the worse failure — but returning success is not the same as claiming the work
+happened, and without the receipt an event that never fired and an event that fired and did
+nothing are the same observation afterwards.</p>
+<h2 id="divergence-is-not-freshness"><a class="zola-anchor" href="#divergence-is-not-freshness" aria-label="Anchor link for: divergence-is-not-freshness">Divergence is not freshness</a></h2>
+<p>Every record carries two independent judgements and they answer different questions.</p>
+<p><strong>Divergence</strong> — <code>exact</code>, <code>advanced</code>, <code>diverged</code>, <code>different_context</code> — says where the
+record's commit sits relative to this checkout's HEAD. <strong>Freshness</strong> — <code>fresh</code>, <code>aging</code>,
+<code>stale</code>, <code>unknown</code>, <code>invalid</code> — says how old it is, against <code>session.freshness</code> in the
+policy, which is the only place either threshold is written.</p>
+<p>A record is <code>advanced</code> on the day it is written and still <code>advanced</code> a month later:
+<code>advanced</code> means its commit is an ancestor of HEAD, which sounds like agreement and says
+nothing whatever about time. A record that is both <code>advanced</code> and <code>stale</code> is the exact
+shape of the 2026-09-05 outage, and it is the reason the two are reported side by side.</p>
+<p>A stale record is history. The briefing still shows it — knowing what the last worker was
+doing is worth having — but it is labelled as historical, its age and the reason are
+stated, and its <code>Next Action</code> is deliberately <strong>not</strong> quoted as the thing to do now. An
+instruction that was correct six days ago, handed over without qualification, is worse than
+no instruction: the worker cannot tell it is wrong until after acting on it.</p>
 <p>The episode belongs to the provider session that opened it, and not to the checkout. Two
 windows of the same provider open on one worktree are two workers: each start event opens
 or keeps <em>its own</em> episode, each end event closes its own and no other, and each worker's
@@ -517,9 +550,9 @@ a second account of events the ledger already holds is what this design refuses.
 <p><strong>No clock and no thresholds.</strong> Nothing in <code>lifecycle.*</code> decides that a record is old. Age
 is <code>session.freshness</code> in the policy and <code>continuity.state</code>'s to judge; a second engine for
 it here would be the second source of truth that makes the numbers disagree. (<code>session.freshness</code>
-and the <code>fresh | aging | stale | unknown | invalid</code> labels are ADR 0041's and arrive with it;
+and the <code>fresh | aging | stale | unknown | invalid</code> labels are ADR 0052's and arrive with it;
 until they do, a record carries its divergence label and its recorded timestamp, and a reader
-does the arithmetic. The whole point of ADR 0041 is that a reader should not have to.)</p>
+does the arithmetic. The whole point of ADR 0052 is that a reader should not have to.)</p>
 <p><strong>No guess about attachment.</strong> Whether the provider that opened an episode is still attached
 to its conversation is not a fact of this repository. The episode file records no process,
 the peer board records no episode, and a client that exits without firing its end event
@@ -554,7 +587,7 @@ exists; the labels on the arrows are what has to be true for the next box to be 
 <span class="giallo-l"><span>                                 |        independent labels: divergence (where their commit</span></span>
 <span class="giallo-l"><span>                                 |        sits) and freshness (how old they are). A stale</span></span>
 <span class="giallo-l"><span>                                 |        record is shown as history; its `Next Action` is</span></span>
-<span class="giallo-l"><span>                                 |        not quoted as the thing to do now.  [ADR 0041]</span></span>
+<span class="giallo-l"><span>                                 |        not quoted as the thing to do now.  [ADR 0052]</span></span>
 <span class="giallo-l"><span>                                 v</span></span>
 <span class="giallo-l"><span>                    CONTEXT PROJECTED   the briefing, within `session.briefing_budget_lines`,</span></span>
 <span class="giallo-l"><span>                                 |      frozen into `local/session-contexts/` as the working</span></span>
@@ -594,7 +627,7 @@ recently did without: <strong>freshness validated</strong> is a step, not a prop
 Without it a handover that was <code>advanced</code> — a true statement about git topology, and
 identically true on the day it was written and a month later — was quoted into every new
 episode for six days after the work it described was finished. The decision, the thresholds
-and the labels are ADR 0041's, "The
+and the labels are ADR 0052's, "The
 session lifecycle is the episode's, not the task's"; every other box in the path is behaviour this tree already has. And the <strong>tracked</strong> box is where the local
 half stops: a clone receives the closed records and nothing else, which is why no generated
 document and no site page may carry a briefing, a working context or an open episode.</p>
@@ -670,7 +703,7 @@ models are shaped this way.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

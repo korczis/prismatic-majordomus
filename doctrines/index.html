@@ -218,8 +218,8 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">43</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">38</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">44</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">39</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">5</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/share/standard/majordomus/" class="text-fg-brand underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
@@ -377,6 +377,14 @@
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Handover integrity</h2>
           <p class="text-sm leading-relaxed text-body">The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_resolver</span>
+        </a>
+      </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.lifecycle-observed lifecycle observation lifecycle doctor watch'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/doctrines/lifecycle-observed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="mj-badge mj-badge--blocking">blocking</span>
+<span class="font-mono text-xs text-body-subtle">doctor · watch</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Lifecycle observation</h2>
+          <p class="text-sm leading-relaxed text-body">A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_lifecycle</span>
         </a>
       </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.note-integrity note integrity note finish'.includes(q.toLowerCase()))">
         <a href="https://majordomus.dev/doctrines/note-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
@@ -602,7 +610,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -323,10 +323,13 @@ that tries to set identity fields is rejected.</p>
 <p><code>--close</code> additionally sets the task's outcome to <code>handed_over</code>, so that a new task may
 <code>start</code> in this checkout; the old record is archived by that <code>start</code>. Without
 <code>--close</code> the task stays active for the next session to continue.</p>
-<p>The provider's <code>SessionEnd</code> event runs <code>--derive --close</code> when the task is still active, so
-an episode that ends leaves a continuation record and not only the envelope of what it
-produced. The two answer different questions: the session record indexes the episode, and a
-handover is what the next worker resumes from.</p>
+<p>The provider's <code>SessionEnd</code> event runs <code>--derive --close</code>, or <code>--derive --no-task</code> when no
+task record exists, so that an episode that ends leaves a continuation record and not only
+the envelope of what it produced. The two answer different questions: the session record
+indexes the episode, and a handover is what the next worker resumes from. It does not ask
+whether the task is active — until ADR 0052 it did, and a repository whose last task had
+been handed over stopped writing the one record a future worker resumes from, for six days,
+while every health check passed.</p>
 <p><strong>Refuses</strong> (<code>10</code>) if a required section is missing or empty, or if the body contains
 an identity field. Refuses (<code>12</code>) with no active task unless <code>--no-task</code>.</p>
 <p><strong>Resolve:</strong> <code>majordomus handover --resolve</code> finds the most relevant prior handover for
@@ -339,7 +342,7 @@ alone, for scripting; <code>--no-task</code> resolves without an active task.</p
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/05_handover.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">05_handover</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/15_command_surface.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">15_command_surface</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/19_end_to_end.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">19_end_to_end</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">25_continuity_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/32_refusal_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">32_refusal_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">33_event_registry</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/05_handover.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">05_handover</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_lifecycle_survives_a_stale_task.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">130_lifecycle_survives_a_stale_task</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/136_changed_files_classifier.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">136_changed_files_classifier</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/15_command_surface.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">15_command_surface</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/19_end_to_end.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">19_end_to_end</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/25_continuity_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">25_continuity_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/32_refusal_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">32_refusal_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">33_event_registry</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
@@ -390,7 +393,7 @@ alone, for scripting; <code>--no-task</code> resolves without an active task.</p
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

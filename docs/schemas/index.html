@@ -1356,16 +1356,18 @@ error.</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>event</th><th>extra fields</th></tr></thead><tbody>
 <tr><td><code>task.started</code></td><td><code>profile</code>, <code>scope[]</code>, <code>owner</code></td></tr>
-<tr><td><code>task.checkpoint</code></td><td><code>checkpoint_path</code> when a body was written; absent when only <code>checkpoint_at</code> moved</td></tr>
+<tr><td><code>task.checkpoint</code></td><td><code>checkpoint_path</code> when a body was written; absent when only <code>checkpoint_at</code> moved; <code>task_id</code> when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0052)</td></tr>
 <tr><td><code>task.evidence</code></td><td><code>task</code>, <code>covers</code> (the obligation token), <code>kind</code>, <code>inputs_hash</code> (over the obligation's declared inputs), and <code>command</code>, <code>artifact</code>, <code>result</code> when given</td></tr>
 <tr><td><code>task.finished</code></td><td><code>outcome</code>, <code>contract</code> (object of doctrine id → <code>pass</code>/<code>fail</code>/<code>skipped</code>), <code>verify</code> (<code>command</code>, <code>exit</code>, <code>seconds</code>) or null, <code>checkpoints</code> (count)</td></tr>
-<tr><td><code>task.handed_over</code></td><td><code>handover_path</code>, <code>closed</code> (true with <code>--close</code>)</td></tr>
+<tr><td><code>task.handed_over</code></td><td><code>handover_path</code>, <code>closed</code> (true with <code>--close</code>); <code>task_id</code> when a task was open, absent otherwise</td></tr>
 <tr><td><code>decision.recorded</code></td><td><code>decision</code> (the entry's title)</td></tr>
 <tr><td><code>question.opened</code></td><td><code>question</code></td></tr>
 <tr><td><code>question.resolved</code></td><td><code>question</code>, <code>answer</code></td></tr>
 <tr><td><code>session.started</code></td><td><code>owner</code>, <code>worker</code> when one was supplied</td></tr>
 <tr><td><code>session.closed</code></td><td><code>outcome</code>, <code>session_path</code></td></tr>
 <tr><td><code>session.recovered</code></td><td><code>session_id</code> (the episode recovered, which is never the one the envelope's own <code>session</code> stamp names), <code>reason</code> (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), <code>session_path</code></td></tr>
+<tr><td><code>provider.event.received</code></td><td><code>provider</code>, <code>event</code> (<code>start</code>/<code>end</code>/<code>compact</code>), <code>provider_session</code> when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event</td></tr>
+<tr><td><code>provider.event.failed</code></td><td><code>provider</code>, <code>event</code>, <code>reason</code>. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding</td></tr>
 <tr><td><code>ledger.rotated</code></td><td><code>archived</code> (lines moved), <code>kept</code>, <code>archive</code> (path)</td></tr>
 <tr><td><code>projections.updated</code></td><td><code>policy_sha256</code>, <code>targets</code> (count)</td></tr>
 <tr><td><code>use_cases.ran</code></td><td><code>ran</code>, <code>failed</code> (counts; the evidence under <code>.ai/local/evidence/use-cases/</code> carries the steps)</td></tr>
@@ -1525,7 +1527,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0136bd9ebb70d50f72ea08d7b3ef33232eccb900" class="font-mono underline">0136bd9</a> · inputs <span class="font-mono">0eebcfa66aa2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b144b2110b1d98565ed780b71b6fff0fdc146b6a" class="font-mono underline">b144b21</a> · inputs <span class="font-mono">4b976e8dff2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
