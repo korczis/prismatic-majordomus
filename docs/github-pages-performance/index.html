@@ -309,11 +309,54 @@ and fails on any difference, so the two cannot drift. When you change a class in
 regenerate the block:</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> paths</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> sed</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">s/^/      - /</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> paste into the paths: block of pages.yml</span></span></code></pre><h3 id="budgets"><a class="zola-anchor" href="#budgets" aria-label="Anchor link for: budgets">Budgets</a></h3>
 <p>Budgets are controlled latency only, in seconds, warm, on a GitHub-hosted Linux runner. They
-were set from measurement — the local benchmark above and the timing rows every deployment
-writes — and a change to one is expected to cite the run that justified it
-(<code>project.performance-evidence</code>). A cold run pays for caches it cannot restore and has its own,
-looser bound. The end-to-end target is reported against every deployment and <strong>not</strong> enforced,
-because the larger half of it is GitHub's.</p>
+are set from measurement — the timing rows every deployment writes — and a change to one is
+expected to cite the run that justified it (<code>project.performance-evidence</code>). A cold run pays
+for caches it cannot restore and has its own, looser bound. The end-to-end target is reported
+against every deployment and <strong>not</strong> enforced, because the larger half of it is GitHub's.</p>
+<p>Two structural rules, both of which the first set of budgets broke and
+<code>test/cases/97_pages_fast_path.sh</code> now asserts:</p>
+<ul>
+<li><strong>Every row the run measures has a budget.</strong> The timings file gets six rows —
+<code>checkout-setup</code> from the workflow, <code>fingerprint</code> and <code>build</code> from <code>scripts/pages build</code>,
+<code>check</code> and <code>local-check</code> from <code>scripts/pages check</code>, <code>publish</code> from the workflow. The
+original model named <code>checkout</code> and <code>setup</code> separately and named nothing for <code>fingerprint</code>
+or <code>local-check</code>, so three of the six rows of every job summary printed an empty budget
+cell while still being summed into the total.</li>
+<li><strong><code>controlled</code> is reachable by adding up its own rows.</strong> It was 75 while the phases summed
+to 105, which made the aggregate stricter than the parts it is made of: a run could be
+inside every single phase budget and still breach, with nothing to point at.</li>
+</ul>
+<h4 id="the-re-derivation-of-2026-09-12"><a class="zola-anchor" href="#the-re-derivation-of-2026-09-12" aria-label="Anchor link for: the-re-derivation-of-2026-09-12">The re-derivation of 2026-09-12</a></h4>
+<p>The budgets written when this path was built were never changed after it, and by 2026-09-12
+they were failing every deployment. They came from
+<code>.ai/repo/benchmarks/pages/baseline.macos-arm64.json</code> — a local macOS arm64 laptop, five
+samples, <code>check</code> median 9799 ms — over a site of <strong>417 routes</strong>. The site <code>check</code> walks is now
+<strong>1021 routes</strong>, 2.45x that baseline, and that directory's own README says a baseline of one
+machine says nothing about another.</p>
+<p>The replacement is measured on the machine it judges: twenty-five runs of <code>pages.yml</code> that
+reached the publish step, 2026-09-10T22:56Z to 2026-09-12T06:38Z, read from
+<code>gh api repos/korczis/prismatic-majordomus/actions/runs/&lt;id&gt;/jobs</code>.</p>
+<!-- Columns are left-aligned deliberately. A right-aligned markdown column renders as a
+     `style="text-align: right"` attribute, which the site's custom CSS policy forbids and
+     `scripts/site-check` refuses on the publication path — it would fail the deploy. -->
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>row</th><th>min</th><th>median</th><th>p90</th><th>max</th><th>budget</th></tr></thead><tbody>
+<tr><td><code>checkout-setup</code></td><td>7</td><td>10</td><td>12</td><td>15</td><td>18</td></tr>
+<tr><td><code>fingerprint</code></td><td>0</td><td>0</td><td>0</td><td>1</td><td>3</td></tr>
+<tr><td><code>build</code></td><td>4</td><td>4</td><td>5</td><td>6</td><td>8</td></tr>
+<tr><td><code>check</code></td><td>30</td><td>38</td><td>46</td><td>47</td><td>60</td></tr>
+<tr><td><code>local-check</code></td><td>0</td><td>0</td><td>0</td><td>1</td><td>3</td></tr>
+<tr><td><code>publish</code></td><td>13</td><td>20</td><td>24</td><td>24</td><td>28</td></tr>
+<tr><td><strong>controlled</strong></td><td><strong>60</strong></td><td><strong>75</strong></td><td><strong>84</strong></td><td><strong>86</strong></td><td><strong>120</strong></td></tr>
+</tbody></table>
+</div>
+<p><strong>Nothing had regressed.</strong> Over those same runs <code>checkout-setup</code> held at 7–15 s and <code>build</code> at
+4–6 s, so both cache domains below restore; and <code>check</code> cost 41 ms per route at 896 routes on
+2026-09-10 (37 s) against 45 ms per route at 1022 routes on 2026-09-12 (46 s). Its growth is
+the corpus it walks, not a defect in how it walks it. What had gone stale was the budget.</p>
+<p>The cold bound moved with it. No cold run appears in that window, so it keeps the allowance the
+old pair expressed — 180 against a warm 75, i.e. 105 s for an uncached <code>npm ci</code> and Zola
+download — over the new warm budget: 120 + 105 = 225.</p>
 <h2 id="caches"><a class="zola-anchor" href="#caches" aria-label="Anchor link for: caches">Caches</a></h2>
 <p>Each domain is invalidated by its own inputs and nothing else, so a documentation change does
 not evict a toolchain and a lockfile change does not evict the site.</p>
@@ -351,6 +394,51 @@ verdict line:</p>
 in those words rather than reporting a failure: the remainder is the Actions queue and
 GitHub's own Pages build, which this repository does not spend, and that is an external limit
 rather than a regression here.</p>
+<h3 id="what-makes-the-run-red"><a class="zola-anchor" href="#what-makes-the-run-red" aria-label="Anchor link for: what-makes-the-run-red">What makes the run red</a></h3>
+<p>A deploy run is red when, and only when, the <strong>deployment</strong> failed. That was not true until
+2026-09-12. <code>scripts/pages report</code> exits 10 on a budget breach, and the workflow ran it as an
+ordinary step <em>after</em> the push to <code>gh-pages</code> — so a measurement of work already finished became
+the verdict on that work.</p>
+<p>Between 2026-09-11T22:36Z and 2026-09-12T06:38Z, <strong>eleven</strong> runs of this workflow reported
+<code>failure</code> from that step (<code>90a875cf2</code>, <code>8ce9d3157</code>, <code>e98bfd44a</code>, <code>48a546ebb</code>, <code>0136bd9eb</code>,
+<code>b144b2110</code>, <code>bbd5a9791</code>, <code>94a018ded</code>, <code>497d56d40</code>, <code>180687c8f</code>, <code>4a4ad6aac</code>). Every one of
+them had pushed <code>gh-pages</code> successfully, and the newest was verified end to end: the live site
+served <code>4a4ad6aac</code>. In the same window exactly one run genuinely failed to publish —
+<code>d5e27a500</code>, whose <code>build</code> step failed, whose <code>publish</code> step was skipped, and whose report step
+therefore <strong>passed</strong>, because there was almost nothing to add up.</p>
+<p>So the run that had not published was the one where the budget check was green, and it carried
+the same <code>failure</code> conclusion as the eleven that had. At the level anybody reads first — the
+tick on the commit, <code>gh run list</code>, the notification — the two were identical; only an
+annotation inside the run told them apart. And the report's Markdown goes to
+<code>$GITHUB_STEP_SUMMARY</code> rather than to the log, so opening the log gave <code>Process completed with exit code 10</code> with no number above it.</p>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+    P{"did the push to gh-pages happen?"}
+    P -- no --&gt; R["run is RED&lt;br/&gt;::error Not published&lt;br/&gt;pages-live refuses on the next validation"]
+    P -- yes --&gt; G{"did GitHub's own build of gh-pages error?"}
+    G -- yes --&gt; R2["run is RED&lt;br/&gt;::error GitHub's Pages build errored"]
+    G -- "no, or not yet known" --&gt; N["::notice Published&lt;br/&gt;run is GREEN"]
+    N --&gt; B{"controlled path within budget?"}
+    B -- yes --&gt; OK["Pages SLO: PASS in the job summary"]
+    B -- no --&gt; W["run stays GREEN&lt;br/&gt;::warning naming the total and the phase that spent it&lt;br/&gt;OVER BUDGET in the summary, pages-slo in the log"]
+</pre>
+<p>The budget is not softened anywhere else. <code>scripts/pages report</code> still exits 10 on a breach for
+a person and for any gate that calls it; <code>--advisory</code> is passed by exactly one caller — the
+post-publish step that measures a deployment which has already happened — and
+<code>test/cases/97_pages_fast_path.sh</code> asserts that it stays exactly one. A breach still produces,
+on every run:</p>
+<ul>
+<li>a <code>::warning</code> annotation on the run, carrying the total, the budget and the phase over its own;</li>
+<li>the full phase table and a bold <strong>OVER BUDGET</strong> verdict in the job summary;</li>
+<li>a <code>pages-slo verdict=… controlled=… budget=… over=…</code> line in the <strong>log</strong>, which is where the
+eleven red runs above were read from and where nothing used to be printed at all;</li>
+<li><code>verdict</code>, <code>controlled</code>, <code>budget</code> and <code>over</code> as outputs of the step, for a reader that is not
+a person.</li>
+</ul>
+<p>This is the same division the publication probe above already makes, and for the same reason: a
+gate on a deployment that has already happened is a gate that gets waived. What refuses a
+publication that never happened is the <code>pages-live</code> gate of <code>.ai/repo/ci/gates.yaml</code>, on the
+next validation of master.</p>
 <h2 id="locally"><a class="zola-anchor" href="#locally" aria-label="Anchor link for: locally">Locally</a></h2>
 <p>The same commands CI runs. There is no GitHub-only build semantics.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> current</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> is the committed derived data current for this tree?</span></span>
@@ -379,10 +467,14 @@ memorable:</p>
 trade is worth revisiting — with the measurement, not with the preference.</p>
 <h2 id="remaining-bottlenecks-by-expected-benefit"><a class="zola-anchor" href="#remaining-bottlenecks-by-expected-benefit" aria-label="Anchor link for: remaining-bottlenecks-by-expected-benefit">Remaining bottlenecks, by expected benefit</a></h2>
 <ol>
-<li><strong><code>site-check</code>, 9.7 s of a 10.3 s controlled build.</strong> Its remaining cost is the per-record
-loops that shell out to <code>jq</code> once per claim, command, capability, use case and plan record.
-The same treatment that took the per-page loops from 25 s to under a second applies:
-one <code>jq</code> program per family instead of one process per record.</li>
+<li><strong><code>site-check</code>, 46 s of an 86 s controlled path on a runner</strong> (9.7 s of 10.3 s locally, on
+a laptop, over a site less than half the size). It is the only phase that grows with the
+corpus: 41 ms per route at 896 routes, 45 ms per route at 1022. Its remaining cost is the
+per-record loops that shell out to <code>jq</code> once per claim, command, capability, use case and
+plan record. The same treatment that took the per-page loops from 25 s to under a second
+applies: one <code>jq</code> program per family instead of one process per record. Until that lands,
+the site adding routes is the thing that moves <code>controlled</code>, and the budget above is what
+will say so.</li>
 <li><strong>The Actions queue.</strong> On this repository, with several worktrees pushing at once, runs
 have waited minutes for a runner (<code>gh run list --json createdAt,startedAt</code>). Nothing in
 these files shortens that. The escalation, if the controlled path is already comfortably
@@ -401,8 +493,18 @@ the cold budget covers.</li>
 trigger follow from it.</li>
 <li>A new path that can change the site goes into a class of <code>gates.yaml</code> that names the
 <code>site-build</code> gate; then regenerate the workflow's <code>paths:</code> block as above.</li>
-<li>A new budget, or a changed one, goes into <code>.ai/repo/ci/pages.yaml</code> and cites the run that
-justified it.</li>
+<li>A new budget, or a changed one, goes into <code>.ai/repo/ci/pages.yaml</code> and cites the runs that
+justified it, in the file, with their numbers — the block there is the worked example. A
+budget derived on a laptop does not bound a runner, and one derived over a site of half the
+size does not bound this one. <code>controlled</code> must stay at least the sum of its phases, and
+every row the run measures must have a key.</li>
+<li>A new timing row — a <code>row</code> or <code>timed</code> call in <code>scripts/pages</code>, or a <code>printf 'pages\t…'</code> in
+the workflow — needs a budget key of the same name in the same commit, or it is summed into
+the total while showing an empty budget cell. <code>test/cases/97_pages_fast_path.sh</code> refuses
+that.</li>
+<li>Nothing measured after the push to <code>gh-pages</code> may become the run's verdict. The run is red
+for a failed deployment and for nothing else; a latency finding is a <code>::warning</code>, a summary
+and a machine-readable line.</li>
 <li>A new check over the published bytes goes into <code>scripts/site-check</code>, which the publication
 path runs. A new check over the repository goes into the gate model, which it does not.</li>
 </ul>
@@ -464,7 +566,7 @@ path runs. A new check over the repository goes into the gate model, which it do
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
         <ul class="space-y-2 text-sm font-medium text-body">
-          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">Source repository</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
@@ -475,7 +577,7 @@ path runs. A new check over the repository goes into the gate model, which it do
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b8d3eb59b643366d6b0d22003aae2fd7b84736ad" class="font-mono underline">b8d3eb5</a> · inputs <span class="font-mono">73576914c2c3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/98a1f080003f2c609b8473dbdb8e6f0f50ff18f7" class="font-mono underline">98a1f08</a> · inputs <span class="font-mono">0514c5699c4f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
