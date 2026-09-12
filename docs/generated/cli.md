@@ -5,9 +5,9 @@
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it, read-only, to MCP clients over stdio.
+The Rust executable of Majordomus. It reads the repository's provider-neutral AI layer under .ai/ and serves it to MCP clients over stdio. Almost every capability is a query; the few that change anything declare themselves as commands and are listed by `capabilities list --kind command`.
 
-The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository; this executable does not implement those commands.
+Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shell tool bin/majordomus in the same repository. Development semantics are converging onto capabilities of this registry one at a time (ADR 0040); until one has, this executable does not implement that command.
 
 Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../../apps/majordomus-cli/src/cli.rs), together with its examples; this file is a projection of that declaration, as `--help` is, as `docs/generated/cli.json` is, and as the website's reference under `/docs/cli/` is. Every example printed here is executed against the built executable by `apps/majordomus-cli/tests/cli_examples.rs`. The task lifecycle (`init`, `start`, `check`, `finish`, `doctor`, ...) is the *shell* tool `bin/majordomus`, a different program, documented in `docs/CLI.md`.
 
@@ -15,8 +15,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 | command | route | does |
 |---|---|---|
-| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
-| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
+| [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio |
+| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ |
 | [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
 | [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
 | [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go |
@@ -118,18 +118,30 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus devcontext compile`](#majordomus-devcontext-compile) | `/docs/cli/devcontext/compile/` | Compile the context for a piece of work: every selected object with its provenance, the reason and the confidence, everything left out with the reason, what was deduplicated, and the per-tier budget; exit 10 when what may not be dropped already exceeds the budget |
 | [`majordomus devcontext explain`](#majordomus-devcontext-explain) | `/docs/cli/devcontext/explain/` | Why one canonical identifier is or is not in the context a request compiles to |
 | [`majordomus devcontext policy`](#majordomus-devcontext-policy) | `/docs/cli/devcontext/policy/` | The compiler's own rules: the tiers, every edge of the composed graph and what is done with it, the selectors, the defaults |
+| [`majordomus mesh`](#majordomus-mesh) | `/docs/cli/mesh/` | The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone |
+| [`majordomus mesh status`](#majordomus-mesh-status) | `/docs/cli/mesh/status/` | Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies |
+| [`majordomus mesh nodes`](#majordomus-mesh-nodes) | `/docs/cli/mesh/nodes/` | Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance |
+| [`majordomus mesh identity`](#majordomus-mesh-identity) | `/docs/cli/mesh/identity/` | This machine's node identity, public half only; absent is an answer, not an error |
+| [`majordomus mesh doctor`](#majordomus-mesh-doctor) | `/docs/cli/mesh/doctor/` | Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end |
+| [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
+| [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
+| [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
 | [`majordomus evidence`](#majordomus-evidence) | `/docs/cli/evidence/` | What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened |
 | [`majordomus evidence show`](#majordomus-evidence-show) | `/docs/cli/evidence/show/` | Every claim against the evidence recorded for it |
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
 | [`majordomus evidence proves`](#majordomus-evidence-proves) | `/docs/cli/evidence/proves/` | One test: its latest execution and every claim it proves |
 | [`majordomus evidence record`](#majordomus-evidence-record) | `/docs/cli/evidence/record/` | Record a run that happened into the ledger |
+| [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
+| [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
+| [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
+| [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus evidence`](#majordomus-evidence).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
 
 ```text
 majordomus <COMMAND>
@@ -140,7 +152,7 @@ Arguments: none.
 <a id="majordomus-mcp"></a>
 ## `majordomus mcp`
 
-Serve the repository's AI layer to an MCP client over stdio (read-only)
+Serve the repository's AI layer to an MCP client over stdio
 
 ```text
 majordomus mcp [OPTIONS]
@@ -188,7 +200,7 @@ Examples:
 <a id="majordomus-serve"></a>
 ## `majordomus serve`
 
-Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
+Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
 
 Subcommands: [`majordomus serve status`](#majordomus-serve-status), [`majordomus serve ensure`](#majordomus-serve-ensure), [`majordomus serve stop`](#majordomus-serve-stop).
 
@@ -3289,6 +3301,202 @@ Examples:
 
   Verified: exits 0; prints TIER, is_a, REFUSED.
 
+<a id="majordomus-mesh"></a>
+## `majordomus mesh`
+
+The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
+
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh doctor`](#majordomus-mesh-doctor).
+
+```text
+majordomus mesh <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-mesh-status"></a>
+## `majordomus mesh status`
+
+Whether the mesh runs in this checkout's server and why not when it does not, with every provider's state and the registry's tallies
+
+```text
+majordomus mesh status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether this checkout's server runs a mesh** — The mesh lives inside the shared server, so the command asks the running server for `mesh.status` and renders it. No server, or no mesh declaration, is an answer with its reason — never an error: the default posture is that nothing leaves the machine until a declaration says otherwise.
+
+  ```console
+  $ majordomus mesh status
+  ```
+
+  Verified: exits 0; prints mesh.
+
+<a id="majordomus-mesh-nodes"></a>
+## `majordomus mesh nodes`
+
+Every node the running server has observed, deduplicated by node identity, with trust, presence, endpoints and provenance
+
+```text
+majordomus mesh nodes [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The nodes the running server has observed** — One row per node, deduplicated by node identity across every discovery source, in node-id order: trust, presence, endpoints and where each observation came from. The registry lives in the server's memory; without a running server there are no nodes to list, and the command says so.
+
+  ```console
+  $ majordomus mesh nodes
+  ```
+
+  Verified: exits 0; prints mesh.
+
+<a id="majordomus-mesh-identity"></a>
+## `majordomus mesh identity`
+
+This machine's node identity, public half only; absent is an answer, not an error
+
+```text
+majordomus mesh identity [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **This machine's node identity, public half only** — The node id is a digest of the machine's Ed25519 public key, kept under the user's state directory — never inside a repository, and the signing key appears in no output. Absent is an answer: the identity is created when a mesh first activates.
+
+  ```console
+  $ majordomus mesh identity
+  ```
+
+  Verified: exits 0; prints present.
+
+<a id="majordomus-mesh-doctor"></a>
+## `majordomus mesh doctor`
+
+Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
+
+```text
+majordomus mesh doctor [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every mesh prerequisite, proved on this machine alone** — Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.
+
+  ```console
+  $ majordomus mesh doctor
+  ```
+
+  Verified: exits 0; prints protocol.
+
+<a id="majordomus-models"></a>
+## `majordomus models`
+
+The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
+
+Subcommands: [`majordomus models list`](#majordomus-models-list), [`majordomus models route`](#majordomus-models-route).
+
+```text
+majordomus models <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-models-list"></a>
+## `majordomus models list`
+
+Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order
+
+```text
+majordomus models list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--vendor` | `<VENDOR>` | — | Only this vendor |
+| `--capability` | `<CAPABILITY>` | — | Only models declaring this capability word |
+| `--id` | `<ID>` | — | One model, by canonical id or alias |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The declared model catalogue** — Every vendor and model share/models.yaml declares, in declaration order — which is also routing's preference order. Vendors show whether their named credential variable is set: presence only, never a value. An empty catalogue is an answer, not an error.
+
+  ```console
+  $ majordomus models list
+  ```
+
+  Verified: exits 0; prints model(s).
+
+<a id="majordomus-models-route"></a>
+## `majordomus models route`
+
+Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
+
+```text
+majordomus models route [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--require` | `<REQUIRE>` | — | Capability words the model must declare, comma-separated: `vision,tools` |
+| `--min-context` | `<MIN_CONTEXT>` | — | The least context window, tokens |
+| `--vendor` | `<VENDOR>` | — | Only this vendor |
+| `--local-only` | flag | — | Only local inference |
+| `--model` | `<MODEL>` | — | A model named outright, by canonical id or alias; still checked against the other requirements |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Which model a need selects, and why** — The first declared model satisfying every requirement wins; the qualifying rest are the fallback chain, and every excluded model carries the first check it failed. Pure over the declared data — the same question always gets the same answer, and the reasons are in it.
+
+  ```console
+  $ majordomus models route --require text
+  ```
+
+  Verified: exits 0; prints selected.
+
 <a id="majordomus-evidence"></a>
 ## `majordomus evidence`
 
@@ -3424,4 +3632,111 @@ Examples:
   ```
 
   Verified: exits 13.
+
+<a id="majordomus-rules"></a>
+## `majordomus rules`
+
+Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
+
+Subcommands: [`majordomus rules report`](#majordomus-rules-report), [`majordomus rules show`](#majordomus-rules-show), [`majordomus rules proves`](#majordomus-rules-proves).
+
+```text
+majordomus rules [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-rules-report"></a>
+## `majordomus rules report`
+
+Every rule against the proof there is for it
+
+```text
+majordomus rules report [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--state` | `<STATE>` | — | Only rules in this proof state (proven, inputs_unchanged, stale, gated, failing, not_run, reviewed, unrunnable, dangling, unproven) |
+| `--class` | `<CLASS>` | — | Only rules of this class (blocking, advisory) |
+| `--namespace` | `<NAMESPACE>` | — | Only rules of this namespace (project, majordomus) |
+| `--findings` | flag | — | Only the rules whose declared class the proof does not support |
+| `--check` | flag | — | Exit 10 when a rule declares a class the proof does not support |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every rule against the proof there is for it** — The same answer `GET /api/v1/rules` and the MCP tool `majordomus_rules` return: per rule, its class, the mode it declares, the validator and the cases it names, whether each is in the tree, the execution behind each, the gates that run them, and the sentence explaining how the state was derived. The tallies count the whole corpus even when the rules are filtered, and `review_only` is counted apart from `passing` so that a rule a person enforces is never added to a total that reads as proof.
+
+  ```console
+  $ majordomus rules report --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /rules, /states, /coverage/rules, /findings.
+
+<a id="majordomus-rules-show"></a>
+## `majordomus rules show`
+
+One rule: what proves it, what it depends on, and what is missing
+
+```text
+majordomus rules show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The rule id, with or without its version |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A rule the repository does not declare** — A rule id nothing declares is a not-found rather than an empty answer. A typo that read as `this rule has no proof` is the one answer this command must never give, because it is indistinguishable from the finding the whole subsystem exists to report.
+
+  ```console
+  $ majordomus rules show project.no-such-rule
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-rules-proves"></a>
+## `majordomus rules proves`
+
+One test: every rule it proves, and the rules that would be left with none
+
+```text
+majordomus rules proves [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | `suite:<case>`, `crate:<binary>`, or the path a rule names it with |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a case proves, and what would lose its only proof** — The reverse of `rules show`, reading the same derivation so the two directions cannot disagree. It names every rule that names this test and, separately, the rules that would be left with no proof at all if it were deleted — the question to ask before renaming a case, and the one that could not be asked while the relation ran one way only.
+
+  ```console
+  $ majordomus rules proves test/cases/125_rule_proof.sh --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
 

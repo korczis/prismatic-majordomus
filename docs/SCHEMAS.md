@@ -1357,6 +1357,7 @@ Events and their extra fields:
 | `question.resolved` | `question`, `answer` |
 | `session.started` | `owner`, `worker` when one was supplied |
 | `session.closed` | `outcome`, `session_path` |
+| `session.recovered` | `session_id` (the episode recovered, which is never the one the envelope's own `session` stamp names), `reason` (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), `session_path` |
 | `provider.event.received` | `provider`, `event` (`start`/`end`/`compact`), `provider_session` when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event |
 | `provider.event.failed` | `provider`, `event`, `reason`. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding |
 | `ledger.rotated` | `archived` (lines moved), `kept`, `archive` (path) |

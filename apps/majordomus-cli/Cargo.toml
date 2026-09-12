@@ -46,6 +46,13 @@ libc = "0.2"
 # from one the crate exports; `span-locations` is what lets a finding name a line.
 syn = { version = "2", default-features = false, features = ["full", "parsing", "clone-impls", "printing", "proc-macro"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
+# ed25519-dalek: the mesh (ADR 0043) treats every discovery datagram as hostile input, and
+# the only identity a node has is a public key it can prove — an unsigned advertisement
+# is noise, not a peer. Signatures only; no encryption, no TLS, no key exchange.
+ed25519-dalek = { version = "2", default-features = false, features = ["std", "fast", "zeroize"] }
+# getrandom: the node's one long-lived signing key and each instance's id need OS entropy
+# once at creation; nothing else in the crate is random.
+getrandom = "0.2"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

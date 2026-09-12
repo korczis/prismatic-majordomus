@@ -60,6 +60,14 @@ cleanup half.
 
 # Verification
 
-Review. The evidence a recovery is expected to consult is the same evidence the repository
-already keeps: `git status` and the branch's own history, the derived artifacts, the session
-and task records under `.ai/`.
+Review, and one executable instance. `majordomus recover` is this rule made mechanical for
+the record stores: it establishes what already happened before it repeats anything — a
+record for the episode already existing is the normal outcome of a re-run and of a crash
+between the publish and the teardown, and it keeps that record rather than writing a second
+— and `test/cases/135_session_store_recovery.sh` proves it, running every subject twice and
+asserting that the second run takes no action, and reconstructing an interrupted run
+(the record written, the open file still there) to assert that the resume keeps what exists.
+
+Everywhere else this is review. The evidence a recovery is expected to consult is the same
+evidence the repository already keeps: `git status` and the branch's own history, the derived
+artifacts, the session and task records under `.ai/`.

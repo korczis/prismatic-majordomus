@@ -87,7 +87,8 @@ mj_validate_policy() {
     unk="$(mj_yaml_unknown_keys "$MJ_POL_FLAT" "$MJ_ALLOW_DIR/policy.txt" || true)"
       if [ -z "$unk" ]; then mj_doctrine_ok policy "$(mj_rel "$MJ_POLICY_FILE")" "parsed, version 1"
       else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "grep -nE '$(printf '%s' "$unk" | sed 's/\..*//' | LC_ALL=C sort -u | tr '\n' '|' | sed 's/|$//')' $(mj_rel "$MJ_POLICY_FILE")"; fi
-  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)"; fi
+  else mj_doctrine_fail policy "$(mj_rel "$MJ_POLICY_FILE")" "unsupported version '$(mj_pol version)' (want 1)" \
+    "grep -n '^version:' $(mj_rel "$MJ_POLICY_FILE")"; fi
 
   local pf n count=0
   for pf in "$MJ_PROFILES_DIR"/*.yaml; do
@@ -95,12 +96,14 @@ mj_validate_policy() {
     if mj_load_profile "$n" 2>/dev/null; then
       unk="$(mj_yaml_unknown_keys "$MJ_PRO_FLAT" "$MJ_ALLOW_DIR/profile.txt" || true)"
       [ -n "$unk" ] && mj_doctrine_fail profiles "$n" "unknown keys: $(printf '%s' "$unk" | tr '\n' ' ')" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"
-      [ "$(mj_pro name)" = "$n" ] || mj_doctrine_fail profiles "$n" "name field '$(mj_pro name)' does not match filename"
+      [ "$(mj_pro name)" = "$n" ] || mj_doctrine_fail profiles "$n" "name field '$(mj_pro name)' does not match filename" \
+        "grep -n '^name:' $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"
     else mj_doctrine_fail profiles "$n" "does not parse" "cat $(mj_rel "$MJ_PROFILES_DIR")/$n.yaml"; fi
   done
   local def; def="$(mj_pol profiles.default)"
   if [ -f "$MJ_PROFILES_DIR/$def.yaml" ]; then mj_doctrine_ok profiles "$count files" "parsed; default '$def' exists"
-  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml"; fi
+  else mj_doctrine_fail profiles "default" "profiles.default='$def' has no file $(mj_rel "$MJ_PROFILES_DIR")/$def.yaml" \
+    "ls $(mj_rel "$MJ_PROFILES_DIR")"; fi
 
   return 0
 }
@@ -166,7 +169,8 @@ mj_validate_wiring() {
             mj_doctrine_fail wiring "$name" "git config $target names '$path' and it is not an executable here" "ls -l $path"
           else mj_doctrine_ok wiring "$name" "declared in this clone as $target"; fi ;;
         ci)
-          if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist"
+          if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist" \
+            "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")"
           elif ! grep -qE "${prog}[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke $prog $arg0" "grep -n $prog $target"
           else mj_doctrine_ok wiring "$name" "invoked from $target"; fi ;;
         provider-hook)
@@ -186,15 +190,18 @@ mj_validate_wiring() {
               cst="$(mj_capture_state "$cprov" "$caspect")"; creason="${cst#*"$MJ_TAB"}"; cst="${cst%%"$MJ_TAB"*}"
               if [ "$cst" = verified ]; then mj_doctrine_ok wiring "$name" "$creason"
               else mj_doctrine_fail wiring "$name" "$cst — $creason" "majordomus capture status"; fi ;;
-            *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" ;;
+            *) mj_doctrine_fail wiring "$name" "unknown provider-hook aspect '$caspect' (provider-hook:<provider> | provider-hook:<provider>:session)" \
+                 "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
           esac ;;
         manual) mj_doctrine_skip wiring "$name" "wired_by: manual — documented, not verified" ;;
-        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" ;;
+        *) mj_doctrine_fail wiring "$name" "unknown wired_by kind '$kind' (git-hook:<name> | ci:<path> | provider-hook:<provider>[:session] | manual)" \
+             "grep -n 'wired_by' $(mj_rel "$MJ_POLICY_FILE")" ;;
       esac
     fi
     i=$((i+1))
   done
-  [ "$i" = 0 ] && mj_doctrine_fail wiring "policy" "no enforcement entries declared; nothing is wired to run majordomus"
+  [ "$i" = 0 ] && mj_doctrine_fail wiring "policy" "no enforcement entries declared; nothing is wired to run majordomus" \
+    "grep -n 'enforcement:' $(mj_rel "$MJ_POLICY_FILE")"
 
   return 0
 }
@@ -289,7 +296,8 @@ mj_validate_budget() {
     if grep -qE '\b[0-9]+ (agents|files|apps|commands|skills|rules)\b' "$measured"; then
       mj_doctrine_fail counts "$subject" "hardcoded count in always-loaded context" "grep -nE '[0-9]+ (agents|files|apps|commands|skills|rules)' $always"
     else mj_doctrine_ok counts "$subject" "no hardcoded counts"; fi
-  elif [ -z "$always" ]; then mj_doctrine_fail budget "policy" "no projection is marked always_loaded: true"; fi
+  elif [ -z "$always" ]; then mj_doctrine_fail budget "policy" "no projection is marked always_loaded: true" \
+    "grep -n 'always_loaded' $(mj_rel "$MJ_POLICY_FILE")"; fi
   rm -f "$owned"
 
   # 8. the continuity subsystem: reachable through the CLI, not merely present on disk.
@@ -652,8 +660,30 @@ mj_validate_rule_package() {
     mj_info rules "distribution" "ships a different package ($(mj_rules_manifest_rev "$MJ_STD_RULES_DIR")); the vendored one stays authoritative until updated" "majordomus rules vendor diff"
   fi
   mj_rules_load || { mj_doctrine_fail rules "effective set" "$MJ_RULES_ERROR" "majordomus rules list"; return 0; }
-  n="$(mj_rule_count)"
-  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override"
+  # A verdict states what it is a verdict about. "122 rule(s) resolve in one deterministic
+  # order" is true and is read as covering the whole set, while the doctrine check below
+  # examines only the subset carrying a validator — so the two numbers are printed beside
+  # each other here, and neither can be mistaken for the other.
+  local tally total enforced blocking blocking_unenforced
+  tally="$(mj_rule_tally)"
+  total="${tally%% *}"; tally="${tally#* }"
+  enforced="${tally%% *}"; tally="${tally#* }"
+  blocking="${tally%% *}"; blocking_unenforced="${tally#* }"
+  n="$total"
+  mj_doctrine_ok rules "$n rule(s)" "resolve in one deterministic order; vendored baseline plus project rules, no override — $enforced carry a validator, $((n - enforced)) are normative text this tool does not check"
+  # The number the doctrine check cannot report, because those rules are not in its
+  # registry at all: a rule declared blocking with no x-majordomus block. Nothing in this
+  # tool runs for it. It may still be held by a CI gate, a behavioural case or a reviewer,
+  # and scripts/ci/enforcement-check is what decides that; what is certain from here is
+  # only that the dispatcher will never stop a command on its behalf. Reported rather than
+  # failed, because the honest count is large and predates the report; the gate ratchets it.
+  if [ "$blocking_unenforced" -gt 0 ]; then
+    mj_info rules "blocking without a validator" \
+      "$blocking_unenforced of $blocking blocking rule(s) carry no x-majordomus block, so no validator runs for them and the doctrine verdict below says nothing about them" \
+      "majordomus rules list | grep -v 'enforced by'"
+  else
+    mj_doctrine_ok rules "blocking" "all $blocking blocking rule(s) carry a validator"
+  fi
   return 0
 }
 
@@ -776,7 +806,17 @@ mj_validate_doctrine_wiring() {
       "cat $root/RELEASE.json"
   fi
 
-  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n doctrines" "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one' || printf 'validator, dispatch, propagation, test and CI resolve for every one')"
+  # State the denominator, always. This line used to read "41 doctrines — validator,
+  # dispatch, propagation, test and CI resolve for every one", beside another line in the
+  # same run reporting 122 rules. "Every one" meant every one of 41 and said nothing about
+  # the other 81, and no reader could tell that from the sentence. The subset is now named
+  # in the subject, and the remainder is named in the detail, so the verdict cannot be
+  # read as covering rules it never looked at.
+  local reg_total reg_rest
+  reg_total="$(mj_rule_count)"
+  reg_rest=$((reg_total - n))
+  [ "$bad" = 0 ] && mj_doctrine_ok doctrine "$n of $reg_total rule(s) carry a validator" \
+    "$([ "$packaged" = 1 ] && printf 'validator, dispatch and propagation resolve for every one of the %s' "$n" || printf 'validator, dispatch, propagation, test and CI resolve for every one of the %s' "$n")$([ "$reg_rest" -gt 0 ] && printf '; the remaining %s declare no validator and this check does not examine them' "$reg_rest")"
   return 0
 }
 # watch's view of the same doctrine: every target against the stamp it carries.

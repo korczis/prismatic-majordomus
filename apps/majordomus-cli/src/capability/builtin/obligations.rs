@@ -476,7 +476,7 @@ pub fn listing_hash(listing: &str) -> String {
 /// The hash of one obligation's declared inputs in this tree and how many files it was
 /// taken over, or `None` when the token declares none — which is the empty string in the
 /// ledger and is compared as such.
-fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usize)> {
+pub(crate) fn inputs_hash(root: &Path, specs: &[String]) -> Option<(String, usize)> {
     if specs.is_empty() {
         return None;
     }

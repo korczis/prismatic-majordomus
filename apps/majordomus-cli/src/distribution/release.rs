@@ -299,6 +299,9 @@ impl Releases {
     }
 
     pub(crate) fn ordered(mut releases: Vec<Release>) -> Self {
+        // Highest version first, and deliberately not the canonical order: `latest_stable`
+        // below takes the first stable record, so descending version is what makes that
+        // answer correct. A label order would make it return an arbitrary release.
         releases.sort_by_key(|r| std::cmp::Reverse(version_key(&r.version)));
         Releases { releases }
     }

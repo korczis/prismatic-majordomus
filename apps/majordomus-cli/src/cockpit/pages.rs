@@ -12,10 +12,12 @@ use serde_json::{json, Value};
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport,
-    TokenList,
+    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
+    RepositoryReport, TokenList,
 };
-use crate::capability::{Capability, CapabilityKind, Context, Provenance};
+use crate::capability::{
+    Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
+};
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
@@ -994,16 +996,23 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure, start_rou
 
     // what the page says about running this comes from the descriptor's own policy, never
     // from a list of capabilities that need care
-    let effect = match (c.kind, c.execution.cancellable) {
-        (CapabilityKind::Command, _) => alert(
+    // The sentence is derived from the declared effect, not from the kind: two commands are
+    // the same kind whether one announces a peer and the other writes a tracked record, and
+    // telling a person the second is the first is how a control comes to lie.
+    let effect = match (c.kind, c.execution.effect, c.execution.cancellable) {
+        (CapabilityKind::Command, CapabilityEffect::RepositoryMutation, _) => alert(
             "warn",
-            "A command. It changes this process's own memory — never the repository — and is sent as a POST from this page's origin.",
+            "A command that writes the repository. It changes tracked files a commit will carry, and is sent as a POST from this page's origin.",
         ),
-        (_, true) => alert(
+        (CapabilityKind::Command, _, _) => alert(
+            "warn",
+            "A command. It changes this process's own memory — not the repository — and is sent as a POST from this page's origin.",
+        ),
+        (_, _, true) => alert(
             "info",
             "It reads and changes nothing, and it stops when it is asked to. Run it as an execution to watch it happen and to be able to cancel it.",
         ),
-        (_, false) => alert("info", "A query. It reads and changes nothing."),
+        (_, _, false) => alert("info", "A query. It reads and changes nothing."),
     };
 
     card_with(
@@ -1718,7 +1727,6 @@ fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
     )
 }
 
-
 /// Every open episode of this checkout's store, and not only the one the pointer follows.
 ///
 /// The card above this one is `continuity.state`'s: the episode `session-current.yaml`
@@ -1754,20 +1762,17 @@ fn episodes_card(e: &Episodes) -> El {
             row(vec![
                 cell(mono(x.session_id.clone())),
                 cell(badge(level, x.standing.as_str())),
-                cell(
-                    el("span").text(if x.provider.is_empty() {
-                        "(opened by hand)"
-                    } else {
-                        &x.provider
-                    }),
-                ),
+                cell(el("span").text(if x.provider.is_empty() {
+                    "(opened by hand)"
+                } else {
+                    &x.provider
+                })),
                 cell(mono(x.branch.clone())),
                 text_cell(x.started_at.clone()),
                 cell(if x.last_activity.is_empty() {
                     el("span").text("(has written nothing)")
                 } else {
-                    el("span")
-                        .text(format!("{} · {}", x.last_activity, x.last_event))
+                    el("span").text(format!("{} · {}", x.last_activity, x.last_event))
                 }),
                 cell(if x.tasks.is_empty() {
                     el("span").text("—")
@@ -1821,13 +1826,25 @@ fn runtime_card(r: &RuntimeView) -> El {
     let short = |h: &str| h[..7.min(h.len())].to_string();
     card_with(
         "This process against the repository",
-        badge(if r.agree { "ok" } else { "fail" }, if r.agree { "current" } else { "behind" }),
+        badge(
+            if r.agree { "ok" } else { "fail" },
+            if r.agree { "current" } else { "behind" },
+        ),
         el("div")
             .child(facts(vec![
                 ("Serving", Node::Element(mono(short(&r.served_head)))),
-                ("Repository is on", Node::Element(mono(short(&r.repository_head)))),
-                ("Branch served", Node::Element(mono(r.served_branch.clone()))),
-                ("Branch now", Node::Element(mono(r.repository_branch.clone()))),
+                (
+                    "Repository is on",
+                    Node::Element(mono(short(&r.repository_head))),
+                ),
+                (
+                    "Branch served",
+                    Node::Element(mono(r.served_branch.clone())),
+                ),
+                (
+                    "Branch now",
+                    Node::Element(mono(r.repository_branch.clone())),
+                ),
                 (
                     "Working tree now",
                     Node::Element(el("span").text(&r.repository_working_tree)),
@@ -1857,9 +1874,12 @@ fn providers_card(p: &ProviderLifecycles) -> El {
                 cell(if x.lifecycle.is_empty() {
                     el("span").text("(no lifecycle adapter)")
                 } else {
-                    el("div")
-                        .class("mj-marks")
-                        .children(x.lifecycle.iter().map(|e| tag(e.clone())).collect::<Vec<_>>())
+                    el("div").class("mj-marks").children(
+                        x.lifecycle
+                            .iter()
+                            .map(|e| tag(e.clone()))
+                            .collect::<Vec<_>>(),
+                    )
                 }),
                 cell(badge(
                     if x.prompt_capture { "ok" } else { "info" },
@@ -1909,7 +1929,9 @@ fn providers_card(p: &ProviderLifecycles) -> El {
 /// Every row carries the command that clears it. A finding with no remedy is a complaint,
 /// and a page full of complaints teaches a reader to stop reading it.
 fn recovery_card(r: &Recovery) -> El {
-    let clean = r.stranded.is_empty() && r.orphans.is_empty() && r.balance.agrees
+    let clean = r.stranded.is_empty()
+        && r.orphans.is_empty()
+        && r.balance.agrees
         && r.pointer.layout != PointerLayout::Inline;
     let body = el("div")
         .child(facts(vec![
@@ -2017,17 +2039,15 @@ fn closed_card(c: &ClosedSessions) -> El {
         "Closed episodes",
         badge("info", format!("{} tracked", c.total)),
         el("div")
-            .child(
-                el("div").class("mj-stats").children(vec![
-                    statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
-                    statistic(
-                        c.on_this_branch.to_string(),
-                        "on this branch",
-                        ".ai/repo/sessions",
-                    ),
-                    statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
-                ]),
-            )
+            .child(el("div").class("mj-stats").children(vec![
+                statistic(c.total.to_string(), "closed records", ".ai/repo/sessions"),
+                statistic(
+                    c.on_this_branch.to_string(),
+                    "on this branch",
+                    ".ai/repo/sessions",
+                ),
+                statistic(c.window.to_string(), "shown below", ".ai/repo/sessions"),
+            ]))
             .child(table(
                 &["Episode", "Closed", "Branch", "Outcome", "Title"],
                 rows,
@@ -2433,6 +2453,288 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
             ("Cockpit", Some("/cockpit")),
             ("Directories", None),
         ])
+}
+
+/// The model catalogue and its routing: the vendors and models `share/models.yaml`
+/// declares, with each vendor's credential *presence* (never a value), rendered from
+/// the same `models.list` every other surface reads. No model name lives in this page.
+pub fn models(ctx: &Context) -> Page {
+    let report: crate::capability::builtin::ModelsReport = match ask(ctx, "models.list", json!({}))
+    {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Models, "Models", e),
+    };
+    let vendors: Vec<El> = report
+        .vendors
+        .iter()
+        .map(|v| {
+            let credential = match v.credential_configured {
+                Some(true) => "credential configured",
+                Some(false) => "credential not configured",
+                None => "no credential declared",
+            };
+            card_with(
+                format!("{} — {}", v.vendor.title, v.vendor.id),
+                word_badge(match v.vendor.inference {
+                    crate::models::Inference::Remote => "remote",
+                    crate::models::Inference::Local => "local",
+                }),
+                el("p").class("mj-prose").text(credential),
+            )
+        })
+        .collect();
+    let models: Vec<El> = report
+        .models
+        .iter()
+        .map(|m| {
+            let status = match m.status {
+                crate::models::ModelStatus::Available => "available",
+                crate::models::ModelStatus::Preview => "preview",
+                crate::models::ModelStatus::Deprecated => "deprecated",
+                crate::models::ModelStatus::Retired => "retired",
+            };
+            card_with(
+                m.id.clone(),
+                word_badge(status),
+                el("div")
+                    .child(facts(vec![
+                        ("Vendor", Node::Element(el("span").text(&m.vendor))),
+                        ("Native id", Node::Element(mono(m.native_id.clone()))),
+                        (
+                            "Context",
+                            Node::Element(
+                                el("span").text(
+                                    m.context_window
+                                        .map(|c| c.to_string())
+                                        .unwrap_or_else(|| "(not declared)".into()),
+                                ),
+                            ),
+                        ),
+                        (
+                            "Capabilities",
+                            Node::Element(el("span").text(m.capabilities.join(", "))),
+                        ),
+                    ]))
+                    .when(!m.aliases.is_empty(), |d| {
+                        d.child(facts(vec![(
+                            "Aliases",
+                            Node::Element(el("span").text(m.aliases.join(", "))),
+                        )]))
+                    })
+                    .when(m.note.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(m.note.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+    let mut findings = el("ul").class("mj-list");
+    for finding in &report.diagnostics {
+        findings = findings.child(el("li").text(finding));
+    }
+    Page::new(
+        Area::Models,
+        "Models",
+        el("div")
+            .class("mj-grid")
+            .child(card(
+                format!("Vendors ({})", report.vendors.len()),
+                if vendors.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no vendors. share/models.yaml is the one place to add one.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(vendors)
+                },
+            ))
+            .child(card(
+                format!("Models ({})", report.count),
+                if models.is_empty() {
+                    el("p").class("mj-prose").text(
+                        "The catalogue declares no models; `models.route` answers that nothing qualifies, which is the truthful answer.",
+                    )
+                } else {
+                    el("div").class("mj-grid").children(models)
+                },
+            ))
+            .when(!report.diagnostics.is_empty(), |d| {
+                d.child(card("Findings", findings))
+            }),
+    )
+}
+
+/// The mesh: the discovered nodes of this process's runtime, the providers that heard
+/// them, and why the mesh is or is not running. Everything on this page is the same
+/// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
+/// node list of its own (project.mesh-is-observation-not-authority).
+pub fn mesh(ctx: &Context) -> Page {
+    let status: crate::mesh::MeshStatus = match ask(ctx, "mesh.status", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let nodes: NodeList = match ask(ctx, "mesh.nodes", json!({})) {
+        Ok(n) => n,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+
+    let mut this_node = facts(vec![(
+        "Mesh",
+        Node::Element(word_badge(if status.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]);
+    if let Some(reason) = &status.reason {
+        this_node = this_node.child(el("p").class("mj-prose").text(reason));
+    }
+    let mut overview = el("div").child(this_node);
+    if let Some(identity) = &status.identity {
+        overview = overview.child(facts(vec![
+            ("Node", Node::Element(mono(identity.node_id.to_string()))),
+            (
+                "Name",
+                Node::Element(el("span").text(&identity.display_name)),
+            ),
+            (
+                "Instance",
+                Node::Element(mono(identity.instance_id.to_string())),
+            ),
+        ]));
+    }
+    if let Some(policy) = &status.trust_policy {
+        overview = overview.child(facts(vec![(
+            "Trust policy",
+            Node::Element(word_badge(policy)),
+        )]));
+    }
+    let t = &status.tallies;
+    let r = &status.refusals;
+    overview = overview.child(facts(vec![
+        (
+            "Nodes",
+            Node::Element(el("span").text(format!(
+                "{} ({} trusted, {} present)",
+                t.nodes, t.trusted, t.present
+            ))),
+        ),
+        (
+            "Accepted / replayed / expired",
+            Node::Element(el("span").text(format!("{} / {} / {}", t.accepted, t.replayed, t.expired))),
+        ),
+        (
+            "Refused",
+            Node::Element(el("span").text(format!(
+                "oversized {}, malformed {}, version {}, bounds {}, stale {}, signature {}, self {}",
+                r.oversized, r.malformed, r.version, r.bounds, r.stale, r.signature, r.self_heard
+            ))),
+        ),
+    ]));
+
+    let providers: Vec<El> = status
+        .providers
+        .iter()
+        .map(|p| {
+            let state = match p.state {
+                crate::mesh::provider::MeshProviderState::Running => "running",
+                crate::mesh::provider::MeshProviderState::Failed => "failed",
+                crate::mesh::provider::MeshProviderState::Stopped => "stopped",
+            };
+            card_with(
+                p.id.clone(),
+                word_badge(state),
+                el("div")
+                    .child(facts(vec![
+                        ("Sent", Node::Element(el("span").text(p.sent.to_string()))),
+                        (
+                            "Received",
+                            Node::Element(el("span").text(p.received.to_string())),
+                        ),
+                    ]))
+                    .when(p.detail.is_some(), |d| {
+                        d.child(
+                            el("p")
+                                .class("mj-prose")
+                                .text(p.detail.clone().unwrap_or_default()),
+                        )
+                    }),
+            )
+        })
+        .collect();
+
+    let node_cards: Vec<El> = nodes
+        .nodes
+        .iter()
+        .map(|n| {
+            let trust = match &n.trust {
+                crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
+                crate::mesh::TrustState::Observed => "observed".to_string(),
+                crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+            };
+            let presence = match n.presence {
+                crate::mesh::Presence::Present => "present",
+                crate::mesh::Presence::Absent => "absent",
+            };
+            let sources = n
+                .sources
+                .iter()
+                .map(|s| format!("{} via {} at {}", s.source.as_str(), s.path, s.at))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("{} — {}", n.display_name, n.node_id),
+                word_badge(presence),
+                el("div")
+                    .child(el("p").class("mj-prose").text(trust))
+                    .child(facts(vec![
+                        (
+                            "Endpoints",
+                            Node::Element(el("span").text(n.endpoints.join(", "))),
+                        ),
+                        (
+                            "Transports",
+                            Node::Element(el("span").text(n.capabilities.join(", "))),
+                        ),
+                        (
+                            "Seen",
+                            Node::Element(el("span").text(format!(
+                                "first {}, last {}, restarts {}",
+                                n.first_seen, n.last_seen, n.restarts
+                            ))),
+                        ),
+                        ("Sources", Node::Element(el("span").text(sources))),
+                        ("Key", Node::Element(mono(n.public_key.clone()))),
+                    ])),
+            )
+        })
+        .collect();
+
+    Page::new(
+        Area::Mesh,
+        "Mesh",
+        el("div")
+            .class("mj-grid")
+            .child(card("This node", overview))
+            .when(!providers.is_empty(), |d| {
+                d.child(card(
+                    "Discovery providers",
+                    el("div").class("mj-grid").children(providers),
+                ))
+            })
+            .child(card(
+                format!("Discovered nodes ({})", nodes.count),
+                if node_cards.is_empty() {
+                    el("p")
+                        .class("mj-prose")
+                        .text("No nodes observed. The registry fills as advertisements arrive; `majordomus mesh doctor` proves the prerequisites on this machine alone.")
+                } else {
+                    el("div").class("mj-grid").children(node_cards)
+                },
+            )),
+    )
 }
 
 /// The health report: the verdicts the engines already reach, read through one capability.

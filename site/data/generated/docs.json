@@ -40,7 +40,7 @@
     {
       "path": "DOCTRINE.md",
       "audience": "everyone",
-      "summary": "what rules are enforced, what enforces each one, how the wiring is verified, and what was deliberately left out",
+      "summary": "what rules are enforced, what enforces each one, how the wiring is verified, the three enforcement modes and why a declared review exemption carries its reason, the proof graph and the ten states a rule's proof can be in, and what was deliberately left out",
       "route": "/docs/doctrine/"
     },
     {
@@ -234,6 +234,18 @@
       "audience": "everyone, MCP clients",
       "summary": "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve",
       "route": "/docs/mcp/"
+    },
+    {
+      "path": "MESH.md",
+      "audience": "everyone, operators",
+      "summary": "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it",
+      "route": "/docs/mesh/"
+    },
+    {
+      "path": "MODELS.md",
+      "audience": "everyone, AI workers",
+      "summary": "the model catalogue: vendors and models declared once in share/models.yaml with provenance and no fabricated facts, and the explainable routing that names why every candidate was chosen or excluded",
+      "route": "/docs/models/"
     },
     {
       "path": "DESIGN_SYSTEM.md",

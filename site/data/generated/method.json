@@ -38,8 +38,8 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>94 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>41 of 94</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>93 of 94</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>91 of 94</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
-    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>42 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>42 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>107 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>48 of 107</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>106 of 107</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>104 of 107</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>44 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>44 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
     "claims": 5,
@@ -62,10 +62,10 @@
   "exposure": {
     "by_module": [
       {
-        "capabilities": 8,
+        "capabilities": 9,
         "cli": 0,
-        "http": 8,
-        "mcp": 8,
+        "http": 9,
+        "mcp": 9,
         "module": "plan"
       },
       {
@@ -95,6 +95,13 @@
         "http": 5,
         "mcp": 5,
         "module": "lifecycle"
+      },
+      {
+        "capabilities": 5,
+        "cli": 2,
+        "http": 5,
+        "mcp": 5,
+        "module": "mesh"
       },
       {
         "capabilities": 5,
@@ -175,6 +182,13 @@
       },
       {
         "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "rules"
+      },
+      {
+        "capabilities": 3,
         "cli": 0,
         "http": 3,
         "mcp": 3,
@@ -199,7 +213,21 @@
         "cli": 0,
         "http": 2,
         "mcp": 2,
+        "module": "gates"
+      },
+      {
+        "capabilities": 2,
+        "cli": 0,
+        "http": 2,
+        "mcp": 2,
         "module": "graph"
+      },
+      {
+        "capabilities": 2,
+        "cli": 2,
+        "http": 2,
+        "mcp": 2,
+        "module": "models"
       },
       {
         "capabilities": 2,
@@ -279,14 +307,14 @@
         "module": "web"
       }
     ],
-    "capabilities": 94,
+    "capabilities": 107,
     "combinations": [
       {
-        "count": 51,
+        "count": 57,
         "surfaces": "http + mcp"
       },
       {
-        "count": 40,
+        "count": 47,
         "surfaces": "cli + http + mcp"
       },
       {
@@ -298,28 +326,28 @@
         "surfaces": "cli"
       }
     ],
-    "modules": 31,
+    "modules": 35,
     "surfaces": [
       {
-        "count": 41,
+        "count": 48,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 93,
+        "count": 106,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 91,
+        "count": 104,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
     ]
   },
   "governance": {
-    "advisory": 4,
-    "blocking": 38,
+    "advisory": 5,
+    "blocking": 39,
     "commands": [
       "check",
       "doctor",
@@ -336,7 +364,7 @@
       "Execution depth is not output verbosity",
       "Parallel work requires isolation"
     ],
-    "rules": 42,
+    "rules": 44,
     "rules_without_principle": [
       {
         "route": "/doctrines/lifecycle-observed/",
@@ -354,6 +382,11 @@
         "title": "A prompt record carries its own identity, is bounded, and is private"
       },
       {
+        "route": "/doctrines/record-changed-files/",
+        "slug": "record-changed-files",
+        "title": "A record's changed_files names the work, not the tool's exhaust"
+      },
+      {
         "route": "/doctrines/use-case-coverage/",
         "slug": "use-case-coverage",
         "title": "Use-case coverage"
@@ -362,11 +395,16 @@
         "route": "/doctrines/obligation-closure/",
         "slug": "obligation-closure",
         "title": "Obligation closure"
+      },
+      {
+        "route": "/doctrines/completion-gates/",
+        "slug": "completion-gates",
+        "title": "Completion is gated"
       }
     ],
     "rules_without_test": [],
-    "tests": 34,
-    "validators": 42
+    "tests": 36,
+    "validators": 44
   },
   "layers": [
     {
@@ -389,7 +427,7 @@
     },
     {
       "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
-      "count": 42,
+      "count": 44,
       "level": "Rule",
       "lifetime": "months",
       "question": "What exactly must, or must not, be?",
@@ -398,7 +436,7 @@
     },
     {
       "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
-      "count": 42,
+      "count": 44,
       "level": "Enforcement",
       "lifetime": "the implementation that answers it",
       "question": "How does a machine decide it?",

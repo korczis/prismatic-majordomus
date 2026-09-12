@@ -1,7 +1,7 @@
 +++
 title = "Hand the repository to someone who cannot clone it"
 description = "Take a snapshot that a model can read or a gate can run in, without sending anything untracked and without losing the file modes on the way."
-weight = 26
+weight = 27
 [extra]
 id = "hand-the-repository-to-a-reader"
 source = ".ai/repo/use-cases/hand-the-repository-to-a-reader.md"

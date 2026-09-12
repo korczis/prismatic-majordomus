@@ -1084,7 +1084,14 @@ mj_record_front_matter() {
     "$(mj_now)" "$task_id" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
   printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
     "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
-  mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
+  # The work, not the exhaust. This was `git status --porcelain` verbatim, which is the
+  # dirty tree and not the episode's work product: running the tool dirties the tree, and a
+  # checkpoint written after a `scripts/derive` named every generated file as something the
+  # worker had done. lib/changed.sh classifies against the five declarations that already
+  # say what is derived; it is sourced here rather than at the top because this is on the
+  # record-writing path and nothing else in common.sh needs it.
+  [ -n "${MJ_LIB_changed:-}" ] || . "$MJ_LIB_DIR/changed.sh"
+  mj_changed_files_block
   local extra; for extra in "$@"; do printf '%s\n' "$extra"; done
   printf -- '---\n\n'
 }

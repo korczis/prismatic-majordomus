@@ -133,6 +133,14 @@ events:
     requires: [outcome, session_path]
     public: true
 
+  - id: session.recovered
+    title: Session recovered
+    summary: An episode nobody closed was closed by recovery, or its records were repaired.
+    emitted_by: recover
+    requires: [session_id, reason, session_path]
+    public: true
+    note: The envelope's own `session` stamp names the episode doing the recovering, which is never the one recovered; the recovered episode is named in session_id. The reason carries the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate.
+
   - id: provider.event.received
     title: Provider lifecycle event received
     summary: A provider's lifecycle event reached this repository, recorded before anything decided what to do about it.
@@ -179,6 +187,14 @@ events:
     requires: [task, covers, kind, inputs_hash]
     public: true
     note: The envelope's head and the recorded inputs_hash are what make this go stale. A later reader recomputes the hash over the obligation's declared inputs and labels the head against the current one; evidence that no longer describes the tree is a failure, not merely an old line.
+
+  - id: task.gate
+    title: A validation gate reported against the task
+    summary: One gate of the repository's CI model ran and reported an exit status, over the files whose hash is recorded.
+    emitted_by: evidence
+    requires: [task, gate, exit, inputs_hash]
+    public: true
+    note: The gate's inputs are derived from the CI model — the union of the paths of the classes that select it — so a change to any of them makes the run stale rather than merely old. A gate that has never emitted this event is reported as queued and never as passing.
 
   - id: adr.proposed
     title: Architecture decision proposed

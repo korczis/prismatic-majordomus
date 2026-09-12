@@ -329,7 +329,7 @@ jq -e '[.selected[] | select([.discovered_by[].selector] | index("scope_path") !
   echo "    the shell tool could not resolve a path in this fixture"; cat "$S/shell-resolve.txt"; exit 1; }
 "$RB" devcontext compile --repo "$PWD" --path .ai/repo/rules --budget-tokens 1000000 --format json > "$S/rules.json"
 jq -r '[.selected[] | select(.kind == "context") | .provenance.path] | sort | .[]' "$S/rules.json" > "$S/rust-contracts.txt"
-grep -oE '\.ai/[A-Za-z0-9_/.-]*README\.md' "$S/shell-resolve.txt" | sort -u > "$S/shell-contracts.txt"
+grep -oE '\.ai/[A-Za-z0-9_/.-]*README\.md' "$S/shell-resolve.txt" | LC_ALL=C sort -u > "$S/shell-contracts.txt"
 [ -s "$S/shell-contracts.txt" ] || { echo "    the shell tool resolved no contract for .ai/repo/rules"; cat "$S/shell-resolve.txt"; exit 1; }
 while IFS= read -r p; do
   grep -qxF "$p" "$S/rust-contracts.txt" || {

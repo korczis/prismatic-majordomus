@@ -224,6 +224,16 @@
     },
     {
       "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.session-records"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "rule:majordomus.handover-integrity"
+    },
+    {
+      "kind": "depends_on",
       "source": "rule:majordomus.session-lifecycle",
       "target": "rule:majordomus.session-records"
     },
@@ -236,6 +246,11 @@
       "kind": "depends_on",
       "source": "rule:majordomus.obligation-closure",
       "target": "rule:majordomus.verification-integrity"
+    },
+    {
+      "kind": "depends_on",
+      "source": "rule:majordomus.completion-gates",
+      "target": "rule:majordomus.obligation-closure"
     },
     {
       "kind": "decided_by",
@@ -414,6 +429,11 @@
     },
     {
       "kind": "decided_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "validator:record_changed_files"
+    },
+    {
+      "kind": "decided_by",
       "source": "rule:majordomus.session-lifecycle",
       "target": "validator:session_lifecycle"
     },
@@ -446,6 +466,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.obligation-closure",
       "target": "validator:obligations"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.completion-gates",
+      "target": "validator:completion_gates"
     },
     {
       "kind": "run_by",
@@ -536,6 +561,16 @@
       "kind": "run_by",
       "source": "validator:command_surface",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:completion_gates",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:completion_gates",
+      "target": "command:finish"
     },
     {
       "kind": "run_by",
@@ -721,6 +756,11 @@
       "kind": "run_by",
       "source": "validator:questions_store",
       "target": "command:watch"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:record_changed_files",
+      "target": "command:doctor"
     },
     {
       "kind": "run_by",
@@ -1034,6 +1074,11 @@
     },
     {
       "kind": "proved_by",
+      "source": "rule:majordomus.record-changed-files",
+      "target": "test:test/cases/136_changed_files_classifier.sh"
+    },
+    {
+      "kind": "proved_by",
       "source": "rule:majordomus.session-lifecycle",
       "target": "test:test/cases/54_session_lifecycle_hooks.sh"
     },
@@ -1066,6 +1111,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.obligation-closure",
       "target": "test:test/cases/103_obligations.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.completion-gates",
+      "target": "test:test/cases/131_completion_gates.sh"
     }
   ],
   "generator": "scripts/lib/governance-graph.jq",
@@ -1521,6 +1571,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.record-changed-files",
+      "kind": "rule",
+      "label": "record-changed-files",
+      "note": "exit 10 · records",
+      "role": "warn",
+      "route": "/doctrines/record-changed-files/",
+      "status": "advisory",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own."
+    },
+    {
+      "external": false,
       "id": "rule:majordomus.session-lifecycle",
       "kind": "rule",
       "label": "session-lifecycle",
@@ -1598,6 +1659,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.completion-gates",
+      "kind": "rule",
+      "label": "completion-gates",
+      "note": "exit 10 · gate",
+      "role": "text",
+      "route": "/doctrines/completion-gates/",
+      "status": "blocking",
+      "summary": "A task reaches the outcome completed only when no validation gate its own change set selects is known to be failing, and a gate's verdict discharges nothing once the files that select it have changed since the run."
+    },
+    {
+      "external": false,
       "id": "validator:adr",
       "kind": "validator",
       "label": "mj_validate_adr",
@@ -1667,6 +1739,14 @@
       "label": "mj_validate_command_surface",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/commands.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:completion_gates",
+      "kind": "validator",
+      "label": "mj_validate_completion_gates",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/gates.sh."
     },
     {
       "external": false,
@@ -1827,6 +1907,14 @@
       "label": "mj_validate_questions_store",
       "role": "muted",
       "summary": "Decides the rule. Declared in lib/doctor.sh."
+    },
+    {
+      "external": false,
+      "id": "validator:record_changed_files",
+      "kind": "validator",
+      "label": "mj_validate_record_changed_files",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/changed.sh."
     },
     {
       "external": false,
@@ -2017,6 +2105,22 @@
       "id": "test:test/cases/130_lifecycle_survives_a_stale_task.sh",
       "kind": "test",
       "label": "test/cases/130_lifecycle_survives_a_stale_task.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/131_completion_gates.sh",
+      "kind": "test",
+      "label": "test/cases/131_completion_gates.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/136_changed_files_classifier.sh",
+      "kind": "test",
+      "label": "test/cases/136_changed_files_classifier.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

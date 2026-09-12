@@ -53,6 +53,18 @@
 //! );
 //! ```
 
+//! # Example
+//!
+//! Four capabilities, and every projection — the command line, the HTTP operation, the MCP
+//! tool — is derived from that one declaration.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::evidence::module;
+//! let m = module();
+//! assert_eq!(m.id.as_str(), "evidence");
+//! assert_eq!(m.capabilities.len(), 4);
+//! ```
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -665,13 +677,19 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
 
+    /// One capability's declared projections: its id, the MCP tool it answers as, the HTTP
+    /// path it is served at, and the words of its command line. Named because the tuple is
+    /// read four times below and an anonymous one of this width is a type nobody can talk
+    /// about.
+    type Projection<'a> = (&'a str, Option<&'a str>, Option<&'a str>, &'a [&'a str]);
+
     /// The declaration is the only place these names exist; every projection derives from
     /// it. This is the assertion a refactor that dropped an exposure would fail.
     #[test]
     fn the_declaration_yields_the_projections_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "evidence");
-        let expected: &[(&str, Option<&str>, Option<&str>, &[&str])] = &[
+        let expected: &[Projection<'_>] = &[
             (
                 "evidence.report",
                 Some("majordomus_evidence"),

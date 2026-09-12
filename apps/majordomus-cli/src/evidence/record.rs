@@ -70,6 +70,18 @@
 //! assert_eq!(execution.digest_matches(root.path()), Some(true));
 //! ```
 
+//! # Example
+//!
+//! The recorder reads what a run already wrote and stamps it with the provenance the run
+//! did not carry. Parsing is separable from recording, which is what makes it testable.
+//!
+//! ```
+//! use majordomus_cli::evidence::{parse_crate_binaries, Outcome};
+//! let got = parse_crate_binaries("     Running tests/product.rs (target/debug/deps/product-1)\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s\n");
+//! assert_eq!(got.len(), 1);
+//! assert_eq!(got[0].1, Outcome::Pass);
+//! ```
+
 use std::path::Path;
 
 use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
@@ -98,6 +110,13 @@ use crate::error::{Error, Result};
 /// assert_eq!(suite_run.suite.as_deref(), Some(std::path::Path::new("tmp/run.tsv")));
 /// ```
 #[derive(Debug, Clone)]
+/// # Example
+///
+/// ```
+/// use majordomus_cli::evidence::{Origin, RecordRequest};
+/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci };
+/// assert_eq!(r.origin, Origin::Ci);
+/// ```
 pub struct RecordRequest {
     /// The runner's TSV report, when a suite run is being recorded.
     pub suite: Option<std::path::PathBuf>,
@@ -148,6 +167,20 @@ pub struct RecordRequest {
 /// assert!(Ledger::load(root.path()).unwrap().latest("suite:99_ghost").is_none());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// # Example
+///
+/// What a recording did: how many executions were written, how many passed, and which
+/// results named a test no runner in this repository owns.
+///
+/// ```
+/// use majordomus_cli::evidence::RecordOutcome;
+/// let o = RecordOutcome {
+///     recorded: 2, passed: 2, commit: "a04b65c9".into(),
+///     working_tree: "clean".into(), unknown: vec![],
+/// };
+/// assert_eq!(o.recorded, 2);
+/// assert!(o.unknown.is_empty());
+/// ```
 pub struct RecordOutcome {
     /// How many executions were written.
     pub recorded: usize,
@@ -207,6 +240,10 @@ fn now_rfc3339() -> String {
 /// assert!(got[0].1.proves());
 /// assert_eq!(got[1].0, "product");
 /// assert!(!got[1].1.proves());
+/// ```
+/// ```
+/// use majordomus_cli::evidence::parse_crate_binaries;
+/// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
     let mut out = Vec::new();

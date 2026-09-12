@@ -20,7 +20,13 @@ fn help_lists_the_one_command_and_exits_zero() {
     assert_eq!(code, 0);
     assert!(out.contains("Usage: majordomus <COMMAND>"), "{out}");
     assert!(out.contains("mcp"), "{out}");
-    assert!(out.contains("read-only"), "{out}");
+    // What the help says about what this executable changes. It used to assert the word
+    // "read-only", which was true while no capability wrote anything and stopped being true
+    // with `plan.transition` (ADR 0040). The assertion is kept and made to hold the accurate
+    // statement instead of the obsolete one: the help must still tell a reader that the
+    // registry is overwhelmingly queries and that the exceptions name themselves.
+    assert!(out.contains("query"), "{out}");
+    assert!(out.contains("commands"), "{out}");
     let commands = out
         .split("Commands:")
         .nth(1)

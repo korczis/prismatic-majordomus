@@ -421,6 +421,14 @@ pub struct Provider {
     pub fly: Option<Fly>,
 }
 
+/// A deployment is presented by its id, which is its identity within the repository; the
+/// title is prose and two providers may well be given the same one.
+impl crate::order::Ordered for Deployment {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One deployment of this repository's executable, as the canonical object states it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

@@ -262,7 +262,9 @@ impl CachePolicy {
 
 /// What a capability is. Three kinds exist because three semantics exist: something that
 /// is executed and changes nothing, something that is executed and changes this process's
-/// own memory, and something that is read. Nothing of any kind writes to the repository.
+/// own memory, and something that is read. A command may also write the repository's own
+/// tracked records, which its kind does not say and its execution policy does
+/// ([`ExecutionPolicy::writes_repository`]).
 ///
 /// How *long* a call takes is not a kind. A read that walks every file of the layer is
 /// still a read, and the thing that makes it worth watching — that it reports as it goes
@@ -275,9 +277,10 @@ impl CachePolicy {
 pub enum CapabilityKind {
     /// Executable and read-only: a typed handler, an input schema, an output schema.
     Query,
-    /// Executable with an effect on this process's in-memory state and nowhere else (a
-    /// peer announcing itself): a typed handler, bound to `POST` over HTTP, and announced
-    /// to MCP clients as not read-only.
+    /// Executable and changing something: a typed handler, bound to `POST` over HTTP, and
+    /// announced to MCP clients as not read-only. Most reach no further than this process's
+    /// own memory (a peer announcing itself); one that writes the repository's tracked
+    /// records says so on its execution policy, which is where a projection reads it.
     Command,
     /// Declarative content the repository holds: read as it is, never executed.
     Resource,
@@ -337,10 +340,21 @@ pub enum Effect {
     ProcessState,
     /// The repository changes.
     ///
-    /// Nothing classifies to this, and the doctrine of this tool is why: no capability of
-    /// any kind writes to the repository. It is on the model so that the day one does, it
-    /// says so here — where a projection already reads it and a client already asks before
-    /// running it — rather than in whichever page happens to render its button.
+    /// For most of this executable's life nothing classified to this, because no capability
+    /// of any kind wrote to the repository. That day arrived with [ADR 0040]: development
+    /// semantics are capabilities of this runtime, and the first of them — `plan.transition`
+    /// — stamps a field into an issue's own tracked record. The variant was put on the model
+    /// in advance so that when one did, it would say so *here*, where a projection already
+    /// reads it and a client already asks before running it, rather than in whichever page
+    /// happens to render its button.
+    ///
+    /// It is not classified from the kind, because the kind cannot know it: a command that
+    /// announces a peer and a command that writes a tracked file are the same kind. A
+    /// handler that writes the repository says so with
+    /// [`ExecutionPolicy::writes_repository`], the way one that stops says so with
+    /// [`ExecutionPolicy::stoppable`].
+    ///
+    /// [ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     RepositoryMutation,
 }
 
@@ -426,6 +440,31 @@ impl ExecutionPolicy {
     pub fn stoppable(self) -> Self {
         ExecutionPolicy {
             cancellable: true,
+            ..self
+        }
+    }
+
+    /// The same policy, for a handler that writes the repository's own tracked files.
+    ///
+    /// The second and last thing the kind cannot decide. Two commands are the same kind
+    /// whether one announces a peer into this process's memory and the other stamps a field
+    /// into a record a commit will carry, and the difference is the whole of what a caller
+    /// needs to know before saying yes. It is stated by the handler because only the handler
+    /// knows it.
+    ///
+    /// This is a widening and never a narrowing: a query cannot reach for it, because the
+    /// registry accepts a declared policy only when it is the kind's own or one of these two
+    /// documented additions to it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Effect, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Command).writes_repository();
+    /// assert_eq!(p.effect, Effect::RepositoryMutation);
+    /// assert!(p.needs_confirmation());
+    /// ```
+    pub fn writes_repository(self) -> Self {
+        ExecutionPolicy {
+            effect: Effect::RepositoryMutation,
             ..self
         }
     }
@@ -575,7 +614,7 @@ pub struct McpExposure {
 pub enum HttpMethod {
     /// Read-only; the input is bound from the query string.
     Get,
-    /// The input is bound from the JSON body. No builtin uses it yet.
+    /// The input is bound from the JSON body. Every mutating capability uses it.
     Post,
 }
 
@@ -820,6 +859,15 @@ pub struct Capability {
     /// What running it as an execution means: classified from the kind, so that a client
     /// reads a fact rather than deciding for itself.
     pub execution: ExecutionPolicy,
+}
+
+/// A capability is presented by its id: the command line's table, the site's registry pages
+/// and the closure matrix all list it that way, and a title is neither unique nor stable
+/// enough to be the thing a reader navigates by.
+impl crate::order::Ordered for Capability {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(self.id.as_str(), self.id.as_str())
+    }
 }
 
 #[cfg(test)]

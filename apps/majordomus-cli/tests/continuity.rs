@@ -507,7 +507,10 @@ fn the_ledger_is_counted_and_a_detached_checkout_says_detached_rather_than_guess
     let mut s = Served::start(&root, &[]);
     let c = state(&s);
     assert_eq!(c["branch"], branch, "{c}");
-    assert_eq!(c["tallies"]["ledger_lines"], 2, "blank lines are not events: {c}");
+    assert_eq!(
+        c["tallies"]["ledger_lines"], 2,
+        "blank lines are not events: {c}"
+    );
     assert_eq!(c["tallies"]["handovers"], 1, "{c}");
     assert_eq!(
         c["handover"]["matched"], "same_branch",

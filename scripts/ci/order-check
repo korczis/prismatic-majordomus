@@ -19,18 +19,29 @@
 #      sorts not pinned with LC_ALL=C, may fall and may not rise. The counts live in
 #      .ai/repo/order-baseline.txt; lowering one is a commit that adopts the canonical
 #      order or pins a locale, and the gate then asks for the baseline to be lowered too.
+#      The crate count is production code only: a sort in a `#[cfg(test)]` module, in a
+#      file a `#[cfg(test)] mod` declaration gates, or in a doc comment orders a fixture,
+#      not a collection a surface shows, and is not debt.
 #
 #   scripts/ci/order-check              report every finding, exit 10 on any
+#   scripts/ci/order-check --sites      list the sites both ratchets count
 #   scripts/ci/order-check --update     rewrite the baseline from this tree (never in CI)
 #   MJ_ROOT=<dir> scripts/ci/order-check
 #
 # Exit: 0 clean, 10 findings, 12 unusable.
 set -eu
-ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+# Two roots, and conflating them is a bug the behavioural case caught: ROOT is the tree
+# being measured (a fixture, under MJ_ROOT), HERE is the tree this gate lives in. The
+# scanner under scripts/lib/ belongs to the gate, so it is read from HERE; a fixture has no
+# scripts/lib/ and never will.
+HERE="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT="${MJ_ROOT:-$HERE}"
 cd "$ROOT"
 BASELINE=.ai/repo/order-baseline.txt
 UPDATE=0
 [ "${1:-}" = "--update" ] && UPDATE=1
+SITES=0
+[ "${1:-}" = "--sites" ] && SITES=1
 
 findings=0
 ok()   { printf 'ok    %s\n' "$*"; }
@@ -79,37 +90,111 @@ else
 fi
 
 # ---------------------------------------------------------------- 4. the ratchets
-crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' \
-  apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -vc 'src/order\.rs:' || true)"
-# `sort` wherever a shell command begins — after a pipe, a semicolon, a brace, a `&&`, or
-# at the start of a line — because an unpinned sort collates by the locale whatever
-# precedes it.
-#
-# The subject is the shell utility. jq has a builtin of the same name, over a JSON array,
-# ordered by jq's own total order and reached by no locale at all; pinning LC_ALL=C around
-# it would be noise that means nothing. So a jq program is not scanned: `.jq` files are out,
-# and in a shell file the single-quoted spans are removed before the line is matched, because
-# nothing inside `'...'` is a shell command. Without that, thirteen jq filters were counted as
-# unpinned shell sorts and the ratchet refused a tree that had not regressed.
-#
-# The line-start case is spelled against grep's own `file:line:` prefix rather than with a
-# bare `^`, which could never match the start of the source line and so let a `sort` in the
-# first column through.
-shell_sorts_lines() {
-  grep -rnI --exclude='*.jq' -e '' lib scripts bin test 2>/dev/null \
-    | sed "s/'[^']*'//g" \
-    | grep -E '(\|[[:space:]]*sort\b)|(^[^:]+:[0-9]+:[[:space:]]*sort([[:space:]]|$))|(([;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$))' \
-    | grep -v 'LC_ALL=C' || true
+# Every sort site of the crate that orders something a person could be shown. A sort inside
+# anything `#[cfg(test)]` introduces — a module, a function, or a whole file a `#[cfg(test)]
+# mod` declaration gates — or inside a doc comment orders a fixture or an example: it is
+# compiled out of the shipped binary, no surface renders it, and two of them cannot disagree
+# with each other in front of a reader. Counting those as debt made the ratchet ask for
+# canonical order in a test that asserts an order — a gate that cries wolf is a gate somebody
+# switches off.
+crate_files() {
+  # Sorted, and pinned: `find` enumerates in filesystem order, so the listing this feeds
+  # would otherwise come out in a different sequence on a different machine — which is the
+  # defect this whole gate exists to refuse. The count does not depend on it; the `--sites`
+  # listing, and anyone diffing two runs of it, do.
+  find apps/majordomus-cli/src -name '*.rs' | grep -v '/order\.rs$' | LC_ALL=C sort
 }
+
+# The files a `#[cfg(test)] mod <name>;` declaration compiles only for tests, as paths.
+test_gated_files() {
+  crate_files | xargs awk '
+    /#\[cfg\(test\)\]/ { pend = 1; next }
+    pend && /^[[:space:]]*(pub[[:space:]]+)?mod[[:space:]]+[A-Za-z0-9_]+[[:space:]]*;/ {
+      name = $0
+      sub(/^[^m]*mod[[:space:]]+/, "", name)
+      sub(/[[:space:]]*;.*$/, "", name)
+      dir = FILENAME
+      sub(/\/[^\/]*$/, "", dir)
+      print dir "/" name ".rs"
+      print dir "/" name "/mod.rs"
+    }
+    { pend = 0 }
+  '
+}
+
+crate_sort_sites() {
+  gated=":$(test_gated_files | tr '\n' ':')"
+  crate_files | xargs awk -v gated="$gated" '
+    FNR == 1 { depth = 0; testdepth = 0; pend = 0; skip = index(gated, ":" FILENAME ":") > 0 }
+    skip { next }
+    {
+      line = $0
+      doc = (line ~ /^[[:space:]]*(\/\/\/|\/\/!)/)
+      if (line ~ /#\[cfg\(test\)\]/) pend = 1
+      if (pend && line ~ /^[[:space:]]*(pub[[:space:]]+)?mod[[:space:]]+[A-Za-z0-9_]+[[:space:]]*;/) pend = 0
+      opened = gsub(/\{/, "{", line)
+      closed = gsub(/\}/, "}", line)
+      if (pend && opened > 0 && testdepth == 0) { testdepth = depth + 1; pend = 0 }
+      depth += opened - closed
+      if (testdepth > 0 && depth < testdepth) testdepth = 0
+      if (!doc && testdepth == 0 && $0 ~ /\.sort_by\(|\.sort_by_key\(|\.sort\(\)|\.sort_unstable/)
+        print FILENAME ":" FNR ":" $0
+    }
+  '
+}
+
+crate_sorts="$(crate_sort_sites | wc -l | tr -d ' ')"
+
+if [ "$SITES" = 1 ]; then
+  crate_sort_sites
+  printf '# %s crate sort site(s)\n' "$crate_sorts"
+fi
+# `sort` wherever a command begins — after a pipe, a semicolon, a brace, a `&&`, or at the
+# start of a line — because an unpinned sort collates by the locale whatever precedes it.
+#
+# The subject is sort(1), invoked by a shell. It is NOT jq's `sort` builtin, which spells
+# itself identically, appears after a pipe identically, and cannot be pinned with LC_ALL=C
+# by anybody. Measured without that distinction this ratchet read 13 where the truth was 2:
+# seven of the thirteen were in scripts/lib/method.jq — a jq program, not a shell script —
+# and four were inside single-quoted jq filters in a behavioural case. The gate was
+# therefore unsatisfiable: no branch could reach a baseline of 0, so it failed every pull
+# request while the debt it was built to stop was not there. A detector that cannot tell
+# its subject from another language that spells it the same way is not a strict gate; it is
+# a broken one, and raising the baseline to accommodate it would have written the mistake
+# into the record as debt.
+#
+# Two exclusions, and no more, because each is exactly a language boundary:
+#   - a *.jq file is a jq program in its entirety;
+#   - text inside quotes is not a command the shell runs. A jq filter passed to jq is
+#     single-quoted by convention and by necessity, and a `sort` inside double quotes is a
+#     string either way. LC_ALL=C is read from the original line, since the pin is never
+#     quoted.
+# What survives both is a bare `sort` in command position — which is sort(1), always.
+shell_sorts_lines() {
+  find lib scripts bin test -type f ! -name '*.jq' 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
+    awk -v prefix="$f" -f "$HERE/scripts/lib/shell-code.awk" "$f" 2>/dev/null
+  done | grep -vE 'LC_ALL=C' \
+    | grep -E '(\|[[:space:]]*sort([[:space:]]|$))|(:[0-9]+:[[:space:]]*sort([[:space:]]|$))|([;&{(]|&&|\|\|)[[:space:]]*sort([[:space:]]|$)' || true
+}
+
 shell_sorts="$(shell_sorts_lines | grep -c . || true)"
+
+if [ "$SITES" = 1 ]; then
+  shell_sorts_lines
+  printf '# %s unpinned shell sort(s)\n' "$shell_sorts"
+  exit 0
+fi
 
 if [ "$UPDATE" = 1 ]; then
   {
     printf '# The two ordering debts of this tree, as counts. Written by\n'
     printf '# `scripts/ci/order-check --update`; the gate refuses a rise.\n'
     printf '#\n'
-    printf '# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs. Each is a\n'
-    printf '#               comparator that could be the canonical order and is not yet.\n'
+    printf '# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs, in code\n'
+    printf '#               that ships. Each is a comparator that could be the canonical order\n'
+    printf '#               and is not yet. Test-only code — anything `#[cfg(test)]` introduces,\n'
+    printf '#               module, function or a whole file, and a doc comment — is not counted:\n'
+    printf '#               it orders a fixture, and no surface renders it.\n'
     printf '# shell_sorts   `sort` invocations under lib/, scripts/, bin/ and test/ that are not\n'
     printf '#               pinned with LC_ALL=C. A glob or a sort collates by the locale, so an\n'
     printf '#               unpinned one orders by whose machine ran it.\n'

@@ -9,6 +9,9 @@ status: active
 class: blocking
 depends_on: [project.finding-carries-reproduce@1]
 tags: [evidence, shell, diagnostics]
+
+x-majordomus:
+  reviewed_because: the rule is about a class of mistake, not a syntax; the one instance with a remedy is in scripts/generate-site-data and a check that recognised the shape would have to understand what each filter means
 ---
 
 # Rationale

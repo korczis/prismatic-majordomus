@@ -401,9 +401,7 @@ pub struct GitContext {
 }
 
 /// One commit the layer itself names, and the record that named it.
-#[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
-)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 pub struct CommitReference {
     /// The commit as the record wrote it.
     pub commit: String,

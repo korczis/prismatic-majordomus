@@ -974,7 +974,10 @@ mod tests {
         for (d, word, trust) in all {
             assert_eq!(d.as_str(), word);
             assert_eq!(d.trustworthy(), trust, "{word}");
-            assert_eq!(serde_json::to_value(d).expect("json"), serde_json::json!(word));
+            assert_eq!(
+                serde_json::to_value(d).expect("json"),
+                serde_json::json!(word)
+            );
         }
         // and the two tiers, which have no third
         assert_eq!(
@@ -999,20 +1002,30 @@ mod tests {
         repo.git(&["commit", "-q", "--allow-empty", "-m", "two"]);
         let second = repo.head();
 
-        assert_eq!(divergence(repo.root(), &first, Some(&first)), Divergence::Exact);
+        assert_eq!(
+            divergence(repo.root(), &first, Some(&first)),
+            Divergence::Exact
+        );
         assert_eq!(
             divergence(repo.root(), &first, Some(&second)),
             Divergence::Advanced
         );
         // a commit this history has never seen is not a yes, and not an unknown either
         assert_eq!(
-            divergence(repo.root(), "0000000000000000000000000000000000000000", Some(&second)),
+            divergence(
+                repo.root(),
+                "0000000000000000000000000000000000000000",
+                Some(&second)
+            ),
             Divergence::Diverged
         );
         // this checkout has no head at all
         assert_eq!(divergence(repo.root(), &first, None), Divergence::Unknown);
         // the record names no commit
-        assert_eq!(divergence(repo.root(), "", Some(&second)), Divergence::Unknown);
+        assert_eq!(
+            divergence(repo.root(), "", Some(&second)),
+            Divergence::Unknown
+        );
     }
 
     // ------------------------------------------------------------------ reading
@@ -1026,7 +1039,10 @@ mod tests {
         assert!(front(&repo.root().join("nothing.md")).is_none());
         assert!(front(&repo.write("plain.md", "just prose, no front matter\n")).is_none());
         assert!(front(&repo.write("broken.md", "---\n: : :\n---\nbody\n")).is_none());
-        let good = repo.write("good.md", &record("2026-01-01T00:00:00Z", "abc", "main", "/w", "Go"));
+        let good = repo.write(
+            "good.md",
+            &record("2026-01-01T00:00:00Z", "abc", "main", "/w", "Go"),
+        );
         let f = front(&good).expect("a record");
         assert_eq!(f.get("branch").map(String::as_str), Some("main"));
         // a list is not a scalar and is dropped rather than stringified
@@ -1040,7 +1056,10 @@ mod tests {
     fn a_fenceless_document_is_read_whole_and_a_missing_one_is_none() {
         let repo = Repo::new();
         assert!(document(&repo.root().join("nothing.yaml")).is_none());
-        let p = repo.write("session.yaml", "session_id: s-1\nstarted_at: t\nowner: \"me\"\n");
+        let p = repo.write(
+            "session.yaml",
+            "session_id: s-1\nstarted_at: t\nowner: \"me\"\n",
+        );
         let d = document(&p).expect("a document");
         assert_eq!(d.get("session_id").map(String::as_str), Some("s-1"));
         assert_eq!(d.get("owner").map(String::as_str), Some("me"));
@@ -1109,46 +1128,74 @@ mod tests {
 
     // ------------------------------------------------------------------ the resolver
 
+    /// The freshness arguments the resolver's own tests want: a policy that declares no
+    /// thresholds, so every record is judged `unknown` — which is not history, so the
+    /// Next Action is kept and these tests assert what they were written to assert. The
+    /// judgement itself is tested against `Thresholds::judge` below, where it belongs.
+    fn unjudged() -> (Thresholds, i64) {
+        (
+            Thresholds::default(),
+            epoch_seconds("2099-01-01T00:00:00Z").expect("a parseable instant"),
+        )
+    }
+
     /// Two tiers and no third, and the ordering inside a tier is by the time the record
     /// asserts. The record from another worktree on this branch is offered *only* when this
     /// worktree has none: a briefing that is quietly about somebody else's work is worse
     /// than no briefing, and the tier is what the reader is told so it can weigh it.
     #[test]
     fn the_nearer_tier_wins_and_the_newer_record_wins_inside_one() {
+        let (t, now) = unjudged();
         let repo = Repo::new();
         let head = repo.head();
         let root = repo.root().to_string_lossy().to_string();
         let dir = repo.root().join("h");
 
         // nothing at all, and not even a directory
-        let (none, skipped) = resolve(repo.root(), &dir, "main", Some(&head));
+        let (none, skipped) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         assert!(none.is_none() && skipped == 0);
 
-        repo.write("h/elsewhere.md", &record("2026-01-03T00:00:00Z", &head, "main", "/other", "Theirs"));
-        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        repo.write(
+            "h/elsewhere.md",
+            &record("2026-01-03T00:00:00Z", &head, "main", "/other", "Theirs"),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         let r = r.expect("the other worktree's record, for want of one here");
         assert_eq!(r.matched, Match::SameBranch);
         assert_eq!(r.next_action, "Theirs");
 
         // ...and it stops being offered the moment this worktree has one, even an older one
-        repo.write("h/mine.md", &record("2026-01-01T00:00:00Z", &head, "main", &root, "Mine"));
-        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        repo.write(
+            "h/mine.md",
+            &record("2026-01-01T00:00:00Z", &head, "main", &root, "Mine"),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         let r = r.expect("this worktree's record");
         assert_eq!(r.matched, Match::SameWorktreeSameBranch);
         assert_eq!(r.next_action, "Mine");
         assert_eq!(r.divergence, Divergence::Exact);
         assert_eq!(r.task_id, "t-1");
         assert_eq!(r.working_tree, "clean");
-        assert!(r.path.starts_with("h/"), "the path is repository-relative: {}", r.path);
+        assert!(
+            r.path.starts_with("h/"),
+            "the path is repository-relative: {}",
+            r.path
+        );
 
         // newer wins inside the tier
-        repo.write("h/newer.md", &record("2026-01-02T00:00:00Z", &head, "main", &root, "Newer"));
-        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        repo.write(
+            "h/newer.md",
+            &record("2026-01-02T00:00:00Z", &head, "main", &root, "Newer"),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         assert_eq!(r.expect("a record").next_action, "Newer");
 
         // another branch is never offered, however new
-        repo.write("h/other-branch.md", &record("2026-09-09T00:00:00Z", &head, "topic", &root, "No"));
-        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head));
+        repo.write(
+            "h/other-branch.md",
+            &record("2026-09-09T00:00:00Z", &head, "topic", &root, "No"),
+        );
+        let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         assert_eq!(r.expect("a record").next_action, "Newer");
     }
 
@@ -1156,12 +1203,22 @@ mod tests {
     /// branch" is not a relation a detached checkout has with anything.
     #[test]
     fn a_detached_checkout_is_offered_no_other_worktrees_record() {
+        let (t, now) = unjudged();
         let repo = Repo::new();
         let head = repo.head();
-        repo.write("h/theirs.md", &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"));
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "DETACHED", Some(&head));
-        assert!(r.is_none(), "a detached checkout was handed another worktree's record");
-        assert_eq!(skipped, 0, "a record that does not match is not a record that is broken");
+        repo.write(
+            "h/theirs.md",
+            &record("2026-01-01T00:00:00Z", &head, "DETACHED", "/other", "No"),
+        );
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "DETACHED", Some(&head), t, now);
+        assert!(
+            r.is_none(),
+            "a detached checkout was handed another worktree's record"
+        );
+        assert_eq!(
+            skipped, 0,
+            "a record that does not match is not a record that is broken"
+        );
     }
 
     /// Each way a file in the store can fail to be a record, counted rather than ignored —
@@ -1171,19 +1228,27 @@ mod tests {
     /// the twin of a silent skip.
     #[test]
     fn every_unreadable_file_is_counted_and_a_future_version_is_one_of_them() {
+        let (t, now) = unjudged();
         let repo = Repo::new();
         let head = repo.head();
         let root = repo.root().to_string_lossy().to_string();
         repo.write("h/prose.md", "no front matter here\n");
-        repo.write("h/no-created.md", "---\nschema_version: 1\nhead: abc\n---\n");
-        repo.write("h/no-head.md", "---\nschema_version: 1\ncreated_at: x\n---\n");
+        repo.write(
+            "h/no-created.md",
+            "---\nschema_version: 1\nhead: abc\n---\n",
+        );
+        repo.write(
+            "h/no-head.md",
+            "---\nschema_version: 1\ncreated_at: x\n---\n",
+        );
         repo.write(
             "h/future.md",
-            &record("2026-01-01T00:00:00Z", &head, "main", &root, "No").replace("schema_version: 1", "schema_version: 2"),
+            &record("2026-01-01T00:00:00Z", &head, "main", &root, "No")
+                .replace("schema_version: 1", "schema_version: 2"),
         );
         // not a record at all, and not counted as a broken one either
         repo.write("h/README.md.yaml", "x\n");
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head));
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now);
         assert!(r.is_none(), "an unreadable file was offered as a record");
         assert_eq!(skipped, 4);
     }
@@ -1194,13 +1259,14 @@ mod tests {
     /// fallback here is on the normal path and not an edge.
     #[test]
     fn a_record_with_no_task_says_none_rather_than_leaving_the_field_empty() {
+        let (t, now) = unjudged();
         let repo = Repo::new();
         let head = repo.head();
         let root = repo.root().to_string_lossy().to_string();
         let body = record("2026-01-01T00:00:00Z", &head, "main", &root, "Go")
             .replace("task_id: t-1\n", "");
         repo.write("h/no-task.md", &body);
-        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head));
+        let (r, skipped) = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now);
         let r = r.expect("a record without a task is still a record");
         assert_eq!(r.task_id, "none");
         assert_eq!(skipped, 0);
@@ -1211,6 +1277,7 @@ mod tests {
     /// that changes between two runs over an unchanged store is one nobody can reason about.
     #[test]
     fn two_records_in_one_second_resolve_the_same_way_every_time() {
+        let (t, now) = unjudged();
         let repo = Repo::new();
         let head = repo.head();
         let root = repo.root().to_string_lossy().to_string();
@@ -1220,9 +1287,9 @@ mod tests {
                 &record("2026-01-01T00:00:00Z", &head, "main", &root, name),
             );
         }
-        let first = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head)).0;
+        let first = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now).0;
         for _ in 0..5 {
-            let again = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head)).0;
+            let again = resolve(repo.root(), &repo.root().join("h"), "main", Some(&head), t, now).0;
             assert_eq!(first, again);
         }
     }
@@ -1257,7 +1324,6 @@ mod tests {
         let t = read_task(&q).expect("a task");
         assert!(t.scope.is_empty() && t.requires.is_empty() && t.profile.is_empty());
     }
-
 
     /// The thresholds, both sides of each and exactly on it. "At or beyond" and "beyond"
     /// are different contracts, and prose cannot be trusted to say which one is implemented.

@@ -633,7 +633,7 @@ impl WorktreeService {
                 }
             })
             .collect();
-        branch_states.sort_by(|a, b| a.name.cmp(&b.name));
+        crate::order::canonical(&mut branch_states);
 
         let mut tallies = TopologyTallies {
             worktrees: worktrees.len(),

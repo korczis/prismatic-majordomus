@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+  "x-majordomus-schema": "majordomus.mesh-declaration/v1",
+  "title": "Mesh",
+  "description": "The mesh declaration of a repository, under .ai/repo/mesh/: whether this repository's shared servers participate in discovery of other running Majordomus instances, over which transports (multicast, broadcast fallback, rendezvous endpoints), and whom they trust. Absent, or enabled: false, means no discovery socket opens anywhere this repository's servers run — the default posture is that nothing leaves the machine, and this object is the one place a person changes that (ADR 0043). Trust allow entries are Ed25519 public keys; nothing secret belongs here.",
+  "x-majordomus-allow": "mesh-declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
+      "const": "mesh/v1"
+    },
+    "kind": {
+      "const": "mesh-declaration"
+    },
+    "id": {
+      "description": "The declaration's identity within the kind.",
+      "type": "string",
+      "minLength": 1
+    },
+    "enabled": {
+      "description": "The master switch. False, or absent, starts nothing.",
+      "type": "boolean"
+    },
+    "multicast": {
+      "description": "UDP multicast, the preferred LAN mechanism.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "group": {
+          "description": "The IPv4 multicast group, conventionally in 239.0.0.0/8.",
+          "type": "string"
+        },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "ttl": {
+          "description": "The datagram TTL; 1 keeps announcements on the local segment.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "interval_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "broadcast": {
+      "description": "UDP broadcast, the controlled fallback; disabled unless declared.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["disabled", "auto", "explicit"] },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "networks": {
+          "description": "Directed broadcast addresses for explicit mode.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "interval_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "rendezvous": {
+      "description": "Other Majordomus servers to register with, for segments multicast cannot cross. Plain HTTP: a private network or an overlay is assumed.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "endpoints": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^http://" }
+        },
+        "interval_seconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "trust": {
+      "description": "Who to trust. The default policy observes everyone and trusts no one.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "enum": ["deny_unknown", "tofu", "allowlist"] },
+        "allow": {
+          "description": "Ed25519 public keys (64 hex characters) trusted regardless of policy.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  }
+}

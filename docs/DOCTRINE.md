@@ -106,6 +106,22 @@ the rule. A rule without the block is normative for whoever reads it and enforce
 nobody, and `majordomus rules list` says `not machine-enforced` for it rather than
 implying otherwise. The class still says what a violation means.
 
+A rule that is `class: blocking` *and* has no block is therefore a promise this tool cannot
+keep by itself, and most of this repository's blocking rules are in that position — measure
+it with `majordomus doctrine status`, which prints the registry's size beside the effective
+set's and names the count on its own line. The count is large, it predates the report, and
+the numbers must be read carefully: most of those rules *are* enforced, by a gate under
+`scripts/ci/` or by a case under `test/cases/` named in their `# Verification` section. What
+the doctrine registry cannot see is not the same as what nothing enforces, and a surface
+that reports one while the reader hears the other is the defect
+`project.a-verdict-states-its-subject` exists to stop.
+
+`scripts/ci/enforcement-check` is what decides the difference: a blocking rule must carry
+either an `x-majordomus` block or a `# Verification` path that exists and runs, and the
+handful that carry neither are ratcheted in `.ai/repo/enforcement-baseline.txt` so the set
+can shrink and cannot grow. It is answered by wiring the enforcement, never by changing the
+rule's class — moving a promise is not keeping it.
+
 ### Resolution
 
 `majordomus rules list` resolves the effective set as a dependency graph, deterministically:
@@ -175,6 +191,81 @@ Not every doctrine is watchable, and the registry says which by omitting `watch`
 `enforced_by`. An unresolved question is the clearest case: it is a recorded state, written
 down on purpose, and the opposite of drift. A questions file that no longer *parses* is
 drift, and that is a different doctrine.
+
+## Three enforcement modes
+
+A rule says how it is enforced in its own `x-majordomus` block, and the shape of that block
+*is* the mode — there is no word to declare and no word to get wrong:
+
+| mode | the block names | who runs it | what the repository can show |
+|---|---|---|---|
+| **dispatched** | `validator`, with `category`, `exit_code`, `enforced_by` and at least one test | `mj_doctrine_dispatch`, at the commands `enforced_by` names | the validator ran, and the cases prove it decides correctly |
+| **gated** | `tests`, and no validator | a CI gate, or the behavioural suite | the cases exist and a gate runs them |
+| **reviewed** | `reviewed_because`, and neither of the above | a person | nothing executable — and the reason why not |
+
+The third exists because some rules genuinely have no machine expression. *The provenance
+of what was written* is one; *whether a mechanism earns its cost* is another. Before it,
+those sat in a debt list called `rule-proof-baseline.txt` alongside rules that merely had
+not been got round to, and the two were indistinguishable — which is the worse failure,
+because the list could only be read as "work still to do" and half of it never would be.
+
+`reviewed_because` is the whole declaration. There is no boolean beside it, deliberately: a
+flag can be set, and a reason cannot be set without writing one. An exemption is therefore
+always a sentence somebody had to defend, and a reviewer reads the sentence rather than
+counting entries in a list.
+
+Two properties keep it from becoming a way out:
+
+- **an executable proof always wins.** A rule that names a test is gated whether or not the
+  reason is still in its front matter, so a rule acquiring a case stops being
+  review-enforced without anyone remembering to delete anything.
+- **it is counted apart, everywhere.** `rule-proof-check` reports every one as `NOTE` on
+  every run and prints the count beside the measured total; the typed report counts them in
+  `review_only`, never in `passing` and never in `named_proof`. This number going up is
+  governance getting weaker, and no summary folds it into a total that would hide that.
+
+## The proof graph
+
+`majordomus doctrine` answers *does the repository satisfy this rule right now*. That is a
+question about the tree. There is a second question — *is this rule in a state where it
+could be satisfied at all* — which is about the rule, and until the proof graph nothing
+asked it. `crate::rules` is the one typed reading that does, and `majordomus-cli rules`
+projects it to every surface.
+
+For each rule it joins the declaration to the tree and to the ledger of recorded runs
+([`EVIDENCE.md`](EVIDENCE.md)), and reports one state:
+
+| state | what it means |
+|---|---|
+| `proven` | every named artifact is in the tree, and every named case has a passing run that nothing has changed since |
+| `inputs unchanged` | the same, except at least one run is only un-invalidated — nothing it names has changed, which is the absence of a known invalidation rather than proof against this commit |
+| `stale` | a passing run exists, and a file it is about has changed since |
+| `gated` | an executable check refuses violations and a CI gate runs it; this repository records no verdict for a gate, so what can be shown is the mechanism and not the result |
+| `failing` | the most recent recorded run did not pass |
+| `not run` | a runner owns the case and no run of it was ever recorded |
+| `reviewed` | the rule declares, with its reason, that nothing executable can express it |
+| `unrunnable` | the rule names a path no runner drives, so nothing can ever record it |
+| `dangling` | the rule names a path that is not in the tree — it reads as proven, and is not |
+| `unproven` | the rule names neither a validator nor a test nor a reason |
+
+A rule's state is the **weakest of its parts**: one dangling case makes the rule dangling
+however many of its other cases pass. The two states nothing else in this repository can
+express are the last two, and they are the reason the graph exists. `dangling` is the
+one-way relation this repository keeps rediscovering — a proof verified by name, with the
+converse unowned, so a case renamed in January leaves a rule reading as enforced in June.
+`unproven` is the half no other check knows to look for: nothing else knows that a blocking
+rule is *supposed* to name anything at all.
+
+A **finding** is a rule whose declared class the state does not support. `dangling` is a
+finding at every class, because it reads as proof and is not. For a blocking rule,
+`unproven`, `failing` and `unrunnable` are findings too: each makes the claim "a gate
+refuses work that violates this" false. `gated`, `reviewed` and `not run` are not findings —
+they are weaker states, said out loud and counted, which is a different thing from a defect.
+
+Both directions are readable. `rules show` answers what proves a rule; `rules proves`
+answers what a test proves, and names the rules that would be left with nothing at all if
+it were deleted. That is the question that could not be asked while the relation ran one
+way only, and it is the one to ask before renaming a case.
 
 ## The dispatcher
 

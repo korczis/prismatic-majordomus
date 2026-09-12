@@ -972,6 +972,31 @@
       "source": "share/standard/majordomus/rules/session-records.v1.md"
     },
     {
+      "id": "majordomus.record-changed-files",
+      "slug": "record-changed-files",
+      "title": "A record's changed_files names the work, not the tool's exhaust",
+      "class": "advisory",
+      "principle": "",
+      "statement": "A record's changed_files is the working tree classified against the declarations that say what is derived — the scope file's generated and never-read sets, the policy's projection targets, the merge driver's derived trees, and the record stores themselves — never git status verbatim.",
+      "summary": "The changed_files block of a checkpoint, a handover or a closed session names what the episode produced. Paths a declaration already calls generated, projected or local are classified out, and the classification reads those declarations rather than a list of its own.",
+      "validator": "record_changed_files",
+      "validator_function": "mj_validate_record_changed_files",
+      "defined_in": "lib/changed.sh",
+      "category": "records",
+      "enforced_by": [
+        "doctor"
+      ],
+      "exit_code": 10,
+      "policy_key": "",
+      "claims": [],
+      "test": "test/cases/136_changed_files_classifier.sh",
+      "depends_on": [
+        "majordomus.session-records@1",
+        "majordomus.handover-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/record-changed-files.v1.md"
+    },
+    {
       "id": "majordomus.session-lifecycle",
       "slug": "session-lifecycle",
       "title": "The episode boundary is drawn below the model, and its working context is local",
@@ -1164,12 +1189,37 @@
         "majordomus.verification-integrity@1"
       ],
       "source": "share/standard/majordomus/rules/obligation-closure.v1.md"
+    },
+    {
+      "id": "majordomus.completion-gates",
+      "slug": "completion-gates",
+      "title": "Completion is gated",
+      "class": "blocking",
+      "principle": "",
+      "statement": "The gates a change must pass are derived from the repository's CI model and the change's own paths; a gate known to be failing, or whose recorded run no longer describes the tree, refuses the outcome completed; a gate that has never reported is recorded as unverified and never as passing; and no surface may reach that judgement a second time.",
+      "summary": "A task reaches the outcome completed only when no validation gate its own change set selects is known to be failing, and a gate's verdict discharges nothing once the files that select it have changed since the run.",
+      "validator": "completion_gates",
+      "validator_function": "mj_validate_completion_gates",
+      "defined_in": "lib/gates.sh",
+      "category": "gate",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "gates_passed",
+      "claims": [],
+      "test": "test/cases/131_completion_gates.sh",
+      "depends_on": [
+        "majordomus.obligation-closure@1"
+      ],
+      "source": "share/standard/majordomus/rules/completion-gates.v1.md"
     }
   ],
   "counts": {
-    "declared": 42,
-    "blocking": 38,
-    "advisory": 4
+    "declared": 44,
+    "blocking": 39,
+    "advisory": 5
   },
   "index": {
     "majordomus.ai-layout-integrity": 0,
@@ -1207,12 +1257,14 @@
     "majordomus.schema-integrity": 32,
     "majordomus.scope-integrity": 33,
     "majordomus.session-records": 34,
-    "majordomus.session-lifecycle": 35,
-    "majordomus.skill-integrity": 36,
-    "majordomus.state-consistency": 37,
-    "majordomus.task-continuity": 38,
-    "majordomus.use-case-coverage": 39,
-    "majordomus.verification-integrity": 40,
-    "majordomus.obligation-closure": 41
+    "majordomus.record-changed-files": 35,
+    "majordomus.session-lifecycle": 36,
+    "majordomus.skill-integrity": 37,
+    "majordomus.state-consistency": 38,
+    "majordomus.task-continuity": 39,
+    "majordomus.use-case-coverage": 40,
+    "majordomus.verification-integrity": 41,
+    "majordomus.obligation-closure": 42,
+    "majordomus.completion-gates": 43
   }
 }

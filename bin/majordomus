@@ -54,6 +54,7 @@ PLAN
 SYSTEM
   init                 create the .ai/ layer in this repository (refuses to overwrite)
   migrate              move pre-.ai project data from .majordomus/ into .ai/ (explicit, backed up)
+  recover              bring this checkout's record stores back to what the contract describes
   update               regenerate provider projections from policy
   doctor               is Majordomus itself healthy and actually wired here?      (read-only)
   doctrine             what rules are enforced, by what, and whether they are wired (read-only)
@@ -125,7 +126,7 @@ case "$cmd" in
     # version is dispatched before the option parser and has to say so for itself
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|rules|bench|usecase|adr|evidence|archive)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|recover|rules|bench|usecase|adr|evidence|archive)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"

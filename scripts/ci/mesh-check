@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# mesh-check — the mesh stays one subsystem: sockets under src/mesh/, one registry,
+# and a declaration whose kind and schema exist together.
+#
+# ADR 0043 gives network discovery three boundaries a grep can hold: the crate opens
+# UDP sockets only inside apps/majordomus-cli/src/mesh/ (a socket anywhere else is a
+# second discovery mechanism growing outside the provider contract); the one peer
+# store is mesh::registry::MeshRegistry, constructed only inside the mesh module (a
+# second construction site is a second truth about who exists); and the `mesh`
+# declaration's kind, schema and rule move together (a kind without its schema is an
+# object nothing validates). What a grep cannot hold — that a trust verdict grants
+# nothing — lives in the tests the rule project.mesh-is-observation-not-authority
+# names, not here.
+#
+#   scripts/ci/mesh-check              report; exit 10 on a finding
+#   MJ_ROOT=<dir> scripts/ci/mesh-check  measure another tree
+#
+# Exempt by kind: documentation (*.md, docs/, site/, .ai/) describes the mesh and
+# opens nothing; the crate's tests may bind sockets to prove behaviour — the subject
+# under test is not a discovery mechanism.
+
+set -euo pipefail
+
+root="${MJ_ROOT:-$(git rev-parse --show-toplevel)}"
+crate="apps/majordomus-cli/src"
+fail=0
+
+finding() {
+  printf 'mesh-check: FAIL %s\n' "$1"
+  fail=1
+}
+
+# 1. UDP sockets only under src/mesh/.
+while IFS= read -r file; do
+  case "$file" in
+    "$crate"/mesh/*) ;;
+    *) finding "$file opens a UDP socket outside $crate/mesh/ — a discovery transport belongs behind the provider contract" ;;
+  esac
+done < <(cd "$root" && grep -rl "UdpSocket" "$crate" --include='*.rs' 2>/dev/null || true)
+
+# 2. One registry, constructed inside the mesh module alone.
+while IFS= read -r file; do
+  case "$file" in
+    "$crate"/mesh/*) ;;
+    *) finding "$file constructs MeshRegistry — the one peer store is built inside src/mesh/ and reached through the runtime" ;;
+  esac
+done < <(cd "$root" && grep -rl "MeshRegistry::new" "$crate" --include='*.rs' 2>/dev/null || true)
+
+# 3. The declaration's kind, schema and rule exist together.
+kind_declared=0
+grep -q '^  mesh-declaration:' "$root/share/kinds.yaml" 2>/dev/null && kind_declared=1
+schema_present=0
+[ -f "$root/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json" ] && schema_present=1
+rule_present=0
+[ -f "$root/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md" ] && rule_present=1
+if [ "$kind_declared$schema_present$rule_present" != "111" ]; then
+  finding "the mesh declaration is incomplete: kind=$kind_declared schema=$schema_present rule=$rule_present — the kind in share/kinds.yaml, its schema and the rule move together"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  exit 10
+fi
+printf 'mesh-check: OK   sockets under src/mesh/, one registry, declaration complete\n'

@@ -121,6 +121,11 @@
           "type": "boolean",
           "description": "Write a derived continuation record when an episode ends. Until ADR 0052 this happened only while a task was still active, so a repository whose last task had been handed over stopped writing the one record a future worker resumes from."
         },
+        "stranded_after": {
+          "type": "string",
+          "pattern": "^[0-9]+[smh]$",
+          "description": "How long an open episode may go without a sign of life before `majordomus recover` may close it. The sign of life is the later of the episode's own started_at and the newest ledger line it stamped. Generous on purpose: closing a live episode costs the worker inside it the boundary of its work, and leaving a dead one open another hour costs nothing."
+        },
         "ensure_server_on_start": {
           "type": "boolean",
           "description": "On the start event, make sure the repository's shared server serves this checkout (`majordomus serve ensure`): a server is started when none answers, never built, and the briefing names where it stands. False leaves the server to the first MCP client."

@@ -210,6 +210,46 @@
       "external": false
     },
     {
+      "id": "lib/changed.sh",
+      "kind": "module",
+      "label": "changed",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/scope.yaml",
+      "kind": "artifact",
+      "label": "repo/scope.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/checkpoints",
+      "kind": "artifact",
+      "label": "local/state/checkpoints",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/handovers",
+      "kind": "artifact",
+      "label": "local/state/handovers",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -233,16 +273,6 @@
       "id": ".ai/local/state/current.yaml",
       "kind": "artifact",
       "label": "local/state/current.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/checkpoints",
-      "kind": "artifact",
-      "label": "local/state/checkpoints",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -330,6 +360,16 @@
       "external": false
     },
     {
+      "id": "lib/gates.sh",
+      "kind": "module",
+      "label": "gates",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/providers",
       "kind": "artifact",
       "label": "repo/providers",
@@ -390,16 +430,6 @@
       "external": false
     },
     {
-      "id": ".ai/local/state/handovers",
-      "kind": "artifact",
-      "label": "local/state/handovers",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/deployment.sh",
       "kind": "module",
       "label": "deployment",
@@ -433,16 +463,6 @@
       "id": "lib/project.sh",
       "kind": "module",
       "label": "project",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/scope.yaml",
-      "kind": "artifact",
-      "label": "repo/scope.yaml",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -750,6 +770,26 @@
       "external": false
     },
     {
+      "id": "lib/recover.sh",
+      "kind": "module",
+      "label": "recover",
+      "command": "recover",
+      "summary": "bring this checkout's record stores back to what the contract describes",
+      "read_only": null,
+      "route": "/commands/recover/",
+      "external": false
+    },
+    {
+      "id": ".ai/local/state/archive",
+      "kind": "artifact",
+      "label": "local/state/archive",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/search.sh",
       "kind": "module",
       "label": "search",
@@ -783,16 +823,6 @@
       "id": ".ai/local/state/locks",
       "kind": "artifact",
       "label": "local/state/locks",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/local/state/archive",
-      "kind": "artifact",
-      "label": "local/state/archive",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -844,6 +874,11 @@
     {
       "source": "lib/archive.sh",
       "target": ".ai/repo/archive.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/repo/scope.yaml",
       "kind": "reads"
     },
     {
@@ -977,6 +1012,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
       "source": "lib/rules.sh",
       "target": ".ai/repo/rules/vendor",
       "kind": "reads"
@@ -1098,6 +1138,11 @@
     },
     {
       "source": "bin/majordomus",
+      "target": "lib/recover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
       "target": "lib/rules.sh",
       "kind": "sources"
     },
@@ -1178,6 +1223,11 @@
     },
     {
       "source": "lib/check.sh",
+      "target": "lib/changed.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
     },
@@ -1194,6 +1244,11 @@
     {
       "source": "lib/check.sh",
       "target": "lib/evidence.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/gates.sh",
       "kind": "sources"
     },
     {
@@ -1224,6 +1279,11 @@
     {
       "source": "lib/common.sh",
       "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": "lib/changed.sh",
       "kind": "sources"
     },
     {
@@ -1352,6 +1412,11 @@
       "kind": "sources"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": "lib/gates.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/finish.sh",
       "target": "lib/check.sh",
       "kind": "sources"
@@ -1359,6 +1424,11 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/gates.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1394,6 +1464,16 @@
     {
       "source": "lib/prompt.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/changed.sh",
       "kind": "sources"
     },
     {
@@ -1494,6 +1574,16 @@
     {
       "source": "lib/capture.sh",
       "target": ".ai/repo/policy.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/changed.sh",
+      "target": ".ai/local/state/handovers",
       "kind": "uses"
     },
     {
@@ -1814,6 +1904,36 @@
     {
       "source": "lib/question.sh",
       "target": ".ai/local/state/open-questions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/archive",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/completed",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/session-current.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/recover.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "uses"
     },
     {

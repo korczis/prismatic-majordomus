@@ -23,6 +23,7 @@ verification:
     - no_open_blockers
     - note_present
     - obligations_met
+    - gates_passed
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report
@@ -72,6 +73,7 @@ session:
                                          # episode knows stops being reachable
   handover_on_end: true
   ensure_server_on_start: true           # the start event converges on a ready shared server
+  stranded_after: 12h                    # an open episode silent this long may be recovered
   # How old a continuation record may be before it stops being current. Divergence
   # (exact/advanced/diverged/different_context) is a fact about git topology and says
   # nothing about age; a record can be `advanced` and six days dead at the same time, which
