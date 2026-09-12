@@ -460,7 +460,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         ledger.save(root)?;
     }
 
-    unknown.sort();
+    crate::order::canonical_strings(&mut unknown);
     unknown.dedup();
     Ok(RecordOutcome {
         recorded,

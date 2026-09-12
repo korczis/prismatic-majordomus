@@ -584,6 +584,14 @@ pub struct Execution {
     pub command: String,
 }
 
+/// A ledger holds one execution per test, so the test identifies it; the label and the
+/// identity are the same string because there is nothing else to read it by.
+impl crate::order::Ordered for Execution {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.test, &self.test)
+    }
+}
+
 impl Execution {
     /// Does the test's source still hash to what was recorded?
     ///

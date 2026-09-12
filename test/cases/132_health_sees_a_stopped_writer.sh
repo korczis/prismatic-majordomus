@@ -95,7 +95,7 @@ DOCTOR2_EXIT=$?
 set -e
 
 grep -qE 'FAIL +lifecycle' "$T/doctor2.out" && {
-  echo "    doctor still reports a stopped writer after the lifecycle ran and wrote records"
+  echo "    doctor still reports a stopped writer after the lifecycle ran and wrote records (exit $DOCTOR2_EXIT)"
   sed 's/^/    | /' "$T/doctor2.out"; exit 1; }
 
 grep -qE 'lifecycle' "$T/doctor2.out" || {

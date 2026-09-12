@@ -312,7 +312,7 @@ impl Ledger {
             }
             n += 1;
         }
-        self.executions.sort_by(|a, b| a.test.cmp(&b.test));
+        crate::order::canonical(&mut self.executions);
         n
     }
 
