@@ -14,13 +14,37 @@
 //! # The traversal policy is the only thing this module decides
 //!
 //! The graph says which things are related and how; it does not say which of those
-//! relations carry *context*. [`EDGES`] is that decision, and it is small on purpose:
-//! twelve edge kinds with a direction and a weight each, and three the compiler refuses to
-//! follow. `is_a` is refused because every object of a kind hangs off one node and
-//! following it would select the whole layer; `composes` and `projects` are refused because
-//! they describe this executable's own wiring rather than the repository being worked on.
-//! [`policy`] projects the table so that a caller can read the decision instead of
-//! inferring it from the answer.
+//! relations carry *context*. [`EDGES`] is that decision, and it is small on purpose: a
+//! weight per direction for each edge kind that carries context, and [`REFUSED`] for the
+//! kinds the compiler will not follow at all. `is_a` is refused because every object of a
+//! kind hangs off one node and following it would select the whole layer; `composes` and
+//! `projects` are refused because they describe this executable's own wiring rather than
+//! the repository being worked on. [`policy`] projects the table so that a caller can read
+//! the decision instead of inferring it from the answer.
+//!
+//! The two tables are complementary and not overlapping, and that is the invariant worth
+//! seeing: a refusal is an edge kind's *absence* from [`EDGES`], so [`edge_policy`]
+//! answering `None` is the refusal rather than a weight of zero standing for one. There is
+//! therefore no way to be in both tables, and no way to be followed at weight nothing.
+//!
+//! ```
+//! use majordomus_cli::devcontext::edge_policy;
+//! use majordomus_cli::devcontext::select::{EDGES, REFUSED};
+//!
+//! // everything in the table is followed, in at least one direction, at a real weight
+//! for e in EDGES {
+//!     assert!(edge_policy(e.kind).is_some(), "{} is in the table", e.kind);
+//!     assert!(e.forward > 0.0 || e.reverse > 0.0, "{} is followed at nothing", e.kind);
+//! }
+//!
+//! // and a refused kind is absent from it, with the reason the report prints
+//! let refused: Vec<&str> = REFUSED.iter().map(|(kind, _)| *kind).collect();
+//! assert_eq!(refused, ["is_a", "composes", "projects"]);
+//! for (kind, why) in REFUSED {
+//!     assert!(edge_policy(kind).is_none(), "{kind} is both followed and refused");
+//!     assert!(!why.is_empty(), "{kind} is refused and does not say why");
+//! }
+//! ```
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
@@ -34,6 +58,37 @@ use crate::model::Object;
 use super::model::{Discovery, Selector, Tier};
 
 /// Which way an edge is worth following, and what it means in each direction.
+///
+/// An edge of the composed graph has one kind and two readings, and the two are rarely
+/// worth the same. From an issue, the milestone it `belongs_to` is strong context; from the
+/// milestone, any one of its thirty-three issues is weak. So the weight is per direction,
+/// and so is the reason — which is prose a reader of the answer sees, not a comment here.
+///
+/// A weight is a multiplier on the relevance of the entry the edge was followed *from*, so
+/// relevance decays with distance and the rate of decay is the edge's own rather than a
+/// global constant.
+///
+/// ```
+/// use majordomus_cli::devcontext::{edge_policy, EdgePolicy};
+///
+/// // `belongs_to` is asymmetric, and the asymmetry is the point
+/// let belongs_to: &EdgePolicy = edge_policy("belongs_to").unwrap();
+/// assert!(
+///     belongs_to.forward > belongs_to.reverse,
+///     "an issue's milestone is context; a milestone's every issue is not",
+/// );
+/// assert_ne!(belongs_to.forward_reason, belongs_to.reverse_reason);
+///
+/// // `supersedes` is symmetric: either version is context for the other
+/// let supersedes: &EdgePolicy = edge_policy("supersedes").unwrap();
+/// assert_eq!(supersedes.forward, supersedes.reverse);
+///
+/// // and both readings of every followed kind carry words a reader of the answer sees
+/// for kind in ["depends_on", "governed_by", "tested_by"] {
+///     let e = edge_policy(kind).unwrap();
+///     assert!(!e.forward_reason.is_empty() && !e.reverse_reason.is_empty(), "{kind}");
+/// }
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct EdgePolicy {
     /// The edge kind, as the composed graph names it.
@@ -207,6 +262,56 @@ pub fn tier_for_kind(kind: &str) -> Tier {
 /// every path that reached the same identifier into one of these, which is where
 /// deduplication happens: the [`Candidate`] is the unit, and `discovered_by` is the
 /// evidence of how many ways there were to find it.
+///
+/// The three scalar fields are folded rather than overwritten as paths arrive, and each
+/// keeps the *best* value any path gave: the highest `relevance`, the shortest `depth`, and
+/// the strongest `tier`. Strongest means lowest, because [`Tier`] is ordered by authority —
+/// so a thing reached once as a seed and again three hops out along a weak edge is still a
+/// `Task`-tier entry at relevance 1 and depth 0. Nothing a later path says can demote it.
+///
+/// `object` and `path` are the two ways a candidate can have a body: `object` indexes into
+/// the index's own objects, and `path` names a file the layer pointed at without indexing.
+/// Both can be absent, for something the layer names and this repository does not hold.
+///
+/// ```
+/// use std::collections::BTreeMap;
+///
+/// use majordomus_cli::devcontext::select::Candidate;
+/// use majordomus_cli::devcontext::{Discovery, Selector, Tier};
+///
+/// let way = |selector: Selector, depth: usize, confidence: f64| Discovery {
+///     selector,
+///     reason: "for the sake of the example".into(),
+///     via: None,
+///     edge: None,
+///     depth,
+///     confidence,
+///     weight: 1.0,
+/// };
+///
+/// // one thing, found twice: named in the request, and again by matching the intent
+/// let c = Candidate {
+///     uri: "majordomus://adr/0052".into(),
+///     kind: "adr".into(),
+///     title: Some("The episode is the boundary".into()),
+///     tier: Tier::Task,
+///     relevance: 1.0,
+///     depth: 0,
+///     discovered_by: vec![
+///         way(Selector::Seed, 0, 1.0),
+///         way(Selector::IntentMatch, 2, 0.4),
+///     ],
+///     object: None,
+///     path: None,
+///     status: None,
+///     facts: BTreeMap::new(),
+/// };
+///
+/// // two recorded paths is the fact worth keeping, not something to hide
+/// assert_eq!(c.discovered_by.len(), 2);
+/// // and the entry is trusted as far as its *best* path, not averaged down by its worst
+/// assert_eq!(c.confidence(), 1.0);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Candidate {
     /// The canonical identifier.
@@ -265,7 +370,64 @@ impl Candidate {
         self.discovered_by.push(d);
     }
 
-    /// The confidence of the most trusted path that reached it.
+    /// The confidence of the most trusted path that reached it: the maximum, not the mean.
+    ///
+    /// Averaging would be wrong in a way that matters. Confidence here is about the
+    /// *provenance of the selection* — 1.0 when the repository declared the path, less when
+    /// the compiler inferred it from words — and a thing the layer explicitly declares does
+    /// not become less certain because a weaker guess also found it. Finding more ways to
+    /// something can only raise this number.
+    ///
+    /// A candidate with no recorded path is 0.0 rather than an error, which is also right:
+    /// nothing vouches for it.
+    ///
+    /// ```
+    /// use std::collections::BTreeMap;
+    ///
+    /// use majordomus_cli::devcontext::select::Candidate;
+    /// use majordomus_cli::devcontext::{Discovery, Selector, Tier};
+    ///
+    /// let mut c = Candidate {
+    ///     uri: "majordomus://rule/project.x@1".into(),
+    ///     kind: "rule".into(),
+    ///     title: None,
+    ///     tier: Tier::Governance,
+    ///     relevance: 0.6,
+    ///     depth: 1,
+    ///     discovered_by: Vec::new(),
+    ///     object: None,
+    ///     path: None,
+    ///     status: None,
+    ///     facts: BTreeMap::new(),
+    /// };
+    ///
+    /// // nothing vouches for it yet
+    /// assert_eq!(c.confidence(), 0.0);
+    ///
+    /// // an inferred path: the words of the intent occurred in its own words
+    /// c.discovered_by.push(Discovery {
+    ///     selector: Selector::IntentMatch,
+    ///     reason: "the intent's words occur in it".into(),
+    ///     via: None,
+    ///     edge: None,
+    ///     depth: 1,
+    ///     confidence: 0.4,
+    ///     weight: 0.5,
+    /// });
+    /// assert_eq!(c.confidence(), 0.4);
+    ///
+    /// // and then a declared one, which the guess cannot dilute
+    /// c.discovered_by.push(Discovery {
+    ///     selector: Selector::Governance,
+    ///     reason: "a rule the layer applies to everything".into(),
+    ///     via: None,
+    ///     edge: None,
+    ///     depth: 0,
+    ///     confidence: 1.0,
+    ///     weight: 1.0,
+    /// });
+    /// assert_eq!(c.confidence(), 1.0, "the best path decides, never the average");
+    /// ```
     pub fn confidence(&self) -> f64 {
         self.discovered_by
             .iter()
@@ -275,6 +437,62 @@ impl Candidate {
 }
 
 /// The candidates a request reaches, and everything the walk learned on the way.
+///
+/// Keyed by canonical identifier, which is what makes structural deduplication a property
+/// of the type rather than a step: one identifier cannot be in here twice, so the question
+/// "was this reached more than once" is answered by a candidate's `discovered_by` and never
+/// by scanning for duplicates.
+///
+/// The other two fields are what the walk could not do, and neither is an error.
+/// `unresolved` is a name the layer declares and this repository holds nothing under — a
+/// dangling reference, which is a fact about the repository worth reporting. `diagnostics`
+/// is what could not be read. The budget turns both into rows of the answer rather than
+/// swallowing them.
+///
+/// ```
+/// use std::collections::BTreeMap;
+///
+/// use majordomus_cli::devcontext::select::{Candidate, Selection};
+/// use majordomus_cli::devcontext::{Discovery, Selector, Tier};
+///
+/// let uri = "majordomus://adr/0052";
+/// let candidate = Candidate {
+///     uri: uri.into(),
+///     kind: "adr".into(),
+///     title: None,
+///     tier: Tier::Decision,
+///     relevance: 0.8,
+///     depth: 1,
+///     discovered_by: vec![Discovery {
+///         selector: Selector::Relation,
+///         reason: "the decision in force over this scope".into(),
+///         via: Some("majordomus://issue/I0301".into()),
+///         edge: Some("governed_by".into()),
+///         depth: 1,
+///         confidence: 1.0,
+///         weight: 0.9,
+///     }],
+///     object: None,
+///     path: None,
+///     status: None,
+///     facts: BTreeMap::new(),
+/// };
+///
+/// let selection = Selection {
+///     candidates: BTreeMap::from([(uri.to_string(), candidate)]),
+///     // a reference the layer declares and nothing answers: reported, not dropped
+///     unresolved: vec![("majordomus://rule/gone@1".into(), "depends_on".into())],
+///     diagnostics: Vec::new(),
+/// };
+///
+/// // the identifier is the key, so one thing is one entry however many paths found it
+/// assert_eq!(selection.candidates.len(), 1);
+/// assert_eq!(selection.candidates[uri].discovered_by.len(), 1);
+/// assert!(selection.candidates.contains_key(uri));
+///
+/// // and a dangling reference survives to be reported as one
+/// assert_eq!(selection.unresolved[0].0, "majordomus://rule/gone@1");
+/// ```
 pub struct Selection {
     /// By canonical identifier.
     pub candidates: BTreeMap<String, Candidate>,
@@ -285,6 +503,44 @@ pub struct Selection {
 }
 
 /// What the walk was asked to start from and how far it may go.
+///
+/// This is the *resolved* request, not the caller's. Every short name is already a canonical
+/// identifier, every path has been normalised, and the free-text intent has already become a
+/// set of terms by [`intent_terms`] — so the walk parses nothing and infers nothing about
+/// what it was asked. That separation is what keeps the inference in one place where its
+/// confidence can be labelled, instead of spread through the traversal.
+///
+/// `paths` is wider than what the caller named: it is the union of the request's own paths
+/// and the scope every seed declares, which is how naming an issue selects the contracts
+/// over the code that issue is about without the caller listing them.
+///
+/// ```
+/// use std::collections::BTreeSet;
+///
+/// use majordomus_cli::devcontext::select::Request;
+/// use majordomus_cli::devcontext::{intent_terms, DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};
+///
+/// let branch = String::from("master");
+/// let req = Request {
+///     seeds: vec!["majordomus://issue/I0301".into()],
+///     // the request named one path; the issue's own declared scope added the other
+///     paths: BTreeSet::from(["apps/majordomus-cli/src".to_string(), "lib".to_string()]),
+///     terms: intent_terms("Explain the CONTEXT budget"),
+///     max_depth: DEFAULT_MAX_DEPTH,
+///     floor: DEFAULT_FLOOR,
+///     all_blocking_rules: false,
+///     branch: Some(&branch),
+/// };
+///
+/// // the intent arrives parsed: lowercased, deduplicated, and without the short words
+/// assert!(req.terms.contains("context") && req.terms.contains("budget"));
+/// assert!(!req.terms.contains("CONTEXT"), "the walk never re-parses the intent");
+/// assert!(!req.terms.contains("the"));
+///
+/// // and the branch is borrowed, because it belongs to the checkout and not to the request
+/// assert_eq!(req.branch, Some("master"));
+/// assert_eq!(req.seeds.len(), 1);
+/// ```
 pub struct Request<'a> {
     /// The canonical identifiers the request named, already resolved.
     pub seeds: Vec<String>,
@@ -383,6 +639,57 @@ fn facts_of(o: &Object) -> BTreeMap<String, String> {
 }
 
 /// The version or date an object states about itself, for the answer's `version` field.
+///
+/// One field, filled from whichever of four keys the object happens to declare, in a fixed
+/// order of preference: `updated_at`, `version`, `date`, `created_at`. The order is "when
+/// was this last true" before "which revision is it" before "when was it first written",
+/// because the answer's `version` exists so that a reader can spot a stale entry, and the
+/// freshest self-description is the one that serves that.
+///
+/// The kinds of the layer disagree about which key they carry — a rule has a `version`, an
+/// ADR a `date`, an issue an `updated_at` — so this is a fallback chain rather than a
+/// lookup. `None` is ordinary: plenty of objects say nothing about their own age.
+///
+/// ```
+/// use majordomus_cli::devcontext::select::version_of;
+/// use majordomus_cli::model::{Object, Provenance};
+/// use serde_json::json;
+///
+/// // the object as the index holds it; only its metadata differs between the cases
+/// let with = |metadata: serde_json::Value| -> Option<String> {
+///     let o = Object {
+///         kind: "rule".into(),
+///         identity: "project.x@2".into(),
+///         uri: "majordomus://rule/project.x@2".into(),
+///         title: None,
+///         description: None,
+///         metadata,
+///         body: String::new(),
+///         content: String::new(),
+///         media_type: "text/markdown",
+///         provenance: Provenance {
+///             path: ".ai/repo/rules/project/x.v2.md".into(),
+///             directory: ".ai/repo/rules/project".into(),
+///             source_class: "rule".into(),
+///             section: Some("rules".into()),
+///             bytes: 2048,
+///             member: None,
+///         },
+///     };
+///     version_of(&o)
+/// };
+///
+/// // the freshest self-description wins, whichever keys are present
+/// assert_eq!(
+///     with(json!({"updated_at": "2026-09-12", "version": 2, "created_at": "2026-08-01"})),
+///     Some("2026-09-12".into()),
+/// );
+/// assert_eq!(with(json!({"version": 2, "date": "2026-08-01"})), Some("2".into()));
+/// assert_eq!(with(json!({"date": "2026-08-01"})), Some("2026-08-01".into()));
+///
+/// // and saying nothing about its own age is ordinary, not a fault
+/// assert_eq!(with(json!({})), None);
+/// ```
 pub fn version_of(o: &Object) -> Option<String> {
     for key in ["updated_at", "version", "date", "created_at"] {
         if let Some(v) = o.metadata.get(key).and_then(scalar) {
@@ -397,6 +704,57 @@ pub fn version_of(o: &Object) -> Option<String> {
 /// Reach every candidate the request implies: the seeds, the graph around them, the paths
 /// they declare, the governance the layer applies, the session that ran before, and — when
 /// the request gave an intent — what its words match.
+///
+/// Nothing is read here. `graph` is [`crate::graph::COMPOSED`] already derived over the
+/// index, so every typed reference the layer declares is an edge before this function
+/// starts, and the walk is over two values the process is holding. That is what lets a
+/// request be answered inside a handler rather than at load time.
+///
+/// It returns a [`Selection`] and never an error: an intent that matches nothing, a seed
+/// whose scope is empty, a reference the layer declares and nothing answers — each of those
+/// is a fact about the repository, carried in `unresolved` or `diagnostics`, and not a
+/// failure of the call.
+///
+/// The governance selector is why a request that names nothing still gets an answer: the
+/// policy and the scope apply to everything, so they are reached without a seed.
+///
+/// ```
+/// use std::collections::BTreeSet;
+///
+/// use majordomus_cli::devcontext::select::{select, Request};
+/// use majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};
+/// use majordomus_cli::graph;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let composed = graph::derive(graph::COMPOSED, &ctx.registry, ctx.index.as_ref()).unwrap();
+///
+/// // a request that names nothing at all
+/// let empty = Request {
+///     seeds: Vec::new(),
+///     paths: BTreeSet::new(),
+///     terms: BTreeSet::new(),
+///     max_depth: DEFAULT_MAX_DEPTH,
+///     floor: DEFAULT_FLOOR,
+///     all_blocking_rules: false,
+///     branch: None,
+/// };
+/// let selection = select(&ctx, &composed, &empty);
+///
+/// // it still reaches the governance, because the governance applies without being asked for
+/// assert!(
+///     selection.candidates.values().any(|c| c.kind == "policy"),
+///     "a request that names nothing still gets what every session is held to",
+/// );
+///
+/// // and every candidate carries at least one recorded way in: nothing is in the
+/// // selection without something that says how it got there
+/// for c in selection.candidates.values() {
+///     assert!(!c.discovered_by.is_empty(), "{} arrived unexplained", c.uri);
+///     assert!(c.confidence() > 0.0, "{} is vouched for by nothing", c.uri);
+/// }
+/// ```
 pub fn select(ctx: &Context, graph: &Graph, req: &Request<'_>) -> Selection {
     let index = ctx.index.as_ref();
     let by_uri: BTreeMap<&str, usize> = index

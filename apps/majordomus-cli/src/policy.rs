@@ -72,6 +72,28 @@ pub struct ProfilesPolicy {
 /// record is written and a month later. Keeping a default here would be a second source of
 /// truth for the same thresholds, so absence is carried as absence and reported as
 /// `unknown`, naming the missing key.
+///
+/// Both keys are independently optional, and the pair is what
+/// [`Thresholds::judge`](crate::capability::builtin::continuity::Thresholds::judge) needs:
+/// with one of them missing it has no band to place a record in and answers `unknown`
+/// rather than inventing the other half.
+///
+/// ```
+/// use majordomus_cli::policy::FreshnessPolicy;
+/// use serde_json::json;
+///
+/// // the declared form: the two numbers that draw fresh | aging | stale
+/// let declared: FreshnessPolicy =
+///     serde_json::from_value(json!({"fresh_minutes": 30, "stale_minutes": 240})).unwrap();
+/// assert_eq!(declared.fresh_minutes, Some(30));
+/// assert_eq!(declared.stale_minutes, Some(240));
+///
+/// // a policy that predates the key: absent, not defaulted. Nothing in this file
+/// // supplies a number the repository never declared.
+/// let silent: FreshnessPolicy = serde_json::from_value(json!({})).unwrap();
+/// assert_eq!(silent, FreshnessPolicy::default());
+/// assert!(silent.fresh_minutes.is_none() && silent.stale_minutes.is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
 pub struct FreshnessPolicy {
     /// Below this age a record is `fresh`.
