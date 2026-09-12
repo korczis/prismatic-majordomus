@@ -161,7 +161,9 @@ composes, because there is no episode without a worker to have one.
 | a linked worktree reports no server while the primary checkout has one | a server serves the checkout it started in; each has its own lease | `serve ensure` in that worktree; `serve status` lists both |
 | `direnv: error .envrc is blocked` | direnv approves by path and content, and a new worktree starts unapproved | `majordomus worktree ensure <branch>` carries the primary's approval over |
 | `majordomus: nothing was serving this checkout; a server is starting` | the expected line on a first entry; the address arrives a moment later, when `watch_file` sees the lease | nothing |
+| `majordomus: <reason>; a server is starting in its place` | the lease named a server that no longer serves this checkout — it lost the lease, runs code no longer on disk, or is not ours — and entry replaced it; the banner shows no address until the new one publishes | nothing; a process that still holds the old port is named by `majordomus serve status` |
 | that same line on every `cd` | the server is started and then fails | read the log the line names, then `majordomus serve status` |
+| a second banner right after the first | direnv re-evaluated entry because the lease moved under `watch_file`; a server arriving or leaving draws the two-line form, never the box again | nothing |
 | `majordomus: the executable is older than the sources`, and no server comes up | entry refuses to start a runtime from stale code | `just build`; the next `cd` ensures one |
 | the peers board is empty although others are working | the board is one server's memory, and each checkout has its own server | `majordomus serve status` names every server of the repository and what each holds |
 
