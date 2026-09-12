@@ -272,7 +272,7 @@ Design rules for this schema:
 These are two models, and this document called them one until 2026-09-11. The confusion is
 not academic: making the second depend on the first is what let an ordinary finished task
 silently disable continuity for every conversation after it, for six days, while every
-diagnostic reported health; ADR 0041, "The session lifecycle is the episode's, not the
+diagnostic reported health; ADR 0052, "The session lifecycle is the episode's, not the
 task's", records the audit and the decision.
 
 A **task** is a unit of intended work that a person opens and closes.

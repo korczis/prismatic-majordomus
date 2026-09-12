@@ -13,7 +13,7 @@
 //! `session.machine` answers the lifecycle state machine as data. It exists because the
 //! same machine is currently drawn three times — in `docs/CONTINUITY.md`, in
 //! `lib/session.sh`'s comments and in the Cockpit — and three drawings of one machine
-//! drift. The `lib/session.sh` drawing still had the task guard in it after ADR 0041
+//! drift. The `lib/session.sh` drawing still had the task guard in it after ADR 0052
 //! removed the guard from the code. The answer here is derived from
 //! [`crate::session::EpisodeState`] and [`crate::session::Transition`] and from nothing
 //! else, so a transition that is added to the type appears in every surface and a diagram
@@ -118,7 +118,7 @@ pub struct IdentityReport {
 fn machine(_: &Context, _: Empty) -> Result<MachineReport, CapabilityError> {
     Ok(MachineReport {
         machine: Machine::describe(),
-        decision: ".ai/repo/adrs/0041-the-session-lifecycle-is-the-episodes-not-the-tasks.md \
+        decision: ".ai/repo/adrs/0052-the-session-lifecycle-is-the-episodes-not-the-tasks.md \
                    and .ai/repo/adrs/0047-the-session-domain-is-typed-and-its-identities-are-not-interchangeable.md"
             .to_string(),
     })
@@ -161,7 +161,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "session_domain.machine",
                 title: "The episode lifecycle, as data",
-                description: "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0041.",
+                description: "Every state an episode can be in, whether it is terminal and what it may move to; every transition — open, resume, checkpoint, detach, close, recover — with the states it runs between and whether it moves the state at all. Derived from the types, so a diagram that disagrees with the code cannot exist. What the machine deliberately does not depend on is stated rather than left to be inferred: task state, which is ADR 0052.",
                 input: Empty,
                 output: MachineReport,
                 stability: Stability::BehaviorallyVerified,
@@ -266,6 +266,6 @@ mod tests {
         assert!(report
             .independent_of
             .iter()
-            .any(|s| s.contains("task") && s.contains("0041")));
+            .any(|s| s.contains("task") && s.contains("0052")));
     }
 }

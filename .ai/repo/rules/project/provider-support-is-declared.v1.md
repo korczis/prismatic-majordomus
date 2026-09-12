@@ -64,7 +64,7 @@ against a checkout with no provider hooks installed, which must still report the
 events. `test/cases/171_session_observability.sh` asserts exactly that, in a fixture that
 carries no provider hook directory at all.
 
-The duplication is deliberate and temporary. ADR 0041 settles the direction — one canonical
+The duplication is deliberate and temporary. ADR 0052 settles the direction — one canonical
 session domain service in the executable, with the shell an adapter over it — and when
 `lib/capture.sh` reads `share/providers.yaml` instead of carrying its own table, this rule's
 gate becomes a tautology and can be retired. Until then it is what makes the duplication

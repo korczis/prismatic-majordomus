@@ -173,8 +173,8 @@ for tree in $TREES; do
   lh="$(mktemp "${TMPDIR:-/tmp}/mj-local.XXXXXX")"
   ph="$(mktemp "${TMPDIR:-/tmp}/mj-pub.XXXXXX")"
   # an empty file is the same bytes everywhere and names nothing; it is not evidence of a leak
-  find "$LOCAL_ABS" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | awk '{print $1}' | sort -u > "$lh" || true
-  find "$tree" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | sort > "$ph" || true
+  find "$LOCAL_ABS" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | awk '{print $1}' | LC_ALL=C sort -u > "$lh" || true
+  find "$tree" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | LC_ALL=C sort > "$ph" || true
   shared="$(awk 'NR==FNR{h[$1];next} ($1 in h){print $2}' "$lh" "$ph" | head -10 || true)"
   rm -f "$lh" "$ph"
   if [ -n "$shared" ]; then

@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_checkpoint:-}" ] && return 0 || MJ_LIB_checkpoint=1
-# checkpoint — a compact progress record inside an active task. Append-only.
+# checkpoint — a compact progress record of an episode. Append-only.
 #
 # checkpoint != handover. A handover is a deliberate continuation package written when a
 # worker stops; a checkpoint is what was true a moment ago, small enough to be quoted into
 # the next worker's context verbatim. The policy caps its length for exactly that reason.
+#
+# A checkpoint belongs to the *episode*, not to a task. It used to refuse to write itself
+# unless a task was open and `active`, which meant that finishing a task silently disabled
+# progress records for every episode after it — on 2026-09-05 that refusal stopped this
+# repository writing checkpoints for six days while doctor stayed green. A task is an
+# optional relation a checkpoint carries and names when it has one; it is not a permission
+# to exist (ADR 0052).
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
 # shellcheck source=derive.sh
@@ -35,11 +42,15 @@ H
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   local dir="$MJ_STATE_DIR/checkpoints"
   if [ "$list" = 1 ]; then mj_record_list "$dir" checkpoint; return; fi
-  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task ($(mj_rel "$MJ_STATE_DIR")/current.yaml); run: majordomus start"
-  local id profile owner; id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"
+  # The task, when there is one. Absence is not an error here: the record is the episode's.
+  local id="" profile="" owner=""
+  if mj_load_current; then id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"; fi
 
   if [ "$show" = 1 ]; then
-    if ! mj_resolve_latest "$dir" "$id"; then echo "No checkpoint for $id."; return 0; fi
+    if ! mj_resolve_latest "$dir" "$id"; then
+      if [ -n "$id" ]; then echo "No checkpoint for $id."; else echo "No checkpoint for this worktree and branch."; fi
+      return 0
+    fi
     if [ "$path_only" = 1 ]; then printf '%s\n' "${MJ_RES_PATH#"$MJ_ROOT/"}"; return 0; fi
     printf 'Checkpoint: %s\nCreated: %s (%s)\nGit state: %s\n---\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" \
       "$MJ_RES_CREATED" "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" \
@@ -47,11 +58,6 @@ H
     mj_record_body "$MJ_RES_PATH"
     return 0
   fi
-
-  case "$(mj_cur outcome)" in
-    active) ;;
-    *) mj_die "$MJ_EX_REFUSED" "task $id is $(mj_cur outcome); a checkpoint records progress inside an active task" ;;
-  esac
 
   local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"
   if [ "$derive" = 1 ]; then mj_derive_checkpoint_body > "$body"; else cat > "$body"; fi
@@ -67,18 +73,28 @@ H
       mj_die "$MJ_EX_CONTRACT" "checkpoint: body is $lines lines, cap $cap (a checkpoint is a progress note, not a report; write a handover instead)"
     fi
     local rec; rec="$(mktemp "${TMPDIR:-/tmp}/mj.cr.XXXXXX")"
-    { mj_record_front_matter "$id" "$profile" "$owner"; cat "$body"; } > "$rec"
+    { mj_record_front_matter "${id:-none}" "${profile:-none}" "$owner"; cat "$body"; } > "$rec"
     final="$(mj_publish_record "$dir" "" "$rec")" || { rm -f "$rec" "$body"; mj_die "$MJ_EX_INTERNAL" "could not create a unique checkpoint file"; }
     rm -f "$rec"
   fi
   rm -f "$body"
 
-  sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+  # The task's own record is touched only when there is a task. An episode checkpoint has
+  # nothing to say about a task nobody opened.
+  if [ -n "$id" ]; then
+    sed "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
+  fi
+  # task_id is omitted rather than written as "none" when there is no task: every reader of
+  # this event collects the field's distinct values, and a literal "none" would enter a
+  # session record's task list as though somebody had opened a task by that name.
+  local fields=""
+  [ -n "$id" ] && fields="\"task_id\":\"$id\""
   if [ -n "$final" ]; then
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\",\"checkpoint_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
+    [ -n "$fields" ] && fields="$fields,"
+    mj_ledger_append task.checkpoint "$fields\"checkpoint_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
     printf '%s\n' "${final#"$MJ_ROOT/"}"
   else
-    mj_ledger_append task.checkpoint "\"task_id\":\"$id\""
-    printf 'checkpoint %s at %s (no body)\n' "$id" "$now"
+    mj_ledger_append task.checkpoint "$fields"
+    printf 'checkpoint %s at %s (no body)\n' "${id:-(no task)}" "$now"
   fi
 }

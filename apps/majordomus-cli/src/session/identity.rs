@@ -424,7 +424,7 @@ impl ProviderSessionId {
 /// A unit of intended work that a person opens and closes: `t-<YYYYMMDDHHMMSS>-<4 hex>`.
 ///
 /// An [`super::Episode`] carries `Option<TaskId>` and nothing else of a task. The
-/// separation is ADR 0041's whole finding: a task is optional, is opened and closed by a
+/// separation is ADR 0052's whole finding: a task is optional, is opened and closed by a
 /// person, and outlives or predeceases any number of episodes. What made this repository
 /// write no checkpoint and no handover for six days was code that asked a task whether an
 /// episode's artefact should be written.
@@ -675,7 +675,7 @@ mod tests {
     fn a_task_id_that_is_the_word_none_is_an_absence() {
         // `task_id: none` is how the records spell "no task". Parsing it as a task would
         // give every episode without one a task called `none` — and the whole point of
-        // ADR 0041 is that an episode without a task is ordinary.
+        // ADR 0052 is that an episode without a task is ordinary.
         assert!(TaskId::parse("none").is_none());
     }
 

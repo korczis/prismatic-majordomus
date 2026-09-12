@@ -10,7 +10,7 @@
 #  * the machine has exactly one terminal state, and nothing leaves it. Episode
 #    s-20260909152316-024f has four immutable records in this repository because the
 #    previous representation — a file that exists or does not — could not say that;
-#  * the machine depends on no task. The signature of the transition is what ADR 0041's
+#  * the machine depends on no task. The signature of the transition is what ADR 0052's
 #    six-day outage turned on, and this asserts the projection says so out loud rather
 #    than leaving a reader to infer an absence;
 #  * the identities the stores conflate are reported as separate subjects with each store's
@@ -122,10 +122,10 @@ done
 jq -e '.transitions[] | select(.transition == "checkpoint") | .moves_state == false' "$S/m.json" >/dev/null \
   || { echo "    a checkpoint is not reported as an event inside a state"; exit 1; }
 
-# and the machine says out loud what it does not depend on. ADR 0041's whole finding.
+# and the machine says out loud what it does not depend on. ADR 0052's whole finding.
 jq -e '[.independent_of[] | select(test("task"))] | length >= 1' "$S/m.json" >/dev/null \
   || { echo "    the machine does not state its independence from task state"; exit 1; }
-jq -e '.decision | test("0041")' "$S/m.json" >/dev/null \
+jq -e '.decision | test("0052")' "$S/m.json" >/dev/null \
   || { echo "    the machine does not cite the decision it implements"; exit 1; }
 
 # ---------------------------------------------------------------- the identities

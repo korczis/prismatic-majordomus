@@ -54,7 +54,7 @@ episode bbbb-sibling s-20260911000002-bbbb 2026-09-11T00:00:02Z "$W/sibling"
 episode cccc-gone    s-20260911000003-cccc 2026-09-11T00:00:03Z "$W/vanished"
 ln -sf "sessions-open/aaaa-here.yaml" "$S/session-current.yaml"
 
-# The arithmetic ADR 0041 asks for, standing in the state it exists to catch. Five episodes
+# The arithmetic ADR 0052 asks for, standing in the state it exists to catch. Five episodes
 # started; `dddd` closed and left a record, so it is accounted for; `aaaa`, `bbbb` and `cccc`
 # are still open, so they are accounted for too. `eeee` started, is not open, and never
 # closed — an end event that reached the tool and produced nothing looks exactly like this,
@@ -105,7 +105,7 @@ jq -e '.episodes[] | select(.session_id == "s-20260911000001-aaaa") | .events ==
   "$T/episodes.json" >/dev/null || { echo "    the ledger was not joined by episode id:"; jq '.episodes[0]' "$T/episodes.json"; exit 1; }
 # the task relation is the ledger's, and it runs from the episode to the task rather than the
 # other way round: an episode names what it touched, and no task decides whether the
-# episode's own records get written (ADR 0041)
+# episode's own records get written (ADR 0052)
 jq -e '.episodes[] | select(.session_id == "s-20260911000001-aaaa") | .tasks == ["t-20260911-0001"]' \
   "$T/episodes.json" >/dev/null || { echo "    the task relation was not read from the ledger:"; jq '[.episodes[] | {session_id, tasks}]' "$T/episodes.json"; exit 1; }
 jq -e '[.episodes[] | select(.session_id == "s-20260911000002-bbbb") | .tasks // []] | flatten | length == 0' \

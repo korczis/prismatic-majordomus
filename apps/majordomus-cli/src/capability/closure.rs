@@ -235,11 +235,19 @@ pub fn unbacked(registry: &CapabilityRegistry, tree: &CommandDoc) -> Vec<Unbacke
     out
 }
 
+/// A matrix row is the capability it reports on, and is ordered by the same id the registry
+/// and the site order capabilities by, so the three can be read side by side.
+impl crate::order::Ordered for Row {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// The matrix, the findings and the debt in one pass.
 pub fn matrix(registry: &CapabilityRegistry, tree: &CommandDoc) -> Matrix {
     let commands = index(tree);
     let mut rows: Vec<Row> = registry.iter().map(|c| row(c, &commands)).collect();
-    rows.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut rows);
     Matrix {
         rows,
         findings: findings(registry, tree),

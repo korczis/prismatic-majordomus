@@ -269,6 +269,7 @@
           "02_doctor_basic",
           "130_mesh",
           "131_models",
+          "132_health_sees_a_stopped_writer",
           "14_wiring_dispatcher",
           "15_command_surface",
           "18_doctrine_wiring",
@@ -283,6 +284,7 @@
         "negative": [
           "02_doctor_basic",
           "03_update",
+          "132_health_sees_a_stopped_writer",
           "13_region_projection",
           "140_prompt_continuity",
           "14_wiring_dispatcher",
@@ -689,6 +691,7 @@
       ],
       "tests": {
         "behaviour": [
+          "130_lifecycle_survives_a_stale_task",
           "136_changed_files_classifier",
           "15_command_surface",
           "20_checkpoint",
@@ -738,18 +741,18 @@
               "checkpoint"
             ],
             "expect": {
-              "exit": 12,
+              "exit": 0,
               "stdout_contains": [
-                "no active task"
+                ".ai/local/state/checkpoints/"
               ]
             },
-            "explain": "A checkpoint belongs to a task. Writing one with nothing to attach it to would produce a record that no later reader could place.",
+            "explain": "A checkpoint belongs to the episode, not to a task. The record is written and its `task_id` is `none`, which is a fact a later reader can place; the ledger event it emits carries no `task_id` at all, because every reader of that event collects the field's distinct values as task identifiers. This scenario expected exit 12 until ADR 0052: refusing here meant that finishing a task silenced progress records for every episode after it, which is exactly what happened to this repository for six days from 2026-09-05.",
             "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
             "stdin_body": "the parser now refuses tabs; the message names the column"
           }
         ]
       },
-      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for the active task in this worktree and branch.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nExit `12` with no active task, `15` when the task is no longer active, `10` when the body\ncarries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
+      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for this worktree and branch — for the active task\n  when there is one, and otherwise the newest whatever task it names.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nA checkpoint belongs to the **episode**, not to a task. It is written whether or not a task\nis open and whatever outcome the last one reached; the record's `task_id` is the task when\nthere is one and `none` otherwise, and the ledger event omits the field entirely rather than\nwriting a literal `none` that every reader of that event would collect as a task by that\nname. Only the task's own `checkpoint_at` is left alone when the task is over, because that\nfield is the task's.\n\nThis refused with `12` (no active task) and `15` (the task is no longer active) until ADR\n0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never\nreplaced silenced this repository's progress records for six days, while episodes went on\nopening and closing and every health check passed.\n\nExit `10` when the body carries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
     },
     {
       "name": "handover",
@@ -786,6 +789,7 @@
       "tests": {
         "behaviour": [
           "05_handover",
+          "130_lifecycle_survives_a_stale_task",
           "136_changed_files_classifier",
           "15_command_surface",
           "19_end_to_end",
@@ -847,7 +851,7 @@
           }
         ]
       },
-      "doc_md": "\nWrite an append-only continuation record.\n\n**Record resolution** — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and `context`: same worktree and branch, else same branch, else nothing.\n\n\n**Input:** the authored body on stdin. Required sections are the policy's\n`handover.required_sections` as level-one headings, each with non-empty content;\ntemplate placeholders in angle brackets count as empty. Optional: `# Completed`,\n`# Decisions`, `# Verification`, `# Risks`, `# Open Work`.\n\n`--derive` composes the body instead of reading stdin, from the task record, the ledger,\ngit, the open questions and the newest checkpoint — each already written, already validated\nand already identity-checked. It calls no model and makes no network request, which is what\nmakes it safe for a provider hook to run: a derived body can be wrong only if a record it\nreads is wrong, and every one of those has its own gate. The policy's required sections are\nemitted in the policy's order; a required section this generator cannot fill is refused by\nname rather than written empty, because an empty section passes the section gate and tells\nthe next worker nothing. An authored body still says more than a derived one, and `--derive`\nexists so that the absence of somebody willing to type is no longer the same thing as the\nabsence of a record.\n\n**Writes:** one new file `state/handovers/<utc-ts>--<branch-key>--<short-head>--<rand>.md`,\nmode `0600`, created atomically (temp file, then hard link; retry with a new random\nsuffix on collision). Front matter is computed from git and from `current.yaml`; a body\nthat tries to set identity fields is rejected.\n\n**Never** stages, commits, or modifies any other file except the task record's\n`checkpoint_at`. Appends `task.handed_over` to the ledger. Prints the path.\n\n`--close` additionally sets the task's outcome to `handed_over`, so that a new task may\n`start` in this checkout; the old record is archived by that `start`. Without\n`--close` the task stays active for the next session to continue.\n\nThe provider's `SessionEnd` event runs `--derive --close` when the task is still active, so\nan episode that ends leaves a continuation record and not only the envelope of what it\nproduced. The two answer different questions: the session record indexes the episode, and a\nhandover is what the next worker resumes from.\n\n**Refuses** (`10`) if a required section is missing or empty, or if the body contains\nan identity field. Refuses (`12`) with no active task unless `--no-task`.\n\n**Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for\nthe current worktree and branch: same worktree and branch first, then same branch, never\na repository-wide fallback. Prints its git-state label and its body. No candidate is a\nnormal outcome and exits `0` with `No relevant handover.` `--path` prints the path\nalone, for scripting; `--no-task` resolves without an active task."
+      "doc_md": "\nWrite an append-only continuation record.\n\n**Record resolution** — choosing which prior record is about the work happening here — is the same rule for handovers, checkpoints and `context`: same worktree and branch, else same branch, else nothing.\n\n\n**Input:** the authored body on stdin. Required sections are the policy's\n`handover.required_sections` as level-one headings, each with non-empty content;\ntemplate placeholders in angle brackets count as empty. Optional: `# Completed`,\n`# Decisions`, `# Verification`, `# Risks`, `# Open Work`.\n\n`--derive` composes the body instead of reading stdin, from the task record, the ledger,\ngit, the open questions and the newest checkpoint — each already written, already validated\nand already identity-checked. It calls no model and makes no network request, which is what\nmakes it safe for a provider hook to run: a derived body can be wrong only if a record it\nreads is wrong, and every one of those has its own gate. The policy's required sections are\nemitted in the policy's order; a required section this generator cannot fill is refused by\nname rather than written empty, because an empty section passes the section gate and tells\nthe next worker nothing. An authored body still says more than a derived one, and `--derive`\nexists so that the absence of somebody willing to type is no longer the same thing as the\nabsence of a record.\n\n**Writes:** one new file `state/handovers/<utc-ts>--<branch-key>--<short-head>--<rand>.md`,\nmode `0600`, created atomically (temp file, then hard link; retry with a new random\nsuffix on collision). Front matter is computed from git and from `current.yaml`; a body\nthat tries to set identity fields is rejected.\n\n**Never** stages, commits, or modifies any other file except the task record's\n`checkpoint_at`. Appends `task.handed_over` to the ledger. Prints the path.\n\n`--close` additionally sets the task's outcome to `handed_over`, so that a new task may\n`start` in this checkout; the old record is archived by that `start`. Without\n`--close` the task stays active for the next session to continue.\n\nThe provider's `SessionEnd` event runs `--derive --close`, or `--derive --no-task` when no\ntask record exists, so that an episode that ends leaves a continuation record and not only\nthe envelope of what it produced. The two answer different questions: the session record\nindexes the episode, and a handover is what the next worker resumes from. It does not ask\nwhether the task is active — until ADR 0052 it did, and a repository whose last task had\nbeen handed over stopped writing the one record a future worker resumes from, for six days,\nwhile every health check passed.\n\n**Refuses** (`10`) if a required section is missing or empty, or if the body contains\nan identity field. Refuses (`12`) with no active task unless `--no-task`.\n\n**Resolve:** `majordomus handover --resolve` finds the most relevant prior handover for\nthe current worktree and branch: same worktree and branch first, then same branch, never\na repository-wide fallback. Prints its git-state label and its body. No candidate is a\nnormal outcome and exits `0` with `No relevant handover.` `--path` prints the path\nalone, for scripting; `--no-task` resolves without an active task."
     },
     {
       "name": "check",
@@ -1855,6 +1859,7 @@
         "behaviour": [
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
+          "130_lifecycle_survives_a_stale_task",
           "140_prompt_continuity",
           "220_exactly_once_close",
           "221_the_lifecycle_under_concurrency",

@@ -9,11 +9,11 @@
 //! API, MCP and the Cockpit. [`crate::capability::builtin::continuity`] opens by declaring
 //! the split — *"It is read, never written. The lifecycle is the shell tool's."*
 //!
-//! ADR 0041 found what the split costs. For six days this repository wrote no checkpoint
+//! ADR 0052 found what the split costs. For six days this repository wrote no checkpoint
 //! and no handover while `doctor` and `watch` reported health, because the invariant that
 //! would have caught it — *lifecycle events are arriving, therefore derived state must
 //! advance* — spans both halves and is owned by neither. The reader faithfully reported the
-//! newest record it could find; the writer faithfully refused to write one. ADR 0041 names
+//! newest record it could find; the writer faithfully refused to write one. ADR 0052 names
 //! the target: **one canonical session/continuity domain service in this crate**, with
 //! `.envrc`, the provider hook shims, the CLI, MCP, HTTP and the Cockpit as adapters over
 //! it. This module is that service's domain.
@@ -37,7 +37,7 @@
 //! inventing a seventh notion of "which repository".
 //!
 //! **[The aggregates](episode).** An [`Episode`] carries `Option<TaskId>` and nothing else
-//! of a task. ADR 0041's defect — a task's state deciding whether an episode's artefact is
+//! of a task. ADR 0052's defect — a task's state deciding whether an episode's artefact is
 //! written — is unrepresentable, because [`EpisodeState::may_move_to`] takes no task.
 //!
 //! **[The machine](state).** Four states, six transitions, one terminal state, declared
@@ -55,7 +55,7 @@
 //! # Freshness is consumed, not restated
 //!
 //! `fresh | aging | stale | unknown | invalid`, `Thresholds::judge` and `epoch_seconds`
-//! arrive with ADR 0041 in `continuity.rs`. This domain does not define a second vocabulary
+//! arrive with ADR 0052 in `continuity.rs`. This domain does not define a second vocabulary
 //! for age: it takes Unix seconds and answers the single predicate the machine needs,
 //! [`Episode::stranded_after`].
 //!
@@ -189,7 +189,7 @@ pub fn open_episodes(root: &Path) -> Vec<Episode> {
             last_sign_of_life: last,
         };
         // The task, when the checkout has one open. A relation the episode carries; its
-        // absence is ordinary and is never a reason to skip anything (ADR 0041).
+        // absence is ordinary and is never a reason to skip anything (ADR 0052).
         if let Some(task) = active_task(root) {
             episode.task = Some(task);
         }
@@ -204,7 +204,7 @@ pub fn open_episodes(root: &Path) -> Vec<Episode> {
 /// finish update.
 ///
 /// It reads the id and nothing else. An episode relates to a task; it does not hold one,
-/// and a copy of the task's outcome on this side would be the second account that ADR 0041
+/// and a copy of the task's outcome on this side would be the second account that ADR 0052
 /// spent six days of silence proving is a defect.
 fn active_task(root: &Path) -> Option<TaskId> {
     let text = std::fs::read_to_string(root.join(".ai/local/state/current.yaml")).ok()?;

@@ -2,7 +2,7 @@
 //!
 //! # Why this is not a new store
 //!
-//! ADR 0041 says it in as many words and this module keeps the promise: the append-only
+//! ADR 0052 says it in as many words and this module keeps the promise: the append-only
 //! ledger at `.ai/local/state/ledger.jsonl` and the record directories beside it are the
 //! substrate, and the write path moves *under* the domain rather than being duplicated
 //! beside it. Every defect this subsystem has produced has the same shape — two accounts of

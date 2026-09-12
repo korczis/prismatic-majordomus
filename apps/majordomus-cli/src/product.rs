@@ -449,6 +449,14 @@ pub struct ResolvedRefs {
 
 // ---------------------------------------------------------------- providers
 
+/// A provider is presented by its id — the directory its bootstrap is written under and the
+/// name every other projection of the product matrix refers to it by.
+impl crate::order::Ordered for ProductProvider {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One provider the tool has an adapter for, discovered from the templates the distribution
 /// ships and decorated with what this repository does with it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -1618,7 +1626,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
             }
         })
         .collect();
-    out.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut out);
     out
 }
 

@@ -226,7 +226,7 @@ pub fn transitive_dependents(issues: &[PlanIssue], id: &str) -> Vec<String> {
         }
     }
     let mut out: Vec<String> = seen.into_iter().collect();
-    out.sort_by(|a, b| natural_cmp(a, b));
+    crate::order::canonical_strings(&mut out);
     out
 }
 
@@ -256,7 +256,7 @@ pub fn transitive_dependents(issues: &[PlanIssue], id: &str) -> Vec<String> {
 pub fn cycles(issues: &[PlanIssue]) -> Vec<Vec<String>> {
     // canonical order of the nodes, so the walk is reproducible
     let mut order: Vec<&str> = issues.iter().map(|i| i.id.as_str()).collect();
-    order.sort_by(|a, b| natural_cmp(a, b));
+    crate::order::canonical_strings(&mut order);
     let position: BTreeMap<&str, usize> =
         order.iter().enumerate().map(|(n, id)| (*id, n)).collect();
     let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); order.len()];
@@ -325,7 +325,7 @@ pub fn cycles(issues: &[PlanIssue]) -> Vec<Vec<String>> {
                 }
                 let cyclic = component.len() > 1 || adjacency[v].contains(&v);
                 if cyclic {
-                    component.sort_by(|a, b| natural_cmp(a, b));
+                    crate::order::canonical_strings(&mut component);
                     components.push(component);
                 }
             }
@@ -383,7 +383,7 @@ pub fn parallel_sets(nodes: &[MilestoneNode]) -> Vec<ParallelSet> {
         }
         for (members, serialised) in sets {
             let mut issues: Vec<String> = members.iter().map(|m| m.issue.clone()).collect();
-            issues.sort_by(|a, b| natural_cmp(a, b));
+            crate::order::canonical_strings(&mut issues);
             out.push(ParallelSet {
                 wave,
                 issues,

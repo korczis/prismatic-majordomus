@@ -23,7 +23,7 @@
 //!   points at, which belong to another worktree, and what the ledger last saw each do.
 //! - **`lifecycle.recovery`** — the episodes that can no longer close themselves, the temporary
 //!   files a killed close left in the tracked directory, whether the pointer has been
-//!   migrated to the per-provider layout, and the arithmetic ADR 0041 asks for: how many
+//!   migrated to the per-provider layout, and the arithmetic ADR 0052 asks for: how many
 //!   `session.started` events the ledger holds against how many `session.closed`.
 //! - **`lifecycle.runtime`** — the commit this process is serving answers about, against the commit
 //!   the repository is on right now. A long-lived server that built its index once and held
@@ -48,7 +48,7 @@
 //!
 //! **No thresholds and no clock.** Nothing here decides that a record is old. Age is
 //! `session.freshness` in the policy and it is [`super::continuity`]'s to judge; a second
-//! engine for it in this file would be the second source of truth ADR 0041 names. What this
+//! engine for it in this file would be the second source of truth ADR 0052 names. What this
 //! module reports is what it can observe without an opinion: a timestamp as recorded, a
 //! count, a path that exists or does not.
 
@@ -188,7 +188,7 @@ pub struct Episode {
     /// span three episodes; the two are joined here by what the ledger recorded rather than
     /// by either one owning the other. An episode with no task is ordinary — work outside a
     /// task is permitted — and it is emphatically not a reason for the episode's own records
-    /// to go unwritten, which is the premise ADR 0041 removes.
+    /// to go unwritten, which is the premise ADR 0052 removes.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tasks: Vec<String>,
     /// Why it stands where it does, in words. Never empty: a standing a reader cannot act
@@ -310,7 +310,7 @@ pub struct Orphan {
 
 /// What the ledger says about episode lifecycle against what the store holds.
 ///
-/// The invariant ADR 0041 asks for, stated as arithmetic a person can check: every episode
+/// The invariant ADR 0052 asks for, stated as arithmetic a person can check: every episode
 /// that started either closed or is still open. When `started` exceeds `closed + open`, the
 /// difference is episodes whose close was never recorded — the shape of the outage that ADR
 /// describes, where events kept arriving and the records they should have produced did not.
@@ -489,7 +489,7 @@ struct Line {
     event: String,
     /// When it was written, as recorded.
     ts: String,
-    /// The task it belonged to, when it belonged to one. This is the relation ADR 0041
+    /// The task it belonged to, when it belonged to one. This is the relation ADR 0052
     /// makes optional in the other direction: an episode names the tasks it touched, and
     /// no task decides whether the episode's own records are written.
     task_id: String,
@@ -803,7 +803,7 @@ fn recovery(ctx: &Context, _: Empty) -> Result<Recovery, CapabilityError> {
             format!("{started} started, {closed} closed, {open} still open: every episode the ledger has seen is accounted for.")
         } else if unaccounted > 0 {
             format!(
-                "{started} started, {closed} closed, {open} still open: {unaccounted} episode(s) started and neither closed nor left a record here. An end event that reached the tool and produced nothing looks exactly like this (ADR 0041)."
+                "{started} started, {closed} closed, {open} still open: {unaccounted} episode(s) started and neither closed nor left a record here. An end event that reached the tool and produced nothing looks exactly like this (ADR 0052)."
             )
         } else {
             format!(

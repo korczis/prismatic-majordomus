@@ -2,7 +2,7 @@
 //!
 //! An **episode** is a provider's conversation boundary. It begins when a client attaches
 //! and ends when it detaches, whether or not anybody declared a task, and whether or not
-//! the last task anybody declared was finished a week ago (ADR 0041).
+//! the last task anybody declared was finished a week ago (ADR 0052).
 //!
 //! A **task** is a unit of intended work that a person opens and closes. It is *related* to
 //! an episode and it is not part of one. The relation is `Option<TaskId>` and nothing more:
@@ -219,7 +219,7 @@ impl Episode {
     ///
     /// The one predicate the state machine needs from the time dimension, and deliberately
     /// the only one. The vocabulary of age — `fresh | aging | stale | unknown | invalid`
-    /// and `Thresholds::judge` — belongs to `continuity` (ADR 0041) and is not restated
+    /// and `Thresholds::judge` — belongs to `continuity` (ADR 0052) and is not restated
     /// here; this domain consumes seconds and answers a boolean.
     ///
     /// `None` means *unjudgeable*, not *fine*. An episode whose evidence cannot be read as
@@ -333,7 +333,7 @@ mod tests {
 
     #[test]
     fn a_tasks_outcome_is_not_reachable_from_an_episodes_transition() {
-        // The structural assertion of ADR 0041. `Episode` carries at most a TaskId: there
+        // The structural assertion of ADR 0052. `Episode` carries at most a TaskId: there
         // is no outcome on it, so no expression of the form `if outcome != active` can be
         // written against an episode without adding a field this test would fail on.
         let e = episode().with_task(TaskId::parse("t-20260905034523-a9f1").expect("a task"));

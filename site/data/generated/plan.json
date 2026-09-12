@@ -13018,7 +13018,7 @@
       ],
       "non_scope": [
         "Deleting any session record. The repair that preceded this issue kept the complete record and deleted only the partial one it contains.",
-        "The wider question of when an episode begins and ends, which ADR 0041 owns on a branch of its own."
+        "The wider question of when an episode begins and ends, which ADR 0052 owns on a branch of its own."
       ],
       "objective": "Stop the session closer from writing a second record for a session that already has one, so that a session identity names one record and the index does not exclude every claimant of it.",
       "why": "The identity collision it produces is not a cosmetic finding: the repository reported its state as `degraded`, and because every claimant of a contested identity is excluded, the session was absent from the registry whose whole purpose is to hold it. A record nobody can read is not a record. The data half of this was repaired — four files claimed majordomus://session/s-20260909152316-024f, three of them written the following morning thirteen and fifteen seconds apart by a closer re-closing a session closed the evening before, and each a strict superset of the committed one — but repairing data does not repair the writer, and the writer will produce the next collision.",

@@ -97,7 +97,7 @@ It is also the page that has to answer two different readers, and it says which 
 **The worker** asks *what am I resuming from?* That is `continuity.state`: one episode — the
 one `session-current.yaml` resolves to — one handover, one checkpoint, each with the
 divergence label that says how far to trust it, and the questions that refuse completion.
-(ADR 0041 adds a freshness label beside the divergence one, because `advanced` is a true
+(ADR 0052 adds a freshness label beside the divergence one, because `advanced` is a true
 statement about git topology and says nothing about age.)
 
 **The operator** asks *is this subsystem working?* That is the `lifecycle.*` group, and it

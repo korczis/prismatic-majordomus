@@ -1374,11 +1374,47 @@ mj_capture_session() {
   # shellcheck disable=SC2034  # read by mj_session_here_file in lib/common.sh
   [ -n "$psession" ] && MJ_SESSION_KEY="$psession"
 
+  # The receipt, before anything decides what to do about the event. Whatever happens after
+  # this line — a guard that skips the work, a record that cannot be written, a policy that
+  # does not parse — the repository knows the event arrived, from whom, and when.
+  #
+  # This is the line whose absence made the 2026-09-05 outage unreadable. Every adapter
+  # below reports its refusals on stderr and returns 0, which is what a provider hook must
+  # do; stderr is not kept, so afterwards an event that never fired and an event that fired
+  # and did nothing were the same observation. Not blocking the provider and pretending the
+  # work happened are different instructions, and only the first is a contract (ADR 0052).
+  mj_capture_session_receipt "$provider" "$event" "$psession"
+
   case "$event" in
     start)   mj_capture_session_start   "$provider" "$psession" "$source" ;;
     end)     mj_capture_session_end     "$provider" "$psession" "$reason" ;;
     compact) mj_capture_session_compact "$provider" "$psession" ;;
   esac
+  return 0
+}
+
+# One typed line saying an event arrived. Best-effort by construction: a receipt that could
+# fail the hook would be a new way to lose an episode, which is the failure it exists to
+# make visible. A ledger that cannot be written is itself reported beside the working
+# contexts.
+mj_capture_session_receipt() {
+  local provider="$1" event="$2" psession="$3" fields
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"event\":\"$(mj_json_esc "$event")\""
+  [ -n "$psession" ] && fields="$fields,\"provider_session\":\"$(mj_json_esc "$psession")\""
+  mj_ledger_append provider.event.received "$fields" 2>/dev/null \
+    || mj_session_context_log "$provider $event event: the receipt could not be appended to the ledger"
+  return 0
+}
+
+# The other half of the receipt: the event arrived and the work it should have done did not
+# complete. A receipt with neither a resulting record nor one of these beside it is a
+# finding in its own right, which is what lets health see a writer that has stopped.
+mj_capture_session_failed() {
+  local provider="$1" event="$2" reason="$3" fields
+  fields="\"provider\":\"$(mj_json_esc "$provider")\",\"event\":\"$(mj_json_esc "$event")\""
+  fields="$fields,\"reason\":\"$(mj_json_esc "$reason")\""
+  mj_ledger_append provider.event.failed "$fields" 2>/dev/null || true
+  mj_session_context_log "$provider $event event: $reason"
   return 0
 }
 
@@ -1413,7 +1449,7 @@ mj_capture_session_start() {
   set -- --if-open keep --provider "$provider"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_start "$@") 2>&1 )" || {
-    mj_session_context_log "$provider start event: the episode did not open: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" start "the episode did not open: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not open; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
@@ -1479,17 +1515,19 @@ mj_capture_session_compact() {
   # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
   # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
   # working contexts, which is where every other failure on this path is reported.
-  mj_load_policy || { mj_session_context_log "$provider compact event: the policy does not parse; nothing recorded"; return 0; }
+  mj_load_policy || {
+    mj_capture_session_failed "$provider" compact "the policy does not parse; nothing recorded"
+    return 0; }
   if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
     mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
     return 0
   fi
-  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
-    mj_err "capture session: compaction with no active task here; nothing to checkpoint"
-    return 0
-  fi
+  # No task guard. A compaction discards the conversation whether or not anybody declared a
+  # task, and what is about to stop being reachable is worth the same either way. This
+  # asked for an `active` task until ADR 0052, which meant that finishing a task turned
+  # compaction checkpoints off for every episode after it — silently, for six days.
   out="$( (mj_cmd_checkpoint --derive) 2>&1 )" || {
-    mj_session_context_log "$provider compact event: the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" compact "the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the checkpoint was not written; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: compaction ahead${psession:+ (provider session $psession)}; checkpointed into $(printf '%s' "$out" | tail -n 1)"
@@ -1514,12 +1552,35 @@ mj_capture_session_end() {
   # The same reasoning as the compaction event, with one difference: an end that cannot read
   # the policy still closes the episode. Only the continuation record is skipped, because
   # leaving a session open for ever is the worse of the two failures.
+  # shellcheck source=checkpoint.sh
+  . "$MJ_LIB_DIR/checkpoint.sh"
   local policy_ok=1
-  mj_load_policy || { policy_ok=0; mj_session_context_log "$provider end event: the policy does not parse; the episode is closed without a continuation record"; }
-  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
-    out="$( (mj_cmd_handover --derive --close) 2>&1 )" \
-      && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
-      || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
+  mj_load_policy || { policy_ok=0; mj_capture_session_failed "$provider" end "the policy does not parse; the episode is closed without a continuation record"; }
+
+  # A final progress record, before the continuation one. An episode that opened and closed
+  # without ever being compacted used to write no checkpoint at all, which left the newest
+  # one dating from whenever the last compaction happened to be — so a health check that
+  # asks whether progress records are still advancing would report a stopped writer for ever
+  # in a repository that simply never compacts, and a finding that never clears teaches its
+  # reader to skip the report. The close is the other moment at which what the episode knows
+  # stops being reachable, so it records the same thing for the same reason.
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.checkpoint_on_compact)" != false ]; then
+    out="$( (mj_cmd_checkpoint --derive) 2>&1 )" \
+      || mj_capture_session_failed "$provider" end "the closing checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+  fi
+
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ]; then
+    # The continuation record is the episode's, and it is written whether or not a task is
+    # open and whatever outcome the last one reached. `--close` marks an active task handed
+    # over and does nothing when there is none; `--no-task` lets the record exist without
+    # one. Until ADR 0052 this whole branch was conditional on an `active` task, so a
+    # repository whose last task had been handed over stopped producing the one record a
+    # future worker resumes from — which is exactly what happened here on 2026-09-05.
+    set -- --derive --close
+    mj_load_current || set -- --derive --no-task
+    out="$( (mj_cmd_handover "$@") 2>&1 )" \
+      && mj_err "capture session: continuation written to $(printf '%s' "$out" | tail -n 1)" \
+      || mj_capture_session_failed "$provider" end "the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
   fi
   # The episode this provider session opened, named rather than resolved: an end event
   # closes its own or nothing. Before this, an end event closed whatever was open in the
@@ -1529,7 +1590,7 @@ mj_capture_session_end() {
   set -- --if-none ignore --outcome "$outcome"
   [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
   out="$( (mj_session_close "$@" < /dev/null) 2>&1 )" || {
-    mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
+    mj_capture_session_failed "$provider" end "the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
     return 0; }
   if [ -n "$out" ]; then mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
