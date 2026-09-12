@@ -1,11 +1,14 @@
 //! `majordomus mesh`: the terminal rendering of the mesh capabilities.
 //!
-//! `identity` and `doctor` answer in-process — the identity file and the machine's
-//! sockets are facts of this machine, so the local registry's own handlers are
-//! truthful. `status` and `nodes` are facts of the *running server*'s memory, so the
-//! command finds this checkout's server (through the same `server.status` capability
-//! `serve status` renders) and asks it over HTTP; a missing server is an answer with
-//! its reason, never an error. The command owns rendering and nothing else.
+//! `identity` answers in-process — the identity file is a fact of this machine, so the
+//! local registry's own handler is truthful. `status` and `nodes` are facts of the
+//! *running server*'s memory, so the command finds this checkout's server (through the
+//! same `server.status` capability `serve status` renders) and asks it over HTTP; a
+//! missing server is an answer with its reason, never an error. `doctor` is both: its
+//! `runtime` check is the server's verdict on the declaration, so it is asked of the
+//! server when one serves this checkout and run here when none does — and a failed
+//! verdict exits 10, because a mesh declared on and not running is a contract unmet.
+//! The command owns rendering and nothing else.
 
 use std::time::Duration;
 
@@ -25,8 +28,49 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Status(args) => from_server(args, "/api/v1/mesh", render_status),
         MeshCommand::Nodes(args) => from_server(args, "/api/v1/mesh/nodes", render_nodes),
         MeshCommand::Identity(args) => in_process(args, &["mesh", "identity"], render_identity),
-        MeshCommand::Doctor(args) => in_process(args, &["mesh", "doctor"], render_doctor),
+        MeshCommand::Doctor(args) => doctor(args),
     }
+}
+
+/// `mesh doctor`: the server's report when one serves this checkout, this process's
+/// otherwise; exit 10 when a check failed, 0 when every check holds.
+fn doctor(args: MeshQueryArgs) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let ctx = &app.context;
+    let value = match ready_server(ctx)? {
+        Some(url) => fetch(&url, "/api/v1/mesh/doctor")?,
+        None => ctx.execute("mesh.doctor", json!({})).map_err(map)?,
+    };
+    emit(&args, &value, render_doctor);
+    Ok(if value["ok"] == json!(true) { 0 } else { 10 })
+}
+
+/// The address of this checkout's ready server, when there is one.
+fn ready_server(ctx: &crate::capability::handler::Context) -> Result<Option<String>> {
+    let status = ctx.execute("server.status", json!({})).map_err(map)?;
+    Ok(status["servers"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
+        .and_then(|s| s["lease"]["url"].as_str())
+        .map(str::to_string))
+}
+
+/// One bounded GET of `route` at the running server, as JSON.
+fn fetch(url: &str, route: &str) -> Result<Value> {
+    let reply = crate::mcp::bridge::request(url, "GET", route, &[], None, REQUEST_TIMEOUT)
+        .map_err(|e| Error::Protocol {
+            reason: format!("{url}{route}: {e}"),
+        })?;
+    if reply.status != 200 {
+        return Err(Error::Protocol {
+            reason: format!("{url}{route}: status {}", reply.status),
+        });
+    }
+    serde_json::from_str(&reply.body).map_err(|e| Error::Protocol {
+        reason: format!("{url}{route}: not JSON: {e}"),
+    })
 }
 
 /// Execute the capability the CLI path names, in this process, and render it.
@@ -54,15 +98,7 @@ fn in_process(args: MeshQueryArgs, path: &[&str], render: fn(&Value) -> String) 
 fn from_server(args: MeshQueryArgs, route: &str, render: fn(&Value) -> String) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let ctx = &app.context;
-    let status = ctx.execute("server.status", json!({})).map_err(map)?;
-    let url = status["servers"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .find(|s| s["this_checkout"] == json!(true) && s["standing"] == json!("ready"))
-        .and_then(|s| s["lease"]["url"].as_str())
-        .map(str::to_string);
-    let Some(url) = url else {
+    let Some(url) = ready_server(ctx)? else {
         let answer = json!({
             "active": false,
             "reason": "no running server for this checkout: the mesh lives inside the shared server (majordomus serve ensure starts one)",
@@ -70,18 +106,7 @@ fn from_server(args: MeshQueryArgs, route: &str, render: fn(&Value) -> String) -
         emit(&args, &answer, render);
         return Ok(0);
     };
-    let reply = crate::mcp::bridge::request(&url, "GET", route, &[], None, REQUEST_TIMEOUT)
-        .map_err(|e| Error::Protocol {
-            reason: format!("{url}{route}: {e}"),
-        })?;
-    if reply.status != 200 {
-        return Err(Error::Protocol {
-            reason: format!("{url}{route}: status {}", reply.status),
-        });
-    }
-    let value: Value = serde_json::from_str(&reply.body).map_err(|e| Error::Protocol {
-        reason: format!("{url}{route}: not JSON: {e}"),
-    })?;
+    let value = fetch(&url, route)?;
     emit(&args, &value, render);
     Ok(0)
 }

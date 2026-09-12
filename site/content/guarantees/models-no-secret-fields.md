@@ -1,7 +1,7 @@
 +++
 title = "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in"
 description = "A vendor entry may name the environment variable its credential lives in"
-weight = 183
+weight = 184
 [extra]
 claim_id = "models-no-secret-fields"
 status = "guaranteed"

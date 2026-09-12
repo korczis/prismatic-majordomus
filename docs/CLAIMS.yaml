@@ -1484,7 +1484,16 @@ claims:
     test: apps/majordomus-cli/tests/mesh.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050).
+    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The skeleton's default is enabled false (ADR 0050); this repository commits enabled true with an allowlist and hubs (ADR 0059), and the claim is about the default, which the tests exercise with declarations of their own.
+
+  - id: mesh-declared-is-held
+    claim: An enabled mesh declaration whose server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is enabled, allowlisted and names a hub
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/doctor.rs
+    test: test/cases/290_the_mesh_is_declared_and_held.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The doctor's `runtime` check reads the server's own decision (activated, or declined with a reason) and the `trust` check reads whether this machine is on its own allowlist; the CLI asks the running server for the report so that the verdict is the server's. tests/mesh.rs proves the failed verdict over a real server; the shell case proves the three briefing answers through the provider's start event and reads this repository's committed declaration (ADR 0059).
 
   - id: mesh-one-registry
     claim: Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own

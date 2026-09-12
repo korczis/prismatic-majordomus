@@ -127,7 +127,7 @@ numbers are per instance; a replayed datagram is dropped and counted.
 ## Operating it
 
 ```
-majordomus mesh doctor        # every prerequisite, proved on this machine alone
+majordomus mesh doctor        # every prerequisite on this machine, and the running server's verdict; exit 10 on a failed check
 majordomus mesh identity      # this machine's node id and public key (for allowlists)
 majordomus mesh status        # the running server's mesh: providers, tallies, refusals
 majordomus mesh nodes         # the observed nodes, one row each
@@ -136,10 +136,10 @@ majordomus mesh nodes         # the observed nodes, one row each
 Enable it by editing the repository's declaration (`.ai/repo/mesh/majordomus.yaml`):
 set `enabled: true`, choose the trust policy — `deny_unknown` plus `allow:` keys from
 `mesh identity` on each of your machines is the recommended shape — commit, and
-restart the server (`majordomus serve stop && majordomus serve ensure`). The committed
-default is `enabled: false`: the repository's "nothing leaves the machine" posture
-holds until a person decides otherwise, and that decision is a reviewed commit, not an
-environment variable.
+restart the server (`majordomus serve stop && majordomus serve ensure`). The skeleton a
+fresh repository starts from ships `enabled: false`: the "nothing leaves the machine"
+posture holds until a person decides otherwise, and that decision is a reviewed commit,
+not an environment variable. This repository has decided (ADR 0059; the section below).
 
 Troubleshooting is `mesh doctor` first (it names the broken prerequisite), then
 `mesh status` on each machine: a provider's `Failed` detail says what its socket could
@@ -147,6 +147,76 @@ not do; the refusal counters say what arrived and why it was dropped (a rising
 `signature` count is somebody malformed or hostile; `stale` is clock skew beyond
 300 s; `self_heard` is normal — a node hears its own multicast); `trust` on a node
 row says what the policy decided and why.
+
+Two of the doctor's checks are verdicts on decisions rather than on the machine:
+
+| check | holds when | fails when |
+|---|---|---|
+| `trust` | every `trust.allow` entry is a 64-hex Ed25519 key and, under an allowlist, this machine's own key is among them | a key is malformed, or this machine is not on its own repository's allowlist — the mistake that makes a node visible everywhere and trusted nowhere |
+| `runtime` | the shared server activated the mesh (`active as <node> since …`, providers running, nodes known); or the declaration is off and the server says `off, as declared`; or no server runs in the process asked and there is nothing to judge | the declaration is enabled and the server's mesh is not active — the check carries the server's reason and the restart that follows fixing it, and the command exits 10 |
+
+`mesh doctor` asks this checkout's running server for the report when one serves it,
+because the `runtime` verdict is the server's; with no server it runs here and says so.
+The same report is `GET /api/v1/mesh/doctor` and the `majordomus_mesh_doctor` tool.
+
+## This repository's mesh
+
+The declaration is committed enabled since ADR 0059, because the fleet this repository
+is developed on is one operator's machines — a laptop, a desktop and a build board on
+one private network and one tailnet — and a checkout whose server did not see the
+others is the failure the mesh exists to prevent. Three things hold it on:
+
+**The declaration** (`.ai/repo/mesh/majordomus.yaml`): `deny_unknown` with an allowlist
+of the three machines' keys, multicast on for the segment a machine is on, and
+rendezvous endpoints naming the two hubs on both networks. A change to it is a reviewed
+commit; a test (`test/cases/290_the_mesh_is_declared_and_held.sh`) refuses a tree whose
+committed declaration is disabled, untracked, without an allowlist or without a hub,
+because on 2026-09-12 three machines each ran an uncommitted `enabled: true` while
+master said `false`, and the one that was reset was silently alone.
+
+**The session start.** The provider's start event ensures the shared server and the
+briefing it injects carries one line about the mesh whenever a declaration exists:
+
+```
+Mesh: active — 2 of 2 provider(s) running; 2 node(s) known, 2 trusted, 2 present
+Mesh: off, as declared
+Mesh: DECLARED ENABLED BUT NOT ACTIVE — the declaration is enabled and this server's mesh is not active — not active: …
+```
+
+The third line is the one the mechanism exists for: a worker is told before its first
+tool call, in the same block that names the server, and `mesh doctor` exits 10 on the
+same fact. The line comes from the executable's own `mesh doctor`; the hook library
+sends no request of its own (SECURITY.md).
+
+**The hubs.** Multicast does not cross the tailnet, and the macOS application firewall
+drops inbound datagrams and connections to the unsigned executable, so the laptop can
+be heard by nobody and registers outward instead. The two Linux machines run their
+shared server as an always-on hub bound beyond loopback — `scripts/mesh-hub install`
+writes and starts a systemd user unit; `scripts/mesh-hub deploy` fast-forwards the
+checkout, rebuilds, restarts and waits for the mesh to be active — and every node
+registers with every hub it can reach. Any Majordomus server is a rendezvous; these two
+are the ones the declaration names.
+
+| node | machine | role | address in the declaration |
+|---|---|---|---|
+| `5d81b5c9` | Tomass-MacBook-Pro | primary checkout; registers outward | — (firewall) |
+| `9d652b2c` | jetson (aarch64) | hub | `192.168.100.30:8791`, `100.92.246.32:8791` |
+| `25c9758f` | lundra (x86_64) | hub | `192.168.100.10:8741`, `100.65.22.118:8741` |
+
+A machine that joins the fleet: `majordomus mesh identity` there, its key into
+`trust.allow`, commit; `scripts/mesh-hub install` if it is to be a hub, and its address
+into `rendezvous.endpoints`. A machine whose key is lost gets a new identity and the
+same two edits; `mesh doctor` on that machine fails `trust` until they land.
+
+What this does not do. One multicast socket per machine: a second server on the same
+machine (a linked worktree's) reports its `udp_multicast` provider `Failed` and rides
+the rendezvous, which the doctor names as a degraded runtime that still holds. Every
+server on a machine advertises the same node id with its own instance, so a machine
+with several servers is one record whose instance and sequence move between them;
+`replayed` counts the datagrams that lost that race, and it is not a fault. The
+skeleton a fresh repository starts from declares no `mesh-declaration` source class
+yet, so a fresh repository sees no declaration until its `sources.yaml` says where one
+lives — this repository's does.
 
 ## Threat model
 

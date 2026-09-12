@@ -249,10 +249,20 @@ mod tests {
         sender
             .send_to(b"a datagram for the listener", (Ipv4Addr::LOCALHOST, port))
             .unwrap();
-        let heard = rx
-            .recv_timeout(Duration::from_secs(5))
-            .expect("the listener hands the datagram up");
-        assert_eq!(heard.source, MeshSource::UdpMulticast);
+        // The announcer shares the socket's port, so the listener may hand up this
+        // node's own startup envelope first; the datagram under test is the one that
+        // must arrive, not the first one that does.
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        let heard = loop {
+            let remaining = deadline.saturating_duration_since(std::time::Instant::now());
+            let observation = rx
+                .recv_timeout(remaining)
+                .expect("the listener hands the datagram up");
+            assert_eq!(observation.source, MeshSource::UdpMulticast);
+            if observation.bytes == b"a datagram for the listener" {
+                break observation;
+            }
+        };
         assert_eq!(heard.bytes, b"a datagram for the listener");
 
         // The announcer transmitted at least its startup announcement.

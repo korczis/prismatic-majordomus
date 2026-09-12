@@ -1488,7 +1488,16 @@
       "status": "guaranteed",
       "route": "/guarantees/mesh-off-by-default/",
       "external": false,
-      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050)."
+      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The skeleton's default is enabled false (ADR 0050); this repository commits enabled true with an allowlist and hubs (ADR 0059), and the claim is about the default, which the tests exercise with declarations of their own."
+    },
+    {
+      "id": "claim:mesh-declared-is-held",
+      "kind": "claim",
+      "label": "An enabled mesh declaration whose server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is enabled, allowlisted and names a hub",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-declared-is-held/",
+      "external": false,
+      "note": "The doctor's `runtime` check reads the server's own decision (activated, or declined with a reason) and the `trust` check reads whether this machine is on its own allowlist; the CLI asks the running server for the report so that the verdict is the server's. tests/mesh.rs proves the failed verdict over a real server; the shell case proves the three briefing answers through the provider's start event and reads this repository's committed declaration (ADR 0059)."
     },
     {
       "id": "claim:mesh-one-registry",
@@ -1658,6 +1667,13 @@
       "id": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mcp/protocol.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/doctor.rs",
       "route": null,
       "external": false
     },
@@ -2710,6 +2726,13 @@
       "label": "test/cases/28_no_hardcoded_values.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh"
+    },
+    {
+      "id": "test:test/cases/290_the_mesh_is_declared_and_held.sh",
+      "kind": "test",
+      "label": "test/cases/290_the_mesh_is_declared_and_held.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/290_the_mesh_is_declared_and_held.sh"
     },
     {
       "id": "test:test/cases/29_prompt_capture.sh",
@@ -3849,6 +3872,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-declared-is-held",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-one-registry",
       "target": "source:docs/MESH.md",
       "kind": "specified_by"
@@ -4649,6 +4677,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-declared-is-held",
+      "target": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mesh-one-registry",
       "target": "impl:apps/majordomus-cli/src/mesh/registry.rs",
       "kind": "implemented_by"
@@ -5446,6 +5479,11 @@
     {
       "source": "claim:mesh-off-by-default",
       "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "test:test/cases/290_the_mesh_is_declared_and_held.sh",
       "kind": "proved_by"
     },
     {

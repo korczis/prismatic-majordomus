@@ -1,15 +1,26 @@
-# The mesh declaration of this repository. Disabled as committed: enabling the mesh is
-# an operator's explicit decision (edit `enabled`, review, commit), and until then no
-# discovery socket opens anywhere this repository's servers run (ADR 0050).
+# The mesh declaration of this repository. Enabled as committed since ADR 0059: the
+# fleet this repository is developed on is one operator's machines on one private
+# network and one tailnet, and a checkout whose server does not see the others is the
+# failure this object exists to prevent. The skeleton a fresh repository starts from
+# still ships `enabled: false` (ADR 0050); this file is this repository's decision.
 #
 # `trust.allow` lists Ed25519 public keys (hex) — `majordomus mesh identity` prints a
-# machine's. With `policy: deny_unknown` and an allowlist, only your own machines are
+# machine's. With `policy: deny_unknown` and this allowlist, only these machines are
 # ever trusted; everything else that shouts on the network is recorded as observed and
-# trusted for nothing.
+# trusted for nothing. A machine whose key is not here is seen but not trusted, and
+# `majordomus mesh doctor` says so on that machine (check `trust`).
+#
+# The rendezvous endpoints are the hubs: servers bound beyond loopback by
+# `scripts/mesh-hub install` (a systemd user unit), each reachable on the LAN and on the
+# tailnet. Every node registers with every hub it can reach; a hub that is down stretches
+# a backoff and stops nothing. A hub registering with itself hears its own envelope and
+# counts it as `self_heard`, which is normal. Multicast stays on for the segment the
+# machine is on; it cannot cross the tailnet and the macOS firewall drops it inbound,
+# which is why the hubs exist. See docs/MESH.md, "This repository's mesh".
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus
-enabled: false
+enabled: true
 multicast:
   enabled: true
   group: 239.255.77.77
@@ -19,8 +30,15 @@ multicast:
 broadcast:
   mode: disabled
 rendezvous:
-  endpoints: []
-  interval_seconds: 60
+  endpoints:
+    - http://192.168.100.30:8791   # jetson, LAN
+    - http://100.92.246.32:8791    # jetson, tailnet
+    - http://192.168.100.10:8741   # lundra, LAN
+    - http://100.65.22.118:8741    # lundra, tailnet
+  interval_seconds: 30
 trust:
   policy: deny_unknown
-  allow: []
+  allow:
+    - 3f7b357805aa15ecdb3c1ace7e7ac02de263e3d0def8aafda9ad280d3af7c813   # 5d81b5c9 — Tomass-MacBook-Pro (primary checkout)
+    - f945cae627707f2df99d292285414e40635e2baa5ae3b1a5243ab854334fe6e9   # 9d652b2c — jetson (hub)
+    - 7cf4caea612d67ac8b75ea090acd8a9d1c0051d53aac3fcfd18ee59ca8aedf4c   # 25c9758f — lundra (hub)
