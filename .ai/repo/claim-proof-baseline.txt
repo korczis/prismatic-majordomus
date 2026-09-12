@@ -1,12 +1,16 @@
-# Promises this repository makes that no machine can follow to a proof.
+# Guaranteed claims whose test does not name the claim back.
 #
-# A rule declared `class: blocking` with neither an x-majordomus block nor a path in
-# its `# Verification` section that exists and runs; and a claim marked
-# `status: guaranteed` whose named test does not name the claim back.
+# A claim marked `status: guaranteed` in docs/CLAIMS.yaml names a test. This is the
+# list of those whose test does not contain the claim's id, so the link is written
+# once, in the claim, and nothing reads it back from the other end.
 #
-# Written by scripts/ci/enforcement-check --write-baseline; never by hand. The list
-# may only shrink, and it shrinks by wiring the enforcement — never by softening the
-# rule's class or the claim's status, which would move the promise instead of keeping it.
+# Rules are not in this list. A blocking rule that names no proof is
+# scripts/ci/rule-proof-check and .ai/repo/rule-proof-baseline.txt.
+#
+# Written by scripts/ci/claim-proof-check --write-baseline; never by hand. The list
+# may only shrink, and it shrinks by writing the claim's id into the test it names —
+# never by lowering the claim's status, which would move the promise instead of
+# keeping it.
 adr-catalogue
 adr-propose
 adr-traceability
@@ -92,12 +96,6 @@ product-surfaces-derived
 profile-validate
 project-schema
 project-status-derived
-project.clean-room
-project.destructive-sweeps-fail-closed
-project.english-only
-project.finding-carries-reproduce
-project.optional-complexity
-project.tests-run-in-disposable-repos
 projection-fingerprint
 projection-generation
 prompt-asset

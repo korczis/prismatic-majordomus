@@ -58,7 +58,10 @@ description or arguments:
 
 - a workflow file may not declare a recipe whose body is a call to either program — that is a
   hand-written bridge, and the generated one already carries it, with the description its own
-  declaration gives;
+  declaration gives. Spelling a command is not the same as using one: a recipe that reads a
+  value out of a command and then does work no command of either program does — `just open`
+  asks `serve status` for an address and opens a browser at it — composes rather than
+  repeats, and no node of the graph projects to it;
 - a shell completion adapter may not contain a command, a flag, an identifier or a value set;
 - an MCP tool list, an HTTP route table, an OpenAPI document, a Cockpit palette and a
   documentation index may not be hand-maintained for a command that the graph carries;
@@ -83,8 +86,11 @@ The gate `command-graph` (`scripts/ci/command-graph`) fails, exit 10, when:
   capability that claims a command line the executable does not declare, an annotation or an
   alias that names a command that no longer exists, or a secret argument with a value source
   that would enumerate it;
-- a workflow file declares a recipe whose body calls one of the two programs directly, with
-  the two bootstrap recipes that produce the bridge named as the exception.
+- a workflow file declares a recipe whose body *is* a call to one of the two programs — a
+  body line that, after the leading whitespace and the `@` and `-` the runner allows, begins
+  with a launcher — with the bootstrap recipe that produces the bridge named as the
+  exception. A program named inside a command substitution, a pipeline or an assignment is
+  a value the recipe consumed, not a name it repeated, and is not a finding.
 
 `test/cases/102_completion_shell.sh` loads the generated adapter into a real zsh and reads
 what it offers, because a completion that looks correct in a file and does nothing at all is
