@@ -1284,6 +1284,15 @@ reference lists are selected by, and it exists because the alternative does not 
 ledger is one file per repository, so a selection by time range cannot tell two concurrent
 workers apart, and the first real run of one claimed another worker's records. A line with
 no <code>session</code> belongs to no episode, which is the honest answer for work done outside one.</p>
+<p><code>ts</code>, <code>event</code>, <code>head</code>, <code>branch</code>, <code>by</code> and <code>session</code> are the <strong>envelope keys</strong>, and a
+payload may not use one of them as a field name. JSON permits a duplicated key and says
+nothing about which of the two wins, so such a line means one thing to a reader that takes
+the first and another to a reader that takes the last. <code>mj_ledger_append</code> refuses the
+collision as an internal error, naming the field; a payload that wants to record something
+of the same shape names it apart, which is why the provider receipts carry
+<code>provider_event</code> and not <code>event</code>. Every reader takes the <strong>first</strong> occurrence of a key —
+the envelope's — through the one extraction <code>MJ_LEDGER_FIELD_AWK</code> declares, so a line
+written by an older version is still read as its writer meant it.</p>
 <p>The event vocabulary is closed. <code>share/events.yaml</code> declares every name the ledger
 accepts, what writes it, and the payload keys it must carry; <code>mj_ledger_append</code> refuses
 an unregistered name, <code>history --event</code> refuses to filter on one, and
@@ -1304,8 +1313,8 @@ error.</p>
 <tr><td><code>session.started</code></td><td><code>owner</code>, <code>worker</code> when one was supplied</td></tr>
 <tr><td><code>session.closed</code></td><td><code>outcome</code>, <code>session_path</code></td></tr>
 <tr><td><code>session.recovered</code></td><td><code>session_id</code> (the episode recovered, which is never the one the envelope's own <code>session</code> stamp names), <code>reason</code> (the evidence that decided it — the last sign of life and its source for a stranded episode, the count of folded records for a duplicate), <code>session_path</code></td></tr>
-<tr><td><code>provider.event.received</code></td><td><code>provider</code>, <code>event</code> (<code>start</code>/<code>end</code>/<code>compact</code>), <code>provider_session</code> when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event</td></tr>
-<tr><td><code>provider.event.failed</code></td><td><code>provider</code>, <code>event</code>, <code>reason</code>. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding</td></tr>
+<tr><td><code>provider.event.received</code></td><td><code>provider</code>, <code>provider_event</code> (<code>start</code>/<code>end</code>/<code>compact</code>), <code>provider_session</code> when the provider named one. Written as the first act of every lifecycle adapter, before any guard decides what to do about the event</td></tr>
+<tr><td><code>provider.event.failed</code></td><td><code>provider</code>, <code>provider_event</code>, <code>reason</code>. The other half of the receipt: the event arrived and the work it should have done did not complete. A receipt with neither a resulting record nor one of these beside it is itself a finding</td></tr>
 <tr><td><code>ledger.rotated</code></td><td><code>archived</code> (lines moved), <code>kept</code>, <code>archive</code> (path)</td></tr>
 <tr><td><code>projections.updated</code></td><td><code>policy_sha256</code>, <code>targets</code> (count)</td></tr>
 <tr><td><code>use_cases.ran</code></td><td><code>ran</code>, <code>failed</code> (counts; the evidence under <code>.ai/local/evidence/use-cases/</code> carries the steps)</td></tr>
@@ -1512,7 +1521,7 @@ the note but does not validate that block. On success the note is copied to
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5e31dd498b174e0c9e0420b1b33643f81a24999d" class="font-mono underline">5e31dd4</a> · inputs <span class="font-mono">5600436203d8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.6.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/cd04012f1b1dc21fd493e2be14938ffdfaccc8fa" class="font-mono underline">cd04012</a> · inputs <span class="font-mono">b492b8855cfc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
