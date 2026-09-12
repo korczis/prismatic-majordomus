@@ -1797,8 +1797,12 @@ done
 jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u | while read -r m; do
   jq -e --arg m "$m" '.modules[] | select(.id == $m and .source == "builtin")' "$REG" >/dev/null || { echo "generate-site-data: docs/generated/registry.json: capability module $m is not a builtin module of the manifest" >&2; exit 10; }
 done
+# The claims reach jq through a file, one per line, slurped back into the array the script
+# reads: as one argument they passed 128 KiB, which is all a Linux kernel allows a single
+# argument, and this projection then failed only in CI while every macOS run of it passed.
+jq -c '.claims[]' "$OUT/capabilities.json" > "$STAGE/claims.jsonl"
 jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
-   --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
+   --slurpfile claims "$STAGE/claims.jsonl" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
   || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
 # ---------------------------------------------------------------- method.json, governance-graph.json
 # The governance method as a dataset: the layers an invariant descends through with what this

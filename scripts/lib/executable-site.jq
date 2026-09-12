@@ -10,7 +10,8 @@
 # claims that speak about each surface — computed from ids and paths, never from prose.
 #
 # input:  docs/generated/registry.json
-# args:   $claims (the claims array), $repo_url (the repository on GitHub), $branch
+# args:   $claims (the claims array, slurped from one claim per line), $repo_url (the
+#         repository on GitHub), $branch
 #
 # A claim is attached by the path of its implementation: a claim implemented in the file a
 # module's descriptors are composed in belongs to that module and each of its capabilities;
