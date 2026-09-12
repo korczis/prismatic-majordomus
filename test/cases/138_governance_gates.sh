@@ -52,6 +52,9 @@ expect_exit 0 "$EN" --strict
 expect_grep 'every authored file is spelled in English'
 
 # ---------------------------------------------------------------- 1. the alphabet
+# Proves `authored-files-are-english`: sections 1 to 5 are the whole claim — a foreign
+# letter in an authored file is named with its file and line, a declared proper noun is
+# English prose, and a declared fixture is exempt only when it carries its reason.
 # The mutation the check exists for. A paragraph in the language this repository is worked
 # in reads as perfectly fine to whoever wrote it and as noise to everyone else, and review
 # is what was catching it, which is to say nothing was.
@@ -110,6 +113,8 @@ expect_grep 'docs/ALPHA\.md'
 expect_exit 0 "$EN" --write-baseline
 
 # ---------------------------------------------------------------- 6. the reproduce command
+# Proves `a-finding-names-how-to-see-it-again`: every finding either carries the command
+# that reproduces it or the gate names the finding that does not.
 # `mj_finding` prints the finding without a reproduce command when none is given, so a caller
 # that forgot one produced a finding that reads exactly like a finding that could not have
 # one. Nothing could tell them apart, so nothing did.

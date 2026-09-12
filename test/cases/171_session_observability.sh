@@ -85,6 +85,10 @@ url="$(jq -r '.url' "$T/ensure.json")"
 api() { curl -fsS "$url/api/v1/$1" > "$T/$2" || { echo "    GET /api/v1/$1 failed"; exit 1; }; }
 
 # ------------------------------------------------- 1. one reading sees one, the other sees all
+# Proves `session-observability`: the subsystem has a reading of itself. Every open
+# episode of the store and not only the one the pointer follows is here; the episodes that
+# can no longer close themselves are section 2; the commit the serving process answers
+# about is section 4; and what each provider's adapter declares is section 3.
 api continuity continuity.json
 api lifecycle/episodes episodes.json
 jq -e '.session.session_id == "s-20260911000001-aaaa"' "$T/continuity.json" >/dev/null || {

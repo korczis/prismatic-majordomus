@@ -129,6 +129,9 @@ expect_grep 'name<TAB>result<TAB>seconds<TAB>phase'
 [ ! -f "$LEDGER" ] || { echo "    a refused recording wrote $LEDGER"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a run, recorded
+# Proves `evidence-proof-is-an-execution`: what makes the claim proven below is this
+# recorded execution and the commit it ran against, not the fact that its `test:` path
+# resolves — section 1 already showed the path resolving and the answer was `not_run`.
 printf '01_alpha\tok\t12\tparallel\n02_beta\tok\t7\texclusive\n' > "$W/all.tsv"
 expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/all.tsv" --origin ci
 expect_grep 'recorded +2 execution\(s\), 2 passing'
@@ -165,6 +168,8 @@ jqe alpha '.reproduce == "bash test/run.sh 01_alpha"' "the claim does not say ho
 expect_exit 0 "$MJB" evidence --repo "$T" show --check
 
 # ---------------------------------------------------------------- 7. both directions
+# Proves `evidence-navigates-both-ways`: one derivation, read from either end — a test
+# lists the claims it proves and each of those claims names the test back.
 # A relation that can only be walked one way is half a relation.
 ev t1 proves suite:01_alpha
 jqe t1 '.test == "suite:01_alpha" and .present == true and .digest_matches == true' \
@@ -182,6 +187,8 @@ ev t2 proves suite:02_beta
 jqe t2 '[.proves[].id] == ["beta-holds"]' "the second test claims the wrong claims"
 
 # ---------------------------------------------------------------- 3. a partial second run
+# Proves `evidence-partial-run-preserves-the-rest`: the second report names one test, and
+# every other claim's evidence must survive it unchanged.
 # The regression that matters most: recording one case must not delete the evidence for
 # every case the run did not include.
 printf '01_alpha\tok\t3\tserial\n' > "$W/one.tsv"
@@ -198,6 +205,9 @@ jqe partial '[.claims[] | select(.test != null) | select(.state != "proven")] | 
   "a partial run left the tests it did not name unproven"
 
 # ---------------------------------------------------------------- 5. proven vs unchanged
+# Proves `evidence-currency-is-not-collapsed`: `proven` and `inputs_unchanged` are two
+# states here and never one, because a run recorded against this commit says more than a
+# run whose inputs merely have not changed since.
 # One commit that changes nothing any claim names. The run still stands — but it was not
 # made against this commit, and saying `proven` here would be the green badge whose
 # derivation cannot be inspected.
@@ -247,6 +257,9 @@ jqe stale2 '.state == "stale" and (.changed == ["lib/beta.sh"])' \
 git checkout -q -- lib/beta.sh
 
 # ---------------------------------------------------------------- 6. a failing result
+# Proves `evidence-unsupported-guarantee-is-reported`: a guarantee no recorded run
+# supports is named by the gate — `show --check` exits 10 — rather than still displayed
+# as guaranteed.
 # Nothing here re-judges a run: a case that failed is a case the runner said failed.
 printf '02_beta\tFAIL\t9\tserial\n' > "$W/fail.tsv"
 expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/fail.tsv"
