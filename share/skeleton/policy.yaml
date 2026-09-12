@@ -100,8 +100,36 @@ benchmark:
     p95: 0.5
     p99: 0.6
   budget:
-    doctor_ms: 3000
-    watch_ms: 3000
+    # doctor and watch report their own wall time against these, INFO under and WARN over,
+    # never as the exit code. These are the values a repository starts with, so they judge
+    # the corpus it starts with: the vendored rule baseline and whatever `init` seeded, and
+    # nothing of your own yet. Re-derive them once your own catalogue has grown — with a
+    # run, and write the run beside the number, as .ai/repo/policy.yaml of the Majordomus
+    # repository itself does.
+    #
+    # THE MEASUREMENT (2026-09-12). `majordomus bench doctor watch`, which is the instrument
+    # that moves these two keys: it runs each command in a disposable repository prepared by
+    # that command's fixture, which is exactly a repository that has just adopted Majordomus.
+    # Run b-20260912T095542Z-7502 at 3407ca2d4, Darwin arm64, bash 5.3.15, 10 warm samples
+    # after 2 warm-ups plus one cold run:
+    #
+    #   command  mode    n    min    p50    p90    max
+    #   doctor   warm   10  10948  13683  15668  15879
+    #   doctor   cold    1  14032  14032  14032  14032
+    #   watch    warm   10  10441  13740  15376  16830
+    #   watch    cold    1  14035  14035  14035  14035
+    #
+    # Each is the warm p90 times 1.5, to the nearest 10 s, and above the slowest run of its
+    # own sample. They come out equal because on a fresh corpus the two commands cost the
+    # same (p50 13683 against 13740): watch skips little when there is little to skip. On a
+    # grown repository they diverge — measured as pairs on one host, watch runs about 0.57
+    # of doctor — which is why the pair is declared per repository and not once here.
+    #
+    # These were 3000 from 2026-09-05 until 2026-09-12, which was never measured on any
+    # corpus. The consequence was not subtle: the first `majordomus doctor` a new adopter
+    # ever ran printed a WARN it could do nothing about, and so did every one after it.
+    doctor_ms: 20000
+    watch_ms: 20000
     enter_ms: 750                        # a `cd` into a checkout whose runtime is already up
     enter_cold_ms: 1000                  # the one that starts a server — and returns, never waits
 

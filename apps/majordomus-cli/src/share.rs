@@ -169,7 +169,7 @@ impl Share {
             .filter_map(|e| e.file_name().to_str().map(str::to_string))
             .filter_map(|n| n.strip_suffix(".tmpl").map(str::to_string))
             .collect();
-        out.sort();
+        crate::order::canonical(&mut out);
         out
     }
 
@@ -197,7 +197,7 @@ impl Share {
         let templates = self.provider_templates();
         let mut ids: Vec<String> = templates.clone();
         ids.extend(file.providers.keys().cloned());
-        ids.sort();
+        crate::order::canonical(&mut ids);
         ids.dedup();
         let providers = ids
             .into_iter()

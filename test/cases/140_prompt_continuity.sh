@@ -9,6 +9,13 @@
 # provider actually runs. The episode is opened and closed by the session shims; the prompts
 # arrive through the capture shim; the reconciliation and the pruning are the commands a
 # person runs afterwards.
+# docs/CLAIMS.yaml marks `prompt-continuity` as guaranteed and names this case as the test
+# that proves it; the id is written here so the link reads from both ends. The claim has
+# four parts and each is a section below: a captured prompt names the episode it belongs to
+# (the join, while it is easy — and it survives the close), or records that none could be
+# resolved and never borrows somebody else's; the archive is free of credential material
+# (a credential never lands); it is private on disk; and it is bounded.
+#
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 echo a > a && git add -A && git commit -qm base

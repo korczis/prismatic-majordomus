@@ -422,9 +422,7 @@ pub struct Completion {
 pub(crate) fn changed_paths(root: &Path, base: Option<&str>) -> Result<Vec<String>, String> {
     let mut out: BTreeSet<String> = BTreeSet::new();
     let git = |args: &[&str]| -> Result<String, String> {
-        let out = std::process::Command::new("git")
-            .arg("-C")
-            .arg(root)
+        let out = crate::git::read_only(root)
             .args(args)
             .output()
             .map_err(|e| format!("git {}: {e}", args.join(" ")))?;

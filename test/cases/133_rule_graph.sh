@@ -216,6 +216,9 @@ jqe zeta2 '.proof.rule.enforcement.mode == "gated"' \
 jqe zeta2 '.proof.state != "reviewed"' "an executable proof did not win over the declaration"
 
 # ---------------------------------------------------------------- 8. mechanism, not verdict
+# Proves `rule-state-is-derived-from-what-ran`: the state is derived from the tree and
+# the ledger together, and a mechanism that refuses violations is reported as a mechanism
+# — never as a run that passed.
 # A check a CI gate runs refuses violations on every run. What this repository does not have
 # is a verdict for it, and reading the mechanism as a verdict is the green badge the whole
 # exercise is against.

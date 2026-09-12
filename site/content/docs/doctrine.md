@@ -357,6 +357,14 @@ blocking doctrines:
 - majordomus.blocker-resolution
 ```
 
+One line of the contract is not about the repository at all. `publication_current` asks
+whether what the public is being served is still a projection of the trunk — a question no
+gate in the CI model can be selected for, because no change to any file can answer it. The
+doctrine `majordomus.publication-currency` runs the gates the CI model marks `at-finish`,
+live, at the moment of the claim, and refuses `completed` while one of them says the
+publication is owed. It is run and never recorded: evidence whose subject can change while
+the tree stands still has no hash to expire against.
+
 ## Reading it from the command line
 
 ```bash

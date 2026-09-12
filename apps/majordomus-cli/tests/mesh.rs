@@ -8,6 +8,16 @@
 //! The in-process half proves the rendezvous handshake end to end without a network:
 //! two runtimes exchange envelopes through `register` exactly as two servers would,
 //! and each converges on one record of the other.
+//!
+//! docs/CLAIMS.yaml marks `mesh-off-by-default` and `mesh-observation-not-authority` as
+//! guaranteed and names this file as the test that proves them; the ids are written here
+//! so the link reads from both ends. `a_disabled_declaration_opens_nothing_and_says_why`
+//! is the first: no socket opens until an enabled declaration is committed, and the
+//! disabled declaration is reported as the reason rather than as an error. The trust
+//! assertions of `a_server_activates_the_mesh_and_registration_converges_to_one_record`
+//! are the second: a discovered node is labelled under the declared policy, which
+//! defaults to deny_unknown, and gains no execution, no authorization and no write
+//! surface by being seen.
 
 mod common;
 
