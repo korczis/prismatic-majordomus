@@ -46,10 +46,17 @@
           <span class="font-mono text-xs text-body-subtle">$ majordomus product matrix</span>
           <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ model.counts.features }} × {{ model.surfaces | length }}</span>
         </figcaption>
-        <div class="relative max-h-[26rem] overflow-x-auto overflow-y-auto" tabindex="0">
+        {#- The whole table, never a window onto it. A 26rem cap once hid 145px of the
+            matrix behind a vertical scrollbar at every width — the one figure on the page
+            whose point is that it is complete, shown incomplete. Height is the content's;
+            only width is bounded, because a table narrower than its columns has nowhere to
+            go on a phone, and `relative` keeps the cells' .sr-only spans inside the scroll
+            container that positions them. With nothing scrolling vertically the head has
+            nothing to stick to, so it does not pretend to. -#}
+        <div class="relative overflow-x-auto" tabindex="0">
           <table class="w-full border-collapse font-mono text-xs">
             <caption class="sr-only">Every feature of the product against the interfaces it is exposed through</caption>
-            <thead class="sticky top-0 bg-neutral-primary-soft">
+            <thead class="bg-neutral-primary-soft">
               <tr>
                 <th scope="col" class="border-b border-default px-3 py-2 text-start font-medium text-body-subtle">feature</th>
                 {%- for s in model.surfaces %}<th scope="col" class="border-b border-default px-2 py-2 text-center font-medium text-body-subtle">{{ s.id }}</th>{% endfor -%}
