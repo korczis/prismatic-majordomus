@@ -1872,6 +1872,16 @@ mj_capture_status() {
         printf '{"provider":"%s","aspect":"%s","state":"%s","reason":"%s"}' "$p" "$a" "$state" "$(mj_json_esc "$reason")"
       done
     done
+    printf ']'
+    # The same denominator the text surface prints. A verdict that states its subject on
+    # one projection and not the other is half a verdict on the surface that omits it.
+    printf ',"unadapted":['
+    first=1
+    for p in $(mj_capture_declared_providers 2>/dev/null); do
+      case " $(mj_capture_providers | tr '\n' ' ') " in *" $p "*) continue ;; esac
+      [ "$first" = 1 ] || printf ','; first=0
+      printf '"%s"' "$p"
+    done
     printf ']}\n'; return 0
   fi
   # The prompt aspect keeps the provider's own name in the first column and the lifecycle
@@ -1883,6 +1893,46 @@ mj_capture_status() {
       printf '%-22s %-12s %s\n' "$([ "$a" = prompt ] && printf '%s' "$p" || printf '%s:session' "$p")" "$state" "$reason"
     done
   done
+  # The denominator, because a listing of what was examined is read as a listing of what
+  # exists. The distribution declares six providers and this table carries an adapter for
+  # one of them, so the two rows above are every row there can be — and a reader who
+  # counted them against `share/providers.yaml` concluded that four providers were broken.
+  # They are not: a provider with no `lifecycle` and no `prompt_capture` is one this tool
+  # ships no capture adapter for, which costs its worker the automation and none of the
+  # model. Saying so here is the difference between a status and a number somebody has to
+  # interpret (project.a-verdict-states-its-subject).
+  mj_capture_unadapted
+}
+
+# Every provider the distribution declares that this table has no adapter for, in the
+# distribution's order. Read from `share/providers.yaml` rather than listed here: a second
+# hand-maintained copy of the provider set is the defect this function exists to report.
+mj_capture_unadapted() {
+  local decl adapted missing="" one
+  decl="$(mj_capture_declared_providers)" || return 0
+  [ -n "$decl" ] || return 0
+  adapted=" $(mj_capture_providers | tr '\n' ' ')"
+  for one in $decl; do
+    case "$adapted" in *" $one "*) continue ;; esac
+    missing="$missing $one"
+  done
+  [ -n "$missing" ] || return 0
+  printf '%-22s %-12s %s\n' "(no adapter)" "n/a" \
+    "this tool ships no capture adapter for:${missing}; they read the model and lose the automation"
+}
+
+# The provider ids `share/providers.yaml` declares. The keys of the `providers:` mapping,
+# one indent in — the same subset of YAML the rest of this library reads.
+mj_capture_declared_providers() {
+  local f="$MJ_SHARE_DIR/providers.yaml"
+  [ -r "$f" ] || return 1
+  awk '
+    /^providers:[[:space:]]*$/ { inp = 1; next }
+    inp && /^[^[:space:]#]/    { inp = 0 }
+    inp && /^  [a-z0-9][a-z0-9_-]*:[[:space:]]*$/ {
+      id = $1; sub(/:$/, "", id); print id
+    }
+  ' "$f"
 }
 
 # ---------------------------------------------------------------- prompt continuity
